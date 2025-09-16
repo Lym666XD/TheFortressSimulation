@@ -1,0 +1,320 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HumanFortress.Core</name>
+    </assembly>
+    <members>
+        <member name="T:HumanFortress.Core.Commands.CommandQueue">
+            <summary>
+            Deterministic command queue for input handling per UI_AND_INPUT_MODEL.md.
+            Commands are tagged with target tick and executed in order.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.CommandQueue.Enqueue(HumanFortress.Core.Commands.ICommand)">
+            <summary>
+            Enqueue a command for execution. Thread-safe.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.CommandQueue.ExecuteCommands(System.UInt64,HumanFortress.Core.Commands.ISimulationContext)">
+            <summary>
+            Execute all commands scheduled for the given tick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.CommandQueue.GetExecutedCommands">
+            <summary>
+            Get all executed commands for replay/save.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.CommandQueue.ClearExecutedCommands">
+            <summary>
+            Clear executed commands (after save).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.CommandQueue.RestoreCommands(System.Collections.Generic.IEnumerable{HumanFortress.Core.Commands.ICommand})">
+            <summary>
+            Restore commands from save/replay.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Commands.ICommand">
+            <summary>
+            Base interface for all game commands per UI_AND_INPUT_MODEL.md.
+            Commands are the only way for UI to affect simulation state.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Commands.ICommand.Tick">
+            <summary>
+            Tick when this command should be executed.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Commands.ICommand.CommandId">
+            <summary>
+            Unique identifier for replay and debugging.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Commands.ICommand.CommandType">
+            <summary>
+            Command type for serialization.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.ICommand.Execute(HumanFortress.Core.Commands.ISimulationContext)">
+            <summary>
+            Execute the command within the simulation context.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Commands.ICommand.Serialize">
+            <summary>
+            Serialize command data for save/replay.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Commands.ISimulationContext">
+            <summary>
+            Context provided to commands during execution.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Commands.IWorldReader">
+            <summary>
+            Read-only world access for commands.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Events.EventBus">
+            <summary>
+            Thread-safe event bus implementation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Events.IEventBus">
+            <summary>
+            Event bus for post-commit game events per GAME_ARCHITECTURE.md.
+            Events are fired after write phase completes.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Events.IEventBus.Publish``1(``0)">
+            <summary>
+            Publish an event to all subscribers.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Events.IEventBus.Subscribe``1(System.Action{``0})">
+            <summary>
+            Subscribe to events of a specific type.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Events.IEventBus.Unsubscribe``1(System.Action{``0})">
+            <summary>
+            Unsubscribe from events.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Events.IGameEvent">
+            <summary>
+            Base interface for all game events.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Events.IGameEvent.Tick">
+            <summary>
+            Tick when the event occurred.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Events.IGameEvent.EventType">
+            <summary>
+            Event type for debugging.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Random.DeterministicRng">
+            <summary>
+            Deterministic random number generator using xoshiro128++ algorithm.
+            Fast, high-quality PRNG suitable for games per DETERMINISM_CI.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.#ctor(System.UInt64)">
+            <summary>
+            Initialize with a seed value.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.Next">
+            <summary>
+            Get the next random 32-bit value.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.NextInt(System.Int32)">
+            <summary>
+            Get a random integer in range [0, max).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.NextInt(System.Int32,System.Int32)">
+            <summary>
+            Get a random integer in range [min, max).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.NextFloat">
+            <summary>
+            Get a random float in range [0, 1).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.NextDouble">
+            <summary>
+            Get a random double in range [0, 1).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.NextBool">
+            <summary>
+            Get a random boolean.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.GetState">
+            <summary>
+            Save RNG state for deterministic replay.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.DeterministicRng.SetState(HumanFortress.Core.Random.RngState)">
+            <summary>
+            Restore RNG state from save.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Random.RngState">
+            <summary>
+            Serializable RNG state.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Random.RngStreamManager">
+            <summary>
+            Manages named RNG streams for deterministic simulation per DETERMINISM_CI.md.
+            Each system gets its own stream to prevent coupling.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.RngStreamManager.GetStream(System.String)">
+            <summary>
+            Get or create a named RNG stream.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Random.RngStreamManager.StreamNames">
+            <summary>
+            Standard stream names per system.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.RngStreamManager.SaveStates">
+            <summary>
+            Save all stream states for deterministic replay.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Random.RngStreamManager.RestoreStates(System.Collections.Generic.Dictionary{System.String,HumanFortress.Core.Random.RngState})">
+            <summary>
+            Restore stream states from save.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Simulation.DiffOp">
+            <summary>
+            Diff-log operation for tile/entity modifications per DIFF_LOG_AND_MERGE_STRATEGIES.md.
+            All write operations must go through this system for determinism.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Simulation.DiffOp.SortKey">
+            <summary>
+            Stable sort key for deterministic merge order.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Simulation.DiffLog">
+            <summary>
+            Collects and merges diff operations for a single tick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Simulation.DiffLog.AddOp(HumanFortress.Core.Simulation.DiffOp)">
+            <summary>
+            Add an operation to the log. Thread-safe for Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Simulation.DiffLog.MergeAndSort">
+            <summary>
+            Merge and apply all operations in deterministic order.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Simulation.DiffLog.Clear">
+            <summary>
+            Clear the log for the next tick.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Simulation.UpdateOrder">
+            <summary>
+            Defines the authoritative update order for simulation systems per UPDATE_ORDER.md.
+            All systems execute in Read phase (parallel), then Write phase (serialized).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Simulation.UpdateOrder.Priority">
+            <summary>
+            System priorities for execution order. Lower values execute first.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Simulation.UpdateOrder.SystemId">
+            <summary>
+            System identifiers for debugging and error reporting.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Time.ITick">
+            <summary>
+            Represents a tickable system that participates in the fixed-step simulation loop.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.ITick.ReadTick(System.UInt64)">
+            <summary>
+            Called during the read phase of a tick. Systems can read state but cannot modify it.
+            Multiple systems may execute this phase in parallel.
+            </summary>
+            <param name="tick">Current simulation tick number</param>
+        </member>
+        <member name="M:HumanFortress.Core.Time.ITick.WriteTick(System.UInt64)">
+            <summary>
+            Called during the write phase of a tick. Systems can modify state through
+            the diff-log or chunk-actor patterns only.
+            </summary>
+            <param name="tick">Current simulation tick number</param>
+        </member>
+        <member name="P:HumanFortress.Core.Time.ITick.Priority">
+            <summary>
+            Priority for system execution order within a phase. Lower values execute first.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Time.ITick.SystemId">
+            <summary>
+            System identifier for debugging and error reporting.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Time.TickScheduler">
+            <summary>
+            Fixed-step tick scheduler implementing the authoritative UPDATE_ORDER.
+            Runs at 50 TPS (20ms per tick) with read-parallel/write-serialized execution.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Time.TickScheduler.CurrentTick">
+            <summary>
+            Current simulation tick number.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Time.TickScheduler.IsRunning">
+            <summary>
+            Whether the simulation is currently running.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Time.TickScheduler.TargetTPS">
+            <summary>
+            Target ticks per second (fixed at 50).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.RegisterSystem(HumanFortress.Core.Time.ITick)">
+            <summary>
+            Register a system to participate in the tick loop.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.Start">
+            <summary>
+            Start the fixed-step simulation loop.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.Stop">
+            <summary>
+            Stop the simulation loop after the current tick completes.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.ExecuteSingleTick">
+            <summary>
+            Execute a single tick synchronously (for testing/replay).
+            </summary>
+        </member>
+    </members>
+</doc>

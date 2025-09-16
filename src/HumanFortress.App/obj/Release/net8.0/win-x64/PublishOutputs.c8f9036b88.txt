@@ -1,0 +1,7 @@
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.App.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.Core.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.Core.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.Simulation.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.Simulation.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.App.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish-small\HumanFortress.App.exe

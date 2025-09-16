@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "HumanFortress.Simulation/0.1.0": {
+        "dependencies": {
+          "HumanFortress.Core": "0.1.0"
+        },
+        "runtime": {
+          "HumanFortress.Simulation.dll": {}
+        }
+      },
+      "HumanFortress.Core/0.1.0": {
+        "runtime": {
+          "HumanFortress.Core.dll": {
+            "assemblyVersion": "0.1.0.0",
+            "fileVersion": "0.1.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "HumanFortress.Simulation/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HumanFortress.Core/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

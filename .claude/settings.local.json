@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(dotnet publish:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(dotnet restore:*)",
+      "Bash(grep:*)",
+      "Bash(./HumanFortress.App.exe --test)",
+      "Bash(dotnet sln:*)",
+      "Bash(dotnet add:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell Stop-Process:*)",
+      "WebSearch",
+      "Bash(./HumanFortress.App.exe)",
+      "Bash(./HumanFortress.App.exe --test-crash)",
+      "Bash(./src/HumanFortress.App/bin/Release/net8.0/win-x64/HumanFortress.App.exe --validate)",
+      "Bash(./src/HumanFortress.App/bin/Release/net8.0/win-x64/HumanFortress.App.exe --test)",
+      "Bash(./src/HumanFortress.App/bin/Release/net8.0/win-x64/HumanFortress.App.exe --test-crash)",
+      "Bash(./src/HumanFortress.App/bin/Release/net8.0/win-x64/HumanFortress.App.exe)",
+      "Bash(./test-fortress-entry.bat)",
+      "Bash(start HumanFortress.App.exe)",
+      "Bash(./HumanFortress.App.exe --validate)",
+      "Bash(tasklist)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

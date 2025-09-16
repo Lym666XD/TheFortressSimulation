@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "material.v3.schema.json",
+  "type": "object",
+  "required": ["id", "tags", "density_solid", "resists", "env", "struct"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "tags": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "density_solid": {
+      "type": "number",
+      "minimum": 1
+    },
+    "resists": {
+      "type": "object",
+      "required": ["bash", "cut", "stab", "acid", "fire", "cold", "electric", "arcane"],
+      "properties": {
+        "bash": {"type": "number", "minimum": 0, "maximum": 200},
+        "cut": {"type": "number", "minimum": 0, "maximum": 200},
+        "stab": {"type": "number", "minimum": 0, "maximum": 200},
+        "acid": {"type": "number", "minimum": 0, "maximum": 200},
+        "fire": {"type": "number", "minimum": 0, "maximum": 200},
+        "cold": {"type": "number", "minimum": 0, "maximum": 200},
+        "electric": {"type": "number", "minimum": 0, "maximum": 200},
+        "arcane": {"type": "number", "minimum": 0, "maximum": 200}
+      },
+      "additionalProperties": false
+    },
+    "env": {
+      "type": "object",
+      "required": ["insulation", "waterproof", "breathability", "chem_protect"],
+      "properties": {
+        "insulation": {"type": "number", "minimum": 0, "maximum": 100},
+        "waterproof": {"type": "number", "minimum": 0, "maximum": 100},
+        "breathability": {"type": "number", "minimum": 0, "maximum": 100},
+        "chem_protect": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "additionalProperties": false
+    },
+    "struct": {
+      "type": "object",
+      "required": ["durability", "rigidity"],
+      "properties": {
+        "durability": {"type": "number", "minimum": 0, "maximum": 100},
+        "rigidity": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "additionalProperties": false
+    },
+    "work": {
+      "type": "object",
+      "properties": {
+        "forgeable": {"type": "boolean"},
+        "weldable": {"type": "boolean"},
+        "carveable": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "mana_conductivity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "mana_capacity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "beautifulness": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "valuebaleness": {
+      "type": "number",
+      "minimum": 0
+    },
+    "thermo": {
+      "type": "object",
+      "properties": {
+        "ignition_point_c": {"type": "number", "minimum": 0},
+        "melt_point_c": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

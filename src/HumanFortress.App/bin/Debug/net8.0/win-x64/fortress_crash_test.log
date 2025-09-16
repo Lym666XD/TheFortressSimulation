@@ -1,0 +1,15 @@
+[TEST-CRASH] Starting crash test
+[TEST-CRASH] Registering states
+[TEST-CRASH] Setting up embark location
+[TEST-CRASH] Generating test world
+[TEST-CRASH] Initializing world
+[TEST-CRASH] Attempting to transition to FortressPlay
+[GameStateManager] ChangeState from  to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[FortressState] Constructor called - deferred initialization
+[FortressPlayState] GameHost not initialized, deferring screen setup
+[GameStateManager] Enter completed for FortressPlay
+[GameStateManager] Starting simulation for FortressPlay
+[TEST-CRASH] Test completed without crash!

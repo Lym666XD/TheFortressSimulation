@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HumanFortress.WorldGen</name>
+    </assembly>
+    <members>
+        <member name="T:HumanFortress.WorldGen.FortressGenerator">
+            <summary>
+            Generates fortress map from world tile context per MAPGEN_PIPELINE.md section 4.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.FortressGenerator.Generate">
+            <summary>
+            Generate the fortress map.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.WorldGen.TerrainType">
+            <summary>
+            Terrain types for fortress generation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.WorldGen.StrataLayer">
+            <summary>
+            Represents a geological stratum layer.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.WorldGen.FortressMap">
+            <summary>
+            Represents the generated fortress map data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.FortressMap.ToSimulationWorld">
+            <summary>
+            Convert to World for simulation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.WorldGen.FortressChunk">
+            <summary>
+            Represents a single chunk in the fortress map.
+            </summary>
+        </member>
+    </members>
+</doc>

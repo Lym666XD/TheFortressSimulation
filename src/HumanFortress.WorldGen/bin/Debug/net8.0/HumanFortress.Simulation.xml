@@ -1,0 +1,222 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HumanFortress.Simulation</name>
+    </assembly>
+    <members>
+        <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshot">
+            <summary>
+            Immutable per-tick snapshot for rendering per RENDERING_SNAPSHOT.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshotBuilder">
+            <summary>
+            Builds immutable render snapshots from world state per RENDERING_SNAPSHOT.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Rendering.RenderSnapshotBuilder.BuildSnapshot(HumanFortress.Simulation.Rendering.CameraInfo,HumanFortress.Simulation.Rendering.ViewportInfo,System.UInt64)">
+            <summary>
+            Build snapshot after simulation commits, per section 2.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Rendering.TileRegistry">
+            <summary>
+            Registry for tile visual data.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TileBase">
+            <summary>
+            Base tile structure per TILE_SPEC.md.
+            Size: 10 bytes (may be padded by CLR).
+            Immutable for thread safety - use atomic replacement for updates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TileBase.WithTerrain(System.UInt16)">
+            <summary>
+            Create a modified copy with new terrain bits.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TileBase.WithFluid(System.Byte,System.Byte)">
+            <summary>
+            Create a modified copy with new fluid.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TerrainKind">
+            <summary>
+            Terrain types per TILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.RampDirection">
+            <summary>
+            Ramp directions.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.Chunk">
+            <summary>
+            Fixed-size chunk of tiles per CHUNK_AND_DATA_LAYOUT.md.
+            Default 32x32 cells per Z-level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetTile(System.Int32,System.Int32)">
+            <summary>
+            Get tile at local coordinates. Thread-safe for reads.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.SetTile(System.Int32,System.Int32,HumanFortress.Simulation.Tiles.TileBase,System.UInt64)">
+            <summary>
+            Set tile at local coordinates. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetFurniture(System.Int32,System.Int32)">
+            <summary>
+            Get furniture at position. Thread-safe.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.PlaceFurniture(System.Int32,System.Int32,HumanFortress.Simulation.World.FurnitureRef,System.Boolean,System.UInt64)">
+            <summary>
+            Place furniture. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetTilesCopy">
+            <summary>
+            Get all tiles for batch operations. Creates a copy for thread safety.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.LocalIndex(System.Int32,System.Int32)">
+            <summary>
+            Convert local coordinates to index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.IndexToLocal(System.Int32)">
+            <summary>
+            Convert index to local coordinates.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ChunkKey">
+            <summary>
+            Unique chunk identifier.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FurnitureCell">
+            <summary>
+            L2 overlay - furniture/constructions.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FurnitureRef">
+            <summary>
+            Reference to furniture instance.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FieldCell">
+            <summary>
+            L4 overlay - fields (gases/decals).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ItemStackRef">
+            <summary>
+            L5 overlay - item stacks.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ChunkLifecycleManager">
+            <summary>
+            Manages chunk lifecycle and LOD transitions per SIM_LOD_POLICY.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.UpdateLODLevels(System.Int32,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Update LOD levels based on camera and heat per section 1.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.AddHeat(HumanFortress.Simulation.World.ChunkKey,System.UInt64)">
+            <summary>
+            Add heat to a chunk (combat, fire, etc).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.PinChunk(HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.PinReason)">
+            <summary>
+            Pin a chunk for a reason (UI focus, etc).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.UnpinChunk(HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.PinReason)">
+            <summary>
+            Unpin a chunk.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.LODLevel">
+            <summary>
+            LOD levels per SIM_LOD_POLICY.md section 0.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.PinReason">
+            <summary>
+            Reasons to pin a chunk at higher LOD.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.World">
+            <summary>
+            World manager handling chunks and LOD per SIM_LOD_POLICY.md.
+            Fortress size: N×N chunks, N ∈ [2..8]; chunk = 32×32×Z tiles.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.SizeInChunks">
+            <summary>
+            Size of the world in chunks (N for N×N).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.SizeInTiles">
+            <summary>
+            Size of the world in tiles.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.MaxZ">
+            <summary>
+            Maximum Z level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetOrCreateChunk(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Get or create a chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetChunk(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Get chunk if it exists.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get tile at world coordinates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.SetTile(System.Int32,System.Int32,System.Int32,HumanFortress.Simulation.Tiles.TileBase,System.UInt64)">
+            <summary>
+            Set tile at world coordinates. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.IsValidPosition(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Check if position is valid.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetActiveChunks">
+            <summary>
+            Get all active chunks (L0/L1).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.UpdateLOD(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Update LOD levels based on player focus per SIM_LOD_POLICY.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetEdgeBandChunks">
+            <summary>
+            Get chunks that need edge-band checking for incidents.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.EdgeBand">
+            <summary>
+            Edge band directions for incident spawning.
+            </summary>
+        </member>
+    </members>
+</doc>

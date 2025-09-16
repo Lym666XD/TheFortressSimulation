@@ -1,0 +1,102 @@
+{
+  "fortress_size": {
+    "width": 64,
+    "height": 64
+  },
+  "terrain": {
+    "surface_elevation": 16,
+    "elevation_variation": 6,
+    "geological_layers": [
+      {
+        "depth": 0,
+        "stone_type": 1,
+        "name": "表层沉积岩 / Surface Sedimentary"
+      },
+      {
+        "depth": 5,
+        "stone_type": 2,
+        "name": "浅层页岩 / Shallow Shale"
+      },
+      {
+        "depth": 10,
+        "stone_type": 3,
+        "name": "变质岩层 / Metamorphic Layer"
+      },
+      {
+        "depth": 20,
+        "stone_type": 4,
+        "name": "深层火成岩 / Deep Igneous"
+      }
+    ]
+  },
+  "minerals": {
+    "ore_vein_probability": 0.08,
+    "mineral_types": [
+      {
+        "type_id": 100,
+        "name": "铁矿 / Iron Ore",
+        "weight": 30
+      },
+      {
+        "type_id": 101,
+        "name": "铜矿 / Copper Ore",
+        "weight": 25
+      },
+      {
+        "type_id": 102,
+        "name": "银矿 / Silver Ore",
+        "weight": 15
+      },
+      {
+        "type_id": 103,
+        "name": "金矿 / Gold Ore",
+        "weight": 10
+      },
+      {
+        "type_id": 104,
+        "name": "煤矿 / Coal Ore",
+        "weight": 20
+      },
+      {
+        "type_id": 105,
+        "name": "宝石 / Gems",
+        "weight": 5
+      },
+      {
+        "type_id": 106,
+        "name": "铅矿 / Lead Ore",
+        "weight": 12
+      },
+      {
+        "type_id": 107,
+        "name": "锡矿 / Tin Ore",
+        "weight": 18
+      },
+      {
+        "type_id": 108,
+        "name": "锌矿 / Zinc Ore",
+        "weight": 15
+      },
+      {
+        "type_id": 109,
+        "name": "稀有矿物 / Rare Minerals",
+        "weight": 3
+      }
+    ]
+  },
+  "caves": {
+    "cave_count": 1,
+    "min_cave_size": 5,
+    "max_cave_size": 10,
+    "cave_density": 0.5,
+    "depth_distribution": {
+      "min_depth": 5,
+      "max_depth": 15
+    }
+  },
+  "random_seed": {
+    "master_seed": 0,
+    "use_fixed_seed": false,
+    "fixed_seed_value": 12345
+  }
+}

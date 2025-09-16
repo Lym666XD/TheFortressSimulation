@@ -1,0 +1,109 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "refs", "refs", "{35F9C120-BB94-3F10-F0F3-8A48563F291A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{517A5CD2-799C-E16A-0093-F0E5504EE2BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.AI", "refs\src\HumanFortress.AI\HumanFortress.AI.csproj", "{68CE4AB0-98E3-20B8-09CF-8BECC33AC522}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.App", "refs\src\HumanFortress.App\HumanFortress.App.csproj", "{94A68E70-1DD1-C72C-681D-114E444417C0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Combat", "refs\src\HumanFortress.Combat\HumanFortress.Combat.csproj", "{961D2560-8D8B-954A-D6D5-DC39B4BA1721}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Contracts", "refs\src\HumanFortress.Contracts\HumanFortress.Contracts.csproj", "{622164FE-F4E8-46DB-C32F-01C1CE93C849}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Core", "refs\src\HumanFortress.Core\HumanFortress.Core.csproj", "{5FB6A293-C649-377E-870C-0DC9F01A0F6B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Economy", "refs\src\HumanFortress.Economy\HumanFortress.Economy.csproj", "{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.ECS", "refs\src\HumanFortress.ECS\HumanFortress.ECS.csproj", "{939634F3-C4FD-B799-6033-E7707B072CC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Fortress", "refs\src\HumanFortress.Fortress\HumanFortress.Fortress.csproj", "{7E99F5AA-6A05-36FF-2298-7DA72C06B93C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Modding", "refs\src\HumanFortress.Modding\HumanFortress.Modding.csproj", "{83743EE9-E874-2E9A-0627-ADCED44E8FC3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Navigation", "refs\src\HumanFortress.Navigation\HumanFortress.Navigation.csproj", "{5D915164-6C70-BEE6-216A-FB9F9935E838}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Save", "refs\src\HumanFortress.Save\HumanFortress.Save.csproj", "{0441E561-B7A2-B31A-515A-BB2264B3ED37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.World", "refs\src\HumanFortress.World\HumanFortress.World.csproj", "{4A20A747-8C12-FF01-3DC8-34A295DC4333}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{68CE4AB0-98E3-20B8-09CF-8BECC33AC522}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{68CE4AB0-98E3-20B8-09CF-8BECC33AC522}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{68CE4AB0-98E3-20B8-09CF-8BECC33AC522}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{68CE4AB0-98E3-20B8-09CF-8BECC33AC522}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94A68E70-1DD1-C72C-681D-114E444417C0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94A68E70-1DD1-C72C-681D-114E444417C0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94A68E70-1DD1-C72C-681D-114E444417C0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94A68E70-1DD1-C72C-681D-114E444417C0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{961D2560-8D8B-954A-D6D5-DC39B4BA1721}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{961D2560-8D8B-954A-D6D5-DC39B4BA1721}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{961D2560-8D8B-954A-D6D5-DC39B4BA1721}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{961D2560-8D8B-954A-D6D5-DC39B4BA1721}.Release|Any CPU.Build.0 = Release|Any CPU
+		{622164FE-F4E8-46DB-C32F-01C1CE93C849}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{622164FE-F4E8-46DB-C32F-01C1CE93C849}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{622164FE-F4E8-46DB-C32F-01C1CE93C849}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{622164FE-F4E8-46DB-C32F-01C1CE93C849}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5FB6A293-C649-377E-870C-0DC9F01A0F6B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FB6A293-C649-377E-870C-0DC9F01A0F6B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FB6A293-C649-377E-870C-0DC9F01A0F6B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FB6A293-C649-377E-870C-0DC9F01A0F6B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{939634F3-C4FD-B799-6033-E7707B072CC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{939634F3-C4FD-B799-6033-E7707B072CC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{939634F3-C4FD-B799-6033-E7707B072CC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{939634F3-C4FD-B799-6033-E7707B072CC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E99F5AA-6A05-36FF-2298-7DA72C06B93C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E99F5AA-6A05-36FF-2298-7DA72C06B93C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E99F5AA-6A05-36FF-2298-7DA72C06B93C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E99F5AA-6A05-36FF-2298-7DA72C06B93C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83743EE9-E874-2E9A-0627-ADCED44E8FC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83743EE9-E874-2E9A-0627-ADCED44E8FC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83743EE9-E874-2E9A-0627-ADCED44E8FC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83743EE9-E874-2E9A-0627-ADCED44E8FC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D915164-6C70-BEE6-216A-FB9F9935E838}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D915164-6C70-BEE6-216A-FB9F9935E838}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D915164-6C70-BEE6-216A-FB9F9935E838}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D915164-6C70-BEE6-216A-FB9F9935E838}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0441E561-B7A2-B31A-515A-BB2264B3ED37}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0441E561-B7A2-B31A-515A-BB2264B3ED37}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0441E561-B7A2-B31A-515A-BB2264B3ED37}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0441E561-B7A2-B31A-515A-BB2264B3ED37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4A20A747-8C12-FF01-3DC8-34A295DC4333}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4A20A747-8C12-FF01-3DC8-34A295DC4333}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4A20A747-8C12-FF01-3DC8-34A295DC4333}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4A20A747-8C12-FF01-3DC8-34A295DC4333}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{517A5CD2-799C-E16A-0093-F0E5504EE2BE} = {35F9C120-BB94-3F10-F0F3-8A48563F291A}
+		{68CE4AB0-98E3-20B8-09CF-8BECC33AC522} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{94A68E70-1DD1-C72C-681D-114E444417C0} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{961D2560-8D8B-954A-D6D5-DC39B4BA1721} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{622164FE-F4E8-46DB-C32F-01C1CE93C849} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{5FB6A293-C649-377E-870C-0DC9F01A0F6B} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{CF5045E9-F99B-D425-6ECE-BBF86AAC20FB} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{939634F3-C4FD-B799-6033-E7707B072CC0} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{7E99F5AA-6A05-36FF-2298-7DA72C06B93C} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{83743EE9-E874-2E9A-0627-ADCED44E8FC3} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{5D915164-6C70-BEE6-216A-FB9F9935E838} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{0441E561-B7A2-B31A-515A-BB2264B3ED37} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+		{4A20A747-8C12-FF01-3DC8-34A295DC4333} = {517A5CD2-799C-E16A-0093-F0E5504EE2BE}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {85B72B1E-7FFE-4A41-A143-6BFC99E62EFC}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,16 @@
+[TEST-CRASH] Starting crash test
+[TEST-CRASH] Registering states
+[TEST-CRASH] Setting up embark location
+[TEST-CRASH] Generating test world
+[TEST-CRASH] Attempting to transition to FortressPlay
+[GameStateManager] ChangeState from  to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[FortressState] Constructor started
+[FortressState] ERROR in constructor: Object reference not set to an instance of an object.
+[FortressState] Stack trace:    at HumanFortress.App.States.FortressState..ctor() in C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\States\FortressState.cs:line 36
+[GameStateManager] FATAL ERROR in ChangeState: Object reference not set to an instance of an object.
+[GameStateManager] Stack trace:    at HumanFortress.App.States.FortressState..ctor() in C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\States\FortressState.cs:line 36
+   at HumanFortress.App.Program.FortressPlayState.Enter() in C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\Program.cs:line 199
+   at HumanFortress.App.GameStates.GameStateManager.ChangeState(GameStateType newStateType) in C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\GameStates\GameStateManager.cs:line 98
