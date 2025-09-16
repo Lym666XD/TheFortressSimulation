@@ -1,4 +1,4 @@
-[STARTUP] HumanFortress starting at 16/09/2025 7:17:00 PM
+[STARTUP] HumanFortress starting at 16/09/2025 9:49:16 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\fortress_debug.log
 [STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content
 [GameStateManager] ChangeState from  to MainMenu
@@ -6,3 +6,28 @@
 [GameStateManager] Calling Enter on MainMenu
 Entered Main Menu
 [GameStateManager] Enter completed for MainMenu
+MainMenuState: Key pressed - Enter
+MainMenuState: Key pressed - N
+[GameStateManager] ChangeState from MainMenu to WorldGen
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on MainMenu
+[GameStateManager] Calling Enter on WorldGen
+[GameStateManager] Enter completed for WorldGen
+[GameStateManager] ChangeState from WorldGen to WorldMap
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldGen
+[GameStateManager] Calling Enter on WorldMap
+[GameStateManager] Enter completed for WorldMap
+[GameStateManager] ChangeState from WorldMap to EmbarkPrep
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldMap
+[GameStateManager] Calling Enter on EmbarkPrep
+[GameStateManager] Enter completed for EmbarkPrep
+[GameStateManager] ChangeState from EmbarkPrep to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on EmbarkPrep
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[GameStateManager] Enter completed for FortressPlay
+[GameStateManager] Starting simulation for FortressPlay
+[SHUTDOWN] Game shutting down normally

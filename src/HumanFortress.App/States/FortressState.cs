@@ -10,6 +10,8 @@ using HumanFortress.Simulation.Tiles;
 using HumanFortress.App.GameStates;
 using HumanFortress.WorldGen;
 using HumanFortress.Core.Content;
+using HumanFortress.App.Rendering;
+using HumanFortress.Navigation;
 
 namespace HumanFortress.App.States
 {
@@ -31,7 +33,9 @@ namespace HumanFortress.App.States
         private RenderSnapshot? _currentSnapshot;
         private int _zoomLevel = 1; // 1 = normal, 2 = zoomed in, etc.
         private Point? _lastMousePos;
-        
+        private NavigationOverlay? _navOverlay;
+        private NavigationManager? _navManager;
+
         public FortressState()
         {
             System.Console.WriteLine("[FortressState] Constructor called - deferred initialization");
@@ -181,6 +185,16 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine("[GenerateFortressMap] Creating RenderSnapshotBuilder");
                 _snapshotBuilder = new RenderSnapshotBuilder(_world);
 
+                // Initialize navigation manager
+                System.Console.WriteLine("[GenerateFortressMap] Creating NavigationManager");
+                _navManager = new NavigationManager(_world);
+                _navManager.RebuildAll();
+
+                // Initialize navigation overlay
+                System.Console.WriteLine("[GenerateFortressMap] Creating NavigationOverlay");
+                _navOverlay = new NavigationOverlay();
+                _navOverlay.SetNavigationManager(_navManager);
+
                 // Build initial snapshot
                 System.Console.WriteLine("[GenerateFortressMap] Building initial snapshot");
                 BuildSnapshot();
@@ -213,8 +227,8 @@ namespace HumanFortress.App.States
             _infoPanel.Print(0, 8, "WASD - Move cursor", Color.Gray);
             _infoPanel.Print(0, 9, "Shift+WASD - Fast move", Color.Gray);
             _infoPanel.Print(0, 10, "Q/E - Change Z-level", Color.Gray);
-            _infoPanel.Print(0, 11, "Mouse Wheel - Z-level", Color.Gray);
-            _infoPanel.Print(0, 12, "Ctrl+Wheel - Zoom", Color.Gray);
+            _infoPanel.Print(0, 11, "F1-F7 - Nav overlay", Color.Gray);
+            _infoPanel.Print(0, 12, "F8 - Cycle overlay", Color.Gray);
             _infoPanel.Print(0, 13, "ESC - Return to menu", Color.Gray);
 
             _infoPanel.Print(0, 15, "Status:", Color.Yellow);
@@ -375,6 +389,13 @@ namespace HumanFortress.App.States
                     }
                 }
             }
+
+            // Render navigation overlay if active
+            if (_navOverlay != null && _world != null && _mapSurface != null)
+            {
+                var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y, 80, 40);
+                _navOverlay.RenderOverlay(_mapSurface, _world, _currentZ, viewport);
+            }
             }
             catch (Exception ex)
             {
@@ -414,7 +435,7 @@ namespace HumanFortress.App.States
 
                 var camera = new CameraInfo
                 {
-                    ChunkKey = new ChunkKey(chunkX, chunkY, _currentZ),
+                    ChunkKey = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _currentZ),
                     CenterX = _cameraPos.X % 32,
                     CenterY = _cameraPos.Y % 32,
                     Z = _currentZ,
@@ -475,6 +496,55 @@ namespace HumanFortress.App.States
             {
                 _currentZ = Math.Min(49, _currentZ + 1);
                 changed = true;
+            }
+
+            // Navigation overlay controls (F1-F7)
+            if (_navOverlay != null)
+            {
+                if (keyboard.IsKeyPressed(Keys.F1))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Walkability;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F2))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.MovementCost;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F3))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Traffic;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F4))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Connectivity;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F5))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.PathDisplay;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F6))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.FlowField;
+                    _navOverlay.SetTarget(_cursorPos);
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F7))
+                {
+                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.None;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.F8))
+                {
+                    // Cycle through modes
+                    _navOverlay.CycleMode();
+                    if (_navOverlay.CurrentMode == NavigationOverlay.OverlayMode.FlowField)
+                        _navOverlay.SetTarget(_cursorPos);
+                    changed = true;
+                }
             }
 
             // Update camera to follow cursor if it moved
@@ -563,26 +633,19 @@ namespace HumanFortress.App.States
             // Keep cursor in view
             int viewWidth = 80 / _zoomLevel;
             int viewHeight = 40 / _zoomLevel;
-            int maxCameraPos = FortressSize * 32 - viewWidth;
+            int worldSize = FortressSize * 32;
+            int maxCameraX = Math.Max(0, worldSize - viewWidth);
+            int maxCameraY = Math.Max(0, worldSize - viewHeight);
 
-            // Check if cursor is outside view and adjust camera
-            if (_cursorPos.X < _cameraPos.X + 10)
-            {
-                _cameraPos = new Point(Math.Max(0, _cursorPos.X - 10), _cameraPos.Y);
-            }
-            else if (_cursorPos.X >= _cameraPos.X + viewWidth - 10)
-            {
-                _cameraPos = new Point(Math.Min(maxCameraPos, _cursorPos.X - viewWidth + 11), _cameraPos.Y);
-            }
+            // Center camera on cursor with some margin
+            int targetCameraX = _cursorPos.X - viewWidth / 2;
+            int targetCameraY = _cursorPos.Y - viewHeight / 2;
 
-            if (_cursorPos.Y < _cameraPos.Y + 5)
-            {
-                _cameraPos = new Point(_cameraPos.X, Math.Max(0, _cursorPos.Y - 5));
-            }
-            else if (_cursorPos.Y >= _cameraPos.Y + viewHeight - 5)
-            {
-                _cameraPos = new Point(_cameraPos.X, Math.Min(maxCameraPos, _cursorPos.Y - viewHeight + 6));
-            }
+            // Clamp camera position to world bounds
+            targetCameraX = Math.Max(0, Math.Min(maxCameraX, targetCameraX));
+            targetCameraY = Math.Max(0, Math.Min(maxCameraY, targetCameraY));
+
+            _cameraPos = new Point(targetCameraX, targetCameraY);
         }
     }
 }

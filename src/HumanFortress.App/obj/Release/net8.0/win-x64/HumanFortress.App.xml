@@ -99,6 +99,11 @@
             Simulation context implementation.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Logger">
+            <summary>
+            Simple file logger that doesn't interfere with SadConsole rendering.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.PhaseTests">
             <summary>
             Comprehensive test suite for all milestone phases.

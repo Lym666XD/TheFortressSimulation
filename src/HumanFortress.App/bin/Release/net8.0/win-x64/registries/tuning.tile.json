@@ -1,0 +1,16 @@
+{
+  "chunk_size_xy": 32,
+  "fluid_depth_max": 7,
+  "nav_cost_base": 10,
+  "nav_cost_fluid_shallow": 6,
+  "nav_cost_fluid_deep": 18,
+  "traffic_cost_adjustments": {
+    "low": -2,
+    "normal": 0,
+    "high": 2,
+    "restricted": 8
+  },
+  "support_check_radius": 1,
+  "opacity_full": 100,
+  "autotile_connect_distance": 1
+}

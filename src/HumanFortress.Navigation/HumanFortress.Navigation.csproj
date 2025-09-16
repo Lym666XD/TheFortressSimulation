@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HumanFortress.Core\HumanFortress.Core.csproj" />
+    <ProjectReference Include="..\HumanFortress.Simulation\HumanFortress.Simulation.csproj" />
+  </ItemGroup>
+
+</Project>

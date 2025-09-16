@@ -76,6 +76,27 @@
             Read-only world access for commands.
             </summary>
         </member>
+        <member name="T:HumanFortress.Core.Content.ContentRegistry">
+            <summary>
+            Central registry for all data-driven content per CONTENT_REGISTRY_OVERVIEW.md.
+            Loads materials, geology, items, buildables, etc. from JSON with validation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.ContentRegistry.LoadContent(System.String)">
+            <summary>
+            Load all content from the content directory structure.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.MaterialData">
+            <summary>
+            Material data from JSON per MATERIALS_SPEC.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.GeologyData">
+            <summary>
+            Geology/terrain data from JSON.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Core.Events.EventBus">
             <summary>
             Thread-safe event bus implementation.

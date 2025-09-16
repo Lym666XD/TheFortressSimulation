@@ -39,5 +39,55 @@
             Represents a single chunk in the fortress map.
             </summary>
         </member>
+        <member name="T:HumanFortress.WorldGen.TerrainTypeMapper">
+            <summary>
+            Maps between old hardcoded TerrainType enum and new data-driven geology system.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetGeologyId(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Get the geology ID for a terrain type.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetTerrainType(System.String)">
+            <summary>
+            Get the terrain type from geology ID (for backwards compatibility).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetBiomeStrata(HumanFortress.Core.World.BiomeType)">
+            <summary>
+            Get geological strata for a biome.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetBiomeSurface(HumanFortress.Core.World.BiomeType)">
+            <summary>
+            Get the surface terrain for a biome.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetGeologyHandle(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Convert terrain type to geology data handle for efficient storage.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetTerrainDisplay(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Get display information from geology data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetNavCost(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Get navigation cost from geology data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.IsMineable(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Check if terrain is mineable.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.WorldGen.TerrainTypeMapper.GetOreChance(HumanFortress.WorldGen.TerrainType)">
+            <summary>
+            Get ore spawn chance for a terrain type.
+            </summary>
+        </member>
     </members>
 </doc>

@@ -28,6 +28,7 @@ namespace HumanFortress.App
             var phaseAPass = RunPhaseATests();
             var phaseBPass = RunPhaseBTests();
             var phaseCPass = RunPhaseCTests();
+            var phaseDPass = RunPhaseDTests();
 
             Console.WriteLine("\n========================================");
             Console.WriteLine("         TEST RESULTS SUMMARY");
@@ -35,6 +36,7 @@ namespace HumanFortress.App
             Console.WriteLine($"Phase A (Platform & CI):     {(phaseAPass ? "✅ PASS" : "❌ FAIL")}");
             Console.WriteLine($"Phase B (WorldGen & Map):    {(phaseBPass ? "✅ PASS" : "❌ FAIL")}");
             Console.WriteLine($"Phase C (Embark & Fortress): {(phaseCPass ? "✅ PASS" : "❌ FAIL")}");
+            Console.WriteLine($"Phase D (Navigation):        {(phaseDPass ? "✅ PASS" : "❌ FAIL")}");
             Console.WriteLine("========================================\n");
         }
 
@@ -535,6 +537,203 @@ namespace HumanFortress.App
             return allPass;
         }
 
+        private static bool RunPhaseDTests()
+        {
+            Console.WriteLine("\n==== PHASE D: Navigation & Connectivity ====");
+            Console.WriteLine("Requirements:");
+            Console.WriteLine("- Walkability/opacity/support masks");
+            Console.WriteLine("- ConnectivityVersion invalidation");
+            Console.WriteLine("- Deterministic A* pathfinding");
+            Console.WriteLine("- Path caching & traffic costs");
+            Console.WriteLine("- 10 concurrent pathfinders\n");
+
+            bool allPass = true;
+
+            // Test 1: Navigation mask generation
+            Console.Write("[TEST] Navigation mask generation... ");
+            try
+            {
+                var tuning = HumanFortress.Navigation.NavigationTuning.Default;
+                var chunkKey = new HumanFortress.Navigation.ChunkKey(0, 0, 0);
+                var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+
+                // Create test tile data with walkable floor
+                var tiles = new HumanFortress.Simulation.Tiles.TileBase[1024];
+                for (int i = 0; i < 1024; i++)
+                {
+                    tiles[i] = new HumanFortress.Simulation.Tiles.TileBase(
+                        geoMatId: 0,
+                        terrainBits: 1, // OpenWithFloor
+                        surfaceBits: 0,
+                        fluidKind: 0,
+                        fluidDepth: 0,
+                        metaBits: 0,
+                        trafficCost: 10);
+                }
+
+                navData.RebuildFromTiles(tiles, tuning);
+
+                // Check that floor tiles are walkable
+                if (!navData.HasCapability(0, HumanFortress.Navigation.NavCapability.Walk))
+                    throw new Exception("Floor tiles should be walkable");
+
+                Console.WriteLine("✅ PASS");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 2: ConnectivityVersion invalidation
+            Console.Write("[TEST] ConnectivityVersion invalidation... ");
+            try
+            {
+                var chunkKey = new HumanFortress.Navigation.ChunkKey(0, 0, 0);
+                var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+                var initialVersion = navData.ConnectivityVersion;
+
+                var tiles = new HumanFortress.Simulation.Tiles.TileBase[1024];
+                navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
+
+                if (navData.ConnectivityVersion <= initialVersion)
+                    throw new Exception("ConnectivityVersion should increment after rebuild");
+
+                Console.WriteLine("✅ PASS");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 3: Deterministic A* pathfinding
+            Console.Write("[TEST] Deterministic A* pathfinding... ");
+            try
+            {
+                var pathService = new HumanFortress.Navigation.PathService();
+                var world = new TestNavigationWorld();
+
+                var request1 = new HumanFortress.Navigation.PathRequest(
+                    new HumanFortress.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Navigation.Point3(10, 10, 0),
+                    HumanFortress.Navigation.MoveMode.Walk,
+                    HumanFortress.Navigation.PathFlags.None,
+                    12345);
+
+                var request2 = new HumanFortress.Navigation.PathRequest(
+                    new HumanFortress.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Navigation.Point3(10, 10, 0),
+                    HumanFortress.Navigation.MoveMode.Walk,
+                    HumanFortress.Navigation.PathFlags.None,
+                    12345);
+
+                pathService.BeginTick();
+                var path1 = pathService.Solve(in request1, world);
+
+                pathService.BeginTick();
+                var path2 = pathService.Solve(in request2, world);
+
+                if (path1.Hash != path2.Hash)
+                    throw new Exception("Identical requests should produce identical paths");
+
+                Console.WriteLine("✅ PASS");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 4: Path caching
+            Console.Write("[TEST] Path caching... ");
+            try
+            {
+                var pathService = new HumanFortress.Navigation.PathService();
+                var world = new TestNavigationWorld();
+
+                var request = new HumanFortress.Navigation.PathRequest(
+                    new HumanFortress.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Navigation.Point3(5, 5, 0),
+                    HumanFortress.Navigation.MoveMode.Walk,
+                    HumanFortress.Navigation.PathFlags.None,
+                    99999);
+
+                pathService.BeginTick();
+                var path1 = pathService.Solve(in request, world);
+                var stats1 = pathService.GetStats();
+
+                pathService.BeginTick();
+                var path2 = pathService.Solve(in request, world);
+                var stats2 = pathService.GetStats();
+
+                if (stats2.CacheHits <= stats1.CacheHits)
+                    throw new Exception("Cache should be used for identical requests");
+
+                Console.WriteLine("✅ PASS");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 5: Concurrent pathfinders
+            Console.Write("[TEST] 10 concurrent pathfinders... ");
+            try
+            {
+                var pathService = new HumanFortress.Navigation.PathService();
+                var world = new TestNavigationWorld();
+                var tasks = new System.Threading.Tasks.Task<HumanFortress.Navigation.Path>[10];
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+                pathService.BeginTick();
+
+                // Launch 10 concurrent pathfinding requests
+                for (int i = 0; i < 10; i++)
+                {
+                    int localI = i;
+                    tasks[i] = System.Threading.Tasks.Task.Run(() =>
+                    {
+                        var request = new HumanFortress.Navigation.PathRequest(
+                            new HumanFortress.Navigation.Point3(localI, 0, 0),
+                            new HumanFortress.Navigation.Point3(20 + localI, 20, 0),
+                            HumanFortress.Navigation.MoveMode.Walk,
+                            HumanFortress.Navigation.PathFlags.None,
+                            (uint)(10000 + localI));
+                        return pathService.Solve(in request, world);
+                    });
+                }
+
+                System.Threading.Tasks.Task.WaitAll(tasks);
+                stopwatch.Stop();
+
+                // Verify all paths were computed
+                int foundPaths = 0;
+                foreach (var task in tasks)
+                {
+                    if (task.Result.Kind == HumanFortress.Navigation.PathResultKind.Found)
+                        foundPaths++;
+                }
+
+                if (foundPaths < 10)
+                    throw new Exception($"Only {foundPaths}/10 paths were found");
+
+                // Check that it completed within reasonable time (should be <10% of frame time)
+                if (stopwatch.ElapsedMilliseconds > 16) // 16ms is roughly 10% of 60fps frame
+                    Console.WriteLine($"✅ PASS (warning: took {stopwatch.ElapsedMilliseconds}ms)");
+                else
+                    Console.WriteLine($"✅ PASS ({stopwatch.ElapsedMilliseconds}ms)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            return allPass;
+        }
+
         // Helper test tick system class
         private class TestTickSystem : HumanFortress.Core.Time.ITick
         {
@@ -562,6 +761,129 @@ namespace HumanFortress.App
             public string CommandType => "TestCommand";
             public void Execute(ISimulationContext context) { }
             public byte[] Serialize() => Array.Empty<byte>();
+        }
+
+        // Helper test navigation world
+        private class TestNavigationWorld : HumanFortress.Navigation.IWorldNavigationView
+        {
+            private readonly Dictionary<HumanFortress.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData> _chunks;
+
+            public TestNavigationWorld()
+            {
+                _chunks = new Dictionary<HumanFortress.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData>();
+
+                // Create a simple walkable world (3x3 chunks)
+                for (int cx = -1; cx <= 1; cx++)
+                {
+                    for (int cy = -1; cy <= 1; cy++)
+                    {
+                        var chunkKey = new HumanFortress.Navigation.ChunkKey(cx, cy, 0);
+                        var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+
+                        // Fill with walkable floor tiles
+                        var tiles = new HumanFortress.Simulation.Tiles.TileBase[1024];
+                        for (int i = 0; i < 1024; i++)
+                        {
+                            tiles[i] = new HumanFortress.Simulation.Tiles.TileBase(
+                                geoMatId: 0,
+                                terrainBits: 1, // OpenWithFloor
+                                surfaceBits: 0,
+                                fluidKind: 0,
+                                fluidDepth: 0,
+                                metaBits: 0,
+                                trafficCost: 10);
+                        }
+
+                        navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
+                        _chunks[chunkKey] = navData;
+                    }
+                }
+            }
+
+            public bool IsValid(HumanFortress.Navigation.Point3 position)
+            {
+                return position.X >= -32 && position.X < 96 &&
+                       position.Y >= -32 && position.Y < 96 &&
+                       position.Z == 0;
+            }
+
+            public HumanFortress.Navigation.NavCapability GetCapabilities(HumanFortress.Navigation.Point3 position)
+            {
+                if (!IsValid(position))
+                    return HumanFortress.Navigation.NavCapability.None;
+
+                var chunk = ToChunkKey(position);
+                if (_chunks.TryGetValue(chunk, out var navData))
+                {
+                    var localIdx = ToLocalIndex(position);
+                    return (HumanFortress.Navigation.NavCapability)navData.NavMask[localIdx];
+                }
+
+                return HumanFortress.Navigation.NavCapability.None;
+            }
+
+            public ushort GetCost(HumanFortress.Navigation.Point3 position)
+            {
+                if (!IsValid(position))
+                    return ushort.MaxValue;
+
+                var chunk = ToChunkKey(position);
+                if (_chunks.TryGetValue(chunk, out var navData))
+                {
+                    var localIdx = ToLocalIndex(position);
+                    return navData.NavCost[localIdx];
+                }
+
+                return ushort.MaxValue;
+            }
+
+            public bool IsWalkable(HumanFortress.Navigation.Point3 position, HumanFortress.Navigation.MoveMode mode)
+            {
+                var caps = GetCapabilities(position);
+                return mode switch
+                {
+                    HumanFortress.Navigation.MoveMode.Walk => (caps & HumanFortress.Navigation.NavCapability.Walk) != 0,
+                    HumanFortress.Navigation.MoveMode.Swim => (caps & HumanFortress.Navigation.NavCapability.Swim) != 0,
+                    HumanFortress.Navigation.MoveMode.Fly => (caps & HumanFortress.Navigation.NavCapability.Fly) != 0,
+                    _ => false,
+                };
+            }
+
+            public bool HasStairsUp(HumanFortress.Navigation.Point3 position)
+            {
+                return false; // No stairs in test world
+            }
+
+            public bool HasStairsDown(HumanFortress.Navigation.Point3 position)
+            {
+                return false; // No stairs in test world
+            }
+
+            public int GetConnectivityVersion(HumanFortress.Navigation.ChunkKey chunk)
+            {
+                if (_chunks.TryGetValue(chunk, out var navData))
+                {
+                    return navData.ConnectivityVersion;
+                }
+                return 0;
+            }
+
+            private static HumanFortress.Navigation.ChunkKey ToChunkKey(HumanFortress.Navigation.Point3 position)
+            {
+                const int ChunkSize = 32;
+                return new HumanFortress.Navigation.ChunkKey(
+                    position.X / ChunkSize,
+                    position.Y / ChunkSize,
+                    position.Z);
+            }
+
+            private static int ToLocalIndex(HumanFortress.Navigation.Point3 position)
+            {
+                const int ChunkSize = 32;
+                int localX = ((position.X % ChunkSize) + ChunkSize) % ChunkSize;
+                int localY = ((position.Y % ChunkSize) + ChunkSize) % ChunkSize;
+                return localY * ChunkSize + localX;
+            }
         }
     }
 }

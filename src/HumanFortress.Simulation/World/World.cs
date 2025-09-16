@@ -100,6 +100,22 @@ public sealed class World : IWorldReader
     }
 
     /// <summary>
+    /// Get all chunks in the world.
+    /// </summary>
+    public IEnumerable<Chunk> GetAllChunks()
+    {
+        return _chunks.Values;
+    }
+
+    /// <summary>
+    /// Get chunk at chunk coordinates.
+    /// </summary>
+    public Chunk? GetChunkAt(int chunkX, int chunkY, int z)
+    {
+        return GetChunk(new ChunkKey(chunkX, chunkY, z));
+    }
+
+    /// <summary>
     /// Get all active chunks (L0/L1).
     /// </summary>
     public IEnumerable<Chunk> GetActiveChunks()

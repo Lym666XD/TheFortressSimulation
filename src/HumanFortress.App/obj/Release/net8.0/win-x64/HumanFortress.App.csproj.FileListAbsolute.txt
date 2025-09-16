@@ -214,3 +214,12 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.WorldGen.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.WorldGen.pdb
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.WorldGen.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\registries\geology.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\registries\materials.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\registries\tuning.damage.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\registries\tuning.tile.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\schemas\geology.schema.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\schemas\material.schema.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.Navigation.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.Navigation.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\HumanFortress.Navigation.xml

@@ -19,6 +19,7 @@
     <ProjectReference Include="..\HumanFortress.Core\HumanFortress.Core.csproj" />
     <ProjectReference Include="..\HumanFortress.Simulation\HumanFortress.Simulation.csproj" />
     <ProjectReference Include="..\HumanFortress.WorldGen\HumanFortress.WorldGen.csproj" />
+    <ProjectReference Include="..\HumanFortress.Navigation\HumanFortress.Navigation.csproj" />
   </ItemGroup>
 
   <ItemGroup>

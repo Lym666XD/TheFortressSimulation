@@ -11,3 +11,4 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Release\net8.0\HumanFortress.Core.xml
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Release\net8.0\HumanFortress.Core.pdb
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Release\net8.0\ref\HumanFortress.Core.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Release\net8.0\HumanFortress.Core.csproj.AssemblyReference.cache

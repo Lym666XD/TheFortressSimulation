@@ -198,6 +198,16 @@
             Check if position is valid.
             </summary>
         </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetAllChunks">
+            <summary>
+            Get all chunks in the world.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetChunkAt(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get chunk at chunk coordinates.
+            </summary>
+        </member>
         <member name="M:HumanFortress.Simulation.World.World.GetActiveChunks">
             <summary>
             Get all active chunks (L0/L1).

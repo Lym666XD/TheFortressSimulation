@@ -120,6 +120,20 @@
           "bin/placeholder/HumanFortress.Core.dll": {}
         }
       },
+      "HumanFortress.Navigation/0.1.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "HumanFortress.Core": "0.1.0",
+          "HumanFortress.Simulation": "0.1.0"
+        },
+        "compile": {
+          "bin/placeholder/HumanFortress.Navigation.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/HumanFortress.Navigation.dll": {}
+        }
+      },
       "HumanFortress.Simulation/0.1.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
@@ -236,6 +250,20 @@
         },
         "runtime": {
           "bin/placeholder/HumanFortress.Core.dll": {}
+        }
+      },
+      "HumanFortress.Navigation/0.1.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "dependencies": {
+          "HumanFortress.Core": "0.1.0",
+          "HumanFortress.Simulation": "0.1.0"
+        },
+        "compile": {
+          "bin/placeholder/HumanFortress.Navigation.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/HumanFortress.Navigation.dll": {}
         }
       },
       "HumanFortress.Simulation/0.1.0": {
@@ -391,6 +419,11 @@
       "path": "../HumanFortress.Core/HumanFortress.Core.csproj",
       "msbuildProject": "../HumanFortress.Core/HumanFortress.Core.csproj"
     },
+    "HumanFortress.Navigation/0.1.0": {
+      "type": "project",
+      "path": "../HumanFortress.Navigation/HumanFortress.Navigation.csproj",
+      "msbuildProject": "../HumanFortress.Navigation/HumanFortress.Navigation.csproj"
+    },
     "HumanFortress.Simulation/0.1.0": {
       "type": "project",
       "path": "../HumanFortress.Simulation/HumanFortress.Simulation.csproj",
@@ -405,6 +438,7 @@
   "projectFileDependencyGroups": {
     "net8.0": [
       "HumanFortress.Core >= 0.1.0",
+      "HumanFortress.Navigation >= 0.1.0",
       "HumanFortress.Simulation >= 0.1.0",
       "HumanFortress.WorldGen >= 0.1.0",
       "MonoGame.Framework.DesktopGL >= 3.8.1.303",
@@ -446,6 +480,9 @@
           "projectReferences": {
             "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Core\\HumanFortress.Core.csproj": {
               "projectPath": "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Core\\HumanFortress.Core.csproj"
+            },
+            "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Navigation\\HumanFortress.Navigation.csproj": {
+              "projectPath": "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Navigation\\HumanFortress.Navigation.csproj"
             },
             "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Simulation\\HumanFortress.Simulation.csproj": {
               "projectPath": "C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Simulation\\HumanFortress.Simulation.csproj"

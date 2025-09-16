@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "rng_jitter": 0,
+  "k": {
+    "mat": 0.1,
+    "item": 1.0
+  },
+  "caps": {
+    "per_hit": 90,
+    "min_damage": 0
+  },
+  "coverage": {
+    "curve": "step",
+    "threshold_pct": 80
+  },
+  "penetration": {
+    "curve": "linear",
+    "a": 1.0,
+    "b": 0.0
+  },
+  "layering": {
+    "falloff": 0.6
+  },
+  "arcane": {
+    "k_mat": 0.1,
+    "k_item": 1.0
+  },
+  "encumbrance": {
+    "w_mass": 0.6,
+    "w_rigidity": 0.25,
+    "w_breath": 0.15,
+    "mass_ref_g": 4000,
+    "thickness_mult": 0.5
+  },
+  "thermal": {
+    "ignite_min_seconds": 2,
+    "melt_min_seconds": 5
+  }
+}

@@ -10,6 +10,7 @@
       "HumanFortress.App/0.1.0": {
         "dependencies": {
           "HumanFortress.Core": "0.1.0",
+          "HumanFortress.Navigation": "0.1.0",
           "HumanFortress.Simulation": "0.1.0",
           "HumanFortress.WorldGen": "0.1.0",
           "MonoGame.Framework.DesktopGL": "3.8.1.303",
@@ -797,8 +798,23 @@
         }
       },
       "HumanFortress.Core/0.1.0": {
+        "dependencies": {
+          "Newtonsoft.Json": "13.0.3"
+        },
         "runtime": {
           "HumanFortress.Core.dll": {
+            "assemblyVersion": "0.1.0.0",
+            "fileVersion": "0.1.0.0"
+          }
+        }
+      },
+      "HumanFortress.Navigation/0.1.0": {
+        "dependencies": {
+          "HumanFortress.Core": "0.1.0",
+          "HumanFortress.Simulation": "0.1.0"
+        },
+        "runtime": {
+          "HumanFortress.Navigation.dll": {
             "assemblyVersion": "0.1.0.0",
             "fileVersion": "0.1.0.0"
           }
@@ -877,6 +893,11 @@
       "hashPath": "thesadrogue.primitives.1.6.0.nupkg.sha512"
     },
     "HumanFortress.Core/0.1.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "HumanFortress.Navigation/0.1.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

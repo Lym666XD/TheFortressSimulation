@@ -169,57 +169,102 @@ namespace HumanFortress.App.States
         {
             bool shift = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
             int moveSpeed = shift ? 10 : 1;
-            
+
             bool moved = false;
-            
-            if (keyboard.IsKeyPressed(Keys.W) || keyboard.IsKeyPressed(Keys.Up))
+            bool cursorMoved = false;
+
+            // Handle cursor movement with WASD
+            if (!keyboard.IsKeyDown(Keys.LeftControl) && !keyboard.IsKeyDown(Keys.RightControl))
             {
-                _cameraPos = new Point(_cameraPos.X, Math.Max(0, _cameraPos.Y - moveSpeed));
-                moved = true;
+                if (keyboard.IsKeyPressed(Keys.W))
+                {
+                    _cursorPos = new Point(_cursorPos.X, Math.Max(0, _cursorPos.Y - moveSpeed));
+                    cursorMoved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.S))
+                {
+                    _cursorPos = new Point(_cursorPos.X, Math.Min(CurrentWorld.Tiles.GetLength(1) - 1, _cursorPos.Y + moveSpeed));
+                    cursorMoved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.A))
+                {
+                    _cursorPos = new Point(Math.Max(0, _cursorPos.X - moveSpeed), _cursorPos.Y);
+                    cursorMoved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D))
+                {
+                    _cursorPos = new Point(Math.Min(CurrentWorld.Tiles.GetLength(0) - 1, _cursorPos.X + moveSpeed), _cursorPos.Y);
+                    cursorMoved = true;
+                }
             }
-            else if (keyboard.IsKeyPressed(Keys.S) || keyboard.IsKeyPressed(Keys.Down))
-            {
-                _cameraPos = new Point(_cameraPos.X, Math.Min(CurrentWorld.Tiles.GetLength(1) - MAP_HEIGHT, _cameraPos.Y + moveSpeed));
-                moved = true;
-            }
-            else if (keyboard.IsKeyPressed(Keys.A) || keyboard.IsKeyPressed(Keys.Left))
-            {
-                _cameraPos = new Point(Math.Max(0, _cameraPos.X - moveSpeed), _cameraPos.Y);
-                moved = true;
-            }
-            else if (keyboard.IsKeyPressed(Keys.D) || keyboard.IsKeyPressed(Keys.Right))
-            {
-                _cameraPos = new Point(Math.Min(CurrentWorld.Tiles.GetLength(0) - MAP_WIDTH, _cameraPos.X + moveSpeed), _cameraPos.Y);
-                moved = true;
-            }
-            
+
+            // Handle camera movement with arrow keys or Ctrl+WASD
             if (keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl))
             {
+                if (keyboard.IsKeyPressed(Keys.W) || keyboard.IsKeyPressed(Keys.Up))
+                {
+                    _cameraPos = new Point(_cameraPos.X, Math.Max(0, _cameraPos.Y - moveSpeed));
+                    moved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.S) || keyboard.IsKeyPressed(Keys.Down))
+                {
+                    _cameraPos = new Point(_cameraPos.X, Math.Min(CurrentWorld.Tiles.GetLength(1) - MAP_HEIGHT, _cameraPos.Y + moveSpeed));
+                    moved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.A) || keyboard.IsKeyPressed(Keys.Left))
+                {
+                    _cameraPos = new Point(Math.Max(0, _cameraPos.X - moveSpeed), _cameraPos.Y);
+                    moved = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D) || keyboard.IsKeyPressed(Keys.Right))
+                {
+                    _cameraPos = new Point(Math.Min(CurrentWorld.Tiles.GetLength(0) - MAP_WIDTH, _cameraPos.X + moveSpeed), _cameraPos.Y);
+                    moved = true;
+                }
+            }
+            else if (keyboard.IsKeyPressed(Keys.Up) || keyboard.IsKeyPressed(Keys.Down) ||
+                     keyboard.IsKeyPressed(Keys.Left) || keyboard.IsKeyPressed(Keys.Right))
+            {
+                // Arrow keys without Ctrl move cursor
                 if (keyboard.IsKeyPressed(Keys.Up))
                 {
-                    _cursorPos = new Point(_cursorPos.X, Math.Max(0, _cursorPos.Y - 1));
-                    moved = true;
+                    _cursorPos = new Point(_cursorPos.X, Math.Max(0, _cursorPos.Y - moveSpeed));
+                    cursorMoved = true;
                 }
                 else if (keyboard.IsKeyPressed(Keys.Down))
                 {
-                    _cursorPos = new Point(_cursorPos.X, Math.Min(CurrentWorld.Tiles.GetLength(1) - 1, _cursorPos.Y + 1));
-                    moved = true;
+                    _cursorPos = new Point(_cursorPos.X, Math.Min(CurrentWorld.Tiles.GetLength(1) - 1, _cursorPos.Y + moveSpeed));
+                    cursorMoved = true;
                 }
                 else if (keyboard.IsKeyPressed(Keys.Left))
                 {
-                    _cursorPos = new Point(Math.Max(0, _cursorPos.X - 1), _cursorPos.Y);
-                    moved = true;
+                    _cursorPos = new Point(Math.Max(0, _cursorPos.X - moveSpeed), _cursorPos.Y);
+                    cursorMoved = true;
                 }
                 else if (keyboard.IsKeyPressed(Keys.Right))
                 {
-                    _cursorPos = new Point(Math.Min(CurrentWorld.Tiles.GetLength(0) - 1, _cursorPos.X + 1), _cursorPos.Y);
-                    moved = true;
+                    _cursorPos = new Point(Math.Min(CurrentWorld.Tiles.GetLength(0) - 1, _cursorPos.X + moveSpeed), _cursorPos.Y);
+                    cursorMoved = true;
                 }
             }
-            
-            if (moved)
+
+            // Update camera to follow cursor
+            if (cursorMoved)
             {
-                _cursorPos = new Point(_cameraPos.X + MAP_WIDTH / 2, _cameraPos.Y + MAP_HEIGHT / 2);
+                // Center camera on cursor
+                int newCameraX = _cursorPos.X - MAP_WIDTH / 2;
+                int newCameraY = _cursorPos.Y - MAP_HEIGHT / 2;
+
+                // Clamp camera position
+                newCameraX = Math.Max(0, Math.Min(CurrentWorld.Tiles.GetLength(0) - MAP_WIDTH, newCameraX));
+                newCameraY = Math.Max(0, Math.Min(CurrentWorld.Tiles.GetLength(1) - MAP_HEIGHT, newCameraY));
+
+                _cameraPos = new Point(newCameraX, newCameraY);
+                moved = true;
+            }
+
+            if (moved || cursorMoved)
+            {
                 RenderMap();
             }
             

@@ -90,6 +90,10 @@ public static class Program
         Game.Create(gameStartup);
         Game.Instance.Run();
         Game.Instance.Dispose();
+
+        // Clean up resources
+        Logger.Log("[SHUTDOWN] Game shutting down normally");
+        Logger.Close();
     }
 
     private static void OnGameStarted(object? sender, GameHost gameHost)
