@@ -147,20 +147,3 @@ All Phase D tests pass:
 ---
 
 **Phase D Complete!** The navigation system provides deterministic, performant pathfinding with proper caching and stuck detection, ready for AI and job systems to build upon.
-
-  1. NavigationOverlay System (NavigationOverlay.cs)
-    - Multiple visualization modes for navigation data
-    - Six different overlay modes you can cycle through
-  2. NavigationManager (NavigationManager.cs)
-    - Manages navigation data for all chunks
-    - Connects the navigation system with the game world
-    - Handles rebuilding navigation data when tiles change
-  3. Visualization Modes Available:
-    - F1 - Walkability: Shows walkable (green ·), swimmable (blue ~), flyable (gray °), and blocked (red █) tiles       
-    - F2 - Movement Cost: Displays movement costs as numbers 0-9 with color gradients
-    - F3 - Traffic: Shows traffic designations (preferred +, high -, restricted R)
-    - F4 - Connectivity: Shows chunk boundaries and connectivity version numbers
-    - F5 - Path Display: Displays computed paths with directional arrows
-    - F6 - Flow Field: Shows arrows pointing toward selected position
-    - F7 - Clear: Removes overlay
-    - F8 - Cycle: Cycles through all modes

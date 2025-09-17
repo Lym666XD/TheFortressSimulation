@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Core.Content;
 
 namespace HumanFortress.WorldGen
 {
@@ -102,8 +103,26 @@ namespace HumanFortress.WorldGen
 
         private TileBase ConvertTerrainToTile(TerrainType terrain)
         {
-            // Convert terrain types to tile data
-            ushort geoMatId = (ushort)terrain;
+            // Convert terrain types to proper material IDs
+            ushort geoMatId = terrain switch
+            {
+                TerrainType.Air => MaterialIdRegistry.Air,
+                TerrainType.Stone => MaterialIdRegistry.GenericStone,
+                TerrainType.Rock => MaterialIdRegistry.Granite,
+                TerrainType.Grass => MaterialIdRegistry.Grass,
+                TerrainType.Sand => MaterialIdRegistry.Sand,
+                TerrainType.Snow => MaterialIdRegistry.Snow,
+                TerrainType.Mud => MaterialIdRegistry.Mud,
+                TerrainType.OreVein => MaterialIdRegistry.IronOre,
+                TerrainType.CavernFloor => MaterialIdRegistry.GenericStone,
+                TerrainType.Granite => MaterialIdRegistry.Granite,
+                TerrainType.Marble => MaterialIdRegistry.Marble,
+                TerrainType.Basalt => MaterialIdRegistry.Basalt,
+                TerrainType.Sandstone => MaterialIdRegistry.Sandstone,
+                TerrainType.Limestone => MaterialIdRegistry.Limestone,
+                TerrainType.Shale => MaterialIdRegistry.Shale,
+                _ => MaterialIdRegistry.GenericStone
+            };
             ushort terrainBits = 0;
             byte surfaceBits = 0;
 
@@ -117,6 +136,12 @@ namespace HumanFortress.WorldGen
                 case TerrainType.Stone:
                 case TerrainType.Rock:
                 case TerrainType.OreVein:
+                case TerrainType.Granite:
+                case TerrainType.Marble:
+                case TerrainType.Basalt:
+                case TerrainType.Sandstone:
+                case TerrainType.Limestone:
+                case TerrainType.Shale:
                     kind = TerrainKind.SolidWall;
                     break;
                 case TerrainType.Grass:

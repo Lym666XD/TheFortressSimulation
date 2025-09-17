@@ -60,7 +60,7 @@ public sealed class Chunk
             LastModifiedTick = tick;
 
             // Update connectivity version if passability changed
-            if (oldTile.IsPassable != tile.IsPassable)
+            if (oldTile.IsWalkable != tile.IsWalkable)
             {
                 ConnectivityVersion++;
             }

@@ -55,40 +55,43 @@ public sealed class ChunkNavData
         {
             ref readonly var tile = ref tiles[idx];
 
-            // Extract terrain kind from TerrainBits
-            var terrainKind = (TerrainKind)(tile.TerrainBits & 0x7);
-            var rampDir = (tile.TerrainBits >> 3) & 0x7;
-            bool hasStairsUp = (tile.TerrainBits & (1 << 8)) != 0;
-            bool hasStairsDown = (tile.TerrainBits & (1 << 9)) != 0;
-            bool isChasm = (tile.TerrainBits & (1 << 10)) != 0;
+            // Use canonical TerrainKind extraction from TileBase
+            var terrainKind = tile.Kind;
+            var rampDir = tile.RampDir;
+            bool isNatural = tile.IsNatural;
+            bool isSmoothed = tile.IsSmoothed;
+            bool isEngraved = tile.IsEngraved;
 
             byte capabilities = 0;
             ushort cost = tuning.BaseCost;
 
-            // Determine capabilities based on terrain
+            // Determine capabilities based on TerrainKind only (per contract)
+            // TerrainKind owns all legality decisions
+            if (tile.IsWalkable)
+            {
+                capabilities |= (byte)NavCapability.Walk;
+            }
+
+            if (tile.IsStandable)
+            {
+                capabilities |= (byte)NavCapability.Standable;
+            }
+
+            if (tile.IsFlyable)
+            {
+                capabilities |= (byte)NavCapability.Fly;
+            }
+
+            // Apply terrain-specific cost adjustments
             switch (terrainKind)
             {
-                case TerrainKind.OpenWithFloor:
-                    capabilities |= (byte)(NavCapability.Walk | NavCapability.Standable);
-                    break;
-
                 case TerrainKind.Ramp:
-                    // Ramps are walkable but direction-dependent
-                    capabilities |= (byte)NavCapability.Walk;
                     cost += tuning.RampDelta;
                     break;
-
                 case TerrainKind.StairsUp:
                 case TerrainKind.StairsDown:
                 case TerrainKind.StairsUD:
-                    capabilities |= (byte)(NavCapability.Walk | NavCapability.Standable);
                     cost += tuning.StairDelta;
-                    break;
-
-                case TerrainKind.SolidWall:
-                case TerrainKind.OpenNoFloor:
-                case TerrainKind.Chasm:
-                    // Not walkable
                     break;
             }
 
@@ -124,10 +127,10 @@ public sealed class ChunkNavData
                     break;
             }
 
-            // Flying ignores most ground obstacles
-            if (terrainKind != TerrainKind.SolidWall)
+            // Apply surface finish modifiers (optional)
+            if (isSmoothed)
             {
-                capabilities |= (byte)NavCapability.Fly;
+                cost = (ushort)Math.Max(1, cost - 1); // Smooth floors are slightly faster
             }
 
             NavMask[idx] = capabilities;
@@ -159,17 +162,4 @@ public sealed class ChunkNavData
     }
 }
 
-/// <summary>
-/// Terrain kinds from TILE_SPEC.md.
-/// </summary>
-public enum TerrainKind : byte
-{
-    SolidWall = 0,
-    OpenWithFloor = 1,
-    OpenNoFloor = 2,
-    Ramp = 3,
-    StairsUp = 4,
-    StairsDown = 5,
-    StairsUD = 6,
-    Chasm = 7,
-}
+// TerrainKind enum is now defined in TileBase.cs

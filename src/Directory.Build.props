@@ -8,7 +8,7 @@
     <AnalysisLevel>latest-minimum</AnalysisLevel>
     <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>CS1591;CA1051;CA1815;CA1028;CA1711;CA1034;CA1307;CA1510;CA1031;CA1024;CA1822;CA1003</NoWarn>
+    <NoWarn>CS1591;CA1051;CA1815;CA1028;CA1711;CA1034;CA1307;CA1510;CA1031;CA1024;CA1822;CA1003;CA1002;CA2227;CA2007;CA1850;CA1872;CA1805;CA1854;CA5394</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup>

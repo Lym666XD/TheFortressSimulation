@@ -70,11 +70,6 @@
             Get movement cost for a tile.
             </summary>
         </member>
-        <member name="T:HumanFortress.Navigation.TerrainKind">
-            <summary>
-            Terrain kinds from TILE_SPEC.md.
-            </summary>
-        </member>
         <member name="T:HumanFortress.Navigation.DeterministicAStar">
             <summary>
             Deterministic A* pathfinder per NAVIGATION_SPEC.md section 5.

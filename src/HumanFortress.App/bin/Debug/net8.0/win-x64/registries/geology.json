@@ -5,8 +5,7 @@
     "material": "core_mat_air",
     "terrain_bits": {
       "kind": "OpenNoFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 32,
@@ -27,8 +26,7 @@
     "material": "core_mat_stone_granite",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -72,8 +70,7 @@
     "material": "core_mat_stone_granite",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 46,
@@ -94,8 +91,7 @@
     "material": "core_mat_stone_marble",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -121,8 +117,7 @@
     "material": "core_mat_stone_basalt",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -148,8 +143,7 @@
     "material": "core_mat_stone_sandstone",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -175,8 +169,7 @@
     "material": "core_mat_stone_limestone",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -202,8 +195,7 @@
     "material": "core_mat_stone_shale",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 219,
@@ -229,8 +221,7 @@
     "material": "core_mat_soil_grass",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 46,
@@ -252,8 +243,7 @@
     "material": "core_mat_soil_dirt",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 46,
@@ -274,8 +264,7 @@
     "material": "core_mat_soil_sand",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 247,
@@ -296,8 +285,7 @@
     "material": "core_mat_soil_mud",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 247,
@@ -318,8 +306,7 @@
     "material": "core_mat_snow",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 42,
@@ -340,8 +327,7 @@
     "material": "core_mat_stone_limestone",
     "terrain_bits": {
       "kind": "OpenWithFloor",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 46,
@@ -362,8 +348,7 @@
     "material": "core_mat_ore_iron",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 15,
@@ -389,8 +374,7 @@
     "material": "core_mat_ore_gold",
     "terrain_bits": {
       "kind": "SolidWall",
-      "natural": true,
-      "support_flag": true
+      "natural": true
     },
     "display": {
       "glyph": 15,
@@ -416,8 +400,7 @@
     "material": "core_mat_stone_granite",
     "terrain_bits": {
       "kind": "StairsUp",
-      "natural": false,
-      "support_flag": true
+      "natural": false
     },
     "display": {
       "glyph": 60,
@@ -438,8 +421,7 @@
     "material": "core_mat_stone_granite",
     "terrain_bits": {
       "kind": "StairsDown",
-      "natural": false,
-      "support_flag": true
+      "natural": false
     },
     "display": {
       "glyph": 62,
@@ -461,8 +443,7 @@
     "terrain_bits": {
       "kind": "Ramp",
       "natural": false,
-      "support_flag": false,
-      "ramp_dir": "none"
+      "rampDirection": 0
     },
     "display": {
       "glyph": 30,
@@ -483,8 +464,7 @@
     "material": "core_mat_air",
     "terrain_bits": {
       "kind": "Chasm",
-      "natural": true,
-      "support_flag": false
+      "natural": true
     },
     "display": {
       "glyph": 178,

@@ -24,7 +24,12 @@
       "Bash(./test-fortress-entry.bat)",
       "Bash(start HumanFortress.App.exe)",
       "Bash(./HumanFortress.App.exe --validate)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(del srcHumanFortress.CoreContentRegistryLegacyMaterialConverter.cs)",
+      "Bash(ren:*)",
+      "Bash(mv:*)",
+      "Bash(python:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

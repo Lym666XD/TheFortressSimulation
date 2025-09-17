@@ -33,14 +33,22 @@ public readonly struct TileBase
         TrafficCost = trafficCost;
     }
 
-    // Terrain bit accessors
+    // Terrain bit accessors per canonical layout
+    // bits 0-2: TerrainKind (0-7)
+    // bits 3-5: RampDirection (0-7, valid only when Kind=Ramp)
+    // bit 6: Natural (1=natural, 0=constructed)
+    // bit 7: Smoothed (optional finish state)
+    // bit 8: Engraved (optional finish state)
+    // bits 9-15: Reserved (must be 0)
     public TerrainKind Kind => (TerrainKind)(TerrainBits & 0x7);
-    public RampDirection RampDir => (RampDirection)((TerrainBits >> 3) & 0x7);
+    public byte RampDir => (byte)((TerrainBits >> 3) & 0x7);
     public bool IsNatural => (TerrainBits & (1 << 6)) != 0;
-    public bool RequiresSupport => (TerrainBits & (1 << 7)) != 0;
-    public bool HasStairUp => (TerrainBits & (1 << 8)) != 0;
-    public bool HasStairDown => (TerrainBits & (1 << 9)) != 0;
-    public bool IsChasm => (TerrainBits & (1 << 10)) != 0;
+    public bool IsSmoothed => (TerrainBits & (1 << 7)) != 0;
+    public bool IsEngraved => (TerrainBits & (1 << 8)) != 0;
+
+    // Ramp direction is only valid when Kind == Ramp
+    public bool HasValidRampDirection => Kind == TerrainKind.Ramp;
+    public RampDirection GetRampDirection() => HasValidRampDirection ? (RampDirection)RampDir : RampDirection.North;
 
     // Surface bit accessors
     public bool HasMud => (SurfaceBits & 1) != 0;
@@ -55,9 +63,23 @@ public readonly struct TileBase
     public byte TrafficLevel => (byte)((MetaBits >> 2) & 0x3);
     public bool HasBlood => (MetaBits & 16) != 0;
 
-    // Navigation helpers
-    public bool IsPassable => Kind != TerrainKind.SolidWall;
-    public bool HasFloor => Kind != TerrainKind.OpenNoFloor && Kind != TerrainKind.Chasm;
+    // Navigation helpers based on TerrainKind only
+    public bool IsWalkable => Kind switch
+    {
+        TerrainKind.OpenWithFloor => true,
+        TerrainKind.Ramp => true,
+        TerrainKind.StairsUp => true,
+        TerrainKind.StairsDown => true,
+        TerrainKind.StairsUD => true,
+        _ => false
+    };
+
+    public bool IsStandable => Kind == TerrainKind.OpenWithFloor;
+
+    public bool IsFlyable => Kind != TerrainKind.SolidWall;
+
+    public bool ProvidesSupport => Kind == TerrainKind.SolidWall || Kind == TerrainKind.OpenWithFloor;
+
     public bool BlocksLOS => Kind == TerrainKind.SolidWall;
 
     /// <summary>
@@ -84,14 +106,14 @@ public readonly struct TileBase
 /// </summary>
 public enum TerrainKind : byte
 {
-    SolidWall = 0,
-    OpenWithFloor = 1,
-    OpenNoFloor = 2,
-    Ramp = 3,
-    StairsUp = 4,
-    StairsDown = 5,
-    StairsUD = 6,
-    Chasm = 7
+    SolidWall = 0,      // Blocks all movement, provides support
+    OpenWithFloor = 1,  // Walkable floor, provides support
+    OpenNoFloor = 2,    // Empty space, flyable only, no support
+    Ramp = 3,           // Z-transition using RampDirection bits
+    StairsUp = 4,       // Z-transition up only
+    StairsDown = 5,     // Z-transition down only
+    StairsUD = 6,       // Z-transition both ways
+    Chasm = 7           // Bottomless pit, flyable only, no support
 }
 
 /// <summary>
@@ -100,11 +122,11 @@ public enum TerrainKind : byte
 public enum RampDirection : byte
 {
     North = 0,
-    East = 1,
-    South = 2,
-    West = 3,
-    Northeast = 4,
+    Northeast = 1,
+    East = 2,
+    Southeast = 3,
+    South = 4,
     Southwest = 5,
-    Reserved6 = 6,
-    None = 7
+    West = 6,
+    Northwest = 7
 }

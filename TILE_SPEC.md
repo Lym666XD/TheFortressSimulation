@@ -75,19 +75,24 @@ Overlays are optional (most cells absent). They change only in Write (§7).
 TerrainBits (ushort)
 
 bits 0..2   TerrainKind (0..7)
-bits 3..5   RampDir (0..5: N,E,S,W,NE/SW diag reserved; 7=none)
+bits 3..5   RampDirection (0..7: N,NE,E,SE,S,SW,W,NW) - valid only when TerrainKind=Ramp
 bit  6      Natural (1) vs Constructed (0)
-bit  7      SupportFlag (requires support beneath if 1)
-bit  8      StairUp
-bit  9      StairDown
-bit 10      Chasm (no floor; lethal fall)
-bits 11..15 Reserved (set 0)
+bit  7      Smoothed (optional finish state)
+bit  8      Engraved (optional finish state)
+bits 9..15  Reserved (set 0)
 
 
 TerrainKind enum (compact):
 
 public enum TerrainKind : byte {
-  SolidWall=0, OpenWithFloor=1, OpenNoFloor=2, Ramp=3, StairsUp=4, StairsDown=5, StairsUD=6, Chasm=7
+  SolidWall=0,      // Blocks all, provides support
+  OpenWithFloor=1,  // Walkable floor, provides support
+  OpenNoFloor=2,    // Empty space, flyable only
+  Ramp=3,           // Z-transition via RampDirection
+  StairsUp=4,       // Z-transition up
+  StairsDown=5,     // Z-transition down
+  StairsUD=6,       // Z-transition both ways
+  Chasm=7           // Bottomless pit, flyable only
 }
 
 

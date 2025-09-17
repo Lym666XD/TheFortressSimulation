@@ -12,6 +12,7 @@ using HumanFortress.WorldGen;
 using HumanFortress.Core.Content;
 using HumanFortress.App.Rendering;
 using HumanFortress.Navigation;
+using HumanFortress.Core.Content;
 
 namespace HumanFortress.App.States
 {
@@ -353,10 +354,28 @@ namespace HumanFortress.App.States
                     int localX = worldX % 32;
                     int localY = worldY % 32;
 
-                    // Get terrain from fortress map
-                    var chunk = _fortressMap.GetChunk(currentChunkX, currentChunkY);
-                    var terrain = chunk.GetTerrain(localX, localY, _currentZ);
-                    var (glyph, color) = GetTerrainDisplay(terrain);
+                    // Get tile from simulation world
+                    if (_world != null)
+                    {
+                        var chunkKey = new HumanFortress.Simulation.World.ChunkKey(currentChunkX, currentChunkY, _currentZ);
+                        var simChunk = _world.GetChunk(chunkKey);
+
+                        int glyph;
+                        Color color;
+
+                        if (simChunk != null)
+                        {
+                            var tile = simChunk.GetTile(localX, localY);
+                            var display = GetTileDisplay(tile);
+                            glyph = display.glyph;
+                            color = display.color;
+                        }
+                        else
+                        {
+                            // Fallback for chunks that don't exist
+                            glyph = '#';
+                            color = Color.DarkGray;
+                        }
 
                     // Draw terrain or cursor
                     if (worldX == _cursorPos.X && worldY == _cursorPos.Y && _zoomLevel == 1)
@@ -387,6 +406,12 @@ namespace HumanFortress.App.States
                     {
                         _mapSurface.SetGlyph(sx, sy, glyph, color);
                     }
+                    }
+                    else
+                    {
+                        // No world data available
+                        _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray);
+                    }
                 }
             }
 
@@ -404,11 +429,34 @@ namespace HumanFortress.App.States
             }
         }
 
-        private (int glyph, Color color) GetTerrainDisplay(TerrainType terrain)
+        private (int glyph, Color color) GetTileDisplay(TileBase tile)
         {
-            // Use data-driven display from JSON
-            var (g, fg, bg) = TerrainTypeMapper.GetTerrainDisplay(terrain);
-            return (g, new Color(fg.R, fg.G, fg.B));
+            // Use MaterialIdRegistry to get display based on material and terrain shape
+            var (glyph, consoleColor) = MaterialIdRegistry.GetDisplay(tile.GeoMatId, (HumanFortress.Core.Content.TerrainKind)tile.Kind);
+
+            // Convert ConsoleColor to SadConsole Color
+            var color = consoleColor switch
+            {
+                ConsoleColor.Black => Color.Black,
+                ConsoleColor.DarkBlue => Color.DarkBlue,
+                ConsoleColor.DarkGreen => Color.DarkGreen,
+                ConsoleColor.DarkCyan => Color.DarkCyan,
+                ConsoleColor.DarkRed => Color.DarkRed,
+                ConsoleColor.DarkMagenta => Color.DarkMagenta,
+                ConsoleColor.DarkYellow => Color.DarkGoldenrod,
+                ConsoleColor.Gray => Color.Gray,
+                ConsoleColor.DarkGray => Color.DarkGray,
+                ConsoleColor.Blue => Color.Blue,
+                ConsoleColor.Green => Color.Green,
+                ConsoleColor.Cyan => Color.Cyan,
+                ConsoleColor.Red => Color.Red,
+                ConsoleColor.Magenta => Color.Magenta,
+                ConsoleColor.Yellow => Color.Yellow,
+                ConsoleColor.White => Color.White,
+                _ => Color.Gray
+            };
+
+            return (glyph, color);
         }
 
         private void BuildSnapshot()
