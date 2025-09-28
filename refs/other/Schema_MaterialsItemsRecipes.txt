@@ -1,0 +1,74 @@
+CLAUDE_BRIEFING.md
+
+Goal
+Lock a data-driven baseline for Materials, Items, and Recipes that ties into our tile/physics design. We’ll keep it simple, deterministic, and moddable.
+
+What’s in this drop
+
+materials.json: 7 core materials (stone, sand, iron, copper, bronze, brass, tempered steel) using a DF-style physics core + CDDA-style aspects, plus two new knobs:
+
+beautifulness (0–100): rough aesthetic rating for player mood/room value.
+
+valuebaleness (float): price multiplier for trading (e.g., brass 1.20).
+
+items.json: representative resources, ingots, powders, liquids, a few tools/equipment, with a unified stack model:
+
+stack.mode: "none" | "count" | "charges".
+
+Resources (intermediates/powders/liquids) use charges.
+
+Ingots/tools/equipment may stack as count only if exactly identical (same proto + material + quality + condition, no decorations/mods/enchantments, and at full durability).
+
+recipes.json: small set that exercises the system (bloomery → wrought iron; cementation → steel; cullet remelt; dilute sulfuric → sulfuric + water + slag).
+
+Naming rules (IDs)
+
+All lowercase snake_case.
+
+Materials: core_mat_<category>_<family>_<variant?>
+
+e.g., core_mat_metal_steel_tempered, core_mat_mineral_sand_silica
+
+Resources/consumables: core_item_<class>_<name>
+
+e.g., core_item_ingot_steel_refined, core_item_liquid_acid_sulfuric
+
+Tools: core_tool_<function>_<form>
+
+e.g., core_tool_mining_pickaxe
+
+Weapons: core_weapon_<family>_<subtype>
+
+e.g., core_weapon_sword_short
+
+Armor: core_armor_<slot>_<type>[_<tier>]
+
+e.g., core_armor_torso_breastplate_medium
+
+Damage types (current set)
+
+Physical: blunt, edge, pierce
+
+Elemental: heat, cold, acid, electric
+
+(Reserved for magic later): arcane, holy, curse, poison
+
+Pricing & aesthetics
+
+Item base value is multiplied by material valuebaleness.
+
+Room/decoration scoring can read material beautifulness directly or via weighted sum.
+
+Concurrency & stacking
+
+For stack.mode = "charges": we’ll use reservation tokens (reserved += q → consume/rollback) to avoid dirty writes.
+
+For stack.mode = "count": stacking only when equal_when fields match and requires_pristine is true (full durability, undecorated, unenchanted). This keeps multithreaded hauling safe.
+
+Out of scope (to discuss later)
+
+Workshops/attachments/tech tiers (we left enablers: [] placeholders).
+
+Advanced alloys and glass families.
+
+Magic materials and special resist overrides.

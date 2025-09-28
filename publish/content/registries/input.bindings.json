@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "presets": {
+    "default": {
+      "global": {
+        "Space": "sim.toggle_pause",
+        "Minus": "sim.speed_down",
+        "Equals": "sim.speed_up",
+        "F9": "overlay.cycle",
+        "Slash": "help.toggle",
+        "Tilde": "debug.toggle",
+        "Question": "help.toggle",
+        "Escape": "ui.back",
+        "MouseRight": "ui.cancel",
+        "F1": "ui.open_panel.creature",
+        "F2": "ui.open_panel.stock",
+        "F3": "ui.open_panel.work",
+        "F4": "ui.open_panel.military",
+        "F5": "ui.open_panel.country",
+        "F6": "ui.open_panel.world",
+        "F7": "ui.open_panel.log",
+        "Z": "ui.open_menu.orders",
+        "X": "ui.open_menu.zones",
+        "C": "ui.open_menu.build"
+      }
+    }
+  }
+}
+

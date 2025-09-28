@@ -1,0 +1,304 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Materials Schema",
+  "description": "Schema for material definitions in HumanFortress",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version (semver)"
+    },
+    "materials": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/material"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": ["version", "materials"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "material": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Unique material ID (1-65535, 0 reserved for 'none')"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "minLength": 1,
+          "maxLength": 64,
+          "description": "Canonical material name (lowercase, alphanumeric + underscore)"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "description": "Alternative names for backward compatibility"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["stone", "soil", "metal", "ore", "vegetation", "liquid", "gas", "frozen", "special"],
+          "description": "Material category for organization"
+        },
+        "display": {
+          "$ref": "#/definitions/displayProperties"
+        },
+        "physical": {
+          "$ref": "#/definitions/physicalProperties"
+        },
+        "navigation": {
+          "$ref": "#/definitions/navigationProperties"
+        },
+        "mining": {
+          "$ref": "#/definitions/miningProperties"
+        },
+        "temperature": {
+          "$ref": "#/definitions/temperatureProperties"
+        },
+        "value": {
+          "$ref": "#/definitions/valueProperties"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "natural", "artificial", "flammable", "explosive",
+              "corrosive", "toxic", "radioactive", "magnetic",
+              "conductive", "insulating", "transparent", "reflective",
+              "porous", "waterproof", "breathable", "edible",
+              "buildable", "igneous", "metamorphic", "sedimentary",
+              "volcanic", "layered", "organic", "fertile", "vegetation",
+              "granular", "loose", "wet", "soft", "frozen", "water",
+              "cold", "ore", "metal", "valuable", "precious", "gas",
+              "empty"
+            ]
+          },
+          "uniqueItems": true,
+          "description": "Material tags for special behaviors"
+        }
+      },
+      "required": ["id", "name", "category", "display", "physical"],
+      "additionalProperties": false
+    },
+
+    "displayProperties": {
+      "type": "object",
+      "properties": {
+        "glyph": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1,
+          "description": "Display character"
+        },
+        "foreground": {
+          "$ref": "#/definitions/color"
+        },
+        "background": {
+          "$ref": "#/definitions/color"
+        },
+        "particleColor": {
+          "$ref": "#/definitions/color",
+          "description": "Color for particle effects"
+        }
+      },
+      "required": ["glyph", "foreground"],
+      "additionalProperties": false
+    },
+
+    "color": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "Black", "DarkBlue", "DarkGreen", "DarkCyan",
+            "DarkRed", "DarkMagenta", "DarkYellow", "Gray",
+            "DarkGray", "Blue", "Green", "Cyan",
+            "Red", "Magenta", "Yellow", "White"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "r": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "g": { "type": "integer", "minimum": 0, "maximum": 255 },
+            "b": { "type": "integer", "minimum": 0, "maximum": 255 }
+          },
+          "required": ["r", "g", "b"],
+          "additionalProperties": false
+        }
+      ]
+    },
+
+    "physicalProperties": {
+      "type": "object",
+      "properties": {
+        "density": {
+          "type": "number",
+          "minimum": 0,
+          "description": "kg/m³"
+        },
+        "hardness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Mohs scale (0-10)"
+        },
+        "toughness": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Resistance to fracture (0-100)"
+        },
+        "elasticity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Elastic deformation coefficient (0-1)"
+        },
+        "friction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2,
+          "description": "Surface friction coefficient (0-2)"
+        }
+      },
+      "required": ["density", "hardness"],
+      "additionalProperties": false
+    },
+
+    "navigationProperties": {
+      "type": "object",
+      "description": "Materials provide only numeric modifiers, never legality decisions",
+      "properties": {
+        "moveCostModifier": {
+          "type": "number",
+          "minimum": -50,
+          "maximum": 50,
+          "description": "Movement cost modifier added to base cost (-50 to +50)"
+        },
+        "frictionModifier": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 1,
+          "description": "Friction modifier affecting movement (-1 to +1)"
+        },
+        "hazardLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Hazard/damage level (0-10)"
+        },
+        "hazardType": {
+          "type": "string",
+          "enum": ["none", "heat", "cold", "poison", "radiation", "electricity", "acid"],
+          "description": "Type of hazard"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "miningProperties": {
+      "type": "object",
+      "properties": {
+        "mineable": {
+          "type": "boolean",
+          "description": "Can be mined/dug"
+        },
+        "diggingTime": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Base ticks to mine"
+        },
+        "toolRequired": {
+          "type": "string",
+          "enum": ["none", "pick", "shovel", "drill", "explosive"],
+          "description": "Required tool type"
+        },
+        "minToolLevel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "Minimum tool quality required"
+        },
+        "yields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "material": { "type": "string" },
+              "min": { "type": "integer", "minimum": 0 },
+              "max": { "type": "integer", "minimum": 0 },
+              "probability": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": ["material", "min", "max"],
+            "additionalProperties": false
+          },
+          "description": "What materials are yielded when mined"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "temperatureProperties": {
+      "type": "object",
+      "properties": {
+        "meltingPoint": {
+          "type": "number",
+          "description": "Temperature at which material melts (Kelvin)"
+        },
+        "boilingPoint": {
+          "type": "number",
+          "description": "Temperature at which material boils (Kelvin)"
+        },
+        "ignitionPoint": {
+          "type": "number",
+          "description": "Temperature at which material ignites (Kelvin)"
+        },
+        "heatCapacity": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Specific heat capacity (J/kg·K)"
+        },
+        "thermalConductivity": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Thermal conductivity (W/m·K)"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "valueProperties": {
+      "type": "object",
+      "properties": {
+        "baseValue": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Base economic value multiplier"
+        },
+        "rarity": {
+          "type": "string",
+          "enum": ["common", "uncommon", "rare", "very_rare", "legendary"],
+          "description": "Rarity classification"
+        },
+        "tradeable": {
+          "type": "boolean",
+          "description": "Can be traded"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

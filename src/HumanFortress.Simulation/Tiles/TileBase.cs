@@ -51,10 +51,11 @@ public readonly struct TileBase
     public RampDirection GetRampDirection() => HasValidRampDirection ? (RampDirection)RampDir : RampDirection.North;
 
     // Surface bit accessors
+    // bit0: Mud, bit1: Grass, bit2: Snow, bit3: Moss (cavern), bits4..7 Fertility
     public bool HasMud => (SurfaceBits & 1) != 0;
     public bool HasGrass => (SurfaceBits & 2) != 0;
     public bool HasSnow => (SurfaceBits & 4) != 0;
-    public bool HasAsh => (SurfaceBits & 8) != 0;
+    public bool HasMoss => (SurfaceBits & 8) != 0;
     public byte Fertility => (byte)(SurfaceBits >> 4);
 
     // Meta bit accessors
@@ -67,6 +68,7 @@ public readonly struct TileBase
     public bool IsWalkable => Kind switch
     {
         TerrainKind.OpenWithFloor => true,
+        TerrainKind.Slope => true,
         TerrainKind.Ramp => true,
         TerrainKind.StairsUp => true,
         TerrainKind.StairsDown => true,
@@ -74,11 +76,11 @@ public readonly struct TileBase
         _ => false
     };
 
-    public bool IsStandable => Kind == TerrainKind.OpenWithFloor;
+    public bool IsStandable => Kind == TerrainKind.OpenWithFloor || Kind == TerrainKind.Slope;
 
     public bool IsFlyable => Kind != TerrainKind.SolidWall;
 
-    public bool ProvidesSupport => Kind == TerrainKind.SolidWall || Kind == TerrainKind.OpenWithFloor;
+    public bool ProvidesSupport => Kind == TerrainKind.SolidWall || Kind == TerrainKind.OpenWithFloor || Kind == TerrainKind.Slope;
 
     public bool BlocksLOS => Kind == TerrainKind.SolidWall;
 
@@ -110,10 +112,10 @@ public enum TerrainKind : byte
     OpenWithFloor = 1,  // Walkable floor, provides support
     OpenNoFloor = 2,    // Empty space, flyable only, no support
     Ramp = 3,           // Z-transition using RampDirection bits
-    StairsUp = 4,       // Z-transition up only
-    StairsDown = 5,     // Z-transition down only
-    StairsUD = 6,       // Z-transition both ways
-    Chasm = 7           // Bottomless pit, flyable only, no support
+    Slope = 4,          // Walkable slope top (paired with a Ramp below)
+    StairsUp = 5,       // Z-transition up only
+    StairsDown = 6,     // Z-transition down only
+    StairsUD = 7        // Z-transition both ways
 }
 
 /// <summary>

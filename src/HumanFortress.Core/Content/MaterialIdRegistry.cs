@@ -73,7 +73,7 @@ public static class MaterialIdRegistry
                 _ => ('█', ConsoleColor.Gray)
             };
         }
-        else if (kind == TerrainKind.OpenWithFloor)
+        else if (kind == TerrainKind.OpenWithFloor || kind == TerrainKind.Slope)
         {
             // Floors use different symbols
             return geoMatId switch
@@ -105,7 +105,7 @@ public static class MaterialIdRegistry
                              kind == TerrainKind.StairsDown ? '>' : 'X';
             return (stairGlyph, ConsoleColor.Yellow);
         }
-        else if (kind == TerrainKind.OpenNoFloor || kind == TerrainKind.Chasm)
+        else if (kind == TerrainKind.OpenNoFloor)
         {
             // Empty space
             return (' ', ConsoleColor.Black);
@@ -127,8 +127,8 @@ public enum TerrainKind : byte
     OpenWithFloor = 1,
     OpenNoFloor = 2,
     Ramp = 3,
-    StairsUp = 4,
-    StairsDown = 5,
-    StairsUD = 6,
-    Chasm = 7
+    Slope = 4,
+    StairsUp = 5,
+    StairsDown = 6,
+    StairsUD = 7
 }

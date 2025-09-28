@@ -1,0 +1,384 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_tannery",
+      "name": "Tannery",
+      "tags": ["workshop", "leather", "tanning", "hides"],
+      "display_order": 40
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_tan_pits_earthen",
+      "name": "Earthen Soak Pits",
+      "slot": "pit_system",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tan_pits_limewood",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["pits", "soak", "tannery"]
+    },
+    {
+      "id": "core_attach_tan_pits_limewood",
+      "name": "Wood-Lined Lime Pits",
+      "slot": "pit_system",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tan_tanhouse_roofed",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["pits", "lime", "tannery"]
+    },
+    {
+      "id": "core_attach_tan_tanhouse_roofed",
+      "name": "Roofed Tanhouse & Vats",
+      "slot": "pit_system",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["pits", "vats", "roofed"]
+    },
+    {
+      "id": "core_attach_tan_flesh_beam_wood",
+      "name": "Wooden Fleshing Beam",
+      "slot": "fleshing_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tan_flesh_beam_iron",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["fleshing", "beam"]
+    },
+    {
+      "id": "core_attach_tan_flesh_beam_iron",
+      "name": "Iron-Edged Fleshing Beam",
+      "slot": "fleshing_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tan_frame_glassing",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["fleshing", "beam", "iron"]
+    },
+    {
+      "id": "core_attach_tan_frame_glassing",
+      "name": "Stretching Frame & Glassing Knife",
+      "slot": "fleshing_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["frame", "glassing", "scrape"]
+    },
+    {
+      "id": "core_attach_tan_bark_mill_hand",
+      "name": "Hand Bark Crusher",
+      "slot": "bark_mill",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tan_bark_mill_horse",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["bark", "crusher"]
+    },
+    {
+      "id": "core_attach_tan_bark_mill_horse",
+      "name": "Horse-Driven Bark Mill",
+      "slot": "bark_mill",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tan_bark_mill_water",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["bark", "mill", "horse"]
+    },
+    {
+      "id": "core_attach_tan_bark_mill_water",
+      "name": "Waterwheel Bark Mill",
+      "slot": "bark_mill",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["bark", "mill", "waterwheel"]
+    },
+    {
+      "id": "core_attach_tan_drying_rack",
+      "name": "Drying Racks",
+      "slot": "drying_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tan_drying_loft",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["drying", "racks"]
+    },
+    {
+      "id": "core_attach_tan_drying_loft",
+      "name": "Ventilated Drying Loft",
+      "slot": "drying_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tan_drying_heated",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["drying", "loft"]
+    },
+    {
+      "id": "core_attach_tan_drying_heated",
+      "name": "Heated Drying Room",
+      "slot": "drying_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["drying", "heated"]
+    },
+    {
+      "id": "core_attach_tan_currying_board",
+      "name": "Currying Board",
+      "slot": "finishing_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tan_currying_press",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["currying", "finish"]
+    },
+    {
+      "id": "core_attach_tan_currying_press",
+      "name": "Greasing & Pressing Bench",
+      "slot": "finishing_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["currying", "press"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_tan_make_lye_all",
+      "workshop": "core_workshop_tannery",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_ash_wood", "count": 2 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_lye_alkaline", "count": 2 }
+      ],
+      "tags": ["alkali", "lye"]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_C",
+      "workshop": "core_workshop_tannery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_tan_pits_earthen",
+        "core_attach_tan_flesh_beam_wood"
+      ],
+      "duration_s": 480,
+      "inputs": [
+        { "id": "core_item_raw_hide", "count": 10 },
+        { "id": "core_item_lye_alkaline", "count": 2 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_hair_waste", "count": 3 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["lime_soak", "dehair", "rinse"]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_M",
+      "workshop": "core_workshop_tannery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_tan_pits_limewood",
+        "core_attach_tan_flesh_beam_iron"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_raw_hide", "count": 10 },
+        { "id": "core_item_lye_alkaline", "count": 2 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_hair_waste", "count": 3 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["lime_soak", "dehair", "rinse"]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_R",
+      "workshop": "core_workshop_tannery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_tan_tanhouse_roofed",
+        "core_attach_tan_frame_glassing"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_raw_hide", "count": 10 },
+        { "id": "core_item_lye_alkaline", "count": 2 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_hair_waste", "count": 2 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["lime_soak", "dehair", "rinse"]
+    },
+    {
+      "id": "core_recipe_tan_veg_C",
+      "workshop": "core_workshop_tannery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_tan_pits_earthen",
+        "core_attach_tan_bark_mill_hand",
+        "core_attach_tan_drying_rack"
+      ],
+      "duration_s": 540,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_bark", "count": 12 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_veg", "count": 10 },
+        { "id": "core_item_spent_tanbark", "count": 4 }
+      ],
+      "tags": ["tanning", "vegetable"]
+    },
+    {
+      "id": "core_recipe_tan_veg_M",
+      "workshop": "core_workshop_tannery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_tan_pits_limewood",
+        "core_attach_tan_bark_mill_horse",
+        "core_attach_tan_drying_loft"
+      ],
+      "duration_s": 480,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_bark", "count": 12 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_veg", "count": 11 },
+        { "id": "core_item_spent_tanbark", "count": 4 }
+      ],
+      "tags": ["tanning", "vegetable"]
+    },
+    {
+      "id": "core_recipe_tan_veg_R",
+      "workshop": "core_workshop_tannery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_tan_tanhouse_roofed",
+        "core_attach_tan_bark_mill_water",
+        "core_attach_tan_drying_heated"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_bark", "count": 12 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_veg", "count": 12 },
+        { "id": "core_item_spent_tanbark", "count": 4 }
+      ],
+      "tags": ["tanning", "vegetable"]
+    },
+    {
+      "id": "core_recipe_tan_alum_M",
+      "workshop": "core_workshop_tannery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_tan_pits_limewood",
+        "core_attach_tan_currying_board",
+        "core_attach_tan_drying_loft"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_alum", "count": 5 },
+        { "id": "core_item_salt", "count": 2 },
+        { "id": "core_item_egg", "count": 2 },
+        { "id": "core_item_tallow_lard", "count": 1 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_alum", "count": 10 }
+      ],
+      "tags": ["tawing", "alum"]
+    },
+    {
+      "id": "core_recipe_tan_oil_R",
+      "workshop": "core_workshop_tannery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_tan_currying_press",
+        "core_attach_tan_drying_heated"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_oil_fish", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_oil", "count": 10 }
+      ],
+      "tags": ["oil_tan", "chamois"]
+    },
+    {
+      "id": "core_recipe_tan_finish_M",
+      "workshop": "core_workshop_tannery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tan_currying_board"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 10 },
+        { "id": "core_item_tallow_lard", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_curried", "count": 10 }
+      ],
+      "tags": ["finish", "grease"]
+    },
+    {
+      "id": "core_recipe_tan_finish_R",
+      "workshop": "core_workshop_tannery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tan_currying_press"],
+      "duration_s": 210,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 10 },
+        { "id": "core_item_tallow_lard", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_curried", "count": 12 }
+      ],
+      "tags": ["finish", "grease"]
+    },
+    {
+      "id": "core_recipe_tan_parchment_all",
+      "workshop": "core_workshop_tannery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_tan_frame_glassing",
+        "core_attach_tan_drying_rack"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_prepared_hide", "count": 10 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_parchment_sheet", "count": 12 }
+      ],
+      "tags": ["parchment", "scrape", "dry"]
+    },
+    {
+      "id": "core_recipe_tan_cut_straps_all",
+      "workshop": "core_workshop_tannery",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_leather_strap", "count": 20 }
+      ],
+      "tags": ["cut", "strap"]
+    }
+  ]
+}

@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_lime_concrete_yard",
+      "name": "Lime Kiln & Concrete Yard",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["lime", "mortar", "concrete", "aggregate", "recycling"],
+      "attachment_slots": ["kiln", "slaker", "formwork", "crushing", "neutralizer"]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_kiln_pit_clamp",
+      "name": "Pit/Clamp Kiln",
+      "slot": "kiln",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_kiln_shaft_draft",
+      "tags": ["calcination"]
+    },
+    {
+      "id": "core_attach_kiln_shaft_draft",
+      "name": "Shaft/Draft Kiln",
+      "slot": "kiln",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_kiln_twin_chamber_continuous",
+      "tags": ["calcination"]
+    },
+    {
+      "id": "core_attach_kiln_twin_chamber_continuous",
+      "name": "Twin-Chamber Continuous Kiln",
+      "slot": "kiln",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["calcination"]
+    },
+    {
+      "id": "core_attach_slaker_pool_open",
+      "name": "Open Slaking Pool",
+      "slot": "slaker",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_slaker_pool_covered",
+      "tags": ["slaking"]
+    },
+    {
+      "id": "core_attach_slaker_pool_covered",
+      "name": "Covered Slaking Pool",
+      "slot": "slaker",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_slaker_pool_series",
+      "tags": ["slaking"]
+    },
+    {
+      "id": "core_attach_slaker_pool_series",
+      "name": "Series Slaking Pools",
+      "slot": "slaker",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["slaking"]
+    },
+    {
+      "id": "core_attach_formwork_manual",
+      "name": "Manual Formwork & Mixing",
+      "slot": "formwork",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_formwork_rig_shed",
+      "tags": ["mixing", "formwork"]
+    },
+    {
+      "id": "core_attach_formwork_rig_shed",
+      "name": "Rig/Scaffold & Mixing Shed",
+      "slot": "formwork",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_formwork_adjustable_drum",
+      "tags": ["mixing", "formwork"]
+    },
+    {
+      "id": "core_attach_formwork_adjustable_drum",
+      "name": "Adjustable Formwork & Drum Mixer",
+      "slot": "formwork",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["mixing", "formwork"]
+    },
+    {
+      "id": "core_attach_crush_sieve_hand",
+      "name": "Hand Crushing & Sieve",
+      "slot": "crushing",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_crush_water_helve_coarse",
+      "tags": ["crushing", "screening"]
+    },
+    {
+      "id": "core_attach_crush_water_helve_coarse",
+      "name": "Water Helve + Coarse Screen",
+      "slot": "crushing",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crush_roller_and_drum",
+      "tags": ["crushing", "screening", "powered"]
+    },
+    {
+      "id": "core_attach_crush_roller_and_drum",
+      "name": "Roller Crusher + Drum Sieve",
+      "slot": "crushing",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["crushing", "screening", "powered"]
+    },
+    {
+      "id": "core_attach_neutralizer_basin",
+      "name": "Neutralizer Basin",
+      "slot": "neutralizer",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_neutralizer_continuous_filter",
+      "tags": ["neutralization", "recycling"]
+    },
+    {
+      "id": "core_attach_neutralizer_continuous_filter",
+      "name": "Continuous Neutralizer & Filter Rack",
+      "slot": "neutralizer",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["neutralization", "recycling"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_c",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "CLASSIC",
+      "duration_s": 1800,
+      "requires_enablers": ["core_attach_kiln_pit_clamp"],
+      "inputs_or": [
+        [{ "id": "core_item_rock_limestone", "count": 10 }],
+        [{ "id": "core_item_shell_generic", "count": 10 }]
+      ],
+      "outputs": [{ "id": "core_item_quicklime", "count": 9 }]
+    },
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_kiln_shaft_draft"],
+      "inputs_or": [
+        [{ "id": "core_item_rock_limestone", "count": 10 }],
+        [{ "id": "core_item_shell_generic", "count": 10 }]
+      ],
+      "outputs": [{ "id": "core_item_quicklime", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_kiln_twin_chamber_continuous"],
+      "inputs_or": [
+        [{ "id": "core_item_rock_limestone", "count": 10 }],
+        [{ "id": "core_item_shell_generic", "count": 10 }]
+      ],
+      "outputs": [{ "id": "core_item_quicklime", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_slake_lime_c",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_slaker_pool_open"],
+      "inputs": [
+        { "id": "core_item_quicklime", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [{ "id": "core_item_lime_slaked_paste", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_slake_lime_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_slaker_pool_covered"],
+      "inputs": [
+        { "id": "core_item_quicklime", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [{ "id": "core_item_lime_slaked_paste", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_slake_lime_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 700,
+      "requires_enablers": ["core_attach_slaker_pool_series"],
+      "inputs": [
+        { "id": "core_item_quicklime", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [{ "id": "core_item_lime_slaked_paste", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_c",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_formwork_manual"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 10 },
+        { "id": "core_item_sand_silica", "count": 20 }
+      ],
+      "outputs": [{ "id": "core_item_mix_mortar_lime", "count": 18 }]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_formwork_rig_shed"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 10 },
+        { "id": "core_item_sand_silica", "count": 20 }
+      ],
+      "outputs": [{ "id": "core_item_mix_mortar_lime", "count": 20 }]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 700,
+      "requires_enablers": ["core_attach_formwork_adjustable_drum"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 10 },
+        { "id": "core_item_sand_silica", "count": 20 }
+      ],
+      "outputs": [{ "id": "core_item_mix_mortar_lime", "count": 22 }]
+    },
+    {
+      "id": "core_recipe_concrete_roman_c",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "CLASSIC",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_formwork_manual"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 6 },
+        { "id": "core_item_powder_pozzolan_volcanic_ash", "count": 4 },
+        { "id": "core_item_aggregate_crushed", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [{ "id": "core_item_concrete_roman_lime_pozzolan", "count": 16 }]
+    },
+    {
+      "id": "core_recipe_concrete_roman_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 1050,
+      "requires_enablers": ["core_attach_formwork_rig_shed"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 6 },
+        { "id": "core_item_powder_pozzolan_volcanic_ash", "count": 4 },
+        { "id": "core_item_aggregate_crushed", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [{ "id": "core_item_concrete_roman_lime_pozzolan", "count": 18 }]
+    },
+    {
+      "id": "core_recipe_concrete_roman_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_formwork_adjustable_drum"],
+      "inputs": [
+        { "id": "core_item_lime_slaked_paste", "count": 6 },
+        { "id": "core_item_powder_pozzolan_volcanic_ash", "count": 4 },
+        { "id": "core_item_aggregate_crushed", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [{ "id": "core_item_concrete_roman_lime_pozzolan", "count": 20 }]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_c",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "CLASSIC",
+      "duration_s": 700,
+      "requires_enablers": ["core_attach_crush_sieve_hand"],
+      "inputs": [{ "id": "core_item_waste_slag_furnace", "count": 10 }],
+      "outputs": [{ "id": "core_item_aggregate_crushed", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_crush_water_helve_coarse"],
+      "inputs": [{ "id": "core_item_waste_slag_furnace", "count": 10 }],
+      "outputs": [{ "id": "core_item_aggregate_crushed", "count": 12 }]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 500,
+      "requires_enablers": ["core_attach_crush_roller_and_drum"],
+      "inputs": [{ "id": "core_item_waste_slag_furnace", "count": 10 }],
+      "outputs": [{ "id": "core_item_aggregate_crushed", "count": 14 }]
+    },
+    {
+      "id": "core_recipe_aggregate_from_chem_slag_m",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_neutralizer_basin"],
+      "inputs": [
+        { "id": "core_item_waste_chem_slag", "count": 10 },
+        { "id": "core_item_lime_slaked_paste", "count": 6 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 4000 }
+      ],
+      "outputs": [{ "id": "core_item_aggregate_crushed", "count": 8 }]
+    },
+    {
+      "id": "core_recipe_aggregate_from_chem_slag_r",
+      "workshop_id": "core_workshop_lime_concrete_yard",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_neutralizer_continuous_filter"],
+      "inputs": [
+        { "id": "core_item_waste_chem_slag", "count": 10 },
+        { "id": "core_item_lime_slaked_paste", "count": 6 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 4000 }
+      ],
+      "outputs": [{ "id": "core_item_aggregate_crushed", "count": 10 }]
+    }
+  ]
+}

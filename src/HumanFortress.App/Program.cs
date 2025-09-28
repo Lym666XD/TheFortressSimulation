@@ -39,8 +39,16 @@ public static class Program
             return;
         }
 
-        // Load content registry BEFORE redirecting console output
-        var contentPath = Path.Combine(Directory.GetCurrentDirectory(), "content");
+        // Normalize working directory to executable base; helps native DLL discovery
+        var baseDir = AppContext.BaseDirectory;
+        Directory.SetCurrentDirectory(baseDir);
+
+        // Preload critical native libraries (SDL2/OpenAL) to avoid DllNotFound issues
+        TryPreloadNative(Path.Combine(baseDir, "SDL2.dll"));
+        TryPreloadNative(Path.Combine(baseDir, "soft_oal.dll"));
+
+        // Load content registry from publish folder
+        var contentPath = Path.Combine(baseDir, "content");
         if (Directory.Exists(contentPath))
         {
             ContentRegistry.Instance.LoadContent(contentPath);
@@ -94,6 +102,27 @@ public static class Program
         // Clean up resources
         Logger.Log("[SHUTDOWN] Game shutting down normally");
         Logger.Close();
+    }
+
+    // Attempt to load a native library explicitly to stabilize P/Invoke resolution
+    private static void TryPreloadNative(string fullPath)
+    {
+        try
+        {
+            if (File.Exists(fullPath))
+            {
+                System.Runtime.InteropServices.NativeLibrary.Load(fullPath);
+                Logger.Log($"[NATIVE] Preloaded {fullPath}");
+            }
+            else
+            {
+                Logger.Log($"[NATIVE] Missing native library: {fullPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[NATIVE] Failed to load {fullPath}: {ex.Message}");
+        }
     }
 
     private static void OnGameStarted(object? sender, GameHost gameHost)

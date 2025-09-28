@@ -1,0 +1,298 @@
+[
+  {
+    "id": "core_mat_mineral_stone_generic",
+    "version": 1,
+    "template": "STONE",
+    "tags": ["mineral", "stone", "inorganic"],
+    "beautifulness": 20,
+    "valuebaleness": 0.8,
+    "thermo": {
+      "specHeat": 790,
+      "meltK": 1811,
+      "boilK": 3500,
+      "density": { "solid": 2600 },
+      "heatDamageK": 1100,
+      "coldDamageK": 190
+    },
+    "mechanics": {
+      "impact": { "yield": 600000, "fracture": 900000 },
+      "compressive": { "yield": 900000, "fracture": 1400000 },
+      "tensile": { "yield": 100000, "fracture": 200000 },
+      "shear": { "yield": 200000, "fracture": 350000 },
+      "torsion": { "yield": 150000, "fracture": 300000 },
+      "bending": { "yield": 200000, "fracture": 400000 },
+      "maxEdge": 500
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "breathability": "N/A",
+      "wind_resist": "HIGH",
+      "salvageRepair": { "repairedWith": "core_res_stone_block", "salvagedInto": null, "repairDifficulty": 2 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 1.1, "edge": 0.7, "pierce": 0.8, "heat": 0.9, "cold": 0.9, "acid": 0.7, "electric": 0.9,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "stone" }, "color": "#8b8f95" }
+  },
+  {
+    "id": "core_mat_mineral_sand_silica",
+    "version": 1,
+    "template": "SAND",
+    "tags": ["mineral", "sand", "granular"],
+    "beautifulness": 10,
+    "valuebaleness": 0.5,
+    "thermo": {
+      "specHeat": 830,
+      "meltK": 1990,
+      "boilK": 3500,
+      "density": { "solid": 1600 },
+      "heatDamageK": 1200,
+      "coldDamageK": 180
+    },
+    "mechanics": {
+      "impact": { "yield": 20000, "fracture": 30000 },
+      "compressive": { "yield": 50000, "fracture": 80000 },
+      "tensile": { "yield": 0, "fracture": 0 },
+      "shear": { "yield": 10000, "fracture": 20000 },
+      "torsion": { "yield": 0, "fracture": 0 },
+      "bending": { "yield": 0, "fracture": 0 },
+      "maxEdge": 0
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": null, "salvagedInto": null, "repairDifficulty": 0 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 0.3, "edge": 0.2, "pierce": 0.2, "heat": 0.7, "cold": 0.9, "acid": 0.9, "electric": 1.1,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "sand" }, "color": "#d6c29b" }
+  },
+  {
+    "id": "core_mat_metal_iron",
+    "version": 1,
+    "template": "METAL",
+    "tags": ["metal", "ferrous"],
+    "beautifulness": 30,
+    "valuebaleness": 1.0,
+    "thermo": {
+      "specHeat": 450,
+      "meltK": 1811,
+      "boilK": 3134,
+      "density": { "solid": 7870 },
+      "heatDamageK": 1200,
+      "coldDamageK": 170
+    },
+    "mechanics": {
+      "impact": { "yield": 1000000, "fracture": 1600000 },
+      "compressive": { "yield": 1000000, "fracture": 1600000 },
+      "tensile": { "yield": 400000, "fracture": 700000 },
+      "shear": { "yield": 350000, "fracture": 500000 },
+      "torsion": { "yield": 300000, "fracture": 500000 },
+      "bending": { "yield": 350000, "fracture": 550000 },
+      "maxEdge": 6000
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": "core_res_metal_scrap", "salvagedInto": null, "repairDifficulty": 2 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 1.0, "edge": 1.0, "pierce": 1.0, "heat": 0.6, "cold": 1.0, "acid": 0.5, "electric": 0.3,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "iron" }, "color": "#9a9a9a" }
+  },
+  {
+    "id": "core_mat_metal_copper",
+    "version": 1,
+    "template": "METAL",
+    "tags": ["metal", "copper"],
+    "beautifulness": 55,
+    "valuebaleness": 1.1,
+    "thermo": {
+      "specHeat": 385,
+      "meltK": 1357,
+      "boilK": 2835,
+      "density": { "solid": 8960 },
+      "heatDamageK": 1100,
+      "coldDamageK": 170
+    },
+    "mechanics": {
+      "impact": { "yield": 800000, "fracture": 1200000 },
+      "compressive": { "yield": 800000, "fracture": 1200000 },
+      "tensile": { "yield": 250000, "fracture": 400000 },
+      "shear": { "yield": 220000, "fracture": 350000 },
+      "torsion": { "yield": 200000, "fracture": 300000 },
+      "bending": { "yield": 220000, "fracture": 350000 },
+      "maxEdge": 4500
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": "core_res_metal_scrap_cu", "salvagedInto": null, "repairDifficulty": 2 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 0.9, "edge": 0.9, "pierce": 0.9, "heat": 0.7, "cold": 1.0, "acid": 0.6, "electric": 0.2,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "copper" }, "color": "#b86835" }
+  },
+  {
+    "id": "core_mat_metal_bronze",
+    "version": 1,
+    "template": "METAL",
+    "tags": ["metal", "alloy", "bronze"],
+    "beautifulness": 60,
+    "valuebaleness": 1.15,
+    "thermo": {
+      "specHeat": 390,
+      "meltK": 1200,
+      "boilK": 3000,
+      "density": { "solid": 8800 },
+      "heatDamageK": 1100,
+      "coldDamageK": 170
+    },
+    "mechanics": {
+      "impact": { "yield": 900000, "fracture": 1400000 },
+      "compressive": { "yield": 900000, "fracture": 1400000 },
+      "tensile": { "yield": 300000, "fracture": 450000 },
+      "shear": { "yield": 280000, "fracture": 420000 },
+      "torsion": { "yield": 260000, "fracture": 400000 },
+      "bending": { "yield": 280000, "fracture": 420000 },
+      "maxEdge": 5200
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": "core_res_metal_scrap_bronze", "salvagedInto": null, "repairDifficulty": 2 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 1.0, "edge": 1.0, "pierce": 1.0, "heat": 0.65, "cold": 1.0, "acid": 0.6, "electric": 0.25,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "bronze" }, "color": "#a57a4a" }
+  },
+  {
+    "id": "core_mat_metal_brass",
+    "version": 1,
+    "template": "METAL",
+    "tags": ["metal", "alloy", "brass"],
+    "beautifulness": 70,
+    "valuebaleness": 1.2,
+    "thermo": {
+      "specHeat": 380,
+      "meltK": 1200,
+      "boilK": 3000,
+      "density": { "solid": 8500 },
+      "heatDamageK": 1100,
+      "coldDamageK": 170
+    },
+    "mechanics": {
+      "impact": { "yield": 800000, "fracture": 1200000 },
+      "compressive": { "yield": 800000, "fracture": 1200000 },
+      "tensile": { "yield": 260000, "fracture": 400000 },
+      "shear": { "yield": 240000, "fracture": 380000 },
+      "torsion": { "yield": 220000, "fracture": 350000 },
+      "bending": { "yield": 240000, "fracture": 380000 },
+      "maxEdge": 4800
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": "core_res_metal_scrap_brass", "salvagedInto": null, "repairDifficulty": 2 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 0.95, "edge": 0.95, "pierce": 0.95, "heat": 0.65, "cold": 1.0, "acid": 0.6, "electric": 0.25,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "brass" }, "color": "#d5b25e" }
+  },
+  {
+    "id": "core_mat_metal_steel_tempered",
+    "version": 1,
+    "template": "METAL",
+    "tags": ["metal", "alloy", "steel", "tempered"],
+    "beautifulness": 40,
+    "valuebaleness": 1.25,
+    "thermo": {
+      "specHeat": 450,
+      "meltK": 1811,
+      "boilK": 3134,
+      "density": { "solid": 7850 },
+      "heatDamageK": 1250,
+      "coldDamageK": 160
+    },
+    "mechanics": {
+      "impact": { "yield": 1100000, "fracture": 1800000 },
+      "compressive": { "yield": 1100000, "fracture": 1800000 },
+      "tensile": { "yield": 550000, "fracture": 800000 },
+      "shear": { "yield": 600000, "fracture": 900000 },
+      "torsion": { "yield": 500000, "fracture": 800000 },
+      "bending": { "yield": 500000, "fracture": 800000 },
+      "maxEdge": 9000
+    },
+    "aspects": {
+      "combustion": {
+        "fuelEnergyKJ": 0,
+        "burnCurve": [{ "tempK": 300, "fuel": 0, "smoke": 0, "burn": 0 }],
+        "explosiveHint": false
+      },
+      "salvageRepair": { "repairedWith": "core_res_metal_scrap", "salvagedInto": null, "repairDifficulty": 3 },
+      "resistProfile": {
+        "override": false,
+        "blend": 0.0,
+        "coeff": {
+          "blunt": 1.1, "edge": 1.15, "pierce": 1.1, "heat": 0.6, "cold": 1.0, "acid": 0.5, "electric": 0.3,
+          "arcane": 1.0, "holy": 1.0, "curse": 1.0, "poison": 1.0
+        }
+      }
+    },
+    "display": { "stateNames": { "solid": "tempered steel" }, "color": "#b4bac1" }
+  }
+]

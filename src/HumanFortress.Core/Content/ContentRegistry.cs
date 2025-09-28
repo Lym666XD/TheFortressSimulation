@@ -78,7 +78,7 @@ namespace HumanFortress.Core.Content
 
         private void LoadTuningFiles(string registriesPath)
         {
-            var tuningFiles = new[] { "tuning.tile.json", "tuning.damage.json" };
+            var tuningFiles = new[] { "tuning.tile.json", "tuning.damage.json", "tuning.mapgen.json", "tuning.ore.json", "tuning.cavern.json", "tuning.navigation.json" };
 
             foreach (var file in tuningFiles)
             {
@@ -385,6 +385,10 @@ namespace HumanFortress.Core.Content
 
         [JsonProperty("ramp_dir")]
         public string? RampDir { get; set; }
+
+        // Accept runtime geology.json that encodes direction as an integer 0-7
+        [JsonProperty("rampDirection")]
+        public int? RampDirection { get; set; }
     }
 
     public class DisplayData

@@ -1,0 +1,461 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_stoneworks",
+      "name": "Stoneworks",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["stone", "cutting", "shaping", "engraving"],
+      "attachment_slots": ["cutting", "forming", "engraving"]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_stone_cut_handbench",
+      "name": "Hand Cleaving Bench",
+      "slot": "cutting",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_stone_cut_watersaw",
+      "tags": ["cut"]
+    },
+    {
+      "id": "core_attach_stone_cut_watersaw",
+      "name": "Water-Powered Stone Saw",
+      "slot": "cutting",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_stone_cut_framesaw_polisher",
+      "tags": ["cut", "waterpower"]
+    },
+    {
+      "id": "core_attach_stone_cut_framesaw_polisher",
+      "name": "Frame Saw & Polisher",
+      "slot": "cutting",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["cut", "polish", "waterpower"]
+    },
+    {
+      "id": "core_attach_stone_form_chisel_rack",
+      "name": "Chiseling Rack",
+      "slot": "forming",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_stone_form_hoist_jigs",
+      "tags": ["form"]
+    },
+    {
+      "id": "core_attach_stone_form_hoist_jigs",
+      "name": "Hoist & Positioning Jigs",
+      "slot": "forming",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_stone_form_template_lathe",
+      "tags": ["form", "rigging"]
+    },
+    {
+      "id": "core_attach_stone_form_template_lathe",
+      "name": "Templates, Lathe & Grinder",
+      "slot": "forming",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["form", "lathe", "waterpower"]
+    },
+    {
+      "id": "core_attach_stone_engrave_bench",
+      "name": "Inscription Bench",
+      "slot": "engraving",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_stone_engrave_tracing_gauges",
+      "tags": ["engrave"]
+    },
+    {
+      "id": "core_attach_stone_engrave_tracing_gauges",
+      "name": "Tracing Gauges",
+      "slot": "engraving",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_stone_engrave_fine_polish",
+      "tags": ["engrave", "measure"]
+    },
+    {
+      "id": "core_attach_stone_engrave_fine_polish",
+      "name": "Fine Carve & Polish Set",
+      "slot": "engraving",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["engrave", "polish"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_stone_cut_blocks_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_cut_handbench"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_block_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_blocks_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_stone_cut_watersaw"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_block_stone", "count": 8 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_blocks_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_stone_cut_framesaw_polisher"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_block_stone", "count": 10 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_cut_handbench"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_slab_stone", "count": 10 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_stone_cut_watersaw"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_slab_stone", "count": 12 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_stone_cut_framesaw_polisher"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_slab_stone", "count": 14 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1400,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_door_stone", "count": 3 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_door_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_door_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1400,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_floodgate_stone", "count": 3 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_floodgate_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_floodgate_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_table_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_table_stone", "count": 6 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_table_stone", "count": 7 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_seat_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_seat_stone", "count": 6 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_seat_stone", "count": 7 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_cabinet_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 950,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_cabinet_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 850,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_cabinet_stone", "count": 6 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_chest_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 950,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_chest_stone", "count": 5 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 850,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_chest_stone", "count": 6 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1600,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack", "core_attach_stone_engrave_bench"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_statue_stone", "count": 2 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 1400,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs", "core_attach_stone_engrave_tracing_gauges"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_statue_stone", "count": 3 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_form_template_lathe", "core_attach_stone_engrave_fine_polish"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_statue_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_stone_form_chisel_rack"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_pedestal_stone", "count": 2 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_m",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "MEDIEVAL",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_stone_form_hoist_jigs"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_pedestal_stone", "count": 3 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_r",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "RENAISSANCE",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_stone_form_template_lathe"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_pedestal_stone", "count": 4 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_slab_memorial_c",
+      "workshop_id": "core_workshop_stoneworks",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_stone_engrave_bench"],
+      "inputs": [{ "id": "core_item_stone_raw", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_slab_stone", "count": 6 },
+        { "id": "core_item_waste_stone_chips", "count": 1 }
+      ]
+    }
+  ]
+}

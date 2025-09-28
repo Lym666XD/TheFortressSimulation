@@ -17,7 +17,7 @@ The compiler must map between terrain_kinds.json names and geology.json enum val
 | `stairs_up`       | `StairsUp`        |
 | `stairs_down`     | `StairsDown`      |
 | `stairs_updown`   | `StairsUD`        |
-| `chasm`           | `Chasm`           |
+| `slope`           | `Slope`           |
 
 **Error Handling**: Unknown terrain kind names must cause compilation to fail with clear error message.
 

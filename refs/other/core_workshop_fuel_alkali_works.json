@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_fuel_alkali_works",
+      "name": "Fuel & Alkali Works",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["fuel", "alkali", "charcoal", "potash"],
+      "attachment_slots": ["carbonize", "leach", "crystallize"]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_carbonize_charcoal_pit",
+      "name": "Charcoal Pit",
+      "slot": "carbonize",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_carbonize_mound_kiln",
+      "tags": ["carbonize"]
+    },
+    {
+      "id": "core_attach_carbonize_mound_kiln",
+      "name": "Mounded Charcoal Kiln",
+      "slot": "carbonize",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_carbonize_retort_kiln",
+      "tags": ["carbonize"]
+    },
+    {
+      "id": "core_attach_carbonize_retort_kiln",
+      "name": "Retort Charcoal Furnace",
+      "slot": "carbonize",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["carbonize", "sealed"]
+    },
+    {
+      "id": "core_attach_leach_ash_bucket",
+      "name": "Ash Bucket & Sieve",
+      "slot": "leach",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_leach_vats_evap",
+      "tags": ["leach"]
+    },
+    {
+      "id": "core_attach_leach_vats_evap",
+      "name": "Leach Vats & Evap Pans",
+      "slot": "leach",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_leach_pearlash_kiln",
+      "tags": ["leach", "evap"]
+    },
+    {
+      "id": "core_attach_leach_pearlash_kiln",
+      "name": "Pearlash Kiln",
+      "slot": "leach",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["leach", "calcine"]
+    },
+    {
+      "id": "core_attach_crystallizer_room",
+      "name": "Crystallization Room",
+      "slot": "crystallize",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["crystallize"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_charcoal_batch_c",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "CLASSIC",
+      "duration_s": 1800,
+      "requires_enablers": ["core_attach_carbonize_charcoal_pit"],
+      "inputs": [
+        { "id": "core_item_log_wood", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_fuel_charcoal", "count": 12 },
+        { "id": "core_item_powder_charcoal", "charges_g": 1000 }
+      ]
+    },
+    {
+      "id": "core_recipe_charcoal_batch_m",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "MEDIEVAL",
+      "duration_s": 1700,
+      "requires_enablers": ["core_attach_carbonize_mound_kiln"],
+      "inputs": [
+        { "id": "core_item_log_wood", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_fuel_charcoal", "count": 14 },
+        { "id": "core_item_powder_charcoal", "charges_g": 2000 }
+      ]
+    },
+    {
+      "id": "core_recipe_charcoal_batch_r",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "RENAISSANCE",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_carbonize_retort_kiln"],
+      "inputs": [
+        { "id": "core_item_log_wood", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_fuel_charcoal", "count": 15 },
+        { "id": "core_item_powder_charcoal", "charges_g": 2000 }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_from_ash_c",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "CLASSIC",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_leach_ash_bucket"],
+      "inputs": [
+        { "id": "core_item_ash_plant", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_alkali_potash", "count": 4 }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_from_ash_m",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "MEDIEVAL",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_leach_vats_evap"],
+      "inputs": [
+        { "id": "core_item_ash_plant", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_alkali_potash", "count": 6 }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_refined_r",
+      "workshop_id": "core_workshop_fuel_alkali_works",
+      "era": "RENAISSANCE",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_leach_pearlash_kiln", "core_attach_crystallizer_room"],
+      "inputs": [
+        { "id": "core_item_ash_plant", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_alkali_potash_refined", "count": 8 }
+      ]
+    }
+  ]
+}

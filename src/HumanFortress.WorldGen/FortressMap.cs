@@ -2,13 +2,14 @@ using System;
 using System.Collections.Generic;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
-using HumanFortress.Core.Content;
 
 namespace HumanFortress.WorldGen
 {
+    using ContentRegistry = HumanFortress.Core.Content.ContentRegistry;
     using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
     /// <summary>
     /// Represents the generated fortress map data.
+    /// Uses geology handles directly instead of TerrainType enum.
     /// </summary>
     public class FortressMap
     {
@@ -79,8 +80,20 @@ namespace HumanFortress.WorldGen
                             {
                                 for (int ly = 0; ly < 32; ly++)
                                 {
-                                    var terrain = fortressChunk.GetTerrain(lx, ly, z);
-                                    var tile = ConvertTerrainToTile(terrain);
+                                    var geologyHandle = fortressChunk.GetGeologyHandle(lx, ly, z);
+                                    var surfaceBits = fortressChunk.GetSurfaceBits(lx, ly, z);
+                                    byte? rampOverride = null;
+                                    // If this tile is a ramp, infer direction based on local neighborhood
+                                    var geo = ContentRegistry.Instance.GetGeologyByHandle(geologyHandle);
+                                    if (geo != null && Enum.TryParse<TerrainKind>(geo.TerrainBits.Kind, out var k) && k == TerrainKind.Ramp)
+                                    {
+                                        // Global coordinates for this tile
+                                        int gx = cx * 32 + lx;
+                                        int gy = cy * 32 + ly;
+                                        rampOverride = InferRampDirection(gx, gy, z);
+                                    }
+
+                                    var tile = ConvertGeologyToTile(geologyHandle, surfaceBits, rampOverride);
                                     simChunk.SetTile(lx, ly, tile, 0);
                                     tilesProcessed++;
                                 }
@@ -91,6 +104,11 @@ namespace HumanFortress.WorldGen
                 }
 
                 System.Console.WriteLine($"[ToSimulationWorld] Conversion complete: {chunksProcessed} chunks, {tilesProcessed} tiles processed");
+
+                // Post-process: inject ramps and slope tops based on surface height differences
+                System.Console.WriteLine("[ToSimulationWorld] Post-process ramps & slopes");
+                InjectRampsAndSlopes(world);
+
                 return world;
             }
             catch (Exception ex)
@@ -101,135 +119,307 @@ namespace HumanFortress.WorldGen
             }
         }
 
-        private TileBase ConvertTerrainToTile(TerrainType terrain)
+        private void InjectRampsAndSlopes(World world)
         {
-            // Convert terrain types to proper material IDs
-            ushort geoMatId = terrain switch
+            int tiles = world.SizeInTiles;
+            int maxZ = world.MaxZ;
+            var surfZ = new int[tiles, tiles];
+            for (int y = 0; y < tiles; y++)
             {
-                TerrainType.Air => MaterialIdRegistry.Air,
-                TerrainType.Stone => MaterialIdRegistry.GenericStone,
-                TerrainType.Rock => MaterialIdRegistry.Granite,
-                TerrainType.Grass => MaterialIdRegistry.Grass,
-                TerrainType.Sand => MaterialIdRegistry.Sand,
-                TerrainType.Snow => MaterialIdRegistry.Snow,
-                TerrainType.Mud => MaterialIdRegistry.Mud,
-                TerrainType.OreVein => MaterialIdRegistry.IronOre,
-                TerrainType.CavernFloor => MaterialIdRegistry.GenericStone,
-                TerrainType.Granite => MaterialIdRegistry.Granite,
-                TerrainType.Marble => MaterialIdRegistry.Marble,
-                TerrainType.Basalt => MaterialIdRegistry.Basalt,
-                TerrainType.Sandstone => MaterialIdRegistry.Sandstone,
-                TerrainType.Limestone => MaterialIdRegistry.Limestone,
-                TerrainType.Shale => MaterialIdRegistry.Shale,
-                _ => MaterialIdRegistry.GenericStone
-            };
-            ushort terrainBits = 0;
-            byte surfaceBits = 0;
-
-            // Set terrain kind based on terrain type
-            TerrainKind kind;
-            switch (terrain)
-            {
-                case TerrainType.Air:
-                    kind = TerrainKind.OpenNoFloor;
-                    break;
-                case TerrainType.Stone:
-                case TerrainType.Rock:
-                case TerrainType.OreVein:
-                case TerrainType.Granite:
-                case TerrainType.Marble:
-                case TerrainType.Basalt:
-                case TerrainType.Sandstone:
-                case TerrainType.Limestone:
-                case TerrainType.Shale:
-                    kind = TerrainKind.SolidWall;
-                    break;
-                case TerrainType.Grass:
-                    kind = TerrainKind.OpenWithFloor;
-                    surfaceBits |= 2; // HasGrass
-                    break;
-                case TerrainType.Sand:
-                case TerrainType.Mud:
-                case TerrainType.CavernFloor:
-                    kind = TerrainKind.OpenWithFloor;
-                    if (terrain == TerrainType.Mud)
-                        surfaceBits |= 1; // HasMud
-                    break;
-                case TerrainType.Snow:
-                    kind = TerrainKind.OpenWithFloor;
-                    surfaceBits |= 4; // HasSnow
-                    break;
-                default:
-                    kind = TerrainKind.OpenWithFloor;
-                    break;
+                for (int x = 0; x < tiles; x++)
+                {
+                    int zTop = -1;
+                    for (int z = maxZ - 1; z >= 0; z--)
+                    {
+                        var t = world.GetTile(x, y, z);
+                        if (t.HasValue && (t.Value.Kind == TerrainKind.OpenWithFloor || t.Value.Kind == TerrainKind.Slope))
+                        {
+                            zTop = z;
+                            break;
+                        }
+                    }
+                    surfZ[x, y] = zTop;
+                }
             }
 
-            // Set terrain bits with kind in lower 3 bits
-            terrainBits = (ushort)((int)kind & 0x7);
+            // NESW deterministic order
+            var dirs = new (int dx, int dy, byte dirCode)[]
+            {
+                (0, -1, 0), // N
+                (1, 0, 2),  // E
+                (0, 1, 4),  // S
+                (-1, 0, 6), // W
+            };
 
-            // Mark natural terrain
-            terrainBits |= (1 << 6); // IsNatural
+            for (int y = 0; y < tiles; y++)
+            {
+                for (int x = 0; x < tiles; x++)
+                {
+                    int s = surfZ[x, y];
+                    if (s < 0) continue;
+                    var cur = world.GetTile(x, y, s);
+                    if (!cur.HasValue) continue;
+
+                    // Only convert from plain floor/slope
+                    if (!(cur.Value.Kind == TerrainKind.OpenWithFloor || cur.Value.Kind == TerrainKind.Slope))
+                        continue;
+
+                    foreach (var (dx, dy, code) in dirs)
+                    {
+                        int nx = x + dx;
+                        int ny = y + dy;
+                        if (nx < 0 || ny < 0 || nx >= tiles || ny >= tiles) continue;
+                        int ns = surfZ[nx, ny];
+                        if (ns == s + 1)
+                        {
+                            // Set current as Ramp pointing to neighbor
+                            var curTile = cur.Value;
+                            ushort bits = curTile.TerrainBits;
+                            bits = TerrainBitOps.SetKind(bits, TerrainKind.Ramp);
+                            bits = TerrainBitOps.SetRampDirection(bits, code);
+                            var rampTile = curTile.WithTerrain(bits);
+                            world.SetTile(x, y, s, rampTile, 0);
+
+                            // Set neighbor top as Slope
+                            var topTileOpt = world.GetTile(nx, ny, ns);
+                            if (topTileOpt.HasValue)
+                            {
+                                var topTile = topTileOpt.Value;
+                                ushort topBits = topTile.TerrainBits;
+                                topBits = TerrainBitOps.SetKind(topBits, TerrainKind.Slope);
+                                var slopeTile = topTile.WithTerrain(topBits);
+                                world.SetTile(nx, ny, ns, slopeTile, 0);
+                            }
+
+                            break; // only one ramp direction per tile
+                        }
+                    }
+                }
+            }
+        }
+
+        private TileBase ConvertGeologyToTile(ushort geologyHandle, byte surfaceBits, byte? rampDirOverride = null)
+        {
+            var geology = ContentRegistry.Instance.GetGeologyByHandle(geologyHandle);
+            if (geology == null)
+            {
+                // Fallback to a solid rock wall if geology not found
+                return new TileBase(
+                    geoMatId: ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite"),
+                    terrainBits: (ushort)TerrainKind.SolidWall,
+                    surfaceBits: surfaceBits,
+                    fluidKind: 0,
+                    fluidDepth: 0,
+                    metaBits: 0,
+                    trafficCost: 10
+                );
+            }
+
+            // Parse TerrainKind from string
+            var terrainKind = Enum.TryParse<TerrainKind>(geology.TerrainBits.Kind, out var kind)
+                ? kind
+                : TerrainKind.OpenNoFloor;
+
+            // Use canonical TerrainBitOps to create terrain bits
+            byte rampDir = 0;
+            if (terrainKind == TerrainKind.Ramp)
+            {
+                // Prefer runtime override; else use numeric in geology; else fallback to ramp_dir string; else 0
+                if (rampDirOverride.HasValue) rampDir = rampDirOverride.Value;
+                else if (geology.TerrainBits.RampDirection.HasValue) rampDir = (byte)Math.Clamp(geology.TerrainBits.RampDirection.Value, 0, 7);
+                else if (!string.IsNullOrEmpty(geology.TerrainBits.RampDir)) rampDir = ParseRampDirString(geology.TerrainBits.RampDir!);
+            }
+
+            var terrainBits = TerrainBitOps.CreateTerrainBits(
+                terrainKind,
+                rampDir,
+                geology.TerrainBits.Natural,
+                false,
+                false
+            );
 
             return new TileBase(
-                geoMatId: geoMatId,
+                geoMatId: geologyHandle,
                 terrainBits: terrainBits,
                 surfaceBits: surfaceBits,
                 fluidKind: 0,
                 fluidDepth: 0,
                 metaBits: 0,
-                trafficCost: 100
+                trafficCost: (ushort)(geology.Properties?.NavCostBase ?? 100)
             );
+        }
+
+        private static byte ParseRampDirString(string s)
+        {
+            switch (s.ToLowerInvariant())
+            {
+                case "n": case "north": return 0;
+                case "ne": case "northeast": return 1;
+                case "e": case "east": return 2;
+                case "se": case "southeast": return 3;
+                case "s": case "south": return 4;
+                case "sw": case "southwest": return 5;
+                case "w": case "west": return 6;
+                case "nw": case "northwest": return 7;
+                default: return 0;
+            }
+        }
+
+        private byte InferRampDirection(int gx, int gy, int z)
+        {
+            // Check 4-neighbor directions for a standable target at z+1
+            var dirs = new (int dx, int dy, byte code)[]
+            {
+                (0, -1, 0), // N
+                (1, 0, 2),  // E
+                (0, 1, 4),  // S
+                (-1, 0, 6), // W
+            };
+
+            foreach (var (dx, dy, code) in dirs)
+            {
+                int nx = gx + dx;
+                int ny = gy + dy;
+                int nz = z + 1;
+                if (nx < 0 || ny < 0 || nz >= _maxZ) continue;
+                int maxXY = _size * 32;
+                if (nx >= maxXY || ny >= maxXY) continue;
+            var kind = GetGeologyKindGlobal(nx, ny, nz);
+                if (kind == TerrainKind.OpenWithFloor)
+                    return code;
+            }
+
+            // Fallback: try diagonals
+            var diags = new (int dx, int dy, byte code)[]
+            {
+                (1, -1, 1), // NE
+                (1, 1, 3),  // SE
+                (-1, 1, 5), // SW
+                (-1, -1, 7),// NW
+            };
+            foreach (var (dx, dy, code) in diags)
+            {
+                int nx = gx + dx;
+                int ny = gy + dy;
+                int nz = z + 1;
+                if (nx < 0 || ny < 0 || nz >= _maxZ) continue;
+                int maxXY = _size * 32;
+                if (nx >= maxXY || ny >= maxXY) continue;
+                var kind = GetGeologyKindGlobal(nx, ny, nz);
+                if (kind == TerrainKind.OpenWithFloor)
+                    return code;
+            }
+
+            return 0; // default
+        }
+
+        private TerrainKind GetGeologyKindGlobal(int gx, int gy, int z)
+        {
+            int cx = gx / 32;
+            int cy = gy / 32;
+            int lx = gx % 32;
+            int ly = gy % 32;
+            if (cx < 0 || cy < 0 || cx >= _size || cy >= _size || z < 0 || z >= _maxZ)
+                return TerrainKind.SolidWall;
+
+            var chunk = _chunks[cx, cy];
+            var handle = chunk.GetGeologyHandle(lx, ly, z);
+            var geo = ContentRegistry.Instance.GetGeologyByHandle(handle);
+            if (geo == null) return TerrainKind.OpenNoFloor;
+            return Enum.TryParse<TerrainKind>(geo.TerrainBits.Kind, out var kind) ? kind : TerrainKind.OpenNoFloor;
         }
     }
     
     /// <summary>
     /// Represents a single chunk in the fortress map.
+    /// Now stores geology handles directly instead of TerrainType enum.
     /// </summary>
     public class FortressChunk
     {
-        private readonly TerrainType[,,] _terrain;
+        private readonly ushort[,,] _geologyHandles;
+        private readonly byte[,,] _surfaceBits;
         private readonly int _x;
         private readonly int _y;
         private readonly int _maxZ;
-        
+
         public int X => _x;
         public int Y => _y;
-        
+
         public FortressChunk(int x, int y, int maxZ)
         {
             _x = x;
             _y = y;
             _maxZ = maxZ;
-            _terrain = new TerrainType[32, 32, maxZ];
-            
-            // Initialize all as stone
+            _geologyHandles = new ushort[32, 32, maxZ];
+            _surfaceBits = new byte[32, 32, maxZ];
+
+            // Initialize all as granite wall
+            var defaultHandle = ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite");
             for (int lx = 0; lx < 32; lx++)
             {
                 for (int ly = 0; ly < 32; ly++)
                 {
                     for (int z = 0; z < maxZ; z++)
                     {
-                        _terrain[lx, ly, z] = TerrainType.Stone;
+                        _geologyHandles[lx, ly, z] = defaultHandle;
+                        _surfaceBits[lx, ly, z] = 0;
                     }
                 }
             }
         }
-        
-        public void SetTerrain(int x, int y, int z, TerrainType terrain)
+
+        public void SetGeology(int x, int y, int z, string geologyId)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
-                _terrain[x, y, z] = terrain;
+                _geologyHandles[x, y, z] = ContentRegistry.Instance.GetGeologyHandle(geologyId);
             }
         }
-        
-        public TerrainType GetTerrain(int x, int y, int z)
+
+        public void SetGeologyHandle(int x, int y, int z, ushort handle)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
-                return _terrain[x, y, z];
+                _geologyHandles[x, y, z] = handle;
             }
-            return TerrainType.Stone;
         }
+
+        public ushort GetGeologyHandle(int x, int y, int z)
+        {
+            if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
+            {
+                return _geologyHandles[x, y, z];
+            }
+            return ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite");
+        }
+
+        // Back-compat helper for tests that expect GetTerrain
+        public ushort GetTerrain(int x, int y, int z) => GetGeologyHandle(x, y, z);
+
+        public string GetGeologyId(int x, int y, int z)
+        {
+            var handle = GetGeologyHandle(x, y, z);
+            var geology = ContentRegistry.Instance.GetGeologyByHandle(handle);
+            return geology?.Id ?? "core_terrain_wall_rock_granite";
+        }
+
+        public void SetSurfaceBits(int x, int y, int z, byte bits)
+        {
+            if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
+            {
+                _surfaceBits[x, y, z] = bits;
+            }
+        }
+
+        public byte GetSurfaceBits(int x, int y, int z)
+        {
+            if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
+            {
+                return _surfaceBits[x, y, z];
+            }
+            return 0;
+        }
+
     }
 }
+

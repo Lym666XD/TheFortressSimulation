@@ -1,0 +1,413 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_logging",
+      "name": "Logging Camp",
+      "tags": ["workshop", "wood", "logging", "lumber"],
+      "display_order": 20
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_logging_felling_axe",
+      "name": "Felling Axe & Adze",
+      "slot": "felling_tools",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_logging_felling_broad_axe",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["felling", "axe", "handtool"]
+    },
+    {
+      "id": "core_attach_logging_felling_broad_axe",
+      "name": "Broad Axe & Hand Saw",
+      "slot": "felling_tools",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_logging_felling_crosscut_set",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["felling", "broad_axe", "hand_saw"]
+    },
+    {
+      "id": "core_attach_logging_felling_crosscut_set",
+      "name": "Crosscut Saw Set",
+      "slot": "felling_tools",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["felling", "crosscut", "saw"]
+    },
+
+    {
+      "id": "core_attach_logging_haul_hand_sled",
+      "name": "Hand Sled & Skids",
+      "slot": "haul_system",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_logging_haul_ox_skids",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["haul", "sled", "skid"]
+    },
+    {
+      "id": "core_attach_logging_haul_ox_skids",
+      "name": "Ox-Team Skids & Rollers",
+      "slot": "haul_system",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_logging_haul_capstan_rollers",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["haul", "ox", "rollers"]
+    },
+    {
+      "id": "core_attach_logging_haul_capstan_rollers",
+      "name": "Capstan & Timber Rollers",
+      "slot": "haul_system",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["haul", "capstan", "rollers"]
+    },
+
+    {
+      "id": "core_attach_logging_saw_hewing_bench",
+      "name": "Hewing Bench",
+      "slot": "sawing_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_logging_saw_pit_saw",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["saw", "hewing", "bench"]
+    },
+    {
+      "id": "core_attach_logging_saw_pit_saw",
+      "name": "Pit Saw",
+      "slot": "sawing_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_logging_saw_waterwheel_frame",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["saw", "pit", "two_man"]
+    },
+    {
+      "id": "core_attach_logging_saw_waterwheel_frame",
+      "name": "Waterwheel Frame Saw",
+      "slot": "sawing_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["saw", "waterwheel", "frame_saw"]
+    },
+
+    {
+      "id": "core_attach_logging_dry_air_stack",
+      "name": "Air-Stack Drying",
+      "slot": "drying_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_logging_dry_covered_shed",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["drying", "air", "stack"]
+    },
+    {
+      "id": "core_attach_logging_dry_covered_shed",
+      "name": "Covered Drying Shed",
+      "slot": "drying_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_logging_dry_vent_kiln",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["drying", "shed", "covered"]
+    },
+    {
+      "id": "core_attach_logging_dry_vent_kiln",
+      "name": "Vented Kiln Drying",
+      "slot": "drying_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["drying", "kiln", "vented"]
+    },
+
+    {
+      "id": "core_attach_logging_split_block",
+      "name": "Splitting Block & Wedges",
+      "slot": "splitting_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_logging_split_sawhorse",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["split", "firewood", "wedges"]
+    },
+    {
+      "id": "core_attach_logging_split_sawhorse",
+      "name": "Sawhorse & Cleaving Set",
+      "slot": "splitting_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_logging_split_frame",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["split", "sawhorse", "cleave"]
+    },
+    {
+      "id": "core_attach_logging_split_frame",
+      "name": "Frame Splitter",
+      "slot": "splitting_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["split", "frame", "lever"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_logging_fell_C",
+      "workshop": "core_workshop_logging",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_logging_felling_axe",
+        "core_attach_logging_haul_hand_sled"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_tree", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_log", "count": 6 },
+        { "id": "core_item_bark", "count": 2 },
+        { "id": "core_item_branch_bundle", "count": 2 },
+        { "id": "core_item_woodchips", "count": 1 }
+      ],
+      "tags": ["felling", "bucking", "haul"]
+    },
+    {
+      "id": "core_recipe_logging_fell_M",
+      "workshop": "core_workshop_logging",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_logging_felling_broad_axe",
+        "core_attach_logging_haul_ox_skids"
+      ],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_tree", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_log", "count": 7 },
+        { "id": "core_item_bark", "count": 2 },
+        { "id": "core_item_branch_bundle", "count": 3 },
+        { "id": "core_item_woodchips", "count": 1 }
+      ],
+      "tags": ["felling", "bucking", "haul"]
+    },
+    {
+      "id": "core_recipe_logging_fell_R",
+      "workshop": "core_workshop_logging",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_logging_felling_crosscut_set",
+        "core_attach_logging_haul_capstan_rollers"
+      ],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_tree", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_log", "count": 8 },
+        { "id": "core_item_bark", "count": 3 },
+        { "id": "core_item_branch_bundle", "count": 3 },
+        { "id": "core_item_woodchips", "count": 1 }
+      ],
+      "tags": ["felling", "bucking", "haul"]
+    },
+
+    {
+      "id": "core_recipe_logging_planks_C",
+      "workshop": "core_workshop_logging",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_logging_saw_hewing_bench"
+      ],
+      "duration_s": 540,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank", "count": 8 },
+        { "id": "core_item_woodchips", "count": 2 }
+      ],
+      "tags": ["boards", "hewing"]
+    },
+    {
+      "id": "core_recipe_logging_planks_M",
+      "workshop": "core_workshop_logging",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_logging_saw_pit_saw"
+      ],
+      "duration_s": 480,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank", "count": 10 },
+        { "id": "core_item_sawdust", "count": 1 }
+      ],
+      "tags": ["boards", "pit_saw"]
+    },
+    {
+      "id": "core_recipe_logging_planks_R",
+      "workshop": "core_workshop_logging",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_logging_saw_waterwheel_frame"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank", "count": 12 },
+        { "id": "core_item_sawdust", "count": 2 }
+      ],
+      "tags": ["boards", "water_saw"]
+    },
+
+    {
+      "id": "core_recipe_logging_beams_C",
+      "workshop": "core_workshop_logging",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_logging_saw_hewing_bench"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_log", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_beam", "count": 3 },
+        { "id": "core_item_woodchips", "count": 1 }
+      ],
+      "tags": ["beams", "hewing"]
+    },
+    {
+      "id": "core_recipe_logging_beams_M",
+      "workshop": "core_workshop_logging",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_logging_saw_pit_saw"
+      ],
+      "duration_s": 380,
+      "inputs": [
+        { "id": "core_item_log", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_beam", "count": 4 }
+      ],
+      "tags": ["beams", "pit_saw"]
+    },
+    {
+      "id": "core_recipe_logging_beams_R",
+      "workshop": "core_workshop_logging",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_logging_saw_waterwheel_frame"
+      ],
+      "duration_s": 340,
+      "inputs": [
+        { "id": "core_item_log", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_beam", "count": 5 }
+      ],
+      "tags": ["beams", "water_saw"]
+    },
+
+    {
+      "id": "core_recipe_logging_firewood_C",
+      "workshop": "core_workshop_logging",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_logging_split_block"
+      ],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_firewood_bundle", "count": 10 }
+      ],
+      "tags": ["firewood", "splitting"]
+    },
+    {
+      "id": "core_recipe_logging_firewood_M",
+      "workshop": "core_workshop_logging",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_logging_split_sawhorse"
+      ],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_firewood_bundle", "count": 11 }
+      ],
+      "tags": ["firewood", "splitting"]
+    },
+    {
+      "id": "core_recipe_logging_firewood_R",
+      "workshop": "core_workshop_logging",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_logging_split_frame"
+      ],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_log", "count": 5 }
+      ],
+      "outputs": [
+        { "id": "core_item_firewood_bundle", "count": 12 }
+      ],
+      "tags": ["firewood", "splitting"]
+    },
+
+    {
+      "id": "core_recipe_logging_season_planks_C",
+      "workshop": "core_workshop_logging",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_logging_dry_air_stack"
+      ],
+      "duration_s": 900,
+      "inputs": [
+        { "id": "core_item_plank", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank_seasoned", "count": 10 }
+      ],
+      "tags": ["drying", "season"]
+    },
+    {
+      "id": "core_recipe_logging_season_planks_M",
+      "workshop": "core_workshop_logging",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_logging_dry_covered_shed"
+      ],
+      "duration_s": 840,
+      "inputs": [
+        { "id": "core_item_plank", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank_seasoned", "count": 11 }
+      ],
+      "tags": ["drying", "season"]
+    },
+    {
+      "id": "core_recipe_logging_season_planks_R",
+      "workshop": "core_workshop_logging",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_logging_dry_vent_kiln"
+      ],
+      "duration_s": 780,
+      "inputs": [
+        { "id": "core_item_plank", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_plank_seasoned", "count": 12 }
+      ],
+      "tags": ["drying", "season"]
+    }
+  ]
+}

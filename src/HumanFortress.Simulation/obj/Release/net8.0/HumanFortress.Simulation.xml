@@ -24,6 +24,90 @@
             Registry for tile visual data.
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TerrainBitOps">
+            <summary>
+            Canonical terrain bit operations per TILES_MATERIALS_ARCHITECTURE.md.
+            This is the single source of truth for TerrainBits encoding/decoding.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetKind(System.UInt16)">
+            <summary>
+            Extract TerrainKind from TerrainBits (bits 0-2).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetRampDirection(System.UInt16)">
+            <summary>
+            Extract RampDirection from TerrainBits (bits 3-5).
+            Only valid when GetKind returns TerrainKind.Ramp.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.IsNatural(System.UInt16)">
+            <summary>
+            Check if terrain is natural (bit 6).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.IsSmoothed(System.UInt16)">
+            <summary>
+            Check if terrain is smoothed (bit 7).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.IsEngraved(System.UInt16)">
+            <summary>
+            Check if terrain is engraved (bit 8).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.HasValidRampDirection(System.UInt16)">
+            <summary>
+            Check if ramp direction is valid (only when kind == Ramp).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.CreateTerrainBits(HumanFortress.Simulation.Tiles.TerrainKind,System.Byte,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            Create TerrainBits from components.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetKind(System.UInt16,HumanFortress.Simulation.Tiles.TerrainKind)">
+            <summary>
+            Modify terrain kind while preserving other bits.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetRampDirection(System.UInt16,System.Byte)">
+            <summary>
+            Modify ramp direction (only valid for Ramp terrain).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetNatural(System.UInt16,System.Boolean)">
+            <summary>
+            Set natural flag.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetSmoothed(System.UInt16,System.Boolean)">
+            <summary>
+            Set smoothed flag.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetEngraved(System.UInt16,System.Boolean)">
+            <summary>
+            Set engraved flag.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetDirectionOffset(System.Byte)">
+            <summary>
+            Get direction offsets for ramp navigation.
+            Direction encoding: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.CanAscendRamp(System.Int32,System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Check if approach direction is valid for ascending a ramp.
+            Must approach from opposite direction (low side).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetRampDestination(System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Get destination position when ascending a ramp.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Tiles.TileBase">
             <summary>
             Base tile structure per TILE_SPEC.md.
@@ -196,6 +280,16 @@
         <member name="M:HumanFortress.Simulation.World.World.IsValidPosition(System.Int32,System.Int32,System.Int32)">
             <summary>
             Check if position is valid.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetAllChunks">
+            <summary>
+            Get all chunks in the world.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetChunkAt(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get chunk at chunk coordinates.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.World.World.GetActiveChunks">

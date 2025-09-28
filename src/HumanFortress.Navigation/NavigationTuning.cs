@@ -1,3 +1,6 @@
+using HumanFortress.Core.Content;
+using Newtonsoft.Json.Linq;
+
 namespace HumanFortress.Navigation;
 
 /// <summary>
@@ -100,4 +103,60 @@ public sealed class NavigationTuning
     /// Get default tuning values.
     /// </summary>
     public static NavigationTuning Default => new();
+
+    /// <summary>
+    /// Load tuning from content registries (tuning.navigation.json). Falls back to defaults.
+    /// </summary>
+    public static NavigationTuning LoadFromContent()
+    {
+        var t = Default;
+        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.navigation", "$");
+        if (obj == null) return t;
+
+        t.AllowDiagonals = obj["allow_diagonals"]?.Value<bool?>() ?? t.AllowDiagonals;
+
+        var cost = obj["cost"] as JObject;
+        if (cost != null)
+        {
+            t.BaseCost = (ushort)(cost["base"]?.Value<int?>() ?? t.BaseCost);
+            t.OrthogonalCost = (ushort)(cost["orthogonal"]?.Value<int?>() ?? t.OrthogonalCost);
+            t.DiagonalCost = (ushort)(cost["diagonal"]?.Value<int?>() ?? t.DiagonalCost);
+            t.RampDelta = (ushort)(cost["ramp_delta"]?.Value<int?>() ?? t.RampDelta);
+            t.StairDelta = (ushort)(cost["stair_delta"]?.Value<int?>() ?? t.StairDelta);
+        }
+
+        var fluids = obj["fluids"] as JObject;
+        if (fluids != null)
+        {
+            t.FluidShallowThreshold = (byte)(fluids["shallow_threshold"]?.Value<int?>() ?? t.FluidShallowThreshold);
+            t.FluidDeepThreshold = (byte)(fluids["deep_threshold"]?.Value<int?>() ?? t.FluidDeepThreshold);
+            t.FluidWadeCost = (ushort)(fluids["wade_cost"]?.Value<int?>() ?? t.FluidWadeCost);
+            t.FluidSwimCost = (ushort)(fluids["swim_cost"]?.Value<int?>() ?? t.FluidSwimCost);
+        }
+
+        var traffic = obj["traffic"] as JObject;
+        if (traffic != null)
+        {
+            t.TrafficLow = (short)(traffic["low"]?.Value<int?>() ?? t.TrafficLow);
+            t.TrafficNormal = (short)(traffic["normal"]?.Value<int?>() ?? t.TrafficNormal);
+            t.TrafficHigh = (short)(traffic["high"]?.Value<int?>() ?? t.TrafficHigh);
+            t.TrafficRestricted = (short)(traffic["restricted"]?.Value<int?>() ?? t.TrafficRestricted);
+        }
+
+        var doors = obj["doors"] as JObject;
+        if (doors != null)
+        {
+            t.DoorClosedBlocks = doors["closed_blocks"]?.Value<bool?>() ?? t.DoorClosedBlocks;
+            t.DoorOpenCost = (ushort)(doors["open_cost"]?.Value<int?>() ?? t.DoorOpenCost);
+        }
+
+        var budgets = obj["budgets"] as JObject;
+        if (budgets != null)
+        {
+            t.MaxNodesPerSearch = budgets["max_nodes_per_search"]?.Value<int?>() ?? t.MaxNodesPerSearch;
+            t.MaxMsPerTickPathing = budgets["max_ms_per_tick_pathing"]?.Value<int?>() ?? t.MaxMsPerTickPathing;
+        }
+
+        return t;
+    }
 }

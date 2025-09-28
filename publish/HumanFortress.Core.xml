@@ -76,6 +76,528 @@
             Read-only world access for commands.
             </summary>
         </member>
+        <member name="T:HumanFortress.Core.Content.ContentRegistry">
+            <summary>
+            Central registry for all data-driven content per CONTENT_REGISTRY_OVERVIEW.md.
+            Loads materials, geology, items, buildables, etc. from JSON with validation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.ContentRegistry.LoadContent(System.String)">
+            <summary>
+            Load all content from the content directory structure.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.MaterialData">
+            <summary>
+            Material data from JSON per MATERIALS_SPEC.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.GeologyData">
+            <summary>
+            Geology/terrain data from JSON.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.MaterialIdRegistry">
+            <summary>
+            Registry of material IDs for use in TileBase.GeoMatId.
+            These IDs map to materials and geology entries in JSON files.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.MaterialIdRegistry.GetDisplay(System.UInt16,HumanFortress.Core.Content.TerrainKind)">
+            <summary>
+            Get display info for a material ID and terrain kind combination.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.TerrainKind">
+            <summary>
+            Terrain types from TILE_SPEC.md.
+            Must match HumanFortress.Simulation.Tiles.TerrainKind
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.AliasResolver">
+            <summary>
+            Resolves aliases and handles content migrations
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.LoadAliases(System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.AliasDefinition},System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.AliasDefinition},System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.ContentMigration},HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Load aliases from definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.ResolveMaterialName(System.String,System.Nullable{HumanFortress.Core.Content.Registry.ContentVersion})">
+            <summary>
+            Resolve a material name through aliases
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.ResolveTerrainName(System.String,System.Nullable{HumanFortress.Core.Content.Registry.ContentVersion})">
+            <summary>
+            Resolve a terrain kind name through aliases
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.ApplyMaterialMigrations(System.String,HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Apply material migrations from a specific version
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.ApplyTerrainMigrations(System.String,HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Apply terrain migrations from a specific version
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.ApplyMigrationRule(System.String,HumanFortress.Core.Content.Registry.MigrationRule,HumanFortress.Core.Content.Registry.ContentMigration)">
+            <summary>
+            Apply a single migration rule
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.GetActiveMaterialAliases(System.Nullable{HumanFortress.Core.Content.Registry.ContentVersion})">
+            <summary>
+            Get all active aliases for a given version
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.IsDeprecated(System.String,System.Boolean)">
+            <summary>
+            Check if an alias is deprecated
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.GetDeprecationWarning(System.String,System.Boolean)">
+            <summary>
+            Get deprecation warning for an alias
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.AliasResolver.Clear">
+            <summary>
+            Clear all aliases and migrations
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.AliasDefinition">
+            <summary>
+            Definition of an alias for backward compatibility
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.ContentMigration">
+            <summary>
+            Definition of a content migration between versions
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.MigrationRule">
+            <summary>
+            A single migration rule
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.BiomeTemplateDefinition">
+            <summary>
+            Complete definition of a biome generation template
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry">
+            <summary>
+            Registry for biome generation templates
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.LoadTemplates(System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.BiomeTemplateDefinition},HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Load templates from definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.AddTemplate(HumanFortress.Core.Content.Registry.BiomeTemplateDefinition)">
+            <summary>
+            Add a template to the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetTemplate(System.String)">
+            <summary>
+            Get template by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.SelectTemplate(HumanFortress.Core.Content.Registry.BiomeParameters)">
+            <summary>
+            Select best matching template for given parameters
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.SelectTemplateById(System.String)">
+            <summary>
+            Select template by explicit ID with fallback
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetTemplatesForClimate(System.Single,System.Single)">
+            <summary>
+            Get templates for a specific climate
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetDefaultTemplate">
+            <summary>
+            Get default/fallback template
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetTemplateIds">
+            <summary>
+            Get all template IDs for save snapshot
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetTemplateCount">
+            <summary>
+            Get template count
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.GetAllTemplates">
+            <summary>
+            Get all templates
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.BiomeTemplateRegistry.Clear">
+            <summary>
+            Clear the registry
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.ContentRegistry">
+            <summary>
+            Main content registry that manages all loaded content
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadContentAsync(System.String)">
+            <summary>
+            Load all content from the specified path
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadContent(System.String)">
+            <summary>
+            Load content synchronously (for compatibility)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadSchemasAsync(System.String)">
+            <summary>
+            Load schemas for validation
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadMaterialsAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Text.Json.JsonDocument})">
+            <summary>
+            Load materials from JSON
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.ParseMaterialDefinition(System.Text.Json.JsonElement)">
+            <summary>
+            Parse a material definition from JSON
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadTerrainKindsAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Text.Json.JsonDocument})">
+            <summary>
+            Load terrain kinds from JSON
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadBiomeTemplatesAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Text.Json.JsonDocument})">
+            <summary>
+            Load biome templates
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadGeologyAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Text.Json.JsonDocument})">
+            <summary>
+            Load geology prototypes from JSON
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.LoadAliasesAsync(System.String,System.Collections.Generic.Dictionary{System.String,System.Text.Json.JsonDocument})">
+            <summary>
+            Load aliases for migration
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.CrossValidateContent">
+            <summary>
+            Cross-validate content references
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.ComputeContentHash">
+            <summary>
+            Compute overall content hash
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.GetSnapshot">
+            <summary>
+            Get content snapshot for saves
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentRegistry.ApplySnapshot(HumanFortress.Core.Content.Registry.ContentSnapshot)">
+            <summary>
+            Apply content snapshot when loading saves
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.ContentValidationResult">
+            <summary>
+            Content validation result
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.ContentSnapshot">
+            <summary>
+            Content snapshot for saves
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.ContentVersion">
+            <summary>
+            Represents a content version with semantic versioning
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.ContentVersion.IsCompatibleWith(HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Checks if this version is compatible with a required version
+            using semantic versioning rules (major must match, minor/patch can be higher)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.GeologyDefinition">
+            <summary>
+            Defines a tile prototype (combination of TerrainKind + Material)
+            This is the actual "recipe" for creating tiles in the world
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.Id">
+            <summary>
+            Unique identifier for this geology prototype
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.Name">
+            <summary>
+            Display name
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.TerrainKind">
+            <summary>
+            The terrain kind (shape) - references terrain_kinds.json
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.Material">
+            <summary>
+            The material - references materials.registry.json
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.NavCostBase">
+            <summary>
+            Per-prototype navigation cost override
+            If null, uses TerrainKind base + Material modifier
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.Opacity">
+            <summary>
+            Per-prototype opacity override (for line of sight)
+            If null, uses TerrainKind default
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Content.Registry.GeologyDefinition.Tags">
+            <summary>
+            Tags for this specific combination
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyDefinition.Validate">
+            <summary>
+            Validate the geology definition
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyDefinition.CalculateMoveCost(HumanFortress.Core.Content.Registry.TerrainKindDefinition,HumanFortress.Core.Content.Registry.MaterialDefinition)">
+            <summary>
+            Calculate the final movement cost for this tile prototype
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyDefinition.IsValidCombination(HumanFortress.Core.Content.Registry.TerrainKindDefinition,HumanFortress.Core.Content.Registry.MaterialDefinition)">
+            <summary>
+            Check if this geology is valid for a given material/terrain combination
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.GeologyRegistry">
+            <summary>
+            Registry for geology definitions (tile prototypes)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.LoadPrototypes(System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.GeologyDefinition},HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Load geology prototypes from definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.AddPrototype(HumanFortress.Core.Content.Registry.GeologyDefinition)">
+            <summary>
+            Add a geology prototype to the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetPrototype(System.String)">
+            <summary>
+            Get prototype by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetPrototype(System.String,System.String)">
+            <summary>
+            Get prototype by terrain kind and material combination
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetOrCreatePrototype(System.String,System.String,HumanFortress.Core.Content.Registry.TerrainKindDefinition,HumanFortress.Core.Content.Registry.MaterialDefinition)">
+            <summary>
+            Find or create a prototype for a terrain/material combination
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetPrototypesForTerrainKind(System.String)">
+            <summary>
+            Get all prototypes for a specific terrain kind
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetPrototypesForMaterial(System.String)">
+            <summary>
+            Get all prototypes for a specific material
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.Clear">
+            <summary>
+            Clear the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.GeologyRegistry.GetAllPrototypes">
+            <summary>
+            Get all prototypes
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.MaterialDefinition">
+            <summary>
+            Complete definition of a material loaded from JSON
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.MaterialRegistry">
+            <summary>
+            Registry for all material definitions loaded from JSON
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Core.Content.Registry.MaterialRegistry.None">
+            <summary>
+            Reserved material IDs
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.LoadMaterials(System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.MaterialDefinition},HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Load materials from definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.AddMaterial(HumanFortress.Core.Content.Registry.MaterialDefinition)">
+            <summary>
+            Add a material to the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.AddReservedMaterials">
+            <summary>
+            Add reserved materials that always exist
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetMaterial(System.UInt16)">
+            <summary>
+            Get material by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetMaterial(System.String)">
+            <summary>
+            Get material by name (checks aliases too)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetMaterialId(System.String)">
+            <summary>
+            Get material ID by name
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.ResolveMaterial(System.String,System.UInt16)">
+            <summary>
+            Resolve material name to ID with fallback
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetMaterialsByCategory(System.String)">
+            <summary>
+            Get all materials in a category
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetMaterialsByTag(System.String)">
+            <summary>
+            Get all materials with a tag
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.HasMaterial(System.UInt16)">
+            <summary>
+            Check if material exists
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.GetNameToIdSnapshot">
+            <summary>
+            Get a snapshot of name to ID mappings for saves
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.ApplyAliases(System.Collections.Generic.Dictionary{System.String,System.String})">
+            <summary>
+            Apply aliases for save migration
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.Clear">
+            <summary>
+            Clear the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.MaterialRegistry.ComputeContentHash">
+            <summary>
+            Compute content hash for save compatibility checking
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.TerrainKindDefinition">
+            <summary>
+            Complete definition of a terrain kind (shape/form) loaded from JSON
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.TerrainKindRegistry">
+            <summary>
+            Registry for terrain kind definitions loaded from JSON
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.LoadTerrainKinds(System.Collections.Generic.IEnumerable{HumanFortress.Core.Content.Registry.TerrainKindDefinition},HumanFortress.Core.Content.Registry.TerrainBitLayout,HumanFortress.Core.Content.Registry.ContentVersion)">
+            <summary>
+            Load terrain kinds from definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.AddTerrainKind(HumanFortress.Core.Content.Registry.TerrainKindDefinition)">
+            <summary>
+            Add a terrain kind to the registry
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.GetKind(System.Byte)">
+            <summary>
+            Get terrain kind by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.GetKind(System.String)">
+            <summary>
+            Get terrain kind by name
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.GetKindId(System.String)">
+            <summary>
+            Get terrain kind ID by name
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.ResolveKind(System.String,System.Byte)">
+            <summary>
+            Resolve terrain kind name to ID with fallback
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.IsMaterialAllowed(HumanFortress.Core.Content.Registry.TerrainKindDefinition,System.String)">
+            <summary>
+            Check if a material can have a specific terrain kind
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.GetKindsForMaterial(System.String)">
+            <summary>
+            Get all terrain kinds that allow a material category
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.BuildNavigationMask(HumanFortress.Core.Content.Registry.TerrainKindDefinition)">
+            <summary>
+            Build navigation mask from terrain kind
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Content.Registry.TerrainKindRegistry.Clear">
+            <summary>
+            Clear the registry
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.Registry.TerrainBitLayout">
+            <summary>
+            Describes the bit layout of the TerrainBits field
+            </summary>
+        </member>
         <member name="T:HumanFortress.Core.Events.EventBus">
             <summary>
             Thread-safe event bus implementation.

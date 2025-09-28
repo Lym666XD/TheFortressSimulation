@@ -1,0 +1,80 @@
+[
+  {
+    "id": "itm_log",
+    "kind": "resource",
+    "tags": ["wood","log"],
+    "fixed_material": "core_mat_wood_oak",
+    "base_volume_ml": 20000,
+    "stack": { "mode": "count", "max_per_stack": 10, "equal_when": ["fixed_material"] },
+    "value_base": 1
+  },
+  {
+    "id": "itm_stone_block",
+    "kind": "resource",
+    "tags": ["stone","block"],
+    "fixed_material": "core_mat_stone_granite",
+    "base_volume_ml": 8000,
+    "stack": { "mode": "count", "max_per_stack": 20, "equal_when": ["fixed_material"] },
+    "value_base": 1
+  },
+  {
+    "id": "itm_iron_ingot",
+    "kind": "resource",
+    "tags": ["metal","ingot","iron"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_volume_ml": 3000,
+    "stack": { "mode": "count", "max_per_stack": 10, "equal_when": ["fixed_material"] },
+    "value_base": 5
+  },
+  {
+    "id": "itm_copper_dagger",
+    "kind": "weapon",
+    "tags": ["weapon","melee","blade"],
+    "fixed_material": "core_mat_metal_copper",
+    "base_volume_ml": 450,
+    "stack": { "mode": "none" },
+    "weapon": { "damage": { "stab": 12, "cut": 4 }, "armor_penetration": { "stab": 8 }, "attack_time_ms": 700, "reach_tiles": 1 },
+    "value_base": 20
+  },
+  {
+    "id": "itm_leather_armor",
+    "kind": "armor",
+    "tags": ["armor","leather"],
+    "fixed_material": "core_mat_leather_bovine",
+    "base_volume_ml": 5000,
+    "thickness_factor": 1.0,
+    "stack": { "mode": "none" },
+    "equip": { "type": "armor", "body_slots": ["torso","arm_l","arm_r"], "layer": "outer", "coverage": 70 },
+    "value_base": 35
+  },
+  {
+    "id": "itm_pickaxe",
+    "kind": "tool",
+    "tags": ["tool","mining"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_volume_ml": 1200,
+    "stack": { "mode": "none" },
+    "value_base": 25
+  },
+  {
+    "id": "itm_waterskin",
+    "kind": "container",
+    "tags": ["container","liquid"],
+    "fixed_material": "core_mat_leather_bovine",
+    "base_volume_ml": 500,
+    "stack": { "mode": "none" },
+    "container": { "capacity_ml": 2000, "accept_tags": ["liquid"], "leakproof": true },
+    "value_base": 12
+  },
+  {
+    "id": "itm_ration",
+    "kind": "consumable",
+    "tags": ["food","ration"],
+    "fixed_material": "core_mat_food_grain",
+    "base_volume_ml": 500,
+    "stack": { "mode": "charges", "unit": "g", "max_per_stack": 1 },
+    "use": { "effects": ["heal_small","warmth_small"], "charges_per_use": 250 },
+    "value_base": 5
+  }
+]
+

@@ -37,7 +37,7 @@
 - [ ] Air (TerrainKind=2) never standable but flyable
 - [ ] Ramps (TerrainKind=3) allow directional Z-transitions
 - [ ] Stairs (TerrainKind=4,5,6) allow appropriate Z-transitions
-- [ ] Chasm (TerrainKind=7) never walkable but flyable
+- [ ] OpenNoFloor never walkable but flyable (no support)
 
 ### Cost Calculation
 - [ ] Base cost from geology.properties.nav_cost_base

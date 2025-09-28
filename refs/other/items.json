@@ -1,0 +1,194 @@
+[
+  {
+    "id": "core_item_ore_iron_hematite",
+    "name": "Hematite Ore",
+    "kind": "RESOURCE",
+    "tags": ["ore", "iron"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_mass_g": 1000,
+    "base_volume_ml": 600,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 100, "equal_when": ["fixed_material"] }
+  },
+  {
+    "id": "core_item_ingot_iron_wrought",
+    "name": "Wrought Iron Ingot",
+    "kind": "RESOURCE",
+    "tags": ["metal", "ingot", "iron"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_mass_g": 1000,
+    "base_volume_ml": 120,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 50, "equal_when": ["fixed_material"] }
+  },
+  {
+    "id": "core_item_ingot_steel_refined",
+    "name": "Refined Steel Ingot",
+    "kind": "RESOURCE",
+    "tags": ["metal", "ingot", "steel"],
+    "fixed_material": "core_mat_metal_steel_tempered",
+    "base_mass_g": 1000,
+    "base_volume_ml": 120,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 50, "equal_when": ["fixed_material"] }
+  },
+  {
+    "id": "core_item_glass_cullet",
+    "name": "Glass Cullet",
+    "kind": "RESOURCE",
+    "tags": ["glass", "cullet", "recyclable"],
+    "base_mass_g": 200,
+    "base_volume_ml": 100,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 200, "equal_when": [] }
+  },
+  {
+    "id": "core_item_glass_batch",
+    "name": "Glass Batch",
+    "kind": "RESOURCE",
+    "tags": ["glass", "batch", "granular"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 700,
+    "stack": { "mode": "charges", "unit": "g", "max_per_stack": 50000 }
+  },
+  {
+    "id": "core_item_powder_charcoal",
+    "name": "Charcoal Powder",
+    "kind": "RESOURCE",
+    "tags": ["fuel", "powder", "carbon"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1500,
+    "stack": { "mode": "charges", "unit": "g", "max_per_stack": 100000 }
+  },
+  {
+    "id": "core_item_liquid_acid_sulfuric_dilute",
+    "name": "Dilute Sulfuric Solution",
+    "kind": "RESOURCE",
+    "tags": ["chem", "acid", "liquid"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1000,
+    "hazard": ["acidic"],
+    "stack": { "mode": "charges", "unit": "ml", "max_per_stack": 20000 }
+  },
+  {
+    "id": "core_item_liquid_acid_sulfuric",
+    "name": "Sulfuric Acid",
+    "kind": "RESOURCE",
+    "tags": ["chem", "acid", "liquid"],
+    "base_mass_g": 1800,
+    "base_volume_ml": 1000,
+    "hazard": ["acidic"],
+    "stack": { "mode": "charges", "unit": "ml", "max_per_stack": 20000 }
+  },
+  {
+    "id": "core_item_liquid_water_pure",
+    "name": "Pure Water",
+    "kind": "RESOURCE",
+    "tags": ["liquid", "water"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1000,
+    "stack": { "mode": "charges", "unit": "ml", "max_per_stack": 50000 }
+  },
+  {
+    "id": "core_item_waste_chem_slag",
+    "name": "Chemical Slag",
+    "kind": "RESOURCE",
+    "tags": ["waste", "slag"],
+    "base_mass_g": 500,
+    "base_volume_ml": 400,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 100, "equal_when": [] }
+  },
+  {
+    "id": "core_item_mix_mortar_lime",
+    "name": "Lime Mortar",
+    "kind": "RESOURCE",
+    "tags": ["mortar", "binder"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 750,
+    "stack": { "mode": "charges", "unit": "ml", "max_per_stack": 50000 }
+  },
+  {
+    "id": "core_tool_mining_pickaxe",
+    "name": "Pickaxe",
+    "kind": "TOOL",
+    "tags": ["mining", "tool"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 2200,
+    "base_volume_ml": 2600,
+    "durability_max": 200,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": { "speed": 1.3, "attacks": [ { "type": "blunt", "base": 10 }, { "type": "pierce", "base": 6 } ] },
+    "tool": { "qualities": { "MINING": 2, "HAMMERING": 1 } }
+  },
+  {
+    "id": "core_weapon_sword_short",
+    "name": "Short Sword",
+    "kind": "WEAPON",
+    "tags": ["weapon", "blade", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 900,
+    "base_volume_ml": 900,
+    "durability_max": 150,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 8,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.0,
+      "attacks": [
+        { "type": "edge", "base": 12, "verb": "slash" },
+        { "type": "pierce", "base": 8, "verb": "stab" }
+      ]
+    }
+  },
+  {
+    "id": "core_armor_torso_breastplate_medium",
+    "name": "Breastplate (Medium)",
+    "kind": "ARMOR",
+    "tags": ["armor", "plate"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 8000,
+    "base_volume_ml": 9000,
+    "durability_max": 180,
+    "equip": { "slot": "TORSO", "layer": "ARMOR" },
+    "armor": { "coverage": 100, "thickness_tier": "MEDIUM" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_container_waterskin_small",
+    "name": "Waterskin (Small)",
+    "kind": "CONTAINER",
+    "tags": ["container", "leather"],
+    "base_mass_g": 150,
+    "base_volume_ml": 500,
+    "container": { "capacity_ml": 2000, "allow_tags": ["liquid"], "sealed": true },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true,
+      "requires_empty": true
+    }
+  }
+]

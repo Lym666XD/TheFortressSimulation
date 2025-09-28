@@ -35,10 +35,28 @@
     </None>
   </ItemGroup>
 
+  <!-- Copy content folder preserving 'content/...' structure in output -->
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)..\..\Content\**\*.*">
+    <Content Include="..\..\content\**\*.*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>content\%(RecursiveDir)%(Filename)%(Extension)</Link>
     </Content>
+  </ItemGroup>
+
+  <!-- Prevent copying Windows reserved device name file 'nul' -->
+  <ItemGroup>
+    <Content Update="..\..\content\nul">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <None Update="..\..\content\nul">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- Remove Windows reserved device file 'nul' from content items -->
+  <ItemGroup>
+    <Content Remove="..\..\content\nul" />
+    <None Remove="..\..\content\nul" />
   </ItemGroup>
 
 </Project>

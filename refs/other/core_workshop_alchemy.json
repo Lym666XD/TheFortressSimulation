@@ -1,0 +1,208 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_alchemy",
+      "name": "Alchemy Workshop",
+      "tags": ["workshop", "alchemy", "occult", "elixir", "transmutation"],
+      "display_order": 52
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_alchemy_transmutation_circle",
+      "name": "Transmutation Circle Table",
+      "slot": "circle",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.04 },
+      "tags": ["circle", "ritual", "transmutation"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_alchemy_chrysopoeia_lead_to_gold_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_alchemy_athanor_regulated",
+        "core_attach_alchemy_alembic_cohobation",
+        "core_attach_alchemy_transmutation_circle",
+        "core_attach_alchemy_fume_hood"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_ingot_lead", "count": 10 },
+        { "id": "core_item_reagent_azoth", "count": 1 },
+        { "id": "core_item_philosopher_stone_shard", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_ingot_gold", "count": 1 },
+        { "id": "core_item_dregs_alchemical", "count": 2 }
+      ],
+      "tags": ["transmutation", "chrysopoeia", "gold"]
+    },
+
+    {
+      "id": "core_recipe_alchemy_transmute_steel_to_mithril_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_alchemy_athanor_regulated",
+        "core_attach_alchemy_transmutation_circle"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_target_steel_equipment", "count": 1 },
+        { "id": "core_item_philosopher_stone_shard", "count": 1 },
+        { "id": "core_item_quintessence", "count": 2 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_equipment_transmuted_mithril",
+          "count": 1,
+          "output_mods": {
+            "copy_from_input": "core_item_target_steel_equipment",
+            "set_material": "core_mat_mithril",
+            "add_tags": ["transmuted", "unique_instance"],
+            "name_suffix": " (Mithril)"
+          }
+        }
+      ],
+      "tags": ["transmutation", "equipment", "mithril"],
+      "ingredient_pools": [
+        {
+          "pool_id": "core_item_target_steel_equipment",
+          "accepts_tags": ["weapon_steel", "armor_steel", "tool_steel"],
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_alchemy_transmute_steel_to_adamantine_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_alchemy_athanor_regulated",
+        "core_attach_alchemy_transmutation_circle"
+      ],
+      "duration_s": 540,
+      "inputs": [
+        { "id": "core_item_target_steel_equipment", "count": 1 },
+        { "id": "core_item_philosopher_stone_shard", "count": 2 },
+        { "id": "core_item_reagent_azoth", "count": 1 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_equipment_transmuted_adamantine",
+          "count": 1,
+          "output_mods": {
+            "copy_from_input": "core_item_target_steel_equipment",
+            "set_material": "core_mat_adamantine",
+            "add_tags": ["transmuted", "unique_instance"],
+            "name_suffix": " (Adamantine)"
+          }
+        }
+      ],
+      "tags": ["transmutation", "equipment", "adamantine"],
+      "ingredient_pools": [
+        {
+          "pool_id": "core_item_target_steel_equipment",
+          "accepts_tags": ["weapon_steel", "armor_steel", "tool_steel"],
+          "min": 0
+        }
+      ]
+    },
+
+    {
+      "id": "core_recipe_alchemy_elixir_healing_plus_M",
+      "workshop": "core_workshop_alchemy",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_alchemy_bath_sand", "core_attach_alchemy_alembic_serpentine"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_herb_medicinal", "count": 2 },
+        { "id": "core_item_quintessence", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_tincture_health_plus", "count": 1 }],
+      "tags": ["elixir", "healing"]
+    },
+    {
+      "id": "core_recipe_alchemy_elixir_stoneskin_plus_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_alchemy_bath_oil", "core_attach_alchemy_alembic_cohobation"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_ash_plant", "count": 1 },
+        { "id": "core_item_reagent_azoth", "count": 1 },
+        { "id": "core_item_quintessence", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_tincture_stoneskin_plus", "count": 1 }],
+      "tags": ["elixir", "defense"]
+    },
+    {
+      "id": "core_recipe_alchemy_elixir_rage_M",
+      "workshop": "core_workshop_alchemy",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_alchemy_bath_sand"],
+      "duration_s": 150,
+      "inputs": [
+        { "id": "core_item_herb_stimulant", "count": 2 },
+        { "id": "core_item_spice_hot", "count": 1 },
+        { "id": "core_item_aqua_vitae", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_elixir_rage", "count": 1 }],
+      "tags": ["elixir", "rage", "combat"]
+    },
+    {
+      "id": "core_recipe_alchemy_elixir_arcane_focus_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_alchemy_bath_oil", "core_attach_alchemy_alembic_cohobation"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_gem_chips_any", "count": 2 },
+        { "id": "core_item_quintessence", "count": 1 },
+        { "id": "core_item_reagent_azoth", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_elixir_arcane_focus", "count": 1 }],
+      "tags": ["elixir", "arcane"]
+    },
+    {
+      "id": "core_recipe_alchemy_elixir_revive_unique_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_alchemy_alembic_cohobation",
+        "core_attach_alchemy_athanor_regulated",
+        "core_attach_alchemy_transmutation_circle"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        { "id": "core_item_philosopher_stone_shard", "count": 1 },
+        { "id": "core_item_herb_occult", "count": 2 },
+        { "id": "core_item_quintessence", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_elixir_revive", "count": 1, "unique": true }
+      ],
+      "tags": ["elixir", "revive", "unique"]
+    },
+
+    {
+      "id": "core_recipe_alchemy_alchemical_fire_sticky_R",
+      "workshop": "core_workshop_alchemy",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_alchemy_athanor_regulated", "core_attach_alchemy_sublimator_multi"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_resin_pine", "count": 2 },
+        { "id": "core_item_pitch_tar", "count": 1 },
+        { "id": "core_item_lime_quick", "count": 1 },
+        { "id": "core_item_powder_sulfur", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_oil_alchemical_fire_sticky", "count": 2 }],
+      "tags": ["fire", "siege", "thrown"]
+    }
+  ]
+}

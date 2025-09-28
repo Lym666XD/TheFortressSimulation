@@ -1,0 +1,612 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_chemistry_lab",
+      "name": "Chemistry Workshop",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["chemistry", "distillation", "acids", "powder", "soap", "silvering"],
+      "attachment_slots": [
+        "distillation",
+        "condenser",
+        "absorber",
+        "sulfuric_line",
+        "nitric_line",
+        "hydrochloric_line",
+        "sublimer",
+        "grinder",
+        "granulator",
+        "dryer",
+        "reactor",
+        "bench",
+        "fumehood"
+      ]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_distill_glass_ceramic",
+      "name": "Glass/Ceramic Still",
+      "slot": "distillation",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_distill_dual_train",
+      "tags": ["distillation"]
+    },
+    {
+      "id": "core_attach_distill_dual_train",
+      "name": "Dual-Train Still",
+      "slot": "distillation",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_distill_multi_pot",
+      "tags": ["distillation"]
+    },
+    {
+      "id": "core_attach_distill_multi_pot",
+      "name": "Multi-Pot Still",
+      "slot": "distillation",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["distillation"]
+    },
+    {
+      "id": "core_attach_condenser_coil",
+      "name": "Coil Condenser",
+      "slot": "condenser",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_condenser_large",
+      "tags": ["condenser"]
+    },
+    {
+      "id": "core_attach_condenser_large",
+      "name": "Large Condenser",
+      "slot": "condenser",
+      "era": "MEDIEVAL",
+      "upgrade_to": null,
+      "tags": ["condenser"]
+    },
+    {
+      "id": "core_attach_absorber_trough",
+      "name": "Settling Trough",
+      "slot": "absorber",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_absorber_wash_pit",
+      "tags": ["scrubber"]
+    },
+    {
+      "id": "core_attach_absorber_wash_pit",
+      "name": "Wash Pit",
+      "slot": "absorber",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_absorber_tower",
+      "tags": ["scrubber"]
+    },
+    {
+      "id": "core_attach_absorber_tower",
+      "name": "Absorption Tower",
+      "slot": "absorber",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["scrubber"]
+    },
+    {
+      "id": "core_attach_sulfuric_alum_dryer_rack",
+      "name": "Alum/Vitriol Drying Rack",
+      "slot": "sulfuric_line",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_sulfuric_alum_drydist_furnace",
+      "tags": ["sulfuric"]
+    },
+    {
+      "id": "core_attach_sulfuric_alum_drydist_furnace",
+      "name": "Alum/Vitriol Dry-Distillation Furnace",
+      "slot": "sulfuric_line",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_sulfuric_multistage_with_boiler",
+      "tags": ["sulfuric"]
+    },
+    {
+      "id": "core_attach_sulfuric_multistage_with_boiler",
+      "name": "Multistage Dry-Distillation + Concentrator",
+      "slot": "sulfuric_line",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["sulfuric"]
+    },
+    {
+      "id": "core_attach_nitric_still",
+      "name": "Strong Acid Still (Nitric)",
+      "slot": "nitric_line",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_nitric_train",
+      "tags": ["nitric"]
+    },
+    {
+      "id": "core_attach_nitric_train",
+      "name": "Nitric Acid Train",
+      "slot": "nitric_line",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["nitric"]
+    },
+    {
+      "id": "core_attach_hcl_generator_pot",
+      "name": "HCl Generator Pot",
+      "slot": "hydrochloric_line",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_hcl_generator_furnace",
+      "tags": ["hydrochloric"]
+    },
+    {
+      "id": "core_attach_hcl_generator_furnace",
+      "name": "HCl Generator Furnace",
+      "slot": "hydrochloric_line",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["hydrochloric"]
+    },
+    {
+      "id": "core_attach_sublimer_furnace",
+      "name": "Sublimation Furnace",
+      "slot": "sublimer",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_sublimer_continuous",
+      "tags": ["sulfur"]
+    },
+    {
+      "id": "core_attach_sublimer_continuous",
+      "name": "Continuous Sublimer",
+      "slot": "sublimer",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_sublimer_multichamber",
+      "tags": ["sulfur"]
+    },
+    {
+      "id": "core_attach_sublimer_multichamber",
+      "name": "Multichamber Sublimer",
+      "slot": "sublimer",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["sulfur"]
+    },
+    {
+      "id": "core_attach_grinder_handmill_sieve",
+      "name": "Hand Mill & Sieve",
+      "slot": "grinder",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_grinder_water_muller",
+      "tags": ["powder"]
+    },
+    {
+      "id": "core_attach_grinder_water_muller",
+      "name": "Water-Powered Muller",
+      "slot": "grinder",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["powder", "powered"]
+    },
+    {
+      "id": "core_attach_granulator_basin",
+      "name": "Granulation Basin",
+      "slot": "granulator",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_granulator_drum",
+      "tags": ["granulation"]
+    },
+    {
+      "id": "core_attach_granulator_drum",
+      "name": "Rotary Drum Granulator",
+      "slot": "granulator",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["granulation", "powered"]
+    },
+    {
+      "id": "core_attach_dryer_rack",
+      "name": "Drying Rack",
+      "slot": "dryer",
+      "era": "MEDIEVAL",
+      "upgrade_to": null,
+      "tags": ["drying"]
+    },
+    {
+      "id": "core_attach_reactor_kettle",
+      "name": "Saponification Kettle",
+      "slot": "reactor",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_reactor_kettle_agitated",
+      "tags": ["reactor"]
+    },
+    {
+      "id": "core_attach_reactor_kettle_agitated",
+      "name": "Agitated Saponification Kettle",
+      "slot": "reactor",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["reactor"]
+    },
+    {
+      "id": "core_attach_bench_mixer_acid",
+      "name": "Acid Mixing Bench",
+      "slot": "bench",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["mixing"]
+    },
+    {
+      "id": "core_attach_bench_tank_acidproof",
+      "name": "Acid-Proof Holding Tank",
+      "slot": "bench",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["storage"]
+    },
+    {
+      "id": "core_attach_fumehood_enclosure",
+      "name": "Fume Hood Enclosure",
+      "slot": "fumehood",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["safety"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_h2so4_from_dilute_c",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "CLASSIC",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_distill_glass_ceramic", "core_attach_condenser_coil"],
+      "inputs": [
+        { "id": "core_item_liquid_acid_sulfuric_dilute", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 1000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 8000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_h2so4_from_dilute_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 1400,
+      "requires_enablers": ["core_attach_distill_dual_train", "core_attach_condenser_large", "core_attach_absorber_wash_pit"],
+      "inputs": [
+        { "id": "core_item_liquid_acid_sulfuric_dilute", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 3000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 6000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_h2so4_from_dilute_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1300,
+      "requires_enablers": ["core_attach_distill_multi_pot", "core_attach_condenser_large", "core_attach_absorber_tower", "core_attach_fumehood_enclosure"],
+      "inputs": [
+        { "id": "core_item_liquid_acid_sulfuric_dilute", "charges_ml": 10000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 4000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_h2so4_from_vitriol_or_alum_c",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "CLASSIC",
+      "duration_s": 1800,
+      "requires_enablers": ["core_attach_sulfuric_alum_dryer_rack", "core_attach_distill_glass_ceramic", "core_attach_condenser_coil"],
+      "inputs_or": [
+        [
+          { "id": "core_item_crystal_vitriol_green", "count": 10 }
+        ],
+        [
+          { "id": "core_item_crystal_alum", "count": 10 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 3000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 2000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_h2so4_from_vitriol_or_alum_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 1600,
+      "requires_enablers": ["core_attach_sulfuric_alum_drydist_furnace", "core_attach_distill_dual_train", "core_attach_condenser_large", "core_attach_absorber_wash_pit"],
+      "inputs_or": [
+        [
+          { "id": "core_item_crystal_vitriol_green", "count": 10 }
+        ],
+        [
+          { "id": "core_item_crystal_alum", "count": 10 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 5000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 3000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_h2so4_from_vitriol_or_alum_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_sulfuric_multistage_with_boiler", "core_attach_condenser_large", "core_attach_fumehood_enclosure"],
+      "inputs_or": [
+        [
+          { "id": "core_item_crystal_vitriol_green", "count": 10 }
+        ],
+        [
+          { "id": "core_item_crystal_alum", "count": 10 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 6000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 3000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_hno3_from_niter_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_nitric_still", "core_attach_condenser_large", "core_attach_absorber_wash_pit"],
+      "inputs": [
+        { "id": "core_item_powder_niter", "charges_g": 10000 },
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_nitric", "charges_ml": 6000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 3000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_hno3_from_niter_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1300,
+      "requires_enablers": ["core_attach_nitric_train", "core_attach_condenser_large", "core_attach_absorber_tower", "core_attach_fumehood_enclosure"],
+      "inputs": [
+        { "id": "core_item_powder_niter", "charges_g": 10000 },
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_nitric", "charges_ml": 8000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 2000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_hcl_from_salt_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_hcl_generator_pot", "core_attach_absorber_wash_pit"],
+      "inputs": [
+        { "id": "core_item_powder_salt", "charges_g": 10000 },
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_hydrochloric", "charges_ml": 6000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 2000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_hcl_from_salt_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1100,
+      "requires_enablers": ["core_attach_hcl_generator_furnace", "core_attach_absorber_tower", "core_attach_fumehood_enclosure"],
+      "inputs": [
+        { "id": "core_item_powder_salt", "charges_g": 10000 },
+        { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_hydrochloric", "charges_ml": 8000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 1000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_aqua_regia_mix_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_bench_mixer_acid", "core_attach_bench_tank_acidproof", "core_attach_fumehood_enclosure"],
+      "inputs": [
+        { "id": "core_item_liquid_acid_nitric", "charges_ml": 4000 },
+        { "id": "core_item_liquid_acid_hydrochloric", "charges_ml": 6000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_acid_aqua_regia", "charges_ml": 8000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_sulfur_powder_from_ore_c",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_sublimer_furnace"],
+      "inputs": [
+        { "id": "core_item_ore_sulfur_natural", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_sulfur", "charges_g": 10000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_sulfur_powder_from_ore_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 850,
+      "requires_enablers": ["core_attach_sublimer_continuous"],
+      "inputs": [
+        { "id": "core_item_ore_sulfur_natural", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_sulfur", "charges_g": 11000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_sulfur_powder_from_ore_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_sublimer_multichamber"],
+      "inputs": [
+        { "id": "core_item_ore_sulfur_natural", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_sulfur", "charges_g": 12000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_gunpowder_granulated_m",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "MEDIEVAL",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_grinder_handmill_sieve", "core_attach_granulator_basin", "core_attach_dryer_rack"],
+      "inputs": [
+        { "id": "core_item_powder_niter", "charges_g": 7500 },
+        { "id": "core_item_powder_sulfur", "charges_g": 1000 },
+        { "id": "core_item_powder_charcoal", "charges_g": 1500 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_black_powder", "charges_g": 10000 }
+      ]
+    },
+    {
+      "id": "core_recipe_gunpowder_granulated_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_grinder_water_muller", "core_attach_granulator_drum", "core_attach_dryer_rack"],
+      "inputs": [
+        { "id": "core_item_powder_niter", "charges_g": 7500 },
+        { "id": "core_item_powder_sulfur", "charges_g": 1000 },
+        { "id": "core_item_powder_charcoal", "charges_g": 1500 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_black_powder", "charges_g": 12000 }
+      ]
+    },
+    {
+      "id": "core_recipe_saponify_soap_c",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "CLASSIC",
+      "duration_s": 1800,
+      "requires_enablers": ["core_attach_reactor_kettle"],
+      "inputs": [
+        { "id": "core_item_liquid_oil_vegetable", "charges_ml": 8000 },
+        { "id": "core_item_liquid_alkali_lye", "charges_ml": 4000 }
+      ],
+      "outputs": [
+        { "id": "core_item_bar_soap", "count": 10 },
+        { "id": "core_item_liquid_glycerin_crude", "charges_ml": 500 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+      {
+    "id": "core_recipe_saponify_soap_m",
+    "workshop_id": "core_workshop_chemistry_lab",
+    "era": "MEDIEVAL",
+    "duration_s": 1650,
+    "requires_enablers": ["core_attach_reactor_kettle"],
+    "inputs": [
+      { "id": "core_item_liquid_oil_vegetable", "charges_ml": 8000 },
+      { "id": "core_item_liquid_alkali_lye", "charges_ml": 4000 }
+    ],
+    "outputs": [
+      { "id": "core_item_bar_soap", "count": 11 },
+      { "id": "core_item_liquid_glycerin_crude", "charges_ml": 550 }
+    ],
+    "byproducts": [
+      { "id": "core_item_waste_chem_slag", "count": 1 }
+    ]
+    },
+    {
+      "id": "core_recipe_saponify_soap_r",
+      "workshop_id": "core_workshop_chemistry_lab",
+      "era": "RENAISSANCE",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_reactor_kettle_agitated"],
+      "inputs": [
+        { "id": "core_item_liquid_oil_vegetable", "charges_ml": 8000 },
+        { "id": "core_item_liquid_alkali_lye", "charges_ml": 4000 }
+      ],
+      "outputs": [
+        { "id": "core_item_bar_soap", "count": 12 },
+        { "id": "core_item_liquid_glycerin_crude", "charges_ml": 600 }
+      ],
+      "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+        "id": "core_recipe_mirror_silvered_plain_r",
+        "workshop_id": "core_workshop_chemistry_lab",
+        "era": "RENAISSANCE",
+        "duration_s": 1200,
+        "requires_enablers": ["core_attach_bench_mixer_acid", "core_attach_fumehood_enclosure"],
+        "inputs": [
+        { "id": "core_item_glass_batch_clear", "charges_g": 5000 },
+        { "id": "core_item_ingot_silver", "count": 1 },
+        { "id": "core_item_liquid_acid_nitric", "charges_ml": 2000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 2000 }
+        ],
+        "outputs": [
+        { "id": "core_item_mirror_silvered_plain", "count": 1 }
+        ],
+        "byproducts": [
+        { "id": "core_item_waste_chem_slag", "count": 1 }
+        ]
+    }
+  ]
+}

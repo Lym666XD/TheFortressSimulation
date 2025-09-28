@@ -1,0 +1,878 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_woodworking",
+      "name": "Woodworking Workshop",
+      "tags": ["workshop", "wood", "carpentry"],
+      "display_order": 40
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_wood_saw_hand_frame",
+      "name": "Hand Saw Frame",
+      "slot": "sawline",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_wood_saw_pit",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["saw", "cut"]
+    },
+    {
+      "id": "core_attach_wood_saw_pit",
+      "name": "Pit Saw Bench",
+      "slot": "sawline",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_wood_saw_water",
+      "effects": { "throughput_mult": 1.25 },
+      "tags": ["saw", "cut", "water_optional"]
+    },
+    {
+      "id": "core_attach_wood_saw_water",
+      "name": "Water-Powered Saw Shed",
+      "slot": "sawline",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.5 },
+      "tags": ["saw", "cut", "water"]
+    },
+    {
+      "id": "core_attach_wood_joinery_bench",
+      "name": "Joinery Bench",
+      "slot": "joinery",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_wood_joinery_fixture_drill",
+      "effects": { "time_mult": 1.0 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_joinery_fixture_drill",
+      "name": "Clamps & Lever Drill",
+      "slot": "joinery",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_wood_joinery_planer_bench",
+      "effects": { "time_mult": 0.9 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_joinery_planer_bench",
+      "name": "Planer/Drill Bench & Jigs",
+      "slot": "joinery",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.8 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_lathe_foot",
+      "name": "Foot-Powered Lathe",
+      "slot": "lathe",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_wood_lathe_improved",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["lathe", "turn"]
+    },
+    {
+      "id": "core_attach_wood_lathe_improved",
+      "name": "Improved Lathe",
+      "slot": "lathe",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["lathe", "turn"]
+    },
+    {
+      "id": "core_attach_wood_dry_shed",
+      "name": "Drying Shed",
+      "slot": "drying",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_wood_dry_vent_store",
+      "effects": {},
+      "tags": ["drying"]
+    },
+    {
+      "id": "core_attach_wood_dry_vent_store",
+      "name": "Ventilated Dry Store",
+      "slot": "drying",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_wood_dry_low_kiln",
+      "effects": { "quality_tags_add": ["warp_resist"] },
+      "tags": ["drying"]
+    },
+    {
+      "id": "core_attach_wood_dry_low_kiln",
+      "name": "Low-Temp Drying Kiln",
+      "slot": "drying",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "quality_tags_add": ["warp_resist", "durability_plus_10"] },
+      "tags": ["drying"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_wood_boards_from_log_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_saw_hand_frame"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_board_wood", "count": 12 }]
+    },
+    {
+      "id": "core_recipe_wood_boards_from_log_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_saw_pit"],
+      "duration_s": 55,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_board_wood", "count": 14 }]
+    },
+    {
+      "id": "core_recipe_wood_boards_from_log_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_saw_water"],
+      "duration_s": 50,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_board_wood", "count": 16 }]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_saw_hand_frame"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_beam_wood", "count": 2 }]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_saw_pit"],
+      "duration_s": 55,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_beam_wood", "count": 3 }]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_saw_water"],
+      "duration_s": 50,
+      "inputs": [{ "id": "core_item_log_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_beam_wood", "count": 4 }]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_saw_hand_frame"],
+      "duration_s": 30,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_rod_wood", "count": 12 }]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_saw_pit"],
+      "duration_s": 27,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_rod_wood", "count": 14 }]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_saw_water"],
+      "duration_s": 24,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_rod_wood", "count": 16 }]
+    },
+    {
+      "id": "core_recipe_wood_components_small_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 30,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_small", "count": 10 }]
+    },
+    {
+      "id": "core_recipe_wood_components_small_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 27,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_small", "count": 12 }]
+    },
+    {
+      "id": "core_recipe_wood_components_small_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 24,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_small", "count": 14 }]
+    },
+    {
+      "id": "core_recipe_wood_components_large_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 40,
+      "inputs": [{ "id": "core_item_beam_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_large", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_wood_components_large_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 36,
+      "inputs": [{ "id": "core_item_beam_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_large", "count": 2 }]
+    },
+    {
+      "id": "core_recipe_wood_components_large_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 32,
+      "inputs": [{ "id": "core_item_beam_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_component_wood_large", "count": 3 }]
+    },
+    {
+      "id": "core_recipe_container_barrel_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_container_barrel_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_barrel_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_container_barrel_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_barrel_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_container_barrel_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bin_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 3 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bin_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bin_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 81,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 3 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bin_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bin_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 72,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 3 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bin_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bucket_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 1 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bucket_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bucket_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 54,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 1 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bucket_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_bucket_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 48,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 1 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_container_bucket_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 5 }
+      ],
+      "outputs": [{ "id": "core_item_cart_hand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 162,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 5 }
+      ],
+      "outputs": [{ "id": "core_item_cart_hand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 144,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 5 }
+      ],
+      "outputs": [{ "id": "core_item_cart_hand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_component_wood_small", "count": 8 }
+      ],
+      "outputs": [{ "id": "core_item_cart_mine_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 216,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_component_wood_small", "count": 8 }
+      ],
+      "outputs": [{ "id": "core_item_cart_mine_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 192,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_component_wood_small", "count": 8 }
+      ],
+      "outputs": [{ "id": "core_item_cart_mine_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_cage_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 81,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_cage_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 72,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_cage_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_bed_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 150,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_rod_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_bed_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_bed_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 135,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_rod_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_bed_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_bed_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 6 },
+        { "id": "core_item_rod_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_bed_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_door_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 75,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_door_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_door_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 68,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_door_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_door_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_door_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_table_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_board_wood", "count": 3 }],
+      "outputs": [{ "id": "core_item_furniture_table_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_table_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [{ "id": "core_item_board_wood", "count": 3 }],
+      "outputs": [{ "id": "core_item_furniture_table_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_table_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [{ "id": "core_item_board_wood", "count": 3 }],
+      "outputs": [{ "id": "core_item_furniture_table_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_chair_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 90,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_chair_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_chair_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 81,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_chair_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_chair_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 72,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_furniture_chair_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 150,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_cabinet_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 135,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_cabinet_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_cabinet_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_coffer_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_coffer_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [{ "id": "core_item_board_wood", "count": 4 }],
+      "outputs": [{ "id": "core_item_furniture_coffer_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_weapon_rack_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_weapon_rack_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_weapon_rack_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_armor_stand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_armor_stand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 4 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_armor_stand_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_grate_wood_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_grate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_grate_wood_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 54,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_grate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_grate_wood_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 48,
+      "inputs": [{ "id": "core_item_board_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_grate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 75,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_hatch_cover_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 68,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_hatch_cover_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_hatch_cover_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_C",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_beam_wood", "count": 1 },
+        { "id": "core_item_board_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_floodgate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_M",
+      "workshop": "core_workshop_woodworking",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_wood_joinery_fixture_drill"],
+      "duration_s": 108,
+      "inputs": [
+        { "id": "core_item_beam_wood", "count": 1 },
+        { "id": "core_item_board_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_floodgate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_R",
+      "workshop": "core_workshop_woodworking",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_wood_joinery_planer_bench"],
+      "duration_s": 96,
+      "inputs": [
+        { "id": "core_item_beam_wood", "count": 1 },
+        { "id": "core_item_board_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_floodgate_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_archery_arrow_shafts_100",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_saw_hand_frame"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_rod_wood", "count": 10 }],
+      "outputs": [{ "id": "core_item_shaft_arrow_wood", "count": 100 }]
+    },
+    {
+      "id": "core_recipe_archery_bolt_shafts_100",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_saw_hand_frame"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_rod_wood", "count": 12 }],
+      "outputs": [{ "id": "core_item_shaft_bolt_wood", "count": 100 }]
+    },
+    {
+      "id": "core_recipe_tool_cane_pair",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 30,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_cane_wood", "count": 2 }]
+    },
+    {
+      "id": "core_recipe_tool_splints_4",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 30,
+      "inputs": [{ "id": "core_item_board_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_splint_wood", "count": 4 }]
+    },
+    {
+      "id": "core_recipe_tool_ladder",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 3 },
+        { "id": "core_item_component_wood_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_ladder_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_tool_animal_trap",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_trap_animal_wood", "count": 1 }]
+    },
+    {
+      "id": "core_recipe_shield_round_wood",
+      "workshop": "core_workshop_woodworking",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_wood_joinery_bench"],
+      "duration_s": 75,
+      "inputs": [
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_component_wood_small", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_shield_wood_round", "count": 1 }]
+    }
+  ]
+}

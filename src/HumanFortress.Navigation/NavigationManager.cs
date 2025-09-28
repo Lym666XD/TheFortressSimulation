@@ -16,7 +16,7 @@ public sealed class NavigationManager
     {
         _world = world;
         _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
-        _tuning = new NavigationTuning();
+        _tuning = NavigationTuning.LoadFromContent();
     }
 
     /// <summary>
@@ -63,6 +63,67 @@ public sealed class NavigationManager
         var navData = GetOrCreateNavData(navKey);
         var tiles = chunk.GetTilesCopy();
         navData.RebuildFromTiles(tiles, _tuning);
+
+        // Precompute ramp connectivity flags for O(1) neighbor expansion
+        // UpRamp: current tile is ramp base, points to top at z+1
+        // DownRamp: current tile is standable top and has a matching ramp below/behind at z-1
+        int baseWorldX = chunk.Key.ChunkX * HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int baseWorldY = chunk.Key.ChunkY * HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int z = chunk.Key.Z;
+
+        for (int ly = 0; ly < ChunkNavData.ChunkSize; ly++)
+        {
+            for (int lx = 0; lx < ChunkNavData.ChunkSize; lx++)
+            {
+                int idx = ly * ChunkNavData.ChunkSize + lx;
+                ref readonly var tile = ref tiles[idx];
+
+                // Reset flags
+                navData.UpRampDir[idx] = 255;
+                navData.DownRampDir[idx] = 255;
+                // Clear reserved bits 6 and 7
+                navData.NavMask[idx] = (byte)(navData.NavMask[idx] & 0b0011_1111);
+
+                // Up ramp (base -> top)
+                if (tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp)
+                {
+                    byte dir = tile.RampDir;
+                    var (dx, dy) = HumanFortress.Simulation.Tiles.TerrainBitOps.GetDirectionOffset(dir);
+                    int topX = baseWorldX + lx + dx;
+                    int topY = baseWorldY + ly + dy;
+                    int topZ = z + 1;
+
+                    var topTile = _world.GetTile(topX, topY, topZ);
+                    if (topTile.HasValue && (topTile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor || topTile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Slope))
+                    {
+                        navData.UpRampDir[idx] = dir;
+                        // Set bit6 for UpRamp
+                        navData.NavMask[idx] = (byte)(navData.NavMask[idx] | (1 << 6));
+                    }
+                }
+
+                // Down ramp (top -> base behind)
+                if (tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor || tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Slope)
+                {
+                    for (byte dir = 0; dir < 8; dir++)
+                    {
+                        var (dx, dy) = HumanFortress.Simulation.Tiles.TerrainBitOps.GetDirectionOffset(dir);
+                        int rampX = baseWorldX + lx - dx;
+                        int rampY = baseWorldY + ly - dy;
+                        int rampZ = z - 1;
+
+                        var rampTile = _world.GetTile(rampX, rampY, rampZ);
+                        if (rampTile.HasValue && rampTile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp && rampTile.Value.RampDir == dir)
+                        {
+                            navData.DownRampDir[idx] = dir;
+                            // Set bit7 for DownRamp
+                            navData.NavMask[idx] = (byte)(navData.NavMask[idx] | (1 << 7));
+                            break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /// <summary>

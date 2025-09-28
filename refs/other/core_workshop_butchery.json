@@ -1,0 +1,921 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_butchery",
+      "name": "Butchery & Meatworks",
+      "tags": [
+        "workshop",
+        "food",
+        "butchery",
+        "meat"
+      ],
+      "display_order": 30
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_butchery_hygiene_open_slab",
+      "name": "Open Slab",
+      "slot": "hygiene_floor",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_butchery_hygiene_covered_floor",
+      "effects": {
+        "throughput_mult": 1.0
+      },
+      "tags": [
+        "hygiene",
+        "floor",
+        "butchery"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_hygiene_covered_floor",
+      "name": "Covered Slaughter Floor",
+      "slot": "hygiene_floor",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_butchery_hygiene_tiled_drain",
+      "effects": {
+        "throughput_mult": 1.05
+      },
+      "tags": [
+        "hygiene",
+        "floor",
+        "butchery"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_hygiene_tiled_drain",
+      "name": "Tiled Floor with Drains",
+      "slot": "hygiene_floor",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {
+        "throughput_mult": 1.1
+      },
+      "tags": [
+        "hygiene",
+        "floor",
+        "drain",
+        "butchery"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_hoist_hook",
+      "name": "Hook & Pulley",
+      "slot": "hoist_system",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_butchery_hoist_frame",
+      "effects": {
+        "throughput_mult": 1.0
+      },
+      "tags": [
+        "hoist",
+        "pulley"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_hoist_frame",
+      "name": "Gallows Hoist",
+      "slot": "hoist_system",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_butchery_hoist_rail",
+      "effects": {
+        "throughput_mult": 1.05
+      },
+      "tags": [
+        "hoist",
+        "frame"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_hoist_rail",
+      "name": "Rail & Trolley",
+      "slot": "hoist_system",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {
+        "throughput_mult": 1.1
+      },
+      "tags": [
+        "hoist",
+        "rail",
+        "trolley"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_curing_salt_barrel",
+      "name": "Salt Barrels",
+      "slot": "curing_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_butchery_curing_brine_room",
+      "effects": {
+        "throughput_mult": 1.0
+      },
+      "tags": [
+        "curing",
+        "salt"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_curing_brine_room",
+      "name": "Brine Room",
+      "slot": "curing_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_butchery_curing_cold_cellar",
+      "effects": {
+        "throughput_mult": 1.05
+      },
+      "tags": [
+        "curing",
+        "brine"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_curing_cold_cellar",
+      "name": "Cold Cellar",
+      "slot": "curing_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {
+        "throughput_mult": 1.1
+      },
+      "tags": [
+        "curing",
+        "cold"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_smoking_pit",
+      "name": "Smoke Pit",
+      "slot": "smoking_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_butchery_smoking_house",
+      "effects": {
+        "throughput_mult": 1.0
+      },
+      "tags": [
+        "smoking",
+        "pit"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_smoking_house",
+      "name": "Smokehouse",
+      "slot": "smoking_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_butchery_smoking_vented_house",
+      "effects": {
+        "throughput_mult": 1.05
+      },
+      "tags": [
+        "smoking",
+        "house"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_smoking_vented_house",
+      "name": "Vented Smokehouse",
+      "slot": "smoking_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {
+        "throughput_mult": 1.1
+      },
+      "tags": [
+        "smoking",
+        "vented"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_render_kettle",
+      "name": "Rendering Kettle",
+      "slot": "rendering_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_butchery_render_multi_kettle",
+      "effects": {
+        "throughput_mult": 1.0
+      },
+      "tags": [
+        "rendering",
+        "kettle"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_render_multi_kettle",
+      "name": "Multi Kettle",
+      "slot": "rendering_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_butchery_render_steam_kettle",
+      "effects": {
+        "throughput_mult": 1.05
+      },
+      "tags": [
+        "rendering",
+        "multi"
+      ]
+    },
+    {
+      "id": "core_attach_butchery_render_steam_kettle",
+      "name": "Steam Rendering Kettle",
+      "slot": "rendering_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {
+        "throughput_mult": 1.1
+      },
+      "tags": [
+        "rendering",
+        "steam"
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_butchery_intake_bleed_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_open_slab",
+        "core_attach_butchery_hoist_hook"
+      ],
+      "duration_s": 180,
+      "inputs": [
+        {
+          "id": "core_item_animal_carcass_mc",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_blood",
+          "count": 2
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 1
+        }
+      ],
+      "tags": [
+        "butchery",
+        "intake",
+        "bleed"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_intake_bleed_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_covered_floor",
+        "core_attach_butchery_hoist_frame"
+      ],
+      "duration_s": 160,
+      "inputs": [
+        {
+          "id": "core_item_animal_carcass_mc",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_blood",
+          "count": 3
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 1
+        }
+      ],
+      "tags": [
+        "butchery",
+        "intake",
+        "bleed"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_intake_bleed_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_tiled_drain",
+        "core_attach_butchery_hoist_rail"
+      ],
+      "duration_s": 140,
+      "inputs": [
+        {
+          "id": "core_item_animal_carcass_mc",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_blood",
+          "count": 3
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 0
+        }
+      ],
+      "tags": [
+        "butchery",
+        "intake",
+        "bleed"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_breakdown_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_open_slab"
+      ],
+      "duration_s": 300,
+      "inputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 9
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 3
+        },
+        {
+          "id": "core_item_offal",
+          "count": 3
+        },
+        {
+          "id": "core_item_bone",
+          "count": 3
+        },
+        {
+          "id": "core_item_hide_or_feathers",
+          "count": 1
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 1
+        },
+        {
+          "id": "core_item_wastewater",
+          "count": 1
+        }
+      ],
+      "tags": [
+        "butchery",
+        "breakdown",
+        "eviscerate"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_breakdown_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_covered_floor"
+      ],
+      "duration_s": 270,
+      "inputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 4
+        },
+        {
+          "id": "core_item_offal",
+          "count": 3
+        },
+        {
+          "id": "core_item_bone",
+          "count": 3
+        },
+        {
+          "id": "core_item_hide_or_feathers",
+          "count": 1
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 1
+        },
+        {
+          "id": "core_item_wastewater",
+          "count": 2
+        }
+      ],
+      "tags": [
+        "butchery",
+        "breakdown",
+        "eviscerate"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_breakdown_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_hygiene_tiled_drain"
+      ],
+      "duration_s": 240,
+      "inputs": [
+        {
+          "id": "core_item_fresh_carcass",
+          "count": 1
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 11
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 4
+        },
+        {
+          "id": "core_item_offal",
+          "count": 4
+        },
+        {
+          "id": "core_item_bone",
+          "count": 3
+        },
+        {
+          "id": "core_item_hide_or_feathers",
+          "count": 1
+        },
+        {
+          "id": "core_item_refuse_butchery",
+          "count": 1
+        },
+        {
+          "id": "core_item_wastewater",
+          "count": 2
+        }
+      ],
+      "tags": [
+        "butchery",
+        "breakdown",
+        "eviscerate"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_salted_meat_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_curing_salt_barrel"
+      ],
+      "duration_s": 240,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_salt",
+          "count": 2
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_salted",
+          "count": 10
+        }
+      ],
+      "tags": [
+        "preserve",
+        "curing",
+        "salted"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_salted_meat_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_curing_brine_room"
+      ],
+      "duration_s": 240,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_salt",
+          "count": 2
+        },
+        {
+          "id": "core_item_water_clean",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_salted",
+          "count": 11
+        }
+      ],
+      "tags": [
+        "preserve",
+        "curing",
+        "salted"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_salted_meat_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_curing_cold_cellar"
+      ],
+      "duration_s": 240,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_salt",
+          "count": 2
+        },
+        {
+          "id": "core_item_ice",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_salted",
+          "count": 12
+        }
+      ],
+      "tags": [
+        "preserve",
+        "curing",
+        "salted"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_jerky_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_smoking_pit"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_fuel",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_jerky",
+          "count": 10
+        }
+      ],
+      "tags": [
+        "preserve",
+        "smoke",
+        "jerky"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_jerky_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_smoking_house"
+      ],
+      "duration_s": 330,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_fuel",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_jerky",
+          "count": 11
+        }
+      ],
+      "tags": [
+        "preserve",
+        "smoke",
+        "jerky"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_jerky_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_smoking_vented_house"
+      ],
+      "duration_s": 300,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 10
+        },
+        {
+          "id": "core_item_fuel",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_meat_jerky",
+          "count": 12
+        }
+      ],
+      "tags": [
+        "preserve",
+        "smoke",
+        "jerky"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_sausage_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_curing_salt_barrel"
+      ],
+      "duration_s": 300,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 8
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 2
+        },
+        {
+          "id": "core_item_salt",
+          "count": 1
+        },
+        {
+          "id": "core_item_casings",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_sausage",
+          "count": 10
+        }
+      ],
+      "tags": [
+        "sausage",
+        "stuffing",
+        "preserve"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_sausage_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_curing_brine_room"
+      ],
+      "duration_s": 300,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 8
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 2
+        },
+        {
+          "id": "core_item_salt",
+          "count": 1
+        },
+        {
+          "id": "core_item_casings",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_sausage",
+          "count": 11
+        }
+      ],
+      "tags": [
+        "sausage",
+        "stuffing",
+        "preserve"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_sausage_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_curing_cold_cellar"
+      ],
+      "duration_s": 280,
+      "inputs": [
+        {
+          "id": "core_item_meat_raw",
+          "count": 8
+        },
+        {
+          "id": "core_item_fat_raw",
+          "count": 2
+        },
+        {
+          "id": "core_item_salt",
+          "count": 1
+        },
+        {
+          "id": "core_item_casings",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_sausage",
+          "count": 11
+        }
+      ],
+      "tags": [
+        "sausage",
+        "stuffing",
+        "preserve"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_rendering_C",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_butchery_render_kettle"
+      ],
+      "duration_s": 420,
+      "inputs": [
+        {
+          "id": "core_item_fat_raw",
+          "count": 10
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_tallow_lard",
+          "count": 8
+        }
+      ],
+      "tags": [
+        "render",
+        "fat",
+        "tallow"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_rendering_M",
+      "workshop": "core_workshop_butchery",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_butchery_render_multi_kettle"
+      ],
+      "duration_s": 390,
+      "inputs": [
+        {
+          "id": "core_item_fat_raw",
+          "count": 10
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_tallow_lard",
+          "count": 9
+        }
+      ],
+      "tags": [
+        "render",
+        "fat",
+        "tallow"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_rendering_R",
+      "workshop": "core_workshop_butchery",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_butchery_render_steam_kettle"
+      ],
+      "duration_s": 360,
+      "inputs": [
+        {
+          "id": "core_item_fat_raw",
+          "count": 10
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_tallow_lard",
+          "count": 10
+        }
+      ],
+      "tags": [
+        "render",
+        "fat",
+        "tallow"
+      ]
+    },
+    {
+      "id": "core_recipe_butchery_bone_crafts_all",
+      "workshop": "core_workshop_butchery",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 180,
+      "inputs": [
+        {
+          "id": "core_item_bone",
+          "count": 10
+        },
+        {
+          "id": "core_item_fuel",
+          "count": 1
+        }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_bone_crafts",
+          "count": 10
+        }
+      ],
+      "tags": [
+        "bone",
+        "crafts",
+        "butchery"
+      ]
+    }
+  ]
+}

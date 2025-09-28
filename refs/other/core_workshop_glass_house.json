@@ -1,0 +1,454 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_glass_house",
+      "name": "Glasshouse & Lehr",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["glass", "melting", "forming", "anneal", "cullet"],
+      "attachment_slots": ["furnace", "fining", "anneal", "wash", "alkali", "forming", "spinner", "press"]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_furnace_crucible",
+      "name": "Crucible Glass Furnace",
+      "slot": "furnace",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_furnace_forest",
+      "tags": ["melting"]
+    },
+    {
+      "id": "core_attach_furnace_forest",
+      "name": "Forest Glass Furnace",
+      "slot": "furnace",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_furnace_cristallo_tank",
+      "tags": ["melting", "potash"]
+    },
+    {
+      "id": "core_attach_furnace_cristallo_tank",
+      "name": "Cristallo Pot/Tank Furnace",
+      "slot": "furnace",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["melting", "clear"]
+    },
+    {
+      "id": "core_attach_fining_pot_standard",
+      "name": "Fining Pot",
+      "slot": "fining",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_fining_pot_large",
+      "tags": ["fining"]
+    },
+    {
+      "id": "core_attach_fining_pot_large",
+      "name": "Large Fining Pot",
+      "slot": "fining",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["fining"]
+    },
+    {
+      "id": "core_attach_annealer_kiln",
+      "name": "Annealing Kiln",
+      "slot": "anneal",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_annealer_channel_long",
+      "tags": ["anneal"]
+    },
+    {
+      "id": "core_attach_annealer_channel_long",
+      "name": "Long Annealing Channel",
+      "slot": "anneal",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_annealer_lehr_long",
+      "tags": ["anneal"]
+    },
+    {
+      "id": "core_attach_annealer_lehr_long",
+      "name": "Long Lehr",
+      "slot": "anneal",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["anneal"]
+    },
+    {
+      "id": "core_attach_wash_sand_trough",
+      "name": "Sand Wash Trough",
+      "slot": "wash",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_wash_sieve_rack",
+      "tags": ["prep"]
+    },
+    {
+      "id": "core_attach_wash_sieve_rack",
+      "name": "Wash & Sieve Rack",
+      "slot": "wash",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_wash_iron_removal",
+      "tags": ["prep"]
+    },
+    {
+      "id": "core_attach_wash_iron_removal",
+      "name": "Refined Wash & De-Ironing",
+      "slot": "wash",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["prep", "clear"]
+    },
+    {
+      "id": "core_attach_alkali_bench_ash",
+      "name": "Alkali Bench (Plant Ash)",
+      "slot": "alkali",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_alkali_bench_refine",
+      "tags": ["alkali"]
+    },
+    {
+      "id": "core_attach_alkali_bench_refine",
+      "name": "Refined Alkali Bench",
+      "slot": "alkali",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_alkali_bench_pure_soda",
+      "tags": ["alkali"]
+    },
+    {
+      "id": "core_attach_alkali_bench_pure_soda",
+      "name": "Pure Soda Bench",
+      "slot": "alkali",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["alkali", "clear"]
+    },
+    {
+      "id": "core_attach_form_blowpipe_stand",
+      "name": "Blowpipe Stand",
+      "slot": "forming",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_form_blowshop_shed",
+      "tags": ["forming"]
+    },
+    {
+      "id": "core_attach_form_blowshop_shed",
+      "name": "Blowshop Shed",
+      "slot": "forming",
+      "era": "MEDIEVAL",
+      "upgrade_to": null,
+      "tags": ["forming"]
+    },
+    {
+      "id": "core_attach_spinner_crown",
+      "name": "Crown Spinner",
+      "slot": "spinner",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_spinner_crown_regulated",
+      "tags": ["window"]
+    },
+    {
+      "id": "core_attach_spinner_crown_regulated",
+      "name": "Regulated Crown Spinner",
+      "slot": "spinner",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["window"]
+    },
+    {
+      "id": "core_attach_press_mould_table",
+      "name": "Mould Press Table",
+      "slot": "press",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "tags": ["pressing"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_glass_batch_crude_c",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "CLASSIC",
+      "duration_s": 1500,
+      "requires_enablers": ["core_attach_furnace_crucible", "core_attach_wash_sand_trough", "core_attach_alkali_bench_ash"],
+      "inputs": [
+        { "id": "core_item_sand_silica", "count": 10 },
+        { "id": "core_item_powder_lime_calcium", "count": 2 }
+      ],
+      "inputs_or": [
+        [{ "id": "core_item_powder_alkali_potash", "count": 6 }],
+        [{ "id": "core_item_powder_soda_ash", "count": 6 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_crude", "charges_g": 10000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_batch_forest_m",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "MEDIEVAL",
+      "duration_s": 1400,
+      "requires_enablers": ["core_attach_furnace_forest", "core_attach_wash_sieve_rack", "core_attach_alkali_bench_refine", "core_attach_fining_pot_standard"],
+      "inputs": [
+        { "id": "core_item_sand_silica", "count": 10 },
+        { "id": "core_item_powder_alkali_potash", "count": 6 },
+        { "id": "core_item_powder_lime_calcium", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_forest", "charges_g": 11000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_batch_clear_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 1200,
+      "requires_enablers": ["core_attach_furnace_cristallo_tank", "core_attach_wash_iron_removal", "core_attach_alkali_bench_pure_soda", "core_attach_fining_pot_large"],
+      "inputs": [
+        { "id": "core_item_sand_silica", "count": 10 },
+        { "id": "core_item_powder_soda_ash_pure", "count": 6 },
+        { "id": "core_item_powder_lime_calcium", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_clear", "charges_g": 12000 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_c",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_furnace_crucible"],
+      "inputs": [
+        { "id": "core_item_glass_cullet", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_crude", "charges_g": 11000 }
+      ],
+      "affinity": { "fuel_cost": -0.15, "time_cost": -0.10 }
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_m",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "MEDIEVAL",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_furnace_forest"],
+      "inputs": [
+        { "id": "core_item_glass_cullet", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_forest", "charges_g": 11000 }
+      ],
+      "affinity": { "fuel_cost": -0.15, "time_cost": -0.10 }
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 700,
+      "requires_enablers": ["core_attach_furnace_cristallo_tank"],
+      "inputs": [
+        { "id": "core_item_glass_cullet", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_glass_batch_clear", "charges_g": 11000 }
+      ],
+      "affinity": { "fuel_cost": -0.18, "time_cost": -0.12 }
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_c",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_form_blowpipe_stand", "core_attach_annealer_kiln"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_common", "count": 10 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_m",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "MEDIEVAL",
+      "duration_s": 800,
+      "requires_enablers": ["core_attach_form_blowshop_shed", "core_attach_annealer_channel_long"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_common", "count": 12 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 700,
+      "requires_enablers": ["core_attach_form_blowshop_shed", "core_attach_annealer_lehr_long"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_common", "count": 12 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_c",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "CLASSIC",
+      "duration_s": 960,
+      "requires_enablers": ["core_attach_form_blowpipe_stand", "core_attach_annealer_kiln"],
+      "inputs_or": [
+        [
+          { "id": "core_item_glass_batch_crude", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_forest", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_clear", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_colored", "count": 10 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_m",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "MEDIEVAL",
+      "duration_s": 850,
+      "requires_enablers": ["core_attach_form_blowshop_shed", "core_attach_annealer_channel_long"],
+      "inputs_or": [
+        [
+          { "id": "core_item_glass_batch_crude", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_forest", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_clear", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_colored", "count": 12 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 750,
+      "requires_enablers": ["core_attach_form_blowshop_shed", "core_attach_annealer_lehr_long"],
+      "inputs_or": [
+        [
+          { "id": "core_item_glass_batch_crude", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_forest", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ],
+        [
+          { "id": "core_item_glass_batch_clear", "charges_g": 10000 },
+          { "id": "core_item_glass_colorant_generic", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_vessel_colored", "count": 12 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_window_crown_m",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "MEDIEVAL",
+      "duration_s": 1000,
+      "requires_enablers": ["core_attach_spinner_crown", "core_attach_annealer_channel_long"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_pane_window", "count": 8 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_window_crown_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_spinner_crown_regulated", "core_attach_annealer_lehr_long"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_pane_window", "count": 10 }
+      ],
+      "byproducts": [
+        { "id": "core_item_glass_cullet", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_brick_press_r",
+      "workshop_id": "core_workshop_glass_house",
+      "era": "RENAISSANCE",
+      "duration_s": 950,
+      "requires_enablers": ["core_attach_press_mould_table", "core_attach_annealer_lehr_long"],
+      "inputs_or": [
+        [{ "id": "core_item_glass_batch_crude", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_forest", "charges_g": 10000 }],
+        [{ "id": "core_item_glass_batch_clear", "charges_g": 10000 }]
+      ],
+      "outputs": [
+        { "id": "core_item_glass_brick", "count": 10 }
+      ]
+    }
+  ]
+}

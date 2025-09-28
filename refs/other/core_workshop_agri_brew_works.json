@@ -1,0 +1,830 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_agri_brew_works",
+      "name": "Agri-Brew Works",
+      "tags": ["workshop", "agriculture", "brewing", "food"],
+      "display_order": 45
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_agri_mill_quern",
+      "name": "Quern & Hand Mill",
+      "slot": "milling",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_mill_power_stone",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["grind", "mill"]
+    },
+    {
+      "id": "core_attach_agri_mill_power_stone",
+      "name": "Powered Millstone",
+      "slot": "milling",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_mill_fine_sifter_line",
+      "effects": { "throughput_mult": 2.5 },
+      "tags": ["grind", "mill", "water_or_wind"]
+    },
+    {
+      "id": "core_attach_agri_mill_fine_sifter_line",
+      "name": "Fine Mill & Sifter Line",
+      "slot": "milling",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 3.0, "quality_tags_add": ["fine_ground"] },
+      "tags": ["grind", "sift", "power"]
+    },
+
+    {
+      "id": "core_attach_agri_press_lever_beam",
+      "name": "Tread Vat & Lever Beam Press",
+      "slot": "press",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_press_improved",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["press"]
+    },
+    {
+      "id": "core_attach_agri_press_improved",
+      "name": "Improved Screw/Lever Press",
+      "slot": "press",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_press_helical",
+      "effects": { "throughput_mult": 1.1, "yield_bonus_pct": 10 },
+      "tags": ["press"]
+    },
+    {
+      "id": "core_attach_agri_press_helical",
+      "name": "Helical Continuous Press",
+      "slot": "press",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.25, "yield_bonus_pct": 20 },
+      "tags": ["press", "power"]
+    },
+
+    {
+      "id": "core_attach_agri_malt_floor",
+      "name": "Malting Floor",
+      "slot": "malting",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_malt_kiln",
+      "effects": {},
+      "tags": ["malting"]
+    },
+    {
+      "id": "core_attach_agri_malt_kiln",
+      "name": "Malt Kiln",
+      "slot": "malting",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_malt_kiln_improved",
+      "effects": { "time_mult": 0.9 },
+      "tags": ["malting", "kiln"]
+    },
+    {
+      "id": "core_attach_agri_malt_kiln_improved",
+      "name": "Improved Malt Kiln",
+      "slot": "malting",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.8 },
+      "tags": ["malting", "kiln"]
+    },
+
+    {
+      "id": "core_attach_agri_mash_kettle",
+      "name": "Mash Kettle",
+      "slot": "mash_boil",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_lauder_tun_boiler",
+      "effects": {},
+      "tags": ["mash", "boil"]
+    },
+    {
+      "id": "core_attach_agri_lauder_tun_boiler",
+      "name": "Lauter Tun & Great Boiler",
+      "slot": "mash_boil",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_insulated_mash_boiler",
+      "effects": { "time_mult": 0.9 },
+      "tags": ["mash", "boil"]
+    },
+    {
+      "id": "core_attach_agri_insulated_mash_boiler",
+      "name": "Insulated Mash & Great Boiler",
+      "slot": "mash_boil",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.8 },
+      "tags": ["mash", "boil"]
+    },
+
+    {
+      "id": "core_attach_agri_cool_stand",
+      "name": "Ambient Cooling Stand",
+      "slot": "cooling",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_coolship",
+      "effects": {},
+      "tags": ["cool"]
+    },
+    {
+      "id": "core_attach_agri_coolship",
+      "name": "Coolship & Cooler",
+      "slot": "cooling",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_cellar_cooling",
+      "effects": { "time_mult": 0.9 },
+      "tags": ["cool"]
+    },
+    {
+      "id": "core_attach_agri_cellar_cooling",
+      "name": "Cold Cellar Cooling",
+      "slot": "cooling",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.8, "quality_tags_add": ["stable_cool"] },
+      "tags": ["cool"]
+    },
+
+    {
+      "id": "core_attach_agri_ferment_vat",
+      "name": "Fermentation Vat",
+      "slot": "ferment",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_cellar",
+      "effects": {},
+      "tags": ["ferment"]
+    },
+    {
+      "id": "core_attach_agri_cellar",
+      "name": "Cellar",
+      "slot": "ferment",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_cold_cellar",
+      "effects": { "time_mult": 0.95, "quality_tags_add": ["matured"] },
+      "tags": ["ferment", "aging"]
+    },
+    {
+      "id": "core_attach_agri_cold_cellar",
+      "name": "Cold Cellar",
+      "slot": "ferment",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.9, "quality_tags_add": ["stable_cool", "matured"] },
+      "tags": ["ferment", "aging"]
+    },
+
+    {
+      "id": "core_attach_agri_still_condenser",
+      "name": "Still & Condenser",
+      "slot": "distill",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {},
+      "tags": ["distill", "alembic"]
+    },
+
+    {
+      "id": "core_attach_agri_acetify_vat",
+      "name": "Acetification Vat & Mother",
+      "slot": "acetify",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": {},
+      "tags": ["acetify", "vinegar"]
+    },
+
+    {
+      "id": "core_attach_agri_prep_drying_ground",
+      "name": "Drying Ground",
+      "slot": "preprocess",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_agri_prep_vent_granary",
+      "effects": {},
+      "tags": ["preprocess", "storage"]
+    },
+    {
+      "id": "core_attach_agri_prep_vent_granary",
+      "name": "Ventilated Granary",
+      "slot": "preprocess",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_agri_prep_dry_granary_winnow",
+      "effects": { "quality_tags_add": ["stable_store"] },
+      "tags": ["preprocess", "storage"]
+    },
+    {
+      "id": "core_attach_agri_prep_dry_granary_winnow",
+      "name": "Dry Granary & Winnow Stand",
+      "slot": "preprocess",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "quality_tags_add": ["stable_store"], "time_mult": 0.9 },
+      "tags": ["preprocess", "storage"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_agribrew_mill_coarse_flour_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_mill_quern"],
+      "duration_s": 60,
+      "inputs_any": [
+        [
+          { "id": "core_item_crop_wheat", "count": 1 },
+          { "id": "core_item_crop_barley", "count": 1 },
+          { "id": "core_item_crop_rye", "count": 1 },
+          { "id": "core_item_crop_oats", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_powder_flour_coarse", "charges_g": 1000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_mill_flour_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_mill_power_stone"],
+      "duration_s": 45,
+      "inputs_any": [
+        [
+          { "id": "core_item_crop_wheat", "count": 1 },
+          { "id": "core_item_crop_barley", "count": 1 },
+          { "id": "core_item_crop_rye", "count": 1 },
+          { "id": "core_item_crop_oats", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_powder_flour", "charges_g": 1000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_mill_fine_flour_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_mill_fine_sifter_line"],
+      "duration_s": 40,
+      "inputs_any": [
+        [
+          { "id": "core_item_crop_wheat", "count": 1 },
+          { "id": "core_item_crop_barley", "count": 1 },
+          { "id": "core_item_crop_rye", "count": 1 },
+          { "id": "core_item_crop_oats", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_powder_flour_fine", "charges_g": 1000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ],
+      "notes": "Fine milling & sifting; yields quality+1 elsewhere."
+    },
+
+    {
+      "id": "core_recipe_agribrew_mill_sugar_pod_any_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_any_required": [
+        ["core_attach_agri_mill_quern", "core_attach_agri_mill_power_stone", "core_attach_agri_mill_fine_sifter_line"]
+      ],
+      "duration_s": 30,
+      "inputs": [
+        { "id": "core_item_crop_sugar_pod", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_sugar", "charges_g": 1000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_sugar_pod_to_syrup_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_prep_drying_ground"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_crop_sugar_pod", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_syrup_sugar", "charges_ml": 1000 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_sugar_pod_to_syrup_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_prep_vent_granary"],
+      "duration_s": 80,
+      "inputs": [
+        { "id": "core_item_crop_sugar_pod", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_syrup_sugar", "charges_ml": 1000 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_sugar_pod_to_syrup_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_prep_dry_granary_winnow"],
+      "duration_s": 70,
+      "inputs": [
+        { "id": "core_item_crop_sugar_pod", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_syrup_sugar", "charges_ml": 1000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_press_olive_oil_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_press_lever_beam"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_crate_olive", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_olive", "charges_ml": 800 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_press_olive_oil_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_press_improved"],
+      "duration_s": 110,
+      "inputs": [
+        { "id": "core_item_crate_olive", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_olive", "charges_ml": 880 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_press_olive_oil_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_press_helical"],
+      "duration_s": 100,
+      "inputs": [
+        { "id": "core_item_crate_olive", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_olive", "charges_ml": 960 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_seed_paste_from_oilseed_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_any_required": [
+        ["core_attach_agri_mill_quern", "core_attach_agri_mill_power_stone", "core_attach_agri_mill_fine_sifter_line"]
+      ],
+      "duration_s": 45,
+      "inputs_any": [
+        [
+          { "id": "core_item_crop_flaxseed", "count": 1 },
+          { "id": "core_item_crop_sesame", "count": 1 },
+          { "id": "core_item_crop_rapeseed", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_paste_seed_oil", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_press_seed_paste_oil_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_press_lever_beam"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_paste_seed_oil", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_vegetable", "charges_ml": 800 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_press_seed_paste_oil_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_press_improved"],
+      "duration_s": 80,
+      "inputs": [
+        { "id": "core_item_paste_seed_oil", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_vegetable", "charges_ml": 880 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_press_seed_paste_oil_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_press_helical"],
+      "duration_s": 70,
+      "inputs": [
+        { "id": "core_item_paste_seed_oil", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_oil_vegetable", "charges_ml": 960 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_press_honeycomb_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_any_required": [
+        ["core_attach_agri_press_lever_beam", "core_attach_agri_press_improved", "core_attach_agri_press_helical"]
+      ],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_comb_honey", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_honey", "charges_ml": 1000 },
+        { "id": "core_item_beeswax", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_grape_crush_to_must_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_any_required": [
+        ["core_attach_agri_press_lever_beam", "core_attach_agri_press_improved", "core_attach_agri_press_helical"]
+      ],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_crate_grape", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_must_grape", "charges_ml": 1000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_apple_press_juice_MR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_any_required": [
+        ["core_attach_agri_press_improved", "core_attach_agri_press_helical"]
+      ],
+      "duration_s": 60,
+      "inputs_any": [
+        [
+          { "id": "core_item_crate_apple", "count": 1 },
+          { "id": "core_item_crate_pear", "count": 1 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_juice_fruit", "charges_ml": 1000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_malting_from_grain_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_malt_floor"],
+      "duration_s": 240,
+      "inputs_any": [
+        [
+          { "id": "core_item_crop_barley", "count": 10 },
+          { "id": "core_item_crop_wheat", "count": 10 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_malt_base", "count": 8 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_malt_dry_kiln_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_malt_kiln"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_malt_base_wet", "count": 8 }
+      ],
+      "outputs": [
+        { "id": "core_item_malt_base", "count": 8 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_malt_dry_kiln_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_malt_kiln_improved"],
+      "duration_s": 150,
+      "inputs": [
+        { "id": "core_item_malt_base_wet", "count": 8 }
+      ],
+      "outputs": [
+        { "id": "core_item_malt_base", "count": 8 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_mash_lauter_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_mash_kettle"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_malt_base", "count": 8 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 8000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wort", "charges_ml": 8000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_boil_gruit_ale_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_mash_kettle"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_liquid_wort", "charges_ml": 8000 },
+        { "id": "core_item_herb_gruit", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wort_hot", "charges_ml": 8000 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_boil_hopped_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_lauder_tun_boiler"],
+      "duration_s": 80,
+      "inputs": [
+        { "id": "core_item_liquid_wort", "charges_ml": 8000 },
+        { "id": "core_item_herb_hops", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wort_hot", "charges_ml": 8000 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_boil_hopped_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_insulated_mash_boiler"],
+      "duration_s": 70,
+      "inputs": [
+        { "id": "core_item_liquid_wort", "charges_ml": 8000 },
+        { "id": "core_item_herb_hops", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wort_hot", "charges_ml": 8000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_cool_hot_wort_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_any_required": [
+        ["core_attach_agri_cool_stand", "core_attach_agri_coolship", "core_attach_agri_cellar_cooling"]
+      ],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_liquid_wort_hot", "charges_ml": 8000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wort_cool", "charges_ml": 8000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_ferment_ale_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_ferment_vat"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_liquid_wort_cool", "charges_ml": 8000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_ale_unhopped", "charges_ml": 8000 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_ferment_beer_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_cellar"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_liquid_wort_cool", "charges_ml": 8000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_beer", "charges_ml": 8000 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ],
+      "notes": "Hopped beer keeps longer (logistics tag elsewhere)."
+    },
+    {
+      "id": "core_recipe_agribrew_ferment_beer_purity_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_cold_cellar"],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_malt_quality", "count": 10 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 8000 },
+        { "id": "core_item_herb_hops", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_beer_purity", "charges_ml": 8000 },
+        { "id": "core_item_waste_food_residue", "count": 2 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_wine_from_must_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_ferment_vat"],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_liquid_must_grape", "charges_ml": 1000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wine", "charges_ml": 750 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_wine_from_must_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_cellar"],
+      "duration_s": 340,
+      "inputs": [
+        { "id": "core_item_liquid_must_grape", "charges_ml": 1000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wine", "charges_ml": 750 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_wine_from_must_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_cold_cellar"],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_liquid_must_grape", "charges_ml": 1000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_wine", "charges_ml": 750 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_cider_from_juice_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_cellar"],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_liquid_juice_fruit", "charges_ml": 1000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_cider", "charges_ml": 750 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_cider_from_juice_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_cold_cellar"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_liquid_juice_fruit", "charges_ml": 1000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_cider", "charges_ml": 750 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_mead_C",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_ferment_vat"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_liquid_honey", "charges_ml": 5000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_mead", "charges_ml": 6000 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_mead_M",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_agri_cellar"],
+      "duration_s": 280,
+      "inputs": [
+        { "id": "core_item_liquid_honey", "charges_ml": 5000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_mead", "charges_ml": 6000 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_agribrew_mead_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_cold_cellar"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_liquid_honey", "charges_ml": 5000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 5000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_mead", "charges_ml": 6000 },
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_distill_brandy_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_still_condenser"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_liquid_wine", "charges_ml": 8000 }
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_brandy", "charges_ml": 3000 },
+        { "id": "core_item_waste_vinasse", "charges_ml": 1000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_acetify_low_abv_R",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_agri_acetify_vat"],
+      "duration_s": 240,
+      "inputs_any": [
+        [
+          { "id": "core_item_liquid_ale_unhopped", "charges_ml": 8000 },
+          { "id": "core_item_liquid_beer", "charges_ml": 8000 },
+          { "id": "core_item_liquid_wine", "charges_ml": 8000 },
+          { "id": "core_item_liquid_cider", "charges_ml": 8000 }
+        ]
+      ],
+      "outputs": [
+        { "id": "core_item_liquid_vinegar", "charges_ml": 6000 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_agribrew_compost_any_scrap_CMR",
+      "workshop": "core_workshop_agri_brew_works",
+      "era": "CLASSIC",
+      "attachments_required": ["core_attach_agri_prep_drying_ground"],
+      "duration_s": 30,
+      "inputs": [
+        { "id": "core_item_waste_food_residue", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost", "count": 1 }
+      ]
+    }
+  ]
+}

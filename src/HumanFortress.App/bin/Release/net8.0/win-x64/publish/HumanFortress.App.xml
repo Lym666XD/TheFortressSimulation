@@ -139,9 +139,35 @@
             Wrapper for EmbarkPrepState to work with GameState system.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Rendering.NavigationOverlay">
+            <summary>
+            Debug overlay for visualizing navigation data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.Rendering.NavigationOverlay.SetNavigationManager(HumanFortress.Navigation.NavigationManager)">
+            <summary>
+            Set the navigation manager for accessing nav data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.Rendering.NavigationOverlay.RenderOverlay(SadConsole.ScreenSurface,HumanFortress.Simulation.World.World,System.Int32,SadRogue.Primitives.Rectangle)">
+            <summary>
+            Render navigation overlay on top of the game view.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.TestRunner">
             <summary>
             Test runner to verify Phase A implementation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.MapScreenSurface">
+            <summary>
+            ScreenSurface specialized for the map area that exposes reliable mouse events
+            for hover and left-click in local cell coordinates.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.UiOverlaySurface">
+            <summary>
+            Full-screen UI overlay surface that captures mouse in overlay coordinates.
             </summary>
         </member>
     </members>

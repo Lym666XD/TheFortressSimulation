@@ -11,6 +11,7 @@ using HumanFortress.App.GameStates;
 using HumanFortress.WorldGen;
 using HumanFortress.Core.Content;
 using HumanFortress.App.Rendering;
+using HumanFortress.App.UI;
 using HumanFortress.Navigation;
 using HumanFortress.Core.Content;
 
@@ -21,7 +22,8 @@ namespace HumanFortress.App.States
         public static Point EmbarkLocation { get; set; }
         public static int FortressSize { get; set; }
         
-        private ScreenSurface? _mapSurface;
+        private MapScreenSurface? _mapSurface;
+        private UiOverlaySurface? _uiSurface; // overlay drawn on top of map and panels
         private SadConsole.Console? _infoPanel;
         private SadConsole.Console? _tileInfoPanel;
         private bool _initialized = false;
@@ -36,6 +38,16 @@ namespace HumanFortress.App.States
         private Point? _lastMousePos;
         private NavigationOverlay? _navOverlay;
         private NavigationManager? _navManager;
+        private HumanFortress.Navigation.WorldNavigationView? _navView;
+        private UiStore _ui = new UiStore();
+        private ulong _uiTick = 0;
+        private bool _cameraFollowCursor = false; // camera follows mouse only when true
+        private bool _enhancedMouseHooked = false;
+        private bool _tilePanelOpen = false;
+        private Point _tilePanelWorld = new Point(0,0);
+        private int _tilePanelZ = 0;
+        private Point? _pathStart = null;
+        private int _pathStartZ = 0;
 
         public FortressState()
         {
@@ -43,14 +55,60 @@ namespace HumanFortress.App.States
             // Defer initialization until OnCalculateRenderPosition is called
         }
 
+        public override void OnFocused()
+        {
+            base.OnFocused();
+            Logger.Log("[FOCUS] FortressState focused");
+        }
+
+        public override void OnFocusLost()
+        {
+            base.OnFocusLost();
+            Logger.Log("[FOCUS] FortressState lost focus -> reclaim");
+            IsFocused = true; // reclaim focus immediately
+        }
+
         public override void Update(TimeSpan delta)
         {
             base.Update(delta);
+            _uiTick++;
+
+            // Keep keyboard focus on this state so keyboard input remains active after mouse clicks
+            if (!IsFocused)
+                IsFocused = true;
 
             if (!_initialized && GameHost.Instance != null)
             {
                 Initialize();
             }
+
+            // Wheel zoom/Z-level handling here to ensure it works regardless of which child captures mouse
+            try
+            {
+                var keyboard = GameHost.Instance?.Keyboard;
+                var mouse = GameHost.Instance?.Mouse;
+                if (mouse != null && mouse.ScrollWheelValueChange != 0)
+                {
+                    bool ctrlHeld = keyboard != null && (keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl));
+                    int deltaWheel = mouse.ScrollWheelValueChange > 0 ? 1 : -1;
+                    if (ctrlHeld)
+                    {
+                        _zoomLevel = Math.Max(1, Math.Min(4, _zoomLevel + deltaWheel));
+                        Logger.Log($"[ZOOM-UPDATE] delta={deltaWheel} -> zoom={_zoomLevel}");
+                    }
+                    else
+                    {
+                        // Reverse scroll axis for Z-level
+                        _currentZ = Math.Max(0, Math.Min(49, _currentZ - deltaWheel));
+                        Logger.Log($"[ZLEVEL-UPDATE] delta={deltaWheel} -> Z={_currentZ}");
+                    }
+                }
+            }
+            catch { /* fallback if host mouse API differs */ }
+
+            // Always render UI overlays; keep this state focused for keyboard
+            if (!IsFocused) IsFocused = true; // keep keyboard input active after mouse clicks
+            DrawUI();
         }
 
         private void Initialize()
@@ -70,29 +128,55 @@ namespace HumanFortress.App.States
 
                 // Create a root surface
                 var rootSurface = new ScreenSurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
-                rootSurface.UseMouse = false;
+                // Allow mouse to bubble to children; keyboard handled by FortressState
+                rootSurface.UseMouse = true;
                 rootSurface.UseKeyboard = false;
                 System.Console.WriteLine("[FortressState] Root surface created");
 
-                _mapSurface = new ScreenSurface(80, 40);
+                // Map surface sized to fit within screen, leaving 2-cell margins
+                int screenW = GameHost.Instance.ScreenCellsX;
+                int screenH = GameHost.Instance.ScreenCellsY;
+                int mapW = Math.Max(20, screenW - 4); // use nearly full width
+                int mapH = Math.Max(8, screenH - 4); // leave 2 cells top/bottom for UI
+                _mapSurface = new MapScreenSurface(mapW, mapH);
                 _mapSurface.Position = new Point(2, 2);
                 _mapSurface.UseMouse = true;  // Enable mouse for hovering
                 _mapSurface.UseKeyboard = false;
+                _mapSurface.MouseMovedLocal += OnMapMouseMovedLocal;
+                _mapSurface.LeftClickedLocal += OnMapLeftClickedLocal;
+                _enhancedMouseHooked = true;
                 System.Console.WriteLine("[FortressState] Map surface created");
+                Logger.Log($"[INIT] MapSurface size={_mapSurface.Surface.Width}x{_mapSurface.Surface.Height} pos={_mapSurface.Position}");
 
                 _infoPanel = new SadConsole.Console(35, 20);
                 _infoPanel.Position = new Point(84, 2);
+                _infoPanel.UseKeyboard = false;
+                _infoPanel.FocusOnMouseClick = false;
                 System.Console.WriteLine("[FortressState] Info panel created");
 
                 // Add tile info panel for mouse hover
                 _tileInfoPanel = new SadConsole.Console(35, 18);
-                _tileInfoPanel.Position = new Point(84, 24);
+                int tileInfoY = Math.Max(2, screenH - _tileInfoPanel.Height - 2);
+                _tileInfoPanel.Position = new Point(84, tileInfoY);
+                _tileInfoPanel.UseKeyboard = false;
+                _tileInfoPanel.FocusOnMouseClick = false;
                 System.Console.WriteLine("[FortressState] Tile info panel created");
+
+                // Create UI overlay surface (full screen) drawn last (on top)
+                _uiSurface = new UiOverlaySurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
+                // Overlay actively handles clicks for dock/quick/debug
+                _uiSurface.UseMouse = true;
+                _uiSurface.UseKeyboard = false;
+                _uiSurface.FocusOnMouseClick = false; // don't steal focus
+                _uiSurface.LeftClickedLocal += OnOverlayLeftClickedLocal;
+                _uiSurface.MouseMovedLocal += OnOverlayMouseMovedLocal;
+                Logger.Log($"[INIT] UiOverlay size={_uiSurface.Surface.Width}x{_uiSurface.Surface.Height}");
 
                 // Add to root surface
                 rootSurface.Children.Add(_mapSurface);
-                rootSurface.Children.Add(_infoPanel);
-                rootSurface.Children.Add(_tileInfoPanel);
+                // Do not add info/tile panels as static right-side consoles; we'll draw a floating
+                // tile popup on the overlay when requested to maximize map area.
+                rootSurface.Children.Add(_uiSurface); // on top
 
                 // Add root as the only child
                 Children.Add(rootSurface);
@@ -216,39 +300,124 @@ namespace HumanFortress.App.States
         
         private void DrawUI()
         {
-            if (_infoPanel == null) return;
-            _infoPanel.Clear();
-            _infoPanel.Print(0, 0, "=== FORTRESS MODE ===", Color.Yellow);
-            _infoPanel.Print(0, 2, $"Cursor: {_cursorPos.X},{_cursorPos.Y}", Color.White);
-            _infoPanel.Print(0, 3, $"Size: {FortressSize}x{FortressSize} chunks", Color.White);
-            _infoPanel.Print(0, 4, $"Z-Level: {_currentZ}/49", Color.Cyan);
-            _infoPanel.Print(0, 5, $"Zoom: {_zoomLevel}x", Color.White);
+            if (_uiSurface == null || _mapSurface == null) return;
+            if (_infoPanel != null) _infoPanel.Clear();
+            // Right-side map & status info removed per request; moved into Debug menu.
 
-            _infoPanel.Print(0, 7, "Controls:", Color.Yellow);
-            _infoPanel.Print(0, 8, "WASD - Move cursor", Color.Gray);
-            _infoPanel.Print(0, 9, "Shift+WASD - Fast move", Color.Gray);
-            _infoPanel.Print(0, 10, "Q/E - Change Z-level", Color.Gray);
-            _infoPanel.Print(0, 11, "F1-F7 - Nav overlay", Color.Gray);
-            _infoPanel.Print(0, 12, "F8 - Cycle overlay", Color.Gray);
-            _infoPanel.Print(0, 13, "ESC - Return to menu", Color.Gray);
-
-            _infoPanel.Print(0, 15, "Status:", Color.Yellow);
-            _infoPanel.Print(0, 16, "Simulation: Running", Color.Green);
-            _infoPanel.Print(0, 17, "TPS: 50", Color.Green);
-
-            UpdateTileInfo();
+            // Build tile info on demand; draw as overlay popup
             RenderMap();
+
+            // Render UI overlays on top of map surface
+            if (_uiSurface != null)
+            {
+                _uiSurface.Clear();
+                UiRenderer.DrawTopBar(_uiSurface, _uiTick);
+                UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
+                UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
+                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick);
+                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick);
+                // Controls/help moved to docs; no on-screen help overlay.
+                UiRenderer.DrawDebug(_uiSurface, _ui, _cursorPos, _currentZ, _zoomLevel, _cameraPos, FortressSize);
+                UiRenderer.DrawDebugUnits(_uiSurface, _ui, _cameraPos.X, _cameraPos.Y, _currentZ);
+                UiRenderer.DrawPause(_uiSurface, _ui);
+                UiRenderer.DrawToasts(_uiSurface, _ui, _uiTick);
+
+                if (_tilePanelOpen)
+                {
+                    DrawTilePopup(_uiSurface);
+                }
+            }
+        }
+
+        // Handle overlay local left-clicks for F1–F7 and Z/X/C buttons
+        private void OnOverlayLeftClickedLocal(Point local)
+        {
+            if (_uiSurface == null) return;
+
+            // Dock F1–F7 at bottom-left (bottom row)
+            int dockY = _uiSurface.Surface.Height - 1;
+            int dockXStart = 1;
+            int dockBtnW = 5;
+            int dockGap = 1;
+            if (local.Y == dockY && local.X >= dockXStart)
+            {
+                int rel = local.X - dockXStart;
+                int slot = rel / (dockBtnW + dockGap);
+                if (slot >= 0 && slot <= 6)
+                {
+                    var id = (DrawerId)(slot + 1);
+                    _ui.OpenPanel(id);
+                    Logger.Log($"[CLICK-OVERLAY] Dock slot={slot} -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Quick Z/X/C one row above bottom (dock is bottom)
+            int quickY = _uiSurface.Surface.Height - 2;
+            if (local.Y == quickY)
+            {
+                int center = _uiSurface.Surface.Width / 2;
+                int w = 5; int gap = 2;
+                var ranges = new (int start, int end, QuickMenuKind kind)[]
+                {
+                    (center - (w + gap) - w / 2, center - (w + gap) - w / 2 + w - 1, QuickMenuKind.Orders),
+                    (center - w / 2,               center - w / 2 + w - 1,               QuickMenuKind.Zones),
+                    (center + (w + gap) - w / 2,   center + (w + gap) - w / 2 + w - 1,   QuickMenuKind.Build),
+                };
+                foreach (var r in ranges)
+                {
+                    if (local.X >= r.start && local.X <= r.end)
+                    {
+                        _ui.OpenQuickMenu(r.kind);
+                        Logger.Log($"[CLICK-OVERLAY] Quick kind={r.kind} -> qmenu={_ui.QuickMenu}");
+                        DrawUI();
+                        return;
+                    }
+                }
+            }
+
+                // Debug menu spawn button (panel is centered and semi-transparent)
+                if (_ui.DebugOpen)
+                {
+                int surfW = _uiSurface.Surface.Width;
+                int surfH = _uiSurface.Surface.Height;
+                int width = Math.Min((int)(surfW * 0.7), surfW - 4);
+                int height = Math.Min((int)(surfH * 0.6), surfH - 4);
+                int x0 = (surfW - width) / 2;
+                int y0 = (surfH - height) / 2;
+                int btnX = x0 + 2; int btnY = y0 + 2; int btnW = 22;
+                if (local.Y == btnY && local.X >= btnX && local.X < btnX + btnW)
+                {
+                    Logger.Log($"[DEBUG] Spawn Dwarf click at cursor=({_cursorPos.X},{_cursorPos.Y},{_currentZ}) [overlay]");
+                    _ui.AddDebugDwarf(_cursorPos, _currentZ);
+                    _ui.AddToast("Spawned dwarf (debug marker)", _uiTick + 100);
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Pass-through: if click not on overlay controls, treat as map click for tile info
+            if (_mapSurface != null)
+            {
+                var mapLocal = new Point(local.X - _mapSurface.Position.X, local.Y - _mapSurface.Position.Y);
+                if (mapLocal.X >= 0 && mapLocal.X < _mapSurface.Surface.Width && mapLocal.Y >= 0 && mapLocal.Y < _mapSurface.Surface.Height)
+                {
+                    OnMapLeftClickedLocal(mapLocal);
+                    return;
+                }
+            }
         }
 
         private void UpdateTileInfo()
         {
-            if (_tileInfoPanel == null || _fortressMap == null) return;
+            if (_tileInfoPanel == null || _fortressMap == null || !_tilePanelOpen) return;
             _tileInfoPanel.Clear();
 
             _tileInfoPanel.Print(0, 0, "=== TILE INFO ===", Color.Cyan);
 
-            // Get tile info at cursor or mouse position
-            Point checkPos = _lastMousePos ?? _cursorPos;
+            // Selected world position
+            Point checkPos = _tilePanelWorld;
 
             if (checkPos.X >= 0 && checkPos.X < FortressSize * 32 &&
                 checkPos.Y >= 0 && checkPos.Y < FortressSize * 32)
@@ -259,15 +428,15 @@ namespace HumanFortress.App.States
                 int localY = checkPos.Y % 32;
 
                 var chunk = _fortressMap.GetChunk(chunkX, chunkY);
-                var terrain = chunk.GetTerrain(localX, localY, _currentZ);
+                var geologyId = chunk.GetGeologyId(localX, localY, _tilePanelZ);
 
                 _tileInfoPanel.Print(0, 2, $"Position: {checkPos.X},{checkPos.Y}", Color.White);
                 _tileInfoPanel.Print(0, 3, $"Chunk: {chunkX},{chunkY}", Color.Gray);
                 _tileInfoPanel.Print(0, 4, $"Local: {localX},{localY}", Color.Gray);
-                _tileInfoPanel.Print(0, 6, $"Terrain: {terrain}", Color.Green);
+                _tileInfoPanel.Print(0, 6, $"Terrain: {geologyId}", Color.Green);
 
                 // Add terrain description
-                string desc = GetTerrainDescription(terrain);
+                string desc = GetTerrainDescription(geologyId);
                 _tileInfoPanel.Print(0, 8, "Description:", Color.Yellow);
 
                 // Word wrap description
@@ -290,10 +459,15 @@ namespace HumanFortress.App.States
             }
         }
 
-        private string GetTerrainDescription(TerrainType terrain)
+        private void HideTilePanel()
+        {
+            _tilePanelOpen = false;
+            _tileInfoPanel?.Clear();
+        }
+
+        private string GetTerrainDescription(string geologyId)
         {
             // Get data-driven description from content registry
-            var geologyId = TerrainTypeMapper.GetGeologyId(terrain);
             var geology = ContentRegistry.Instance.GetGeology(geologyId);
             var material = geology != null ? ContentRegistry.Instance.GetMaterial(geology.Material) : null;
 
@@ -333,9 +507,11 @@ namespace HumanFortress.App.States
             int maxWorldSize = FortressSize * 32;
 
             // Render visible area from fortress map data
-            for (int sx = 0; sx < 80; sx++)
+            int viewW = _mapSurface.Surface.Width;
+            int viewH = _mapSurface.Surface.Height;
+            for (int sx = 0; sx < viewW; sx++)
             {
-                for (int sy = 0; sy < 40; sy++)
+                for (int sy = 0; sy < viewH; sy++)
                 {
                     // Calculate world position based on zoom
                     int worldX = _cameraPos.X + (sx / _zoomLevel);
@@ -386,19 +562,15 @@ namespace HumanFortress.App.States
                     else if (_zoomLevel > 1)
                     {
                         // When zoomed, draw each tile multiple times
-                        for (int zx = 0; zx < _zoomLevel && sx + zx < 80; zx++)
+                        for (int zx = 0; zx < _zoomLevel && sx + zx < viewW; zx++)
                         {
-                            for (int zy = 0; zy < _zoomLevel && sy + zy < 40; zy++)
+                            for (int zy = 0; zy < _zoomLevel && sy + zy < viewH; zy++)
                             {
-                                if (worldX == _cursorPos.X && worldY == _cursorPos.Y &&
-                                    zx == 0 && zy == 0)
-                                {
-                                    _mapSurface.SetGlyph(sx + zx, sy + zy, 'X', Color.Yellow, Color.DarkGray);
-                                }
-                                else
-                                {
-                                    _mapSurface.SetGlyph(sx + zx, sy + zy, glyph, color);
-                                }
+                                bool isCursor = (worldX == _cursorPos.X && worldY == _cursorPos.Y);
+                                _mapSurface.SetGlyph(sx + zx, sy + zy,
+                                    isCursor ? 'X' : glyph,
+                                    isCursor ? Color.Yellow : color,
+                                    isCursor ? Color.DarkGray : Color.Black);
                             }
                         }
                     }
@@ -406,19 +578,19 @@ namespace HumanFortress.App.States
                     {
                         _mapSurface.SetGlyph(sx, sy, glyph, color);
                     }
-                    }
-                    else
-                    {
-                        // No world data available
-                        _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray);
-                    }
                 }
+                else
+                {
+                    // No world data available
+                    _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray);
+                }
+            }
             }
 
             // Render navigation overlay if active
             if (_navOverlay != null && _world != null && _mapSurface != null)
             {
-                var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y, 80, 40);
+                var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y, viewW, viewH);
                 _navOverlay.RenderOverlay(_mapSurface, _world, _currentZ, viewport);
             }
             }
@@ -431,32 +603,81 @@ namespace HumanFortress.App.States
 
         private (int glyph, Color color) GetTileDisplay(TileBase tile)
         {
-            // Use MaterialIdRegistry to get display based on material and terrain shape
-            var (glyph, consoleColor) = MaterialIdRegistry.GetDisplay(tile.GeoMatId, (HumanFortress.Core.Content.TerrainKind)tile.Kind);
+            // Content-driven display: prefer geology display colors; shape by TerrainKind
+            var geology = ContentRegistry.Instance.GetGeologyByHandle(tile.GeoMatId);
 
-            // Convert ConsoleColor to SadConsole Color
-            var color = consoleColor switch
+            // Default fallback colors if geology not found
+            var fg = geology != null
+                ? new Color(geology.Display.Foreground.R, geology.Display.Foreground.G, geology.Display.Foreground.B)
+                : Color.Gray;
+
+            // Choose glyph based on terrain kind. For floor/wall/air, use geology glyph if available.
+            int glyph;
+            switch (tile.Kind)
             {
-                ConsoleColor.Black => Color.Black,
-                ConsoleColor.DarkBlue => Color.DarkBlue,
-                ConsoleColor.DarkGreen => Color.DarkGreen,
-                ConsoleColor.DarkCyan => Color.DarkCyan,
-                ConsoleColor.DarkRed => Color.DarkRed,
-                ConsoleColor.DarkMagenta => Color.DarkMagenta,
-                ConsoleColor.DarkYellow => Color.DarkGoldenrod,
-                ConsoleColor.Gray => Color.Gray,
-                ConsoleColor.DarkGray => Color.DarkGray,
-                ConsoleColor.Blue => Color.Blue,
-                ConsoleColor.Green => Color.Green,
-                ConsoleColor.Cyan => Color.Cyan,
-                ConsoleColor.Red => Color.Red,
-                ConsoleColor.Magenta => Color.Magenta,
-                ConsoleColor.Yellow => Color.Yellow,
-                ConsoleColor.White => Color.White,
-                _ => Color.Gray
-            };
+                case HumanFortress.Simulation.Tiles.TerrainKind.SolidWall:
+                    glyph = geology?.Display.Glyph ?? '#';
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor:
+                    // Surface overlays: Snow > Grass > Mud > Moss
+                    if (tile.HasSnow)
+                    {
+                        glyph = '*';
+                        fg = Color.White;
+                    }
+                    else if (tile.HasGrass)
+                    {
+                        glyph = ',';
+                        fg = Color.Green;
+                    }
+                    else if (tile.HasMud)
+                    {
+                        glyph = '~';
+                        fg = Color.DarkGoldenrod;
+                    }
+                    else if (tile.HasMoss)
+                    {
+                        glyph = ',';
+                        fg = new Color(0, 120, 0);
+                    }
+                    else
+                    {
+                        glyph = geology?.Display.Glyph ?? '.';
+                    }
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor:
+                    glyph = ' ';
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.Slope:
+                    // Simple slope glyph
+                    glyph = '^';
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.Ramp:
+                    // Cardinal ramps show arrows; diagonals use 'x'
+                    glyph = tile.RampDir switch
+                    {
+                        0 => '^',   // N
+                        2 => '>',   // E
+                        4 => 'v',   // S
+                        6 => '<',   // W
+                        _ => 'x'    // diagonals
+                    };
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.StairsUp:
+                    glyph = '<';
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.StairsDown:
+                    glyph = '>';
+                    break;
+                case HumanFortress.Simulation.Tiles.TerrainKind.StairsUD:
+                    glyph = 'X';
+                    break;
+                default:
+                    glyph = geology?.Display.Glyph ?? '?';
+                    break;
+            }
 
-            return (glyph, color);
+            return (glyph, fg);
         }
 
         private void BuildSnapshot()
@@ -493,8 +714,8 @@ namespace HumanFortress.App.States
 
                 var viewport = new ViewportInfo
                 {
-                    TilesWidth = 80,
-                    TilesHeight = 40
+                    TilesWidth = _mapSurface?.Surface.Width ?? 80,
+                    TilesHeight = _mapSurface?.Surface.Height ?? 40
                 };
 
                 System.Console.WriteLine("[BuildSnapshot] Building snapshot");
@@ -514,25 +735,25 @@ namespace HumanFortress.App.States
             int maxPos = FortressSize * 32 - 1;
             int moveSpeed = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift) ? 5 : 1;
 
-            // Move cursor with WASD
-            if (keyboard.IsKeyPressed(Keys.W))
+            // Move camera with WASD (continuous while held)
+            if (keyboard.IsKeyDown(Keys.W))
             {
-                _cursorPos = new Point(_cursorPos.X, Math.Max(0, _cursorPos.Y - moveSpeed));
+                _cameraPos = new Point(_cameraPos.X, _cameraPos.Y - moveSpeed);
                 changed = true;
             }
-            else if (keyboard.IsKeyPressed(Keys.S))
+            else if (keyboard.IsKeyDown(Keys.S))
             {
-                _cursorPos = new Point(_cursorPos.X, Math.Min(maxPos, _cursorPos.Y + moveSpeed));
+                _cameraPos = new Point(_cameraPos.X, _cameraPos.Y + moveSpeed);
                 changed = true;
             }
-            else if (keyboard.IsKeyPressed(Keys.A))
+            else if (keyboard.IsKeyDown(Keys.A))
             {
-                _cursorPos = new Point(Math.Max(0, _cursorPos.X - moveSpeed), _cursorPos.Y);
+                _cameraPos = new Point(_cameraPos.X - moveSpeed, _cameraPos.Y);
                 changed = true;
             }
-            else if (keyboard.IsKeyPressed(Keys.D))
+            else if (keyboard.IsKeyDown(Keys.D))
             {
-                _cursorPos = new Point(Math.Min(maxPos, _cursorPos.X + moveSpeed), _cursorPos.Y);
+                _cameraPos = new Point(_cameraPos.X + moveSpeed, _cameraPos.Y);
                 changed = true;
             }
             else if (keyboard.IsKeyPressed(Keys.Q))
@@ -546,56 +767,112 @@ namespace HumanFortress.App.States
                 changed = true;
             }
 
-            // Navigation overlay controls (F1-F7)
-            if (_navOverlay != null)
+            // UI: help panel
+            if (keyboard.IsKeyPressed(Keys.H))
             {
-                if (keyboard.IsKeyPressed(Keys.F1))
+                _ui.ToggleHelp();
+                changed = true;
+            }
+
+            // UI: debug menu - support ` / ~ via OEM detection or F12 fallback
+            if (keyboard.IsKeyPressed(Keys.F12) || (keyboard.KeysPressed.Count > 0 && keyboard.KeysPressed.Any(k =>
                 {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Walkability;
-                    changed = true;
+                    var name = k.Key.ToString();
+                    return name.Contains("OemTilde", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem3", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("OemGrave", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem8", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem7", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Backquote", StringComparison.OrdinalIgnoreCase);
+                })))
+            {
+                _ui.ToggleDebug();
+                Logger.Log($"[DEBUG] Toggle debug menu -> { _ui.DebugOpen }");
+                changed = true;
+            }
+
+            // UI: dock panels F1..F7
+            if (keyboard.IsKeyPressed(Keys.F1)) { _ui.OpenPanel(DrawerId.Creature); Logger.Log($"[KEY] F1 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F2)) { _ui.OpenPanel(DrawerId.Stock); Logger.Log($"[KEY] F2 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F3)) { _ui.OpenPanel(DrawerId.Work); Logger.Log($"[KEY] F3 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F4)) { _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F5)) { _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F6)) { _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F7)) { _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F9))
+            {
+                // Cycle navigation overlay modes
+                _navOverlay?.CycleMode();
+                _ui.AddToast($"Overlay: {_navOverlay?.CurrentMode}", _uiTick + 150);
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.F10))
+            {
+                var ctrl = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+                if (ctrl)
+                {
+                    _navOverlay?.ClearPath();
+                    _pathStart = null;
+                    _ui.AddToast("Path cleared", _uiTick + 120);
                 }
-                else if (keyboard.IsKeyPressed(Keys.F2))
+                else
                 {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.MovementCost;
-                    changed = true;
+                    HandlePathToolF10();
                 }
-                else if (keyboard.IsKeyPressed(Keys.F3))
-                {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Traffic;
-                    changed = true;
-                }
-                else if (keyboard.IsKeyPressed(Keys.F4))
-                {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.Connectivity;
-                    changed = true;
-                }
-                else if (keyboard.IsKeyPressed(Keys.F5))
-                {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.PathDisplay;
-                    changed = true;
-                }
-                else if (keyboard.IsKeyPressed(Keys.F6))
-                {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.FlowField;
+                changed = true;
+            }
+
+            // UI: quick menus Z/X/C
+            if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+
+            // Overlay cycle F9
+            if (keyboard.IsKeyPressed(Keys.F9) && _navOverlay != null)
+            {
+                _navOverlay.CycleMode();
+                if (_navOverlay.CurrentMode == NavigationOverlay.OverlayMode.FlowField)
                     _navOverlay.SetTarget(_cursorPos);
+                changed = true;
+            }
+
+            // Drawer tab cycling
+            if (_ui.Context == UiContext.Drawer)
+            {
+                if (keyboard.IsKeyPressed(Keys.Tab) && !(keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _ui.TabNext(); changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.Tab) && (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _ui.TabPrev(); changed = true;
+                }
+            }
+
+            if (keyboard.IsKeyPressed(Keys.Escape))
+            {
+                // Close tile panel first if open
+                if (_tilePanelOpen)
+                {
+                    HideTilePanel();
                     changed = true;
                 }
-                else if (keyboard.IsKeyPressed(Keys.F7))
+                // If no UI open, toggle pause overlay instead of exiting immediately
+                else if (_ui.OpenDrawer == DrawerId.None && _ui.QuickMenu == QuickMenuKind.None && !_ui.HelpOpen && !_ui.DebugOpen)
                 {
-                    _navOverlay.CurrentMode = NavigationOverlay.OverlayMode.None;
+                    _ui.TogglePause();
+                    Logger.Log("[UI] ESC -> Toggle Pause overlay");
                     changed = true;
                 }
-                else if (keyboard.IsKeyPressed(Keys.F8))
+                else
                 {
-                    // Cycle through modes
-                    _navOverlay.CycleMode();
-                    if (_navOverlay.CurrentMode == NavigationOverlay.OverlayMode.FlowField)
-                        _navOverlay.SetTarget(_cursorPos);
+                    _ui.Back();
+                    Logger.Log($"[UI] ESC -> Back; drawer={_ui.OpenDrawer} qmenu={_ui.QuickMenu} help={_ui.HelpOpen} debug={_ui.DebugOpen}");
                     changed = true;
                 }
             }
 
-            // Update camera to follow cursor if it moved
+            // Final redraw after handling all UI keys (ensures ESC/Debug/help reflect immediately)
             if (changed)
             {
                 UpdateCameraToFollowCursor();
@@ -603,12 +880,37 @@ namespace HumanFortress.App.States
                 DrawUI();
             }
 
-            if (keyboard.IsKeyPressed(Keys.Escape))
+            return true;
+        }
+
+        private void HandlePathToolF10()
+        {
+            if (_world == null || _navManager == null || _navOverlay == null) return;
+            // Ensure nav view
+            _navView ??= new HumanFortress.Navigation.WorldNavigationView(_navManager, _world);
+
+            if (_pathStart == null)
             {
-                GameStateManager.Instance.ChangeState(GameStateType.MainMenu);
+                _pathStart = _cursorPos;
+                _pathStartZ = _currentZ;
+                _ui.AddToast($"Start set at ({_pathStart.Value.X},{_pathStart.Value.Y},{_pathStartZ})", _uiTick + 150);
+                _navOverlay.CurrentMode = HumanFortress.App.Rendering.NavigationOverlay.OverlayMode.PathDisplay;
+                return;
             }
 
-            return true;
+            // Compute path from previously set Start → current cursor
+            var tuning = HumanFortress.Navigation.NavigationTuning.LoadFromContent();
+            var astar = new HumanFortress.Navigation.DeterministicAStar(tuning);
+            var req = new HumanFortress.Navigation.PathRequest(
+                new HumanFortress.Navigation.Point3(_pathStart.Value.X, _pathStart.Value.Y, _pathStartZ),
+                new HumanFortress.Navigation.Point3(_cursorPos.X, _cursorPos.Y, _currentZ),
+                HumanFortress.Navigation.MoveMode.Walk,
+                HumanFortress.Navigation.PathFlags.None,
+                0);
+            var path = astar.FindPath(req, _navView);
+            _navOverlay.CurrentMode = HumanFortress.App.Rendering.NavigationOverlay.OverlayMode.PathDisplay;
+            _navOverlay.SetPath(path);
+            _ui.AddToast($"Path: {path.Kind} len={path.Length}", _uiTick + 180);
         }
 
         public override bool ProcessMouse(MouseScreenObjectState state)
@@ -617,14 +919,18 @@ namespace HumanFortress.App.States
 
             bool changed = false;
 
-            // Get mouse position relative to map surface
-            var mousePos = state.SurfaceCellPosition;
+            // Ensure keyboard focus stays on FortressState while handling mouse
+            if (!IsFocused) IsFocused = true;
 
-            // Adjust for map surface position
-            mousePos = new Point(mousePos.X - _mapSurface.Position.X, mousePos.Y - _mapSurface.Position.Y);
+            // Keep keyboard focus on this state so panels remain interactive after clicks
+            this.IsFocused = true;
+
+            // Get mouse position relative to map surface
+            var mousePos = new Point(state.SurfaceCellPosition.X - _mapSurface.Position.X,
+                                     state.SurfaceCellPosition.Y - _mapSurface.Position.Y);
 
             // Check if mouse is over the map
-            if (mousePos.X >= 0 && mousePos.X < 80 && mousePos.Y >= 0 && mousePos.Y < 40)
+            if (mousePos.X >= 0 && mousePos.X < _mapSurface.Surface.Width && mousePos.Y >= 0 && mousePos.Y < _mapSurface.Surface.Height)
             {
                 // Calculate world position from mouse
                 int worldX = _cameraPos.X + (mousePos.X / _zoomLevel);
@@ -634,6 +940,9 @@ namespace HumanFortress.App.States
                 if (worldX >= 0 && worldX <= maxPos && worldY >= 0 && worldY <= maxPos)
                 {
                     _lastMousePos = new Point(worldX, worldY);
+                    _cursorPos = _lastMousePos.Value; // follow mouse
+                    Logger.Log($"[MOUSE] Hover tile world=({_cursorPos.X},{_cursorPos.Y},{_currentZ})");
+                    changed = true;
                     UpdateTileInfo();
                 }
             }
@@ -655,13 +964,15 @@ namespace HumanFortress.App.States
                     // Ctrl+Scroll for zoom
                     int delta = state.Mouse.ScrollWheelValueChange > 0 ? 1 : -1;
                     _zoomLevel = Math.Max(1, Math.Min(4, _zoomLevel + delta));
+                    Logger.Log($"[ZOOM] Ctrl+Wheel delta={delta} -> zoom={_zoomLevel}");
                     changed = true;
                 }
                 else
                 {
                     // Regular scroll for Z-level
                     int delta = state.Mouse.ScrollWheelValueChange > 0 ? 1 : -1;
-                    _currentZ = Math.Max(0, Math.Min(49, _currentZ + delta));
+                    _currentZ = Math.Max(0, Math.Min(49, _currentZ - delta));
+                    Logger.Log($"[ZLEVEL] Wheel delta={delta} (reversed) -> Z={_currentZ}");
                     changed = true;
                 }
             }
@@ -673,27 +984,311 @@ namespace HumanFortress.App.States
                 DrawUI();
             }
 
+            // First: screen-level dock buttons (bottom-left of console)
+            if (state.Mouse.LeftClicked)
+            {
+                if (HandleDockClicksScreen(state.SurfaceCellPosition))
+                    return true;
+                if (HandleQuickClicksScreen(state.SurfaceCellPosition))
+                    return true;
+            }
+
+            // Handle mouse clicks for UI (map-relative)
+            if (state.Mouse.LeftClicked)
+            {
+                // Hit-test dock and quick icons by map-surface coordinates
+                var cell = state.SurfaceCellPosition - _mapSurface.Position;
+                int yDock = _mapSurface.Surface.Height - 1;
+                if (cell.Y == yDock - 1) // moved up one row
+                {
+                    // Simple segmented buttons positions
+                    if (cell.X >= 0 && cell.X < 5) { _ui.OpenPanel(DrawerId.Creature); }
+                    else if (cell.X < 10) { _ui.OpenPanel(DrawerId.Stock); }
+                    else if (cell.X < 15) { _ui.OpenPanel(DrawerId.Work); }
+                    else if (cell.X < 20) { _ui.OpenPanel(DrawerId.Military); }
+                    else if (cell.X < 25) { _ui.OpenPanel(DrawerId.Country); }
+                    else if (cell.X < 30) { _ui.OpenPanel(DrawerId.World); }
+                    else if (cell.X < 35) { _ui.OpenPanel(DrawerId.Log); }
+                    Logger.Log($"[CLICK] Dock click at cell=({cell.X},{cell.Y}) -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return true;
+                }
+
+                int center = _mapSurface.Surface.Width / 2;
+                int quickY = yDock;
+                if (cell.Y == quickY)
+                {
+                    if (cell.X >= center - 8 && cell.X < center - 8 + 9) { _ui.OpenQuickMenu(QuickMenuKind.Orders); }
+                    else if (cell.X >= center + 2 && cell.X < center + 2 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Zones); }
+                    else if (cell.X >= center + 12 && cell.X < center + 12 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Build); }
+                    DrawUI();
+                    return true;
+                }
+
+                // Click inside quick menu area → show WIP toast
+                if (_ui.QuickMenu != QuickMenuKind.None)
+                {
+                    _ui.AddToast("This feature is coming soon", _uiTick + 100);
+                    Logger.Log($"[CLICK] Quick menu area clicked - qmenu={_ui.QuickMenu}");
+                    DrawUI();
+                    return true;
+                }
+
+                // If click inside the map and not on UI, open tile panel
+                if (cell.X >= 0 && cell.X < _mapSurface.Surface.Width && cell.Y >= 0 && cell.Y < _mapSurface.Surface.Height)
+                {
+                    OnMapLeftClickedLocal(cell);
+                    return true;
+                }
+            }
+
+            if (state.Mouse.RightClicked)
+            {
+                if (_tilePanelOpen) HideTilePanel();
+                else _ui.Cancel();
+                DrawUI();
+                return true;
+            }
+
             return base.ProcessMouse(state);
+        }
+
+        // Click handling for bottom-left dock drawn at screen coordinates
+        private bool HandleDockClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 1; // moved to bottom row
+            if (screenCell.Y != y) return false;
+
+            int xStart = 1;
+            int buttonWidth = 5; // must match UiRenderer.DrawDockScreen
+            int gap = 1;
+            int[] xRanges = new int[7];
+            for (int i = 0; i < 7; i++)
+            {
+                xRanges[i] = xStart + i * (buttonWidth + gap);
+            }
+
+            int x = screenCell.X;
+            for (int i = 0; i < 7; i++)
+            {
+                int start = xRanges[i];
+                int end = start + buttonWidth - 1;
+                if (x >= start && x <= end)
+                {
+                    var id = (DrawerId)(i + 1); // enum values: 1..7 correspond to Creature..Log
+                    _ui.OpenPanel(id);
+                    Logger.Log($"[CLICK] DockScreen i={i} cell=({screenCell.X},{screenCell.Y}) -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Click handling for bottom-center quick icons drawn at screen coordinates
+        private bool HandleQuickClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 2; // matches UiRenderer.DrawQuickIconsScreen
+            if (screenCell.Y != y) return false;
+
+            int center = screenW / 2;
+            int buttonWidth = 5; // must match UiRenderer
+            int gap = 2;
+
+            var buttons = new (int start, int end, QuickMenuKind kind)[]
+            {
+                (center - (buttonWidth + gap) - buttonWidth / 2, center - (buttonWidth + gap) - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Orders),
+                (center - buttonWidth / 2, center - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Zones),
+                (center + (buttonWidth + gap) - buttonWidth / 2, center + (buttonWidth + gap) - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Build),
+            };
+
+            foreach (var b in buttons)
+            {
+                if (screenCell.X >= b.start && screenCell.X <= b.end)
+                {
+                    _ui.OpenQuickMenu(b.kind);
+                    Logger.Log($"[CLICK] QuickIconsScreen kind={b.kind} cell=({screenCell.X},{screenCell.Y}) -> qmenu={_ui.QuickMenu}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void UpdateCameraToFollowCursor()
         {
-            // Keep cursor in view
-            int viewWidth = 80 / _zoomLevel;
-            int viewHeight = 40 / _zoomLevel;
+            // Compute bounds
+            int viewWidth = Math.Max(1, (_mapSurface?.Surface.Width ?? 80) / _zoomLevel);
+            int viewHeight = Math.Max(1, (_mapSurface?.Surface.Height ?? 40) / _zoomLevel);
             int worldSize = FortressSize * 32;
             int maxCameraX = Math.Max(0, worldSize - viewWidth);
             int maxCameraY = Math.Max(0, worldSize - viewHeight);
 
-            // Center camera on cursor with some margin
-            int targetCameraX = _cursorPos.X - viewWidth / 2;
-            int targetCameraY = _cursorPos.Y - viewHeight / 2;
+            if (_cameraFollowCursor)
+            {
+                // Center camera on cursor
+                int targetCameraX = _cursorPos.X - viewWidth / 2;
+                int targetCameraY = _cursorPos.Y - viewHeight / 2;
+                targetCameraX = Math.Max(0, Math.Min(maxCameraX, targetCameraX));
+                targetCameraY = Math.Max(0, Math.Min(maxCameraY, targetCameraY));
+                _cameraPos = new Point(targetCameraX, targetCameraY);
+            }
+            else
+            {
+                // Only clamp camera to bounds (no following)
+                int cx = Math.Max(0, Math.Min(maxCameraX, _cameraPos.X));
+                int cy = Math.Max(0, Math.Min(maxCameraY, _cameraPos.Y));
+                _cameraPos = new Point(cx, cy);
+            }
+        }
 
-            // Clamp camera position to world bounds
-            targetCameraX = Math.Max(0, Math.Min(maxCameraX, targetCameraX));
-            targetCameraY = Math.Max(0, Math.Min(maxCameraY, targetCameraY));
+        // _uiTick is advanced in the existing Update at the top of this class
 
-            _cameraPos = new Point(targetCameraX, targetCameraY);
+        // Enhanced map-surface mouse handlers (for robust hover tracking)
+        private void OnMapMouseMovedLocal(Point local)
+        {
+            if (_mapSurface == null) return;
+            if (local.X < 0 || local.Y < 0 || local.X >= _mapSurface.Surface.Width || local.Y >= _mapSurface.Surface.Height)
+                return;
+
+            int worldX = _cameraPos.X + (local.X / _zoomLevel);
+            int worldY = _cameraPos.Y + (local.Y / _zoomLevel);
+            int maxPos = FortressSize * 32 - 1;
+            if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos)
+                return;
+
+            _lastMousePos = new Point(worldX, worldY);
+            _cursorPos = _lastMousePos.Value; // follow mouse
+            if (_uiTick % 10 == 0)
+                Logger.Log($"[MOUSE-EVT] Hover world=({_cursorPos.X},{_cursorPos.Y},{_currentZ}) local=({local.X},{local.Y}) camera=({_cameraPos.X},{_cameraPos.Y}) zoom={_zoomLevel}");
+            UpdateTileInfo();
+        }
+
+        // Overlay mouse move: update cursor when overlay sits on top of map
+        private void OnOverlayMouseMovedLocal(Point local)
+        {
+            if (_mapSurface == null || _uiSurface == null) return;
+            var mapLocal = new Point(local.X - _mapSurface.Position.X, local.Y - _mapSurface.Position.Y);
+            if (mapLocal.X < 0 || mapLocal.Y < 0 || mapLocal.X >= _mapSurface.Surface.Width || mapLocal.Y >= _mapSurface.Surface.Height)
+                return;
+
+            int worldX = _cameraPos.X + (mapLocal.X / _zoomLevel);
+            int worldY = _cameraPos.Y + (mapLocal.Y / _zoomLevel);
+            int maxPos = FortressSize * 32 - 1;
+            if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos)
+                return;
+
+            _lastMousePos = new Point(worldX, worldY);
+            _cursorPos = _lastMousePos.Value;
+        }
+
+        // Left-click on the map: open tile info panel for the clicked world tile
+        private void OnMapLeftClickedLocal(Point local)
+        {
+            if (_mapSurface == null) return;
+            // Map-local to world
+            int worldX = _cameraPos.X + (local.X / _zoomLevel);
+            int worldY = _cameraPos.Y + (local.Y / _zoomLevel);
+            int maxPos = FortressSize * 32 - 1;
+            if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos) return;
+
+            _tilePanelWorld = new Point(worldX, worldY);
+            _tilePanelZ = _currentZ;
+            _tilePanelOpen = true;
+            Logger.Log($"[CLICK] Open TilePanel at world=({_tilePanelWorld.X},{_tilePanelWorld.Y},{_tilePanelZ})");
+
+            // Dump TILE INFO (L0..L7) to log for debugging
+            try
+            {
+                if (_world != null)
+                {
+                    int chunkX = _tilePanelWorld.X / 32;
+                    int chunkY = _tilePanelWorld.Y / 32;
+                    int localX = _tilePanelWorld.X % 32;
+                    int localY = _tilePanelWorld.Y % 32;
+                    var key = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _tilePanelZ);
+                    var simChunk = _world.GetChunk(key);
+                    if (simChunk != null)
+                    {
+                        var tile = simChunk.GetTile(localX, localY);
+                        // WorldMap geology id from generator
+                        string geoIdWorld = _fortressMap?.GetChunk(chunkX, chunkY)?.GetGeologyId(localX, localY, _tilePanelZ) ?? "?";
+                        Logger.Log($"[TILE] L0 geology={geoIdWorld} kind={tile.Kind} nat={(tile.IsNatural?1:0)} rampDir={tile.RampDir}");
+                        Logger.Log($"[TILE] L1 surface mud={tile.HasMud} grass={tile.HasGrass} snow={tile.HasSnow} fert={tile.Fertility}");
+                        Logger.Log($"[TILE] L3 fluid kind={tile.FluidKind} depth={tile.FluidDepth}");
+                        Logger.Log($"[TILE] L7 meta revealed={tile.IsRevealed} forbid={tile.IsForbidden} traffic={tile.TrafficLevel} blood={tile.HasBlood}");
+                    }
+                }
+            }
+            catch { }
+            DrawUI();
+        }
+
+        // Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
+        private void DrawTilePopup(ScreenSurface overlay)
+        {
+            if (_fortressMap == null || _world == null) return;
+            var surf = overlay.Surface;
+            int w = 38;
+            int h = 14;
+            int x0 = surf.Width - w - 2;
+            int y0 = 2;
+            var bg = new Color(10, 10, 10, 220);
+
+            for (int yy = y0; yy < y0 + h; yy++)
+                for (int xx = x0; xx < x0 + w; xx++)
+                    surf.SetGlyph(xx, yy, ' ', Color.White, bg);
+
+            surf.Print(x0 + 2, y0, "TILE INFO", Color.Cyan);
+            surf.Print(x0 + 2, y0 + 1, $"World: {_tilePanelWorld.X},{_tilePanelWorld.Y}  Z:{_tilePanelZ}", Color.White);
+            surf.Print(x0 + 2, y0 + 2, "Layers L0..L7:", Color.Yellow);
+
+            int chunkX = _tilePanelWorld.X / 32;
+            int chunkY = _tilePanelWorld.Y / 32;
+            int localX = _tilePanelWorld.X % 32;
+            int localY = _tilePanelWorld.Y % 32;
+
+            var key = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _tilePanelZ);
+            var simChunk = _world.GetChunk(key);
+            if (simChunk != null)
+            {
+                var tile = simChunk.GetTile(localX, localY);
+                var geology = ContentRegistry.Instance.GetGeologyByHandle(tile.GeoMatId);
+                string geoId = geology?.Id ?? $"#${tile.GeoMatId}";
+
+                // L0: geology + terrain
+                surf.Print(x0 + 2, y0 + 4, $"L0: {geoId}", Color.Green);
+                string l0b = $"    Kind={tile.Kind} Nat={(tile.IsNatural?1:0)}" + (tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp ? $" Dir={tile.RampDir}" : "");
+                surf.Print(x0 + 2, y0 + 5, l0b, Color.Gray);
+
+                // L1: surface bits
+                string l1 = $"L1: Mud={(tile.HasMud?1:0)} Grass={(tile.HasGrass?1:0)} Snow={(tile.HasSnow?1:0)} Fert={tile.Fertility}";
+                surf.Print(x0 + 2, y0 + 6, l1, Color.Gray);
+
+                // L2: reserved
+                surf.Print(x0 + 2, y0 + 7, "L2: (reserved)", Color.DarkGray);
+
+                // L3: fluids
+                string l3 = $"L3: Fluid={tile.FluidKind} Depth={tile.FluidDepth}";
+                surf.Print(x0 + 2, y0 + 8, l3, Color.Gray);
+
+                // L4..L6: reserved
+                surf.Print(x0 + 2, y0 + 9,  "L4: (reserved)", Color.DarkGray);
+                surf.Print(x0 + 2, y0 + 10, "L5: (reserved)", Color.DarkGray);
+                surf.Print(x0 + 2, y0 + 11, "L6: (reserved)", Color.DarkGray);
+
+                // L7: meta
+                string l7 = $"L7: Revealed={(tile.IsRevealed?1:0)} Forbid={(tile.IsForbidden?1:0)} Traffic={tile.TrafficLevel} Blood={(tile.HasBlood?1:0)}";
+                surf.Print(x0 + 2, y0 + 12, l7, Color.Gray);
+            }
+
+            surf.Print(x0 + 2, y0 + h - 1, "ESC to close", Color.DarkGray);
         }
     }
 }

@@ -22,7 +22,7 @@
       "properties": {
         "kind": {
           "type": "string",
-          "enum": ["SolidWall", "OpenWithFloor", "OpenNoFloor", "Ramp", "StairsUp", "StairsDown", "StairsUD", "Chasm"]
+          "enum": ["SolidWall", "OpenWithFloor", "OpenNoFloor", "Ramp", "Slope", "StairsUp", "StairsDown", "StairsUD"]
         },
         "natural": {"type": "boolean"},
         "support_flag": {"type": "boolean"},

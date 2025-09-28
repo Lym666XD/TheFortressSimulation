@@ -1,0 +1,453 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_kitchen",
+      "name": "Kitchen",
+      "tags": ["workshop", "food", "kitchen", "cooking"],
+      "display_order": 35
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_kitchen_heat_open_hearth",
+      "name": "Open Hearth",
+      "slot": "heat_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_kitchen_heat_cauldron_hearth",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["heat", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_heat_cauldron_hearth",
+      "name": "Cauldron Hearth",
+      "slot": "heat_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_kitchen_heat_brick_oven_hearth",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["heat", "cauldron", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_heat_brick_oven_hearth",
+      "name": "Brick Oven & Hearth",
+      "slot": "heat_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["heat", "brick_oven", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_block",
+      "name": "Chopping Block",
+      "slot": "prep_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_kitchen_prep_board",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["prep", "chopping"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_board",
+      "name": "Butcher’s Block & Kneading Board",
+      "slot": "prep_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_kitchen_prep_tiled_table",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["prep", "kneading"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_tiled_table",
+      "name": "Tiled Prep Table",
+      "slot": "prep_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["prep", "tiled"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_clay_dome",
+      "name": "Clay Dome Oven",
+      "slot": "baking_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_kitchen_bake_stone_oven",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["baking", "clay_oven"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_stone_oven",
+      "name": "Stone Bread Oven",
+      "slot": "baking_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_kitchen_bake_brick_oven",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["baking", "stone_oven"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_brick_oven",
+      "name": "Vented Brick Bake Oven",
+      "slot": "baking_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["baking", "brick_oven", "vented"]
+    },
+    {
+      "id": "core_attach_kitchen_roast_spit",
+      "name": "Hand Spit",
+      "slot": "roast_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_kitchen_roast_spit_pan",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["roast", "spit"]
+    },
+    {
+      "id": "core_attach_kitchen_roast_spit_pan",
+      "name": "Spit & Drip Pan",
+      "slot": "roast_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_kitchen_roast_clock_jack",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["roast", "spit", "pan"]
+    },
+    {
+      "id": "core_attach_kitchen_roast_clock_jack",
+      "name": "Clock-Jack Spit",
+      "slot": "roast_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["roast", "spit", "jack"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_kitchen_make_dough_all",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_prep_block"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_flour", "count": 10 },
+        { "id": "core_item_water_clean", "count": 2 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_dough", "count": 10 }],
+      "tags": ["prep", "dough", "bread_base"]
+    },
+    {
+      "id": "core_recipe_kitchen_flatbread_C",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_bake_clay_dome"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_dough", "count": 10 },
+        { "id": "core_item_fuel", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_flatbread", "count": 10 }],
+      "tags": ["baking", "bread"]
+    },
+    {
+      "id": "core_recipe_kitchen_bread_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_bake_stone_oven"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_dough", "count": 10 },
+        { "id": "core_item_fuel", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_bread_loaf", "count": 11 }],
+      "tags": ["baking", "bread"]
+    },
+    {
+      "id": "core_recipe_kitchen_bread_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_bake_brick_oven"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_dough", "count": 10 },
+        { "id": "core_item_fuel", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_bread_loaf", "count": 12 }],
+      "tags": ["baking", "bread"]
+    },
+    {
+      "id": "core_recipe_kitchen_pottage_C",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_heat_open_hearth"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_vegetable", "count": 8 },
+        { "id": "core_item_grain", "count": 2 },
+        { "id": "core_item_water_clean", "count": 2 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_pottage", "count": 10 }],
+      "tags": ["stew", "porridge", "classical"]
+    },
+    {
+      "id": "core_recipe_kitchen_hearty_stew_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_heat_cauldron_hearth"],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_vegetable", "count": 6 },
+        { "id": "core_item_meat_raw", "count": 4 },
+        { "id": "core_item_water_clean", "count": 2 },
+        { "id": "core_item_herb", "count": 1 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_stew_hearty", "count": 11 }],
+      "tags": ["stew", "medieval"]
+    },
+    {
+      "id": "core_recipe_kitchen_lavish_stew_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_heat_brick_oven_hearth"],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_vegetable", "count": 6 },
+        { "id": "core_item_meat_raw", "count": 4 },
+        { "id": "core_item_cheese", "count": 2 },
+        { "id": "core_item_water_clean", "count": 2 },
+        { "id": "core_item_herb", "count": 1 },
+        { "id": "core_item_spice", "count": 1 },
+        { "id": "core_item_tallow_lard", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_stew_lavish", "count": 12 }],
+      "tags": ["stew", "lavish", "renaissance"]
+    },
+    {
+      "id": "core_recipe_kitchen_roast_platter_C",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_roast_spit"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_meat_raw", "count": 10 },
+        { "id": "core_item_tallow_lard", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_roast_platter", "count": 10 }],
+      "tags": ["roast", "spit"]
+    },
+    {
+      "id": "core_recipe_kitchen_roast_platter_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_roast_spit_pan"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_meat_raw", "count": 10 },
+        { "id": "core_item_tallow_lard", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_roast_platter", "count": 11 }],
+      "tags": ["roast", "spit"]
+    },
+    {
+      "id": "core_recipe_kitchen_roast_platter_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_roast_clock_jack"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_meat_raw", "count": 10 },
+        { "id": "core_item_tallow_lard", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_roast_platter", "count": 12 }],
+      "tags": ["roast", "spit"]
+    },
+    {
+      "id": "core_recipe_kitchen_meat_pie_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_bake_stone_oven", "core_attach_kitchen_prep_board"],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_dough", "count": 6 },
+        { "id": "core_item_meat_raw", "count": 4 },
+        { "id": "core_item_vegetable", "count": 2 },
+        { "id": "core_item_tallow_lard", "count": 1 },
+        { "id": "core_item_herb", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_meat_pie", "count": 10 }],
+      "tags": ["pie", "medieval"]
+    },
+    {
+      "id": "core_recipe_kitchen_meat_pie_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_bake_brick_oven", "core_attach_kitchen_prep_tiled_table"],
+      "duration_s": 330,
+      "inputs": [
+        { "id": "core_item_dough", "count": 6 },
+        { "id": "core_item_meat_raw", "count": 4 },
+        { "id": "core_item_vegetable", "count": 2 },
+        { "id": "core_item_tallow_lard", "count": 1 },
+        { "id": "core_item_spice", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_meat_pie", "count": 12 }],
+      "tags": ["pie", "renaissance"]
+    },
+    {
+      "id": "core_recipe_kitchen_dumplings_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_heat_cauldron_hearth", "core_attach_kitchen_prep_board"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_dough", "count": 6 },
+        { "id": "core_item_meat_raw", "count": 2 },
+        { "id": "core_item_water_clean", "count": 1 },
+        { "id": "core_item_herb", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_dumplings", "count": 10 }],
+      "tags": ["dumpling", "boiled"]
+    },
+    {
+      "id": "core_recipe_kitchen_dumplings_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_heat_brick_oven_hearth", "core_attach_kitchen_prep_tiled_table"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_dough", "count": 6 },
+        { "id": "core_item_cheese", "count": 2 },
+        { "id": "core_item_water_clean", "count": 1 },
+        { "id": "core_item_spice", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_dumplings", "count": 12 }],
+      "tags": ["dumpling", "boiled"]
+    },
+    {
+      "id": "core_recipe_kitchen_honey_cakes_C",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_bake_clay_dome"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_flour", "count": 8 },
+        { "id": "core_item_honey", "count": 3 },
+        { "id": "core_item_tallow_lard", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_honey_cake", "count": 10 }],
+      "tags": ["baking", "sweet", "classical"]
+    },
+    {
+      "id": "core_recipe_kitchen_marchpane_tart_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_bake_brick_oven", "core_attach_kitchen_prep_tiled_table"],
+      "duration_s": 360,
+      "inputs": [
+        { "id": "core_item_dough", "count": 4 },
+        { "id": "core_item_nut_almond", "count": 4 },
+        { "id": "core_item_powder_sugar", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_dessert_marchpane_tart", "count": 10 }],
+      "tags": ["baking", "sweet", "renaissance"]
+    },
+    {
+      "id": "core_recipe_kitchen_broth_all",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_heat_open_hearth"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_bone", "count": 6 },
+        { "id": "core_item_water_clean", "count": 6 },
+        { "id": "core_item_herb", "count": 1 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_broth_stock", "count": 10 }],
+      "tags": ["stock", "broth", "base"]
+    },
+    {
+      "id": "core_recipe_kitchen_biscuit_ration_M",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_bake_stone_oven"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_dough", "count": 10 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_biscuit_ration", "count": 12 }],
+      "tags": ["biscuit", "ration"]
+    },
+    {
+      "id": "core_recipe_kitchen_biscuit_ration_R",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_bake_brick_oven"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_dough", "count": 10 },
+        { "id": "core_item_salt", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_biscuit_ration", "count": 14 }],
+      "tags": ["biscuit", "ration"]
+    },
+    {
+      "id": "core_recipe_kitchen_meal_easy_generic",
+      "workshop": "core_workshop_kitchen",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_kitchen_heat_open_hearth", "core_attach_kitchen_prep_block"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_any_meat_or_veg", "count": 6 },
+        { "id": "core_item_any_starch_or_bread", "count": 4 }
+      ],
+      "outputs": [{ "id": "core_item_meal_easy", "count": 10 }],
+      "tags": ["meal", "generic", "easy"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_any_meat_or_veg", "accepts_tags": ["meat", "vegetable"], "min": 10, "note": "Game may split internally (e.g., 6 veg + 4 meat, etc.)" },
+        { "pool_id": "core_item_any_starch_or_bread", "accepts_tags": ["dough", "grain", "bread", "flatbread"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_kitchen_meal_fine_generic",
+      "workshop": "core_workshop_kitchen",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_kitchen_heat_cauldron_hearth", "core_attach_kitchen_prep_board"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_any_meat", "count": 4 },
+        { "id": "core_item_any_veg", "count": 4 },
+        { "id": "core_item_any_starch_or_bread", "count": 3 }
+      ],
+      "outputs": [{ "id": "core_item_meal_fine", "count": 11 }],
+      "tags": ["meal", "generic", "fine"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_any_meat", "accepts_tags": ["meat"], "min": 0 },
+        { "pool_id": "core_item_any_veg", "accepts_tags": ["vegetable"], "min": 0 },
+        { "pool_id": "core_item_any_starch_or_bread", "accepts_tags": ["dough", "grain", "bread", "flatbread"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_kitchen_meal_lavish_generic",
+      "workshop": "core_workshop_kitchen",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_kitchen_heat_brick_oven_hearth", "core_attach_kitchen_prep_tiled_table"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_any_meat", "count": 4 },
+        { "id": "core_item_any_veg", "count": 4 },
+        { "id": "core_item_any_starch_or_bread", "count": 3 },
+        { "id": "core_item_any_fat_or_dairy", "count": 1 },
+        { "id": "core_item_any_herb_or_spice", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_meal_lavish", "count": 12 }],
+      "tags": ["meal", "generic", "lavish"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_any_meat", "accepts_tags": ["meat"], "min": 0 },
+        { "pool_id": "core_item_any_veg", "accepts_tags": ["vegetable"], "min": 0 },
+        { "pool_id": "core_item_any_starch_or_bread", "accepts_tags": ["dough", "grain", "bread", "flatbread"], "min": 0 },
+        { "pool_id": "core_item_any_fat_or_dairy", "accepts_tags": ["tallow", "lard", "butter", "cheese", "dairy"], "min": 0 },
+        { "pool_id": "core_item_any_herb_or_spice", "accepts_tags": ["herb", "spice"], "min": 0 }
+      ]
+    }
+  ]
+}

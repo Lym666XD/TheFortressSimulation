@@ -1,0 +1,546 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_pottery",
+      "name": "Pottery Workshop",
+      "tags": ["workshop", "ceramic", "pottery", "building_materials"],
+      "display_order": 42
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_pottery_clay_trough",
+      "name": "Clay Pit & Puddling Trough",
+      "slot": "clay_prep",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_clay_levigation_basin",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["clay", "prep", "puddling"]
+    },
+    {
+      "id": "core_attach_pottery_clay_levigation_basin",
+      "name": "Levigating Basins & Rakes",
+      "slot": "clay_prep",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_clay_sieves_settling",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["clay", "levigation", "settle"]
+    },
+    {
+      "id": "core_attach_pottery_clay_sieves_settling",
+      "name": "Fine Sieves & Settling Tanks",
+      "slot": "clay_prep",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["clay", "refine", "sieve"]
+    },
+
+    {
+      "id": "core_attach_pottery_form_hand",
+      "name": "Hand Forming Boards",
+      "slot": "form_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_form_kick_wheel",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["form", "handbuild"]
+    },
+    {
+      "id": "core_attach_pottery_form_kick_wheel",
+      "name": "Kick Wheel",
+      "slot": "form_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_form_treadle_wheel_gauges",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["form", "wheel"]
+    },
+    {
+      "id": "core_attach_pottery_form_treadle_wheel_gauges",
+      "name": "Treadle Wheel & Gauges",
+      "slot": "form_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["form", "treadle", "precision"]
+    },
+
+    {
+      "id": "core_attach_pottery_kiln_pit",
+      "name": "Pit Kiln",
+      "slot": "kiln",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_kiln_updraft",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["kiln", "earthenware"]
+    },
+    {
+      "id": "core_attach_pottery_kiln_updraft",
+      "name": "Updraft Kiln",
+      "slot": "kiln",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_kiln_downdraft_stoneware",
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["kiln", "updraft", "earthenware"]
+    },
+    {
+      "id": "core_attach_pottery_kiln_downdraft_stoneware",
+      "name": "Downdraft/Stoneware Kiln",
+      "slot": "kiln",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.2 },
+      "tags": ["kiln", "downdraft", "stoneware"]
+    },
+
+    {
+      "id": "core_attach_pottery_dry_rack",
+      "name": "Drying Racks",
+      "slot": "drying",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_dry_shed",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["dry", "greenware"]
+    },
+    {
+      "id": "core_attach_pottery_dry_shed",
+      "name": "Ventilated Drying Shed",
+      "slot": "drying",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_dry_heated_room",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["dry", "shed"]
+    },
+    {
+      "id": "core_attach_pottery_dry_heated_room",
+      "name": "Heated Drying Room",
+      "slot": "drying",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["dry", "heated"]
+    },
+
+    {
+      "id": "core_attach_pottery_glaze_ash_vat",
+      "name": "Ash Glaze Vat",
+      "slot": "glaze_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_glaze_lead_pot",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["glaze", "ash"]
+    },
+    {
+      "id": "core_attach_pottery_glaze_lead_pot",
+      "name": "Lead-Glaze Pot & Stirrer",
+      "slot": "glaze_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_glaze_tin_pan",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["glaze", "lead"]
+    },
+    {
+      "id": "core_attach_pottery_glaze_tin_pan",
+      "name": "Tin-Opaque Glaze Pan",
+      "slot": "glaze_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["glaze", "tin"]
+    },
+    {
+      "id": "core_attach_pottery_salt_port",
+      "name": "Salt Glaze Ports",
+      "slot": "salt_glaze_port",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.04 },
+      "tags": ["glaze", "salt"]
+    },
+
+    {
+      "id": "core_attach_pottery_tile_press_frame",
+      "name": "Tile Frame & Moulds",
+      "slot": "tile_press",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_pottery_tile_press_lever",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["tile", "mould"]
+    },
+    {
+      "id": "core_attach_pottery_tile_press_lever",
+      "name": "Lever Tile Press",
+      "slot": "tile_press",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_pottery_tile_press_screw",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["tile", "press"]
+    },
+    {
+      "id": "core_attach_pottery_tile_press_screw",
+      "name": "Screw Tile Press",
+      "slot": "tile_press",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["tile", "press"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_pottery_refine_clay_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_clay_trough", "core_attach_pottery_dry_rack"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_clay_raw", "count": 10 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_clay_refined", "count": 10 },
+        { "id": "core_item_sand_silt", "count": 2 }
+      ],
+      "tags": ["clay", "refine"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_clay_raw", "accepts_tags": ["clay_common", "clay_alluvial", "clay_fireclay"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_refine_clay_M",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_clay_levigation_basin", "core_attach_pottery_dry_shed"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_clay_raw", "count": 10 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_clay_refined", "count": 12 },
+        { "id": "core_item_sand_silt", "count": 2 }
+      ],
+      "tags": ["clay", "refine"]
+    },
+    {
+      "id": "core_recipe_pottery_refine_clay_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_clay_sieves_settling", "core_attach_pottery_dry_heated_room"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_clay_raw", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_clay_refined", "count": 13 },
+        { "id": "core_item_sand_silt", "count": 2 }
+      ],
+      "tags": ["clay", "refine"]
+    },
+    {
+      "id": "core_recipe_pottery_make_slip_all",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_clay_trough"],
+      "duration_s": 90,
+      "inputs": [
+        { "id": "core_item_clay_refined", "count": 5 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clay_slip", "count": 6 }],
+      "tags": ["slip", "binder"]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_ash_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_glaze_ash_vat"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_ash_wood", "count": 4 },
+        { "id": "core_item_sand_silica", "count": 2 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_glaze_clear_ash", "count": 6 }],
+      "tags": ["glaze", "ash"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_sand_silica", "accepts_tags": ["sand_river", "sand_quartz"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_lead_M",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_glaze_lead_pot"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_lead_oxide", "count": 2 },
+        { "id": "core_item_sand_silica", "count": 3 },
+        { "id": "core_item_ash_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_glaze_lead_opaque", "count": 6 }],
+      "tags": ["glaze", "lead"]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_tin_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_glaze_tin_pan"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_glaze_lead_opaque", "count": 4 },
+        { "id": "core_item_tin_oxide", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_glaze_tin_white", "count": 6 }],
+      "tags": ["glaze", "tin", "opaque"]
+    },
+
+    {
+      "id": "core_recipe_pottery_shape_bowl_all",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_form_hand"],
+      "duration_s": 90,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 2 }],
+      "outputs": [{ "id": "core_item_greenware_bowl", "count": 1 }],
+      "tags": ["form", "tableware"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_mug_all",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_form_kick_wheel"],
+      "duration_s": 80,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 2 }],
+      "outputs": [{ "id": "core_item_greenware_mug", "count": 1 }],
+      "tags": ["form", "tableware"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_jug_all",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_form_kick_wheel"],
+      "duration_s": 110,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 4 }],
+      "outputs": [{ "id": "core_item_greenware_jug", "count": 1 }],
+      "tags": ["form", "vessel"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_large_pot_all",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_form_treadle_wheel_gauges"],
+      "duration_s": 140,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 6 }],
+      "outputs": [{ "id": "core_item_greenware_large_pot", "count": 1 }],
+      "tags": ["form", "storage"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_plate_all",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_form_hand"],
+      "duration_s": 80,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 2 }],
+      "outputs": [{ "id": "core_item_greenware_plate", "count": 1 }],
+      "tags": ["form", "tableware"]
+    },
+
+    {
+      "id": "core_recipe_pottery_shape_roof_tiles_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_tile_press_frame"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 6 }],
+      "outputs": [{ "id": "core_item_greenware_roof_tile", "count": 6 }],
+      "tags": ["form", "tile", "roof"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_floor_tiles_M",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_tile_press_lever"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 6 }],
+      "outputs": [{ "id": "core_item_greenware_floor_tile", "count": 8 }],
+      "tags": ["form", "tile", "floor"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_bricks_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_tile_press_frame"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 6 }],
+      "outputs": [{ "id": "core_item_greenware_brick", "count": 8 }],
+      "tags": ["form", "brick"]
+    },
+    {
+      "id": "core_recipe_pottery_shape_pipe_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_tile_press_screw"],
+      "duration_s": 160,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 6 }],
+      "outputs": [{ "id": "core_item_greenware_pipe", "count": 4 }],
+      "tags": ["form", "pipe", "utility"]
+    },
+
+    {
+      "id": "core_recipe_pottery_glaze_apply_ash_all",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_glaze_ash_vat"],
+      "duration_s": 60,
+      "inputs": [
+        { "id": "core_item_clay_slip", "count": 1 },
+        { "id": "core_item_glaze_clear_ash", "count": 1 },
+        { "id": "core_item_greenware_bowl", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_greenware_bowl_glazed", "count": 1 }],
+      "tags": ["glaze", "apply"]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_apply_lead_M",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_glaze_lead_pot"],
+      "duration_s": 70,
+      "inputs": [
+        { "id": "core_item_glaze_lead_opaque", "count": 1 },
+        { "id": "core_item_greenware_mug", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_greenware_mug_glazed", "count": 1 }],
+      "tags": ["glaze", "lead"]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_apply_tin_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_glaze_tin_pan"],
+      "duration_s": 80,
+      "inputs": [
+        { "id": "core_item_glaze_tin_white", "count": 1 },
+        { "id": "core_item_greenware_plate", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_greenware_plate_glazed", "count": 1 }],
+      "tags": ["glaze", "tin"]
+    },
+
+    {
+      "id": "core_recipe_pottery_fire_earthenware_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_kiln_pit"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_fuel_wood", "count": 3 },
+        { "id": "core_item_greenware_bowl", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_ceramic_bowl", "count": 1 }],
+      "tags": ["fire", "earthenware"]
+    },
+    {
+      "id": "core_recipe_pottery_fire_earthenware_M_multi",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_kiln_updraft"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_fuel_wood", "count": 4 },
+        { "id": "core_item_greenware_mug_glazed", "count": 1 },
+        { "id": "core_item_greenware_jug", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_ceramic_mug_glazed", "count": 1 },
+        { "id": "core_item_ceramic_jug", "count": 1 }
+      ],
+      "tags": ["fire", "earthenware", "glazed"]
+    },
+    {
+      "id": "core_recipe_pottery_fire_building_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_kiln_pit"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_fuel_wood", "count": 4 },
+        { "id": "core_item_greenware_brick", "count": 8 }
+      ],
+      "outputs": [{ "id": "core_item_brick_clay", "count": 8 }],
+      "tags": ["brick", "fire"]
+    },
+    {
+      "id": "core_recipe_pottery_fire_tiles_M",
+      "workshop": "core_workshop_pottery",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_pottery_kiln_updraft"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_fuel_wood", "count": 4 },
+        { "id": "core_item_greenware_roof_tile", "count": 6 },
+        { "id": "core_item_greenware_floor_tile", "count": 6 }
+      ],
+      "outputs": [
+        { "id": "core_item_roof_tile_clay", "count": 6 },
+        { "id": "core_item_floor_tile_clay", "count": 6 }
+      ],
+      "tags": ["tile", "fire"]
+    },
+    {
+      "id": "core_recipe_pottery_fire_stoneware_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_kiln_downdraft_stoneware"],
+      "duration_s": 280,
+      "inputs": [
+        { "id": "core_item_fuel_charcoal", "count": 4 },
+        { "id": "core_item_greenware_large_pot", "count": 1 },
+        { "id": "core_item_greenware_mug", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_stoneware_large_pot", "count": 1 },
+        { "id": "core_item_stoneware_mug", "count": 1 }
+      ],
+      "tags": ["stoneware", "highfire"]
+    },
+    {
+      "id": "core_recipe_pottery_fire_salt_glaze_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_kiln_downdraft_stoneware", "core_attach_pottery_salt_port"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_fuel_charcoal", "count": 4 },
+        { "id": "core_item_salt", "count": 2 },
+        { "id": "core_item_greenware_jug", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_stoneware_jug_salt_glazed", "count": 1 }],
+      "tags": ["stoneware", "salt_glaze"]
+    },
+
+    {
+      "id": "core_recipe_pottery_statue_small_C",
+      "workshop": "core_workshop_pottery",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_pottery_form_hand"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_clay_refined", "count": 3 }],
+      "outputs": [{ "id": "core_item_figurine_terracotta", "count": 1 }],
+      "tags": ["craft", "decor"]
+    },
+    {
+      "id": "core_recipe_pottery_plate_set_R",
+      "workshop": "core_workshop_pottery",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_pottery_form_treadle_wheel_gauges", "core_attach_pottery_glaze_tin_pan"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_greenware_plate_glazed", "count": 4 },
+        { "id": "core_item_fuel_wood", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_ceramic_plate_tin_glazed_set", "count": 1 }],
+      "tags": ["tableware", "set", "glazed"]
+    }
+  ]
+}

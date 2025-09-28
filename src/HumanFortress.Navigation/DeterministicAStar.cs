@@ -224,6 +224,44 @@ public sealed class DeterministicAStar
             ProcessNeighbor(current, downPos, (ushort)(_tuning.OrthogonalCost + _tuning.StairDelta),
                 request, world);
         }
+
+        // Ramps: allow ascending from ramp base and descending from ramp top
+        // Semantics: rampDirection points from base (z) toward top (z+1)
+        if (world.TryGetRampDirection(current.Position, out var dir))
+        {
+            var (dx, dy) = GetDirectionOffset(dir);
+            var topPos = new Point3(current.Position.X + dx, current.Position.Y + dy, current.Position.Z + 1);
+            if (world.IsValid(topPos) && world.IsStandable(topPos))
+            {
+                ProcessNeighbor(current, topPos, (ushort)(_tuning.OrthogonalCost + _tuning.RampDelta), request, world);
+            }
+        }
+        // If we're on a standable top tile, allow descending via cached down-ramp link
+        if (world.IsStandable(current.Position) && world.TryGetDownRampDirection(current.Position, out var ddir))
+        {
+            var (dx, dy) = GetDirectionOffset(ddir);
+            var rampPos = new Point3(current.Position.X - dx, current.Position.Y - dy, current.Position.Z - 1);
+            if (world.IsValid(rampPos) && world.IsWalkable(rampPos, request.Mode))
+            {
+                ProcessNeighbor(current, rampPos, (ushort)(_tuning.OrthogonalCost + _tuning.RampDelta), request, world);
+            }
+        }
+    }
+
+    private static (int dx, int dy) GetDirectionOffset(byte direction)
+    {
+        return direction switch
+        {
+            0 => (0, -1),   // N
+            1 => (1, -1),   // NE
+            2 => (1, 0),    // E
+            3 => (1, 1),    // SE
+            4 => (0, 1),    // S
+            5 => (-1, 1),   // SW
+            6 => (-1, 0),   // W
+            7 => (-1, -1),  // NW
+            _ => (0, -1)
+        };
     }
 
     private bool HasRequiredCapability(NavCapability caps, MoveMode mode)

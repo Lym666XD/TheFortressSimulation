@@ -1,0 +1,228 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_firearms",
+      "name": "Firearms Workshop",
+      "tags": ["workshop", "armaments", "firearms", "artillery"],
+      "display_order": 60
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_firearms_assembly_matchlock_bench",
+      "name": "Matchlock Assembly Bench",
+      "slot": "gun_assembly",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_firearms_assembly_precision_bench",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["assembly", "firearm"]
+    },
+    {
+      "id": "core_attach_firearms_assembly_precision_bench",
+      "name": "Precision Gunsmith Assembly Bench",
+      "slot": "gun_assembly",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["assembly", "firearm"]
+    },
+    {
+      "id": "core_attach_firearms_barrel_straight_muzzle",
+      "name": "Barrel Straightening & Muzzling Station",
+      "slot": "barrel_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_firearms_barrel_straight_bore_precision",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["barrel", "straighten", "muzzle"]
+    },
+    {
+      "id": "core_attach_firearms_barrel_straight_bore_precision",
+      "name": "Straightening + Precision Boring Bench",
+      "slot": "barrel_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["barrel", "boring", "precision"]
+    },
+    {
+      "id": "core_attach_artillery_lift_tripod",
+      "name": "Tripod Hoist",
+      "slot": "artillery_lift",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_artillery_lift_crane_block",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["lift", "hoist", "artillery"]
+    },
+    {
+      "id": "core_attach_artillery_lift_crane_block",
+      "name": "Overhead Crane & Tackle",
+      "slot": "artillery_lift",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["lift", "crane", "artillery"]
+    },
+    {
+      "id": "core_attach_artillery_carriage_bench",
+      "name": "Gun Carriage Assembly Stand",
+      "slot": "carriage_assembly",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_artillery_carriage_rotating_stand",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["carriage", "assembly"]
+    },
+    {
+      "id": "core_attach_artillery_carriage_rotating_stand",
+      "name": "Disassemblable Carriage & Rotating Mount Stand",
+      "slot": "carriage_assembly",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["carriage", "rotating", "assembly"]
+    },
+    {
+      "id": "core_attach_artillery_trunnion_fixture",
+      "name": "Trunnion Alignment Fixture",
+      "slot": "trunnion_fixture",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_artillery_axle_recoil_fixture",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["trunnion", "alignment"]
+    },
+    {
+      "id": "core_attach_artillery_axle_recoil_fixture",
+      "name": "Axle & Recoil Fitting Jig",
+      "slot": "trunnion_fixture",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["axle", "recoil", "fitting"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_firearm_caliver_M",
+      "workshop": "core_workshop_firearms",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_firearms_assembly_matchlock_bench",
+        "core_attach_firearms_barrel_straight_muzzle"
+      ],
+      "duration_s": 600,
+      "inputs": [
+        { "id": "core_item_gunbarrel", "count": 1 },
+        { "id": "core_item_mechanism_lock_matchlock", "count": 1 },
+        { "id": "core_item_block_wood", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_firearm_caliver_matchlock", "count": 1 }
+      ],
+      "tags": ["assembly", "firearm", "matchlock"]
+    },
+    {
+      "id": "core_recipe_firearm_musket_matchlock_R",
+      "workshop": "core_workshop_firearms",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_firearms_assembly_precision_bench",
+        "core_attach_firearms_barrel_straight_bore_precision"
+      ],
+      "duration_s": 720,
+      "inputs": [
+        { "id": "core_item_gunbarrel", "count": 1 },
+        { "id": "core_item_block_wood", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_firearm_musket_matchlock", "count": 1 }
+      ],
+      "tags": ["assembly", "firearm", "matchlock", "long_gun"]
+    },
+    {
+      "id": "core_recipe_artillery_swivel_gun_M",
+      "workshop": "core_workshop_firearms",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_artillery_lift_tripod",
+        "core_attach_artillery_carriage_bench",
+        "core_attach_artillery_trunnion_fixture"
+      ],
+      "duration_s": 900,
+      "inputs": [
+        { "id": "core_item_cannon_barrel", "count": 1 },
+        { "id": "core_item_mount_swivel_pivot", "count": 1 },
+        { "id": "core_item_bearing_trunnion", "count": 2 },
+        { "id": "core_item_component_mechanical_small", "count": 4 },
+        { "id": "core_item_component_mechanical_large", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_cannon_swivel", "count": 1 }
+      ],
+      "tags": ["artillery", "swivel", "direct_fire"]
+    },
+    {
+      "id": "core_recipe_artillery_saker_R",
+      "workshop": "core_workshop_firearms",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_artillery_lift_crane_block",
+        "core_attach_artillery_carriage_rotating_stand",
+        "core_attach_artillery_axle_recoil_fixture"
+      ],
+      "duration_s": 1200,
+      "inputs": [
+        { "id": "core_item_cannon_barrel_saker", "count": 1 },
+        { "id": "core_item_carriage_field_gun", "count": 1 },
+        { "id": "core_item_bearing_trunnion", "count": 2 },
+        { "id": "core_item_wheel_wooden_large", "count": 2 },
+        { "id": "core_item_component_mechanical_small", "count": 8 },
+        { "id": "core_item_component_mechanical_large", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_cannon_saker", "count": 1 }
+      ],
+      "tags": ["artillery", "field_gun", "direct_fire"]
+    },
+    {
+      "id": "core_recipe_artillery_mortar_M",
+      "workshop": "core_workshop_firearms",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_artillery_lift_tripod",
+        "core_attach_artillery_carriage_bench"
+      ],
+      "duration_s": 900,
+      "inputs": [
+        { "id": "core_item_cannon_barrel_mortar", "count": 1 },
+        { "id": "core_item_mortar_bed", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 8 },
+        { "id": "core_item_component_mechanical_large", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_mortar", "count": 1 }
+      ],
+      "tags": ["artillery", "mortar", "indirect_fire"]
+    },
+    {
+      "id": "core_recipe_artillery_mortar_R",
+      "workshop": "core_workshop_firearms",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_artillery_lift_crane_block",
+        "core_attach_artillery_carriage_bench"
+      ],
+      "duration_s": 840,
+      "inputs": [
+        { "id": "core_item_cannon_barrel_mortar", "count": 1 },
+        { "id": "core_item_mortar_bed", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 8 },
+        { "id": "core_item_component_mechanical_large", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_weapon_mortar", "count": 1 }
+      ],
+      "tags": ["artillery", "mortar", "indirect_fire"]
+    }
+  ]
+}

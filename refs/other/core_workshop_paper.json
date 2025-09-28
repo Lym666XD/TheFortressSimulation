@@ -1,0 +1,363 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_paper",
+      "name": "Papermaking Workshop",
+      "tags": ["workshop", "paper", "writing", "bookmaking"],
+      "display_order": 45
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_paper_pulp_quern",
+      "name": "Quern & Mortar (Plant Pulp)",
+      "slot": "pulp_prep",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_paper_pulp_stampers_water",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["pulp", "quern", "plant"]
+    },
+    {
+      "id": "core_attach_paper_pulp_stampers_water",
+      "name": "Water Stampers (Trip-Hammer)",
+      "slot": "pulp_prep",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_pulp_stampers_frame",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["pulp", "stampers", "waterpower"]
+    },
+    {
+      "id": "core_attach_paper_pulp_stampers_frame",
+      "name": "Improved Stampers & Trough",
+      "slot": "pulp_prep",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["pulp", "stampers", "frame"]
+    },
+
+    {
+      "id": "core_attach_paper_vat_reed_screen",
+      "name": "Vat & Reed Screen",
+      "slot": "sheet_form",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_paper_vat_mould_deckle",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["vat", "screen", "form"]
+    },
+    {
+      "id": "core_attach_paper_vat_mould_deckle",
+      "name": "Vat with Mould & Deckle",
+      "slot": "sheet_form",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_vat_twin_couch",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["mould", "deckle", "couch"]
+    },
+    {
+      "id": "core_attach_paper_vat_twin_couch",
+      "name": "Twin-Vat & Couching Table",
+      "slot": "sheet_form",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["twin_vat", "couch", "form"]
+    },
+
+    {
+      "id": "core_attach_paper_press_hand",
+      "name": "Hand Press",
+      "slot": "press_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_paper_press_screw",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["press", "hand"]
+    },
+    {
+      "id": "core_attach_paper_press_screw",
+      "name": "Screw Press",
+      "slot": "press_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_press_double",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["press", "screw"]
+    },
+    {
+      "id": "core_attach_paper_press_double",
+      "name": "Double Screw Press",
+      "slot": "press_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["press", "double"]
+    },
+
+    {
+      "id": "core_attach_paper_dry_rope_loft",
+      "name": "Rope-Drying Loft",
+      "slot": "drying_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_paper_dry_loft_laths",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["drying", "loft"]
+    },
+    {
+      "id": "core_attach_paper_dry_loft_laths",
+      "name": "Lath-Drying Loft",
+      "slot": "drying_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_dry_heated_room",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["drying", "laths"]
+    },
+    {
+      "id": "core_attach_paper_dry_heated_room",
+      "name": "Heated Drying Room",
+      "slot": "drying_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["drying", "heated"]
+    },
+
+    {
+      "id": "core_attach_paper_rag_sort_bench",
+      "name": "Rag Sorting Bench",
+      "slot": "rag_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_rag_boiler_beater",
+      "effects": { "throughput_mult": 1.02 },
+      "tags": ["rag", "sort"]
+    },
+    {
+      "id": "core_attach_paper_rag_boiler_beater",
+      "name": "Rag Boiler & Beater",
+      "slot": "rag_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["rag", "boil", "beat"]
+    },
+
+    {
+      "id": "core_attach_paper_size_glue_pot",
+      "name": "Glue Sizing Pot",
+      "slot": "sizing_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_paper_size_tub_alum",
+      "effects": { "throughput_mult": 1.02 },
+      "tags": ["sizing", "gelatin"]
+    },
+    {
+      "id": "core_attach_paper_size_tub_alum",
+      "name": "Sizing Trough (Glue + Alum)",
+      "slot": "sizing_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["sizing", "alum"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_paper_pulp_generic_from_plant_C",
+      "workshop": "core_workshop_paper",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_paper_pulp_quern"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_plant_fiber", "count": 10 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_pulp_slurry", "count": 10 },
+        { "id": "core_item_seed_generic", "count": 2 }
+      ],
+      "tags": ["pulp", "plant"]
+    },
+    {
+      "id": "core_recipe_paper_pulp_generic_from_plant_M",
+      "workshop": "core_workshop_paper",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_paper_pulp_stampers_water"],
+      "duration_s": 150,
+      "inputs": [
+        { "id": "core_item_plant_fiber", "count": 10 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_pulp_slurry", "count": 12 },
+        { "id": "core_item_seed_generic", "count": 2 }
+      ],
+      "tags": ["pulp", "plant"]
+    },
+    {
+      "id": "core_recipe_paper_pulp_generic_from_plant_R",
+      "workshop": "core_workshop_paper",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_paper_pulp_stampers_frame"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_plant_fiber", "count": 10 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_pulp_slurry", "count": 13 },
+        { "id": "core_item_seed_generic", "count": 2 }
+      ],
+      "tags": ["pulp", "plant"]
+    },
+
+    {
+      "id": "core_recipe_paper_pulp_generic_from_rags_M",
+      "workshop": "core_workshop_paper",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_paper_rag_sort_bench", "core_attach_paper_pulp_stampers_water"],
+      "duration_s": 210,
+      "inputs": [
+        { "id": "core_item_rags_linen", "count": 8 },
+        { "id": "core_item_water_clean", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_pulp_slurry", "count": 10 }
+      ],
+      "tags": ["pulp", "rags"]
+    },
+    {
+      "id": "core_recipe_paper_pulp_generic_from_rags_R",
+      "workshop": "core_workshop_paper",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_paper_rag_boiler_beater", "core_attach_paper_pulp_stampers_frame"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_rags_linen", "count": 8 },
+        { "id": "core_item_water_clean", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_pulp_slurry", "count": 12 }
+      ],
+      "tags": ["pulp", "rags"]
+    },
+
+    {
+      "id": "core_recipe_paper_press_sheet_C",
+      "workshop": "core_workshop_paper",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_paper_vat_reed_screen",
+        "core_attach_paper_press_hand",
+        "core_attach_paper_dry_rope_loft"
+      ],
+      "duration_s": 240,
+      "inputs": [{ "id": "core_item_pulp_slurry", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_sheet_paper", "count": 10 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["sheet", "press", "dry"]
+    },
+    {
+      "id": "core_recipe_paper_press_sheet_M",
+      "workshop": "core_workshop_paper",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_paper_vat_mould_deckle",
+        "core_attach_paper_press_screw",
+        "core_attach_paper_dry_loft_laths"
+      ],
+      "duration_s": 200,
+      "inputs": [{ "id": "core_item_pulp_slurry", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_sheet_paper", "count": 11 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["sheet", "press", "dry"]
+    },
+    {
+      "id": "core_recipe_paper_press_sheet_R",
+      "workshop": "core_workshop_paper",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_paper_vat_twin_couch",
+        "core_attach_paper_press_double",
+        "core_attach_paper_dry_heated_room"
+      ],
+      "duration_s": 180,
+      "inputs": [{ "id": "core_item_pulp_slurry", "count": 10 }],
+      "outputs": [
+        { "id": "core_item_sheet_paper", "count": 12 },
+        { "id": "core_item_wastewater", "count": 1 }
+      ],
+      "tags": ["sheet", "press", "dry"]
+    },
+
+    {
+      "id": "core_recipe_paper_size_M",
+      "workshop": "core_workshop_paper",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_paper_size_glue_pot", "core_attach_paper_dry_loft_laths"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_sheet_paper", "count": 10 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_sheet_paper_sized", "count": 10 }],
+      "tags": ["sizing", "glue"]
+    },
+    {
+      "id": "core_recipe_paper_size_R",
+      "workshop": "core_workshop_paper",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_paper_size_tub_alum", "core_attach_paper_dry_heated_room"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_sheet_paper", "count": 10 },
+        { "id": "core_item_glue_animal", "count": 1 },
+        { "id": "core_item_alum", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_sheet_paper_sized", "count": 12 }],
+      "tags": ["sizing", "alum"]
+    },
+
+    {
+      "id": "core_recipe_paper_scroll_all",
+      "workshop": "core_workshop_paper",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_sheet_paper", "count": 1 },
+        { "id": "core_item_scroll_roller", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_scroll_blank", "count": 1 }],
+      "tags": ["scroll", "writing"]
+    },
+    {
+      "id": "core_recipe_paper_quire_all",
+      "workshop": "core_workshop_paper",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 150,
+      "inputs": [
+        { "id": "core_item_sheet_paper", "count": 4 },
+        { "id": "core_item_thread_hemp", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_quire_blank", "count": 1 }],
+      "tags": ["quire", "gather"]
+    },
+    {
+      "id": "core_recipe_paper_codex_blank_R",
+      "workshop": "core_workshop_paper",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_paper_press_double"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_quire_blank", "count": 2 },
+        { "id": "core_item_board_wood", "count": 2 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_codex_blank", "count": 1 }],
+      "tags": ["book", "codex", "binding"]
+    }
+  ]
+}

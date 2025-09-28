@@ -159,5 +159,16 @@
             Test runner to verify Phase A implementation.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.UI.MapScreenSurface">
+            <summary>
+            ScreenSurface specialized for the map area that exposes reliable mouse events
+            for hover and left-click in local cell coordinates.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.UiOverlaySurface">
+            <summary>
+            Full-screen UI overlay surface that captures mouse in overlay coordinates.
+            </summary>
+        </member>
     </members>
 </doc>

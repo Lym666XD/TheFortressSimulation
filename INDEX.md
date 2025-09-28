@@ -1,101 +1,103 @@
-This index maps concepts ‚Üí markdown specs so codegen tools can jump straight to the right contract.
+This index maps concepts ‚Ü?markdown specs so codegen tools can jump straight to the right contract.
 Legend: [N] Normative (binding) ¬∑ [U] Unified (merged) ¬∑ [D] Design (non-binding) ¬∑ [T] TODO (planned)
 
 0) Start Here (Core Overview)
 
-GAME_ARCHITECTURE.md [N][U] ‚Äî High-level modules, ownership, boundaries, dependencies.
+GAME_ARCHITECTURE.md [N][U] ‚Ä?High-level modules, ownership, boundaries, dependencies.
 
-GAME_STATE_FLOW.md [N][U] ‚Äî Fortress-only flow (menus ‚Üí worldgen ‚Üí embark ‚Üí play ‚Üí save/load), edge-band incidents.
+GAME_STATE_FLOW.md [N][U] ‚Ä?Fortress-only flow (menus ‚Ü?worldgen ‚Ü?embark ‚Ü?play ‚Ü?save/load), edge-band incidents.
 
-DEVELOPMENT_PROCEDURE.md [N] ‚Äî Phase plan, gates/DoD, parallel workstreams.
+DEVELOPMENT_PROCEDURE.md [N] ‚Ä?Phase plan, gates/DoD, parallel workstreams.
 
 1) Simulation Kernel & Concurrency
 
-CONCURRENCY_MODEL.md [N] ‚Äî Read-parallel / Write-serialized, Diff-Log + Chunk-Actor options, barriers.
+CONCURRENCY_MODEL.md [N] ‚Ä?Read-parallel / Write-serialized, Diff-Log + Chunk-Actor options, barriers.
 
-UPDATE_ORDER.md (Unified) [N][U] ‚Äî Fixed per-tick stages, write windows, rebuild/commit points.
+UPDATE_ORDER.md (Unified) [N][U] ‚Ä?Fixed per-tick stages, write windows, rebuild/commit points.
 
-SIM_LOD_POLICY.md [N] ‚Äî L0/L1 active; L2+ frozen/decimated; pin/promote rules.
+SIM_LOD_POLICY.md [N] ‚Ä?L0/L1 active; L2+ frozen/decimated; pin/promote rules.
 
-CHUNK_AND_DATA_LAYOUT.md [N][U] ‚Äî Chunk geometry (32√ó32√óZ), SoA hot arrays + sparse overlays, indices/masks.
+CHUNK_AND_DATA_LAYOUT.md [N][U] ‚Ä?Chunk geometry (32√ó32√óZ), SoA hot arrays + sparse overlays, indices/masks.
 
 2) Tiles, Fields, Fluids & Rendering
 
-TILE_SPEC.md (Detailed) [N][U] ‚Äî L0‚ÄìL7 responsibilities, TileBase bit layouts, mutation rules, snapshot contracts.
+TILE_SPEC.md (Detailed) [N][U] ‚Ä?L0‚ÄìL7 responsibilities, TileBase bit layouts, mutation rules, snapshot contracts.
 
-FIELD_SPEC.md [N] ‚Äî L4 overlay (gases/decals/aura), decay/propagation, LOS opacity, serialization.
+FIELD_SPEC.md [N] ‚Ä?L4 overlay (gases/decals/aura), decay/propagation, LOS opacity, serialization.
 
-FLUID_SPEC.md [N] ‚Äî L3 single-kind depth 0..7, quantized solver, budgets, determinism.
+FLUID_SPEC.md [N] ‚Ä?L3 single-kind depth 0..7, quantized solver, budgets, determinism.
 
-RENDERING_SNAPSHOT.md (Unified) [N][U] ‚Äî Immutable snapshot DTOs, draw order, dirty-chunk rebuild.
+RENDERING_SNAPSHOT.md (Unified) [N][U] ‚Ä?Immutable snapshot DTOs, draw order, dirty-chunk rebuild.
 
-AUTOTILING_AND_ROTATION.md [N] ‚Äî connect_groups, NESW masks, rotation chains (data-driven).
+AUTOTILING_AND_ROTATION.md [N] ‚Ä?connect_groups, NESW masks, rotation chains (data-driven).
 
-TILE_CSHARP_SKELETON.md [D] ‚Äî Minimal code shapes for TileBase[], overlays, derived caches.
+TILE_CSHARP_SKELETON.md [D] ‚Ä?Minimal code shapes for TileBase[], overlays, derived caches.
 
-DATA_LAYOUT.md / TILE_LAYERS.md [D] ‚Äî Earlier rationale; superseded by TILE_SPEC.md.
+DATA_LAYOUT.md / TILE_LAYERS.md [D] ‚Ä?Earlier rationale; superseded by TILE_SPEC.md.
 
 3) World Generation (Fortress & World Map)
 
-MAPGEN_PIPELINE.md (Unified) [N][U] ‚Äî Stage-by-stage (height/biome/geology/cavern/POI), seed hierarchy, write targets (L0/L1/L3/L4/L7).
+MAPGEN_PIPELINE.md (Unified) [N][U] ‚Ä?Stage-by-stage (height/biome/geology/cavern/POI), seed hierarchy, write targets (L0/L1/L3/L4/L7).
 
-MAPGEN_X_TILES.md [D] ‚Äî Layer mapping examples; reference supplement.
+MAPGEN_X_TILES.md [D] ‚Ä?Layer mapping examples; reference supplement.
 
 4) Navigation & Movement
 
-NAVIGATION_SPEC.md [N] ‚Äî NavMask/NavCost, ramps/stairs rules, door/fluid costs, deterministic A*, budgets, LOD cooperation.
+NAVIGATION_SPEC.md [N] ‚Ä?NavMask/NavCost, ramps/stairs rules, door/fluid costs, deterministic A*, budgets, LOD cooperation.
 
 5) Jobs, Hauling & Construction
 
-JOB_SCHEDULER_SPEC.md [N] ‚Äî Task board, priorities, reservations TTL, fairness/starvation rules.
+JOB_SCHEDULER_SPEC.md [N] ‚Ä?Task board, priorities, reservations TTL, fairness/starvation rules.
 
-HAULING_POLICY.md [N] ‚Äî Stockpile (area) pull, supply, dump, anti ping-pong, scoring, multi-pick, reservations.
+HAULING_POLICY.md [N] ‚Ä?Stockpile (area) pull, supply, dump, anti ping-pong, scoring, multi-pick, reservations.
 
-BUILDABLE_SPEC.md [N] ‚Äî Buildables (workshops/doors/walls) registry model, placement/rotation/IO policy.
+BUILDABLE_SPEC.md [N] ‚Ä?Buildables (workshops/doors/walls) registry model, placement/rotation/IO policy.
 
-DESIGNATIONS_AND_BLUEPRINTS.md [T] ‚Äî L7 markers ‚Üí jobs, mass ops, priorities (planned).
+DESIGNATIONS_AND_BLUEPRINTS.md [T] ‚Ä?L7 markers ‚Ü?jobs, mass ops, priorities (planned).
 
 6) Storyteller / Incidents
 
-INCIDENT_DIRECTOR_SPEC.md [N] ‚Äî Threat budget, candidate selection, cooldowns/safety rails, edge-band targeting, executors, save state.
+INCIDENT_DIRECTOR_SPEC.md [N] ‚Ä?Threat budget, candidate selection, cooldowns/safety rails, edge-band targeting, executors, save state.
 
 7) Creatures, Combat & AI
 
-CREATURES_SPEC.md [N][U] ‚Äî Attributes (vitals/skills/traits), body slots (CDDA-like, not hyper-detailed), multi-limb ready, extra cognitive fields (reserved).
+CREATURES_SPEC.md [N][U] ‚Ä?Attributes (vitals/skills/traits), body slots (CDDA-like, not hyper-detailed), multi-limb ready, extra cognitive fields (reserved).
 
-COMBAT_SPEC.md [T] ‚Äî Damage rolls, armor/coverage, encumbrance‚Üímove penalty hook, morale (MVP).
+COMBAT_SPEC.md [T] ‚Ä?Damage rolls, armor/coverage, encumbrance‚Üímove penalty hook, morale (MVP).
 
-AI_CITIZEN_SPEC.md [T] ‚Äî Utility buckets (work/eat/sleep/idle/flee), scheduling, visitors/caravans.
+AI_CITIZEN_SPEC.md [T] ‚Ä?Utility buckets (work/eat/sleep/idle/flee), scheduling, visitors/caravans.
 
 8) Content & Registries (Data-Driven, Anti-Hardcode)
 
-CONTENT_REGISTRY_OVERVIEW.md (Normative) [N] ‚Äî Load order (base‚ÜíDLC‚Üímod), string IDs‚Üîruntime indices, conflict resolution, hot-reload, save impact.
+CONTENT_REGISTRY_OVERVIEW.md (Normative) [N] ‚Ä?Load order (base‚ÜíDLC‚Üímod), string IDs‚Üîruntime indices, conflict resolution, hot-reload, save impact.
 
-CONTENT_BUILD_PIPELINE.md [N] ‚Äî .cpack compile, IdMaps/TagIndex/LUTs, determinism, signatures.
+CONTENT_BUILD_PIPELINE.md [N] ‚Ä?.cpack compile, IdMaps/TagIndex/LUTs, determinism, signatures.
 
 Gameplay registries/specs
 
-MATERIALS_SPEC.md [N] ‚Äî Simplified physical + magical properties (density/mass from density√óvolume, flammability, magic resist/conduct), heat/ignition/melt (simplified).
+MATERIALS_SPEC.md [N] ‚Ä?Simplified physical + magical properties (density/mass from density√óvolume, flammability, magic resist/conduct), heat/ignition/melt (simplified).
 
-ITEMS_SPEC.md [N] ‚Äî Item proto (tags, slots coverage, weight/encumbrance model, quality hooks, recipe tags).
+ITEMS_SPEC.md [N] ‚Ä?Item proto (tags, slots coverage, weight/encumbrance model, quality hooks, recipe tags).
 
-FLUID_SPEC.md [N] ‚Äî Fluid prototypes (id, phase, density/viscosity, color, interaction flags).
+FLUID_SPEC.md [N] ‚Ä?Fluid prototypes (id, phase, density/viscosity, color, interaction flags).
 
-FIELD_SPEC.md [N] ‚Äî Field prototypes (category, render priority, decay/propagate/effects).
+FIELD_SPEC.md [N] ‚Ä?Field prototypes (category, render priority, decay/propagate/effects).
 
-BUILDABLE_SPEC.md [N] ‚Äî Furniture/workshops footprint, rotation, blockers, IO policy.
+BUILDABLE_SPEC.md [N] ‚Ä?Furniture/workshops footprint, rotation, blockers, IO policy.
 
-RECIPE_SPEC.md [N] ‚Äî Work orders (tags, material classes, skill/bench reqs), yields, batch/repeat.
+RECIPE_SPEC.md [N] ‚Ä?Work orders (tags, material classes, skill/bench reqs), yields, batch/repeat.
 
 Tuning & global LUTs
 
-/content/registries/tuning.damage.json [N] ‚Äî Damage constants: k_mat, k_item, penetration/coverage curves, caps.
+TUNING_FILES.md [U] °™ Overview of tuning.mapgen.json / tuning.cavern.json / tuning.ore.json keys.
 
-/content/registries/tuning.navigation.json [N] ‚Äî Move costs, ramps/stairs deltas, fluid thresholds, node/time budgets.
+/content/registries/tuning.damage.json [N] ‚Ä?Damage constants: k_mat, k_item, penetration/coverage curves, caps.
 
-/content/registries/tuning.storyteller.json [N] ‚Äî Director tick, curves, cooldowns, rails, weights/scales.
+/content/registries/tuning.navigation.json [N] °™ Move costs, ramps/stairs deltas, fluid thresholds, node/time budgets. (Planned; current defaults in code)
 
-/content/registries/tuning.fields.json [N] ‚Äî LOS sum mode vs dominant, budgets, LOD freeze.
+/content/registries/tuning.storyteller.json [N] ‚Ä?Director tick, curves, cooldowns, rails, weights/scales.
+
+/content/registries/tuning.fields.json [N] ‚Ä?LOS sum mode vs dominant, budgets, LOD freeze.
 
 Schemas (JSON)
 
@@ -119,39 +121,39 @@ Schemas (JSON)
 
 9) Persistence, Errors & Determinism
 
-SAVE_FORMAT.md (Normative) [N] ‚Äî Bundle layout, chunks, registries signatures, world actors/factions/sites/artifacts ledgers, memories (player vs NPC knowledge).
+SAVE_FORMAT.md (Normative) [N] ‚Ä?Bundle layout, chunks, registries signatures, world actors/factions/sites/artifacts ledgers, memories (player vs NPC knowledge).
 
-ERROR_HANDLING_POLICY.md (Normative) [N] ‚Äî try/catch boundaries per system/chunk/tick, quarantine, user-safe degradations.
+ERROR_HANDLING_POLICY.md (Normative) [N] ‚Ä?try/catch boundaries per system/chunk/tick, quarantine, user-safe degradations.
 
-DETERMINISM_CI.md (Normative) [N] ‚Äî Replay gates, cross-OS parity, golden seeds, chaos injection rules.
+DETERMINISM_CI.md (Normative) [N] ‚Ä?Replay gates, cross-OS parity, golden seeds, chaos injection rules.
 
 10) UI & Input
 
-UI_AND_INPUT_MODEL.md [N] ‚Äî MVU store, command bus, virtualization, input bindings (SadConsole primary).
+UI_AND_INPUT_MODEL.md [N] ‚Ä?MVU store, command bus, virtualization, input bindings (SadConsole primary).
 
-SADCONSOLE-MIGRATION.md [D] ‚Äî Renderer specifics & tips (legacy-to-current).
+SADCONSOLE-MIGRATION.md [D] ‚Ä?Renderer specifics & tips (legacy-to-current).
 
 11) Legacy / Superseded (kept for reference)
 
-architecture.md / TECHNICAL_SOLUTION.md / old GAME_ARCHITECTURE.md ‚Äî Reference only; look at unified docs above.
+architecture.md / TECHNICAL_SOLUTION.md / old GAME_ARCHITECTURE.md ‚Ä?Reference only; look at unified docs above.
 
-MAPGEN_X_TILES.md, DATA_LAYOUT.md, TILE_LAYERS.md ‚Äî Background; superseded by TILE_SPEC & MAPGEN_PIPELINE.
+MAPGEN_X_TILES.md, DATA_LAYOUT.md, TILE_LAYERS.md ‚Ä?Background; superseded by TILE_SPEC & MAPGEN_PIPELINE.
 
-12) Quick ‚ÄúIf you‚Äôre implementing X, read Y‚Äù
+12) Quick ‚ÄúIf you‚Äôre implementing X, read Y‚Ä?
 
-Pathfinding ‚Üí NAVIGATION_SPEC.md + TILE_SPEC.md (NavMask/NavCost rules).
+Pathfinding ‚Ü?NAVIGATION_SPEC.md + TILE_SPEC.md (NavMask/NavCost rules).
 
-Hauling ‚Üí HAULING_POLICY.md + JOB_SCHEDULER_SPEC.md + ITEMS_SPEC.md.
+Hauling ‚Ü?HAULING_POLICY.md + JOB_SCHEDULER_SPEC.md + ITEMS_SPEC.md.
 
-Incidents ‚Üí INCIDENT_DIRECTOR_SPEC.md + SIM_LOD_POLICY.md.
+Incidents ‚Ü?INCIDENT_DIRECTOR_SPEC.md + SIM_LOD_POLICY.md.
 
-Build/Place ‚Üí BUILDABLE_SPEC.md + TILE_SPEC.md (L2 blockers & autotile).
+Build/Place ‚Ü?BUILDABLE_SPEC.md + TILE_SPEC.md (L2 blockers & autotile).
 
-Fields/Fluids ‚Üí FIELD_SPEC.md / FLUID_SPEC.md + UPDATE_ORDER.md.
+Fields/Fluids ‚Ü?FIELD_SPEC.md / FLUID_SPEC.md + UPDATE_ORDER.md.
 
-Saving ‚Üí SAVE_FORMAT.md + CONTENT_REGISTRY_OVERVIEW.md.
+Saving ‚Ü?SAVE_FORMAT.md + CONTENT_REGISTRY_OVERVIEW.md.
 
-Rendering ‚Üí RENDERING_SNAPSHOT.md + TILE_SPEC.md + UI_AND_INPUT_MODEL.md.
+Rendering ‚Ü?RENDERING_SNAPSHOT.md + TILE_SPEC.md + UI_AND_INPUT_MODEL.md.
 
 13) Folder Hints (suggested)
 /docs/

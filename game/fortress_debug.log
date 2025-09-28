@@ -1,11 +1,10 @@
-[STARTUP] HumanFortress starting at 17/09/2025 7:43:59 AM
+[STARTUP] HumanFortress starting at 19/09/2025 4:16:35 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\game\fortress_debug.log
 [GameStateManager] ChangeState from  to MainMenu
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
 [GameStateManager] Calling Enter on MainMenu
 Entered Main Menu
 [GameStateManager] Enter completed for MainMenu
-MainMenuState: Key pressed - Enter
 MainMenuState: Key pressed - N
 [GameStateManager] ChangeState from MainMenu to WorldGen
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
@@ -86,37 +85,6 @@ EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: True
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
@@ -141,60 +109,6 @@ EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: True
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
-EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
@@ -207,7 +121,7 @@ EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: True
-[EmbarkPrepState] Starting embark at (40,20) with size 2x2
+[EmbarkPrepState] Starting embark at (40,20) with size 3x3
 [EmbarkPrepState] Changing state to FortressPlay
 [GameStateManager] ChangeState from EmbarkPrep to FortressPlay
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
@@ -224,51 +138,75 @@ Entered Fortress Play
 [FortressState] Info panel created
 [FortressState] Tile info panel created
 [FortressState] UI hierarchy established
-[FortressState] FortressSize = 2
-[FortressState] Camera position set to (0,12), cursor at (32,32)
+[FortressState] FortressSize = 3
+[FortressState] Camera position set to (8,28), cursor at (48,48)
 [GenerateFortressMap] Starting fortress generation
-[GenerateFortressMap] FortressSize: 2, EmbarkLocation: (40,20)
-[GenerateFortressMap] World tiles dimensions: 128x128
+[GenerateFortressMap] FortressSize: 3, EmbarkLocation: (40,20)
+[GenerateFortressMap] World tiles dimensions: 256x256
 [GenerateFortressMap] Got world tile at (40,20)
 [GenerateFortressMap] Creating FortressGenerator
 [GenerateFortressMap] Generating fortress map
-[GenerateSurface] Generating 64x64 tiles
+[GenerateSurface] Generating 96x96 tiles
 [GenerateSurface] Base elevation: 0.4688083, Surface Z: 29
 [GenerateSurface] Surface generation complete for biome: Tundra
 [VerifyPlayability] Accessible surface: True
 [VerifyPlayability] Has water source: False
 [VerifyPlayability] Has ore deposits: False
-[GenerateFortressMap] Fortress map generated: 2x2 chunks
+[GenerateFortressMap] Fortress map generated: 3x3 chunks
 [GenerateFortressMap] Converting to simulation world
-[ToSimulationWorld] Converting fortress map to world: 2x2 chunks, MaxZ=50
-[ToSimulationWorld] Conversion complete: 4 chunks, 204800 tiles processed
-[GenerateFortressMap] World created: 2x2 chunks
+[ToSimulationWorld] Converting fortress map to world: 3x3 chunks, MaxZ=50
+[ToSimulationWorld] Conversion complete: 9 chunks, 460800 tiles processed
+[GenerateFortressMap] World created: 3x3 chunks
 [GenerateFortressMap] Creating RenderSnapshotBuilder
 [GenerateFortressMap] Building initial snapshot
 [BuildSnapshot] Starting snapshot build
 [BuildSnapshot] Camera chunk: 0,0 at Z=25
 [BuildSnapshot] Building snapshot
-[BuildSnapshot] Snapshot built with 4 chunks
-[GenerateFortressMap] SUCCESS: Generated fortress map: 2x2 chunks at (40,20)
+[BuildSnapshot] Snapshot built with 6 chunks
+[GenerateFortressMap] SUCCESS: Generated fortress map: 3x3 chunks at (40,20)
 [GenerateFortressMap] Biome: Tundra, Elevation: 0.47
 [FortressState] Initialize completed successfully
-[GameStateManager] ChangeState from FortressPlay to MainMenu
-[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
-[GameStateManager] Calling Exit on FortressPlay
-[GameStateManager] Stopping simulation
-[GameStateManager] Calling Enter on MainMenu
-Entered Main Menu
-[GameStateManager] Enter completed for MainMenu
-MainMenuState: Key pressed - Escape
-MainMenuState: Key pressed - Enter
-MainMenuState: Key pressed - N
-[GameStateManager] ChangeState from MainMenu to WorldGen
-[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
-[GameStateManager] Calling Exit on MainMenu
-[GameStateManager] Calling Enter on WorldGen
-[GameStateManager] Enter completed for WorldGen
-[GameStateManager] ChangeState from WorldGen to WorldMap
-[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
-[GameStateManager] Calling Exit on WorldGen
-[GameStateManager] Calling Enter on WorldMap
-[GameStateManager] Enter completed for WorldMap
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks
+[BuildSnapshot] Starting snapshot build
+[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Building snapshot
+[BuildSnapshot] Snapshot built with 6 chunks

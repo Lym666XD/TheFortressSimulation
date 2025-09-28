@@ -29,7 +29,8 @@
       "Bash(ren:*)",
       "Bash(mv:*)",
       "Bash(python:*)",
-      "Bash(del nul)"
+      "Bash(del nul)",
+      "Bash(paste:*)"
     ],
     "deny": [],
     "ask": []

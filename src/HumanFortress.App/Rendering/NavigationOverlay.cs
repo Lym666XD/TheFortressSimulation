@@ -59,6 +59,13 @@ public class NavigationOverlay
             RefreshOverlay();
     }
 
+    public void ClearPath()
+    {
+        _currentPath = null;
+        if (_currentMode == OverlayMode.PathDisplay)
+            RefreshOverlay();
+    }
+
     public void SetTarget(Point target)
     {
         _selectedTarget = target;
@@ -461,7 +468,7 @@ public class NavigationOverlay
                 break;
         }
 
-        surface.Surface.Print(legendX, legendY + 2, "F1-F6: Change mode | F7: Clear", Color.DarkGray);
+        surface.Surface.Print(legendX, legendY + 2, "F9: Mode  |  F10: Set/Path  |  Ctrl+F10: Clear", Color.DarkGray);
     }
 
     private ChunkNavData? GetNavDataForChunk(Chunk chunk)

@@ -33,7 +33,7 @@ public readonly struct TileBase
     public readonly ushort TerrainBits;  // L0: kind/flags (bit layout in §1.3)
     public readonly byte   SurfaceBits;  // L1: small flags (mud, grass, fertility tiers)
     public readonly byte   FluidKind;    // L3: fluid IdMap index (0 = none)
-    public readonly byte   FluidDepth;   // L3: 0..7
+    public readonly byte   FluidDepth;   // L3: 0..10
     public readonly byte   MetaBits;     // L7: revealed/traffic/etc. (§1.3)
     public readonly ushort TrafficCost;  // cached nav cost (SoA alternative in §1.4)
 }
@@ -89,10 +89,10 @@ public enum TerrainKind : byte {
   OpenWithFloor=1,  // Walkable floor, provides support
   OpenNoFloor=2,    // Empty space, flyable only
   Ramp=3,           // Z-transition via RampDirection
-  StairsUp=4,       // Z-transition up
-  StairsDown=5,     // Z-transition down
-  StairsUD=6,       // Z-transition both ways
-  Chasm=7           // Bottomless pit, flyable only
+  Slope=4,          // Walkable slope top (paired with Ramp below)
+  StairsUp=5,       // Z-transition up
+  StairsDown=6,     // Z-transition down
+  StairsUD=7        // Z-transition both ways
 }
 
 
@@ -101,7 +101,7 @@ SurfaceBits (byte)
 bit0  Mud
 bit1  Grass
 bit2  Snow
-bit3  Ash
+bit3  Moss  // cavern floor moss overlay
 bits4..7 Fertility (0..15)  // coarse tier packed into 4 bits
 
 
@@ -348,7 +348,7 @@ L0 is OpenWithFloor or Stairs*, and no L2 Blocker marked BlocksMove, and (FluidD
 
 Passable if:
 
-Not a SolidWall, not Chasm, not L2.Blocker.BlocksMove, and fluid rules allow.
+Not a SolidWall, not OpenNoFloor, not L2.Blocker.BlocksMove, and fluid rules allow.
 
 Support:
 

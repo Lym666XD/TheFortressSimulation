@@ -1,7 +1,2272 @@
-[STARTUP] HumanFortress starting at 16/09/2025 8:07:03 AM
+[STARTUP] HumanFortress starting at 28/09/2025 10:35:38 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\fortress_debug.log
+[STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\content
 [GameStateManager] ChangeState from  to MainMenu
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
 [GameStateManager] Calling Enter on MainMenu
 Entered Main Menu
 [GameStateManager] Enter completed for MainMenu
+MainMenuState: Key pressed - N
+[GameStateManager] ChangeState from MainMenu to WorldGen
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on MainMenu
+[GameStateManager] Calling Enter on WorldGen
+[GameStateManager] Enter completed for WorldGen
+[GameStateManager] ChangeState from WorldGen to WorldMap
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldGen
+[GameStateManager] Calling Enter on WorldMap
+[GameStateManager] Enter completed for WorldMap
+[GameStateManager] ChangeState from WorldMap to EmbarkPrep
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldMap
+[GameStateManager] Calling Enter on EmbarkPrep
+[GameStateManager] Enter completed for EmbarkPrep
+[GameStateManager] ChangeState from EmbarkPrep to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on EmbarkPrep
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[FOCUS] FortressState focused
+[GameStateManager] Enter completed for FortressPlay
+[GameStateManager] Starting simulation for FortressPlay
+[INIT] MapSurface size=116x36 pos=(2,2)
+[INIT] UiOverlay size=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=50
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[UiRenderer.TopBar] overlay=120x40 tick=200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[UiRenderer.TopBar] overlay=120x40 tick=250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=1050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=1100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=27
+[UiRenderer.TopBar] overlay=120x40 tick=1200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=26
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=1250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[ZLEVEL-UPDATE] delta=-1 -> Z=27
+[UiRenderer.TopBar] overlay=120x40 tick=1400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=26
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=1450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=1850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=2350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=2950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=3950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=1 -> zoom=2
+[UiRenderer.TopBar] overlay=120x40 tick=4200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[UiRenderer.TopBar] overlay=120x40 tick=4250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=1 -> zoom=2
+[UiRenderer.TopBar] overlay=120x40 tick=4300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=1 -> zoom=3
+[ZOOM-UPDATE] delta=1 -> zoom=4
+[UiRenderer.TopBar] overlay=120x40 tick=4650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=1 -> zoom=4
+[UiRenderer.TopBar] overlay=120x40 tick=4700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZOOM-UPDATE] delta=-1 -> zoom=3
+[ZOOM-UPDATE] delta=-1 -> zoom=2
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[ZOOM-UPDATE] delta=-1 -> zoom=1
+[UiRenderer.TopBar] overlay=120x40 tick=4750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=4950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=5950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=6000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=6050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=6100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=6150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=6250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=6300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=6450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=6600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=6850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=24
+[UiRenderer.TopBar] overlay=120x40 tick=6900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=25
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=6950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=7000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=7250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=7600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=7950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=8700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=8800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=8850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=8900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=8950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=9150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(22,57,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=9300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=9950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=10250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(22,56,25)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Ramp nat=1 rampDir=4
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=10400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=10550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(21,56,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=10650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=10850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(21,56,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=10900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=10950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=11050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(21,56,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=11100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=11200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(21,56,25)
+[TILE] L0 geology=core_terrain_wall_rock_basalt kind=SolidWall nat=1 rampDir=0
+[TILE] L1 surface mud=False grass=False snow=False fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=11350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=11500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(21,56,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=11600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=11650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=11700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=11900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=11950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=12000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=12100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=12350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(20,55,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=12500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=12550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=12700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=12800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=12900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=12950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=13900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=13950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=14950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=15550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=15950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=16950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=17950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=18950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=19950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=20950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=21950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=22950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=23950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=24950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=25950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=26950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=27
+[ZLEVEL-UPDATE] delta=1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=27650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=27700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=27750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=27900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=27950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=28100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(23,59,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=28200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(23,59,26)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=Slope nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=28300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=28400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=-1 -> Z=26
+[UiRenderer.TopBar] overlay=120x40 tick=28450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[ZLEVEL-UPDATE] delta=1 -> Z=25
+[UiRenderer.TopBar] overlay=120x40 tick=28600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=28950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=29950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=30950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[CLICK] Open TilePanel at world=(19,52,25)
+[TILE] L0 geology=core_terrain_floor_rock_granite kind=OpenWithFloor nat=1 rampDir=0
+[TILE] L1 surface mud=True grass=False snow=True fert=0
+[TILE] L3 fluid kind=0 depth=0
+[TILE] L7 meta revealed=False forbid=False traffic=0 blood=False
+[UiRenderer.TopBar] overlay=120x40 tick=31500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=31950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=32950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=33750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[SHUTDOWN] Game shutting down normally

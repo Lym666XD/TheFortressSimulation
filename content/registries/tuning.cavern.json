@@ -1,0 +1,16 @@
+{
+  "band": { "mode": "max_density" },
+  "path": {
+    "thickness": 4,
+    "steps_factor": 6.0,
+    "direction_bias_east": 0.7,
+    "tunnel_width": 3
+  },
+  "rooms": {
+    "radius_min": 4,
+    "radius_max": 7,
+    "interval_factor": 0.15
+  },
+  "shafts": { "count": 3 },
+  "moss_on_floor": true
+}

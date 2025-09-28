@@ -1,0 +1,601 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_crafts",
+      "name": "Crafts Workshop",
+      "tags": ["workshop", "crafts", "carving", "lathe", "casting", "inlay", "jewel"],
+      "display_order": 46
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_crafts_carve_bench",
+      "name": "Carving Bench & Bow Drill",
+      "slot": "carve_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_crafts_carve_fine_bench",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["carve", "drill"]
+    },
+    {
+      "id": "core_attach_crafts_carve_fine_bench",
+      "name": "Fine Carving Bench & Vise",
+      "slot": "carve_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crafts_carve_vise_micros",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["carve", "vise"]
+    },
+    {
+      "id": "core_attach_crafts_carve_vise_micros",
+      "name": "Precision Vise & Micro Chisels",
+      "slot": "carve_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["carve", "precision"]
+    },
+
+    {
+      "id": "core_attach_crafts_lathe_bow",
+      "name": "Bow Lathe",
+      "slot": "lathe_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_crafts_lathe_pole",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["lathe", "turning"]
+    },
+    {
+      "id": "core_attach_crafts_lathe_pole",
+      "name": "Spring-Pole Lathe",
+      "slot": "lathe_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crafts_lathe_treadle",
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["lathe", "turning"]
+    },
+    {
+      "id": "core_attach_crafts_lathe_treadle",
+      "name": "Treadle Lathe & Gauges",
+      "slot": "lathe_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.18 },
+      "tags": ["lathe", "turning", "precision"]
+    },
+
+    {
+      "id": "core_attach_crafts_polish_pad",
+      "name": "Polishing Pads & Abrasives",
+      "slot": "polish_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_crafts_polish_drum",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["polish", "finish"]
+    },
+    {
+      "id": "core_attach_crafts_polish_drum",
+      "name": "Sand Barrel & Buffing Drum",
+      "slot": "polish_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crafts_polish_wheel",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["polish", "finish"]
+    },
+    {
+      "id": "core_attach_crafts_polish_wheel",
+      "name": "Polishing Wheel",
+      "slot": "polish_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["polish", "finish"]
+    },
+
+    {
+      "id": "core_attach_crafts_cast_pewter_moulds",
+      "name": "Pewter Moulds & Ladle",
+      "slot": "cast_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crafts_cast_pewter_stove",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["casting", "pewter"]
+    },
+    {
+      "id": "core_attach_crafts_cast_pewter_stove",
+      "name": "Casting Stove & Sprue Cutter",
+      "slot": "cast_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["casting", "pewter"]
+    },
+
+    {
+      "id": "core_attach_crafts_inlay_bench",
+      "name": "Inlay & Engraving Bench",
+      "slot": "inlay_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["inlay", "engrave"]
+    },
+
+    {
+      "id": "core_attach_crafts_lapidary_plate",
+      "name": "Lapidary Plate & Abrasive Slurry",
+      "slot": "jewel_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_crafts_lapidary_wheel",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["lapidary", "gem_cut"]
+    },
+    {
+      "id": "core_attach_crafts_lapidary_wheel",
+      "name": "Lapidary Wheel",
+      "slot": "jewel_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_crafts_lapidary_waterdrip",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["lapidary", "gem_cut", "wheel"]
+    },
+    {
+      "id": "core_attach_crafts_lapidary_waterdrip",
+      "name": "Water-Drip Lapidary & Faceting Gauges",
+      "slot": "jewel_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["lapidary", "gem_cut", "faceting"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_crafts_figurine_wood_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_block_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_figurine_wood", "count": 1 }],
+      "tags": ["carve", "figurine"]
+    },
+    {
+      "id": "core_recipe_crafts_amulet_bone_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 100,
+      "inputs": [{ "id": "core_item_bone_stack", "count": 2 }],
+      "outputs": [{ "id": "core_item_craft_amulet_bone", "count": 1 }],
+      "tags": ["carve", "bone", "amulet"]
+    },
+    {
+      "id": "core_recipe_crafts_beads_wood_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_block_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_beads_wood", "count": 6 }],
+      "tags": ["bead", "drill"]
+    },
+    {
+      "id": "core_recipe_crafts_necklace_beads_any_all",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 80,
+      "inputs": [
+        { "id": "core_item_craft_beads_any", "count": 6 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_necklace_beads", "count": 1 }],
+      "tags": ["string", "jewelry"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_craft_beads_any", "accepts_tags": ["beads_wood", "beads_bone", "beads_shell", "beads_stone"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_crafts_top_wood_lathe_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_lathe_bow"],
+      "duration_s": 90,
+      "inputs": [{ "id": "core_item_block_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_top_spinning", "count": 1 }],
+      "tags": ["toy", "lathe"]
+    },
+    {
+      "id": "core_recipe_crafts_wax_tablet_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 110,
+      "inputs": [
+        { "id": "core_item_block_wood", "count": 1 },
+        { "id": "core_item_wax_bees", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_wax_tablet", "count": 1 }],
+      "tags": ["writing", "school"]
+    },
+    {
+      "id": "core_recipe_crafts_stylus_bone_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 70,
+      "inputs": [{ "id": "core_item_bone_stack", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_stylus_bone", "count": 1 }],
+      "tags": ["writing", "tool"]
+    },
+
+    {
+      "id": "core_recipe_crafts_comb_bone_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench", "core_attach_crafts_polish_drum"],
+      "duration_s": 140,
+      "inputs": [{ "id": "core_item_bone_stack", "count": 3 }],
+      "outputs": [{ "id": "core_item_craft_comb_bone", "count": 1 }],
+      "tags": ["toiletry", "bone"]
+    },
+    {
+      "id": "core_recipe_crafts_buttons_wood_set_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench"],
+      "duration_s": 100,
+      "inputs": [{ "id": "core_item_block_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_buttons_wood_set", "count": 6 }],
+      "tags": ["fastener", "tailor"]
+    },
+    {
+      "id": "core_recipe_crafts_bracelet_shell_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench", "core_attach_crafts_polish_drum"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_shell", "count": 2 }],
+      "outputs": [{ "id": "core_item_craft_bracelet_shell", "count": 1 }],
+      "tags": ["jewelry", "shell"]
+    },
+    {
+      "id": "core_recipe_crafts_dice_wood_set_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_block_wood", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_dice_wood_set", "count": 1 }],
+      "tags": ["game", "dice"]
+    },
+    {
+      "id": "core_recipe_crafts_goblet_wood_lathe_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_lathe_pole", "core_attach_crafts_polish_drum"],
+      "duration_s": 140,
+      "inputs": [{ "id": "core_item_block_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_craft_goblet_wood_turned", "count": 1 }],
+      "tags": ["lathe", "tableware"]
+    },
+    {
+      "id": "core_recipe_crafts_badge_pewter_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_cast_pewter_moulds"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_ingot_pewter", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_badge_pewter", "count": 1 }],
+      "tags": ["casting", "pewter", "badge"]
+    },
+    {
+      "id": "core_recipe_crafts_figurine_stone_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench", "core_attach_crafts_polish_drum"],
+      "duration_s": 180,
+      "inputs": [{ "id": "core_item_block_stone", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_figurine_stone", "count": 1 }],
+      "tags": ["carve", "stone"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_block_stone", "accepts_tags": ["stone_limestone", "stone_sandstone", "stone_marble", "stone_schist", "stone_granite"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_crafts_rosary_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_craft_beads_any", "count": 10 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_rosary", "count": 1 }],
+      "tags": ["devotional", "jewelry"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_craft_beads_any", "accepts_tags": ["beads_wood", "beads_bone", "beads_shell", "beads_stone"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_crafts_chess_set_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_lathe_treadle", "core_attach_crafts_carve_vise_micros", "core_attach_crafts_polish_wheel"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_block_wood", "count": 4 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_chess_set_wood", "count": 1 }],
+      "tags": ["game", "lathe", "carve"]
+    },
+    {
+      "id": "core_recipe_crafts_beads_stone_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_carve_vise_micros", "core_attach_crafts_polish_wheel"],
+      "duration_s": 160,
+      "inputs": [{ "id": "core_item_block_stone", "count": 1 }],
+      "outputs": [{ "id": "core_item_craft_beads_stone", "count": 8 }],
+      "tags": ["bead", "stone"]
+    },
+    {
+      "id": "core_recipe_crafts_inlay_figurine_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_craft_figurine_wood", "count": 1 },
+        { "id": "core_item_gem_chips_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_craft_figurine_wood_inlaid", "count": 1 }],
+      "tags": ["inlay", "gem"]
+    },
+    {
+      "id": "core_recipe_crafts_inlay_goblet_silver_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench", "core_attach_crafts_polish_wheel"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_craft_goblet_wood_turned", "count": 1 },
+        { "id": "core_item_ingot_silver", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_goblet_wood_inlaid", "count": 1 }],
+      "tags": ["inlay", "luxury"]
+    },
+
+    {
+      "id": "core_recipe_crafts_crown_band_wood_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench", "core_attach_crafts_polish_pad"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_block_wood", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_crown_band_wood", "count": 1 }],
+      "tags": ["regalia", "crown", "wood"]
+    },
+    {
+      "id": "core_recipe_crafts_crown_band_pewter_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_cast_pewter_moulds", "core_attach_crafts_polish_drum"],
+      "duration_s": 220,
+      "inputs": [{ "id": "core_item_ingot_pewter", "count": 2 }],
+      "outputs": [{ "id": "core_item_craft_crown_band_pewter", "count": 1 }],
+      "tags": ["regalia", "crown", "pewter"]
+    },
+    {
+      "id": "core_recipe_crafts_crown_regalia_inlaid_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench", "core_attach_crafts_polish_wheel", "core_attach_crafts_lapidary_waterdrip"],
+      "duration_s": 280,
+      "inputs": [
+        { "id": "core_item_craft_crown_band_pewter", "count": 1 },
+        { "id": "core_item_gem_cut_any", "count": 4 },
+        { "id": "core_item_powder_gold", "count": 1 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_crown_regalia", "count": 1 }],
+      "tags": ["regalia", "crown", "inlay", "gild"]
+    },
+
+    {
+      "id": "core_recipe_crafts_scepter_wood_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_lathe_bow", "core_attach_crafts_polish_pad"],
+      "duration_s": 160,
+      "inputs": [{ "id": "core_item_block_wood", "count": 2 }],
+      "outputs": [{ "id": "core_item_craft_scepter_wood", "count": 1 }],
+      "tags": ["regalia", "scepter", "lathe"]
+    },
+    {
+      "id": "core_recipe_crafts_scepter_inlaid_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench", "core_attach_crafts_polish_wheel"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_craft_scepter_wood", "count": 1 },
+        { "id": "core_item_gem_cut_any", "count": 2 },
+        { "id": "core_item_powder_silver", "count": 1 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_craft_scepter_inlaid", "count": 1 }],
+      "tags": ["regalia", "scepter", "inlay", "silver"]
+    },
+
+    {
+      "id": "core_recipe_crafts_totem_wood_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_carve_bench"],
+      "duration_s": 200,
+      "inputs": [{ "id": "core_item_block_wood", "count": 3 }],
+      "outputs": [{ "id": "core_item_craft_totem_wood", "count": 1 }],
+      "tags": ["totem", "carve", "ritual"]
+    },
+    {
+      "id": "core_recipe_crafts_totem_bone_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_carve_fine_bench", "core_attach_crafts_polish_drum"],
+      "duration_s": 220,
+      "inputs": [{ "id": "core_item_bone_stack", "count": 4 }],
+      "outputs": [{ "id": "core_item_craft_totem_bone", "count": 1 }],
+      "tags": ["totem", "bone", "ritual"]
+    },
+
+    {
+      "id": "core_recipe_crafts_cut_gems_C",
+      "workshop": "core_workshop_crafts",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_crafts_lapidary_plate"],
+      "duration_s": 120,
+      "inputs": [{ "id": "core_item_gem_rough_any", "count": 1 }],
+      "outputs": [{ "id": "core_item_gem_cut_any", "count": 1 }],
+      "tags": ["lapidary", "gem_cut"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_gem_rough_any", "accepts_tags": ["rough_quartz", "rough_garnet", "rough_agate", "rough_jasper", "rough_amethyst"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_crafts_cut_gems_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_lapidary_wheel"],
+      "duration_s": 110,
+      "inputs": [{ "id": "core_item_gem_rough_any", "count": 1 }],
+      "outputs": [
+        { "id": "core_item_gem_cut_any", "count": 1 },
+        { "id": "core_item_gem_chips_any", "count": 1 }
+      ],
+      "tags": ["lapidary", "gem_cut"]
+    },
+    {
+      "id": "core_recipe_crafts_faceted_gem_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_lapidary_waterdrip", "core_attach_crafts_polish_wheel"],
+      "duration_s": 130,
+      "inputs": [{ "id": "core_item_gem_rough_any", "count": 1 }],
+      "outputs": [{ "id": "core_item_gem_cut_faceted", "count": 1 }],
+      "tags": ["lapidary", "faceted"]
+    },
+    {
+      "id": "core_recipe_crafts_cut_glass_gem_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_lapidary_wheel"],
+      "duration_s": 100,
+      "inputs": [{ "id": "core_item_glass_raw", "count": 1 }],
+      "outputs": [{ "id": "core_item_gem_cut_glass", "count": 1 }],
+      "tags": ["lapidary", "glass"]
+    },
+
+    {
+      "id": "core_recipe_crafts_decorate_item_encrust_M",
+      "workshop": "core_workshop_crafts",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_crafts_inlay_bench"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_target_decorable_basic", "count": 1 },
+        { "id": "core_item_gem_cut_any", "count": 2 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_target_decorated",
+          "count": 1,
+          "output_mods": {
+            "copy_from_input": "core_item_target_decorable_basic",
+            "add_tags": ["decorated", "unique_instance"],
+            "name_suffix": " (Jeweled)"
+          }
+        }
+      ],
+      "tags": ["decorate", "inlay"],
+      "ingredient_pools": [
+        {
+          "pool_id": "core_item_target_decorable_basic",
+          "accepts_tags": ["weapon", "armor", "clothing", "amulet", "goblet", "figurine", "tool"],
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_crafts_decorate_item_gild_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench", "core_attach_crafts_polish_wheel"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_target_decorable_basic", "count": 1 },
+        { "id": "core_item_powder_gold", "count": 1 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_target_decorated_gilt",
+          "count": 1,
+          "output_mods": {
+            "copy_from_input": "core_item_target_decorable_basic",
+            "add_tags": ["gilt", "decorated", "unique_instance"],
+            "name_suffix": " (Gilt Trim)"
+          }
+        }
+      ],
+      "tags": ["decorate", "gild"],
+      "ingredient_pools": [
+        {
+          "pool_id": "core_item_target_decorable_basic",
+          "accepts_tags": ["weapon", "armor", "clothing", "amulet", "goblet", "figurine", "tool"],
+          "min": 0
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_crafts_decorate_item_parcel_gilt_and_gems_R",
+      "workshop": "core_workshop_crafts",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_crafts_inlay_bench", "core_attach_crafts_lapidary_waterdrip", "core_attach_crafts_polish_wheel"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_target_decorable_basic", "count": 1 },
+        { "id": "core_item_gem_cut_any", "count": 2 },
+        { "id": "core_item_powder_gold", "count": 1 },
+        { "id": "core_item_powder_silver", "count": 1 },
+        { "id": "core_item_glue_animal", "count": 1 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_target_decorated_luxury",
+          "count": 1,
+          "output_mods": {
+            "copy_from_input": "core_item_target_decorable_basic",
+            "add_tags": ["decorated", "parcel_gilt", "unique_instance"],
+            "name_suffix": " (Jeweled & Parcel-Gilt)"
+          }
+        }
+      ],
+      "tags": ["decorate", "inlay", "gild"],
+      "ingredient_pools": [
+        {
+          "pool_id": "core_item_target_decorable_basic",
+          "accepts_tags": ["weapon", "armor", "clothing", "amulet", "goblet", "figurine", "tool"],
+          "min": 0
+        }
+      ]
+    }
+  ]
+}

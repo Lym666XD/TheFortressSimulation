@@ -1,0 +1,1027 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_tailor",
+      "name": "Tailoring Workshop",
+      "tags": ["workshop", "clothing", "textile", "tailor"],
+      "display_order": 50
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_tailor_cut_block",
+      "name": "Cutting Block & Needles",
+      "slot": "cut_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tailor_cut_board_shears",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["cut", "needles"]
+    },
+    {
+      "id": "core_attach_tailor_cut_board_shears",
+      "name": "Tailor’s Board & Broad Shears",
+      "slot": "cut_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_cut_table_patterns",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["cut", "shears"]
+    },
+    {
+      "id": "core_attach_tailor_cut_table_patterns",
+      "name": "Large Cutting Table & Patterns",
+      "slot": "cut_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["cut", "patterns", "measure"]
+    },
+
+    {
+      "id": "core_attach_tailor_stitch_needles",
+      "name": "Hand Stitch Kit",
+      "slot": "stitch_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tailor_stitch_palm_thimble",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["stitch", "sew"]
+    },
+    {
+      "id": "core_attach_tailor_stitch_palm_thimble",
+      "name": "Palm & Thimble Set",
+      "slot": "stitch_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_stitch_fine_kit",
+      "effects": { "throughput_mult": 1.06 },
+      "tags": ["stitch", "thimble"]
+    },
+    {
+      "id": "core_attach_tailor_stitch_fine_kit",
+      "name": "Fine Needles & Awls",
+      "slot": "stitch_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.12 },
+      "tags": ["stitch", "fine"]
+    },
+
+    {
+      "id": "core_attach_tailor_press_airing_rail",
+      "name": "Airing Rail & Pressing Board",
+      "slot": "press_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tailor_press_seam_mallet",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["press", "airing"]
+    },
+    {
+      "id": "core_attach_tailor_press_seam_mallet",
+      "name": "Seam Mallet & Clapper",
+      "slot": "press_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_press_box_iron",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["press", "seam"]
+    },
+    {
+      "id": "core_attach_tailor_press_box_iron",
+      "name": "Pressing Bench & Box Iron",
+      "slot": "press_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["press", "iron"]
+    },
+
+    {
+      "id": "core_attach_tailor_spin_spindle_distaff",
+      "name": "Spindle & Distaff",
+      "slot": "spinning_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tailor_spin_wheel",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["spinning", "fiber"]
+    },
+    {
+      "id": "core_attach_tailor_spin_wheel",
+      "name": "Spinning Wheel",
+      "slot": "spinning_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_spin_flyer",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["spinning", "wheel"]
+    },
+    {
+      "id": "core_attach_tailor_spin_flyer",
+      "name": "Flyer Spinning Wheel",
+      "slot": "spinning_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["spinning", "flyer"]
+    },
+
+    {
+      "id": "core_attach_tailor_loom_warp_weighted",
+      "name": "Warp-Weighted Loom",
+      "slot": "loom_station",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_tailor_loom_treadle",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["loom", "weaving"]
+    },
+    {
+      "id": "core_attach_tailor_loom_treadle",
+      "name": "Horizontal Treadle Loom",
+      "slot": "loom_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_loom_wide_frame",
+      "effects": { "throughput_mult": 1.08 },
+      "tags": ["loom", "treadle"]
+    },
+    {
+      "id": "core_attach_tailor_loom_wide_frame",
+      "name": "Wide Frame Loom",
+      "slot": "loom_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.15 },
+      "tags": ["loom", "frame"]
+    },
+
+    {
+      "id": "core_attach_tailor_leather_awl_punch",
+      "name": "Leather Awl & Punch Bench",
+      "slot": "leather_station",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_tailor_leather_rivet_press",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["leather", "awl", "punch"]
+    },
+    {
+      "id": "core_attach_tailor_leather_rivet_press",
+      "name": "Rivet & Strapping Press",
+      "slot": "leather_station",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["leather", "rivet", "press"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_tailor_spin_thread_plant_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_spin_spindle_distaff"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_fiber_plant_any", "count": 10 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 10 },
+        { "id": "core_item_seed_generic", "count": 2 }
+      ],
+      "tags": ["spinning", "plant"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_plant_any", "accepts_tags": ["fiber_flax", "fiber_hemp", "fiber_cotton", "fiber_pig_tail", "fiber_rope_reed", "fiber_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_spin_thread_plant_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_spin_wheel"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_fiber_plant_any", "count": 10 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 12 },
+        { "id": "core_item_seed_generic", "count": 2 }
+      ],
+      "tags": ["spinning", "plant"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_plant_any", "accepts_tags": ["fiber_flax", "fiber_hemp", "fiber_cotton", "fiber_pig_tail", "fiber_rope_reed", "fiber_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_spin_thread_plant_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_spin_flyer"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_fiber_plant_any", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 13 }
+      ],
+      "tags": ["spinning", "plant"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_plant_any", "accepts_tags": ["fiber_flax", "fiber_hemp", "fiber_cotton", "fiber_pig_tail", "fiber_rope_reed", "fiber_silk"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_spin_thread_animal_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_spin_spindle_distaff"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_fiber_animal_any", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 10 }
+      ],
+      "tags": ["spinning", "animal"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_animal_any", "accepts_tags": ["wool", "alpaca_wool", "llama_wool", "sheep_wool", "goat_hair"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_spin_thread_animal_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_spin_wheel"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_fiber_animal_any", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 12 }
+      ],
+      "tags": ["spinning", "animal"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_animal_any", "accepts_tags": ["wool", "alpaca_wool", "llama_wool", "sheep_wool", "goat_hair"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_spin_thread_animal_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_spin_flyer"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_fiber_animal_any", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_thread_any", "count": 13 }
+      ],
+      "tags": ["spinning", "animal"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fiber_animal_any", "accepts_tags": ["wool", "alpaca_wool", "llama_wool", "sheep_wool", "goat_hair"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_weave_cloth_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_loom_warp_weighted"],
+      "duration_s": 200,
+      "inputs": [{ "id": "core_item_thread_any", "count": 10 }],
+      "outputs": [{ "id": "core_item_fabric_any", "count": 10 }],
+      "tags": ["weaving", "cloth"]
+    },
+    {
+      "id": "core_recipe_tailor_weave_cloth_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_loom_treadle"],
+      "duration_s": 180,
+      "inputs": [{ "id": "core_item_thread_any", "count": 10 }],
+      "outputs": [{ "id": "core_item_fabric_any", "count": 11 }],
+      "tags": ["weaving", "cloth"]
+    },
+    {
+      "id": "core_recipe_tailor_weave_cloth_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_loom_wide_frame"],
+      "duration_s": 160,
+      "inputs": [{ "id": "core_item_thread_any", "count": 10 }],
+      "outputs": [{ "id": "core_item_fabric_any", "count": 12 }],
+      "tags": ["weaving", "cloth"]
+    },
+
+    {
+      "id": "core_recipe_tailor_tunic_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 6 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_tunic", "count": 1 }],
+      "tags": ["garment", "upper", "classical"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_trousers_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 5 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_trousers", "count": 1 }],
+      "tags": ["garment", "lower", "classical"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_cloak_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 6 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_cloak", "count": 1 }],
+      "tags": ["garment", "outer", "classical"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_cap_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_cap", "count": 1 }],
+      "tags": ["headwear", "classical"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_socks_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_socks", "count": 1 }],
+      "tags": ["footwear", "classical"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_kirtle_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble", "core_attach_tailor_press_seam_mallet"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 7 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_kirtle", "count": 1 }],
+      "tags": ["garment", "gown", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_hood_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 3 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_hood", "count": 1 }],
+      "tags": ["headwear", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_hose_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 190,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 3 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_hose", "count": 1 }],
+      "tags": ["legwear", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_surcoat_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 6 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_surcoat", "count": 1 }],
+      "tags": ["outer", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_chemise_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 5 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_shirt_chemise", "count": 1 }],
+      "tags": ["under", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_mittens_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_mittens", "count": 1 }],
+      "tags": ["handwear", "medieval"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_bag_sack_all",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_bag_cloth_sack", "count": 1 }],
+      "tags": ["container", "sack"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_hemp", "fabric_cotton", "fabric_silk", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_doublet_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit", "core_attach_tailor_press_box_iron"],
+      "duration_s": 280,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 6 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_doublet", "count": 1 }],
+      "tags": ["garment", "upper", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_breeches_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 5 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_breeches", "count": 1 }],
+      "tags": ["garment", "lower", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_jerkin_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 5 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_jerkin", "count": 1 }],
+      "tags": ["garment", "outer", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_gown_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit", "core_attach_tailor_press_box_iron"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 8 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_gown", "count": 1 }],
+      "tags": ["garment", "outer", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_ruff_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit", "core_attach_tailor_press_box_iron"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_ruff", "count": 1 }],
+      "tags": ["accessory", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_linen", "fabric_cotton", "fabric_silk", "fabric_wool", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_beret_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_beret", "count": 1 }],
+      "tags": ["headwear", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_stockings_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 3 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_stockings", "count": 1 }],
+      "tags": ["legwear", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+    {
+      "id": "core_recipe_tailor_dress_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit", "core_attach_tailor_press_box_iron"],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_fabric_any", "count": 8 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_dress", "count": 1 }],
+      "tags": ["garment", "gown", "renaissance"],
+      "ingredient_pools": [
+        { "pool_id": "core_item_fabric_any", "accepts_tags": ["fabric_wool", "fabric_linen", "fabric_cotton", "fabric_silk", "fabric_hemp", "fabric_pig_tail", "fabric_rope_reed"], "min": 0 },
+        { "pool_id": "core_item_thread_any", "accepts_tags": ["thread_hemp", "thread_flax", "thread_wool", "thread_cotton", "thread_silk"], "min": 0 }
+      ]
+    },
+
+    {
+      "id": "core_recipe_tailor_jerkin_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 5 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_jerkin_leather", "count": 1 }],
+      "tags": ["leather", "outer"]
+    },
+    {
+      "id": "core_recipe_tailor_jerkin_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_cut_table_patterns", "core_attach_tailor_stitch_fine_kit", "core_attach_tailor_press_box_iron"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_leather_curried", "count": 5 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_clothing_jerkin_leather", "count": 1 }],
+      "tags": ["leather", "outer"]
+    },
+
+    {
+      "id": "core_recipe_tailor_cloak_fur_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_pelt_fur", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_cloak_fur", "count": 1 }],
+      "tags": ["fur", "outer"]
+    },
+    {
+      "id": "core_recipe_tailor_cap_fur_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 140,
+      "inputs": [
+        { "id": "core_item_pelt_fur", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_cap_fur", "count": 1 }],
+      "tags": ["fur", "headwear"]
+    },
+    {
+      "id": "core_recipe_tailor_mittens_fur_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_cut_board_shears", "core_attach_tailor_stitch_palm_thimble"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_pelt_fur", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_mittens_fur", "count": 1 }],
+      "tags": ["fur", "handwear"]
+    },
+
+    {
+      "id": "core_recipe_tailor_bandage_all",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block"],
+      "duration_s": 60,
+      "inputs": [{ "id": "core_item_rags_linen", "count": 2 }],
+      "outputs": [{ "id": "core_item_bandage_roll", "count": 4 }],
+      "tags": ["medical", "utility"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_cap_leather_C",
+      "workshop": "core_workshop_tailor",
+      "era": "CLASSICAL",
+      "attachments_required": ["core_attach_tailor_cut_block", "core_attach_tailor_stitch_needles"],
+      "duration_s": 160,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_cap_leather", "count": 1 }],
+      "tags": ["armor", "leather", "head"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_head_coif_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_head_leather_coif", "count": 1 }],
+      "tags": ["armor", "leather", "head"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_head_skullcap_leather_hardened_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press", "core_attach_tailor_press_box_iron"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 3 },
+        { "id": "core_item_rivet_metal_small", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_head_skullcap_leather_hardened", "count": 1 }],
+      "tags": ["armor", "leather", "head", "hardened"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_shoulder_spaulders_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 3 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_shoulder_spaulders_leather", "count": 1 }],
+      "tags": ["armor", "leather", "upperbody", "shoulder"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_neck_gorget_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 2 },
+        { "id": "core_item_rivet_metal_small", "count": 2 },
+        { "id": "core_item_leather_strap", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_neck_gorget_leather", "count": 1 }],
+      "tags": ["armor", "leather", "upperbody", "neck"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_arm_vambrace_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 4 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_arm_vambrace_leather", "count": 1 }],
+      "tags": ["armor", "leather", "arm"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_arm_vambrace_leather_reinforced_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 4 },
+        { "id": "core_item_rivet_metal_small", "count": 2 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_arm_vambrace_leather_reinforced", "count": 1 }],
+      "tags": ["armor", "leather", "arm", "hardened"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_body_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 300,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 8 },
+        { "id": "core_item_leather_strap", "count": 2 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_armor_body_leather", "count": 1 }],
+      "tags": ["armor", "leather", "torso"]
+    },
+    {
+      "id": "core_recipe_tailor_leather_harden_blank_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_press_seam_mallet"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 6 },
+        { "id": "core_item_glue_animal", "count": 1 },
+        { "id": "core_item_tallow_lard", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_leather_hardened", "count": 6 }],
+      "tags": ["leather", "harden"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_body_leather_hardened_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press", "core_attach_tailor_press_box_iron"],
+      "duration_s": 320,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 8 },
+        { "id": "core_item_leather_strap", "count": 2 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_armor_body_leather_hardened", "count": 1 }],
+      "tags": ["armor", "leather", "torso", "hardened"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_leggings_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 240,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 6 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_armor_leggings_leather", "count": 1 }],
+      "tags": ["armor", "leather", "leg"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_lower_cuisses_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 5 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_armor_lower_cuisses_leather", "count": 1 }],
+      "tags": ["armor", "leather", "lowerbody", "thigh"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_lower_tassets_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 5 },
+        { "id": "core_item_rivet_metal_small", "count": 3 },
+        { "id": "core_item_leather_strap", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_lower_tassets_leather", "count": 1 }],
+      "tags": ["armor", "leather", "lowerbody", "tassets", "hardened"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_leg_greaves_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 260,
+      "inputs": [
+        { "id": "core_item_leather_hardened", "count": 4 },
+        { "id": "core_item_rivet_metal_small", "count": 2 },
+        { "id": "core_item_leather_strap", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_leg_greaves_leather", "count": 1 }],
+      "tags": ["armor", "leather", "lowerbody", "shin", "hardened"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_gloves_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 180,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_gloves_leather", "count": 1 }],
+      "tags": ["armor", "leather", "hand"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_hand_gauntlets_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_leather_curried", "count": 3 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_hand_gauntlets_leather", "count": 1 }],
+      "tags": ["armor", "leather", "hand"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_boot_low_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 200,
+      "inputs": [
+        { "id": "core_item_leather_veg", "count": 3 },
+        { "id": "core_item_leather_strap", "count": 1 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_boot_low_leather", "count": 1 }],
+      "tags": ["armor", "leather", "foot"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_boot_high_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press"],
+      "duration_s": 220,
+      "inputs": [
+        { "id": "core_item_leather_curried", "count": 4 },
+        { "id": "core_item_leather_strap", "count": 2 },
+        { "id": "core_item_thread_any", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_boot_high_leather", "count": 1 }],
+      "tags": ["armor", "leather", "foot"]
+    },
+
+    {
+      "id": "core_recipe_tailor_armor_suit_leather_M",
+      "workshop": "core_workshop_tailor",
+      "era": "MEDIEVAL",
+      "attachments_required": ["core_attach_tailor_leather_awl_punch"],
+      "duration_s": 340,
+      "inputs": [
+        { "id": "core_item_armor_head_leather_coif", "count": 1 },
+        { "id": "core_item_armor_body_leather", "count": 1 },
+        { "id": "core_item_armor_arm_vambrace_leather", "count": 1 },
+        { "id": "core_item_armor_gloves_leather", "count": 1 },
+        { "id": "core_item_armor_leggings_leather", "count": 1 },
+        { "id": "core_item_armor_boot_low_leather", "count": 1 },
+        { "id": "core_item_armor_shoulder_spaulders_leather", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_suit_leather_basic", "count": 1 }],
+      "tags": ["armor", "leather", "set"]
+    },
+    {
+      "id": "core_recipe_tailor_armor_suit_leather_R",
+      "workshop": "core_workshop_tailor",
+      "era": "RENAISSANCE",
+      "attachments_required": ["core_attach_tailor_leather_rivet_press", "core_attach_tailor_press_box_iron"],
+      "duration_s": 380,
+      "inputs": [
+        { "id": "core_item_armor_head_skullcap_leather_hardened", "count": 1 },
+        { "id": "core_item_armor_body_leather_hardened", "count": 1 },
+        { "id": "core_item_armor_arm_vambrace_leather_reinforced", "count": 1 },
+        { "id": "core_item_armor_hand_gauntlets_leather", "count": 1 },
+        { "id": "core_item_armor_lower_tassets_leather", "count": 1 },
+        { "id": "core_item_armor_leg_greaves_leather", "count": 1 },
+        { "id": "core_item_armor_boot_high_leather", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_armor_suit_leather_hardened", "count": 1 }],
+      "tags": ["armor", "leather", "set", "hardened"]
+    }
+  ]
+}

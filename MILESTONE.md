@@ -97,7 +97,7 @@ Brings over “pathfinding hard limits & diagnostics” from prior plan, adapted
 
 milestones
 
-Phase E — Items, Stockpiles, Zones (Weeks 9-10)
+Phase E — Creatures, Items, Stockpiles, Zones (Weeks 9-10)
 
 Items registry + schema (done) → runtime pools; stacking; ownership refs.
 

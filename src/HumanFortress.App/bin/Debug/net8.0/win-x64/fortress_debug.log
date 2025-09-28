@@ -1,4 +1,4 @@
-[STARTUP] HumanFortress starting at 17/09/2025 2:17:22 PM
+[STARTUP] HumanFortress starting at 19/09/2025 4:17:17 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\fortress_debug.log
 [STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content
 [GameStateManager] ChangeState from  to MainMenu
@@ -6,7 +6,6 @@
 [GameStateManager] Calling Enter on MainMenu
 Entered Main Menu
 [GameStateManager] Enter completed for MainMenu
-MainMenuState: Key pressed - Enter
 MainMenuState: Key pressed - N
 [GameStateManager] ChangeState from MainMenu to WorldGen
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
@@ -30,4 +29,1409 @@ MainMenuState: Key pressed - N
 Entered Fortress Play
 [GameStateManager] Enter completed for FortressPlay
 [GameStateManager] Starting simulation for FortressPlay
+[INIT] MapSurface size=80x40 pos=(2,2)
+[INIT] UiOverlay size=120x40
+[DrawUI] uiTick=1 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=2 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=3 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=4 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=5 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=6 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=7 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=8 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=9 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=10 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=11 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=12 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=13 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=14 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=15 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=16 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=17 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=18 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=19 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=20 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=21 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=22 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=23 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=24 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=25 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=26 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=27 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=28 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=29 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=30 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=31 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=32 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=33 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=34 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=35 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=36 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=37 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=38 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=39 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=40 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=41 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=42 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=43 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=44 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=45 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=46 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=47 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=48 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=49 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=50 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=50
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=51 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=52 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=53 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=54 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=55 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=56 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=57 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=58 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=59 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=60 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=61 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=62 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=63 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=64 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=65 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=66 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=67 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=68 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=69 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=70 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=71 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=72 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=73 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=74 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=75 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=76 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=77 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=78 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=79 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=80 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=81 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=82 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=83 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=84 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=85 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=86 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=87 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=88 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=89 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=90 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(54,29,25) local=(54,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=91 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=92 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=93 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=94 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=95 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=96 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=97 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=98 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=99 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=100 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=100
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(43,29,25) local=(43,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=101 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=102 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=103 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=104 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=105 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=106 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=107 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=108 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=109 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=110 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(40,30,25) local=(40,18) camera=(0,12) zoom=1
+[DrawUI] uiTick=111 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=112 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=113 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=114 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=115 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=116 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=117 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=118 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=119 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=120 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(46,32,25) local=(46,20) camera=(0,12) zoom=1
+[DrawUI] uiTick=121 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=122 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=123 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=124 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=125 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=126 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=127 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=128 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=129 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=130 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=131 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=132 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=133 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=134 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=135 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=136 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=137 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=138 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=139 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=140 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=141 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=142 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=143 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=144 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=145 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=146 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=147 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=148 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=149 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=150 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=150
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[DrawUI] uiTick=151 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=152 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=153 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=154 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=155 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=156 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=157 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=158 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=159 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=160 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=161 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=162 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=163 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=164 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=165 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=166 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=167 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=168 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=169 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=170 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=171 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=172 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=173 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=174 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=175 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=176 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=177 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=178 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=179 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=180 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=181 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=182 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=183 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=184 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=185 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=186 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=187 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=188 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=189 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=190 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=191 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=192 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=193 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=194 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=195 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=196 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=197 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=198 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=199 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=200 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=200
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[DrawUI] uiTick=201 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=202 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=203 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=204 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=205 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=206 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=207 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=208 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=209 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=210 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=211 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=212 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=213 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=214 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=215 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=216 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=217 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=218 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=219 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=220 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=221 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=222 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=223 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=224 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=225 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=226 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=227 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=228 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=229 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=230 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(60,29,25) local=(60,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=231 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=232 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=233 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=234 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=235 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=236 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=237 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=238 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=239 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=240 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(33,29,25) local=(33,17) camera=(0,12) zoom=1
+[DrawUI] uiTick=241 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=242 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=243 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=244 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=245 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=246 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=247 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=248 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=249 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=250 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=250
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(33,28,25) local=(33,16) camera=(0,12) zoom=1
+[DrawUI] uiTick=251 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=252 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=253 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=254 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=255 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=256 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=257 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=258 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=259 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=260 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(33,28,25) local=(33,16) camera=(0,12) zoom=1
+[DrawUI] uiTick=261 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=262 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=263 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=264 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=265 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=266 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=267 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=268 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=269 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=270 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(33,28,25) local=(33,16) camera=(0,12) zoom=1
+[DrawUI] uiTick=271 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=272 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=273 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=274 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=275 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=276 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=277 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=278 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=279 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=280 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(33,28,25) local=(33,16) camera=(0,12) zoom=1
+[DrawUI] uiTick=281 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=282 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=283 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=284 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=285 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=286 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=287 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=288 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=289 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=290 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(33,28,25) local=(33,16) camera=(0,12) zoom=1
+[DrawUI] uiTick=291 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=292 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=293 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=294 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=295 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=296 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=297 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=298 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=299 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=300 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=300
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,23,25) local=(29,11) camera=(0,12) zoom=1
+[DrawUI] uiTick=301 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=302 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=303 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=304 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=305 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=306 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=307 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=308 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=309 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=310 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,23,25) local=(29,11) camera=(0,12) zoom=1
+[DrawUI] uiTick=311 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=312 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=313 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=314 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=315 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=316 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=317 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=318 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=319 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=320 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,24,25) local=(29,12) camera=(0,12) zoom=1
+[DrawUI] uiTick=321 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=322 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=323 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=324 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=325 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=326 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=327 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=327 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=328 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=329 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=330 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=331 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=332 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=333 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=334 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=335 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=336 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=337 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=338 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=339 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=340 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=341 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=342 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=343 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=344 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=345 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=346 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=347 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=348 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=349 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=350 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=350
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=351 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=352 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=353 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=354 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=355 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=356 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=357 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=358 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=359 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=360 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=361 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=362 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=363 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=364 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=365 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=366 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=367 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=368 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=369 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=370 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=371 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=372 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=373 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=374 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=375 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=376 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=377 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=378 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=379 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=380 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,16,24) local=(29,12) camera=(0,4) zoom=1
+[DrawUI] uiTick=381 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=382 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=383 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=384 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=385 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=386 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=386 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=387 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=388 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=389 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=390 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=391 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=392 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=393 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=394 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=395 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=396 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=397 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=398 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=399 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=400 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=400
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=401 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=402 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=403 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=404 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=405 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=406 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=407 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=408 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=409 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=410 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=411 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=412 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=413 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=414 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=415 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=416 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=417 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=418 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=419 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=420 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=421 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] Z -> QMenu=Orders
+[DrawUI] uiTick=421 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=422 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=423 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=424 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=425 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=426 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=427 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=428 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=429 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=430 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=431 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=432 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=433 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=434 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=435 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=436 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=437 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=438 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=439 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=440 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=441 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=442 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=443 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=444 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=445 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=446 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=447 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=448 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=449 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] Z -> QMenu=None
+[DrawUI] uiTick=449 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=450 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=450
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=451 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=452 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=453 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=454 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=455 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=456 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=457 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=458 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=459 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=460 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=461 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=462 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=463 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=464 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=465 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=466 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=467 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=468 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=469 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=470 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=471 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=472 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=473 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=474 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=475 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] X -> QMenu=Zones
+[DrawUI] uiTick=475 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=476 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=477 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=478 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=479 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=480 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=481 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=482 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=483 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=484 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=485 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=486 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=487 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=488 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=489 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=490 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=491 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=492 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=493 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=494 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=495 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=496 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=497 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=498 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] X -> QMenu=None
+[DrawUI] uiTick=498 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=499 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=500 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=500
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=501 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=502 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=503 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=504 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=505 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=506 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=507 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=508 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=509 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=510 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=511 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=512 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=513 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=514 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] C -> QMenu=Build
+[DrawUI] uiTick=514 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=515 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=516 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=517 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=518 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=519 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=520 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=521 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=522 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=523 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=524 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=525 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=526 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] C -> QMenu=None
+[DrawUI] uiTick=526 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=527 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=528 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=529 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=530 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=531 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=532 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=533 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=534 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=535 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=536 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=537 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=538 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=539 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=540 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=541 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=542 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=543 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=544 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=545 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=546 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=547 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=548 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=549 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=550 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=550
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=551 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=552 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=553 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=554 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=555 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=556 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=557 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=558 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=559 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=560 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=561 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=562 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=563 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=564 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=565 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=566 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=567 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=568 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=569 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=570 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=571 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=572 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=573 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=574 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=575 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=576 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=577 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=578 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=579 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=580 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=581 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=582 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=583 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=584 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=585 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=586 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=587 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=588 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=589 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=590 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=591 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=592 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=593 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=594 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=595 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=596 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=597 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=598 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=599 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=600 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=600
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=601 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=602 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=603 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=604 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=605 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=606 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=607 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=608 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=609 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=610 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=611 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=612 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=613 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=614 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=615 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=616 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=617 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=618 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=619 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=620 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=621 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=622 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=623 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=624 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=625 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=626 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=627 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=628 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=629 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=630 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=631 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=632 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=633 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=634 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=635 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=636 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=637 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=638 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=639 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=640 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=641 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=642 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=643 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=644 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=645 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=646 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=647 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=648 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=649 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=650 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=650
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=651 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=652 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=653 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=654 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=655 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=656 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=657 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=658 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=659 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=660 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=661 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=662 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=663 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=664 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=665 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=666 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=667 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=668 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=669 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=670 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=671 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=672 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=673 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=674 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=675 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=676 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=677 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F1 -> Drawer=Creature
+[DrawUI] uiTick=677 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=678 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=679 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=680 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=681 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=682 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=683 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=684 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=685 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=686 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=687 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=688 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=689 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=690 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=691 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=692 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=693 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=694 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=695 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=696 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=697 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=698 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=699 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=700 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=700
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[UiRenderer.Drawer] size=120x40 height=28 y0=11 panel=Creature tab=0
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=701 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=702 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=703 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F1 -> Drawer=None
+[DrawUI] uiTick=703 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=704 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=705 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=706 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=707 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=708 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=709 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=710 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=711 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=712 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=713 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=714 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=715 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=716 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=717 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F2 -> Drawer=Stock
+[DrawUI] uiTick=717 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=718 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=719 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=720 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=721 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=722 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=723 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=724 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=725 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=726 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=727 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=728 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=729 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=730 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=731 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=732 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=733 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=734 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=735 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=736 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=737 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=738 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=739 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=740 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=741 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=742 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=743 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=744 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=745 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=746 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F2 -> Drawer=None
+[DrawUI] uiTick=746 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=747 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=748 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=749 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=750 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=750
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=751 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=752 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=753 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=754 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=755 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=756 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=757 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=758 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=759 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=760 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=761 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=762 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F3 -> Drawer=Work
+[DrawUI] uiTick=762 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=763 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=764 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=765 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=766 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=767 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=768 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=769 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=770 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=771 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=772 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=773 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=774 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=775 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=776 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=777 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=778 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=779 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=780 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=781 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=782 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F4 -> Drawer=Military
+[DrawUI] uiTick=782 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=783 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=784 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=785 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=786 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=787 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=788 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=789 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=790 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=791 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=792 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=793 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=794 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=795 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=796 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=797 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=798 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=799 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=800 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=800
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[UiRenderer.Drawer] size=120x40 height=28 y0=11 panel=Military tab=0
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=801 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=802 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=803 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=804 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=805 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=806 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=807 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=808 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=809 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=810 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=811 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=812 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=813 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=814 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=815 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=816 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=817 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=818 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=819 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F5 -> Drawer=Country
+[DrawUI] uiTick=819 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=820 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=821 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=822 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=823 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=824 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=825 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=826 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=827 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=828 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=829 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=830 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=831 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=832 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=833 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=834 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=835 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=836 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=837 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=838 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=839 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=840 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=841 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=842 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=843 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=844 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=845 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=846 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=847 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=848 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=849 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=850 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=850
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[UiRenderer.Drawer] size=120x40 height=28 y0=11 panel=Country tab=0
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=851 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=852 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=853 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=854 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=855 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=856 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=857 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=858 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=859 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=860 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=861 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=862 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=863 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=864 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=865 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=866 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=867 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=868 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=869 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=870 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=871 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=872 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=873 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=874 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=875 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=876 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=877 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=878 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=879 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=880 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=881 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=882 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=883 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=884 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=885 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=886 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=887 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=888 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=889 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=890 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=891 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=892 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=893 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=894 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=895 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=896 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F1 -> Drawer=Creature
+[DrawUI] uiTick=896 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=897 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=898 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=899 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=900 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=900
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[UiRenderer.Drawer] size=120x40 height=28 y0=11 panel=Creature tab=0
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=901 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=902 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=903 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=904 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=905 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=906 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=907 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=908 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=909 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=910 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=911 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=912 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=913 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=914 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=915 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=916 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=917 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=918 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=919 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=920 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=921 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=922 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=923 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=924 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=925 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=926 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=927 map=80x40 pos=(2,2) uiSurf=120x40
+[KEY] F1 -> Drawer=None
+[DrawUI] uiTick=927 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=928 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=929 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=930 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=931 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=932 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=933 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=934 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=935 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=936 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=937 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=938 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=939 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=940 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=941 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=942 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=943 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=944 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=945 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=946 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=947 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=948 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=949 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=950 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=950
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=951 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=952 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=953 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=954 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=955 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=956 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=957 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=958 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=959 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=960 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=961 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=962 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=963 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=964 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=965 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=966 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=967 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=968 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=969 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=970 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=971 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=972 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=973 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=974 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=975 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=976 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=977 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=978 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=979 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=980 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=981 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=982 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=983 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=984 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=985 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=986 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=987 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=988 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=989 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=990 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=991 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=992 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=993 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=994 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=995 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=996 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=997 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=998 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=999 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1000 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=1000
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1001 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1002 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1003 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1004 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1005 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1006 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1007 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1008 map=80x40 pos=(2,2) uiSurf=120x40
+[DEBUG] Toggle debug menu -> True
+[DrawUI] uiTick=1008 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1009 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1010 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1011 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1012 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1013 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1014 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1015 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1016 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1017 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1018 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1019 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1020 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1021 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1022 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1023 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1024 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1025 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1026 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1027 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1028 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1029 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1030 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1031 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1032 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1033 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1034 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1035 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1036 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1037 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1038 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1039 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1040 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1041 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1042 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1043 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1044 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1045 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1046 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1047 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1048 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1049 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1050 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=1050
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1051 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1052 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1053 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1054 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1055 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1056 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1057 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1058 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1059 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1060 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1061 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1062 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1063 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1064 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1065 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1066 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1067 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1068 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1069 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1070 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1071 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1072 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1073 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1074 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1075 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1076 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1077 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1078 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1079 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1080 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1081 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1082 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1083 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1084 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1085 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1086 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1087 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1088 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1089 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1090 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1091 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1092 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1093 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1094 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1095 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1096 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1097 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1098 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1099 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1100 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=1100
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1101 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1102 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1103 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1104 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1105 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1106 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1107 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1108 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1109 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1110 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1111 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1112 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1113 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1114 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1115 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1116 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1117 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1118 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1119 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1120 map=80x40 pos=(2,2) uiSurf=120x40
+[DEBUG] Toggle debug menu -> False
+[DrawUI] uiTick=1120 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1121 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1122 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1123 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1124 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1125 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1126 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1127 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1128 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1129 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1130 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1131 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1132 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1133 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1134 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1135 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1136 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1137 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1138 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1139 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1140 map=80x40 pos=(2,2) uiSurf=120x40
+[MOUSE-EVT] Hover world=(29,12,23) local=(29,12) camera=(0,0) zoom=1
+[DrawUI] uiTick=1141 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1142 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1143 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1144 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1145 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1146 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1147 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1148 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1149 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1150 map=80x40 pos=(2,2) uiSurf=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=1150
+[UiRenderer.Dock] overlay=120x40 anchor=(2,2,80,40) row=40
+[UiRenderer.QuickIcons] anchor=(2,2,80,40) row=41 center=42
+[DrawUI] uiTick=1151 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1152 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1153 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1154 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1155 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1156 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1157 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1158 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1159 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1160 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1161 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1162 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1163 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1164 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1165 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1166 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1167 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1168 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1169 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1170 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1171 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1172 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1173 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1174 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1175 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1176 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1177 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1178 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1179 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1180 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1181 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1182 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1183 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1184 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1185 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1186 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1187 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1188 map=80x40 pos=(2,2) uiSurf=120x40
+[DrawUI] uiTick=1189 map=80x40 pos=(2,2) uiSurf=120x40
 [SHUTDOWN] Game shutting down normally

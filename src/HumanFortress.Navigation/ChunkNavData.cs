@@ -24,6 +24,16 @@ public sealed class ChunkNavData
     public ushort[] NavCost { get; }
 
     /// <summary>
+    /// Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
+    /// </summary>
+    public byte[] UpRampDir { get; }
+
+    /// <summary>
+    /// Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
+    /// </summary>
+    public byte[] DownRampDir { get; }
+
+    /// <summary>
     /// Connectivity version for cache invalidation.
     /// Bumped when topology changes.
     /// </summary>
@@ -39,6 +49,8 @@ public sealed class ChunkNavData
         Key = key;
         NavMask = new byte[TilesPerChunk];
         NavCost = new ushort[TilesPerChunk];
+        UpRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
+        DownRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
         ConnectivityVersion = 0;
     }
 

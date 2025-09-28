@@ -6,6 +6,7 @@ applies_to:
   - Nav caches (NavMask/NavCost), connectivity versioning
   - Pathfinding service (requests, caching, A* search, tie-breakers)
   - Movement execution (walk/ramps/stairs/fluids/doors) contracts
+  - Debug & visualization overlays (non-normative guidance)
 principles:
   - Deterministic across OS/thread counts (stable orders, no wall-clock)
   - Read-parallel / write-serialized cooperation with UPDATE_ORDER
@@ -34,11 +35,11 @@ Global region graph (optional P1; v1 uses chunk-local caches + cheap checks).
 2) Data Model (Authoritative)
 Each chunk (32√ó32) maintains derived navigation caches rebuilt during RebuildDerived (commit phase):
 
-NavMask[idx] : byte/ushort ‚Äî capability bits (Walk/Crawl/Swim/Fly/Standable/EdgeClimb, etc.).
+NavMask[idx] : byte/ushort ‚Ä?capability bits (Walk/Crawl/Swim/Fly/Standable/EdgeClimb, etc.).
 
-NavCost[idx] : ushort ‚Äî movement cost baseline including fluids/surface/traffic.
+NavCost[idx] : ushort ‚Ä?movement cost baseline including fluids/surface/traffic.
 
-ConnectivityVersion : int ‚Äî bump when topology-relevant data changes; consumers invalidate caches by version. 
+ConnectivityVersion : int ‚Ä?bump when topology-relevant data changes; consumers invalidate caches by version. 
 DATA_LAYOUT
 
  
@@ -50,7 +51,7 @@ DATA_LAYOUT
 
 
 3) Passability Semantics (L0‚ÜíL7 precedence)
-When computing passability and cost, layers are consulted in this order (deterministic): L0/L2 ‚Üí L3 ‚Üí L4 ‚Üí L5/L6. Hard blockers in earlier layers preempt later ones. 
+When computing passability and cost, layers are consulted in this order (deterministic): L0/L2 ‚Ü?L3 ‚Ü?L4 ‚Ü?L5/L6. Hard blockers in earlier layers preempt later ones. 
 TILE_LAYERS
 
 
@@ -63,7 +64,7 @@ bit0 Walk        // 4-neighbor planar motion
 bit1 Crawl       // reserved (tight tunnels)
 bit2 Swim        // allow motion when FluidDepth >= threshold
 bit3 Fly         // airborne (ignores many L0/L2 tests)
-bit4 Standable   // valid ‚Äústop‚Äù tile for walkers
+bit4 Standable   // valid ‚Äústop‚Ä?tile for walkers
 bit5 EdgeClimb   // ladders/rope (treated as vertical neighbor)
 bits6..15 Reserved
 A door closed acts as L2 Blocker (no Walk); open contributes Walk with extra cost. Buildables supply these flags via L2 furniture metadata.
@@ -72,7 +73,7 @@ A door closed acts as L2 Blocker (no Walk); open contributes Walk with extra cos
 A cell is Walk if:
 
 L0 is OpenWithFloor or Stairs*, and no L2 Blocker with BlocksMove, and (if FluidDepth > shallow_threshold) the actor either has Swim or the fluid policy permits wading.
-Standable is Walk plus ‚Äúnot a ramp down edge unless coming from proper direction‚Äù.
+Standable is Walk plus ‚Äúnot a ramp down edge unless coming from proper direction‚Ä?
 
 3.3 Ramps & Stairs (vertical neighbors)
 Ramp: Walk from (x,y,z) to (x+dx,y+dy,z+dz) when RampDir matches and target is OpenWithFloor (or stair top).
@@ -107,7 +108,7 @@ NavCost = Base10
         + FluidAdj(FluidKind, FluidDepth)          // L3
         + SurfaceAdj(SurfaceBits)                  // L1
         + DoorAdj(L2 door state)                   // L2
-TrafficAdj: Normal=0, Low=-2, High=+2, Restricted=+8 (clamped ‚â•1).
+TrafficAdj: Normal=0, Low=-2, High=+2, Restricted=+8 (clamped ‚â?).
 
 All constants come from /content/registries/tuning.navigation.json (data-driven).
 
@@ -122,7 +123,7 @@ MoveMultiplier = 1 + EncumbranceK * Encumbrance (encumbrance from equipment spec
 4.3 Edge weights
 Orthogonal step weight = 10.
 
-Diagonal (if enabled) = 14 (approx ‚àö2*10).
+Diagonal (if enabled) = 14 (approx ‚à?*10).
 
 Ramp adds +RAMP_DELTA to cost when moving between Z.
 
@@ -157,7 +158,7 @@ Hard cap max_nodes_per_search. If exceeded, return Partial with the best frontie
 Time budget per tick: max_ms_per_tick_pathing; the service processes requests FIFO until the budget is exhausted; remaining requests roll to next tick (determinism preserved by stable queue order).
 
 5.3 Connectivity quick-reject
-If source and goal chunks differ in ConnectivityVersion history during planning, the service falls back to A* (v1). P1 may add per-mode RegionId labeling to early-out ‚Äúdisconnected‚Äù queries; for now, we rely on A* with closed-set size cap.
+If source and goal chunks differ in ConnectivityVersion history during planning, the service falls back to A* (v1). P1 may add per-mode RegionId labeling to early-out ‚Äúdisconnected‚Ä?queries; for now, we rely on A* with closed-set size cap.
 
 5.4 API (normative)
 csharp
@@ -208,13 +209,13 @@ UPDATE_ORDER
 
 
 7) Execution & Replanning
-Movement execution samples the next 1‚Äì3 steps from the path each tick.
+Movement execution samples the next 1‚Ä? steps from the path each tick.
 
 If execution detects mask change (ConnectivityVersion bump on any step): mark path stale, request replan.
 
 If blocked by units (L6), execution uses local yielding / brief wait; path is not recomputed unless stale for topology reasons.
 
-The AI/job flow already includes ‚ÄúReplan Path‚Äù on block/timeout. 
+The AI/job flow already includes ‚ÄúReplan Path‚Ä?on block/timeout. 
 GAME_ARCHITECTURE
 
 
@@ -259,7 +260,7 @@ Copy code
 11) Determinism & CI Gates
 Stable iteration orders, stable heap ordering, no dependence on dictionary order.
 
-Repeated seeds & same world state ‚Üí identical path Hash.
+Repeated seeds & same world state ‚Ü?identical path Hash.
 
 Cross-thread parity: caches guarded only by ConnectivityVersion.
 
@@ -268,7 +269,7 @@ UPDATE_ORDER
 
 
 12) Tests (must-haves)
-Semantics: every L0/L2/L3 combination ‚Üí expected NavMask/NavCost.
+Semantics: every L0/L2/L3 combination ‚Ü?expected NavMask/NavCost.
 
 Ramps/Stairs: directed ramps accept only correct approach; stairs up/down behave as vertical neighbors.
 
@@ -291,7 +292,7 @@ Size-aware navigation (2√ó1 creatures), ladders/ropes as explicit edge records.
 
 Per-actor hazard sensitivity and threat maps from the Incident Director.
 
-Appendix A ‚Äî Where this hooks into the engine
+Appendix A ‚Ä?Where this hooks into the engine
 Data & caches live in chunk (NavMask/NavCost/ConnectivityVersion). 
 TILE_CSHARP_SKELETON
 

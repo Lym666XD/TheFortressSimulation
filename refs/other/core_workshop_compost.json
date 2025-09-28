@@ -1,0 +1,259 @@
+{
+  "workshops": [
+    {
+      "id": "core_workshop_compost",
+      "name": "Compost Pit",
+      "tags": ["workshop", "agriculture", "fertilizer", "compost"],
+      "display_order": 25
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_compost_infra_pit_basic",
+      "name": "Earthen Pit (Basic)",
+      "slot": "pit_infrastructure",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_compost_infra_bay_partition",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["infrastructure", "pit", "compost"]
+    },
+    {
+      "id": "core_attach_compost_infra_bay_partition",
+      "name": "Partitioned Bay",
+      "slot": "pit_infrastructure",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_compost_infra_roofed_three_bin",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["infrastructure", "bay", "partition"]
+    },
+    {
+      "id": "core_attach_compost_infra_roofed_three_bin",
+      "name": "Roofed Three-Bin",
+      "slot": "pit_infrastructure",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["infrastructure", "roofed", "three_bin"]
+    },
+
+    {
+      "id": "core_attach_compost_turn_fork",
+      "name": "Hand Fork Turning",
+      "slot": "turning_system",
+      "era": "CLASSICAL",
+      "upgrade_to": "core_attach_compost_turn_frame",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["turning", "manual"]
+    },
+    {
+      "id": "core_attach_compost_turn_frame",
+      "name": "Turning Frame",
+      "slot": "turning_system",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_compost_turn_tumbler",
+      "effects": { "throughput_mult": 1.05 },
+      "tags": ["turning", "frame"]
+    },
+    {
+      "id": "core_attach_compost_turn_tumbler",
+      "name": "Crank Tumbler",
+      "slot": "turning_system",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["turning", "tumbler"]
+    },
+
+    {
+      "id": "core_attach_compost_nitrary_bed",
+      "name": "Niter Bed",
+      "slot": "nitrary_facility",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_compost_nitrary_bay",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["niter", "nitrary", "bed"]
+    },
+    {
+      "id": "core_attach_compost_nitrary_bay",
+      "name": "Roofed Nitrary Bay",
+      "slot": "nitrary_facility",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.1 },
+      "tags": ["niter", "nitrary", "bay"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_compost_start_C",
+      "workshop": "core_workshop_compost",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_compost_infra_pit_basic"
+      ],
+      "duration_s": 600,
+      "inputs": [
+        { "id": "core_item_plant_waste", "count": 10 },
+        { "id": "core_item_manure_animal", "count": 5 },
+        { "id": "core_item_straw_bedding", "count": 5 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_unripe", "count": 12 }
+      ],
+      "tags": ["compost", "start"]
+    },
+    {
+      "id": "core_recipe_compost_start_M",
+      "workshop": "core_workshop_compost",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_compost_infra_bay_partition"
+      ],
+      "duration_s": 540,
+      "inputs": [
+        { "id": "core_item_plant_waste", "count": 10 },
+        { "id": "core_item_manure_animal", "count": 5 },
+        { "id": "core_item_straw_bedding", "count": 5 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_unripe", "count": 13 }
+      ],
+      "tags": ["compost", "start"]
+    },
+    {
+      "id": "core_recipe_compost_start_R",
+      "workshop": "core_workshop_compost",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_compost_infra_roofed_three_bin"
+      ],
+      "duration_s": 480,
+      "inputs": [
+        { "id": "core_item_plant_waste", "count": 10 },
+        { "id": "core_item_manure_animal", "count": 5 },
+        { "id": "core_item_straw_bedding", "count": 5 },
+        { "id": "core_item_water_clean", "count": 2 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_unripe", "count": 14 }
+      ],
+      "tags": ["compost", "start"]
+    },
+
+    {
+      "id": "core_recipe_compost_cure_C",
+      "workshop": "core_workshop_compost",
+      "era": "CLASSICAL",
+      "attachments_required": [
+        "core_attach_compost_infra_pit_basic",
+        "core_attach_compost_turn_fork"
+      ],
+      "duration_s": 600,
+      "inputs": [
+        { "id": "core_item_compost_unripe", "count": 12 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_mature", "count": 10 }
+      ],
+      "tags": ["compost", "cure", "turn"]
+    },
+    {
+      "id": "core_recipe_compost_cure_M",
+      "workshop": "core_workshop_compost",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_compost_infra_bay_partition",
+        "core_attach_compost_turn_frame"
+      ],
+      "duration_s": 540,
+      "inputs": [
+        { "id": "core_item_compost_unripe", "count": 12 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_mature", "count": 11 }
+      ],
+      "tags": ["compost", "cure", "turn"]
+    },
+    {
+      "id": "core_recipe_compost_cure_R",
+      "workshop": "core_workshop_compost",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_compost_infra_roofed_three_bin",
+        "core_attach_compost_turn_tumbler"
+      ],
+      "duration_s": 480,
+      "inputs": [
+        { "id": "core_item_compost_unripe", "count": 12 },
+        { "id": "core_item_water_clean", "count": 1 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_mature", "count": 12 }
+      ],
+      "tags": ["compost", "cure", "turn"]
+    },
+
+    {
+      "id": "core_recipe_compost_screen_all",
+      "workshop": "core_workshop_compost",
+      "era": "CLASSICAL",
+      "attachments_required": [],
+      "duration_s": 120,
+      "inputs": [
+        { "id": "core_item_compost_mature", "count": 10 }
+      ],
+      "outputs": [
+        { "id": "core_item_compost_fine", "count": 10 }
+      ],
+      "tags": ["compost", "screen"]
+    },
+
+    {
+      "id": "core_recipe_compost_niter_M",
+      "workshop": "core_workshop_compost",
+      "era": "MEDIEVAL",
+      "attachments_required": [
+        "core_attach_compost_nitrary_bed"
+      ],
+      "duration_s": 2400,
+      "inputs": [
+        { "id": "core_item_plant_waste", "count": 10 },
+        { "id": "core_item_manure_animal", "count": 10 },
+        { "id": "core_item_straw_bedding", "count": 5 },
+        { "id": "core_item_rubble_limestone", "count": 2 },
+        { "id": "core_item_water_clean", "count": 3 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_niter", "count": 3 },
+        { "id": "core_item_compost_mature", "count": 6 }
+      ],
+      "tags": ["niter", "nitrary"]
+    },
+    {
+      "id": "core_recipe_compost_niter_R",
+      "workshop": "core_workshop_compost",
+      "era": "RENAISSANCE",
+      "attachments_required": [
+        "core_attach_compost_nitrary_bay"
+      ],
+      "duration_s": 1800,
+      "inputs": [
+        { "id": "core_item_plant_waste", "count": 10 },
+        { "id": "core_item_manure_animal", "count": 10 },
+        { "id": "core_item_straw_bedding", "count": 5 },
+        { "id": "core_item_rubble_limestone", "count": 2 },
+        { "id": "core_item_ash_wood", "count": 2 },
+        { "id": "core_item_water_clean", "count": 4 }
+      ],
+      "outputs": [
+        { "id": "core_item_powder_niter", "count": 5 },
+        { "id": "core_item_compost_mature", "count": 8 }
+      ],
+      "tags": ["niter", "nitrary"]
+    }
+  ]
+}

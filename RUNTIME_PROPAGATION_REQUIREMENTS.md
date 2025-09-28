@@ -226,7 +226,7 @@ public void RebuildDerived()
 - Walls block all movement
 - Floors allow walking/standing
 - Ramps allow directional Z-transitions
-- Air/Chasm allow flying only
+- Air (OpenNoFloor) allows flying only
 - Materials never override TerrainKind legality
 
 ### Performance Tests

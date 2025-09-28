@@ -25,7 +25,7 @@ bits 9-15: Reserved (must be 0)
 #### TerrainKind Authority
 - **Owns**: walkable, standable, climbable, flyable decisions
 - **Owns**: support rules, Z-transitions (ramps/stairs)
-- **Values**: 0=SolidWall, 1=OpenWithFloor, 2=OpenNoFloor, 3=Ramp, 4-6=Stairs, 7=Chasm
+- **Values**: 0=SolidWall, 1=OpenWithFloor, 2=OpenNoFloor, 3=Ramp, 4=Slope, 5=StairsUp, 6=StairsDown, 7=StairsUD
 
 #### Materials as Modifiers Only
 - **Removed**: All walkable/standable/climbable/flyable fields from materials

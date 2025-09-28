@@ -1,0 +1,1764 @@
+{
+  "schema_version": 1,
+  "workshops": [
+    {
+      "id": "core_workshop_metalworks",
+      "name": "Metalworks",
+      "era_min": "CLASSIC",
+      "era_max": "RENAISSANCE",
+      "tags": ["metal", "forge", "form", "assemble"],
+      "attachment_slots": ["forge_form", "shear_punch", "draw_chain", "assemble_rivet", "limb_heat", "heat_source"]
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_metal_forge_hand_anvil",
+      "name": "Hand Hammer & Anvil",
+      "slot": "forge_form",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_metal_forge_water_hammer",
+      "effects": { "throughput_mult": 1.0 },
+      "tags": ["forge", "form"]
+    },
+    {
+      "id": "core_attach_metal_forge_water_hammer",
+      "name": "Water Hammer",
+      "slot": "forge_form",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_metal_forge_screw_press",
+      "effects": { "throughput_mult": 1.25 },
+      "tags": ["forge", "form", "waterpower"]
+    },
+    {
+      "id": "core_attach_metal_forge_screw_press",
+      "name": "Screw/Lever Press",
+      "slot": "forge_form",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "throughput_mult": 1.5 },
+      "tags": ["forge", "form"]
+    },
+    {
+      "id": "core_attach_metal_shear_chisel_bench",
+      "name": "Chisel & Cut Bench",
+      "slot": "shear_punch",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_metal_shear_lever",
+      "effects": { "time_mult": 1.0 },
+      "tags": ["shear", "punch"]
+    },
+    {
+      "id": "core_attach_metal_shear_lever",
+      "name": "Lever Shear",
+      "slot": "shear_punch",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_metal_shear_press",
+      "effects": { "time_mult": 0.85 },
+      "tags": ["shear", "punch"]
+    },
+    {
+      "id": "core_attach_metal_shear_press",
+      "name": "Press Shear",
+      "slot": "shear_punch",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.75 },
+      "tags": ["shear", "punch"]
+    },
+    {
+      "id": "core_attach_metal_draw_hand_plate",
+      "name": "Hand Drawplate",
+      "slot": "draw_chain",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_metal_draw_coiler",
+      "effects": { "yield_bonus": 0.0 },
+      "tags": ["draw", "chain"]
+    },
+    {
+      "id": "core_attach_metal_draw_coiler",
+      "name": "Coiling Draw Machine",
+      "slot": "draw_chain",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_metal_draw_precision",
+      "effects": { "yield_bonus": 0.05 },
+      "tags": ["draw", "chain", "waterpower"]
+    },
+    {
+      "id": "core_attach_metal_draw_precision",
+      "name": "Precision Drawbench",
+      "slot": "draw_chain",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "yield_bonus": 0.1 },
+      "tags": ["draw", "chain"]
+    },
+    {
+      "id": "core_attach_metal_rivet_cold",
+      "name": "Cold Riveting Bench",
+      "slot": "assemble_rivet",
+      "era": "CLASSIC",
+      "upgrade_to": "core_attach_metal_rivet_hot",
+      "effects": { "time_mult": 1.0 },
+      "tags": ["assemble", "rivet"]
+    },
+    {
+      "id": "core_attach_metal_rivet_hot",
+      "name": "Hot Rivet Forge & Station",
+      "slot": "assemble_rivet",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_metal_rivet_thread",
+      "effects": { "time_mult": 0.85 },
+      "tags": ["assemble", "rivet"]
+    },
+    {
+      "id": "core_attach_metal_rivet_thread",
+      "name": "Threaded Fastener Tooling",
+      "slot": "assemble_rivet",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "time_mult": 0.75 },
+      "tags": ["assemble", "rivet", "thread"]
+    },
+    {
+      "id": "core_attach_metal_limb_anneal_temper",
+      "name": "Limb Anneal/Temper Furnace",
+      "slot": "limb_heat",
+      "era": "MEDIEVAL",
+      "upgrade_to": "core_attach_metal_limb_iso_temper",
+      "effects": {},
+      "tags": ["limb_heat"]
+    },
+    {
+      "id": "core_attach_metal_limb_iso_temper",
+      "name": "Isothermal Tempering Bench",
+      "slot": "limb_heat",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "quality_tag": "durability_plus_20" },
+      "tags": ["limb_heat"]
+    },
+    {
+      "id": "core_attach_metal_heat_lava_forge",
+      "name": "Lava Forge (Terrain)",
+      "slot": "heat_source",
+      "era": "RENAISSANCE",
+      "upgrade_to": null,
+      "effects": { "fuel_override": "none", "applies_to_flags": ["requires_heat"] },
+      "tags": ["heat", "nofuel"]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "core_recipe_metal_blocks_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_block_metal", "count": 10, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_blocks_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 780,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_block_metal", "count": 12, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_blocks_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 720,
+      "requires_enablers": ["core_attach_metal_forge_screw_press"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_block_metal", "count": 14, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_chain_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 420,
+      "requires_enablers": ["core_attach_metal_draw_hand_plate"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_chain_metal", "count": 5, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_chain_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 360,
+      "requires_enablers": ["core_attach_metal_draw_coiler"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_chain_metal", "count": 6, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_chain_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 320,
+      "requires_enablers": ["core_attach_metal_draw_precision"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_chain_metal", "count": 7, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_parts_small_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 420,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil", "core_attach_metal_shear_chisel_bench"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_component_mechanical_small", "count": 6, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_parts_small_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 360,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer", "core_attach_metal_shear_lever"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_component_mechanical_small", "count": 7, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_parts_small_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 320,
+      "requires_enablers": ["core_attach_metal_forge_screw_press", "core_attach_metal_shear_press"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_component_mechanical_small", "count": 8, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_trap_kit_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_metal_rivet_cold"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_component_mechanical_small", "count": 2 }],
+      "outputs": [{ "id": "core_item_kit_trap_generic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_trap_kit_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 480,
+      "requires_enablers": ["core_attach_metal_rivet_hot"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_component_mechanical_small", "count": 2 }],
+      "outputs": [{ "id": "core_item_kit_trap_generic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_trap_kit_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 360,
+      "requires_enablers": ["core_attach_metal_rivet_thread"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_component_mechanical_small", "count": 2 }],
+      "outputs": [{ "id": "core_item_kit_trap_generic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_furniture_blank_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_metal_rivet_cold"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 4 },
+          { "id": "core_item_ingot_bronze", "count": 4 },
+          { "id": "core_item_ingot_steel", "count": 4 },
+          { "id": "core_item_ingot_steel_refined", "count": 4 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_chain_metal", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_metal_blank", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_furniture_blank_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 720,
+      "requires_enablers": ["core_attach_metal_rivet_hot"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 4 },
+          { "id": "core_item_ingot_bronze", "count": 4 },
+          { "id": "core_item_ingot_steel", "count": 4 },
+          { "id": "core_item_ingot_steel_refined", "count": 4 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_chain_metal", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_metal_blank", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_furniture_blank_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 540,
+      "requires_enablers": ["core_attach_metal_rivet_thread"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 4 },
+          { "id": "core_item_ingot_bronze", "count": 4 },
+          { "id": "core_item_ingot_steel", "count": 4 },
+          { "id": "core_item_ingot_steel_refined", "count": 4 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_chain_metal", "count": 1 },
+        { "id": "core_item_component_mechanical_small", "count": 2 }
+      ],
+      "outputs": [{ "id": "core_item_furniture_metal_blank", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_sheet_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 960,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil", "core_attach_metal_shear_chisel_bench"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_sheet_metal", "count": 12, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_sheet_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 840,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer", "core_attach_metal_shear_lever"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_sheet_metal", "count": 14, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_sheet_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 720,
+      "requires_enablers": ["core_attach_metal_forge_screw_press", "core_attach_metal_shear_press"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 10 },
+          { "id": "core_item_ingot_bronze", "count": 10 },
+          { "id": "core_item_ingot_steel", "count": 10 },
+          { "id": "core_item_ingot_steel_refined", "count": 10 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_sheet_metal", "count": 16, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_metal_strip_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 540,
+      "requires_enablers": ["core_attach_metal_shear_press"],
+      "inputs": [{ "id": "core_item_sheet_metal", "count": 10 }],
+      "outputs": [{ "id": "core_item_strip_metal", "count": 12, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_mining_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 720,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_powder_charcoal", "charges_g": 1000 },
+        { "id": "core_item_liquid_water_pure", "charges_ml": 1000 }
+      ],
+      "outputs": [{ "id": "core_item_toolset_mining_classic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_mining_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 660,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil", "core_attach_metal_rivet_cold"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 3 },
+          { "id": "core_item_ingot_bronze", "count": 3 },
+          { "id": "core_item_ingot_steel", "count": 3 },
+          { "id": "core_item_ingot_steel_refined", "count": 3 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_chain_metal", "count": 1 }],
+      "outputs": [{ "id": "core_item_toolset_mining_medieval", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_mining_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer", "core_attach_metal_rivet_hot"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_steel", "count": 3 },
+          { "id": "core_item_ingot_steel_refined", "count": 3 },
+          { "id": "core_item_ingot_iron_wrought", "count": 3 },
+          { "id": "core_item_ingot_bronze", "count": 3 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_component_mechanical_small", "count": 2 }],
+      "outputs": [{ "id": "core_item_toolset_mining_renaissance", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_woodcut_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_lumber", "count": 1 }],
+      "outputs": [{ "id": "core_item_toolset_lumber_classic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_lumber_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 540,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil", "core_attach_metal_rivet_cold", "core_attach_metal_draw_hand_plate"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_lumber", "count": 2 },
+        { "id": "core_item_chain_metal", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_toolset_lumber_medieval", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_lumber_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 480,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 },
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_lumber", "count": 2 }],
+      "outputs": [{ "id": "core_item_toolset_lumber_renaissance", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_agri_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 600,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 },
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_lumber", "count": 1 }],
+      "outputs": [{ "id": "core_item_toolset_agriculture_classic", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_agri_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 540,
+      "requires_enablers": ["core_attach_metal_forge_hand_anvil", "core_attach_metal_rivet_cold"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 3 },
+          { "id": "core_item_ingot_bronze", "count": 3 },
+          { "id": "core_item_ingot_steel", "count": 3 },
+          { "id": "core_item_ingot_steel_refined", "count": 3 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_lumber", "count": 2 },
+        { "id": "core_item_leather", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_toolset_agriculture_medieval", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_toolset_agri_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 480,
+      "requires_enablers": ["core_attach_metal_forge_water_hammer"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 },
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 }
+        ]
+      ],
+      "inputs": [{ "id": "core_item_lumber", "count": 1 }],
+      "outputs": [{ "id": "core_item_toolset_agriculture_renaissance", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_crossbow_metal_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 900,
+      "requires_enablers": ["core_attach_metal_limb_anneal_temper", "core_attach_metal_rivet_cold"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 },
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_component_mechanical_small", "count": 2 },
+        { "id": "core_item_stock_wood_crossbow", "count": 1 }
+      ],
+      "outputs": [{ "id": "core_item_weapon_crossbow_metal", "count": 1, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_crossbow_metal_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 840,
+      "requires_enablers": ["core_attach_metal_limb_iso_temper", "core_attach_metal_rivet_hot"],
+      "flags": ["requires_heat"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_steel", "count": 2 },
+          { "id": "core_item_ingot_steel_refined", "count": 2 },
+          { "id": "core_item_ingot_iron_wrought", "count": 2 },
+          { "id": "core_item_ingot_bronze", "count": 2 }
+        ]
+      ],
+      "inputs": [
+        { "id": "core_item_component_mechanical_small", "count": 2 },
+        { "id": "core_item_stock_wood_crossbow", "count": 1 }
+      ],
+      "outputs": [
+        {
+          "id": "core_item_weapon_crossbow_metal",
+          "count": 1,
+          "inherit_material_from": "primary_input",
+          "add_quality_tag": "durability_plus_20"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_arrowheads_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 540,
+      "requires_enablers": ["core_attach_metal_shear_chisel_bench"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 1 },
+          { "id": "core_item_ingot_bronze", "count": 1 },
+          { "id": "core_item_ingot_steel", "count": 1 },
+          { "id": "core_item_ingot_steel_refined", "count": 1 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_head_arrow_metal", "count": 300, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_arrowheads_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 480,
+      "requires_enablers": ["core_attach_metal_shear_lever"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 1 },
+          { "id": "core_item_ingot_bronze", "count": 1 },
+          { "id": "core_item_ingot_steel", "count": 1 },
+          { "id": "core_item_ingot_steel_refined", "count": 1 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_head_arrow_metal", "count": 360, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_arrowheads_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 420,
+      "requires_enablers": ["core_attach_metal_shear_press"],
+      "inputs_or": [
+        [
+          { "id": "core_item_ingot_iron_wrought", "count": 1 },
+          { "id": "core_item_ingot_bronze", "count": 1 },
+          { "id": "core_item_ingot_steel", "count": 1 },
+          { "id": "core_item_ingot_steel_refined", "count": 1 }
+        ]
+      ],
+      "outputs": [{ "id": "core_item_head_arrow_metal", "count": 420, "inherit_material_from": "primary_input" }]
+    },
+    {
+      "id": "core_recipe_arrows_assemble_c",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "CLASSIC",
+      "duration_s": 480,
+      "requires_enablers": ["core_attach_metal_rivet_cold"],
+      "inputs": [
+        { "id": "core_item_head_arrow_metal", "count": 100 },
+        { "id": "core_item_shaft_wood", "count": 100 },
+        { "id": "core_item_fletching_feather", "count": 100 }
+      ],
+      "outputs": [{ "id": "core_item_ammo_arrow", "count": 100 }]
+    },
+    {
+      "id": "core_recipe_arrows_assemble_m",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "MEDIEVAL",
+      "duration_s": 420,
+      "requires_enablers": ["core_attach_metal_rivet_hot"],
+      "inputs": [
+        { "id": "core_item_head_arrow_metal", "count": 100 },
+        { "id": "core_item_shaft_wood", "count": 100 },
+        { "id": "core_item_fletching_feather", "count": 100 }
+      ],
+      "outputs": [{ "id": "core_item_ammo_arrow", "count": 120 }]
+    },
+    {
+      "id": "core_recipe_arrows_assemble_r",
+      "workshop_id": "core_workshop_metalworks",
+      "era": "RENAISSANCE",
+      "duration_s": 360,
+      "requires_enablers": ["core_attach_metal_rivet_thread"],
+      "inputs": [
+        { "id": "core_item_head_arrow_metal", "count": 100 },
+        { "id": "core_item_shaft_wood", "count": 100 },
+        { "id": "core_item_fletching_feather", "count": 100 }
+      ],
+      "outputs": [{ "id": "core_item_ammo_arrow", "count": 140 }]
+    },
+      {
+    "id": "core_recipe_weapon_battle_axe_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_axe_battle", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_sword_short_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_short", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_spear_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_spear", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_dagger_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 1800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_dagger", "count": 12 }]
+  },
+  {
+    "id": "core_recipe_weapon_mace_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_mace", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_blowgun_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 1800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_blowgun", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_weapon_javelin_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 1800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_javelin", "count": 10 }]
+  },
+
+  {
+    "id": "core_recipe_weapon_axe_great_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_axe_great", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_weapon_axe_great_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_axe_great", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_halberd_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_halberd", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_halberd_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_halberd", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_weapon_bill_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_bill", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_bill_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_bill", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_weapon_sword_long_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_long", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_sword_long_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_long", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_weapon_sword_twohanded_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_twohanded", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_weapon_sword_twohanded_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_twohanded", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_scimitar_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_scimitar", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_scimitar_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_sword_scimitar", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_weapon_hammer_war_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_hammer_war", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_hammer_war_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_hammer_war", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_weapon_flail_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_flail", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_flail_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_flail", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_weapon_maul_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_maul", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_weapon_maul_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_maul", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_pike_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_pike", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_pike_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_pike", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_weapon_morningstar_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_morningstar", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_weapon_morningstar_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_morningstar", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_weapon_pick_war_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_pick_war", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_weapon_pick_war_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_pick_war", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_weapon_crossbow_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_assembly_hot_rivet", "core_enabler_limb_heat_treat"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_crossbow", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_weapon_crossbow_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_assembly_threaded", "core_enabler_limb_heat_treat_iso"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_weapon_crossbow", "count": 6 }]
+  },
+
+  {
+    "id": "core_recipe_armor_helmet_roman_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_head_helmet_roman", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_mail_shirt_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_shear_punch_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_mail_shirt", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_scale_cuirass_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_shear_punch_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_scale_cuirass", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_segmentata_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic", "core_enabler_shear_punch_basic", "core_enabler_assembly_rivet_basic"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_segmentata", "count": 4 }]
+  },
+  {
+    "id": "core_recipe_armor_greaves_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_forming_basic"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_greaves", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_shield_scutum_classic",
+    "workshop": "core_workshop_metalworks",
+    "era": "CLASSIC",
+    "enablers": ["core_enabler_assembly_rivet_basic"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_offhand_shield_scutum", "count": 4 }]
+  },
+
+  {
+    "id": "core_recipe_armor_helmet_nasal_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_head_helmet_nasal", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_helmet_nasal_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_head_helmet_nasal", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_armor_hauberk_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_shear_punch_basic", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 3800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_hauberk", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_hauberk_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_shear_punch_basic", "core_enabler_assembly_threaded"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_hauberk", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_brigandine_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer", "core_enabler_shear_punch_basic", "core_enabler_assembly_hot_rivet"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_brigandine", "count": 4 }]
+  },
+  {
+    "id": "core_recipe_armor_brigandine_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press", "core_enabler_shear_punch_basic", "core_enabler_assembly_threaded"],
+    "duration_s": 3400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_brigandine", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_breastplate_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_breastplate", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_breastplate_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_breastplate", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_arms_set_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_arms_plate_set", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_arms_set_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_arms_plate_set", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_gauntlets_full_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_hands_gauntlets_plate", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_gauntlets_full_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_hands_gauntlets_plate", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_thigh_knee_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_thigh_knee", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_thigh_knee_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_thigh_knee", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_greaves_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_greaves", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_greaves_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_greaves", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_sabatons_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_feet_sabatons", "count": 6 }]
+  },
+  {
+    "id": "core_recipe_armor_sabatons_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_feet_sabatons", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_shield_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_assembly_hot_rivet"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_offhand_shield_medieval", "count": 4 }]
+  },
+  {
+    "id": "core_recipe_armor_shield_medieval_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_assembly_threaded"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_offhand_shield_medieval", "count": 5 }]
+  },
+  {
+    "id": "core_recipe_armor_vambrace_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_arms_vambrace", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_vambrace_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_arms_vambrace", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_armor_gauntlets_simple_medieval",
+    "workshop": "core_workshop_metalworks",
+    "era": "MEDIEVAL",
+    "enablers": ["core_enabler_forming_water_hammer"],
+    "duration_s": 2800,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_hands_gauntlets_simple", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_gauntlets_simple_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 2600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_hands_gauntlets_simple", "count": 10 }]
+  },
+
+  {
+    "id": "core_recipe_armor_helmet_fluted_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_head_helmet_fluted", "count": 8 }]
+  },
+  {
+    "id": "core_recipe_armor_breast_back_fluted_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_torso_breast_back_fluted", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_armor_arms_full_harness_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3400,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_arms_full_harness", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_armor_gauntlets_complex_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_hands_gauntlets_complex", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_armor_legs_full_harness_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3600,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_legs_full_harness", "count": 7 }]
+  },
+  {
+    "id": "core_recipe_armor_feet_plate_boots_fluted_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_forming_press"],
+    "duration_s": 3200,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_feet_plate_boots_fluted", "count": 10 }]
+  },
+  {
+    "id": "core_recipe_armor_shield_targe_renaissance",
+    "workshop": "core_workshop_metalworks",
+    "era": "RENAISSANCE",
+    "enablers": ["core_enabler_assembly_threaded"],
+    "duration_s": 3000,
+    "inputs_or": [[
+      { "id": "core_item_ingot_iron_wrought", "count": 10 },
+      { "id": "core_item_ingot_bronze", "count": 10 },
+      { "id": "core_item_ingot_steel", "count": 10 },
+      { "id": "core_item_ingot_steel_refined", "count": 10 }
+    ]],
+    "outputs": [{ "id": "core_armor_offhand_shield_targe", "count": 7 }]
+  }
+  ]
+}

@@ -43,6 +43,16 @@
             Base cost + traffic + fluid + surface adjustments.
             </summary>
         </member>
+        <member name="P:HumanFortress.Navigation.ChunkNavData.UpRampDir">
+            <summary>
+            Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Navigation.ChunkNavData.DownRampDir">
+            <summary>
+            Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
+            </summary>
+        </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.ConnectivityVersion">
             <summary>
             Connectivity version for cache invalidation.
@@ -385,6 +395,11 @@
             Get default tuning values.
             </summary>
         </member>
+        <member name="M:HumanFortress.Navigation.NavigationTuning.LoadFromContent">
+            <summary>
+            Load tuning from content registries (tuning.navigation.json). Falls back to defaults.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Navigation.PathCache">
             <summary>
             LRU cache for computed paths.
@@ -567,6 +582,11 @@
         <member name="M:HumanFortress.Navigation.Point3.#ctor(System.Int32,System.Int32,System.Int32)">
             <summary>
             3D point for navigation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Navigation.WorldNavigationView">
+            <summary>
+            Concrete IWorldNavigationView over Simulation.World + NavigationManager caches.
             </summary>
         </member>
     </members>
