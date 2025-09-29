@@ -1,0 +1,25 @@
+{
+  "surface": { "base_z": 25, "sky_above": 15 },
+  "hills": { "enabled": true, "radius_min": 6, "radius_max": 12, "density": 0.0015, "max_delta_z": 2 },
+  "bands": [
+    { "name": "deep_rock",       "z_min": 1,  "z_max": 10, "caves": { "density": 0.0 } },
+    { "name": "mid_caves",       "z_min": 11, "z_max": 13, "caves": { "density": 0.35 } },
+    { "name": "shallow_caves",   "z_min": 14, "z_max": 20, "caves": { "density": 0.20 } },
+    { "name": "surface_band",    "z_min": 21, "z_max": 25, "caves": { "density": 0.02 } }
+  ],
+  "biome_surface_floor": {
+    "Mountain": "core_terrain_floor_rock_granite",
+    "Hills": "core_terrain_floor_rock_limestone",
+    "TemperateForest": "core_terrain_floor_rock_limestone",
+    "TemperateGrassland": "core_terrain_floor_rock_limestone",
+    "Savanna": "core_terrain_floor_rock_sandstone",
+    "Desert": "core_terrain_floor_rock_sandstone",
+    "Taiga": "core_terrain_floor_rock_granite",
+    "Tundra": "core_terrain_floor_rock_granite",
+    "Glacier": "core_terrain_floor_rock_granite",
+    "TropicalForest": "core_terrain_floor_rock_basalt",
+    "Swamp": "core_terrain_floor_rock_shale",
+    "Default": "core_terrain_floor_rock_limestone"
+  }
+}
+

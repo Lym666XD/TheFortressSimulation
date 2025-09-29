@@ -105,6 +105,19 @@ public sealed class WorldNavigationView : IWorldNavigationView
         return true;
     }
 
+    public bool TryGetUpRampMask(Point3 position, out byte mask)
+    {
+        mask = 0;
+        var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
+        if (navData == null) return false;
+        int idx = LocalIndex(position);
+        if (idx < 0 || idx >= ChunkNavData.TilesPerChunk) return false;
+        var m = navData.UpRampMask[idx];
+        if (m == 0) return false;
+        mask = m;
+        return true;
+    }
+
     private static int LocalIndex(Point3 position)
     {
         const int ChunkSize = 32;

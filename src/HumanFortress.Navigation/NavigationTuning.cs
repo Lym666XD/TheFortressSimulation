@@ -100,6 +100,21 @@ public sealed class NavigationTuning
     public int MaxMsPerTickPathing { get; set; } = 3;
 
     /// <summary>
+    /// Vertical alignment mode for ramps. "df" by default.
+    /// </summary>
+    public string RampVerticalAlignmentMode { get; set; } = "df";
+
+    /// <summary>
+    /// Whether ascending a ramp requires high-side support (solid wall) below the top tile.
+    /// </summary>
+    public bool RampRequiresHighsideSupport { get; set; } = true;
+
+    /// <summary>
+    /// Apply corner-check rule for diagonal moves (2D). If true, both orthogonal adjacent tiles must be walkable.
+    /// </summary>
+    public bool DiagonalCornerCheck { get; set; } = true;
+
+    /// <summary>
     /// Get default tuning values.
     /// </summary>
     public static NavigationTuning Default => new();
@@ -114,6 +129,8 @@ public sealed class NavigationTuning
         if (obj == null) return t;
 
         t.AllowDiagonals = obj["allow_diagonals"]?.Value<bool?>() ?? t.AllowDiagonals;
+        t.RampVerticalAlignmentMode = obj["ramp_vertical_alignment_mode"]?.Value<string?>() ?? t.RampVerticalAlignmentMode;
+        t.RampRequiresHighsideSupport = obj["ramp_requires_highside_support"]?.Value<bool?>() ?? t.RampRequiresHighsideSupport;
 
         var cost = obj["cost"] as JObject;
         if (cost != null)
@@ -123,6 +140,12 @@ public sealed class NavigationTuning
             t.DiagonalCost = (ushort)(cost["diagonal"]?.Value<int?>() ?? t.DiagonalCost);
             t.RampDelta = (ushort)(cost["ramp_delta"]?.Value<int?>() ?? t.RampDelta);
             t.StairDelta = (ushort)(cost["stair_delta"]?.Value<int?>() ?? t.StairDelta);
+        }
+
+        var diag = obj["diagonal_rules"] as JObject;
+        if (diag != null)
+        {
+            t.DiagonalCornerCheck = diag["corner_check"]?.Value<bool?>() ?? t.DiagonalCornerCheck;
         }
 
         var fluids = obj["fluids"] as JObject;

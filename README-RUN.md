@@ -65,6 +65,12 @@ HumanFortress.App.exe --test
 - Update your graphics drivers
 - Try running in compatibility mode
 
+### SDL/Keyboard initialization crash (publish exe)
+- If you see: `The type initializer for 'Keyboard' threw an exception` or `The type initializer for 'Sdl' threw an exception`, it usually means native libraries (SDL2/OpenAL) were not located by the single-file bundle.
+- Fix: use the multi-file self-contained build in `publish` (now includes `SDL2.dll` and `soft_oal.dll`), or republish without single-file bundling:
+  - `dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=false -o ../../publish`
+  - Then run `publish/HumanFortress.App.exe` again.
+
 ## System Requirements
 
 - **OS**: Windows 10/11 (64-bit)

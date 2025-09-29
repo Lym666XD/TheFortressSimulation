@@ -46,11 +46,18 @@
         <member name="P:HumanFortress.Navigation.ChunkNavData.UpRampDir">
             <summary>
             Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
+            Deprecated in favor of UpRampMask but kept for back-compat.
             </summary>
         </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.DownRampDir">
             <summary>
             Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Navigation.ChunkNavData.UpRampMask">
+            <summary>
+            Per-tile mask of allowed ascend directions for ramps.
+            Bits 0..7 correspond to N,NE,E,SE,S,SW,W,NW. 0 = no ascend from this tile.
             </summary>
         </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.ConnectivityVersion">
@@ -390,6 +397,21 @@
             Maximum milliseconds per tick for pathfinding.
             </summary>
         </member>
+        <member name="P:HumanFortress.Navigation.NavigationTuning.RampVerticalAlignmentMode">
+            <summary>
+            Vertical alignment mode for ramps. "df" by default.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Navigation.NavigationTuning.RampRequiresHighsideSupport">
+            <summary>
+            Whether ascending a ramp requires high-side support (solid wall) below the top tile.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Navigation.NavigationTuning.DiagonalCornerCheck">
+            <summary>
+            Apply corner-check rule for diagonal moves (2D). If true, both orthogonal adjacent tiles must be walkable.
+            </summary>
+        </member>
         <member name="P:HumanFortress.Navigation.NavigationTuning.Default">
             <summary>
             Get default tuning values.
@@ -559,7 +581,7 @@
             Path result from pathfinding service.
             </summary>
         </member>
-        <member name="M:HumanFortress.Navigation.Path.#ctor(HumanFortress.Navigation.PathResultKind,System.Int32,System.UInt32,System.ReadOnlyMemory{HumanFortress.Navigation.PathNode})">
+        <member name="M:HumanFortress.Navigation.Path.#ctor(HumanFortress.Navigation.PathResultKind,System.Int32,System.UInt32,System.UInt32,System.ReadOnlyMemory{HumanFortress.Navigation.PathNode})">
             <summary>
             Path result from pathfinding service.
             </summary>

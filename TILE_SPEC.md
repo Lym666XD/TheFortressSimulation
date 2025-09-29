@@ -124,6 +124,17 @@ public static byte Set2Bits(byte b, int startBit, byte twoBitValue) {
     return (byte)(b | ((twoBitValue & 0b11) << startBit));
 }
 
+2) Ramp Geometry (DF‑Style, Normative Update)
+
+- Vertical alignment. A ramp lives at (x, y, z). Its cell directly above (x, y, z+1) remains OpenNoFloor (empty space). We do not place a separate "slope top" geometry at z+1.
+- Ascend targets. From the ramp at (x, y, z), an actor may ascend to any of the 8 neighboring cells at z+1: (x+dx, y+dy, z+1) with dx,dy ∈ {−1,0,1}, not both 0, provided that:
+  - The target (x+dx, y+dy, z+1) is standable (OpenWithFloor or stair top).
+  - The top space (x, y, z+1) is OpenNoFloor.
+  - High‑side support (tunable): the high side below (x+dx, y+dy, z) provides support (e.g., SolidWall). Controlled by tuning.navigation.json.
+- Descend symmetry. From a top tile at (x+dx, y+dy, z+1), the actor may descend to (x, y, z) if that ramp’s derived mask allows that direction.
+- Direction permission is derived. We do not encode ramp direction into TerrainBits. The navigation cache (ChunkNavData) holds an 8‑bit UpRampMask[idx] computed during RebuildDerived().
+- Rendering. The renderer may draw a visual "slope" on the standable top tile(s) at z+1 for readability; this is purely visual and has no pathfinding effect.
+
 1.4 Optional SoA Split (future-proof seam)
 
 If profiling shows heavy write amplification, we may split hot fields into separate arrays:

@@ -1,0 +1,648 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Biome Template Schema",
+  "description": "Schema for biome generation templates in HumanFortress",
+  "type": "object",
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version (semver)"
+    },
+    "templates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/biomeTemplate"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "required": ["version", "templates"],
+  "additionalProperties": false,
+
+  "definitions": {
+    "biomeTemplate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique template identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Human-readable description"
+        },
+        "priority": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Template priority (higher wins conflicts)"
+        },
+        "conditions": {
+          "$ref": "#/definitions/biomeConditions"
+        },
+        "layers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/layerDefinition"
+          },
+          "minItems": 1,
+          "description": "Layer stack from surface down"
+        },
+        "surfaceFeatures": {
+          "$ref": "#/definitions/surfaceFeatures"
+        },
+        "underground": {
+          "$ref": "#/definitions/undergroundFeatures"
+        },
+        "ores": {
+          "$ref": "#/definitions/oreDistribution"
+        },
+        "fluids": {
+          "$ref": "#/definitions/fluidSettings"
+        },
+        "vegetation": {
+          "$ref": "#/definitions/vegetationSettings"
+        },
+        "noise": {
+          "$ref": "#/definitions/noiseSettings"
+        }
+      },
+      "required": ["id", "name", "layers"],
+      "additionalProperties": false
+    },
+
+    "biomeConditions": {
+      "type": "object",
+      "properties": {
+        "temperature": {
+          "$ref": "#/definitions/range",
+          "description": "Temperature range (Kelvin)"
+        },
+        "rainfall": {
+          "$ref": "#/definitions/range",
+          "description": "Annual rainfall (mm)"
+        },
+        "elevation": {
+          "$ref": "#/definitions/range",
+          "description": "Elevation range (meters)"
+        },
+        "latitude": {
+          "$ref": "#/definitions/range",
+          "description": "Latitude range (degrees)"
+        },
+        "coastal": {
+          "type": "boolean",
+          "description": "Requires coastal location"
+        },
+        "river": {
+          "type": "boolean",
+          "description": "Requires river"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "layerDefinition": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Single material name"
+            },
+            {
+              "$ref": "#/definitions/materialDistribution"
+            }
+          ]
+        },
+        "depth": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Fixed depth"
+            },
+            {
+              "$ref": "#/definitions/range",
+              "description": "Depth range"
+            },
+            {
+              "type": "string",
+              "enum": ["remaining", "bedrock"],
+              "description": "Special depth value"
+            }
+          ]
+        },
+        "terrainKind": {
+          "type": "string",
+          "description": "Terrain kind for this layer"
+        },
+        "noise": {
+          "$ref": "#/definitions/layerNoise"
+        },
+        "inclusions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/inclusion"
+          },
+          "description": "Materials included in this layer"
+        },
+        "transition": {
+          "type": "string",
+          "enum": ["sharp", "gradual", "mixed", "erosion"],
+          "description": "Transition type to next layer"
+        }
+      },
+      "required": ["material", "depth"],
+      "additionalProperties": false
+    },
+
+    "materialDistribution": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["weighted", "perlin", "cellular", "stratified"]
+        },
+        "materials": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "conditions": {
+                "type": "object",
+                "description": "Additional conditions for this material"
+              }
+            },
+            "required": ["name", "weight"],
+            "additionalProperties": false
+          }
+        },
+        "seed": {
+          "type": "integer",
+          "description": "Seed offset for this distribution"
+        }
+      },
+      "required": ["type", "materials"],
+      "additionalProperties": false
+    },
+
+    "surfaceFeatures": {
+      "type": "object",
+      "properties": {
+        "topsoil": {
+          "type": "object",
+          "properties": {
+            "material": { "type": "string" },
+            "depth": { "$ref": "#/definitions/range" },
+            "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+          },
+          "additionalProperties": false
+        },
+        "boulders": {
+          "type": "object",
+          "properties": {
+            "density": { "type": "number", "minimum": 0, "maximum": 1 },
+            "materials": { "type": "array", "items": { "type": "string" } },
+            "sizeRange": { "$ref": "#/definitions/range" }
+          },
+          "additionalProperties": false
+        },
+        "pools": {
+          "type": "object",
+          "properties": {
+            "frequency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "fluid": { "type": "string" },
+            "depthRange": { "$ref": "#/definitions/range" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "undergroundFeatures": {
+      "type": "object",
+      "properties": {
+        "caves": {
+          "$ref": "#/definitions/caveSettings"
+        },
+        "caverns": {
+          "$ref": "#/definitions/cavernSettings"
+        },
+        "tunnels": {
+          "$ref": "#/definitions/tunnelSettings"
+        },
+        "voids": {
+          "$ref": "#/definitions/voidSettings"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "caveSettings": {
+      "type": "object",
+      "properties": {
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Cave frequency (0-1)"
+        },
+        "minDepth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxDepth": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "algorithm": {
+          "type": "string",
+          "enum": ["cellular", "worm", "room_corridor", "fractal"]
+        },
+        "connectivity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How connected caves are"
+        },
+        "wetness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Chance of water features"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "cavernSettings": {
+      "type": "object",
+      "properties": {
+        "layers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "depth": { "type": "integer", "minimum": 0 },
+              "height": { "$ref": "#/definitions/range" },
+              "openness": { "type": "number", "minimum": 0, "maximum": 1 },
+              "floorMaterial": { "type": "string" },
+              "features": { "type": "array", "items": { "type": "string" } }
+            },
+            "required": ["depth"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "tunnelSettings": {
+      "type": "object",
+      "properties": {
+        "natural": {
+          "type": "boolean",
+          "description": "Natural vs artificial tunnels"
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "connectivity": {
+          "type": "string",
+          "enum": ["none", "local", "regional", "global"]
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "voidSettings": {
+      "type": "object",
+      "properties": {
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sizeRange": {
+          "$ref": "#/definitions/range"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "oreDistribution": {
+      "type": "object",
+      "properties": {
+        "veins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/oreVein"
+          }
+        },
+        "clusters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/oreCluster"
+          }
+        },
+        "scattered": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/scatteredOre"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "oreVein": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string"
+        },
+        "hostRock": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Materials this ore appears in"
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "depthRange": {
+          "$ref": "#/definitions/range"
+        },
+        "veinSize": {
+          "$ref": "#/definitions/range",
+          "description": "Vein size in tiles"
+        },
+        "richness": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Ore concentration in vein"
+        }
+      },
+      "required": ["material", "frequency"],
+      "additionalProperties": false
+    },
+
+    "oreCluster": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "clusterSize": {
+          "$ref": "#/definitions/range"
+        },
+        "nodeCount": {
+          "$ref": "#/definitions/range"
+        }
+      },
+      "required": ["material", "frequency"],
+      "additionalProperties": false
+    },
+
+    "scatteredOre": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string"
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "depthRange": {
+          "$ref": "#/definitions/range"
+        }
+      },
+      "required": ["material", "density"],
+      "additionalProperties": false
+    },
+
+    "fluidSettings": {
+      "type": "object",
+      "properties": {
+        "waterTable": {
+          "type": "object",
+          "properties": {
+            "depth": { "type": "integer", "minimum": 0 },
+            "variation": { "type": "integer", "minimum": 0 },
+            "seasonal": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "aquifers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "depth": { "$ref": "#/definitions/range" },
+              "pressure": { "type": "string", "enum": ["low", "medium", "high", "artesian"] },
+              "salinity": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "additionalProperties": false
+          }
+        },
+        "springs": {
+          "type": "object",
+          "properties": {
+            "frequency": { "type": "number", "minimum": 0, "maximum": 1 },
+            "flowRate": { "$ref": "#/definitions/range" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "vegetationSettings": {
+      "type": "object",
+      "properties": {
+        "trees": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "species": { "type": "string" },
+              "density": { "type": "number", "minimum": 0, "maximum": 1 },
+              "maturityRange": { "$ref": "#/definitions/range" }
+            },
+            "required": ["species", "density"],
+            "additionalProperties": false
+          }
+        },
+        "shrubs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "species": { "type": "string" },
+              "density": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": ["species", "density"],
+            "additionalProperties": false
+          }
+        },
+        "groundCover": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "species": { "type": "string" },
+              "coverage": { "type": "number", "minimum": 0, "maximum": 1 }
+            },
+            "required": ["species", "coverage"],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "noiseSettings": {
+      "type": "object",
+      "properties": {
+        "elevation": {
+          "$ref": "#/definitions/noiseLayer"
+        },
+        "moisture": {
+          "$ref": "#/definitions/noiseLayer"
+        },
+        "temperature": {
+          "$ref": "#/definitions/noiseLayer"
+        },
+        "fertility": {
+          "$ref": "#/definitions/noiseLayer"
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "noiseLayer": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["perlin", "simplex", "cellular", "value", "cubic"]
+        },
+        "octaves": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 1
+        },
+        "amplitude": {
+          "type": "number",
+          "minimum": 0
+        },
+        "persistence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "lacunarity": {
+          "type": "number",
+          "minimum": 1
+        },
+        "seed": {
+          "type": "integer"
+        }
+      },
+      "required": ["type"],
+      "additionalProperties": false
+    },
+
+    "layerNoise": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "amplitude": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Noise amplitude (0-1)"
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0.001,
+          "maximum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+
+    "inclusion": {
+      "type": "object",
+      "properties": {
+        "material": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "sizeRange": {
+          "$ref": "#/definitions/range"
+        },
+        "shape": {
+          "type": "string",
+          "enum": ["blob", "vein", "layer", "scattered"]
+        }
+      },
+      "required": ["material", "frequency"],
+      "additionalProperties": false
+    },
+
+    "range": {
+      "type": "object",
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      },
+      "required": ["min", "max"],
+      "additionalProperties": false
+    }
+  }
+}

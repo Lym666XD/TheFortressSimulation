@@ -148,12 +148,12 @@ internal sealed class BinaryHeap
 internal readonly struct HeapEntry
 {
     public readonly ulong Key;      // Node identifier
-    public readonly ushort F;       // f = g + h
-    public readonly ushort H;       // Heuristic
-    public readonly ushort G;       // Cost from start
+    public readonly uint F;         // f = g + h (scaled fixed-point)
+    public readonly uint H;         // Heuristic (scaled fixed-point)
+    public readonly uint G;         // Cost from start (scaled fixed-point)
     public readonly int LocalIndex; // Deterministic tie-breaker
 
-    public HeapEntry(ulong key, ushort f, ushort h, ushort g, int localIndex)
+    public HeapEntry(ulong key, uint f, uint h, uint g, int localIndex)
     {
         Key = key;
         F = f;

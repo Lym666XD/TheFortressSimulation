@@ -1,16 +1,16 @@
-0) Scope
+ï»¿0) Scope
 
 Updates the pipeline to reflect:
 
 Chunk = 32Ã—32Ã—Z tiles (Z configurable).
 
-Fortress map size: SÃ—S chunks, S âˆ?{1,2,3,4} (user selectable).
+Fortress map size: SÃ—S chunks, S ï¿½?{1,2,3,4} (user selectable).
 
 World map uses a Square grid (hex interface kept but not used).
 
 Exactly one cavern band (performance) with connected walkway/tunnels (data-driven).
 
-Fortress size does not affect world footprint â€?like RimWorld: a site occupies one world cell regardless of S.
+Fortress size does not affect world footprint ï¿½?like RimWorld: a site occupies one world cell regardless of S.
 
 1) Seeds & Reproducibility (Normative)
 
@@ -35,43 +35,43 @@ biome.json, geology.json (strata/ores/aquifer), river.json, road.json, landmark.
 }
 
 
-Strict schema validation at boot; unknown fields warn once; missing required â‡?fail to main menu (no process crash).
+Strict schema validation at boot; unknown fields warn once; missing required ï¿½?fail to main menu (no process crash).
 
-3) World Map (Square Grid) â€?Pipeline (Normative)
+3) World Map (Square Grid) ï¿½?Pipeline (Normative)
 3.1 Grid & Interfaces
 
 Square world grid (4-neighbor NESW; optional 8-neighbor for visuals/cost).
 
-Keep Hex interface stubs in schema/IDs; current generator returns â€œnot implementedâ€?for Hex (no save format changes later).
+Keep Hex interface stubs in schema/IDs; current generator returns â€œnot implementedï¿½?for Hex (no save format changes later).
 
 3.2 Stages
 
-Elevation â€?ridged/simplex blend â†?elevation, slope.
+Elevation ï¿½?ridged/simplex blend ï¿½?elevation, slope.
 
-Climate â€?temperature (lat/alt lapse), rainfall, drainage.
+Climate ï¿½?temperature (lat/alt lapse), rainfall, drainage.
 
-Hydrography â€?rivers & lakes with erosion passes; export channel polylines + classes.
+Hydrography ï¿½?rivers & lakes with erosion passes; export channel polylines + classes.
 
-Biomes & Regions â€?assign by (temp, rain, elevation, drainage); store biomeId.
+Biomes & Regions ï¿½?assign by (temp, rain, elevation, drainage); store biomeId.
 
-Factions & Roads â€?settlement placement; roads along least-cost corridors & fords.
+Factions & Roads ï¿½?settlement placement; roads along least-cost corridors & fords.
 
-Landmarks/Features â€?ruins, craters, sinkholes, shrines with biome/lat-band rates.
+Landmarks/Features ï¿½?ruins, craters, sinkholes, shrines with biome/lat-band rates.
 
-Geology Envelope â€?stone strata stack, ore bands, aquifer flags per world cell.
+Geology Envelope ï¿½?stone strata stack, ore bands, aquifer flags per world cell.
 
-Tile Summary â€?cache {biome,temp,rain,elev,riverClass,stoneSet,aquifer?,landmarks[]}.
+Tile Summary ï¿½?cache {biome,temp,rain,elev,riverClass,stoneSet,aquifer?,landmarks[]}.
 
-Site Placement â€?claiming a site occupies one world cell. S is recorded with the site but does not expand the footprint.
+Site Placement ï¿½?claiming a site occupies one world cell. S is recorded with the site but does not expand the footprint.
 
 No multi-cell reservation; roads/rivers remain unchanged.
 
 For local continuity when S>1, we will sample neighbor cells at gen time (see Â§4.2).
 
-4) Fortress Map (Local) â€?Pipeline (Normative)
+4) Fortress Map (Local) ï¿½?Pipeline (Normative)
 4.1 Size & Chunks
 
-Map size: SÃ—S chunks; chunk = 32Ã—32Ã—Z tiles; S âˆ?{1,2,3,4}.
+Map size: SÃ—S chunks; chunk = 32Ã—32Ã—Z tiles; S ï¿½?{1,2,3,4}.
 
 Save header persists {S, W=32, Z}; renderer & sim use identical geometry.
 
@@ -93,16 +93,16 @@ Roads: similar stubs for visual continuity.
 
 Landmarks: instantiate only those owned by the home cell; neighbor landmarks never spawn inside.
 
-4) Fortress Map (Local) ¡ª Pipeline (Normative)
+4) Fortress Map (Local) ï¿½ï¿½ Pipeline (Normative)
 4.3 Subsurface Synthesis (single cavern band)
 
 Strata: apply home-cell geology envelope across the whole fortress map (biome-driven strata stack).
 
 Aquifer: mark columns by geology flags (light/heavy).
 
-Cavern Band ¡Á1: pick the band with highest caves.density; choose mid-Z as floor level; generate a connected walkway from the map edge with periodic rooms and widened tunnels (data-driven via tuning.cavern.json). Floor uses host-rock floor variant; optional moss overlay on the cavern floor.
+Cavern Band ï¿½ï¿½1: pick the band with highest caves.density; choose mid-Z as floor level; generate a connected walkway from the map edge with periodic rooms and widened tunnels (data-driven via tuning.cavern.json). Floor uses host-rock floor variant; optional moss overlay on the cavern floor.
 
-Guarantee ¡Ý2 natural entrances to surface (shafts at edges connected via widened horizontal tunnels at cavern Z).
+Guarantee ï¿½ï¿½2 natural entrances to surface (shafts at edges connected via widened horizontal tunnels at cavern Z).
 
 Magma (optional): small magma pockets (no global sea).
 
@@ -122,7 +122,7 @@ Fluids (F), Fields (G) per-tick quotas
 
 Initial agents/animals cap, flora density, attempt counts
 
-Pathfinding/search: scale max distance âˆ?S, but branch/backtrack caps âˆ?S^0.85.
+Pathfinding/search: scale max distance ï¿½?S, but branch/backtrack caps ï¿½?S^0.85.
 
 Rendering: snapshot/delta remains chunk-local; larger S touches more chunks, but only dirty ones rebuild.
 
@@ -136,7 +136,7 @@ Outputs include version & seedSpan for replay audits.
 
 World: parallel per world cell; single commit at end.
 
-Fortress: parallel per column/chunk; no shared writesâ€”final data goes through Diff-Log â†?Merge â†?Commit.
+Fortress: parallel per column/chunk; no shared writesâ€”final data goes through Diff-Log ï¿½?Merge ï¿½?Commit.
 
 8) Files & Persistence (Normative)
 
@@ -148,7 +148,7 @@ Save also records {grid.adjacency, paletteVersion} for replay parity.
 
 9) Testing & CI (Normative)
 
-Determinism: identical seeds â‡?identical world/fortress hashes (across OS/CPU/threads).
+Determinism: identical seeds ï¿½?identical world/fortress hashes (across OS/CPU/threads).
 
 Hydrology sanity: inflow/outflow within epsilon; border stubs never create illegal loops.
 
@@ -180,3 +180,13 @@ Tuning files:
 - content/registries/tuning.cavern.json (connected cavern parameters)
 - content/registries/tuning.ore.json (ore abundance/size, per-ore host tags & shape)
 
+
+Update: DFâ€‘Style Ramps (Geometry Only)
+--------------------------------------
+
+We switch ramp semantics to DFâ€‘style vertical alignment for geometry:
+
+- The ramp resides at (x,y,z). Its cell directly above (x,y,z+1) remains OpenNoFloor (empty space).
+- Standable top tiles are neighboring floors at z+1; we do not place a separate slope geometry at z+1.
+- Which directions are allowed to ascend is not authored in generation. It is derived at runtime by the navigation rebuild (UpRampMask) using topology/support checks.
+- The renderer may draw a visual slope indicator on the standable top tiles at z+1 for readability; this has no pathfinding effect.

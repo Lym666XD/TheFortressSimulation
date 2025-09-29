@@ -62,4 +62,11 @@ public interface IWorldNavigationView
         rampDirection = 0;
         return false;
     }
+
+    // Up ramp helper: returns per-tile ascend mask bits 0..7 (N,NE,E,SE,S,SW,W,NW). Returns false if not a ramp or no cache.
+    public virtual bool TryGetUpRampMask(Point3 position, out byte mask)
+    {
+        mask = 0;
+        return false;
+    }
 }

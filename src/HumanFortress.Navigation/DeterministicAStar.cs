@@ -61,7 +61,7 @@ public sealed class DeterministicAStar
             H = Heuristic(request.Source, request.Destination),
             Parent = ulong.MaxValue,
         };
-        startNode.F = (ushort)(startNode.G + startNode.H);
+        startNode.F = startNode.G + startNode.H;
 
         _nodeMap[startKey] = startNode;
         _openSet.Push(new HeapEntry(startKey, startNode.F, startNode.H, startNode.G, GetLocalIndex(request.Source)));
@@ -116,7 +116,7 @@ public sealed class DeterministicAStar
         // Process each neighbor
         for (int i = 0; i < neighbors.Length; i++)
         {
-            ProcessNeighbor(current, neighbors[i], _tuning.OrthogonalCost, request, world);
+            ProcessNeighbor(current, neighbors[i], (uint)_tuning.OrthogonalCost, request, world);
         }
 
         // Add diagonal neighbors if allowed
@@ -142,15 +142,15 @@ public sealed class DeterministicAStar
                     continue; // Can't cut corners
                 }
 
-                ProcessNeighbor(current, diagonals[i], _tuning.DiagonalCost, request, world);
-            }
+                ProcessNeighbor(current, diagonals[i], (uint)_tuning.DiagonalCost, request, world);
+    }
         }
 
         // Check for vertical neighbors (stairs/ramps)
         CheckVerticalNeighbors(current, request, world);
     }
 
-    private void ProcessNeighbor(AStarNode current, Point3 neighborPos, ushort edgeCost,
+    private void ProcessNeighbor(AStarNode current, Point3 neighborPos, uint edgeCostBase,
         PathRequest request, IWorldNavigationView world)
     {
         // Check if valid and walkable
@@ -168,8 +168,12 @@ public sealed class DeterministicAStar
             return;
 
         // Calculate costs
-        var moveCost = world.GetCost(neighborPos);
-        var stepCost = (edgeCost * moveCost) / 10; // Normalize by base cost
+        // Fixed-point scaling for finer granularity
+        const uint FP = 10; // 1 decimal place
+        var moveCost = (uint)world.GetCost(neighborPos);
+        // Scale edge cost and ramp/stair deltas uniformly by FP
+        var edgeCostScaled = edgeCostBase * FP;
+        var stepCost = (edgeCostScaled * moveCost) / (uint)_tuning.BaseCost;
         var tentativeG = current.G + stepCost;
 
         // Check if we've seen this node before
@@ -178,8 +182,8 @@ public sealed class DeterministicAStar
             // Only update if we found a better path
             if (tentativeG < existingNode.G)
             {
-                existingNode.G = (ushort)tentativeG;
-                existingNode.F = (ushort)(tentativeG + existingNode.H);
+                existingNode.G = tentativeG;
+                existingNode.F = tentativeG + existingNode.H;
                 existingNode.Parent = PointToKey(current.Position);
                 _nodeMap[neighborKey] = existingNode;
 
@@ -195,9 +199,9 @@ public sealed class DeterministicAStar
             var newNode = new AStarNode
             {
                 Position = neighborPos,
-                G = (ushort)tentativeG,
+                G = tentativeG,
                 H = h,
-                F = (ushort)(tentativeG + h),
+                F = tentativeG + h,
                 Parent = PointToKey(current.Position),
             };
 
@@ -213,7 +217,8 @@ public sealed class DeterministicAStar
         if (world.HasStairsUp(current.Position))
         {
             var upPos = current.Position.WithZ(current.Position.Z + 1);
-            ProcessNeighbor(current, upPos, (ushort)(_tuning.OrthogonalCost + _tuning.StairDelta),
+            // Use fixed-point scaled base cost inside ProcessNeighbor
+            ProcessNeighbor(current, upPos, (uint)(_tuning.OrthogonalCost + _tuning.StairDelta),
                 request, world);
         }
 
@@ -221,19 +226,37 @@ public sealed class DeterministicAStar
         if (world.HasStairsDown(current.Position))
         {
             var downPos = current.Position.WithZ(current.Position.Z - 1);
-            ProcessNeighbor(current, downPos, (ushort)(_tuning.OrthogonalCost + _tuning.StairDelta),
+            ProcessNeighbor(current, downPos, (uint)(_tuning.OrthogonalCost + _tuning.StairDelta),
                 request, world);
         }
 
         // Ramps: allow ascending from ramp base and descending from ramp top
-        // Semantics: rampDirection points from base (z) toward top (z+1)
-        if (world.TryGetRampDirection(current.Position, out var dir))
+        // Prefer derived UpRampMask; fall back to single ramp direction for back-compat
+        if (world.TryGetUpRampMask(current.Position, out var mask))
+        {
+            for (byte d = 0; d < 8; d++)
+            {
+                if ((mask & (1 << d)) == 0) continue;
+                var (dx, dy) = GetDirectionOffset(d);
+                var topPos = new Point3(current.Position.X + dx, current.Position.Y + dy, current.Position.Z + 1);
+                if (world.IsValid(topPos) && world.IsStandable(topPos))
+                {
+                    // Use diagonal base cost for diagonal ramp directions; orthogonal for N/E/S/W
+                    bool isDiagonal = (dx != 0 && dy != 0);
+                    uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
+                    ProcessNeighbor(current, topPos, baseEdge + (uint)_tuning.RampDelta, request, world);
+                }
+            }
+        }
+        else if (world.TryGetRampDirection(current.Position, out var dir))
         {
             var (dx, dy) = GetDirectionOffset(dir);
             var topPos = new Point3(current.Position.X + dx, current.Position.Y + dy, current.Position.Z + 1);
             if (world.IsValid(topPos) && world.IsStandable(topPos))
             {
-                ProcessNeighbor(current, topPos, (ushort)(_tuning.OrthogonalCost + _tuning.RampDelta), request, world);
+                bool isDiagonal = (dx != 0 && dy != 0);
+                uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
+                ProcessNeighbor(current, topPos, baseEdge + (uint)_tuning.RampDelta, request, world);
             }
         }
         // If we're on a standable top tile, allow descending via cached down-ramp link
@@ -243,7 +266,9 @@ public sealed class DeterministicAStar
             var rampPos = new Point3(current.Position.X - dx, current.Position.Y - dy, current.Position.Z - 1);
             if (world.IsValid(rampPos) && world.IsWalkable(rampPos, request.Mode))
             {
-                ProcessNeighbor(current, rampPos, (ushort)(_tuning.OrthogonalCost + _tuning.RampDelta), request, world);
+                bool isDiagonal = (dx != 0 && dy != 0);
+                uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
+                ProcessNeighbor(current, rampPos, baseEdge + (uint)_tuning.RampDelta, request, world);
             }
         }
     }
@@ -276,7 +301,7 @@ public sealed class DeterministicAStar
         };
     }
 
-    private ushort Heuristic(Point3 from, Point3 to)
+    private uint Heuristic(Point3 from, Point3 to)
     {
         // Manhattan distance for 4-neighbor movement
         var dx = Math.Abs(from.X - to.X);
@@ -288,13 +313,19 @@ public sealed class DeterministicAStar
             // Octile distance for 8-neighbor
             var dMin = Math.Min(dx, dy);
             var dMax = Math.Max(dx, dy);
-            return (ushort)(_tuning.DiagonalCost * dMin + _tuning.OrthogonalCost * (dMax - dMin) +
-                _tuning.StairDelta * dz);
+            const uint FP = 10;
+            uint diag = (uint)_tuning.DiagonalCost * FP;
+            uint orth = (uint)_tuning.OrthogonalCost * FP;
+            uint stair = (uint)_tuning.StairDelta * FP;
+            return diag * (uint)dMin + orth * (uint)(dMax - dMin) + stair * (uint)dz;
         }
         else
         {
             // Manhattan distance
-            return (ushort)(_tuning.OrthogonalCost * (dx + dy) + _tuning.StairDelta * dz);
+            const uint FP = 10;
+            uint orth = (uint)_tuning.OrthogonalCost * FP;
+            uint stair = (uint)_tuning.StairDelta * FP;
+            return orth * (uint)(dx + dy) + stair * (uint)dz;
         }
     }
 
@@ -318,15 +349,15 @@ public sealed class DeterministicAStar
 
         // Calculate path hash for determinism verification
         var hash = CalculatePathHash(path);
-
-        return new Path(PathResultKind.Found, path.Count, hash, path.ToArray());
+        var total = _nodeMap[goalKey].G; // scaled by FP
+        return new Path(PathResultKind.Found, path.Count, total, hash, path.ToArray());
     }
 
     private Path BuildPartialPath(PathRequest request, IWorldNavigationView world)
     {
         // Find the best frontier node (lowest F)
         ulong bestKey = 0;
-        ushort bestF = ushort.MaxValue;
+        uint bestF = uint.MaxValue;
 
         foreach (var entry in _openSet.GetAll())
         {
@@ -379,9 +410,9 @@ public sealed class DeterministicAStar
     private struct AStarNode
     {
         public Point3 Position;
-        public ushort G; // Cost from start
-        public ushort H; // Heuristic to goal
-        public ushort F; // G + H
+        public uint G; // Cost from start (scaled fixed-point)
+        public uint H; // Heuristic to goal (scaled)
+        public uint F; // G + H (scaled)
         public ulong Parent; // Parent node key
     }
 }

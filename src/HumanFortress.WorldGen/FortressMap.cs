@@ -105,8 +105,8 @@ namespace HumanFortress.WorldGen
 
                 System.Console.WriteLine($"[ToSimulationWorld] Conversion complete: {chunksProcessed} chunks, {tilesProcessed} tiles processed");
 
-                // Post-process: inject ramps and slope tops based on surface height differences
-                System.Console.WriteLine("[ToSimulationWorld] Post-process ramps & slopes");
+                // Post-process: inject ramps based on surface height differences (DF-style)
+                System.Console.WriteLine("[ToSimulationWorld] Post-process ramps (DF-style, no slope tops)");
                 InjectRampsAndSlopes(world);
 
                 return world;
@@ -143,12 +143,17 @@ namespace HumanFortress.WorldGen
             }
 
             // NESW deterministic order
+            // 8-neighborhood (N,NE,E,SE,S,SW,W,NW) to detect any rising neighbor at z+1
             var dirs = new (int dx, int dy, byte dirCode)[]
             {
                 (0, -1, 0), // N
+                (1, -1, 1), // NE
                 (1, 0, 2),  // E
+                (1, 1, 3),  // SE
                 (0, 1, 4),  // S
+                (-1, 1, 5), // SW
                 (-1, 0, 6), // W
+                (-1, -1, 7),// NW
             };
 
             for (int y = 0; y < tiles; y++)
@@ -180,16 +185,19 @@ namespace HumanFortress.WorldGen
                             var rampTile = curTile.WithTerrain(bits);
                             world.SetTile(x, y, s, rampTile, 0);
 
-                            // Set neighbor top as Slope
-                            var topTileOpt = world.GetTile(nx, ny, ns);
-                            if (topTileOpt.HasValue)
+                            // DF-style: ensure the cell directly above the ramp base is open air (OpenNoFloor)
+                            // This clears any leftover ceiling so vertical alignment is unblocked.
+                            var aboveOpt = world.GetTile(x, y, s + 1);
+                            if (aboveOpt.HasValue)
                             {
-                                var topTile = topTileOpt.Value;
-                                ushort topBits = topTile.TerrainBits;
-                                topBits = TerrainBitOps.SetKind(topBits, TerrainKind.Slope);
-                                var slopeTile = topTile.WithTerrain(topBits);
-                                world.SetTile(nx, ny, ns, slopeTile, 0);
+                                var above = aboveOpt.Value;
+                                ushort aboveBits = above.TerrainBits;
+                                aboveBits = TerrainBitOps.SetKind(aboveBits, TerrainKind.OpenNoFloor);
+                                var airTile = above.WithTerrain(aboveBits).WithFluid(0, 0);
+                                world.SetTile(x, y, s + 1, airTile, 0);
                             }
+
+                            // DF-style: do not inject slope geometry at z+1; top remains standable floor
 
                             break; // only one ramp direction per tile
                         }

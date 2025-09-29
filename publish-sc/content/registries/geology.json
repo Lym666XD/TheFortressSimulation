@@ -1,0 +1,101 @@
+[
+  {
+    "id": "core_terrain_air",
+    "tags": ["empty", "passable"],
+    "material": "core_mat_air",
+    "terrain_bits": { "kind": "OpenNoFloor", "natural": true },
+    "display": { "glyph": 32, "foreground": {"r": 0, "g": 0, "b": 0}, "background": {"r": 0, "g": 0, "b": 0} },
+    "properties": { "mineable": false, "buildable": false, "smoothable": false, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_granite",   "tags": ["stone","wall","igneous"],     "material": "core_mat_stone_granite",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 160, "g": 160, "b": 160}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_granite",  "tags": ["stone","floor","igneous"],     "material": "core_mat_stone_granite",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 120, "g": 120, "b": 120}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_marble",    "tags": ["stone","wall","metamorphic"],  "material": "core_mat_stone_marble",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 240, "g": 240, "b": 240}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_marble",   "tags": ["stone","floor","metamorphic"], "material": "core_mat_stone_marble",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 220, "g": 220, "b": 220}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_basalt",    "tags": ["stone","wall","igneous"],     "material": "core_mat_stone_basalt",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 70, "g": 70, "b": 90}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_basalt",   "tags": ["stone","floor","igneous"],    "material": "core_mat_stone_basalt",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 110, "g": 110, "b": 130}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_sandstone", "tags": ["stone","wall","sedimentary"], "material": "core_mat_stone_sandstone",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 210, "g": 180, "b": 140}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_sandstone","tags": ["stone","floor","sedimentary"],"material": "core_mat_stone_sandstone",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 215, "g": 185, "b": 150}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_limestone","tags": ["stone","wall","sedimentary"],"material": "core_mat_stone_limestone",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 200, "g": 200, "b": 180}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_limestone","tags": ["stone","floor","sedimentary"],"material": "core_mat_stone_limestone",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 190, "g": 190, "b": 170}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  },
+
+  { "id": "core_terrain_wall_rock_shale",     "tags": ["stone","wall","sedimentary"],"material": "core_mat_stone_shale",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 219, "foreground": {"r": 112, "g": 128, "b": 144}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": true, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_floor_rock_shale",    "tags": ["stone","floor","sedimentary"],"material": "core_mat_stone_shale",
+    "terrain_bits": { "kind": "OpenWithFloor", "natural": true },
+    "display": { "glyph": 46, "foreground": {"r": 130, "g": 150, "b": 170}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": false, "buildable": true, "smoothable": true, "nav_cost_base": 10, "opacity": 0 }
+  }
+  ,
+  { "id": "core_terrain_wall_ore_iron_magnetite",     "tags": ["ore","wall","mineable"],
+    "material": "core_mat_ore_iron_magnetite",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 15, "foreground": {"r": 180, "g": 180, "b": 180}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": false, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_wall_ore_copper_chalcopyrite", "tags": ["ore","wall","mineable"],
+    "material": "core_mat_ore_copper_chalcopyrite",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 15, "foreground": {"r": 255, "g": 140, "b": 0}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": false, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_wall_ore_coal_bituminous",    "tags": ["ore","wall","mineable"],
+    "material": "core_mat_ore_coal_bituminous",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 15, "foreground": {"r": 80, "g": 80, "b": 80}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": false, "nav_cost_base": 999, "opacity": 100 }
+  },
+  { "id": "core_terrain_wall_ore_gold_native",         "tags": ["ore","wall","mineable"],
+    "material": "core_mat_ore_gold_native",
+    "terrain_bits": { "kind": "SolidWall", "natural": true },
+    "display": { "glyph": 15, "foreground": {"r": 255, "g": 215, "b": 0}, "background": {"r":0,"g":0,"b":0} },
+    "properties": { "mineable": true, "buildable": false, "smoothable": false, "nav_cost_base": 999, "opacity": 100 }
+  }
+]

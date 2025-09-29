@@ -6,10 +6,10 @@ namespace HumanFortress.Navigation;
 /// Per-chunk navigation data per NAVIGATION_SPEC.md section 2.
 /// Rebuilt during RebuildDerived phase in UPDATE_ORDER.
 /// </summary>
-public sealed class ChunkNavData
-{
-    public const int ChunkSize = 32;
-    public const int TilesPerChunk = ChunkSize * ChunkSize;
+    public sealed class ChunkNavData
+    {
+        public const int ChunkSize = 32;
+        public const int TilesPerChunk = ChunkSize * ChunkSize;
 
     /// <summary>
     /// Navigation capability mask for each tile.
@@ -23,15 +23,22 @@ public sealed class ChunkNavData
     /// </summary>
     public ushort[] NavCost { get; }
 
-    /// <summary>
+        /// <summary>
     /// Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
-    /// </summary>
-    public byte[] UpRampDir { get; }
+    /// Deprecated in favor of UpRampMask but kept for back-compat.
+        /// </summary>
+        public byte[] UpRampDir { get; }
 
-    /// <summary>
-    /// Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
-    /// </summary>
-    public byte[] DownRampDir { get; }
+        /// <summary>
+        /// Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
+        /// </summary>
+        public byte[] DownRampDir { get; }
+
+        /// <summary>
+        /// Per-tile mask of allowed ascend directions for ramps.
+        /// Bits 0..7 correspond to N,NE,E,SE,S,SW,W,NW. 0 = no ascend from this tile.
+        /// </summary>
+        public byte[] UpRampMask { get; }
 
     /// <summary>
     /// Connectivity version for cache invalidation.
@@ -44,15 +51,16 @@ public sealed class ChunkNavData
     /// </summary>
     public ChunkKey Key { get; }
 
-    public ChunkNavData(ChunkKey key)
-    {
-        Key = key;
-        NavMask = new byte[TilesPerChunk];
-        NavCost = new ushort[TilesPerChunk];
-        UpRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
-        DownRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
-        ConnectivityVersion = 0;
-    }
+        public ChunkNavData(ChunkKey key)
+        {
+            Key = key;
+            NavMask = new byte[TilesPerChunk];
+            NavCost = new ushort[TilesPerChunk];
+            UpRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
+            DownRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
+            UpRampMask = new byte[TilesPerChunk];
+            ConnectivityVersion = 0;
+        }
 
     /// <summary>
     /// Rebuild navigation data from tile information.

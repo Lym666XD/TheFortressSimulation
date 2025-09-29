@@ -144,16 +144,6 @@
             Debug overlay for visualizing navigation data.
             </summary>
         </member>
-        <member name="M:HumanFortress.App.Rendering.NavigationOverlay.SetNavigationManager(HumanFortress.Navigation.NavigationManager)">
-            <summary>
-            Set the navigation manager for accessing nav data.
-            </summary>
-        </member>
-        <member name="M:HumanFortress.App.Rendering.NavigationOverlay.RenderOverlay(SadConsole.ScreenSurface,HumanFortress.Simulation.World.World,System.Int32,SadRogue.Primitives.Rectangle)">
-            <summary>
-            Render navigation overlay on top of the game view.
-            </summary>
-        </member>
         <member name="T:HumanFortress.App.TestRunner">
             <summary>
             Test runner to verify Phase A implementation.

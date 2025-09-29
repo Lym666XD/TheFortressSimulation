@@ -88,18 +88,19 @@ public readonly record struct ChunkKey(int ChunkX, int ChunkY, int Z)
 public readonly record struct Path(
     PathResultKind Kind,
     int Length,
+    uint TotalCost, // Fixed-point total cost (FP=10)
     uint Hash,
     ReadOnlyMemory<PathNode> Steps)
 {
     /// <summary>
     /// Empty failed path.
     /// </summary>
-    public static readonly Path Failed = new(PathResultKind.NoPath, 0, 0, ReadOnlyMemory<PathNode>.Empty);
+    public static readonly Path Failed = new(PathResultKind.NoPath, 0, 0, 0, ReadOnlyMemory<PathNode>.Empty);
 
     /// <summary>
     /// Invalid path request.
     /// </summary>
-    public static readonly Path Invalid = new(PathResultKind.Invalid, 0, 0, ReadOnlyMemory<PathNode>.Empty);
+    public static readonly Path Invalid = new(PathResultKind.Invalid, 0, 0, 0, ReadOnlyMemory<PathNode>.Empty);
 }
 
 /// <summary>

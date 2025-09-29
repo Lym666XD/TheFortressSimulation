@@ -18,6 +18,18 @@
   - `vein.size [min,max]`, `vein.thickness [min,max]`, `vein.orientation_bias`, `vein.branch_chance`
   - `blob.size [min,max]`, `blob.radius [min,max]`
 
+- `content/registries/tuning.navigation.json`
+  - `allow_diagonals`: enable 8-neighbor expansion (corner rules may apply)
+  - `cost`: `{ base, orthogonal, diagonal, ramp_delta, stair_delta }`
+  - `fluids`: `{ shallow_threshold, deep_threshold, wade_cost, swim_cost }`
+  - `traffic`: `{ low, normal, high, restricted }`
+  - `doors`: `{ closed_blocks, open_cost }`
+  - `budgets`: `{ max_nodes_per_search, max_ms_per_tick_pathing }`
+  - `ramp_vertical_alignment_mode`: `"df"` — ramp at (x,y,z) ascends to neighbors at z+1 while (x,y,z+1) stays `OpenNoFloor`
+  - `ramp_requires_highside_support`: true|false — require support at high side below
+  - `diagonal_rules`: optional corner checks for diagonals
+  - `surface_cost`: optional map `{ mud, snow, grass, moss, ... } -> cost adj`
+
 Notes
 - Cavern generation uses a single connected band at mid-Z of the densest band from `tuning.mapgen.json`.
 - Floor overlays use SurfaceBits: Mud, Grass, Snow, Moss (see TILE_SPEC.md).

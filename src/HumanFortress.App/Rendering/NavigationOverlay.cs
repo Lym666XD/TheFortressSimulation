@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+﻿using HumanFortress.Navigation;
 using HumanFortress.Simulation.World;
 using SadConsole;
 using SadRogue.Primitives;
@@ -13,309 +13,203 @@ public class NavigationOverlay
     public enum OverlayMode
     {
         None,
-        Walkability,    // Show walkable/blocked tiles
-        MovementCost,   // Show movement costs as gradient
-        Traffic,        // Show traffic designations
-        Connectivity,   // Show connectivity versions
-        PathDisplay,    // Show computed paths
-        FlowField,      // Show flow field to selected point
+        Walkability,
+        MovementCost,
+        Traffic,
+        Connectivity,
+        PathDisplay,
+        FlowField,
+        RampMask,
     }
 
     private OverlayMode _currentMode = OverlayMode.None;
     private HumanFortress.Navigation.Path? _currentPath;
     private Point? _selectedTarget;
-    private Dictionary<Point, char> _overlayChars;
-    private Dictionary<Point, Color> _overlayColors;
+    private readonly Dictionary<Point, char> _overlayChars;
+    private readonly Dictionary<Point, Color> _overlayColors;
     private NavigationManager? _navManager;
+    private readonly HumanFortress.Navigation.NavigationTuning _tuning;
 
     public NavigationOverlay()
     {
         _overlayChars = new Dictionary<Point, char>();
         _overlayColors = new Dictionary<Point, Color>();
+        _tuning = HumanFortress.Navigation.NavigationTuning.LoadFromContent();
     }
 
-    /// <summary>
-    /// Set the navigation manager for accessing nav data.
-    /// </summary>
-    public void SetNavigationManager(NavigationManager navManager)
-    {
-        _navManager = navManager;
-    }
+    public void SetNavigationManager(NavigationManager navManager) => _navManager = navManager;
 
     public OverlayMode CurrentMode
     {
         get => _currentMode;
-        set
-        {
-            _currentMode = value;
-            RefreshOverlay();
-        }
+        set { _currentMode = value; RefreshOverlay(); }
     }
 
     public void SetPath(HumanFortress.Navigation.Path path)
     {
         _currentPath = path;
-        if (_currentMode == OverlayMode.PathDisplay)
-            RefreshOverlay();
+        if (_currentMode == OverlayMode.PathDisplay) RefreshOverlay();
     }
 
     public void ClearPath()
     {
         _currentPath = null;
-        if (_currentMode == OverlayMode.PathDisplay)
-            RefreshOverlay();
+        if (_currentMode == OverlayMode.PathDisplay) RefreshOverlay();
     }
 
     public void SetTarget(Point target)
     {
         _selectedTarget = target;
-        if (_currentMode == OverlayMode.FlowField)
-            RefreshOverlay();
+        if (_currentMode == OverlayMode.FlowField) RefreshOverlay();
     }
 
-    /// <summary>
-    /// Render navigation overlay on top of the game view.
-    /// </summary>
     public void RenderOverlay(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        if (_currentMode == OverlayMode.None)
-            return;
-
+        if (_currentMode == OverlayMode.None) return;
         switch (_currentMode)
         {
-            case OverlayMode.Walkability:
-                RenderWalkability(surface, world, z, viewport);
-                break;
-            case OverlayMode.MovementCost:
-                RenderMovementCost(surface, world, z, viewport);
-                break;
-            case OverlayMode.Traffic:
-                RenderTraffic(surface, world, z, viewport);
-                break;
-            case OverlayMode.Connectivity:
-                RenderConnectivity(surface, world, z, viewport);
-                break;
-            case OverlayMode.PathDisplay:
-                RenderPath(surface, viewport);
-                break;
-            case OverlayMode.FlowField:
-                RenderFlowField(surface, world, z, viewport);
-                break;
+            case OverlayMode.Walkability:  RenderWalkability(surface, world, z, viewport); break;
+            case OverlayMode.MovementCost: RenderMovementCost(surface, world, z, viewport); break;
+            case OverlayMode.Traffic:      RenderTraffic(surface, world, z, viewport); break;
+            case OverlayMode.Connectivity: RenderConnectivity(surface, world, z, viewport); break;
+            case OverlayMode.PathDisplay:  RenderPath(surface, viewport); break;
+            case OverlayMode.FlowField:    RenderFlowField(surface, world, z, viewport); break;
+            case OverlayMode.RampMask:     RenderRampMask(surface, world, z, viewport); break;
         }
-
-        // Render legend
         RenderLegend(surface);
     }
 
     private void RenderWalkability(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        int worldSizeInTiles = world.SizeInTiles;
-
+        int worldSize = world.SizeInTiles;
         for (int y = 0; y < viewport.Height && y < surface.Surface.Height; y++)
+        for (int x = 0; x < viewport.Width  && x < surface.Surface.Width;  x++)
         {
-            for (int x = 0; x < viewport.Width && x < surface.Surface.Width; x++)
-            {
-                var worldX = viewport.X + x;
-                var worldY = viewport.Y + y;
-
-                // Skip if outside world bounds
-                if (worldX < 0 || worldX >= worldSizeInTiles || worldY < 0 || worldY >= worldSizeInTiles)
-                    continue;
-
-                var chunk = world.GetChunkAt(worldX / 32, worldY / 32, z);
-                if (chunk == null) continue;
-
-                var localIdx = (worldY % 32) * 32 + (worldX % 32);
-                if (localIdx < 0 || localIdx >= ChunkNavData.TilesPerChunk)
-                    continue;
-
-                var navData = GetNavDataForChunk(chunk);
-
-                if (navData != null && navData.NavMask != null && localIdx < navData.NavMask.Length)
-                {
-                    var caps = (NavCapability)navData.NavMask[localIdx];
-
-                    if ((caps & NavCapability.Walk) != 0)
-                    {
-                        // Walkable - show as green dot
-                        surface.Surface.SetGlyph(x, y, '·', Color.Green);
-                    }
-                    else if ((caps & NavCapability.Swim) != 0)
-                    {
-                        // Swimmable - show as blue wave
-                        surface.Surface.SetGlyph(x, y, '~', Color.Blue);
-                    }
-                    else if ((caps & NavCapability.Fly) != 0)
-                    {
-                        // Flyable only - show as light gray
-                        surface.Surface.SetGlyph(x, y, '°', Color.Gray);
-                    }
-                    else
-                    {
-                        // Blocked - show as red X
-                        surface.Surface.SetGlyph(x, y, '█', Color.DarkRed);
-                    }
-                }
-            }
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            if (wx < 0 || wx >= worldSize || wy < 0 || wy >= worldSize) continue;
+            var chunk = world.GetChunkAt(wx / 32, wy / 32, z); if (chunk == null) continue;
+            int idx = (wy % 32) * 32 + (wx % 32);
+            var nav = GetNavDataForChunk(chunk); if (nav == null) continue;
+            var caps = (NavCapability)nav.NavMask[idx];
+            if ((caps & NavCapability.Walk) != 0) surface.Surface.SetGlyph(x, y, '.', Color.Green);
+            else if ((caps & NavCapability.Swim) != 0) surface.Surface.SetGlyph(x, y, '~', Color.Blue);
+            else if ((caps & NavCapability.Fly)  != 0) surface.Surface.SetGlyph(x, y, 'o', Color.Gray);
+            else surface.Surface.SetGlyph(x, y, 'X', Color.DarkRed);
         }
     }
 
     private void RenderMovementCost(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        int worldSizeInTiles = world.SizeInTiles;
-
+        int worldSize = world.SizeInTiles;
         for (int y = 0; y < viewport.Height && y < surface.Surface.Height; y++)
+        for (int x = 0; x < viewport.Width  && x < surface.Surface.Width;  x++)
         {
-            for (int x = 0; x < viewport.Width && x < surface.Surface.Width; x++)
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            if (wx < 0 || wx >= worldSize || wy < 0 || wy >= worldSize) continue;
+            var chunk = world.GetChunkAt(wx / 32, wy / 32, z); if (chunk == null) continue;
+            int idx = (wy % 32) * 32 + (wx % 32);
+            var nav = GetNavDataForChunk(chunk); if (nav == null) continue;
+            var cost = nav.NavCost[idx];
+            if (cost == ushort.MaxValue)
             {
-                var worldX = viewport.X + x;
-                var worldY = viewport.Y + y;
-
-                // Skip if outside world bounds
-                if (worldX < 0 || worldX >= worldSizeInTiles || worldY < 0 || worldY >= worldSizeInTiles)
-                    continue;
-
-                var chunk = world.GetChunkAt(worldX / 32, worldY / 32, z);
-                if (chunk == null) continue;
-
-                var localIdx = (worldY % 32) * 32 + (worldX % 32);
-                if (localIdx < 0 || localIdx >= ChunkNavData.TilesPerChunk)
-                    continue;
-
-                var navData = GetNavDataForChunk(chunk);
-
-                if (navData != null && navData.NavCost != null && localIdx < navData.NavCost.Length)
-                {
-                    var cost = navData.NavCost[localIdx];
-
-                    // Map cost to digit 0-9 and color gradient
-                    char costChar;
-                    Color costColor;
-
-                    if (cost == ushort.MaxValue)
-                    {
-                        costChar = '█';
-                        costColor = Color.DarkRed;
-                    }
-                    else if (cost <= 10)
-                    {
-                        costChar = '0';
-                        costColor = Color.Green;
-                    }
-                    else if (cost <= 20)
-                    {
-                        costChar = (char)('0' + (cost - 10) / 2);
-                        costColor = Color.YellowGreen;
-                    }
-                    else if (cost <= 30)
-                    {
-                        costChar = (char)('5' + (cost - 20) / 2);
-                        costColor = Color.Yellow;
-                    }
-                    else
-                    {
-                        costChar = '9';
-                        costColor = Color.Red;
-                    }
-
-                    surface.Surface.SetGlyph(x, y, costChar, costColor);
-                }
+                surface.Surface.SetGlyph(x, y, 'X', Color.DarkRed);
+                continue;
             }
+
+            // Scale to fixed-point ratio against BaseCost for finer bins
+            // ratio_fp = (cost * 10) / BaseCost  -> 0.0, 1.0, 1.2, ...
+            double ratio = (double)cost / Math.Max(1, (int)_tuning.BaseCost);
+            double fp = ratio * 10.0; // FP=10 view
+
+            // Quantize into 36 bins: 0-9 -> '0'..'9', 10-35 -> 'A'..'Z'
+            int bin = (int)Math.Clamp(Math.Round(fp), 0, 35);
+            char glyph = bin < 10 ? (char)('0' + bin) : (char)('A' + (bin - 10));
+
+            // Color gradient by ratio
+            Color col = ratio <= 1.0 ? Color.Green : ratio <= 1.5 ? Color.YellowGreen : ratio <= 2.0 ? Color.Yellow : ratio <= 3.0 ? Color.Orange : Color.Red;
+            surface.Surface.SetGlyph(x, y, glyph, col);
+        }
+    }
+
+    private void RenderRampMask(ScreenSurface surface, World world, int z, Rectangle viewport)
+    {
+        int worldSize = world.SizeInTiles;
+        for (int y = 0; y < viewport.Height && y < surface.Surface.Height; y++)
+        for (int x = 0; x < viewport.Width  && x < surface.Surface.Width;  x++)
+        {
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            if (wx < 0 || wx >= worldSize || wy < 0 || wy >= worldSize) continue;
+            var chunk = world.GetChunkAt(wx / 32, wy / 32, z); if (chunk == null) continue;
+            int idx = (wy % 32) * 32 + (wx % 32);
+            var nav = GetNavDataForChunk(chunk); if (nav == null) continue;
+
+            byte mask = nav.UpRampMask[idx];
+            if (mask == 0) continue; // not a ramp base or no directions
+
+            // If single direction -> draw arrow. Multiple -> '*'
+            int count = CountBits(mask);
+            char ch;
+            if (count == 1)
+            {
+                byte dir = FirstBit(mask);
+                ch = dir switch
+                {
+                    0 => '^',  // N
+                    1 => '/',  // NE
+                    2 => '>',  // E
+                    3 => '\\', // SE
+                    4 => 'v',  // S
+                    5 => '/',  // SW
+                    6 => '<',  // W
+                    7 => '\\', // NW
+                    _ => '+'
+                };
+            }
+            else
+            {
+                ch = '*';
+            }
+
+            surface.Surface.SetGlyph(x, y, ch, Color.Yellow);
         }
     }
 
     private void RenderTraffic(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        int worldSizeInTiles = world.SizeInTiles;
-
+        int worldSize = world.SizeInTiles;
         for (int y = 0; y < viewport.Height && y < surface.Surface.Height; y++)
+        for (int x = 0; x < viewport.Width  && x < surface.Surface.Width;  x++)
         {
-            for (int x = 0; x < viewport.Width && x < surface.Surface.Width; x++)
-            {
-                var worldX = viewport.X + x;
-                var worldY = viewport.Y + y;
-
-                // Skip if outside world bounds
-                if (worldX < 0 || worldX >= worldSizeInTiles || worldY < 0 || worldY >= worldSizeInTiles)
-                    continue;
-
-                // Get traffic level from tile metadata
-                var chunk = world.GetChunkAt(worldX / 32, worldY / 32, z);
-                if (chunk == null) continue;
-
-                var localIdx = (worldY % 32) * 32 + (worldX % 32);
-                var localX = (worldX % 32);
-                var localY = (worldY % 32);
-                var tile = chunk.GetTile(localX, localY);
-
-                var trafficLevel = (tile.MetaBits >> 4) & 0x3;
-
-                switch (trafficLevel)
-                {
-                    case 0: // Normal
-                        // Don't overlay normal traffic
-                        break;
-                    case 1: // Low/Preferred
-                        surface.Surface.SetGlyph(x, y, '+', Color.Green);
-                        break;
-                    case 2: // High
-                        surface.Surface.SetGlyph(x, y, '-', Color.Yellow);
-                        break;
-                    case 3: // Restricted
-                        surface.Surface.SetGlyph(x, y, 'R', Color.Red);
-                        break;
-                }
-            }
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            if (wx < 0 || wx >= worldSize || wy < 0 || wy >= worldSize) continue;
+            var chunk = world.GetChunkAt(wx / 32, wy / 32, z); if (chunk == null) continue;
+            int lx = wx % 32, ly = wy % 32; var tile = chunk.GetTile(lx, ly);
+            var level = (tile.MetaBits >> 4) & 0x3;
+            if (level == 1) surface.Surface.SetGlyph(x, y, '+', Color.Green);
+            else if (level == 2) surface.Surface.SetGlyph(x, y, '-', Color.Yellow);
+            else if (level == 3) surface.Surface.SetGlyph(x, y, 'R', Color.Red);
         }
     }
 
     private void RenderConnectivity(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        var chunkVersions = new Dictionary<(int, int), int>();
-
-        // First pass - collect all chunk versions
-        for (int cy = viewport.Y / 32; cy <= (viewport.Y + viewport.Height) / 32; cy++)
-        {
-            for (int cx = viewport.X / 32; cx <= (viewport.X + viewport.Width) / 32; cx++)
-            {
-                var chunk = world.GetChunkAt(cx, cy, z);
-                if (chunk != null)
-                {
-                    var navData = GetNavDataForChunk(chunk);
-                    if (navData != null)
-                    {
-                        chunkVersions[(cx, cy)] = navData.ConnectivityVersion;
-                    }
-                }
-            }
-        }
-
-        // Second pass - render chunk boundaries with version numbers
+        // Draw chunk boundaries and version dots at centers
         for (int y = 0; y < viewport.Height; y++)
+        for (int x = 0; x < viewport.Width;  x++)
         {
-            for (int x = 0; x < viewport.Width; x++)
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            if (wx % 32 == 0 || wy % 32 == 0) surface.Surface.SetGlyph(x, y, ':', Color.DarkGray);
+            if (wx % 32 == 16 && wy % 32 == 16)
             {
-                var worldX = viewport.X + x;
-                var worldY = viewport.Y + y;
-
-                // Check if we're at chunk boundary
-                if (worldX % 32 == 0 || worldY % 32 == 0)
+                var ck = world.GetChunkAt(wx / 32, wy / 32, z);
+                if (ck != null)
                 {
-                    surface.Surface.SetGlyph(x, y, '┼', Color.DarkGray);
-                }
-
-                // Show version number at chunk corner
-                if (worldX % 32 == 16 && worldY % 32 == 16)
-                {
-                    var cx = worldX / 32;
-                    var cy = worldY / 32;
-                    if (chunkVersions.TryGetValue((cx, cy), out var version))
+                    var nav = GetNavDataForChunk(ck);
+                    if (nav != null)
                     {
-                        var versionStr = version.ToString();
-                        for (int i = 0; i < versionStr.Length && x + i < viewport.Width; i++)
-                        {
-                            surface.Surface.SetGlyph(x + i, y, versionStr[i], Color.Cyan);
-                        }
+                        var s = nav.ConnectivityVersion.ToString();
+                        for (int i = 0; i < s.Length && x + i < viewport.Width; i++)
+                            surface.Surface.SetGlyph(x + i, y, s[i], Color.Cyan);
                     }
                 }
             }
@@ -324,169 +218,100 @@ public class NavigationOverlay
 
     private void RenderPath(ScreenSurface surface, Rectangle viewport)
     {
-        if (_currentPath == null || _currentPath.Value.Steps.IsEmpty)
-            return;
-
-        if (!_currentPath.Value.Steps.IsEmpty)
+        if (_currentPath == null || _currentPath.Value.Steps.IsEmpty) return;
+        var steps = _currentPath.Value.Steps.Span;
+        for (int i = 0; i < steps.Length; i++)
         {
-            var pathNodes = _currentPath.Value.Steps.Span;
-
-            for (int i = 0; i < pathNodes.Length; i++)
+            var node = steps[i];
+            int sx = node.Position.X - viewport.X;
+            int sy = node.Position.Y - viewport.Y;
+            if (sx < 0 || sx >= viewport.Width || sy < 0 || sy >= viewport.Height) continue;
+            char ch; Color col;
+            if (i == 0) { ch = 'S'; col = Color.Green; }
+            else if (i == steps.Length - 1) { ch = 'G'; col = Color.Red; }
+            else
             {
-                var node = pathNodes[i];
-            var screenX = node.Position.X - viewport.X;
-            var screenY = node.Position.Y - viewport.Y;
-
-            if (screenX >= 0 && screenX < viewport.Width &&
-                screenY >= 0 && screenY < viewport.Height)
-            {
-                char pathChar;
-                Color pathColor;
-
-                if (i == 0)
-                {
-                    // Start
-                    pathChar = 'S';
-                    pathColor = Color.Green;
-                }
-                else if (i == pathNodes.Length - 1)
-                {
-                    // Goal
-                    pathChar = 'G';
-                    pathColor = Color.Red;
-                }
-                else
-                {
-                    // Path segment - use directional arrows
-                    if (i > 0 && i < pathNodes.Length - 1)
-                    {
-                        var prev = pathNodes[i - 1].Position;
-                        var next = pathNodes[i + 1].Position;
-                        var dx = next.X - prev.X;
-                        var dy = next.Y - prev.Y;
-
-                        if (dx > 0) pathChar = '→';
-                        else if (dx < 0) pathChar = '←';
-                        else if (dy > 0) pathChar = '↓';
-                        else if (dy < 0) pathChar = '↑';
-                        else pathChar = '•';
-                    }
-                    else
-                    {
-                        pathChar = '•';
-                    }
-                    pathColor = Color.Yellow;
-                }
-
-                    surface.Surface.SetGlyph(screenX, screenY, pathChar, pathColor);
-                }
+                int dx = 0, dy = 0;
+                if (i < steps.Length - 1) { var n = steps[i + 1].Position; dx = n.X - node.Position.X; dy = n.Y - node.Position.Y; }
+                else { var p = steps[i - 1].Position; dx = node.Position.X - p.X; dy = node.Position.Y - p.Y; }
+                if (dx == 1 && dy == 0) ch = '>';
+                else if (dx == -1 && dy == 0) ch = '<';
+                else if (dx == 0 && dy == 1) ch = 'v';
+                else if (dx == 0 && dy == -1) ch = '^';
+                else if (dx == 1 && dy == -1) ch = '/';   // NE
+                else if (dx == 1 && dy == 1) ch = '\\'; // SE
+                else if (dx == -1 && dy == 1) ch = '/';   // SW
+                else if (dx == -1 && dy == -1) ch = '\\'; // NW
+                else ch = '.';
+                col = Color.Yellow;
             }
+            surface.Surface.SetGlyph(sx, sy, ch, col);
         }
     }
 
     private void RenderFlowField(ScreenSurface surface, World world, int z, Rectangle viewport)
     {
-        if (_selectedTarget == null)
-            return;
-
-        // Simple flow field visualization - arrows pointing toward target
+        if (_selectedTarget == null) return;
         for (int y = 0; y < viewport.Height; y++)
+        for (int x = 0; x < viewport.Width;  x++)
         {
-            for (int x = 0; x < viewport.Width; x++)
-            {
-                var worldX = viewport.X + x;
-                var worldY = viewport.Y + y;
-
-                // Check if walkable
-                var chunk = world.GetChunkAt(worldX / 32, worldY / 32, z);
-                if (chunk == null) continue;
-
-                var localIdx = (worldY % 32) * 32 + (worldX % 32);
-                var navData = GetNavDataForChunk(chunk);
-
-                if (navData != null && (navData.NavMask[localIdx] & (byte)NavCapability.Walk) != 0)
-                {
-                    // Calculate direction to target
-                    var dx = _selectedTarget.Value.X - worldX;
-                    var dy = _selectedTarget.Value.Y - worldY;
-
-                    char arrow;
-                    if (Math.Abs(dx) > Math.Abs(dy))
-                    {
-                        arrow = dx > 0 ? '→' : '←';
-                    }
-                    else if (dy != 0)
-                    {
-                        arrow = dy > 0 ? '↓' : '↑';
-                    }
-                    else
-                    {
-                        arrow = '●'; // At target
-                    }
-
-                    var distance = Math.Abs(dx) + Math.Abs(dy);
-                    var color = distance < 10 ? Color.Green :
-                               distance < 20 ? Color.Yellow :
-                               distance < 30 ? Color.Orange : Color.Red;
-
-                    surface.Surface.SetGlyph(x, y, arrow, color);
-                }
-            }
+            int wx = viewport.X + x, wy = viewport.Y + y;
+            var chunk = world.GetChunkAt(wx / 32, wy / 32, z); if (chunk == null) continue;
+            int idx = (wy % 32) * 32 + (wx % 32);
+            var nav = GetNavDataForChunk(chunk); if (nav == null) continue;
+            if ((nav.NavMask[idx] & (byte)NavCapability.Walk) == 0) continue;
+            int dx = _selectedTarget.Value.X - wx;
+            int dy = _selectedTarget.Value.Y - wy;
+            char arrow = Math.Abs(dx) > Math.Abs(dy) ? (dx > 0 ? '>' : '<') : (dy != 0 ? (dy > 0 ? 'v' : '^') : '.');
+            var dist = Math.Abs(dx) + Math.Abs(dy);
+            var col = dist < 10 ? Color.Green : dist < 20 ? Color.Yellow : dist < 30 ? Color.Orange : Color.Red;
+            surface.Surface.SetGlyph(x, y, arrow, col);
         }
     }
 
     private void RenderLegend(ScreenSurface surface)
     {
-        int legendY = surface.Surface.Height - 5;
-        int legendX = 2;
-
+        int legendY = surface.Surface.Height - 5, legendX = 2;
         surface.Surface.Print(legendX, legendY, $"Navigation: {_currentMode}", Color.White);
-
+        if (_currentMode == OverlayMode.PathDisplay && _currentPath.HasValue && _currentPath.Value.Length > 0)
+        {
+            // TotalCost is fixed-point (FP=10)
+            double totalCost = _currentPath.Value.TotalCost / 10.0;
+            surface.Surface.Print(legendX + 24, legendY, $"Path len={_currentPath.Value.Length} cost={totalCost:F1}", Color.Gold);
+        }
         switch (_currentMode)
         {
             case OverlayMode.Walkability:
-                surface.Surface.Print(legendX, legendY + 1, "· Walk", Color.Green);
+                surface.Surface.Print(legendX, legendY + 1, ". Walk", Color.Green);
                 surface.Surface.Print(legendX + 10, legendY + 1, "~ Swim", Color.Blue);
-                surface.Surface.Print(legendX + 20, legendY + 1, "° Fly", Color.Gray);
-                surface.Surface.Print(legendX + 30, legendY + 1, "█ Block", Color.DarkRed);
+                surface.Surface.Print(legendX + 20, legendY + 1, "o Fly", Color.Gray);
+                surface.Surface.Print(legendX + 30, legendY + 1, "X Block", Color.DarkRed);
                 break;
-
             case OverlayMode.MovementCost:
-                surface.Surface.Print(legendX, legendY + 1, "0-9: Cost (Green=Low, Red=High)", Color.White);
+                surface.Surface.Print(legendX, legendY + 1, "0-9,A-Z: FP cost bins (Green=Low, Red=High)", Color.White);
+                surface.Surface.Print(legendX, legendY + 2, $"Base={_tuning.BaseCost} (tile cost shown as x{10}/Base)", Color.DarkGray);
                 break;
-
-            case OverlayMode.Traffic:
-                surface.Surface.Print(legendX, legendY + 1, "+ Preferred", Color.Green);
-                surface.Surface.Print(legendX + 15, legendY + 1, "- High", Color.Yellow);
-                surface.Surface.Print(legendX + 25, legendY + 1, "R Restricted", Color.Red);
-                break;
-
             case OverlayMode.PathDisplay:
-                surface.Surface.Print(legendX, legendY + 1, "S Start", Color.Green);
-                surface.Surface.Print(legendX + 10, legendY + 1, "→ Path", Color.Yellow);
-                surface.Surface.Print(legendX + 20, legendY + 1, "G Goal", Color.Red);
+                surface.Surface.Print(legendX, legendY + 1, "S Start  ./>^\\ Path  G Goal", Color.White);
+                break;
+            case OverlayMode.RampMask:
+                surface.Surface.Print(legendX, legendY + 1, "Ramp ascend: ^ > v < / \\ (*=multi)", Color.White);
                 break;
         }
-
         surface.Surface.Print(legendX, legendY + 2, "F9: Mode  |  F10: Set/Path  |  Ctrl+F10: Clear", Color.DarkGray);
     }
 
-    private ChunkNavData? GetNavDataForChunk(Chunk chunk)
+    private ChunkNavData? GetNavDataForChunk(Chunk chunk) => _navManager?.GetNavData(chunk.Key);
+    private void RefreshOverlay() { _overlayChars.Clear(); _overlayColors.Clear(); }
+    public void CycleMode() { var modes = Enum.GetValues<OverlayMode>(); int i = Array.IndexOf(modes, _currentMode); CurrentMode = modes[(i + 1) % modes.Length]; }
+
+    private static int CountBits(byte v)
     {
-        return _navManager?.GetNavData(chunk.Key);
+        int c = 0; while (v != 0) { v &= (byte)(v - 1); c++; } return c;
     }
 
-    private void RefreshOverlay()
+    private static byte FirstBit(byte v)
     {
-        _overlayChars.Clear();
-        _overlayColors.Clear();
-    }
-
-    public void CycleMode()
-    {
-        var modes = Enum.GetValues<OverlayMode>();
-        var currentIndex = Array.IndexOf(modes, _currentMode);
-        currentIndex = (currentIndex + 1) % modes.Length;
-        CurrentMode = modes[currentIndex];
+        for (byte i = 0; i < 8; i++) if ((v & (1 << i)) != 0) return i; return 0;
     }
 }

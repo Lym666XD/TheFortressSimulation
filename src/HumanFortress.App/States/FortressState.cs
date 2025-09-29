@@ -901,16 +901,19 @@ namespace HumanFortress.App.States
             // Compute path from previously set Start → current cursor
             var tuning = HumanFortress.Navigation.NavigationTuning.LoadFromContent();
             var astar = new HumanFortress.Navigation.DeterministicAStar(tuning);
+            var flags = tuning.AllowDiagonals ? HumanFortress.Navigation.PathFlags.AllowDiagonal : HumanFortress.Navigation.PathFlags.None;
             var req = new HumanFortress.Navigation.PathRequest(
                 new HumanFortress.Navigation.Point3(_pathStart.Value.X, _pathStart.Value.Y, _pathStartZ),
                 new HumanFortress.Navigation.Point3(_cursorPos.X, _cursorPos.Y, _currentZ),
                 HumanFortress.Navigation.MoveMode.Walk,
-                HumanFortress.Navigation.PathFlags.None,
+                flags,
                 0);
             var path = astar.FindPath(req, _navView);
             _navOverlay.CurrentMode = HumanFortress.App.Rendering.NavigationOverlay.OverlayMode.PathDisplay;
             _navOverlay.SetPath(path);
-            _ui.AddToast($"Path: {path.Kind} len={path.Length}", _uiTick + 180);
+            // TotalCost is fixed-point (FP=10). Show with one decimal.
+            double totalCost = path.TotalCost / 10.0;
+            _ui.AddToast($"Path: {path.Kind} len={path.Length} cost={totalCost:F1}", _uiTick + 180);
         }
 
         public override bool ProcessMouse(MouseScreenObjectState state)
