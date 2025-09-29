@@ -187,6 +187,6 @@ Update: DF‑Style Ramps (Geometry Only)
 We switch ramp semantics to DF‑style vertical alignment for geometry:
 
 - The ramp resides at (x,y,z). Its cell directly above (x,y,z+1) remains OpenNoFloor (empty space).
-- Standable top tiles are neighboring floors at z+1; we do not place a separate slope geometry at z+1.
+- Standable top tiles are the 8 neighboring floors at z+1（N,NE,E,SE,S,SW,W,NW）；不在 z+1 注入坡顶几何。
 - Which directions are allowed to ascend is not authored in generation. It is derived at runtime by the navigation rebuild (UpRampMask) using topology/support checks.
 - The renderer may draw a visual slope indicator on the standable top tiles at z+1 for readability; this has no pathfinding effect.

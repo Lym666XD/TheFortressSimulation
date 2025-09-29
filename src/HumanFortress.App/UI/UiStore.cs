@@ -30,17 +30,49 @@ public enum QuickMenuKind
     Build
 }
 
+public enum ZoneSubmenu
+{
+    None,
+    Stockpile,
+    Room,
+    Activity
+}
+
+public enum PlacementMode
+{
+    None,
+    StockpileFirstCorner,
+    StockpileSecondCorner,
+    StockpilePresetSelect,
+    StockpileDelete,
+    StockpileCopy
+}
+
 public sealed class UiStore
 {
     public UiContext Context { get; private set; } = UiContext.Global;
     public DrawerId OpenDrawer { get; private set; } = DrawerId.None;
     public int DrawerTab { get; private set; } = 0;
     public QuickMenuKind QuickMenu { get; private set; } = QuickMenuKind.None;
+    public ZoneSubmenu ZoneMenu { get; private set; } = ZoneSubmenu.None;
+    public PlacementMode PlaceMode { get; set; } = PlacementMode.None;
     public Point? HoverTile { get; private set; } = null;
+
+    // Stockpile placement state
+    public Point? PlaceFirstCorner { get; set; } = null;
+    public Point? PlaceSecondCorner { get; set; } = null;
+    public int PlaceZ { get; set; } = 0;
+    public string? CopiedPreset { get; set; } = null;
+    public int? CopiedPriority { get; set; } = null;
     public bool HelpOpen { get; private set; } = false;
     public bool DebugOpen { get; private set; } = false;
     public bool PauseOpen { get; private set; } = false;
     public readonly List<(Point pos, int z)> DebugDwarfs = new();
+
+    // Debug menu state
+    public int DebugMenuTab { get; set; } = 0; // 0=Spawn, 1=Items
+    public string DebugSelectedCreature { get; set; } = "core_race_dwarf";
+    public string DebugSelectedItem { get; set; } = "core_item_stone_generic";
 
     // Toasts (text + expire tick)
     public readonly List<(string text, ulong expireTick)> Toasts = new();
@@ -64,12 +96,35 @@ public sealed class UiStore
         if (QuickMenu == kind)
         {
             QuickMenu = QuickMenuKind.None;
+            ZoneMenu = ZoneSubmenu.None;
             if (OpenDrawer == DrawerId.None)
                 Context = UiContext.Global;
             return;
         }
         QuickMenu = kind;
         Context = UiContext.QuickMenu;
+    }
+
+    public void OpenZoneSubmenu(ZoneSubmenu submenu)
+    {
+        ZoneMenu = submenu;
+    }
+
+    public void StartPlacement(PlacementMode mode, int z)
+    {
+        PlaceMode = mode;
+        PlaceZ = z;
+        PlaceFirstCorner = null;
+        PlaceSecondCorner = null;
+        Context = UiContext.PlacingTool;
+    }
+
+    public void CancelPlacement()
+    {
+        PlaceMode = PlacementMode.None;
+        PlaceFirstCorner = null;
+        PlaceSecondCorner = null;
+        Context = QuickMenu != QuickMenuKind.None ? UiContext.QuickMenu : UiContext.Global;
     }
 
     public void TabNext()
@@ -94,9 +149,21 @@ public sealed class UiStore
         }
         else if (Context == UiContext.QuickMenu)
         {
-            // Close quick menu
-            QuickMenu = QuickMenuKind.None;
-            Context = UiContext.Global;
+            if (ZoneMenu != ZoneSubmenu.None)
+            {
+                // Back to zone menu
+                ZoneMenu = ZoneSubmenu.None;
+            }
+            else
+            {
+                // Close quick menu
+                QuickMenu = QuickMenuKind.None;
+                Context = UiContext.Global;
+            }
+        }
+        else if (Context == UiContext.PlacingTool)
+        {
+            CancelPlacement();
         }
         else if (HelpOpen)
         {

@@ -18,18 +18,17 @@
 ### Data Contract Enforcement
 - [x] No walkable/standable/climbable/flyable fields in materials.registry.json
 - [x] No support_flag in geology.json terrain_bits
-- [x] RampDirection uses numeric 0-7 encoding
+- [x] TerrainBits v2: Kind uses 4 bits (0-15)
 - [x] All materials referenced by geology exist (via name or alias)
 
 ## Runtime System Validation
 
-### Tile System
+### Tile System (v2)
 - [ ] Bit packing/unpacking unit tests pass
-- [ ] TerrainKind extraction (bits 0-2) correct
-- [ ] RampDirection extraction (bits 3-5) correct
-- [ ] Natural flag (bit 6) preserved correctly
-- [ ] Smoothed/Engraved bits (7-8) handled
-- [ ] Reserved bits (9-15) always zero
+- [ ] TerrainKind extraction (bits 0-3) correct
+- [ ] Natural flag (bit 5) preserved correctly
+- [ ] Modifiable flag (bit 6) preserved correctly
+- [ ] Reserved bits (others) always zero
 
 ### Navigation System
 - [ ] Walls (TerrainKind=0) never walkable/standable
@@ -46,11 +45,11 @@
 - [ ] Traffic levels modify cost as expected
 - [ ] Final cost clamped to valid range (1-999)
 
-### Ramp Navigation
-- [ ] Ascent only from opposite direction
-- [ ] Descent allowed from ramp direction
-- [ ] All 8 compass directions (0-7) work
-- [ ] Invalid directions cause error
+### Ramp Navigation (DF style)
+- [ ] UpRampMask derived correctly from topology
+- [ ] Ascent allowed only to Standable tiles at z+1 satisfying support/corner rules
+- [ ] Descent validated via ramp base UpRampMask symmetry
+- [ ] All 8 compass directions (0-7) handled when enabled
 
 ## Worldgen Validation
 
@@ -83,9 +82,7 @@
 - [ ] Resolves material aliases correctly
 - [ ] Maps terrain kind names properly
 
-### Output Generation
-- [ ] TerrainBits use canonical layout
-- [ ] RampDirection validated (0-7 for Ramps only)
+- [ ] TerrainBits use canonical layout v2
 - [ ] Cost normalization applied (0-255 → 0-999)
 - [ ] Opacity normalization applied (0-255 → 0-100)
 

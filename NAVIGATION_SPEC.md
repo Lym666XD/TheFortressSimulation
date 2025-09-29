@@ -1,308 +1,171 @@
 id: navigation.v1
 status: normative
 owner: sim/navigation
-last_updated: 2025-09-15
-applies_to:
-  - Nav caches (NavMask/NavCost), connectivity versioning
-  - Pathfinding service (requests, caching, A* search, tie-breakers)
-  - Movement execution (walk/ramps/stairs/fluids/doors) contracts
-  - Debug & visualization overlays (non-normative guidance)
-principles:
-  - Deterministic across OS/thread counts (stable orders, no wall-clock)
-  - Read-parallel / write-serialized cooperation with UPDATE_ORDER
-  - Cache-friendly hot data, sparse cold data
-1) Goals & Non-Goals
+last_updated: 2025-09-29
+
+# Navigation Spec (Fortress Map)
+
+This specification defines the fortress navigation model: data layout, ramp/stairs semantics, cost model, pathfinding API, and tuning. It is UTF‑8 encoded and supersedes older non‑UTF8 drafts.
+
+The implementation is deterministic across OS/thread counts and cooperates with the fixed UPDATE_ORDER (read‑parallel, write‑serialized).
+
+## 1) Goals & Non‑Goals
+
 Goals
+- Deterministic, grid‑based pathfinding on a single fortress map (32×32 tiles per chunk, multiple Z levels).
+- Clear, data‑driven passability and cost semantics derived from the L0..L7 tile stack.
+- Fast cache lookups via per‑chunk derived arrays with versioning.
 
-Single-map fortress navigation with deterministic results for identical inputs.
+Non‑Goals (v1)
+- Any‑angle/continuous navigation.
+- Global region graphs (may be added later as a layer on top).
 
-Clear passability semantics from the L0–L7 tile stack (terrain→meta). 
-TILE_LAYERS
+## 2) Data Model (Authoritative)
 
-
-Cache-friendly lookups via per-chunk NavMask[] and NavCost[], invalidated by ConnectivityVersion. 
-DATA_LAYOUT
-
-
-Non-Goals (v1)
-
-Any-angle/continuous navigation (grid only).
-
-Complex dynamic avoidance (execution does local yielding; pathing is quasi-static).
-
-Global region graph (optional P1; v1 uses chunk-local caches + cheap checks).
-
-2) Data Model (Authoritative)
 Each chunk (32×32) maintains derived navigation caches rebuilt during RebuildDerived (commit phase):
 
-NavMask[idx] : byte/ushort �?capability bits (Walk/Crawl/Swim/Fly/Standable/EdgeClimb, etc.).
+- `NavMask[idx] : byte` – capability bits (Walk/Crawl/Swim/Fly/Standable/vertical links flags, etc.).
+- `NavCost[idx] : ushort` – movement cost baseline including fluids/surface/traffic/doors.
+- `UpRampMask[idx] : byte` – per‑ramp base ascend mask (bits 0..7 map to N..NW). 0 means no ramp ascend.
+- `DownRampDir[idx] : byte` – for standable top tiles, 0..7 if a matching ramp exists below; 255 means none.
+- `ConnectivityVersion : int` – bump when topology‑relevant data changes; consumers invalidate caches by version.
 
-NavCost[idx] : ushort �?movement cost baseline including fluids/surface/traffic.
+Rebuild triggers: L0/L2 edits; L3 fluid thresholds crossed; L7 traffic changes; never from renderer.
 
-ConnectivityVersion : int �?bump when topology-relevant data changes; consumers invalidate caches by version. 
-DATA_LAYOUT
+## 3) Passability Semantics (L0→L7 precedence)
 
- 
-UPDATE_ORDER
+Evaluation order is deterministic: L0/L2 → L3 → L4 → L5/L6. Earlier blockers preempt later layers.
 
+### 3.1 Capability Bits (example layout)
 
-When rebuilt: after L0/L2 edits; after L3 depth/kind if thresholds crossed; after L4 opacity (LOS only) or L7 traffic changes; never from the renderer. 
-DATA_LAYOUT
-
-
-3) Passability Semantics (L0→L7 precedence)
-When computing passability and cost, layers are consulted in this order (deterministic): L0/L2 �?L3 �?L4 �?L5/L6. Hard blockers in earlier layers preempt later ones. 
-TILE_LAYERS
-
-
-3.1 Capabilities (bit layout)
-NavMask packs capability bits (exact enum is binding for v1):
-
-cpp
-Copy code
-bit0 Walk        // 4-neighbor planar motion
+```
+bit0 Walk        // planar motion
 bit1 Crawl       // reserved (tight tunnels)
-bit2 Swim        // allow motion when FluidDepth >= threshold
-bit3 Fly         // airborne (ignores many L0/L2 tests)
-bit4 Standable   // valid “stop�?tile for walkers
-bit5 EdgeClimb   // ladders/rope (treated as vertical neighbor)
-bits6..15 Reserved
-A door closed acts as L2 Blocker (no Walk); open contributes Walk with extra cost. Buildables supply these flags via L2 furniture metadata.
+bit2 Swim        // fluid tolerance
+bit3 Fly         // airborne
+bit4 Standable   // valid stop for walkers
+bit5 EdgeClimb   // ladders/rope (vertical)
+bit6 HasRampUp   // derived: this cell can ascend to z+1 via ramp (any direction)
+bit7 HasRampDown // derived: this cell can descend to z-1 via ramp behind
+```
 
-3.2 Walk / Standable
-A cell is Walk if:
+Doors: closed → L2 blocker; open → contributes Walk with a cost delta.
 
-L0 is OpenWithFloor or Stairs*, and no L2 Blocker with BlocksMove, and (if FluidDepth > shallow_threshold) the actor either has Swim or the fluid policy permits wading.
-Standable is Walk plus “not a ramp down edge unless coming from proper direction�?
+### 3.2 Walk / Standable
 
-3.3 Ramps & Stairs (vertical neighbors)
-Ramp: Walk from (x,y,z) to (x+dx,y+dy,z+dz) when RampDir matches and target is OpenWithFloor (or stair top).
+Walk if L0 is `OpenWithFloor` or `Stairs*`, no L2 hard blocker, and fluid rules allow it. Standable is Walk plus “not a down‑ramp unless approaching from the proper direction”.
 
-StairsUp/Down/UD: add vertical neighbors accordingly.
+### 3.3 Ramps & Stairs — DF‑Style Vertical Alignment
 
-Vertical steps use dedicated edge costs (see §4.3).
+Ramp geometry follows DF‑style vertical alignment (see NAVIGATION_RAMP_ADDENDUM.md):
 
-3.4 Fluids (L3)
-Single dominant fluid per tile, depth 0..7. Depth contributes to cost or blocks if above actor tolerance. 
-TILE_LAYERS
+- The ramp resides at `(x,y,z)`.
+- The cell directly above `(x,y,z+1)` is `OpenNoFloor` (empty space). No slope geometry is placed at z+1.
+- Standable top tiles are the 8 neighbors at z+1: `(x+dx, y+dy, z+1)`, where `(dx,dy)` ∈ {N,NE,E,SE,S,SW,W,NW}.
+- Allowed ascend directions are derived into `UpRampMask[idx]` (bits 0..7) during RebuildDerived using:
+  1) Target `(x+dx,y+dy,z+1)` must be Standable (floor or stair top);
+  2) Top space `(x,y,z+1)` must be `OpenNoFloor`;
+  3) High‑side support (tunable): tile `(x+dx,y+dy,z)` should provide support when enabled;
+  4) Diagonal corner rule (tunable): when diagonals are allowed, at least one adjacent orthogonal at z+1 must also be Standable.
 
+Neighbor expansion uses `UpRampMask` to add vertical neighbors (ramp base → top). Descend from a top tile to the ramp base may be mirrored via a cached `DownRampDir` or validated at runtime by checking the ramp below/behind.
 
-3.5 Fields (L4)
-Do not block walk; may add hazard cost (smoke/miasma/fire) read from tuning. (LOS handled elsewhere.)
+StairsUp/Down/UD: add vertical neighbors as usual.
 
-3.6 Items (L5) & Units (L6)
-Items never block unless item prototype sets BulkyBlocksMove.
+## 4) Cost Model (Normative)
 
-Units are runtime occupiers; pathing treats them as passable (execution handles yielding). 
-TILE_LAYERS
+### 4.1 Base Cost (per‑tile)
 
+`NavCost[idx] = Base + TrafficAdj + FluidAdj + SurfaceAdj + DoorAdj`
 
-4) Cost Model (Normative)
-4.1 Base cost
-NavCost[idx] is precomputed:
+All constants come from `/content/registries/tuning.navigation.json`.
 
-cpp
-Copy code
-NavCost = Base10
-        + TrafficAdj(Meta.TrafficMask)             // L7
-        + FluidAdj(FluidKind, FluidDepth)          // L3
-        + SurfaceAdj(SurfaceBits)                  // L1
-        + DoorAdj(L2 door state)                   // L2
-TrafficAdj: Normal=0, Low=-2, High=+2, Restricted=+8 (clamped �?).
+### 4.2 Actor Modulation (optional)
 
-All constants come from /content/registries/tuning.navigation.json (data-driven).
+At search time engines may multiply step costs by an actor move multiplier (encumbrance/speed). This spec does not mandate actor fields; implementations must remain deterministic.
 
-4.2 Actor-specific modulation
-At search time, per-actor encumbrance/speed multiplies step costs:
+### 4.3 Edge Weights
 
-ini
-Copy code
-StepCost = EdgeWeight * (NavCost[start] + NavCost[dest]) / 2 * Actor.MoveMultiplier
-MoveMultiplier = 1 + EncumbranceK * Encumbrance (encumbrance from equipment spec), clamped. (Damage/needs modifiers may alter this later.)
+- Orthogonal step weight = 10
+- Diagonal (if enabled) = 14 (≈ √2×10)
+- Ramp adds `+RAMP_DELTA` to the chosen edge weight (orthogonal/diagonal) for vertical motion
+- Stairs add `+STAIR_DELTA` (direction‑agnostic)
 
-4.3 Edge weights
-Orthogonal step weight = 10.
+Implementation note: engines may use fixed‑point scaling internally (e.g., ×10) to increase granularity while keeping integer tunables. Public semantics remain as above.
 
-Diagonal (if enabled) = 14 (approx �?*10).
+Default is 4‑neighbor; `allow_diagonals=true` enables 8‑neighbor with a corner rule per tuning.
 
-Ramp adds +RAMP_DELTA to cost when moving between Z.
+## 5) Pathfinding Service
 
-Stairs uses +STAIR_DELTA and ignores ramp direction.
+### 5.1 Deterministic A*
 
-Default v1 uses 4-neighbor (no diagonals). A tuning flag allow_diagonals enables 8-neighbor with no corner-cutting (both adjacent orthos must be Walk).
+Use Manhattan/Octile heuristic; open set keyed by `(f,h,g,localIdx)` with stable tie‑breakers:
+1) smaller `f=g+h`, 2) smaller `h`, 3) smaller `g`, 4) smaller `LocalIndex` (row‑major 0..1023).
 
-5) Pathfinding Service
-5.1 Deterministic A* (binding)
-A* over the grid using Manhattan heuristic for 4-neighbor or octile for 8-neighbor; never admissible violations.
+Node/time budgets enforce fail‑soft behavior (return `Partial` with best frontier when limits are hit). All iteration orders are deterministic.
 
-Tie-breakers (stable):
+### 5.2 Connectivity & Cache
 
-Smaller f = g + h
+Caches are chunk‑local. `ConnectivityVersion` bumps invalidate path cache entries that include those chunks. Region labeling can be added later; v1 relies on A* with caps.
 
-Smaller h
+## 6) API (Normative)
 
-Smaller g
-
-Smaller LocalIndex (row-major; 0..1023)
-
-Open set is a binary heap keyed by (f,h,g,idx) in that order; no HashSet iteration dependence. The service runs in the read phase and consumes NavMask/NavCost only. Architectural path/caching integration matches the prior diagrams. 
-GAME_ARCHITECTURE
-
- 
-GAME_ARCHITECTURE
-
-
-5.2 Node limits & fail-soft
-Hard cap max_nodes_per_search. If exceeded, return Partial with the best frontier node (lowest f), plus a reason NodeCapHit. Job/AI can step toward frontier and re-issue next tick.
-
-Time budget per tick: max_ms_per_tick_pathing; the service processes requests FIFO until the budget is exhausted; remaining requests roll to next tick (determinism preserved by stable queue order).
-
-5.3 Connectivity quick-reject
-If source and goal chunks differ in ConnectivityVersion history during planning, the service falls back to A* (v1). P1 may add per-mode RegionId labeling to early-out “disconnected�?queries; for now, we rely on A* with closed-set size cap.
-
-5.4 API (normative)
-csharp
-Copy code
+```csharp
 public enum PathResultKind { Found, Partial, NoPath, Invalid }
 
 public readonly record struct PathRequest(
-  ChunkKey SrcCk, int SrcIdx,
-  ChunkKey DstCk, int DstIdx,
-  MoveMode Mode, PathFlags Flags, uint Seed);
+  Point3 Source,
+  Point3 Destination,
+  MoveMode Mode,
+  PathFlags Flags,
+  uint Seed);
+
+public readonly record struct PathNode(Point3 Position, ushort Cost);
 
 public readonly record struct Path(
-  PathResultKind Kind, int Length, uint Hash,
-  ReadOnlyMemory<(ChunkKey ck, int idx)> Steps);
+  PathResultKind Kind,
+  int Length,
+  uint TotalCost,   // Fixed‑point total if engine uses scaling; otherwise 0
+  uint Hash,
+  ReadOnlyMemory<PathNode> Steps);
 
 public interface IPathService {
-  Path Solve(in PathRequest req, in WorldSnapshot snap); // sync in read-phase
+  Path Solve(in PathRequest req, in IWorldNavigationView world); // sync in read‑phase
+  void BeginTick();
+  void ProcessQueuedRequests(IWorldNavigationView world);
 }
-MoveMode: Walk/Crawl/Swim/Fly.
+```
 
-Flags: AvoidHazard, PreferRoad (traffic Low), AllowDoors, etc.
+`IWorldNavigationView` exposes read‑only queries for `IsValid`, `GetCapabilities`, `GetCost`, `HasStairsUp/Down`, `TryGetUpRampMask`, `TryGetDownRampDirection`, and `GetConnectivityVersion`.
 
-Hash helps cache & determinism CI.
+## 7) Tuning (Data‑Driven)
 
-Cache: LRU keyed by (srcCk,srcIdx,dstCk,dstIdx,mode,flags,ConnVerHash); invalid on any involved chunk version bump. (Cache wiring shown in architecture docs.) 
-GAME_ARCHITECTURE
+`/content/registries/tuning.navigation.json` (example):
 
-
-6) Neighbor Expansion (exact rules)
-Given (ck, idx):
-
-Produce 4 neighbors (N,E,S,W). If allow_diagonals, also produce (NE,SE,SW,NW) with no corner-cutting.
-
-For each neighbor:
-
-Read NavMask of destination; require Walk (or Swim if Mode=Swim) and Standable if the neighbor may be a stop.
-
-If ramp edge, validate RampDir.
-
-If stairs, add vertical neighbor(s) and apply stair cost.
-
-If door and Flags.AllowDoors, accept with DoorAdj; otherwise treat as blocker.
-
-Reject if FluidDepth exceeds actor tolerance and mode is not Swim.
-
-All reads are from chunk-local caches (no overlay traversal on the hot path). Derived caches are built earlier in the update order. 
-UPDATE_ORDER
-
-
-7) Execution & Replanning
-Movement execution samples the next 1�? steps from the path each tick.
-
-If execution detects mask change (ConnectivityVersion bump on any step): mark path stale, request replan.
-
-If blocked by units (L6), execution uses local yielding / brief wait; path is not recomputed unless stale for topology reasons.
-
-The AI/job flow already includes “Replan Path�?on block/timeout. 
-GAME_ARCHITECTURE
-
-
-8) LOD Cooperation (hard rule)
-Path solving is intended for active (L0/L1) zones.
-
-If source or destination chunk is L2+, either:
-(a) the caller asks the LOD service to Pin/Promote the target chunks first, or
-(b) the path service returns Invalid with reason TargetZoneSleeping.
-This mirrors the director/incident LOD cooperation and avoids heavy work in sleeping zones. 
-DIRECTOR_SPEC
-
-
-9) Serialization & Save
-NavMask/NavCost and any in-memory path caches are derived and not serialized; rebuild after load.
-
-The only persisted inputs are the tile stack and designations; commit sweep after load rebuilds Derived and Snapshot. 
-DATA_LAYOUT
-
- 
-MAPGEN_X_TILES
-
-
-10) Tuning (data-driven)
-/content/registries/tuning.navigation.json (example)
-
-json
-Copy code
+```json
 {
-  "allow_diagonals": false,
-  "orth_cost": 10,
-  "diag_cost": 14,
-  "ramp_delta": 6,
-  "stair_delta": 8,
-  "fluid": { "shallow": 1, "deep_block_threshold": 6, "wade_cost": 6, "swim_cost": 18 },
+  "allow_diagonals": true,
+  "ramp_vertical_alignment_mode": "df",
+  "ramp_requires_highside_support": true,
+  "diagonal_rules": { "corner_check": true },
+  "cost": { "base": 10, "orthogonal": 10, "diagonal": 14, "ramp_delta": 6, "stair_delta": 8 },
+  "fluids": { "shallow_threshold": 1, "deep_threshold": 6, "wade_cost": 6, "swim_cost": 18 },
   "traffic": { "low": -2, "normal": 0, "high": 2, "restricted": 8 },
-  "doors": { "open_extra": 4, "closed_blocks": true },
-  "hazard_weights": { "smoke": 2, "miasma": 4, "flame": 12 },
-  "max_nodes_per_search": 10000,
-  "max_ms_per_tick_pathing": 3
+  "doors": { "closed_blocks": true, "open_cost": 4 },
+  "budgets": { "max_nodes_per_search": 10000, "max_ms_per_tick_pathing": 3 },
+  "surface_cost": { "mud": 2, "snow": 3, "grass": 1, "moss": 1 }
 }
-11) Determinism & CI Gates
-Stable iteration orders, stable heap ordering, no dependence on dictionary order.
+```
 
-Repeated seeds & same world state �?identical path Hash.
+## 8) Debug & Visualization (Non‑Normative Guidance)
 
-Cross-thread parity: caches guarded only by ConnectivityVersion.
+- `MovementCost` overlay may display fixed‑point binned costs (e.g., ×10) for finer granularity.
+- `RampMask` overlay draws allowed ascend directions per ramp base (arrows for single direction, `*` for multiple).
+- `PathDisplay` overlay shows S/Path/G with step arrows; UI may also display `len` and total `cost` (scaled).
 
-CI scenario suite: walls toggling mid-run, floods raising depths, door spam; Found/Partial/NoPath hashes must match across runs. (Update order & barrier model is already specified.) 
-UPDATE_ORDER
+## 9) Determinism & LOD Cooperation
 
+- All reads happen in the read phase; no writes during path solving.
+- LOD service must Pin/Promote sleeping chunks before pathing across them (or return `Invalid`).
+- Replay gates in CI verify identical results across OS/CPU/thread counts for golden seeds.
 
-12) Tests (must-haves)
-Semantics: every L0/L2/L3 combination �?expected NavMask/NavCost.
-
-Ramps/Stairs: directed ramps accept only correct approach; stairs up/down behave as vertical neighbors.
-
-Fluids: shallow adds cost; deep blocks unless Swim; Swim uses swim_cost.
-
-Doors: closed blocks; open adds cost when allowed.
-
-A*: synthetic mazes verify node caps, tie-breakers, and determinism.
-
-Caching: version bump invalidates cache; no stale reuse.
-
-LOD: sleeping zones return Invalid unless pinned.
-
-13) Extension Points (v2)
-RegionId component labeling & global region graph for instant disconnect tests.
-
-Flow fields for repeated goals (stockpiles, main halls).
-
-Size-aware navigation (2×1 creatures), ladders/ropes as explicit edge records.
-
-Per-actor hazard sensitivity and threat maps from the Incident Director.
-
-Appendix A �?Where this hooks into the engine
-Data & caches live in chunk (NavMask/NavCost/ConnectivityVersion). 
-TILE_CSHARP_SKELETON
-
-
-RebuildDerived updates them during the commit pipeline. 
-UPDATE_ORDER
-
-
-Pathfinding sits in the AI/Job flow with request→cache→A*→result, as diagrammed in the architecture docs. 
-GAME_ARCHITECTURE
-
- 
-GAME_ARCHITECTURE

@@ -501,6 +501,487 @@
         "tradeable": true
       },
       "tags": ["ore", "precious", "valuable"]
+    },
+    {
+      "id": 32,
+      "name": "core_mat_stone_slate",
+      "aliases": ["slate"],
+      "category": "stone",
+      "display": {
+        "glyph": "█",
+        "foreground": "DarkGray"
+      },
+      "physical": {
+        "density": 2700,
+        "hardness": 5,
+        "toughness": 50,
+        "elasticity": 0.3,
+        "friction": 0.65
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 100,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "slate_boulder",
+            "min": 1,
+            "max": 1,
+            "probability": 0.8
+          }
+        ]
+      },
+      "tags": ["stone", "metamorphic", "layered"]
+    },
+    {
+      "id": 33,
+      "name": "core_mat_stone_quartzite",
+      "aliases": ["quartzite"],
+      "category": "stone",
+      "display": {
+        "glyph": "█",
+        "foreground": "White"
+      },
+      "physical": {
+        "density": 2650,
+        "hardness": 7.5,
+        "toughness": 65,
+        "elasticity": 0.35,
+        "friction": 0.7
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 130,
+        "toolRequired": "pick",
+        "minToolLevel": 1,
+        "yields": [
+          {
+            "material": "quartzite_boulder",
+            "min": 1,
+            "max": 1,
+            "probability": 0.8
+          }
+        ]
+      },
+      "tags": ["stone", "metamorphic", "hard"]
+    },
+    {
+      "id": 34,
+      "name": "core_mat_stone_gneiss",
+      "aliases": ["gneiss"],
+      "category": "stone",
+      "display": {
+        "glyph": "█",
+        "foreground": "Gray"
+      },
+      "physical": {
+        "density": 2800,
+        "hardness": 6.5,
+        "toughness": 58,
+        "elasticity": 0.32,
+        "friction": 0.68
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 115,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "gneiss_boulder",
+            "min": 1,
+            "max": 1,
+            "probability": 0.8
+          }
+        ]
+      },
+      "tags": ["stone", "metamorphic", "banded"]
+    },
+    {
+      "id": 35,
+      "name": "core_mat_stone_obsidian",
+      "aliases": ["obsidian"],
+      "category": "stone",
+      "display": {
+        "glyph": "█",
+        "foreground": "Black"
+      },
+      "physical": {
+        "density": 2400,
+        "hardness": 5.5,
+        "toughness": 20,
+        "elasticity": 0.1,
+        "friction": 0.6
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 1
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 90,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "obsidian_shard",
+            "min": 2,
+            "max": 4,
+            "probability": 0.9
+          }
+        ]
+      },
+      "tags": ["stone", "igneous", "volcanic", "glass"]
+    },
+    {
+      "id": 36,
+      "name": "core_mat_ore_chalk",
+      "aliases": ["chalk"],
+      "category": "ore",
+      "display": {
+        "glyph": "∙",
+        "foreground": "White"
+      },
+      "physical": {
+        "density": 2300,
+        "hardness": 3,
+        "toughness": 30,
+        "elasticity": 0.2,
+        "friction": 0.5
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 60,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "chalk_powder",
+            "min": 2,
+            "max": 5,
+            "probability": 0.9
+          }
+        ]
+      },
+      "tags": ["ore", "sedimentary", "flux", "soft"]
+    },
+    {
+      "id": 37,
+      "name": "core_mat_ore_dolomite",
+      "aliases": ["dolomite"],
+      "category": "ore",
+      "display": {
+        "glyph": "¤",
+        "foreground": "LightGray"
+      },
+      "physical": {
+        "density": 2850,
+        "hardness": 4,
+        "toughness": 45,
+        "elasticity": 0.28,
+        "friction": 0.65
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 100,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "dolomite_chunk",
+            "min": 1,
+            "max": 3,
+            "probability": 0.8
+          }
+        ]
+      },
+      "tags": ["ore", "sedimentary", "flux"]
+    },
+    {
+      "id": 38,
+      "name": "core_mat_ore_coal",
+      "aliases": ["coal"],
+      "category": "ore",
+      "display": {
+        "glyph": "◊",
+        "foreground": "Black"
+      },
+      "physical": {
+        "density": 1400,
+        "hardness": 2.5,
+        "toughness": 25,
+        "elasticity": 0.15,
+        "friction": 0.45
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 80,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "coal_chunk",
+            "min": 2,
+            "max": 4,
+            "probability": 0.9
+          }
+        ]
+      },
+      "tags": ["ore", "fuel", "carbon"]
+    },
+    {
+      "id": 39,
+      "name": "core_mat_ore_graphite",
+      "aliases": ["graphite"],
+      "category": "ore",
+      "display": {
+        "glyph": "◊",
+        "foreground": "DarkGray"
+      },
+      "physical": {
+        "density": 2200,
+        "hardness": 2,
+        "toughness": 20,
+        "elasticity": 0.1,
+        "friction": 0.2
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 70,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "graphite_chunk",
+            "min": 1,
+            "max": 3,
+            "probability": 0.85
+          }
+        ]
+      },
+      "tags": ["ore", "carbon", "conductor"]
+    },
+    {
+      "id": 40,
+      "name": "core_mat_ore_gypsum",
+      "aliases": ["gypsum"],
+      "category": "ore",
+      "display": {
+        "glyph": "∙",
+        "foreground": "LightGray"
+      },
+      "physical": {
+        "density": 2320,
+        "hardness": 2,
+        "toughness": 28,
+        "elasticity": 0.18,
+        "friction": 0.48
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 65,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "gypsum_powder",
+            "min": 2,
+            "max": 4,
+            "probability": 0.85
+          }
+        ]
+      },
+      "tags": ["ore", "mineral", "ceramic", "soft"]
+    },
+    {
+      "id": 41,
+      "name": "core_mat_ore_talc",
+      "aliases": ["talc"],
+      "category": "ore",
+      "display": {
+        "glyph": "∙",
+        "foreground": "Green"
+      },
+      "physical": {
+        "density": 2750,
+        "hardness": 1,
+        "toughness": 15,
+        "elasticity": 0.08,
+        "friction": 0.3
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 40,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "talc_powder",
+            "min": 3,
+            "max": 6,
+            "probability": 0.95
+          }
+        ]
+      },
+      "tags": ["ore", "mineral", "soft", "lubricant"]
+    },
+    {
+      "id": 42,
+      "name": "core_mat_ore_kaolinite",
+      "aliases": ["kaolinite", "kaolin"],
+      "category": "ore",
+      "display": {
+        "glyph": "∙",
+        "foreground": "White"
+      },
+      "physical": {
+        "density": 2600,
+        "hardness": 2.5,
+        "toughness": 32,
+        "elasticity": 0.22,
+        "friction": 0.52
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 70,
+        "toolRequired": null,
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "kaolin_clay",
+            "min": 2,
+            "max": 5,
+            "probability": 0.9
+          }
+        ]
+      },
+      "tags": ["ore", "mineral", "ceramic", "clay"]
+    },
+    {
+      "id": 43,
+      "name": "core_mat_ore_feldspar",
+      "aliases": ["feldspar"],
+      "category": "ore",
+      "display": {
+        "glyph": "¤",
+        "foreground": "Pink"
+      },
+      "physical": {
+        "density": 2550,
+        "hardness": 6,
+        "toughness": 48,
+        "elasticity": 0.3,
+        "friction": 0.62
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 95,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "feldspar_chunk",
+            "min": 1,
+            "max": 3,
+            "probability": 0.8
+          }
+        ]
+      },
+      "tags": ["ore", "mineral", "ceramic", "glass"]
+    },
+    {
+      "id": 44,
+      "name": "core_mat_ore_quartz",
+      "aliases": ["quartz"],
+      "category": "ore",
+      "display": {
+        "glyph": "♦",
+        "foreground": "Cyan"
+      },
+      "physical": {
+        "density": 2650,
+        "hardness": 7,
+        "toughness": 55,
+        "elasticity": 0.33,
+        "friction": 0.68
+      },
+      "navigation": {
+        "moveCostModifier": 0,
+        "frictionModifier": 0,
+        "hazardLevel": 0
+      },
+      "mining": {
+        "mineable": true,
+        "diggingTime": 110,
+        "toolRequired": "pick",
+        "minToolLevel": 0,
+        "yields": [
+          {
+            "material": "quartz_crystal",
+            "min": 1,
+            "max": 3,
+            "probability": 0.75
+          }
+        ]
+      },
+      "tags": ["ore", "mineral", "glass", "crystal"]
     }
   ]
 }

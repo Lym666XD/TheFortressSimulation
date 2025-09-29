@@ -7,6 +7,7 @@ This addendum refines ramp semantics to match DF-style vertical alignment while 
 - Ramp resides at (x, y, z).
 - The cell directly above (x, y, z+1) remains `OpenNoFloor` (empty space). No separate "slope top" geometry is placed.
 - Standable top tiles are the 8 neighbors at z+1: `(x+dx, y+dy, z+1)`.
+- Generation note: ramp detection/injection considers all 8 neighbors (N,NE,E,SE,S,SW,W,NW) when stamping the ramp base; the cell above the base is forced to `OpenNoFloor` to satisfy vertical alignment.
 
 ## Ascend/Descend Rules
 
@@ -38,7 +39,11 @@ Do not encode ramp direction or mask in TerrainBits. Instead, the per-chunk navi
 - `diagonal_rules: { corner_check: true }`
 - `surface_cost: { mud: 2, snow: 3, grass: 1, moss: 1 }`
 
+## Debug Overlays (Implementation Guidance)
+
+- `MovementCost` overlay may present fixed-point binned costs (e.g., ×10) for finer visual granularity while keeping integer tunables.
+- `RampMask` overlay draws allowed ascend directions per ramp base (arrows for single-direction, `*` for multiple).
+
 ## Rendering
 
 The renderer may show a visual slope indicator on the standable tiles at z+1 for readability. This indication is purely visual and does not affect pathfinding.
-

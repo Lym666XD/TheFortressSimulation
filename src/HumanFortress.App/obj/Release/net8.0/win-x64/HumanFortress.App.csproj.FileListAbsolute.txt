@@ -40,7 +40,6 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\geology.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\geology_prototypes.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\input.bindings.json
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\items.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\materials.authoring.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\materials.registry.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\stockpiles.json
@@ -239,3 +238,5 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\mscordbi.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\mscorrc.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\msquic.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\stockpile_presets.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\tuning.stockpile.json

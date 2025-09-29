@@ -30,7 +30,11 @@
       "Bash(mv:*)",
       "Bash(python:*)",
       "Bash(del nul)",
-      "Bash(paste:*)"
+      "Bash(paste:*)",
+      "Bash(del \"C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Core\\Commands\\StockpileCommands.cs\")",
+      "Bash(del \"src\\HumanFortress.Core\\Commands\\StockpileCommands.cs\")",
+      "Bash(del \"C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\data\\core\\items\\ingots.json\")",
+      "Bash(del \"data\\core\\items\\ingots.json\")"
     ],
     "deny": [],
     "ask": []

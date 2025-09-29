@@ -1,0 +1,212 @@
+[
+  {
+    "id": "core_item_gem_diamond_raw",
+    "name": "Raw Diamond",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "diamond", "raw"],
+    "fixed_material": "core_mat_gem_diamond",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_diamond_cut",
+    "name": "Cut Diamond",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "diamond", "cut"],
+    "fixed_material": "core_mat_gem_diamond",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_ruby_raw",
+    "name": "Raw Ruby",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "ruby", "raw"],
+    "fixed_material": "core_mat_gem_ruby",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_ruby_cut",
+    "name": "Cut Ruby",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "ruby", "cut"],
+    "fixed_material": "core_mat_gem_ruby",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_emerald_raw",
+    "name": "Raw Emerald",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "emerald", "raw"],
+    "fixed_material": "core_mat_gem_emerald",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_emerald_cut",
+    "name": "Cut Emerald",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "emerald", "cut"],
+    "fixed_material": "core_mat_gem_emerald",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_sapphire_raw",
+    "name": "Raw Sapphire",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "sapphire", "raw"],
+    "fixed_material": "core_mat_gem_sapphire",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_sapphire_cut",
+    "name": "Cut Sapphire",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "sapphire", "cut"],
+    "fixed_material": "core_mat_gem_sapphire",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_opal_raw",
+    "name": "Raw Opal",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "opal", "raw"],
+    "fixed_material": "core_mat_gem_opal",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_opal_cut",
+    "name": "Cut Opal",
+    "kind": "RESOURCE",
+    "tags": ["gem", "precious", "opal", "cut"],
+    "fixed_material": "core_mat_gem_opal",
+    "base_mass_g": 1,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_amethyst_raw",
+    "name": "Raw Amethyst",
+    "kind": "RESOURCE",
+    "tags": ["gem", "semiprecious", "amethyst", "raw"],
+    "fixed_material": "core_mat_gem_amethyst",
+    "base_mass_g": 2,
+    "base_volume_ml": 2,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_amethyst_cut",
+    "name": "Cut Amethyst",
+    "kind": "RESOURCE",
+    "tags": ["gem", "semiprecious", "amethyst", "cut"],
+    "fixed_material": "core_mat_gem_amethyst",
+    "base_mass_g": 2,
+    "base_volume_ml": 2,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_topaz_raw",
+    "name": "Raw Topaz",
+    "kind": "RESOURCE",
+    "tags": ["gem", "semiprecious", "topaz", "raw"],
+    "fixed_material": "core_mat_gem_topaz",
+    "base_mass_g": 2,
+    "base_volume_ml": 2,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_gem_topaz_cut",
+    "name": "Cut Topaz",
+    "kind": "RESOURCE",
+    "tags": ["gem", "semiprecious", "topaz", "cut"],
+    "fixed_material": "core_mat_gem_topaz",
+    "base_mass_g": 2,
+    "base_volume_ml": 2,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["quality"]
+    }
+  }
+]

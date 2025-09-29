@@ -43,17 +43,6 @@
             Base cost + traffic + fluid + surface adjustments.
             </summary>
         </member>
-        <member name="P:HumanFortress.Navigation.ChunkNavData.UpRampDir">
-            <summary>
-            Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
-            Deprecated in favor of UpRampMask but kept for back-compat.
-            </summary>
-        </member>
-        <member name="P:HumanFortress.Navigation.ChunkNavData.DownRampDir">
-            <summary>
-            Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
-            </summary>
-        </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.UpRampMask">
             <summary>
             Per-tile mask of allowed ascend directions for ramps.

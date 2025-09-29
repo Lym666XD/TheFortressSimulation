@@ -8,12 +8,14 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\materials.authoring.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\materials.registry.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\stockpiles.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\stockpile_presets.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\terrain_kinds.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.cavern.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.damage.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.mapgen.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.navigation.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.ore.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.stockpile.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\registries\tuning.tile.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\schemas\aliases.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content\schemas\biome_template.schema.json

@@ -1,4 +1,5 @@
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Stockpile;
 
 namespace HumanFortress.Simulation.World;
 
@@ -16,6 +17,7 @@ public sealed class Chunk
     private readonly Dictionary<int, List<FieldCell>> _fields;
     private readonly Dictionary<int, List<ItemStackRef>> _items;
     private readonly object _writeLock = new();
+    private ChunkStockpileData? _stockpileData;
 
     public ChunkKey Key { get; }
     public int LODLevel { get; set; }
@@ -29,6 +31,7 @@ public sealed class Chunk
         _furniture = new Dictionary<int, FurnitureCell>();
         _fields = new Dictionary<int, List<FieldCell>>();
         _items = new Dictionary<int, List<ItemStackRef>>();
+        _stockpileData = new ChunkStockpileData();
         LODLevel = 0;
     }
 
@@ -129,6 +132,25 @@ public sealed class Chunk
     public static (int x, int y) IndexToLocal(int index)
     {
         return (index % SIZE_XY, index / SIZE_XY);
+    }
+
+    /// <summary>
+    /// Get stockpile data for this chunk. Thread-safe for reads.
+    /// </summary>
+    public ChunkStockpileData? GetStockpileData()
+    {
+        return _stockpileData;
+    }
+
+    /// <summary>
+    /// Initialize stockpile data if not present. Write phase only.
+    /// </summary>
+    public void EnsureStockpileData()
+    {
+        lock (_writeLock)
+        {
+            _stockpileData ??= new ChunkStockpileData();
+        }
     }
 }
 

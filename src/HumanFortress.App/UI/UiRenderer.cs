@@ -1,6 +1,8 @@
 using SadConsole;
 using SadRogue.Primitives;
 using HumanFortress.App;
+using HumanFortress.Simulation.Stockpile;
+using System.Linq;
 
 namespace HumanFortress.App.UI;
 
@@ -78,7 +80,7 @@ namespace HumanFortress.App.UI;
         }
 
     // Draw bottom drawer placeholder
-    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick)
+    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick, StockpileManager? stockpileManager = null)
     {
         if (ui.OpenDrawer == DrawerId.None) return;
         var surf = mapSurface.Surface;
@@ -109,8 +111,16 @@ namespace HumanFortress.App.UI;
         };
         surf.Print(1, y0, $"== {title} ==", Color.Yellow);
 
-        // tabs (three stub tabs)
-        string[] tabs = new[] { "Tab 1", "Tab 2", "Tab 3" };
+        // 为Stock面板自定义tabs
+        string[] tabs;
+        if (ui.OpenDrawer == DrawerId.Stock)
+        {
+            tabs = new[] { "Items", "Stockpiles", "Trade" };
+        }
+        else
+        {
+            tabs = new[] { "Tab 1", "Tab 2", "Tab 3" };
+        }
         int tx = 24;
         for (int i = 0; i < tabs.Length; i++)
         {
@@ -121,8 +131,16 @@ namespace HumanFortress.App.UI;
             tx += 1;
         }
 
-        // content placeholder
-        surf.Print(2, y0 + 2, "(Content coming soon)", Color.Gray);
+        // Stock面板的Stockpiles tab内容
+        if (ui.OpenDrawer == DrawerId.Stock && ui.DrawerTab == 1 && stockpileManager != null)
+        {
+            DrawStockpilesTab(surf, stockpileManager, y0 + 2);
+        }
+        else
+        {
+            // content placeholder
+            surf.Print(2, y0 + 2, "(Content coming soon)", Color.Gray);
+        }
     }
 
     // Draw quick menu (root only, minimal)
@@ -246,20 +264,124 @@ namespace HumanFortress.App.UI;
         // Title
         surf.Print(x0 + 2, y0, "DEBUG", Color.Cyan);
 
-        // Actions (left column)
-        surf.Print(x0 + 2, y0 + 2, "Spawn Dwarf (click)", Color.Yellow);
+        // Tab buttons
+        surf.Print(x0 + 20, y0, "[TAB] Switch", Color.Gray);
+        var tabColor0 = ui.DebugMenuTab == 0 ? Color.Yellow : Color.DarkGray;
+        var tabColor1 = ui.DebugMenuTab == 1 ? Color.Yellow : Color.DarkGray;
+        surf.Print(x0 + 35, y0, "[1] Creatures", tabColor0);
+        surf.Print(x0 + 50, y0, "[2] Items", tabColor1);
 
-        // Status and map info (two columns)
-        int col2 = x0 + Math.Max(24, width / 2);
+        // Left column - spawn options based on tab
+        if (ui.DebugMenuTab == 0) // Creatures tab
+        {
+            surf.Print(x0 + 2, y0 + 2, "Spawn Creature (click):", Color.Yellow);
+            surf.Print(x0 + 2, y0 + 3, "[D] Dwarf", ui.DebugSelectedCreature.Contains("dwarf") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 4, "[H] Human", ui.DebugSelectedCreature.Contains("human") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 5, "[G] Goblin", ui.DebugSelectedCreature.Contains("goblin") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 6, "[E] Elf", ui.DebugSelectedCreature.Contains("elf") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 7, "[O] Orc", ui.DebugSelectedCreature.Contains("orc") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 9, $"Selected: {GetCreatureName(ui.DebugSelectedCreature)}", Color.Cyan);
+        }
+        else // Items tab
+        {
+            surf.Print(x0 + 2, y0 + 2, "Spawn Item (click):", Color.Yellow);
+            surf.Print(x0 + 2, y0 + 3, "[1] Stone", ui.DebugSelectedItem.Contains("stone") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 4, "[2] Iron Ingot", ui.DebugSelectedItem.Contains("iron") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 5, "[3] Wood Log", ui.DebugSelectedItem.Contains("wood") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 6, "[4] Pickaxe", ui.DebugSelectedItem.Contains("pickaxe") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 7, "[5] Sword", ui.DebugSelectedItem.Contains("sword") ? Color.White : Color.DarkGray);
+            surf.Print(x0 + 2, y0 + 9, $"Selected: {GetItemName(ui.DebugSelectedItem)}", Color.Cyan);
+        }
+
+        // Click to spawn button
+        surf.Print(x0 + 2, y0 + 11, "[CLICK] Spawn at cursor", Color.Green);
+
+        // Status and map info (right column)
+        int col2 = x0 + Math.Max(35, width / 2);
         surf.Print(col2, y0 + 2, "Status:", Color.Yellow);
         surf.Print(col2, y0 + 3, "Simulation: Running", Color.Green);
         surf.Print(col2, y0 + 4, "TPS: 50", Color.Green);
 
-        surf.Print(x0 + 2, y0 + 4, $"Cursor: {cursor.X},{cursor.Y}", Color.White);
-        surf.Print(x0 + 2, y0 + 5, $"Z-Level: {currentZ}/49", Color.Cyan);
-        surf.Print(x0 + 2, y0 + 6, $"Zoom: {zoomLevel}x", Color.White);
-        surf.Print(x0 + 2, y0 + 7, $"Camera: {camera.X},{camera.Y}", Color.Gray);
-        surf.Print(col2, y0 + 6, $"Map: {fortressSize}x{fortressSize} chunks", Color.Gray);
+        surf.Print(col2, y0 + 6, $"Cursor: {cursor.X},{cursor.Y}", Color.White);
+        surf.Print(col2, y0 + 7, $"Z-Level: {currentZ}/49", Color.Cyan);
+        surf.Print(col2, y0 + 8, $"Zoom: {zoomLevel}x", Color.White);
+        surf.Print(col2, y0 + 9, $"Camera: {camera.X},{camera.Y}", Color.Gray);
+        surf.Print(col2, y0 + 10, $"Map: {fortressSize}x{fortressSize} chunks", Color.Gray);
+    }
+
+    private static string GetCreatureName(string id)
+    {
+        return id switch
+        {
+            "core_race_dwarf" => "Dwarf",
+            "core_race_human" => "Human",
+            "core_race_goblin" => "Goblin",
+            "core_race_elf" => "Elf",
+            "core_race_orc" => "Orc",
+            _ => "Unknown"
+        };
+    }
+
+    private static string GetItemName(string id)
+    {
+        return id switch
+        {
+            "core_item_stone_generic" => "Stone",
+            "core_item_ingot_iron" => "Iron Ingot",
+            "core_item_wood_log" => "Wood Log",
+            "core_tool_mining_pickaxe" => "Pickaxe",
+            "core_weapon_sword_short" => "Short Sword",
+            _ => "Unknown"
+        };
+    }
+
+    // Draw Stockpiles tab content
+    private static void DrawStockpilesTab(ICellSurface surf, StockpileManager stockpileManager, int startY)
+    {
+        var zones = stockpileManager.GetAllZones().ToList();
+
+        if (zones.Count == 0)
+        {
+            surf.Print(2, startY, "No stockpiles created yet.", Color.Gray);
+            surf.Print(2, startY + 2, "Press [X] -> [Z] -> [Z] to create a stockpile.", Color.DarkGray);
+            return;
+        }
+
+        surf.Print(2, startY, "Stockpile Zones:", Color.Yellow);
+
+        int y = startY + 2;
+        foreach (var zone in zones.Take(15)) // 最多显示15个
+        {
+            var priorityColor = zone.Priority switch
+            {
+                3 => Color.Red,
+                2 => Color.Orange,
+                1 => Color.Yellow,
+                _ => Color.Gray
+            };
+
+            surf.Print(2, y, $"#{zone.ZoneId} {zone.Name}", Color.White);
+            surf.Print(30, y, $"Pri:{zone.Priority}", priorityColor);
+            surf.Print(40, y, $"Chunks:{zone.MemberChunks.Count}", Color.Gray);
+
+            // 显示过滤器摘要
+            if (zone.Filter.Tags.Count > 0)
+            {
+                var tags = string.Join(", ", zone.Filter.Tags.Take(3));
+                surf.Print(50, y, tags, Color.DarkGray);
+            }
+            else
+            {
+                surf.Print(50, y, "All items", Color.DarkGray);
+            }
+
+            y++;
+        }
+
+        if (zones.Count > 15)
+        {
+            surf.Print(2, y, $"... and {zones.Count - 15} more", Color.DarkGray);
+        }
     }
 
     // Draw simple debug dwarf markers (overlay) on current z

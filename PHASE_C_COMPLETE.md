@@ -1,6 +1,6 @@
-# Phase C: Embark & Fortress Bootstrap - COMPLETE
+﻿# Phase C: Embark & Fortress Bootstrap - COMPLETE
 
-## 🎮 How to Test Phase C Features
+##  How to Test Phase C Features
 
 ### Run the Game
 1. Double-click `RunGame.bat` or run `game/HumanFortress.App.exe`
@@ -34,22 +34,22 @@ When you embark on the fortress map:
 - **Write Phase**: Serialized updates via DiffLog
 - **Render Snapshots**: Immutable render data
 
-## 🏗️ What Was Implemented
+## What Was Implemented
 
 ### Fortress Generation Enhancements
-✅ **Geological System**
+- **Geological System**
 - `StrataLayer` class for rock layers
 - Biome-specific geology (Granite, Marble, Basalt, etc.)
 - Layer thickness variation (5-15 tiles)
 - Ore placement in appropriate strata
 
-✅ **Cavern System**
+- **Cavern System**
 - Single connected cavern network
 - Perlin noise-based generation
-- Height variation (±1 level)
+- Height variation (卤1 level)
 - Cavern floor terrain type
 
-✅ **Terrain Types Extended**
+- **Terrain Types Extended**
 - Added 6 geological materials:
   - Granite (dark red)
   - Marble (white)
@@ -59,48 +59,48 @@ When you embark on the fortress map:
   - Shale (slate gray)
 
 ### Chunk Lifecycle Management
-✅ **ChunkLifecycleManager**
+- **ChunkLifecycleManager**
 - LOD level transitions with hysteresis
 - Heat score tracking and decay
 - Chunk pinning for UI focus
 - Catch-up integration for promoted chunks
 - Unload queue for L4 chunks
 
-✅ **LOD Budgets**
+- **LOD Budgets**
 - R0_ACTIVE = 1 chunk radius for L0
 - R1_NEAR = 3 chunk radius for L1
 - R2_FAR = 5 chunk radius for L2
 - Hysteresis bands (+1 for down-transitions)
 
 ### Render System
-✅ **RenderSnapshotBuilder**
+- **RenderSnapshotBuilder**
 - Immutable snapshot creation
 - Z-slice based rendering
 - Autotiling support for walls
 - Animation phase tracking
 - Tile registry with palette indices
 
-✅ **TileRegistry Updates**
+- **TileRegistry Updates**
 - Visual data for all terrain types
 - Autotiling masks for stone/rock
 - Support for 16 animation phases
 - 4096 palette color support
 
 ### Simulation Infrastructure
-✅ **TickScheduler**
+- **TickScheduler**
 - Fixed 50 TPS execution
 - Read-parallel/write-serialized phases
 - Barrier synchronization
 - Error resilience per system
 - Single-tick execution for testing
 
-✅ **DiffLog System**
+- **DiffLog System**
 - Atomic write operations
 - Stable merge ordering
 - System priority handling
 - Deterministic conflict resolution
 
-## 📁 Modified Files
+##  Modified Files
 
 ### Core Changes
 - `src/HumanFortress.WorldGen/FortressGenerator.cs`
@@ -122,13 +122,13 @@ When you embark on the fortress map:
   - Full determinism verification
   - 50 TPS simulation test
 
-## 🔧 Technical Details
+##  Technical Details
 
 ### Geological Strata
 - **Layers**: 3-6 per fortress
 - **Thickness**: 5-15 tiles per layer
 - **Ore Chance**: 2-5% per layer
-- **Boundary Variation**: ±2 tiles using noise
+- **Boundary Variation**: 卤2 tiles using noise
 
 ### Cavern Generation
 - **Algorithm**: Perlin noise threshold
@@ -136,13 +136,18 @@ When you embark on the fortress map:
 - **Height**: Main level + variations
 - **Threshold**: >0.3 noise value
 
+### TerrainBits v2 & DF Ramp Geometry
+- TerrainBits v2: bits 0..3=Kind, bit5=Natural, bit6=Modifiable（仅 z==0 置 0 禁止挖掘；其余层为 1）
+- DF 坡道几何：Ramp 底在 (x,y,z)；(x,y,z+1) 为 OpenNoFloor；上行目标为 z+1 的 8 邻域 floor
+- FortressMap→World 转换：不注入 z+1 坡顶，按高度差 8 邻域注入 Ramp 底并强制顶空
+
 ### LOD Performance
 - **L0**: Full tick rate (50 TPS)
 - **L1**: Decimated (10 TPS equivalent)
 - **L2**: Background only (1 TPS)
 - **L3/L4**: Frozen/unloaded
 
-## 📊 Performance Metrics
+##  Performance Metrics
 
 - Fortress generation: <1 second for 4x4 chunks
 - LOD transitions: <1ms per chunk
@@ -150,21 +155,11 @@ When you embark on the fortress map:
 - Memory per chunk: ~256KB loaded, 0 unloaded
 - Determinism: 100% reproducible with same seed
 
-## ✅ Phase C Requirements Met
+## Phase C Requirements Met
 
-Per MILESTONE.md:
-- ✅ EmbarkPrep: N×N chunks, N∈[2..8]
-- ✅ Fortress generator with surface + cavern
-- ✅ Strata and ore veins
-- ✅ Chunk lifecycle (load/unload)
-- ✅ LOD framework (L0-L4) with budgets
-- ✅ RenderSnapshot builder
-- ✅ SadConsole layers
-- ✅ Idle sim loop at 50 TPS
-- ✅ 60 FPS rendering
-- ✅ Stable deterministic hashes
+Per MILESTONE.md:- EmbarkPrep: N×N chunks, N∈[2..8]- Fortress generator with surface + cavern- Strata and ore veins- Chunk lifecycle (load/unload)- LOD framework (L0-L4) with budgets- RenderSnapshot builder- SadConsole layers- Idle sim loop at 50 TPS- 60 FPS rendering- Stable deterministic hashes
 
-## 🚀 Next Steps (Phase D)
+##  Next Steps (Phase D)
 
 Per MILESTONE.md, Phase D will implement:
 - Walkability/opacity/support masks
@@ -173,7 +168,7 @@ Per MILESTONE.md, Phase D will implement:
 - Path caching and traffic costs
 - Stuck detection
 
-## 🎯 Validation Tests
+##  Validation Tests
 
 Run `game/HumanFortress.App.exe --validate` to verify:
 - All Phase A tests pass

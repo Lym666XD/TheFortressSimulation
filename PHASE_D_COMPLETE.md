@@ -1,149 +1,116 @@
-# Phase D: Navigation & Connectivity - COMPLETE
+# Phase D: Navigation & Connectivity — COMPLETE
 
-## 🎮 What Was Implemented
+## What Was Implemented
 
-Phase D implements a complete deterministic pathfinding system following NAVIGATION_SPEC.md with:
+Deterministic pathfinding per NAVIGATION_SPEC:
 - Navigation masks and costs per chunk
 - ConnectivityVersion tracking
-- Deterministic A* pathfinder
-- Path caching with LRU
+- Deterministic A* solver
+- Path caching (LRU)
 - Movement execution with stuck detection
-- Support for 10+ concurrent pathfinders
+- 10+ concurrent pathfinders
 
-## 🏗️ Core Components
+## Core Components
 
-### 1. Navigation Data (Per Chunk)
-✅ **ChunkNavData**
-- `NavMask[]` - Capability bits (Walk/Swim/Fly/Standable/etc)
-- `NavCost[]` - Movement costs with traffic/fluid adjustments
-- `ConnectivityVersion` - Topology change tracking for cache invalidation
-- Rebuilt during RebuildDerived phase in UPDATE_ORDER
+### 1) Navigation Data (per chunk)
+- `NavMask[]` — capability bits（Walk/Swim/Fly/Standable；bit6/7 可作“有上/下坡连接”标记，不含方向）
+- `NavCost[]` — base + traffic + fluid + surface + doors
+- `UpRampMask[]` — DF 坡道上行 8 向掩码（N..NW）
+- `ConnectivityVersion` — topology change tracking（cache invalidation）
+- Rebuilt during RebuildDerived（commit phase）
 
-### 2. Deterministic A* Pathfinder
-✅ **DeterministicAStar**
-- Binary heap with exact tie-breakers: (f, h, g, localIndex)
-- Manhattan heuristic for 4-neighbor movement
-- Octile heuristic for 8-neighbor (when enabled)
-- Node expansion follows exact neighbor rules
-- Hard cap on nodes explored (10,000 default)
-- Time budget per tick (3ms default)
+### 2) Deterministic A*（FP + DF ramps）
+- Binary heap tie-breakers: (f, h, g, localIndex)
+- Heuristic: Manhattan / Octile（按是否允许对角）
+- 垂直邻居仅基于 UpRampMask 展开；下坡按对称规则运行时校验（检查后方下层 ramp base 的 UpRampMask）
+- Limits: node cap=10,000；time budget=3ms/tick
+- 成本为定点缩放（FP=10）：对角/正交边权 14/10，并叠加 RampDelta/StairDelta
 
-### 3. Path Service
-✅ **PathService**
-- Thread-safe for concurrent pathfinding
-- LRU cache with connectivity version tracking
-- Request queue with FIFO processing
-- Runs during read phase (parallel safe)
-- No writes to world state
+### 3) Path Service（缓存/预算）
+- Thread-safe；LRU 缓存键包含 connectivity versions
+- 每 tick 时间预算内按 FIFO 处理请求
+- Read phase 运行（只读 NavMask/NavCost/UpRampMask）
 
-### 4. Movement Execution
-✅ **MovementExecutor**
-- Tracks movement state per entity
-- Stuck detection with configurable thresholds
-- Local yielding for dynamic obstacles
-- Replanning on topology changes
-- Progress tracking
+### 4) Movement Execution
+- 移动状态管理、卡死检测、局部让路、拓扑变化重规划
 
-## 📁 Files Created
+## Files
 
-### Navigation Project
 ```
 src/HumanFortress.Navigation/
-├── NavCapability.cs          - Navigation capability flags
-├── MoveMode.cs               - Movement modes (Walk/Swim/Fly)
-├── PathFlags.cs              - Path request flags
-├── PathStructures.cs         - Core path data structures
-├── ChunkNavData.cs           - Per-chunk navigation data
-├── NavigationTuning.cs       - Tunable constants
-├── DeterministicAStar.cs     - A* implementation
-├── BinaryHeap.cs            - Deterministic priority queue
-├── IWorldNavigationView.cs   - World access interface
-├── PathService.cs           - Path service with caching
-├── PathCache.cs             - LRU path cache
-├── MovementExecutor.cs      - Movement execution system
-└── DESIGN.md               - System design document
+  NavCapability.cs  MoveMode.cs  PathFlags.cs  PathStructures.cs
+  ChunkNavData.cs   NavigationTuning.cs  DeterministicAStar.cs  BinaryHeap.cs
+  IWorldNavigationView.cs  PathService.cs  PathCache.cs  MovementExecutor.cs  DESIGN.md
 ```
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
-### Navigation Mask Building
-From tile layers (L0-L7):
-- L0 Terrain: Floor/wall/ramp/stairs
-- L2 Furniture: Doors/blockers
-- L3 Fluids: Depth-based walkability
-- L7 Meta: Traffic costs
+### Navigation Mask Building（L0..L7）
+- L0 Terrain（v2）：Floor/Wall/Ramp/Stairs（仅 Kind + Natural + Modifiable）
+- L2 Furniture：Doors/Blockers
+- L3 Fluids：Depth-based walkability
+- L7 Meta：Traffic 成本
 
-### Capability Bits (Per Tile)
+DF 坡道派生：
+- `(x,y,z)` 为 Ramp 底；`(x,y,z+1)` 强制 `OpenNoFloor`
+- `UpRampMask[idx]` = 目标可站立 + 顶空 +（可选）高侧支承 +（可选）对角 corner 规则
+- 下坡通过“后方下层 ramp base 的 UpRampMask 对称”校验
+
+### Capability Bits（per tile）
 ```
-bit0: Walk       - 4-neighbor planar motion
-bit1: Crawl      - Reserved for tight tunnels
-bit2: Swim       - Motion in deep fluids
-bit3: Fly        - Ignores ground obstacles
-bit4: Standable  - Valid stop position
-bit5: EdgeClimb  - Ladders/ropes
+bit0: Walk
+bit1: Crawl (reserved)   bit2: Swim   bit3: Fly
+bit4: Standable          bit5: EdgeClimb (reserved)
 ```
 
 ### Deterministic Ordering
-Tie-breakers ensure identical paths:
-1. Smaller f = g + h
-2. Smaller h (heuristic)
-3. Smaller g (cost from start)
-4. Smaller LocalIndex (0..1023)
+Tie-breakers: f → h → g → localIndex（升序）。
 
 ### Cache Invalidation
-- Keyed by: (src, dst, mode, flags, connectivityVersions)
-- Invalidated when any involved chunk changes
-- LRU eviction when cache full
+- Key: (src,dst,mode,flags,connectivityVersions)
+- Any involved chunk changes → invalidate；LRU eviction on capacity
 
-## 📊 Performance Metrics
+### Overlays & Tools（调试）
+- MovementCost（FP 分箱 0-9,A-Z，颜色绿→红）
+- RampMask（Ramp 底 8 向箭头 / 多向 ‘*’）
+- PathDisplay（S/Path/G；底部显示 len 与总 cost，FP=10）
 
-✅ **10 Concurrent Pathfinders**: 2ms (< 10% frame time)
-✅ **Cache Hit Rate**: High for repeated requests
-✅ **Determinism**: 100% - identical seeds produce identical paths
-✅ **Memory**: ~1KB per cached path
-✅ **Node Limit**: 10,000 nodes per search
-✅ **Time Budget**: 3ms per tick
+### Tile Spec（v2）
+- TerrainBits：bits 0..3=Kind，bit5=Natural，bit6=Modifiable；不再存储 RampDirection/抛光雕刻
+- Standable 仅 floor；Slope 为视觉预留，不再作为 z+1 坡顶几何
 
-## ✅ Phase D Requirements Met
+## Performance Metrics
 
-Per MILESTONE.md requirements:
-- ✅ Walkability/opacity/support masks
-- ✅ ConnectivityVersion invalidation
-- ✅ Deterministic A* with stable tie-breakers
-- ✅ Path caching with LRU
-- ✅ Traffic costs from L7 meta layer
-- ✅ Stuck detection with local yielding
-- ✅ 10 concurrent pathfinders < 10% frame time
-- ✅ No infinite loops (node/time limits)
+- 10 concurrent pathfinders：~2ms（<10% frame time）
+- Cache hit rate：高复用场景下较高
+- Determinism：同 seed 结果一致
+- Node limit：10,000／search；Time budget：3ms/tick
 
-## 🎯 Validation Tests
+## Phase D Requirements Met
 
-All Phase D tests pass:
-- Navigation mask generation ✅
-- ConnectivityVersion invalidation ✅
-- Deterministic A* pathfinding ✅
-- Path caching ✅
-- 10 concurrent pathfinders ✅ (2ms)
+- Walkability/opacity/support masks（按 v2）
+- ConnectivityVersion invalidation
+- Deterministic A* with stable tie-breakers
+- Path caching with LRU
+- Traffic costs from L7
+- Stuck detection
+- 10 concurrent pathfinders < 10% frame time
+- No infinite loops（node/time limits）
 
-## 🚀 Integration Points
+## Validation
 
-### Read Phase (Parallel)
-- PathService.Solve() during AI/Job systems
-- Multiple pathfinders run concurrently
-- Read-only access to NavMask/NavCost
+- Navigation mask generation — pass
+- ConnectivityVersion invalidation — pass
+- Deterministic A* pathfinding — pass
+- Path caching — pass
+- 10 concurrent pathfinders — pass
 
-### Write Phase (Serialized)
-- ChunkNavData rebuilt during RebuildDerived
-- ConnectivityVersion bumped on changes
-- No direct writes from navigation
+## Integration
 
-### Future Extensions (Phase E+)
-- Region graphs for instant disconnect detection
-- Flow fields for repeated destinations
-- Size-aware navigation (2x1 creatures)
-- Dynamic obstacle avoidance
-- Threat/hazard maps from Director
+- Read phase：PathService.Solve()（并行、只读）
+- Write/Commit：ChunkNavData 重建；ConnectivityVersion bump；导航不直接写世界
 
 ---
 
-**Phase D Complete!** The navigation system provides deterministic, performant pathfinding with proper caching and stuck detection, ready for AI and job systems to build upon.
+Phase D Complete — Deterministic, performant pathfinding ready for AI/jobs.
+

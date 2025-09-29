@@ -607,3 +607,554 @@ reproduction: gestation, litters, milk/shear.
 drops: butcher outputs (table/by_mass).
 
 Placeholders (non-operative until wired): facets, aptitudes, stamina, pain, morale, courage, disease_resist.
+
+CREATURE_SPEC.md (v1.1)
+
+Scope. Defines data-driven creature content and the minimal runtime instance/state needed by simulation, navigation, jobs, and saving.
+Design goals. Deterministic, mod-friendly, minimal invariants, separation of registry (content truth) vs instance (runtime/save).
+
+0) Files & Loading
+content/
+└─ registries/
+   ├─ creatures.body_plans.json     # Body plans (equip slots, natural attacks, sizes)
+   ├─ creatures.json                # Species/creature defs (references body plans)
+   ├─ traits.json                   # (optional) trait defs; can be disabled
+   └─ aliases.json                  # name/ID migration map (optional)
+
+
+Load order: body_plans → traits → creatures → aliases applied.
+
+All lookups by stable ID; names are for authoring, resolved at load.
+
+Validation: JSON Schema (Draft 07) per file; cross-refs checked at load.
+
+1) Registry: BodyPlan
+
+A body plan defines anatomy & equipment affordances shared by multiple species.
+
+{
+  "id": "humanoid_simple",
+  "displayName": "Humanoid (Simple)",
+  "sizeClass": "M",               // XS,S,M,L,XL (affects mass, carry, collision)
+  "baseMassKg": 70,               // reference mass used for encumbrance
+  "equipSlots": [
+    {"id":"head","max":1},
+    {"id":"torso","max":1},
+    {"id":"legs","max":1},
+    {"id":"feet","max":1},
+    {"id":"hands","max":2},
+    {"id":"back","max":1},
+    {"id":"belt","max":1}
+  ],
+  "carryCapacityKg": 40,          // baseline; species may scale
+  "naturalAttacks": [             // optional simple block; advanced combat may replace
+    {"id":"punch","damageType":"blunt","dice":"1d2","apCost":50}
+  ],
+  "anatomy": {                    // optional: minimal graph (future: wounds)
+    "nodes": ["head","torso","left_arm","right_arm","left_leg","right_leg"],
+    "edges": [["torso","head"],["torso","left_arm"],["torso","right_arm"],
+              ["torso","left_leg"],["torso","right_leg"]]
+  }
+}
+
+
+Notes
+
+equipSlots are identifiers used by Items to declare compatible slots.
+
+Keep simple; detailed hit locations/wounds can plug into anatomy later without breaking IDs.
+
+2) Registry: CreatureDef (species)
+
+Describes a species or template. Instances reference this by species_id.
+
+{
+  "id": "cre_dwarf",
+  "displayName": "Dwarf",
+  "tags": ["civilized","miner","underground"],
+  "bodyPlanId": "humanoid_simple",
+
+  "stats": {                      // baseline; integer 1..20 typical
+    "str": 10, "agi": 8, "end": 11, "int": 8, "per": 8, "cha": 6
+  },
+
+  "senses": {                     // tiles or booleans; keep minimal
+    "visionTiles": 20,
+    "darkvisionTiles": 6,
+    "hearing": "normal"
+  },
+
+  "gaits": {                      // movement presets; costs are tiles/tick or AP per step
+    "walk": {"tilesPerTick": 1.0, "apCost": 100},
+    "run":  {"tilesPerTick": 1.8, "apCost": 100}
+  },
+
+  "movementCaps": {               // shape/terrain capabilities (aligns with NAVIGATION_SPEC)
+    "canWalk": true,
+    "canSwim": false,
+    "canFly": false,
+    "canClimb": false            // reserved capability; not yet implemented
+  },
+
+  "resistances": {                // coarse damage/environment modifiers (optional)
+    "blunt": 1.0, "slash": 1.0, "pierce": 1.0, "heat": 1.0, "cold": 1.0, "poison": 1.0
+  },
+
+  "ai": {                         // simple hooks (actual behavior in code/BT)
+    "aggroRange": 8,
+    "courage": "normal",          // cowardly/normal/brave
+    "fleeThreshold": 0.15         // HP fraction to flee
+  },
+
+  "factionDefaults": {            // default alignment on spawn (can be overridden)
+    "factionId": "fac_dwarves",
+    "hostilityTags": ["hostile_goblins"]
+  },
+
+  "skills": {                     // coarse professional aptitudes; optional
+    "mining": 2, "woodcutting": 1, "masonry": 2
+  },
+
+  "traits": ["hardy","craft_pride"], // optional; if traits system disabled, ignored
+
+  "needs": {                      // placeholder; disabled by default
+    "hunger": false, "rest": false, "recreation": false
+  }
+}
+
+
+Notes
+
+canClimb exists for future; engine currently treats it as false (no climb logic).
+
+Keep values coarse and data-first. No per-frame logic in defs.
+
+3) Registry: Traits (optional)
+{
+  "id": "hardy",
+  "displayName": "Hardy",
+  "description": "+10% disease resistance; -10% need for rest.",
+  "modifiers": {"end": +1, "diseaseResist": 1.1}
+}
+
+
+Traits are small, additive, and deterministic.
+
+If the trait system is disabled, loader accepts but runtime ignores them.
+
+4) Runtime Instance (save-layer)
+
+What gets created for an individual creature at runtime.
+
+{
+  "guid": "c_7f1a…",             // stable per save
+  "speciesId": "cre_dwarf",
+  "bodyPlanId": "humanoid_simple",// resolved snapshot for fast access
+
+  "factionId": "fac_dwarves",     // required runtime ownership/allegiance
+  "controller": "ai",             // ai | player | neutral
+
+  "pos": {"chunk":"(cx,cy,cz)", "x":12, "y":34, "z":5},
+
+  "hp": {"current": 60, "max": 60},          // coarse; not per-limb yet
+  "stamina": 100, "pain": 0, "morale": 0,    // simple bars (your current placeholders)
+  "statusEffects": [],                       // poison/bleed/etc., optional
+
+  "inventory": {"capacityKg": 45, "items": []},
+  "equipment": { "head": null, "torso": null, "legs": null, "feet": null,
+                 "hands": [], "back": null, "belt": null },
+
+  "skills": {"mining": 2, "woodcutting": 1}, // snapshot with growth
+  "traits": ["hardy"],                        // resolved at spawn; immutable or rare
+
+  "jobHandle": null,                          // link to scheduler
+  "navCaps": { "canWalk": true, "canSwim": false, "canFly": false, "canClimb": false },
+
+  "contentVersion": "1.1.0",                  // for save migration
+  "aliasesApplied": ["cre_dwarf@1.0→cre_dwarf"]
+}
+
+
+Rules
+
+Instance carries only mutable/runtime fields. All static data remains in the registry.
+
+factionId is required; changes trigger cache invalidation where relevant (hostility grids, UI).
+
+5) Determinism & Validation
+
+Any procedural variance (e.g., starting traits) must use seed = worldSeed ⊕ speciesId ⊕ guid.
+
+Validation on load:
+
+IDs resolve; body plan exists; equip slots are consistent.
+
+movementCaps must align with engine capabilities; unknown flags are ignored with warnings.
+
+6) Testing Checklist
+
+Spawn/serialize/deserialize round-trip equals (registry IDs and instance-only fields preserved).
+
+Equipment validation respects body plan slots.
+
+Faction hostility routing works (AI target selection changes when faction changes).
+
+Disabling traits/needs leaves runtime behavior unchanged.
+
+7) Backward Compatibility
+
+aliases.json supports { "from": "cre_dwarf@<=1.0", "to": "cre_dwarf" }.
+
+Instance carries a snapshot of resolved IDs in save headers; loader remaps via aliases when needed.
+
+Appendix: Minimal Examples
+
+creatures.body_plans.json
+
+[
+  { "id": "humanoid_simple", "displayName": "Humanoid (Simple)",
+    "sizeClass":"M", "baseMassKg":70,
+    "equipSlots":[{"id":"head","max":1},{"id":"torso","max":1},{"id":"legs","max":1},{"id":"feet","max":1},{"id":"hands","max":2},{"id":"back","max":1},{"id":"belt","max":1}],
+    "carryCapacityKg":40,
+    "naturalAttacks":[{"id":"punch","damageType":"blunt","dice":"1d2","apCost":50}]
+  }
+]
+
+
+creatures.json
+
+[
+  { "id":"cre_dwarf","displayName":"Dwarf","tags":["civilized","miner"],
+    "bodyPlanId":"humanoid_simple",
+    "stats":{"str":10,"agi":8,"end":11,"int":8,"per":8,"cha":6},
+    "senses":{"visionTiles":20,"darkvisionTiles":6},
+    "gaits":{"walk":{"tilesPerTick":1.0,"apCost":100},"run":{"tilesPerTick":1.8,"apCost":100}},
+    "movementCaps":{"canWalk":true,"canSwim":false,"canFly":false,"canClimb":false},
+    "factionDefaults":{"factionId":"fac_dwarves"},
+    "skills":{"mining":2,"masonry":1},
+    "traits":["hardy"],
+    "needs":{"hunger":false,"rest":false,"recreation":false}
+  }
+]
+
+Notes on what changed vs prior version
+
+Added traits (optional) and needs (placeholders, default off).
+
+Clarified movementCaps with climb reserved.
+
+Formalized body plan slots and simple natural attacks.
+
+Required factionId at runtime (instance).
+
+Added determinism/validation/back-compat sections.
+
+CREATURE_SPEC.md (v1.2)
+
+Scope. Data-driven creature content & minimal runtime/save model.
+Principles. Deterministic, mod-friendly, clear separation of registry (truth) vs instance (runtime), small invariants.
+
+0) Files & Loading
+content/
+└─ registries/
+   ├─ creatures.body_plans.json      # Parts tree, joints, functional roles, equip slots
+   ├─ creatures.json                 # Species templates (attributes/skills/traits/values/appearance)
+   ├─ traits.json                    # Personality/traits (optional)
+   ├─ values.axes.json               # Cultural/values axes (optional)
+   ├─ genes.loci.json                # Gene/allele definitions (optional; inheritance rules)
+   ├─ aliases.json                   # Name/ID migration (optional)
+   └─ schemas/                       # JSON Schemas (Draft 07)
+
+
+Load order. traits → values.axes → genes.loci → body_plans → creatures → apply aliases.
+Lookup. All by stable IDs; authoring names are resolved at load.
+Compatibility. All new blocks are optional; missing blocks are treated as “no effect”.
+
+1) Registry: BodyPlan (hierarchy + joints + coverage)
+1.1 Humanoid example (ID per your convention)
+{
+  "id": "core_creature_humanoid",
+  "displayName": "Humanoid (Detailed)",
+  "sizeClass": "M",
+  "baseMassKg": 70,
+
+  "parts": [
+    { "id":"head", "parent":null, "hitWeight":0.10, "vital":true,
+      "functional":["see","hear","smell","speak"],
+      "children":[
+        {"id":"eye_l","hitWeight":0.01,"functional":["see"]},
+        {"id":"eye_r","hitWeight":0.01,"functional":["see"]},
+        {"id":"ear_l","hitWeight":0.01,"functional":["hear"]},
+        {"id":"ear_r","hitWeight":0.01,"functional":["hear"]},
+        {"id":"nose", "hitWeight":0.01,"functional":["smell"]},
+        {"id":"mouth","hitWeight":0.01,"functional":["speak","bite"]}
+      ]
+    },
+    { "id":"neck","parent":null,"hitWeight":0.03,"vital":true },
+
+    { "id":"shoulders","parent":null,"hitWeight":0.04 },
+    { "id":"chest","parent":null,"hitWeight":0.18,"vital":true, "organs":["heart","lungs"]},
+    { "id":"abdomen","parent":null,"hitWeight":0.12,"organs":["stomach","liver","intestines"]},
+    { "id":"pelvis","parent":null,"hitWeight":0.08,"organs":["genitals"]},
+
+    { "id":"upper_arm_l","parent":"shoulders","hitWeight":0.04 },
+    { "id":"forearm_l",  "parent":"upper_arm_l","hitWeight":0.03 },
+    { "id":"hand_l",     "parent":"forearm_l","hitWeight":0.02, "functional":["grasp"] },
+
+    { "id":"upper_arm_r","parent":"shoulders","hitWeight":0.04 },
+    { "id":"forearm_r",  "parent":"upper_arm_r","hitWeight":0.03 },
+    { "id":"hand_r",     "parent":"forearm_r","hitWeight":0.02, "functional":["grasp"] },
+
+    { "id":"thigh_l","parent":"pelvis","hitWeight":0.06 },
+    { "id":"shin_l", "parent":"thigh_l","hitWeight":0.05 },
+    { "id":"foot_l", "parent":"shin_l","hitWeight":0.04, "functional":["stand","move"] },
+
+    { "id":"thigh_r","parent":"pelvis","hitWeight":0.06 },
+    { "id":"shin_r", "parent":"thigh_r","hitWeight":0.05 },
+    { "id":"foot_r", "parent":"shin_r","hitWeight":0.04, "functional":["stand","move"] }
+  ],
+
+  "joints": [
+    ["neck","head"],["shoulders","upper_arm_l"],["upper_arm_l","forearm_l"],["forearm_l","hand_l"],
+    ["shoulders","upper_arm_r"],["upper_arm_r","forearm_r"],["forearm_r","hand_r"],
+    ["pelvis","thigh_l"],["thigh_l","shin_l"],["shin_l","foot_l"],
+    ["pelvis","thigh_r"],["thigh_r","shin_r"],["shin_r","foot_r"],
+    ["shoulders","chest"],["chest","abdomen"],["abdomen","pelvis"],["neck","chest"]
+  ],
+
+  "equipSlots": [
+    {"slotId":"head","max":1,"covers":["head"]},
+    {"slotId":"neck","max":1,"covers":["neck"]},
+    {"slotId":"shoulders","max":1,"covers":["shoulders"]},
+    {"slotId":"torso","max":1,"covers":["chest","abdomen","pelvis"]},
+    {"slotId":"arms","max":1,"covers":["upper_arm_l","forearm_l","upper_arm_r","forearm_r"]},   // arms slot added
+    {"slotId":"hands","max":2,"covers":["hand_l","hand_r"]},
+    {"slotId":"legs","max":1,"covers":["thigh_l","shin_l","thigh_r","shin_r"]},
+    {"slotId":"feet","max":1,"covers":["foot_l","foot_r"]},
+    {"slotId":"back","max":1,"covers":["chest"]},
+    {"slotId":"belt","max":1,"covers":["pelvis"]},
+    {"slotId":"rings","max":10,"covers":[]},     // optional jewelry
+    {"slotId":"amulet","max":1,"covers":[]}
+  ],
+
+  "carryCapacityKg": 40,
+  "naturalAttacks": [{"id":"punch","damageType":"blunt","dice":"1d2","apCost":50}]
+}
+
+
+Notes
+
+arms covers upper/forearms (bracers/armguards). hands remains for gloves and grasp.
+
+rings/amulet are optional (good hooks for culture/values later).
+
+No tissue layer math yet; this body graph can be extended later without breaking IDs.
+
+Quadruped template
+Provide core_creature_quadruped similarly: fore/hind limbs + tail (balance role). Not expanded here.
+
+2) Registry: Species (attributes/skills/personality/values/appearance)
+{
+  "id": "cre_dwarf",
+  "displayName": "Dwarf",
+  "bodyPlanId": "core_creature_humanoid",
+  "sapience": "sapient",                    // sapient | semi_sapient | animal | construct
+
+  "attributes": {                           // 8 primary stats
+    "STR": 10, "AGI": 8, "END": 11, "PER": 8, "INT": 8, "WIL": 10, "CHA": 6, "SPI": 7
+  },
+
+  "speciesAverages": {                      // DF-style species baseline; 1000 = human reference
+    "baseline": 1000,
+    "mean":  { "STR":1100, "AGI":800, "END":1150, "PER":900, "INT":950, "WIL":1100, "CHA":800, "SPI":900 },
+    "stdev": { "STR":120,  "AGI":150, "END":120,  "PER":120, "INT":120, "WIL":120,  "CHA":150, "SPI":120 }
+  },
+
+  "skills": {                               // expanded skill set (see full list below)
+    "Mining": 2, "Melee": 2, "Construction": 1, "Smithing": 1, "Logistics": 1
+  },
+
+  "personality": {                          // facets −2..+2 (see list below)
+    "Industriousness": +2,
+    "Bravery": +1,
+    "Temperance": 0,
+    "Curiosity": -1
+  },
+
+  "values": {                               // value axes −2..+2 (sapients only)
+    "Authority": +1, "Tradition": +2, "Collectivism": +1, "Industry": +2,
+    "Purity": 0, "Spiritual": 0, "Honor": +1, "Militarism": +1
+  },
+
+  "appearance": {                           // phenotype for future rendering & flavor
+    "heightCm": { "mean": 135, "stdev": 6 },
+    "massKg":   { "mean": 65,  "stdev": 8 },
+    "skinPalette": ["#c69a78","#a67c52"],
+    "hairPalette": ["#3b2b20","#6b4e2e","#b38b5a"],
+    "eyePalette":  ["#3a3a3a","#2e4a6b"],
+    "beardChance": 0.85,
+    "styleTags": ["dwarven_craft","sturdy"],
+    "portraitParams": { "browDepth":0.2, "noseWidth":0.6, "jaw":0.8 }
+  },
+
+  "factionDefaults": { "factionId": "fac_dwarves" },
+
+  "genetics": {                             // optional: simple heredity model
+    "loci": [
+      { "id":"HEIGHT", "type":"polygenic", "heritability":0.6, "mutRate":0.0001 },
+      { "id":"HAIR_COLOR", "type":"codominant", "alleles":["dark","brown","blond"], "heritability":0.9 },
+      { "id":"EYE_COLOR",  "type":"codominant", "alleles":["dark","blue","green"],  "heritability":0.8 },
+      { "id":"BEARD_DENS", "type":"additive",   "heritability":0.7 }
+    ]
+  }
+}
+
+
+Notes
+
+speciesAverages: use mean/stdev around the human 1000 reference; when spawning, sample and map to your internal 1..20 (or other) scales.
+
+appearance: even if not rendered yet, it’s saveable and can drive events/preferences.
+
+genetics: lightweight placeholder; breeding combines parental alleles/traits; heritability tunes gene vs environment.
+
+3) Attributes / Skills / Personality / Values (expanded sets)
+3.1 Primary attributes (8)
+
+STR, AGI, END, PER, INT, WIL, CHA, SPI
+Derived stats (HP, stamina, move AP, aim/hit/dodge, carry, work speed, learn rate…) come from attributes + skills + equipment.
+
+3.2 Skills (≈20; merged from DF/RimWorld/CDDA)
+
+Combat
+
+Melee, Ranged, Shields, Polearms (optional), Dodge, Riding (optional)
+
+Production & Engineering
+
+Mining, Construction, Masonry, Carpentry, Smithing, Tailoring, Stonecraft, Woodcraft, Pottery, Glassworking, Chemistry/Alchemy (optional), Engineering (traps/mechanisms)
+
+Livelihood & Logistics
+
+Cooking, Brewing, Farming, Herbalism/Foraging, AnimalHandling, Medicine, Logistics (hauling/organization)
+
+Social & Academic
+
+Social, Artistic, Intellectual, Magic (optional; pairs well with SPI)
+
+Detailed recipes/weapon families stay in recipe tags to avoid exploding the skill tree.
+
+3.3 Personality facets (−2..+2; suggest 14–18)
+
+Industriousness, Bravery, Composure, Altruism, Curiosity, Cautiousness, Temperance, Cheerfulness, RiskTaking, Greed, Honesty, Empathy, Pride, Vengefulness, Loyalty, Ambition, Pacifism/Aggression (pick one axis)
+
+3.4 Value axes (−2..+2; sapients only)
+
+Authority↔Liberty, Tradition↔Progress, Collectivism↔Individualism, Ascetic↔Hedonist, Purity↔Tolerance, Nature↔Industry, Spiritual↔Pragmatic, Honor↔Cunning, Egalitarian↔Hierarchy, Pacifism↔Militarism
+
+Non-sapients: no values; keep a small subset of personality (bravery/aggression/tamability…).
+
+4) Runtime Instance (save layer)
+{
+  "guid": "c_7f1a…",
+  "speciesId": "cre_dwarf",
+  "bodyPlanId": "core_creature_humanoid",
+  "sapience": "sapient",
+
+  "factionId": "fac_dwarves",
+  "controller": "ai",
+
+  "pos": {"chunk":"(cx,cy,cz)", "x":12,"y":34,"z":5},
+
+  "attributes": {"STR":11,"AGI":8,"END":12,"PER":9,"INT":8,"WIL":11,"CHA":6,"SPI":8},
+  "skills": {"Mining":2,"Melee":2},                // instance snapshot; grows over time
+  "personality": {"Industriousness":2,"Bravery":1},
+  "values": {"Tradition":2,"Industry":2},          // omit for non-sapients
+
+  "appearance": {
+    "heightCm": 136, "massKg": 66,
+    "skin":"#a67c52","hair":"#6b4e2e","eyes":"#3a3a3a",
+    "portraitParams": {"browDepth":0.22,"jaw":0.78}
+  },
+
+  "genome": {                                      // optional compact DNA record
+    "seed": "G:abcd…", "loci":[["HEIGHT","…"],["HAIR_COLOR","…"]]
+  },
+
+  "hp":{"current":60,"max":60},
+  "stamina":100,"pain":0,"morale":0,
+
+  "inventory":{"capacityKg":45,"items":[]},
+  "equipment":{"head":null,"neck":null,"shoulders":null,"torso":null,"arms":null,"hands":[],
+               "legs":null,"feet":null,"back":null,"belt":null,"rings":[], "amulet":null},
+
+  "jobHandle": null,
+  "navCaps":{"canWalk":true,"canSwim":false,"canFly":false,"canClimb":false},
+
+  "contentVersion":"1.2.0","aliasesApplied":[]
+}
+
+
+Rules
+
+Keep a single HP/Stamina bar for MVP; later connect wounds to parts.
+
+appearance/genome are persisted even if unrevealed in rendering yet.
+
+Random generation uses seed = worldSeed ⊕ speciesId ⊕ guid.
+
+5) Determinism & Validation
+
+All randomness (appearance/genes/facets/values) uses stable seeds; cross-platform deterministic.
+
+Validate: equipSlots.covers[] must reference valid parts; unknown skills/facets/values log warnings but load.
+
+Non-sapients: if values present, loader ignores and warns (keeps data coherent).
+
+6) Testing Checklist
+
+Hit distribution roughly matches hitWeight; (future) armor coverage reduces exposure.
+
+Attributes sampled from speciesAverages produce expected mean/stdev after mapping.
+
+Genetics: child distributions skew toward parents when heritability > 0.
+
+Serialization: appearance/genes/facets/values round-trip intact; disabling values/genes does not break loading.
+
+7) Optional / Future (does not affect compatibility)
+
+Tissue layers & organ lethality (heart/lungs/brain…)
+
+Coverage/penetration and multi-layer armor
+
+Faction culture/ideology binding to values
+
+Titles/lineage/social graphs (CK/M&B flavor)
+
+Cybernetics/mutations (Qud/CDDA flavor) as traits/genes extensions
+
+Appendices (for implementation)
+
+Full skill set (suggested)
+Melee, Ranged, Shields, Polearms, Dodge, Riding,
+Mining, Construction, Masonry, Carpentry, Smithing, Tailoring, Stonecraft, Woodcraft, Pottery, Glassworking, Chemistry/Alchemy, Engineering,
+Cooking, Brewing, Farming, Herbalism, AnimalHandling, Medicine, Logistics,
+Social, Artistic, Intellectual, Magic
+
+Personality facets (suggested)
+Industriousness, Bravery, Composure, Altruism, Curiosity, Cautiousness, Temperance, Cheerfulness, RiskTaking, Greed, Honesty, Empathy, Pride, Vengefulness, Loyalty, Ambition, Pacifism/Aggression (pick one axis)
+
+Value axes (suggested)
+Authority↔Liberty, Tradition↔Progress, Collectivism↔Individualism, Ascetic↔Hedonist, Purity↔Tolerance, Nature↔Industry, Spiritual↔Pragmatic, Honor↔Cunning, Egalitarian↔Hierarchy, Pacifism↔Militarism
+
+Open questions (please confirm)
+
+Lethality rules: For MVP, ok to treat head/neck/chest as high-risk multipliers and add organ-level kills later?
+
+Armor coverage precision: Short-term equipSlots.covers[]; do we plan multi-layer coverage/exposure/penetration later?
+
+Genetics scope: Start with genome.seed + a few visible loci (height/hair/eye/beard), defer complex alleles?
+
+Culture & style: Should styleTags tie to faction/values to influence default apparel/jewelry/building aesthetics?
+
+If this looks good, I can also provide tiny example files for creatures.body_plans.json and creatures.json that validate against Draft-07 schemas and match this spec, so Codex can wire them up quickly.

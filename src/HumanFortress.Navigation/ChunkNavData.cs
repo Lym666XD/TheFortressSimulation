@@ -23,22 +23,11 @@ namespace HumanFortress.Navigation;
     /// </summary>
     public ushort[] NavCost { get; }
 
-        /// <summary>
-    /// Per-tile ramp direction from base to top (0..7), 255 = none. Precomputed for O(1) neighbor expansion.
-    /// Deprecated in favor of UpRampMask but kept for back-compat.
-        /// </summary>
-        public byte[] UpRampDir { get; }
-
-        /// <summary>
-        /// Per-tile ramp direction from top toward forward (0..7), 255 = none. Base is at (x-dx,y-dy,z-1).
-        /// </summary>
-        public byte[] DownRampDir { get; }
-
-        /// <summary>
-        /// Per-tile mask of allowed ascend directions for ramps.
-        /// Bits 0..7 correspond to N,NE,E,SE,S,SW,W,NW. 0 = no ascend from this tile.
-        /// </summary>
-        public byte[] UpRampMask { get; }
+    /// <summary>
+    /// Per-tile mask of allowed ascend directions for ramps.
+    /// Bits 0..7 correspond to N,NE,E,SE,S,SW,W,NW. 0 = no ascend from this tile.
+    /// </summary>
+    public byte[] UpRampMask { get; }
 
     /// <summary>
     /// Connectivity version for cache invalidation.
@@ -53,14 +42,12 @@ namespace HumanFortress.Navigation;
 
         public ChunkNavData(ChunkKey key)
         {
-            Key = key;
-            NavMask = new byte[TilesPerChunk];
-            NavCost = new ushort[TilesPerChunk];
-            UpRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
-            DownRampDir = Enumerable.Repeat((byte)255, TilesPerChunk).ToArray();
-            UpRampMask = new byte[TilesPerChunk];
-            ConnectivityVersion = 0;
-        }
+        Key = key;
+        NavMask = new byte[TilesPerChunk];
+        NavCost = new ushort[TilesPerChunk];
+        UpRampMask = new byte[TilesPerChunk];
+        ConnectivityVersion = 0;
+    }
 
     /// <summary>
     /// Rebuild navigation data from tile information.
@@ -77,10 +64,7 @@ namespace HumanFortress.Navigation;
 
             // Use canonical TerrainKind extraction from TileBase
             var terrainKind = tile.Kind;
-            var rampDir = tile.RampDir;
             bool isNatural = tile.IsNatural;
-            bool isSmoothed = tile.IsSmoothed;
-            bool isEngraved = tile.IsEngraved;
 
             byte capabilities = 0;
             ushort cost = tuning.BaseCost;
@@ -145,12 +129,6 @@ namespace HumanFortress.Navigation;
                 case 3: // Restricted
                     cost += (ushort)tuning.TrafficRestricted;
                     break;
-            }
-
-            // Apply surface finish modifiers (optional)
-            if (isSmoothed)
-            {
-                cost = (ushort)Math.Max(1, cost - 1); // Smooth floors are slightly faster
             }
 
             NavMask[idx] = capabilities;

@@ -82,18 +82,7 @@ namespace HumanFortress.WorldGen
                                 {
                                     var geologyHandle = fortressChunk.GetGeologyHandle(lx, ly, z);
                                     var surfaceBits = fortressChunk.GetSurfaceBits(lx, ly, z);
-                                    byte? rampOverride = null;
-                                    // If this tile is a ramp, infer direction based on local neighborhood
-                                    var geo = ContentRegistry.Instance.GetGeologyByHandle(geologyHandle);
-                                    if (geo != null && Enum.TryParse<TerrainKind>(geo.TerrainBits.Kind, out var k) && k == TerrainKind.Ramp)
-                                    {
-                                        // Global coordinates for this tile
-                                        int gx = cx * 32 + lx;
-                                        int gy = cy * 32 + ly;
-                                        rampOverride = InferRampDirection(gx, gy, z);
-                                    }
-
-                                    var tile = ConvertGeologyToTile(geologyHandle, surfaceBits, rampOverride);
+                                    var tile = ConvertGeologyToTile(geologyHandle, surfaceBits, z);
                                     simChunk.SetTile(lx, ly, tile, 0);
                                     tilesProcessed++;
                                 }
@@ -165,8 +154,8 @@ namespace HumanFortress.WorldGen
                     var cur = world.GetTile(x, y, s);
                     if (!cur.HasValue) continue;
 
-                    // Only convert from plain floor/slope
-                    if (!(cur.Value.Kind == TerrainKind.OpenWithFloor || cur.Value.Kind == TerrainKind.Slope))
+                    // Only convert from plain floor
+                    if (!(cur.Value.Kind == TerrainKind.OpenWithFloor))
                         continue;
 
                     foreach (var (dx, dy, code) in dirs)
@@ -177,11 +166,10 @@ namespace HumanFortress.WorldGen
                         int ns = surfZ[nx, ny];
                         if (ns == s + 1)
                         {
-                            // Set current as Ramp pointing to neighbor
+                            // Set current as Ramp base (DF-style)
                             var curTile = cur.Value;
                             ushort bits = curTile.TerrainBits;
                             bits = TerrainBitOps.SetKind(bits, TerrainKind.Ramp);
-                            bits = TerrainBitOps.SetRampDirection(bits, code);
                             var rampTile = curTile.WithTerrain(bits);
                             world.SetTile(x, y, s, rampTile, 0);
 
@@ -206,7 +194,7 @@ namespace HumanFortress.WorldGen
             }
         }
 
-        private TileBase ConvertGeologyToTile(ushort geologyHandle, byte surfaceBits, byte? rampDirOverride = null)
+        private TileBase ConvertGeologyToTile(ushort geologyHandle, byte surfaceBits, int z)
         {
             var geology = ContentRegistry.Instance.GetGeologyByHandle(geologyHandle);
             if (geology == null)
@@ -228,22 +216,13 @@ namespace HumanFortress.WorldGen
                 ? kind
                 : TerrainKind.OpenNoFloor;
 
-            // Use canonical TerrainBitOps to create terrain bits
-            byte rampDir = 0;
-            if (terrainKind == TerrainKind.Ramp)
-            {
-                // Prefer runtime override; else use numeric in geology; else fallback to ramp_dir string; else 0
-                if (rampDirOverride.HasValue) rampDir = rampDirOverride.Value;
-                else if (geology.TerrainBits.RampDirection.HasValue) rampDir = (byte)Math.Clamp(geology.TerrainBits.RampDirection.Value, 0, 7);
-                else if (!string.IsNullOrEmpty(geology.TerrainBits.RampDir)) rampDir = ParseRampDirString(geology.TerrainBits.RampDir!);
-            }
-
+            // Create TerrainBits with Natural/Modifiable (modifiable false only for bottommost z=0)
+            bool natural = geology.TerrainBits.Natural;
+            bool modifiable = z > 0; // bottommost layer z==0 is not modifiable
             var terrainBits = TerrainBitOps.CreateTerrainBits(
                 terrainKind,
-                rampDir,
-                geology.TerrainBits.Natural,
-                false,
-                false
+                natural,
+                modifiable
             );
 
             return new TileBase(
@@ -257,69 +236,7 @@ namespace HumanFortress.WorldGen
             );
         }
 
-        private static byte ParseRampDirString(string s)
-        {
-            switch (s.ToLowerInvariant())
-            {
-                case "n": case "north": return 0;
-                case "ne": case "northeast": return 1;
-                case "e": case "east": return 2;
-                case "se": case "southeast": return 3;
-                case "s": case "south": return 4;
-                case "sw": case "southwest": return 5;
-                case "w": case "west": return 6;
-                case "nw": case "northwest": return 7;
-                default: return 0;
-            }
-        }
-
-        private byte InferRampDirection(int gx, int gy, int z)
-        {
-            // Check 4-neighbor directions for a standable target at z+1
-            var dirs = new (int dx, int dy, byte code)[]
-            {
-                (0, -1, 0), // N
-                (1, 0, 2),  // E
-                (0, 1, 4),  // S
-                (-1, 0, 6), // W
-            };
-
-            foreach (var (dx, dy, code) in dirs)
-            {
-                int nx = gx + dx;
-                int ny = gy + dy;
-                int nz = z + 1;
-                if (nx < 0 || ny < 0 || nz >= _maxZ) continue;
-                int maxXY = _size * 32;
-                if (nx >= maxXY || ny >= maxXY) continue;
-            var kind = GetGeologyKindGlobal(nx, ny, nz);
-                if (kind == TerrainKind.OpenWithFloor)
-                    return code;
-            }
-
-            // Fallback: try diagonals
-            var diags = new (int dx, int dy, byte code)[]
-            {
-                (1, -1, 1), // NE
-                (1, 1, 3),  // SE
-                (-1, 1, 5), // SW
-                (-1, -1, 7),// NW
-            };
-            foreach (var (dx, dy, code) in diags)
-            {
-                int nx = gx + dx;
-                int ny = gy + dy;
-                int nz = z + 1;
-                if (nx < 0 || ny < 0 || nz >= _maxZ) continue;
-                int maxXY = _size * 32;
-                if (nx >= maxXY || ny >= maxXY) continue;
-                var kind = GetGeologyKindGlobal(nx, ny, nz);
-                if (kind == TerrainKind.OpenWithFloor)
-                    return code;
-            }
-
-            return 0; // default
-        }
+        // Removed ramp direction parsing/inference: DF-style ramps derive directions at nav rebuild time
 
         private TerrainKind GetGeologyKindGlobal(int gx, int gy, int z)
         {

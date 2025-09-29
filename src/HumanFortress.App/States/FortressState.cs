@@ -13,7 +13,8 @@ using HumanFortress.Core.Content;
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
 using HumanFortress.Navigation;
-using HumanFortress.Core.Content;
+using HumanFortress.Simulation.Stockpile;
+using ChunkKey = HumanFortress.Simulation.World.ChunkKey;
 
 namespace HumanFortress.App.States
 {
@@ -48,6 +49,8 @@ namespace HumanFortress.App.States
         private int _tilePanelZ = 0;
         private Point? _pathStart = null;
         private int _pathStartZ = 0;
+        private StockpileManager? _stockpileManager;
+        private StockpileUI? _stockpileUI;
 
         public FortressState()
         {
@@ -280,6 +283,11 @@ namespace HumanFortress.App.States
                 _navOverlay = new NavigationOverlay();
                 _navOverlay.SetNavigationManager(_navManager);
 
+                // Initialize stockpile system
+                System.Console.WriteLine("[GenerateFortressMap] Creating StockpileManager");
+                _stockpileManager = new StockpileManager();
+                _stockpileUI = new StockpileUI(_stockpileManager);
+
                 // Build initial snapshot
                 System.Console.WriteLine("[GenerateFortressMap] Building initial snapshot");
                 BuildSnapshot();
@@ -314,8 +322,51 @@ namespace HumanFortress.App.States
                 UiRenderer.DrawTopBar(_uiSurface, _uiTick);
                 UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
                 UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
-                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick);
+                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager);
                 UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick);
+
+                // Draw stockpile-specific UI
+                if (_stockpileUI != null)
+                {
+                    // Draw zone menu if open
+                    if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.None)
+                    {
+                        _stockpileUI.DrawZoneMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 10, 10);
+                    }
+                    // Draw stockpile submenu if open
+                    else if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.Stockpile)
+                    {
+                        _stockpileUI.DrawStockpileMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 12, 10);
+                    }
+
+                    // Draw placement mode UI
+                    if (_ui.Context == UiContext.PlacingTool)
+                    {
+                        var mouseWorld = _lastMousePos ?? _cursorPos;
+                        _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
+
+                        // Draw placement preview on map
+                        if (_ui.PlaceFirstCorner.HasValue && _ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+                        {
+                            var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                                _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                            _stockpileUI.RenderPlacementPreview(_mapSurface,
+                                _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
+                        }
+                    }
+
+                    // Draw edit popup if open
+                    _stockpileUI.DrawEditPopup(_uiSurface);
+
+                    // Render stockpile overlays on map
+                    if (_world != null)
+                    {
+                        var mapViewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                            _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                        _stockpileUI.RenderOverlay(_mapSurface, _world, _currentZ, mapViewport);
+                    }
+                }
+
                 // Controls/help moved to docs; no on-screen help overlay.
                 UiRenderer.DrawDebug(_uiSurface, _ui, _cursorPos, _currentZ, _zoomLevel, _cameraPos, FortressSize);
                 UiRenderer.DrawDebugUnits(_uiSurface, _ui, _cameraPos.X, _cameraPos.Y, _currentZ);
@@ -648,20 +699,9 @@ namespace HumanFortress.App.States
                 case HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor:
                     glyph = ' ';
                     break;
-                case HumanFortress.Simulation.Tiles.TerrainKind.Slope:
-                    // Simple slope glyph
-                    glyph = '^';
-                    break;
                 case HumanFortress.Simulation.Tiles.TerrainKind.Ramp:
-                    // Cardinal ramps show arrows; diagonals use 'x'
-                    glyph = tile.RampDir switch
-                    {
-                        0 => '^',   // N
-                        2 => '>',   // E
-                        4 => 'v',   // S
-                        6 => '<',   // W
-                        _ => 'x'    // diagonals
-                    };
+                    // Generic ramp base glyph (direction is derived at runtime; overlay shows arrows)
+                    glyph = '^';
                     break;
                 case HumanFortress.Simulation.Tiles.TerrainKind.StairsUp:
                     glyph = '<';
@@ -822,10 +862,145 @@ namespace HumanFortress.App.States
                 changed = true;
             }
 
-            // UI: quick menus Z/X/C
-            if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+            // Handle debug menu keys when open
+            if (_ui.DebugOpen)
+            {
+                if (keyboard.IsKeyPressed(Keys.Tab))
+                {
+                    _ui.DebugMenuTab = (_ui.DebugMenuTab + 1) % 2;
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D1))
+                {
+                    if (_ui.DebugMenuTab == 0)
+                        _ui.DebugMenuTab = 0;
+                    else
+                        _ui.DebugSelectedItem = "core_item_stone_generic";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D2))
+                {
+                    if (_ui.DebugMenuTab == 0)
+                        _ui.DebugMenuTab = 1;
+                    else
+                        _ui.DebugSelectedItem = "core_item_ingot_iron";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D3) && _ui.DebugMenuTab == 1)
+                {
+                    _ui.DebugSelectedItem = "core_item_wood_log";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D4) && _ui.DebugMenuTab == 1)
+                {
+                    _ui.DebugSelectedItem = "core_tool_mining_pickaxe";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D5) && _ui.DebugMenuTab == 1)
+                {
+                    _ui.DebugSelectedItem = "core_weapon_sword_short";
+                    changed = true;
+                }
+                else if (_ui.DebugMenuTab == 0)
+                {
+                    // Creature selection
+                    if (keyboard.IsKeyPressed(Keys.D))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_dwarf";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.H))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_human";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.G))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_goblin";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.E))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_elf";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.O))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_orc";
+                        changed = true;
+                    }
+                }
+            }
+
+            // Handle context-specific keys first
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Zones)
+            {
+                if (_ui.ZoneMenu == ZoneSubmenu.None)
+                {
+                    // Zone main menu
+                    if (keyboard.IsKeyPressed(Keys.Z))
+                    {
+                        _ui.OpenZoneSubmenu(ZoneSubmenu.Stockpile);
+                        changed = true;
+                    }
+                }
+                else if (_ui.ZoneMenu == ZoneSubmenu.Stockpile)
+                {
+                    // Stockpile submenu
+                    if (keyboard.IsKeyPressed(Keys.Z))
+                    {
+                        // Start stockpile creation
+                        _ui.StartPlacement(PlacementMode.StockpileFirstCorner, _currentZ);
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.OemComma))
+                    {
+                        // Start stockpile deletion
+                        _ui.StartPlacement(PlacementMode.StockpileDelete, _currentZ);
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.X))
+                    {
+                        // Start copy mode
+                        _ui.StartPlacement(PlacementMode.StockpileCopy, _currentZ);
+                        changed = true;
+                    }
+                }
+            }
+            else if (_ui.Context == UiContext.PlacingTool)
+            {
+                // Handle preset selection
+                if (_ui.PlaceMode == PlacementMode.StockpilePresetSelect)
+                {
+                    for (int i = 1; i <= 9; i++)
+                    {
+                        if (keyboard.IsKeyPressed((Keys)(Keys.D1 + i - 1)))
+                        {
+                            var presetId = _stockpileUI?.HandlePresetSelection(i);
+                            if (presetId != null)
+                            {
+                                CreateStockpile(presetId);
+                                _ui.CancelPlacement();
+                                changed = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (keyboard.IsKeyPressed(Keys.Enter))
+                    {
+                        CreateStockpile("all");
+                        _ui.CancelPlacement();
+                        changed = true;
+                    }
+                }
+            }
+            // UI: quick menus Z/X/C (only in global context)
+            else if (_ui.Context == UiContext.Global)
+            {
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+            }
 
             // Overlay cycle F9
             if (keyboard.IsKeyPressed(Keys.F9) && _navOverlay != null)
@@ -851,10 +1026,26 @@ namespace HumanFortress.App.States
 
             if (keyboard.IsKeyPressed(Keys.Escape))
             {
-                // Close tile panel first if open
+                // Priority order: tile panel -> stockpile edit -> placement mode -> submenus -> main menus
                 if (_tilePanelOpen)
                 {
                     HideTilePanel();
+                    changed = true;
+                }
+                else if (_stockpileUI != null)
+                {
+                    // Always close edit popup first
+                    _stockpileUI.CloseEditPopup();
+
+                    // Then handle placement or menu states
+                    if (_ui.Context == UiContext.PlacingTool)
+                    {
+                        _ui.CancelPlacement();
+                    }
+                    else
+                    {
+                        _ui.Back();
+                    }
                     changed = true;
                 }
                 // If no UI open, toggle pause overlay instead of exiting immediately
@@ -1047,8 +1238,20 @@ namespace HumanFortress.App.States
 
             if (state.Mouse.RightClicked)
             {
-                if (_tilePanelOpen) HideTilePanel();
-                else _ui.Cancel();
+                if (_tilePanelOpen)
+                {
+                    HideTilePanel();
+                }
+                else if (_stockpileUI != null)
+                {
+                    // 先尝试关闭储存区编辑弹窗
+                    _stockpileUI.CloseEditPopup();
+                    _ui.Cancel();
+                }
+                else
+                {
+                    _ui.Cancel();
+                }
                 DrawUI();
                 return true;
             }
@@ -1191,7 +1394,7 @@ namespace HumanFortress.App.States
             _cursorPos = _lastMousePos.Value;
         }
 
-        // Left-click on the map: open tile info panel for the clicked world tile
+        // Left-click on the map: handle placement modes or open tile info panel
         private void OnMapLeftClickedLocal(Point local)
         {
             if (_mapSurface == null) return;
@@ -1201,7 +1404,51 @@ namespace HumanFortress.App.States
             int maxPos = FortressSize * 32 - 1;
             if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos) return;
 
-            _tilePanelWorld = new Point(worldX, worldY);
+            Point worldPos = new Point(worldX, worldY);
+
+            // Handle placement modes
+            if (_ui.Context == UiContext.PlacingTool)
+            {
+                if (_ui.PlaceMode == PlacementMode.StockpileFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.StockpileSecondCorner;
+                    Logger.Log($"[STOCKPILE] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+                {
+                    // 保存第二个角的坐标并进入预设选择
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+                        _ui.PlaceMode = PlacementMode.StockpilePresetSelect;
+                        Logger.Log($"[STOCKPILE] Second corner at ({worldX},{worldY},{_currentZ})");
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.StockpileCopy)
+                {
+                    // Check if clicking on a stockpile
+                    if (_stockpileUI != null && _world != null && _stockpileUI.HandleStockpileClick(worldPos, _currentZ, _world))
+                    {
+                        _ui.AddToast("Stockpile settings copied", _uiTick + 150);
+                        _ui.CancelPlacement();
+                        DrawUI();
+                    }
+                    return;
+                }
+            }
+            // Check if clicking on a stockpile for editing
+            else if (_stockpileUI != null && _world != null && _stockpileUI.HandleStockpileClick(worldPos, _currentZ, _world))
+            {
+                DrawUI();
+                return;
+            }
+
+            _tilePanelWorld = worldPos;
             _tilePanelZ = _currentZ;
             _tilePanelOpen = true;
             Logger.Log($"[CLICK] Open TilePanel at world=({_tilePanelWorld.X},{_tilePanelWorld.Y},{_tilePanelZ})");
@@ -1222,7 +1469,7 @@ namespace HumanFortress.App.States
                         var tile = simChunk.GetTile(localX, localY);
                         // WorldMap geology id from generator
                         string geoIdWorld = _fortressMap?.GetChunk(chunkX, chunkY)?.GetGeologyId(localX, localY, _tilePanelZ) ?? "?";
-                        Logger.Log($"[TILE] L0 geology={geoIdWorld} kind={tile.Kind} nat={(tile.IsNatural?1:0)} rampDir={tile.RampDir}");
+                        Logger.Log($"[TILE] L0 geology={geoIdWorld} kind={tile.Kind} nat={(tile.IsNatural?1:0)} mod={(tile.IsModifiable?1:0)}");
                         Logger.Log($"[TILE] L1 surface mud={tile.HasMud} grass={tile.HasGrass} snow={tile.HasSnow} fert={tile.Fertility}");
                         Logger.Log($"[TILE] L3 fluid kind={tile.FluidKind} depth={tile.FluidDepth}");
                         Logger.Log($"[TILE] L7 meta revealed={tile.IsRevealed} forbid={tile.IsForbidden} traffic={tile.TrafficLevel} blood={tile.HasBlood}");
@@ -1231,6 +1478,105 @@ namespace HumanFortress.App.States
             }
             catch { }
             DrawUI();
+        }
+
+        private void CreateStockpile(string presetId)
+        {
+            if (_stockpileManager == null || !_ui.PlaceFirstCorner.HasValue || !_ui.PlaceSecondCorner.HasValue)
+                return;
+
+            var corner1 = _ui.PlaceFirstCorner.Value;
+            var corner2 = _ui.PlaceSecondCorner.Value;
+
+            // Create zone
+            var zoneId = _stockpileManager.CreateZone($"Stockpile {_stockpileManager.GetAllZones().Count() + 1}",
+                new HumanFortress.Simulation.World.ChunkKey(corner1.X / 32, corner1.Y / 32, _currentZ), _uiTick);
+
+            // Calculate cells to add
+            int minX = Math.Min(corner1.X, corner2.X);
+            int maxX = Math.Max(corner1.X, corner2.X);
+            int minY = Math.Min(corner1.Y, corner2.Y);
+            int maxY = Math.Max(corner1.Y, corner2.Y);
+
+            // Group cells by chunk - 检查地形和重叠
+            var cellsByChunk = new Dictionary<HumanFortress.Simulation.World.ChunkKey, List<int>>();
+            int skippedInvalid = 0;
+            int skippedOverlap = 0;
+            for (int x = minX; x <= maxX; x++)
+            {
+                for (int y = minY; y <= maxY; y++)
+                {
+                    int chunkX = x / 32;
+                    int chunkY = y / 32;
+                    int localX = x % 32;
+                    int localY = y % 32;
+                    var chunkKey = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _currentZ);
+
+                    // 检查地形是否有效（必须是OpenWithFloor）
+                    if (_world != null)
+                    {
+                        var chunk = _world.GetChunk(chunkKey);
+                        if (chunk != null)
+                        {
+                            var tile = chunk.GetTile(localX, localY);
+                            if (tile.Kind != HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
+                            {
+                                skippedInvalid++;
+                                continue; // 只能在开放地板上创建储存区
+                            }
+
+                            // 检查是否已有其他储存区
+                            var stockpileData = chunk.GetStockpileData();
+                            if (stockpileData != null)
+                            {
+                                int cellIndex = localY * 32 + localX;
+                                if (stockpileData.GetZoneAtCell(cellIndex) != 0)
+                                {
+                                    skippedOverlap++;
+                                    continue; // 跳过已有储存区的格子
+                                }
+                            }
+                        }
+                    }
+
+                    if (!cellsByChunk.ContainsKey(chunkKey))
+                        cellsByChunk[chunkKey] = new List<int>();
+
+                    cellsByChunk[chunkKey].Add(localY * 32 + localX);
+                }
+            }
+
+            // Generate diffs for adding cells
+            foreach (var kvp in cellsByChunk)
+            {
+                if (_world != null)
+                {
+                    var chunk = _world.GetChunk(kvp.Key);
+                    if (chunk != null)
+                    {
+                        chunk.EnsureStockpileData();
+                        var stockpileData = chunk.GetStockpileData();
+                        if (stockpileData != null)
+                        {
+                            stockpileData.CreateOrUpdateShard(zoneId, kvp.Key);
+                            stockpileData.AddCellsToZone(zoneId, kvp.Value);
+                        }
+                    }
+                }
+            }
+
+            // Update zone's member chunks
+            _stockpileManager.GetZone(zoneId)?.UpdateMemberChunks(cellsByChunk.Keys);
+
+            var totalCells = cellsByChunk.Values.Sum(list => list.Count);
+            var skipMessage = "";
+            if (skippedInvalid > 0) skipMessage += $"{skippedInvalid} invalid, ";
+            if (skippedOverlap > 0) skipMessage += $"{skippedOverlap} overlap, ";
+            if (!string.IsNullOrEmpty(skipMessage))
+                _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles, {skipMessage.TrimEnd(',', ' ')} skipped)", _uiTick + 150);
+            else
+                _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles)", _uiTick + 150);
+            Logger.Log($"[STOCKPILE] Created zone {zoneId} with {cellsByChunk.Sum(kvp => kvp.Value.Count)} cells");
         }
 
         // Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
@@ -1267,7 +1613,7 @@ namespace HumanFortress.App.States
 
                 // L0: geology + terrain
                 surf.Print(x0 + 2, y0 + 4, $"L0: {geoId}", Color.Green);
-                string l0b = $"    Kind={tile.Kind} Nat={(tile.IsNatural?1:0)}" + (tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp ? $" Dir={tile.RampDir}" : "");
+                string l0b = $"    Kind={tile.Kind} Nat={(tile.IsNatural?1:0)} Mod={(tile.IsModifiable?1:0)}";
                 surf.Print(x0 + 2, y0 + 5, l0b, Color.Gray);
 
                 // L1: surface bits

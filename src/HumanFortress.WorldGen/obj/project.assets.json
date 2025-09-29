@@ -54,60 +54,6 @@
           "bin/placeholder/HumanFortress.Simulation.dll": {}
         }
       }
-    },
-    "net8.0/win-x64": {
-      "Newtonsoft.Json/13.0.3": {
-        "type": "package",
-        "compile": {
-          "lib/net6.0/Newtonsoft.Json.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net6.0/Newtonsoft.Json.dll": {
-            "related": ".xml"
-          }
-        }
-      },
-      "TheSadRogue.Primitives/1.6.0": {
-        "type": "package",
-        "compile": {
-          "lib/net8.0/TheSadRogue.Primitives.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net8.0/TheSadRogue.Primitives.dll": {
-            "related": ".xml"
-          }
-        }
-      },
-      "HumanFortress.Core/0.1.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "dependencies": {
-          "Newtonsoft.Json": "13.0.3"
-        },
-        "compile": {
-          "bin/placeholder/HumanFortress.Core.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/HumanFortress.Core.dll": {}
-        }
-      },
-      "HumanFortress.Simulation/0.1.0": {
-        "type": "project",
-        "framework": ".NETCoreApp,Version=v8.0",
-        "dependencies": {
-          "HumanFortress.Core": "0.1.0"
-        },
-        "compile": {
-          "bin/placeholder/HumanFortress.Simulation.dll": {}
-        },
-        "runtime": {
-          "bin/placeholder/HumanFortress.Simulation.dll": {}
-        }
-      }
     }
   },
   "libraries": {
@@ -258,31 +204,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-            "version": "[8.0.15, 8.0.15]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Runtime.win-x64",
-            "version": "[8.0.15, 8.0.15]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-            "version": "[8.0.15, 8.0.15]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.203/PortableRuntimeIdentifierGraph.json"
-      }
-    },
-    "runtimes": {
-      "win-x64": {
-        "#import": []
       }
     }
   }

@@ -155,6 +155,62 @@
             for hover and left-click in local cell coordinates.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.UI.StockpileUI">
+            <summary>
+            UI handler for stockpile zones.
+            Manages creation, editing, deletion, and visualization.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.DrawZoneMenu(SadConsole.ScreenSurface,System.Int32,System.Int32)">
+            <summary>
+            Draw zone menu (after X -> Z).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.DrawStockpileMenu(SadConsole.ScreenSurface,System.Int32,System.Int32)">
+            <summary>
+            Draw stockpile submenu (after X -> Z -> Z).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.DrawPlacementMode(SadConsole.ScreenSurface,HumanFortress.App.UI.UiStore,SadRogue.Primitives.Point)">
+            <summary>
+            Draw placement mode UI.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.DrawPresetSelection(SadConsole.ScreenSurface)">
+            <summary>
+            Draw preset selection menu.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.DrawEditPopup(SadConsole.ScreenSurface)">
+            <summary>
+            Draw edit popup for a stockpile.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.RenderOverlay(SadConsole.ScreenSurface,HumanFortress.Simulation.World.World,System.Int32,SadRogue.Primitives.Rectangle)">
+            <summary>
+            Render stockpile overlays on the map.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.RenderPlacementPreview(SadConsole.ScreenSurface,SadRogue.Primitives.Point,SadRogue.Primitives.Point,SadRogue.Primitives.Rectangle,System.Boolean)">
+            <summary>
+            Render preview rectangle during placement.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.HandleStockpileClick(SadRogue.Primitives.Point,System.Int32,HumanFortress.Simulation.World.World)">
+            <summary>
+            Handle click on stockpile for editing.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.StockpileUI.HandlePresetSelection(System.Int32)">
+            <summary>
+            Handle preset selection input.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.StockpileUI.StockpileVisual">
+            <summary>
+            Visual state for a stockpile zone.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.UI.UiOverlaySurface">
             <summary>
             Full-screen UI overlay surface that captures mouse in overlay coordinates.

@@ -1,5 +1,8 @@
 {
-  "allow_diagonals": false,
+  "allow_diagonals": true,
+  "ramp_vertical_alignment_mode": "df",
+  "ramp_requires_highside_support": true,
+  "diagonal_rules": { "corner_check": true },
   "cost": { "base": 10, "orthogonal": 10, "diagonal": 14, "ramp_delta": 6, "stair_delta": 8 },
   "fluids": { "shallow_threshold": 1, "deep_threshold": 6, "wade_cost": 6, "swim_cost": 18 },
   "traffic": { "low": -2, "normal": 0, "high": 2, "restricted": 8 },

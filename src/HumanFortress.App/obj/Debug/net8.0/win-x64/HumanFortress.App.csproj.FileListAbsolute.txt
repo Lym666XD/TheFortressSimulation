@@ -239,3 +239,5 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content\schemas\terrain_kinds.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content\registries\tuning.cavern.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content\registries\tuning.navigation.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content\registries\stockpile_presets.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content\registries\tuning.stockpile.json

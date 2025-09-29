@@ -1,7 +1,128 @@
-[STARTUP] HumanFortress starting at 16/09/2025 6:26:03 PM
+[STARTUP] HumanFortress starting at 29/09/2025 7:06:26 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\fortress_debug.log
+[STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content
 [GameStateManager] ChangeState from  to MainMenu
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
 [GameStateManager] Calling Enter on MainMenu
 Entered Main Menu
 [GameStateManager] Enter completed for MainMenu
+MainMenuState: Key pressed - N
+[GameStateManager] ChangeState from MainMenu to WorldGen
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on MainMenu
+[GameStateManager] Calling Enter on WorldGen
+[GameStateManager] Enter completed for WorldGen
+[GameStateManager] ChangeState from WorldGen to WorldMap
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldGen
+[GameStateManager] Calling Enter on WorldMap
+[GameStateManager] Enter completed for WorldMap
+[GameStateManager] ChangeState from WorldMap to EmbarkPrep
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldMap
+[GameStateManager] Calling Enter on EmbarkPrep
+[GameStateManager] Enter completed for EmbarkPrep
+[GameStateManager] ChangeState from EmbarkPrep to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on EmbarkPrep
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[FOCUS] FortressState focused
+[GameStateManager] Enter completed for FortressPlay
+[GameStateManager] Starting simulation for FortressPlay
+[INIT] MapSurface size=116x36 pos=(2,2)
+[INIT] UiOverlay size=120x40
+[UiRenderer.TopBar] overlay=120x40 tick=50
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UI] ESC -> Toggle Pause overlay
+[UiRenderer.TopBar] overlay=120x40 tick=150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UI] ESC -> Toggle Pause overlay
+[UiRenderer.TopBar] overlay=120x40 tick=200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[KEY] X -> QMenu=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=250
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=300
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=350
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=400
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[STOCKPILE] First corner at (19,14,25)
+[STOCKPILE] Second corner at (31,34,25)
+[UiRenderer.TopBar] overlay=120x40 tick=450
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=500
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=550
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[STOCKPILE] Created zone 1 with 266 cells
+[UiRenderer.TopBar] overlay=120x40 tick=600
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=650
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=700
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=750
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=800
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=850
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[UiRenderer.TopBar] overlay=120x40 tick=900
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.QuickMenu] size=120x40 x0=2 y0=10 height=28 kind=Zones
+[CLICK-OVERLAY] Quick kind=Zones -> qmenu=None
+[UiRenderer.TopBar] overlay=120x40 tick=950
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1000
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1050
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1100
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1150
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[UiRenderer.TopBar] overlay=120x40 tick=1200
+[UiRenderer.DockScreen] overlay=120x40 row=39
+[UiRenderer.QuickIconsScreen] overlay=120x40 row=38 center=60 width=5
+[SHUTDOWN] Game shutting down normally

@@ -93,7 +93,7 @@ TUNING_FILES.md [U] �� Overview of tuning.mapgen.json / tuning.cavern.json /
 
 /content/registries/tuning.damage.json [N] �?Damage constants: k_mat, k_item, penetration/coverage curves, caps.
 
-/content/registries//content/registries/tuning.navigation.json [N] — Move costs, ramps/stairs deltas, fluid thresholds, node/time budgets. (Implemented)
+/content/registries/tuning.navigation.json [N] — Move costs, ramps/stairs deltas, fluid thresholds, node/time budgets. (Implemented)
 
 /content/registries/tuning.storyteller.json [N] �?Director tick, curves, cooldowns, rails, weights/scales.
 

@@ -73,14 +73,7 @@ public sealed class WorldNavigationView : IWorldNavigationView
     public bool TryGetRampDirection(Point3 position, out byte rampDirection)
     {
         rampDirection = 0;
-        var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
-        if (navData == null) return false;
-        int idx = LocalIndex(position);
-        if (idx < 0 || idx >= ChunkNavData.TilesPerChunk) return false;
-        byte dir = navData.UpRampDir[idx];
-        if (dir == 255) return false;
-        rampDirection = dir;
-        return true;
+        return false;
     }
 
     public bool IsStandable(Point3 position)
@@ -89,20 +82,13 @@ public sealed class WorldNavigationView : IWorldNavigationView
         var caps = GetCapabilities(position);
         if ((caps & NavCapability.Standable) != 0) return true;
         var tile = _world.GetTile(position.X, position.Y, position.Z);
-        return tile.HasValue && (tile.Value.Kind == TerrainKind.OpenWithFloor || tile.Value.Kind == TerrainKind.Slope);
+        return tile.HasValue && tile.Value.Kind == TerrainKind.OpenWithFloor;
     }
 
     public bool TryGetDownRampDirection(Point3 position, out byte rampDirection)
     {
         rampDirection = 0;
-        var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
-        if (navData == null) return false;
-        int idx = LocalIndex(position);
-        if (idx < 0 || idx >= ChunkNavData.TilesPerChunk) return false;
-        byte dir = navData.DownRampDir[idx];
-        if (dir == 255) return false;
-        rampDirection = dir;
-        return true;
+        return false;
     }
 
     public bool TryGetUpRampMask(Point3 position, out byte mask)

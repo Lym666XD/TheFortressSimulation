@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("HumanFortress Team")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+0ada98a27f808d021d68ae5b2dfe8c4b7d368c3a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("0.1.0+ed470ca2b420f2f5f610aebb81d5c9a68e7045ec")]
 [assembly: System.Reflection.AssemblyProductAttribute("HumanFortress")]
 [assembly: System.Reflection.AssemblyTitleAttribute("HumanFortress.Navigation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("0.1.0.0")]

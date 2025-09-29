@@ -248,27 +248,24 @@ public sealed class DeterministicAStar
                 }
             }
         }
-        else if (world.TryGetRampDirection(current.Position, out var dir))
-        {
-            var (dx, dy) = GetDirectionOffset(dir);
-            var topPos = new Point3(current.Position.X + dx, current.Position.Y + dy, current.Position.Z + 1);
-            if (world.IsValid(topPos) && world.IsStandable(topPos))
-            {
-                bool isDiagonal = (dx != 0 && dy != 0);
-                uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
-                ProcessNeighbor(current, topPos, baseEdge + (uint)_tuning.RampDelta, request, world);
-            }
-        }
+        // no fallback to single direction; UpRampMask is the sole source
         // If we're on a standable top tile, allow descending via cached down-ramp link
-        if (world.IsStandable(current.Position) && world.TryGetDownRampDirection(current.Position, out var ddir))
+        if (world.IsStandable(current.Position))
         {
-            var (dx, dy) = GetDirectionOffset(ddir);
-            var rampPos = new Point3(current.Position.X - dx, current.Position.Y - dy, current.Position.Z - 1);
-            if (world.IsValid(rampPos) && world.IsWalkable(rampPos, request.Mode))
+            // Try descending: check all 8 directions for a matching ramp base below/behind with UpRampMask allowing this dir
+            for (byte d = 0; d < 8; d++)
             {
-                bool isDiagonal = (dx != 0 && dy != 0);
-                uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
-                ProcessNeighbor(current, rampPos, baseEdge + (uint)_tuning.RampDelta, request, world);
+                var (dx, dy) = GetDirectionOffset(d);
+                var rampPos = new Point3(current.Position.X - dx, current.Position.Y - dy, current.Position.Z - 1);
+                if (!world.IsValid(rampPos)) continue;
+                // Require ramp at rampPos and UpRampMask allowing d
+                if (!world.IsWalkable(rampPos, request.Mode)) continue; // quick reject
+                if (world.TryGetUpRampMask(rampPos, out var m) && (m & (1 << d)) != 0)
+                {
+                    bool isDiagonal = (dx != 0 && dy != 0);
+                    uint baseEdge = (uint)(isDiagonal ? _tuning.DiagonalCost : _tuning.OrthogonalCost);
+                    ProcessNeighbor(current, rampPos, baseEdge + (uint)_tuning.RampDelta, request, world);
+                }
             }
         }
     }
