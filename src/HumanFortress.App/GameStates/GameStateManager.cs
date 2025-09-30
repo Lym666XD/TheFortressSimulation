@@ -224,8 +224,11 @@ public sealed class GameStateManager
         _tickScheduler.RegisterSystem(_haulingPlanner);
 
         // Haul job executor assigns creatures and moves items along paths
-        var haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner);
+        var haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog);
         _tickScheduler.RegisterSystem(haulJobs);
+
+        // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
+        _tickScheduler.PostTick += OnPostTickApplyDiffs;
 
         _tickScheduler.Start();
     }
@@ -250,5 +253,14 @@ public sealed class GameStateManager
         public ulong CurrentTick => 0; // Not currently propagated by scheduler
         public IWorldReader World => _world;
         public IEventBus EventBus => _eventBus;
+    }
+
+    private void OnPostTickApplyDiffs(ulong tick)
+    {
+        // Merge and clear for next tick. In this phase, we could apply supported ops.
+        var merged = _diffLog.MergeAndSort();
+        // Apply core diffs (creatures/items). Stockpile diffs are applied by StockpileDiffApplicator in its own pipeline.
+        HumanFortress.Simulation.Diff.SimulationDiffApplicator.ApplyAll(_world!, merged);
+        _diffLog.Clear();
     }
 }

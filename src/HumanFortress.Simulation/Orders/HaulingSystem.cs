@@ -65,8 +65,9 @@ public sealed class HaulingSystem : ITick
                 if (plannedCount >= _maxPerTick) break;
 
                 // Choose nearest accepting zone cell (v1: first shard member cell)
-                if (!TryFindDestination(item, zones, out var destWorld))
+                if (!TryFindDestination(item, zones, out var destWorld, out var toZ))
                     continue;
+
 
                 _planned.Add(new PlannedMove
                 {
@@ -74,7 +75,7 @@ public sealed class HaulingSystem : ITick
                     From = item.Position,
                     FromZ = item.Z,
                     To = destWorld,
-                    ToZ = d.Z
+                    ToZ = toZ
                 });
                 plannedCount++;
             }
@@ -126,10 +127,11 @@ public sealed class HaulingSystem : ITick
         return zones.Values.ToList();
     }
 
-    private bool TryFindDestination(Items.ItemInstance item, List<StockpileZone> zones, out Point destWorld)
+    private bool TryFindDestination(Items.ItemInstance item, List<StockpileZone> zones, out Point destWorld, out int destZ)
     {
-        // v1: pick the member cell in the nearest zone by Manhattan distance (chunk-level) and use the first cell in that shard
+        // v1: pick the member cell in the nearest zone by Manhattan distance (chunk-level, includes Z) and use the first cell in that shard
         destWorld = default;
+        destZ = item.Z;
 
         var itemChunkX = item.Position.X / Chunk.SIZE_XY;
         var itemChunkY = item.Position.Y / Chunk.SIZE_XY;
@@ -143,8 +145,7 @@ public sealed class HaulingSystem : ITick
             // Must contain at least one shard at this Z
             foreach (var ck in zone.MemberChunks)
             {
-                if (ck.Z != item.Z) continue;
-                int dist = Math.Abs(ck.ChunkX - itemChunkKey.ChunkX) + Math.Abs(ck.ChunkY - itemChunkKey.ChunkY);
+                int dist = Math.Abs(ck.ChunkX - itemChunkKey.ChunkX) + Math.Abs(ck.ChunkY - itemChunkKey.ChunkY) + Math.Abs(ck.Z - itemChunkKey.Z);
                 if (dist < bestDist)
                 {
                     bestDist = dist;
@@ -158,7 +159,6 @@ public sealed class HaulingSystem : ITick
         // Choose first member cell from the nearest shard
         foreach (var ck in bestZone.MemberChunks)
         {
-            if (ck.Z != item.Z) continue;
             var chunk = _world.GetChunk(ck);
             if (chunk == null) continue;
             var stock = chunk.GetStockpileData();
@@ -172,6 +172,7 @@ public sealed class HaulingSystem : ITick
                 if (!shard.MemberCells[idx]) continue;
                 var (lx, ly) = Chunk.IndexToLocal(idx);
                 destWorld = new Point(ck.ChunkX * Chunk.SIZE_XY + lx, ck.ChunkY * Chunk.SIZE_XY + ly);
+                destZ = ck.Z;
                 return true;
             }
         }

@@ -177,6 +177,14 @@ namespace HumanFortress.App.UI;
         var recent = world.Orders.GetRecentHauls();
         surf.Print(2, startY, "== Work: Orders (Haul) ==", Color.Yellow);
         int y = startY + 2;
+        // Basic counters from job system
+        try
+        {
+            surf.Print(2, y++, $"Assigned: {HumanFortress.App.Jobs.JobStats.Assigned}  Completed: {HumanFortress.App.Jobs.JobStats.Completed}", Color.Cyan);
+            surf.Print(2, y++, $"NoPath: {HumanFortress.App.Jobs.JobStats.NoPath}  Requeued: {HumanFortress.App.Jobs.JobStats.Requeued}", Color.Cyan);
+            y++;
+        }
+        catch { /* if not available, skip */ }
         if (recent.Count == 0)
         {
             surf.Print(2, y, "No haul orders yet.", Color.Gray);

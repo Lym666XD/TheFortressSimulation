@@ -75,6 +75,13 @@
             Get all instances (creates a snapshot for thread safety)
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Diff.SimulationDiffApplicator">
+            <summary>
+            Applies core DiffLog operations to the simulation world (v1.1 minimal).
+            Handles MoveCreature, MoveItem, MarkCarried, UnmarkCarried.
+            This runs after systems' Write phase per UPDATE_ORDER.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Items.ItemDefinition">
             <summary>
             Static definition of an item type loaded from data/core/items/*.json

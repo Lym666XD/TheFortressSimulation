@@ -20,12 +20,13 @@ public sealed class HaulJobSystem : ITick
     private readonly IPathService _paths;
     private readonly WorldNavigationView _navView;
     private readonly MovementExecutor _move;
+    private readonly DiffLog? _diff;
 
     private readonly List<ActiveJob> _active = new();
     private readonly List<HaulingSystem.PlannedMove> _inboxBuffer = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<HaulingSystem.PlannedMove> _backlog = new();
 
-    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner)
+    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner, DiffLog? diffLog = null)
     {
         _world = world;
         _planner = planner;
@@ -33,6 +34,7 @@ public sealed class HaulJobSystem : ITick
         _paths = new PathService();
         _navView = new WorldNavigationView(_nav, world);
         _move = new MovementExecutor(_paths);
+        _diff = diffLog;
         _nav.RebuildAll();
     }
 
@@ -55,7 +57,17 @@ public sealed class HaulJobSystem : ITick
             return;
         }
 
-        var moves = _inboxBuffer.OrderBy(m => m.ItemGuid).ToList();
+        // De-duplicate by item and drop stale ones (already reserved/carried)
+        var seen = new HashSet<Guid>();
+        var moves = _inboxBuffer
+            .OrderBy(m => m.ItemGuid)
+            .Where(m =>
+            {
+                if (!seen.Add(m.ItemGuid)) return false;
+                var it = _world.Items.GetInstance(m.ItemGuid);
+                return it != null && !it.IsCarried && !it.IsReserved;
+            })
+            .ToList();
         var creatures = _world.Creatures.GetAllInstances().OrderBy(c => c.Guid).ToList();
         Logger.Log($"[HAULJOBS][{tick}] Moves={moves.Count} Creatures={creatures.Count}");
         IWorldNavigationView view = _navView;
@@ -65,13 +77,14 @@ public sealed class HaulJobSystem : ITick
             bool assigned = false;
             foreach (var worker in creatures)
             {
-                if (worker.Z != mv.FromZ || worker.HP <= 0) continue;
+                if (worker.HP <= 0) continue; // allow cross-Z by pathfinding
                 if (busy.Contains(worker.Guid)) continue; // already on a job
-                var req = new PathRequest(new Point3(worker.Position.X, worker.Position.Y, worker.Z), new Point3(mv.From.X, mv.From.Y, mv.FromZ), MoveMode.Walk, PathFlags.None, SeedFrom(worker.Guid, mv.ItemGuid));
+                var req = new PathRequest(new Point3(worker.Position.X, worker.Position.Y, worker.Z), new Point3(mv.From.X, mv.From.Y, mv.FromZ), MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(worker.Guid, mv.ItemGuid));
                 var path = _paths.Solve(in req, in view);
                 if (path.Kind != PathResultKind.Found)
                 {
                     Logger.Log($"[HAULJOBS][{tick}] No path to item for worker={worker.Guid} from=({worker.Position.X},{worker.Position.Y},{worker.Z}) to=({mv.From.X},{mv.From.Y},{mv.FromZ})");
+                    JobStats.NoPath++;
                     continue;
                 }
                 var job = new ActiveJob
@@ -84,8 +97,16 @@ public sealed class HaulJobSystem : ITick
                 _move.BeginMovement(ToEntity(worker.Guid), req, path);
                 _active.Add(job);
                 busy.Add(worker.Guid);
+                // Reserve the item to prevent duplicate planning/assignment
+                var it = _world.Items.GetInstance(mv.ItemGuid);
+                if (it != null)
+                {
+                    it.IsReserved = true;
+                    it.ReservedBy = worker.Guid;
+                }
                 Logger.Log($"[HAULJOBS][{tick}] Assigned worker={worker.Guid} -> item={mv.ItemGuid} dest=({mv.To.X},{mv.To.Y},{mv.ToZ})");
                 assigned = true;
+                JobStats.Assigned++;
                 break;
             }
             if (!assigned)
@@ -93,6 +114,7 @@ public sealed class HaulJobSystem : ITick
                 // Requeue for retry next tick
                 _backlog.Enqueue(mv);
                 Logger.Log($"[HAULJOBS][{tick}] No available worker for item={mv.ItemGuid}; requeue.");
+                JobStats.Requeued++;
             }
         }
     }
@@ -120,15 +142,17 @@ public sealed class HaulJobSystem : ITick
                 continue;
             }
 
-            cr.Position = new SadRogue.Primitives.Point(update.Position.X, update.Position.Y);
-            cr.Z = update.Position.Z;
+            // Emit Diff for creature movement (runtime updated by applicator)
+            EmitMoveCreatureDiff(eid, update.Position);
 
             if (update.Status == MovementStatus.Arrived || update.Status == MovementStatus.PathComplete)
             {
                 if (job.Stage == JobStage.ToItem)
                 {
                     IWorldNavigationView view3 = _navView;
-                    var req2 = new PathRequest(update.Position, job.Dest, MoveMode.Walk, PathFlags.None, SeedFrom(job.CreatureId, job.ItemId));
+                    // Mark carried when item picked up (via Diff)
+                    EmitMarkCarried(job.ItemId, job.CreatureId, update.Position);
+                    var req2 = new PathRequest(update.Position, job.Dest, MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(job.CreatureId, job.ItemId));
                     var path2 = _paths.Solve(in req2, in view3);
                     if (path2.Kind == PathResultKind.Found)
                     {
@@ -140,14 +164,12 @@ public sealed class HaulJobSystem : ITick
                 }
                 else if (job.Stage == JobStage.ToDest)
                 {
-                    var item = _world.Items.GetInstance(job.ItemId);
-                    if (item != null)
-                    {
-                        item.Position = new SadRogue.Primitives.Point(job.Dest.X, job.Dest.Y);
-                        item.Z = job.Dest.Z;
-                    }
+                    // Place item via Diff and clear carried state
+                    EmitMoveItem(job.ItemId, job.Dest);
+                    EmitUnmarkCarried(job.ItemId, job.Dest);
                     finished.Add(job);
                     Logger.Log($"[HAULJOBS][{tick}] Completed haul item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) by worker={job.CreatureId}");
+                    JobStats.Completed++;
                 }
             }
         }
@@ -190,5 +212,79 @@ public sealed class HaulJobSystem : ITick
         public Point3 Dest { get; set; }
         public JobStage Stage { get; set; }
     }
+
+    private void EmitMoveCreatureDiff(uint entityId, Point3 position)
+    {
+        if (_diff == null) return;
+        int chunkX = position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, position.Z));
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)entityId));
+        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, SystemId, Priority));
+    }
+
+    private void EmitMoveItem(Guid itemId, Point3 dest)
+    {
+        if (_diff == null) return;
+        uint eid = ToEntity(itemId);
+        int chunkX = dest.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = dest.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = dest.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = dest.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, dest.Z));
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eid));
+        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, SystemId, Priority));
+    }
+
+    private void EmitMarkCarried(Guid itemId, Guid carrierId, Point3 at)
+    {
+        if (_diff == null) return;
+        uint eidItem = ToEntity(itemId);
+        uint eidCarrier = ToEntity(carrierId);
+        int chunkX = at.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = at.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = at.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = at.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, at.Z));
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eidItem));
+        ulong args = eidCarrier; // low 32 bits carry carrier entity id
+        _diff.AddOp(new DiffOp(DiffOpType.MarkCarried, target, SystemId, Priority, args));
+    }
+
+    private void EmitUnmarkCarried(Guid itemId, Point3 at)
+    {
+        if (_diff == null) return;
+        uint eidItem = ToEntity(itemId);
+        int chunkX = at.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = at.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = at.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = at.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, at.Z));
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eidItem));
+        _diff.AddOp(new DiffOp(DiffOpType.UnmarkCarried, target, SystemId, Priority));
+    }
+
+    private static int EncodeChunkId(HumanFortress.Simulation.World.ChunkKey ck)
+    {
+        // 10 bits each for x,y,z -> supports up to 1024 in each dimension
+        int x = ck.ChunkX & 0x3FF;
+        int y = ck.ChunkY & 0x3FF;
+        int z = ck.Z & 0x3FF;
+        return (z << 20) | (x << 10) | y;
+    }
+}
+
+public static class JobStats
+{
+    public static int Assigned;
+    public static int Completed;
+    public static int NoPath;
+    public static int Requeued;
 }
 

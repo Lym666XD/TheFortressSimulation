@@ -43,7 +43,11 @@ public enum DiffOpType : byte
     RemoveItem,
     MoveCreature,
     DamageCreature,
-    ModifyAttribute
+    ModifyAttribute,
+    // Items/Jobs v1.1 extensions (used by Haul jobs)
+    MoveItem,
+    MarkCarried,
+    UnmarkCarried
 }
 
 public readonly struct DiffTarget
