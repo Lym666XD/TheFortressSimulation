@@ -1,4 +1,4 @@
-using SadConsole;
+﻿using SadConsole;
 using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.Simulation.Stockpile;
@@ -15,8 +15,8 @@ namespace HumanFortress.App.UI;
             int y = surf.Height - 1; // move to very bottom to avoid drawer overlap
             int x = 1;
             int buttonWidth = 5; // e.g., [F1]
-            if (tick % 50 == 0)
-                Logger.Log($"[UiRenderer.DockScreen] overlay={surf.Width}x{surf.Height} row={y}");
+            // if (tick % 50 == 0)
+            //     Logger.Log($"[UiRenderer.DockScreen] overlay={surf.Width}x{surf.Height} row={y}");
 
             DrawSquareButton(surf, ref x, y, "F1", ui.OpenDrawer == DrawerId.Creature, buttonWidth);
             DrawSquareButton(surf, ref x, y, "F2", ui.OpenDrawer == DrawerId.Stock, buttonWidth);
@@ -75,19 +75,19 @@ namespace HumanFortress.App.UI;
             xC = center + (buttonWidth + gap) - buttonWidth / 2;
             DrawSquareButton(surf, ref xC, y, "C", ui.QuickMenu == QuickMenuKind.Build, buttonWidth);
 
-            if (tick % 50 == 0)
-                Logger.Log($"[UiRenderer.QuickIconsScreen] overlay={surf.Width}x{surf.Height} row={y} center={center} width={buttonWidth}");
+            // if (tick % 50 == 0)
+            //     Logger.Log($"[UiRenderer.QuickIconsScreen] overlay={surf.Width}x{surf.Height} row={y} center={center} width={buttonWidth}");
         }
 
     // Draw bottom drawer placeholder
-    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick, StockpileManager? stockpileManager = null)
+    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick, StockpileManager? stockpileManager = null, HumanFortress.Simulation.World.World? world = null)
     {
         if (ui.OpenDrawer == DrawerId.None) return;
         var surf = mapSurface.Surface;
         int height = Math.Max(8, (int)(surf.Height * 0.7));
         int y0 = surf.Height - 1 - height; // top of drawer area
-        if (tick % 50 == 0)
-            Logger.Log($"[UiRenderer.Drawer] size={surf.Width}x{surf.Height} height={height} y0={y0} panel={ui.OpenDrawer} tab={ui.DrawerTab}");
+        // if (tick % 50 == 0)
+        //     Logger.Log($"[UiRenderer.Drawer] size={surf.Width}x{surf.Height} height={height} y0={y0} panel={ui.OpenDrawer} tab={ui.DrawerTab}");
         // background panel
         for (int y = y0; y < surf.Height - 1; y++)
         {
@@ -101,7 +101,7 @@ namespace HumanFortress.App.UI;
         string title = ui.OpenDrawer switch
         {
             DrawerId.Creature => "Creature Management",
-            DrawerId.Stock => "Stock Management",
+            DrawerId.Stock => "Stock/Items Management",
             DrawerId.Work => "Work Management",
             DrawerId.Military => "Military Management",
             DrawerId.Country => "Country Management",
@@ -111,9 +111,13 @@ namespace HumanFortress.App.UI;
         };
         surf.Print(1, y0, $"== {title} ==", Color.Yellow);
 
-        // 为Stock面板自定义tabs
+        // Custom tabs per drawer
         string[] tabs;
-        if (ui.OpenDrawer == DrawerId.Stock)
+        if (ui.OpenDrawer == DrawerId.Creature)
+        {
+            tabs = new[] { "All Creatures", "Animals", "Settings" };
+        }
+        else if (ui.OpenDrawer == DrawerId.Stock)
         {
             tabs = new[] { "Items", "Stockpiles", "Trade" };
         }
@@ -131,15 +135,62 @@ namespace HumanFortress.App.UI;
             tx += 1;
         }
 
-        // Stock面板的Stockpiles tab内容
-        if (ui.OpenDrawer == DrawerId.Stock && ui.DrawerTab == 1 && stockpileManager != null)
+        // Content based on drawer and tab
+        if (ui.OpenDrawer == DrawerId.Creature && world != null)
         {
-            DrawStockpilesTab(surf, stockpileManager, y0 + 2);
+            if (ui.DrawerTab == 0)
+                DrawCreaturesTab(surf, world, ui, y0 + 2, height - 3);
+            else if (ui.DrawerTab == 1)
+                DrawAnimalsTab(surf, y0 + 2);
+            else
+                surf.Print(2, y0 + 2, "(Settings coming soon)", Color.Gray);
+        }
+        else if (ui.OpenDrawer == DrawerId.Stock)
+        {
+            if (ui.DrawerTab == 0 && world != null)
+                DrawItemsTab(surf, world, ui, y0 + 2, height - 3);
+            else if (ui.DrawerTab == 1 && stockpileManager != null)
+                DrawStockpilesTab(surf, stockpileManager, y0 + 2);
+            else
+                surf.Print(2, y0 + 2, "(Trade coming soon)", Color.Gray);
+        }
+        else if (ui.OpenDrawer == DrawerId.Work)
+        {
+            if (ui.DrawerTab == 1 && world != null)
+            {
+                DrawWorkOrdersTab(surf, world, y0 + 2);
+            }
+            else
+            {
+                surf.Print(2, y0 + 2, "(Overview coming soon)", Color.Gray);
+            }
         }
         else
         {
             // content placeholder
             surf.Print(2, y0 + 2, "(Content coming soon)", Color.Gray);
+        }
+    }
+
+    private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY)
+    {
+        var recent = world.Orders.GetRecentHauls();
+        surf.Print(2, startY, "== Work: Orders (Haul) ==", Color.Yellow);
+        int y = startY + 2;
+        if (recent.Count == 0)
+        {
+            surf.Print(2, y, "No haul orders yet.", Color.Gray);
+            return;
+        }
+        int shown = 0;
+        foreach (var d in recent.Take(12))
+        {
+            surf.Print(2, y++, $"Haul rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z}", Color.White);
+            shown++;
+        }
+        if (recent.Count > shown)
+        {
+            surf.Print(2, y, $"... and {recent.Count - shown} more", Color.DarkGray);
         }
     }
 
@@ -169,8 +220,36 @@ namespace HumanFortress.App.UI;
             _ => "Menu"
         };
         surf.Print(x0 + 2, y0, $"-- {title} --", Color.Cyan);
-        // Minimal stub buttons
-        surf.Print(x0 + 2, y0 + 2, "[WIP] Buttons here...", Color.Gray);
+        // Orders menu buttons from input bindings (data-driven)
+        if (ui.QuickMenu == QuickMenuKind.Orders)
+        {
+            var bindings = HumanFortress.App.Input.InputBindingsService.Instance.GetContext("menu.orders");
+            int y = y0 + 2;
+            if (bindings.Count > 0)
+            {
+                foreach (var kv in bindings)
+                {
+                    var key = kv.Key; var action = kv.Value; var label = action switch
+                    {
+                        "orders.select.haul" => $"[{key}] Haul",
+                        "orders.haul.rect" => $"[{key}] Haul (Rect)",
+                        _ => $"[{key}] {action}"
+                    };
+                    surf.Print(x0 + 2, y++, label, Color.White);
+                }
+            }
+            else
+            {
+                // Fallback placeholders per INPUT_SPEC (disabled)
+                surf.Print(x0 + 2, y++, "[F] Haul", Color.Gray);
+                surf.Print(x0 + 2, y++, "[Z] Haul (Rect)", Color.Gray);
+            }
+            // Also draw placeholders for other orders (WIP buttons)
+            surf.Print(x0 + 26, y0 + 2, "[Z] Mining (WIP)", Color.DarkGray);
+            surf.Print(x0 + 26, y0 + 3, "[X] Lumber (WIP)", Color.DarkGray);
+            surf.Print(x0 + 26, y0 + 4, "[C] Gather (WIP)", Color.DarkGray);
+            surf.Print(x0 + 26, y0 + 5, "[V] Masonry (WIP)", Color.DarkGray);
+        }
     }
 
     public static void DrawHelp(ScreenSurface mapSurface, UiStore ui)
@@ -262,51 +341,53 @@ namespace HumanFortress.App.UI;
         surf.SetGlyph(x0 + width - 1, y0 + height - 1, '+');
 
         // Title
-        surf.Print(x0 + 2, y0, "DEBUG", Color.Cyan);
+        surf.Print(x0 + 2, y0, "DEBUG MENU", Color.Cyan);
 
         // Tab buttons
-        surf.Print(x0 + 20, y0, "[TAB] Switch", Color.Gray);
+        surf.Print(x0 + 20, y0, "[TAB] Switch |", Color.Gray);
         var tabColor0 = ui.DebugMenuTab == 0 ? Color.Yellow : Color.DarkGray;
         var tabColor1 = ui.DebugMenuTab == 1 ? Color.Yellow : Color.DarkGray;
-        surf.Print(x0 + 35, y0, "[1] Creatures", tabColor0);
-        surf.Print(x0 + 50, y0, "[2] Items", tabColor1);
+        var tabColor2 = ui.DebugMenuTab == 2 ? Color.Yellow : Color.DarkGray;
+        surf.Print(x0 + 38, y0, "[0] Status", tabColor0);
+        surf.Print(x0 + 50, y0, "[1] Creatures", tabColor1);
+        surf.Print(x0 + 65, y0, "[2] Items", tabColor2);
 
-        // Left column - spawn options based on tab
-        if (ui.DebugMenuTab == 0) // Creatures tab
+        // Content based on tab
+        if (ui.DebugMenuTab == 0) // Status tab
         {
-            surf.Print(x0 + 2, y0 + 2, "Spawn Creature (click):", Color.Yellow);
+            surf.Print(x0 + 2, y0 + 2, "=== Fortress Status ===", Color.Yellow);
+            surf.Print(x0 + 2, y0 + 4, "Simulation: Running", Color.Green);
+            surf.Print(x0 + 2, y0 + 5, "TPS: 50", Color.Green);
+            surf.Print(x0 + 2, y0 + 7, $"Cursor: {cursor.X},{cursor.Y}", Color.White);
+            surf.Print(x0 + 2, y0 + 8, $"Z-Level: {currentZ}/49", Color.Cyan);
+            surf.Print(x0 + 2, y0 + 9, $"Zoom: {zoomLevel}x", Color.White);
+            surf.Print(x0 + 2, y0 + 10, $"Camera: {camera.X},{camera.Y}", Color.Gray);
+            surf.Print(x0 + 2, y0 + 11, $"Map: {fortressSize}x{fortressSize} chunks", Color.Gray);
+        }
+        else if (ui.DebugMenuTab == 1) // Creatures tab
+        {
+            surf.Print(x0 + 2, y0 + 2, "Spawn Creature:", Color.Yellow);
             surf.Print(x0 + 2, y0 + 3, "[D] Dwarf", ui.DebugSelectedCreature.Contains("dwarf") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 4, "[H] Human", ui.DebugSelectedCreature.Contains("human") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 5, "[G] Goblin", ui.DebugSelectedCreature.Contains("goblin") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 6, "[E] Elf", ui.DebugSelectedCreature.Contains("elf") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 7, "[O] Orc", ui.DebugSelectedCreature.Contains("orc") ? Color.White : Color.DarkGray);
+
             surf.Print(x0 + 2, y0 + 9, $"Selected: {GetCreatureName(ui.DebugSelectedCreature)}", Color.Cyan);
+            surf.Print(x0 + 2, y0 + 11, "Click map to spawn at mouse position", Color.Green);
         }
         else // Items tab
         {
-            surf.Print(x0 + 2, y0 + 2, "Spawn Item (click):", Color.Yellow);
+            surf.Print(x0 + 2, y0 + 2, "Spawn Item:", Color.Yellow);
             surf.Print(x0 + 2, y0 + 3, "[1] Stone", ui.DebugSelectedItem.Contains("stone") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 4, "[2] Iron Ingot", ui.DebugSelectedItem.Contains("iron") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 5, "[3] Wood Log", ui.DebugSelectedItem.Contains("wood") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 6, "[4] Pickaxe", ui.DebugSelectedItem.Contains("pickaxe") ? Color.White : Color.DarkGray);
             surf.Print(x0 + 2, y0 + 7, "[5] Sword", ui.DebugSelectedItem.Contains("sword") ? Color.White : Color.DarkGray);
+
             surf.Print(x0 + 2, y0 + 9, $"Selected: {GetItemName(ui.DebugSelectedItem)}", Color.Cyan);
+            surf.Print(x0 + 2, y0 + 11, "Click map to spawn at mouse position", Color.Green);
         }
-
-        // Click to spawn button
-        surf.Print(x0 + 2, y0 + 11, "[CLICK] Spawn at cursor", Color.Green);
-
-        // Status and map info (right column)
-        int col2 = x0 + Math.Max(35, width / 2);
-        surf.Print(col2, y0 + 2, "Status:", Color.Yellow);
-        surf.Print(col2, y0 + 3, "Simulation: Running", Color.Green);
-        surf.Print(col2, y0 + 4, "TPS: 50", Color.Green);
-
-        surf.Print(col2, y0 + 6, $"Cursor: {cursor.X},{cursor.Y}", Color.White);
-        surf.Print(col2, y0 + 7, $"Z-Level: {currentZ}/49", Color.Cyan);
-        surf.Print(col2, y0 + 8, $"Zoom: {zoomLevel}x", Color.White);
-        surf.Print(col2, y0 + 9, $"Camera: {camera.X},{camera.Y}", Color.Gray);
-        surf.Print(col2, y0 + 10, $"Map: {fortressSize}x{fortressSize} chunks", Color.Gray);
     }
 
     private static string GetCreatureName(string id)
@@ -336,52 +417,145 @@ namespace HumanFortress.App.UI;
     }
 
     // Draw Stockpiles tab content
+        // Draw Stockpiles tab content (safe version)
+        // Draw Stockpiles tab content (stubbed)
     private static void DrawStockpilesTab(ICellSurface surf, StockpileManager stockpileManager, int startY)
     {
         var zones = stockpileManager.GetAllZones().ToList();
-
-        if (zones.Count == 0)
+        surf.Print(2, startY, $"Stockpiles: {zones.Count}", Color.Yellow);
+        int y = startY + 2;
+        foreach (var zone in zones.Take(10))
         {
-            surf.Print(2, startY, "No stockpiles created yet.", Color.Gray);
-            surf.Print(2, startY + 2, "Press [X] -> [Z] -> [Z] to create a stockpile.", Color.DarkGray);
+            surf.Print(2, y++, $"#{zone.ZoneId} {zone.Name} Pri:{zone.Priority}", Color.White);
+        }
+    }private static void DrawCreaturesTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight)
+    {
+        var creatures = world.Creatures.GetAllInstances().ToList();
+
+        surf.Print(2, startY, $"=== All Creatures ({creatures.Count}) ===", Color.Yellow);
+        surf.Print(2, startY + 1, "Click creature to view details | Filter: (Coming soon)", Color.Gray);
+
+        if (creatures.Count == 0)
+        {
+            surf.Print(2, startY + 3, "No creatures spawned yet.", Color.DarkGray);
+            surf.Print(2, startY + 4, "Use F12 Debug menu to spawn creatures.", Color.DarkGray);
             return;
         }
 
-        surf.Print(2, startY, "Stockpile Zones:", Color.Yellow);
+        int y = startY + 3;
+        int maxY = startY + maxHeight - 2;
+        int displayed = 0;
 
-        int y = startY + 2;
-        foreach (var zone in zones.Take(15)) // 最多显示15个
+        foreach (var creature in creatures.Take(20)) // Show first 20
         {
-            var priorityColor = zone.Priority switch
-            {
-                3 => Color.Red,
-                2 => Color.Orange,
-                1 => Color.Yellow,
-                _ => Color.Gray
-            };
+            if (y >= maxY) break;
 
-            surf.Print(2, y, $"#{zone.ZoneId} {zone.Name}", Color.White);
-            surf.Print(30, y, $"Pri:{zone.Priority}", priorityColor);
-            surf.Print(40, y, $"Chunks:{zone.MemberChunks.Count}", Color.Gray);
+            var def = world.Creatures.GetDefinition(creature.DefinitionId);
+            string name = def?.Name ?? "Unknown";
+            string status = creature.HP > 0 ? "IDLE" : "DEAD";
+            var statusColor = creature.HP > 0 ? Color.Green : Color.Red;
+            bool selected = ui.SelectedCreatureGuid == creature.Guid.ToString();
+            var bgColor = selected ? new Color(50, 50, 0) : new Color(20, 20, 20);
 
-            // 显示过滤器摘要
-            if (zone.Filter.Tags.Count > 0)
-            {
-                var tags = string.Join(", ", zone.Filter.Tags.Take(3));
-                surf.Print(50, y, tags, Color.DarkGray);
-            }
-            else
-            {
-                surf.Print(50, y, "All items", Color.DarkGray);
-            }
+            // Render line with custom background for selection
+            for (int x = 2; x < surf.Width - 2; x++)
+                surf.SetGlyph(x, y, ' ', Color.White, bgColor);
+
+            surf.Print(2, y, $"{name,-12} @ ({creature.Position.X,3},{creature.Position.Y,3},{creature.Z,2})", Color.White);
+            surf.Print(45, y, $"[{status}]", statusColor);
 
             y++;
+            displayed++;
         }
 
-        if (zones.Count > 15)
+        if (creatures.Count > displayed)
         {
-            surf.Print(2, y, $"... and {zones.Count - 15} more", Color.DarkGray);
+            surf.Print(2, y, $"... and {creatures.Count - displayed} more (scroll coming soon)", Color.DarkGray);
         }
+
+        // Footer stats
+        int alive = creatures.Count(c => c.HP > 0);
+        int dead = creatures.Count - alive;
+        surf.Print(2, startY + maxHeight - 1, $"Total: {creatures.Count}  Alive: {alive}  Dead: {dead}", Color.Cyan);
+    }
+
+    // Draw Animals tab (F1 Tab 1)
+    private static void DrawAnimalsTab(ICellSurface surf, int startY)
+    {
+        surf.Print(2, startY, "=== Animals ===", Color.Yellow);
+        surf.Print(2, startY + 2, "Coming soon - Animal tracking will be available here.", Color.Gray);
+        surf.Print(2, startY + 3, "Press ESC to return.", Color.DarkGray);
+    }
+
+    // Draw Items tab (F2 Tab 0)
+    private static void DrawItemsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight)
+    {
+        // Kind filter dropdown
+        var availableKinds = new[] { "all", "resource", "weapon", "armor", "tool", "container", "consumable" };
+        surf.Print(2, startY, "Filter by kind: [", Color.Gray);
+        int filterX = 18;
+        foreach (var kind in availableKinds)
+        {
+            bool active = ui.ItemKindFilter == kind;
+            var color = active ? Color.Yellow : Color.DarkGray;
+            surf.Print(filterX, startY, kind, color);
+            filterX += kind.Length + 1;
+            if (kind != availableKinds[^1])
+                surf.Print(filterX - 1, startY, "|", Color.Gray);
+        }
+
+        // Get items
+        var allItems = world.Items.GetAllInstances().Where(i => !i.IsCarried);
+        var filteredItems = ui.ItemKindFilter == "all"
+            ? allItems.ToList()
+            : allItems.Where(item => {
+                var def = world.Items.GetDefinition(item.DefinitionId);
+                return def?.Kind.ToLower() == ui.ItemKindFilter;
+            }).ToList();
+
+        surf.Print(2, startY + 2, $"=== Items on Map ({filteredItems.Count}) ===", Color.Yellow);
+
+        if (filteredItems.Count == 0)
+        {
+            surf.Print(2, startY + 4, "No items found.", Color.DarkGray);
+            surf.Print(2, startY + 5, "Use F12 Debug menu to spawn items.", Color.DarkGray);
+            return;
+        }
+
+        int y = startY + 4;
+        int maxY = startY + maxHeight - 2;
+        int displayed = 0;
+        int totalUnits = 0;
+
+        foreach (var item in filteredItems.Take(20))
+        {
+            if (y >= maxY) break;
+
+            var def = world.Items.GetDefinition(item.DefinitionId);
+            string name = def?.Name ?? "Unknown";
+            int qty = item.StackCount;
+            totalUnits += qty;
+            bool selected = ui.SelectedItemGuid == item.Guid.ToString();
+            var bgColor = selected ? new Color(50, 50, 0) : new Color(20, 20, 20);
+
+            // Render line with selection background
+            for (int x = 2; x < surf.Width - 2; x++)
+                surf.SetGlyph(x, y, ' ', Color.White, bgColor);
+
+            string qtyStr = qty > 1 ? $"x{qty}" : "";
+            surf.Print(2, y, $"{name,-15} {qtyStr,-4} @ ({item.Position.X,3},{item.Position.Y,3},{item.Z,2})", Color.White);
+
+            y++;
+            displayed++;
+        }
+
+        if (filteredItems.Count > displayed)
+        {
+            surf.Print(2, y, $"... and {filteredItems.Count - displayed} more", Color.DarkGray);
+        }
+
+        // Footer stats
+        surf.Print(2, startY + maxHeight - 1, $"Total: {filteredItems.Count} items  {totalUnits} units", Color.Cyan);
     }
 
     // Draw simple debug dwarf markers (overlay) on current z
@@ -401,15 +575,45 @@ namespace HumanFortress.App.UI;
     }
 
     // Top bar with time/speed hints
-    public static void DrawTopBar(ScreenSurface mapSurface, ulong tick)
+    public static void DrawTopBar(ScreenSurface mapSurface, ulong tick, HumanFortress.Core.Time.TickScheduler? scheduler = null)
     {
         var surf = mapSurface.Surface;
         int y = 0;
         for (int x = 0; x < surf.Width; x++)
             surf.SetGlyph(x, y, ' ', Color.White, new Color(10, 10, 10));
-        surf.Print(1, y, "[Space] Pause  [-] Slower  [+] Faster", Color.Gray);
-        if (tick % 50 == 0)
-            Logger.Log($"[UiRenderer.TopBar] overlay={surf.Width}x{surf.Height} tick={tick}");
+
+        // Show current speed/pause status
+        string statusText = "";
+        Color statusColor = Color.Gray;
+
+        if (scheduler != null)
+        {
+            if (scheduler.IsPaused)
+            {
+                statusText = "[PAUSED]";
+                statusColor = Color.Yellow;
+            }
+            else
+            {
+                statusText = $"[{scheduler.SpeedMultiplier:F2}x]";
+                statusColor = scheduler.SpeedMultiplier switch
+                {
+                    < 1.0f => Color.Cyan,      // Slow = cyan
+                    1.0f => Color.White,       // Normal = white
+                    _ => Color.Orange          // Fast = orange
+                };
+            }
+
+            surf.Print(1, y, statusText, statusColor);
+            surf.Print(1 + statusText.Length + 2, y, "[Space] Pause  [-] Slower  [+] Faster", Color.Gray);
+        }
+        else
+        {
+            surf.Print(1, y, "[Space] Pause  [-] Slower  [+] Faster", Color.Gray);
+        }
+
+        // if (tick % 50 == 0)
+        //     Logger.Log($"[UiRenderer.TopBar] overlay={surf.Width}x{surf.Height} tick={tick}");
     }
 
     private static void DrawButton(ICellSurface surf, ref int x, int y, string label, bool active)
@@ -453,5 +657,3 @@ namespace HumanFortress.App.UI;
         surf.SetGlyph(x - 1, y, ' ', Color.White, bg);
     }
 }
-
-

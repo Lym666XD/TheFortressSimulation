@@ -22,8 +22,11 @@
         "Z": "ui.open_menu.orders",
         "X": "ui.open_menu.zones",
         "C": "ui.open_menu.build"
+      },
+      "menu.orders": {
+        "F": "orders.select.haul",
+        "Z": "orders.haul.rect"
       }
     }
   }
 }
-

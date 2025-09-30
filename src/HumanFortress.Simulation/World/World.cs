@@ -1,5 +1,7 @@
 using HumanFortress.Core.Commands;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Creatures;
+using HumanFortress.Simulation.Items;
 using System.Collections.Concurrent;
 
 namespace HumanFortress.Simulation.World;
@@ -14,6 +16,11 @@ public sealed class World : IWorldReader
     private readonly int _sizeInChunks;
     private readonly int _maxZ;
 
+    // Global managers (singleton per world)
+    public CreatureManager Creatures { get; }
+    public ItemManager Items { get; }
+    public HumanFortress.Simulation.Orders.OrdersManager Orders { get; }
+
     public World(int sizeInChunks, int maxZ)
     {
         if (sizeInChunks < 2 || sizeInChunks > 8)
@@ -22,6 +29,14 @@ public sealed class World : IWorldReader
         _sizeInChunks = sizeInChunks;
         _maxZ = maxZ;
         _chunks = new ConcurrentDictionary<ChunkKey, Chunk>();
+
+        // Initialize managers
+        Creatures = new CreatureManager();
+        Items = new ItemManager();
+        Orders = new HumanFortress.Simulation.Orders.OrdersManager();
+
+        // Set self-reference
+        Creatures.SetWorld(this);
     }
 
     /// <summary>

@@ -26,6 +26,7 @@ public sealed class GameStateManager
     private GameState? _currentState;
     private World? _world;
     private SimulationContext? _simContext;
+    private HumanFortress.Simulation.Orders.HaulingSystem? _haulingPlanner;
 
     public GameStateManager(ulong masterSeed)
     {
@@ -47,6 +48,21 @@ public sealed class GameStateManager
     /// Active world (when in fortress play).
     /// </summary>
     public World? World => _world;
+
+    /// <summary>
+    /// Simulation tick scheduler.
+    /// </summary>
+    public TickScheduler TickScheduler => _tickScheduler;
+
+    public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => _haulingPlanner;
+
+    /// <summary>
+    /// Enqueue a simulation command.
+    /// </summary>
+    public void EnqueueCommand(ICommand command)
+    {
+        _commandQueue.Enqueue(command);
+    }
 
     /// <summary>
     /// Register a state.
@@ -126,6 +142,45 @@ public sealed class GameStateManager
     {
         _world = new World(sizeInChunks, maxZ);
         _simContext = new SimulationContext(_diffLog, _world, _eventBus);
+
+        // Load creature and item definitions
+        // Try multiple possible paths for data files
+        var baseDir = AppContext.BaseDirectory;
+        string? dataPath = null;
+
+        // Try path 1: published location (data/core in base directory)
+        var path1 = Path.Combine(baseDir, "data", "core");
+        if (Directory.Exists(path1))
+        {
+            dataPath = path1;
+        }
+        // Try path 2: development location (../../data/core relative to bin)
+        else
+        {
+            var path2 = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core"));
+            if (Directory.Exists(path2))
+            {
+                dataPath = path2;
+            }
+        }
+
+        if (dataPath != null)
+        {
+            Logger.Log($"[GameStateManager] Loading creature and item definitions from {dataPath}");
+            _world.Creatures.LoadDefinitions(dataPath);
+
+            // Set ContentRegistry dependency for material validation
+            _world.Items.SetDependencies(_world, HumanFortress.Core.Content.Registry.ContentRegistry.Instance);
+            _world.Items.LoadDefinitions(dataPath);
+
+            Logger.Log($"[GameStateManager] Loaded {_world.Creatures.DefinitionCount} creatures, {_world.Items.DefinitionCount} items");
+        }
+        else
+        {
+            Logger.Log($"[GameStateManager] WARNING: Data directory not found. Tried:");
+            Logger.Log($"  - {path1}");
+            Logger.Log($"  - {Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core")}");
+        }
     }
 
     /// <summary>
@@ -164,7 +219,13 @@ public sealed class GameStateManager
             throw new InvalidOperationException("World not initialized");
 
         // Register systems with tick scheduler
-        // (Systems will be added as we implement them)
+        // Hauling planner produces planned moves from haul designations
+        _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders);
+        _tickScheduler.RegisterSystem(_haulingPlanner);
+
+        // Haul job executor assigns creatures and moves items along paths
+        var haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner);
+        _tickScheduler.RegisterSystem(haulJobs);
 
         _tickScheduler.Start();
     }
@@ -186,7 +247,7 @@ public sealed class GameStateManager
         }
 
         public DiffLog DiffLog => _diffLog;
-        public ulong CurrentTick => 0; // Will be set by tick scheduler
+        public ulong CurrentTick => 0; // Not currently propagated by scheduler
         public IWorldReader World => _world;
         public IEventBus EventBus => _eventBus;
     }

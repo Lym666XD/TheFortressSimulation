@@ -818,6 +818,47 @@
             Target ticks per second (fixed at 50).
             </summary>
         </member>
+        <member name="P:HumanFortress.Core.Time.TickScheduler.IsPaused">
+            <summary>
+            Whether the simulation is currently paused.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Core.Time.TickScheduler.SpeedMultiplier">
+            <summary>
+            Current speed multiplier (0.25x - 8x).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.Pause">
+            <summary>
+            Pause the simulation. Does not affect command queue.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.Resume">
+            <summary>
+            Resume the simulation from pause.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.TogglePause">
+            <summary>
+            Toggle pause state.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.SetSpeed(System.Single)">
+            <summary>
+            Set simulation speed multiplier.
+            Clamped to [0.25, 8.0] range.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.CycleSpeedUp">
+            <summary>
+            Cycle through predefined speed levels: 0.25x, 0.5x, 1x, 2x, 4x, 8x.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Core.Time.TickScheduler.CycleSpeedDown">
+            <summary>
+            Cycle through predefined speed levels (reverse).
+            </summary>
+        </member>
         <member name="M:HumanFortress.Core.Time.TickScheduler.RegisterSystem(HumanFortress.Core.Time.ITick)">
             <summary>
             Register a system to participate in the tick loop.

@@ -1,0 +1,496 @@
+[
+  {
+    "id": "core_weapon_crossbow",
+    "name": "Crossbow",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "military", "crossbow"],
+    "allowed_material_tags": ["metal", "wood"],
+    "base_mass_g": 3000,
+    "base_volume_ml": 4000,
+    "durability_max": 120,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 5,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 2.0,
+      "attacks": [
+        { "type": "pierce", "base": 20, "verb": "shoot", "ranged": true, "ammo": "bolt" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_bow_short",
+    "name": "Short Bow",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "military", "bow"],
+    "allowed_material_tags": ["wood"],
+    "base_mass_g": 800,
+    "base_volume_ml": 2000,
+    "durability_max": 80,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 8,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.2,
+      "attacks": [
+        { "type": "pierce", "base": 12, "verb": "shoot", "ranged": true, "ammo": "arrow" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_bow_long",
+    "name": "Long Bow",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "military", "bow", "two_handed"],
+    "allowed_material_tags": ["wood"],
+    "base_mass_g": 1200,
+    "base_volume_ml": 3000,
+    "durability_max": 100,
+    "equip": { "slot": "BOTH_HANDS" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.6,
+      "attacks": [
+        { "type": "pierce", "base": 18, "verb": "shoot", "ranged": true, "ammo": "arrow" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_musket",
+    "name": "Musket",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 4500,
+    "base_volume_ml": 5000,
+    "durability_max": 150,
+    "equip": { "slot": "BOTH_HANDS" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 4,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 3.0,
+      "attacks": [
+        { "type": "pierce", "base": 30, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_pistol",
+    "name": "Flintlock Pistol",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military", "sidearm"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 1800,
+    "base_volume_ml": 2000,
+    "durability_max": 120,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 2.2,
+      "attacks": [
+        { "type": "pierce", "base": 22, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_firearm_matchlock",
+    "name": "Matchlock Musket",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military", "matchlock"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 5000,
+    "base_volume_ml": 5500,
+    "durability_max": 140,
+    "equip": { "slot": "BOTH_HANDS" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 4,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 3.5,
+      "attacks": [
+        { "type": "pierce", "base": 28, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_firearm_arquebus",
+    "name": "Arquebus",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military", "early"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 4000,
+    "base_volume_ml": 4500,
+    "durability_max": 120,
+    "equip": { "slot": "BOTH_HANDS" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 5,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 3.2,
+      "attacks": [
+        { "type": "pierce", "base": 25, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_firearm_wheellock",
+    "name": "Wheellock Pistol",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military", "sidearm", "wheellock"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 2000,
+    "base_volume_ml": 2200,
+    "durability_max": 130,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 2.0,
+      "attacks": [
+        { "type": "pierce", "base": 24, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_firearm_handgonne",
+    "name": "Handgonne",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "firearm", "military", "primitive"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 3500,
+    "base_volume_ml": 3000,
+    "durability_max": 100,
+    "equip": { "slot": "BOTH_HANDS" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 4.0,
+      "attacks": [
+        { "type": "pierce", "base": 20, "verb": "shoot", "ranged": true, "ammo": "bullet" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_cannon_swivel",
+    "name": "Swivel Gun",
+    "kind": "SIEGE_WEAPON",
+    "tags": ["weapon", "ranged", "artillery", "swivel", "mounted"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 50000,
+    "base_volume_ml": 30000,
+    "durability_max": 300,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 1,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 6.0,
+      "attacks": [
+        { "type": "pierce", "base": 80, "verb": "fire", "ranged": true, "ammo": "cannonball_small" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_cannon_saker",
+    "name": "Saker Cannon",
+    "kind": "SIEGE_WEAPON",
+    "tags": ["weapon", "ranged", "artillery", "field_gun", "wheeled"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 200000,
+    "base_volume_ml": 100000,
+    "durability_max": 400,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 1,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 8.0,
+      "attacks": [
+        { "type": "pierce", "base": 150, "verb": "fire", "ranged": true, "ammo": "cannonball" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_mortar",
+    "name": "Mortar",
+    "kind": "SIEGE_WEAPON",
+    "tags": ["weapon", "ranged", "artillery", "mortar", "indirect"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 100000,
+    "base_volume_ml": 60000,
+    "durability_max": 350,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 1,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 7.0,
+      "attacks": [
+        { "type": "explosive", "base": 100, "verb": "bombard", "ranged": true, "ammo": "mortar_shell" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_blowgun",
+    "name": "Blowgun",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "simple"],
+    "allowed_material_tags": ["wood", "bamboo"],
+    "base_mass_g": 200,
+    "base_volume_ml": 1000,
+    "durability_max": 60,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 0.8,
+      "attacks": [
+        { "type": "pierce", "base": 4, "verb": "shoot", "ranged": true, "ammo": "dart" }
+      ]
+    }
+  },
+  {
+    "id": "core_ammo_arrow",
+    "name": "Arrow",
+    "kind": "AMMO",
+    "tags": ["ammo", "arrow"],
+    "allowed_material_tags": ["wood"],
+    "base_mass_g": 30,
+    "base_volume_ml": 50,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["material", "quality"]
+    }
+  },
+  {
+    "id": "core_ammo_bolt",
+    "name": "Crossbow Bolt",
+    "kind": "AMMO",
+    "tags": ["ammo", "bolt"],
+    "allowed_material_tags": ["metal", "wood"],
+    "base_mass_g": 50,
+    "base_volume_ml": 40,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["material", "quality"]
+    }
+  },
+  {
+    "id": "core_ammo_bullet_lead",
+    "name": "Lead Bullet",
+    "kind": "AMMO",
+    "tags": ["ammo", "bullet"],
+    "fixed_material": "core_mat_metal_lead",
+    "base_mass_g": 20,
+    "base_volume_ml": 10,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 200,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_ammo_dart",
+    "name": "Dart",
+    "kind": "AMMO",
+    "tags": ["ammo", "dart"],
+    "allowed_material_tags": ["wood", "bone"],
+    "base_mass_g": 10,
+    "base_volume_ml": 20,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 200,
+      "equal_when": ["material"]
+    }
+  },
+  {
+    "id": "core_ammo_cannonball",
+    "name": "Cannonball",
+    "kind": "AMMO",
+    "tags": ["ammo", "cannonball", "artillery"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_mass_g": 5000,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_ammo_cannonball_small",
+    "name": "Small Cannonball",
+    "kind": "AMMO",
+    "tags": ["ammo", "cannonball", "artillery", "small"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_mass_g": 2000,
+    "base_volume_ml": 250,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 50,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_ammo_mortar_shell",
+    "name": "Mortar Shell",
+    "kind": "AMMO",
+    "tags": ["ammo", "explosive", "mortar", "artillery"],
+    "fixed_material": "core_mat_metal_iron",
+    "base_mass_g": 8000,
+    "base_volume_ml": 1000,
+    "hazard": ["explosive"],
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_ammo_grapeshot",
+    "name": "Grapeshot",
+    "kind": "AMMO",
+    "tags": ["ammo", "grapeshot", "artillery", "antipersonnel"],
+    "fixed_material": "core_mat_metal_lead",
+    "base_mass_g": 3000,
+    "base_volume_ml": 500,
+    "stack": {
+      "mode": "count",
+      "unit": "charge",
+      "max_per_stack": 20,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_quiver",
+    "name": "Quiver",
+    "kind": "CONTAINER",
+    "tags": ["container", "ammo_holder"],
+    "allowed_material_tags": ["leather"],
+    "base_mass_g": 400,
+    "base_volume_ml": 1500,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 5,
+      "equal_when": ["material", "quality"]
+    },
+    "container": {
+      "capacity": 40,
+      "accepts": ["arrow", "bolt"]
+    }
+  },
+  {
+    "id": "core_item_powder_horn",
+    "name": "Powder Horn",
+    "kind": "CONTAINER",
+    "tags": ["container", "ammo_holder"],
+    "allowed_material_tags": ["horn", "metal"],
+    "base_mass_g": 200,
+    "base_volume_ml": 500,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality"]
+    },
+    "container": {
+      "capacity": 500,
+      "accepts": ["gunpowder"]
+    }
+  }
+]

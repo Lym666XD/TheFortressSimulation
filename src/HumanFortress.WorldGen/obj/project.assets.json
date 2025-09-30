@@ -45,7 +45,8 @@
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
         "dependencies": {
-          "HumanFortress.Core": "0.1.0"
+          "HumanFortress.Core": "0.1.0",
+          "TheSadRogue.Primitives": "1.6.0-rc1"
         },
         "compile": {
           "bin/placeholder/HumanFortress.Simulation.dll": {}

@@ -15,6 +15,19 @@
           }
         }
       },
+      "TheSadRogue.Primitives/1.6.0-rc1": {
+        "type": "package",
+        "compile": {
+          "lib/net7.0/TheSadRogue.Primitives.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/TheSadRogue.Primitives.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "HumanFortress.Core/0.1.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v8.0",
@@ -61,6 +74,27 @@
         "packageIcon.png"
       ]
     },
+    "TheSadRogue.Primitives/1.6.0-rc1": {
+      "sha512": "sfq468SK54qy+qL0Ct7AhsrTCr5JAkZFAn3q3jbqBpcO4gxhbfsga5awehJ6YChOwYn98Dd8KkO9p14W1GV0bQ==",
+      "type": "package",
+      "path": "thesadrogue.primitives/1.6.0-rc1",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/TheSadRogue.Primitives.dll",
+        "lib/net5.0/TheSadRogue.Primitives.xml",
+        "lib/net6.0/TheSadRogue.Primitives.dll",
+        "lib/net6.0/TheSadRogue.Primitives.xml",
+        "lib/net7.0/TheSadRogue.Primitives.dll",
+        "lib/net7.0/TheSadRogue.Primitives.xml",
+        "lib/netcoreapp3.1/TheSadRogue.Primitives.dll",
+        "lib/netcoreapp3.1/TheSadRogue.Primitives.xml",
+        "lib/netstandard2.1/TheSadRogue.Primitives.dll",
+        "lib/netstandard2.1/TheSadRogue.Primitives.xml",
+        "thesadrogue.primitives.1.6.0-rc1.nupkg.sha512",
+        "thesadrogue.primitives.nuspec"
+      ]
+    },
     "HumanFortress.Core/0.1.0": {
       "type": "project",
       "path": "../HumanFortress.Core/HumanFortress.Core.csproj",
@@ -69,7 +103,8 @@
   },
   "projectFileDependencyGroups": {
     "net8.0": [
-      "HumanFortress.Core >= 0.1.0"
+      "HumanFortress.Core >= 0.1.0",
+      "TheSadRogue.Primitives >= 1.6.0-rc1"
     ]
   },
   "packageFolders": {
@@ -125,6 +160,12 @@
     "frameworks": {
       "net8.0": {
         "targetAlias": "net8.0",
+        "dependencies": {
+          "TheSadRogue.Primitives": {
+            "target": "Package",
+            "version": "[1.6.0-rc1, )"
+          }
+        },
         "imports": [
           "net461",
           "net462",

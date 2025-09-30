@@ -43,6 +43,14 @@
     </Content>
   </ItemGroup>
 
+  <!-- Copy data folder for creature/item definitions -->
+  <ItemGroup>
+    <Content Include="..\..\data\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>data\%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
   <!-- Prevent copying Windows reserved device name file 'nul' -->
   <ItemGroup>
     <Content Update="..\..\content\nul">

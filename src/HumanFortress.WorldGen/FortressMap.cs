@@ -45,19 +45,29 @@ namespace HumanFortress.WorldGen
         }
         
         /// <summary>
-        /// Convert to World for simulation.
+        /// Fill an existing World with terrain data from this fortress map.
+        /// This is the preferred method - it fills terrain into a World that already has
+        /// CreatureManager and ItemManager with loaded definitions.
         /// </summary>
-        public World ToSimulationWorld()
+        public void FillWorld(World targetWorld)
         {
             try
             {
-                System.Console.WriteLine($"[ToSimulationWorld] Converting fortress map to world: {_size}x{_size} chunks, MaxZ={_maxZ}");
-                var world = new World(_size, _maxZ);
+                System.Console.WriteLine($"[FillWorld] Filling world with terrain data: {_size}x{_size} chunks, MaxZ={_maxZ}");
+
+                if (targetWorld == null)
+                    throw new ArgumentNullException(nameof(targetWorld));
+
+                if (targetWorld.SizeInChunks != _size)
+                    throw new ArgumentException($"World size mismatch: expected {_size}, got {targetWorld.SizeInChunks}");
+
+                if (targetWorld.MaxZ != _maxZ)
+                    throw new ArgumentException($"World MaxZ mismatch: expected {_maxZ}, got {targetWorld.MaxZ}");
 
                 int chunksProcessed = 0;
                 int tilesProcessed = 0;
 
-                // Transfer terrain data to simulation world
+                // Transfer terrain data to existing world
                 for (int cx = 0; cx < _size; cx++)
                 {
                     for (int cy = 0; cy < _size; cy++)
@@ -65,7 +75,7 @@ namespace HumanFortress.WorldGen
                         var fortressChunk = _chunks[cx, cy];
                         if (fortressChunk == null)
                         {
-                            System.Console.WriteLine($"[ToSimulationWorld] WARNING: Null chunk at {cx},{cy}");
+                            System.Console.WriteLine($"[FillWorld] WARNING: Null chunk at {cx},{cy}");
                             continue;
                         }
 
@@ -73,7 +83,7 @@ namespace HumanFortress.WorldGen
                         for (int z = 0; z < _maxZ; z++)
                         {
                             var chunkKey = new ChunkKey(cx, cy, z);
-                            var simChunk = world.GetOrCreateChunk(chunkKey);
+                            var simChunk = targetWorld.GetOrCreateChunk(chunkKey);
 
                             // Copy terrain data
                             for (int lx = 0; lx < 32; lx++)
@@ -92,12 +102,37 @@ namespace HumanFortress.WorldGen
                     }
                 }
 
-                System.Console.WriteLine($"[ToSimulationWorld] Conversion complete: {chunksProcessed} chunks, {tilesProcessed} tiles processed");
+                System.Console.WriteLine($"[FillWorld] Filled {chunksProcessed} chunks, {tilesProcessed} tiles");
 
                 // Post-process: inject ramps based on surface height differences (DF-style)
-                System.Console.WriteLine("[ToSimulationWorld] Post-process ramps (DF-style, no slope tops)");
-                InjectRampsAndSlopes(world);
+                System.Console.WriteLine("[FillWorld] Post-processing ramps (DF-style, no slope tops)");
+                InjectRampsAndSlopes(targetWorld);
 
+                System.Console.WriteLine("[FillWorld] World terrain filling complete");
+            }
+            catch (Exception ex)
+            {
+                System.Console.WriteLine($"[FillWorld] ERROR: {ex.Message}");
+                System.Console.WriteLine($"[FillWorld] Stack trace: {ex.StackTrace}");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Convert to World for simulation.
+        /// OBSOLETE: Use FillWorld(World) instead to preserve loaded Creature/Item definitions.
+        /// This method is kept for backward compatibility with tests.
+        /// </summary>
+        [Obsolete("Use FillWorld(World) instead to preserve loaded definitions")]
+        public World ToSimulationWorld()
+        {
+            try
+            {
+                System.Console.WriteLine($"[ToSimulationWorld] Converting fortress map to world: {_size}x{_size} chunks, MaxZ={_maxZ}");
+                System.Console.WriteLine($"[ToSimulationWorld] WARNING: This method creates a new World with empty managers. Use FillWorld(World) instead.");
+
+                var world = new World(_size, _maxZ);
+                FillWorld(world);
                 return world;
             }
             catch (Exception ex)

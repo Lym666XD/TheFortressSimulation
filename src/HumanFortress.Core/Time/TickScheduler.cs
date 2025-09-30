@@ -17,6 +17,8 @@ public sealed class TickScheduler
 
     private ulong _currentTick;
     private bool _isRunning;
+    private bool _isPaused;
+    private float _speedMultiplier = 1.0f;
     private Thread? _tickThread;
 
     public event Action<ulong>? PreTick;
@@ -37,6 +39,81 @@ public sealed class TickScheduler
     /// Target ticks per second (fixed at 50).
     /// </summary>
     public int TargetTPS => TARGET_TPS;
+
+    /// <summary>
+    /// Whether the simulation is currently paused.
+    /// </summary>
+    public bool IsPaused => _isPaused;
+
+    /// <summary>
+    /// Current speed multiplier (0.25x - 8x).
+    /// </summary>
+    public float SpeedMultiplier => _speedMultiplier;
+
+    /// <summary>
+    /// Pause the simulation. Does not affect command queue.
+    /// </summary>
+    public void Pause()
+    {
+        _isPaused = true;
+    }
+
+    /// <summary>
+    /// Resume the simulation from pause.
+    /// </summary>
+    public void Resume()
+    {
+        _isPaused = false;
+    }
+
+    /// <summary>
+    /// Toggle pause state.
+    /// </summary>
+    public void TogglePause()
+    {
+        _isPaused = !_isPaused;
+    }
+
+    /// <summary>
+    /// Set simulation speed multiplier.
+    /// Clamped to [0.25, 8.0] range.
+    /// </summary>
+    public void SetSpeed(float multiplier)
+    {
+        _speedMultiplier = Math.Clamp(multiplier, 0.25f, 8.0f);
+    }
+
+    /// <summary>
+    /// Cycle through predefined speed levels: 0.25x, 0.5x, 1x, 2x, 4x, 8x.
+    /// </summary>
+    public void CycleSpeedUp()
+    {
+        _speedMultiplier = _speedMultiplier switch
+        {
+            < 0.5f => 0.5f,
+            < 1.0f => 1.0f,
+            < 2.0f => 2.0f,
+            < 4.0f => 4.0f,
+            < 8.0f => 8.0f,
+            _ => 8.0f
+        };
+    }
+
+    /// <summary>
+    /// Cycle through predefined speed levels (reverse).
+    /// </summary>
+    public void CycleSpeedDown()
+    {
+        _speedMultiplier = _speedMultiplier switch
+        {
+            > 4.0f => 4.0f,
+            > 2.0f => 2.0f,
+            > 1.0f => 1.0f,
+            > 0.5f => 0.5f,
+            > 0.25f => 0.25f,
+            _ => 0.25f
+        };
+    }
 
     /// <summary>
     /// Register a system to participate in the tick loop.
@@ -92,21 +169,33 @@ public sealed class TickScheduler
 
         while (_isRunning)
         {
+            // If paused, sleep and skip tick execution
+            if (_isPaused)
+            {
+                Thread.Sleep(50); // Sleep 50ms when paused to reduce CPU usage
+                nextTickTime = _frameTimer.ElapsedMilliseconds; // Reset timing when unpaused
+                continue;
+            }
+
             var startTime = _frameTimer.ElapsedMilliseconds;
 
             ExecuteTick();
 
             var elapsedMs = _frameTimer.ElapsedMilliseconds - startTime;
-            nextTickTime += MS_PER_TICK;
+
+            // Adjust tick interval based on speed multiplier
+            // Higher speed = shorter interval between ticks
+            int adjustedMsPerTick = (int)(MS_PER_TICK / _speedMultiplier);
+            nextTickTime += adjustedMsPerTick;
 
             var sleepTime = (int)(nextTickTime - _frameTimer.ElapsedMilliseconds);
             if (sleepTime > 0)
             {
                 Thread.Sleep(sleepTime);
             }
-            else if (sleepTime < -MS_PER_TICK * 5)
+            else if (sleepTime < -adjustedMsPerTick * 5)
             {
-                // If we're more than 5 ticks behind, reset timing
+                // If we're more than 5 ticks behind, reset timing to prevent spiral
                 nextTickTime = _frameTimer.ElapsedMilliseconds;
             }
         }

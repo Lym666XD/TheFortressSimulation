@@ -1,0 +1,128 @@
+[
+  {
+    "id": "core_armor_torso_breastplate",
+    "name": "Breastplate",
+    "kind": "ARMOR",
+    "tags": ["armor", "plate"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 8000,
+    "base_volume_ml": 9000,
+    "durability_max": 180,
+    "equip": { "slot": "TORSO", "layer": "ARMOR" },
+    "armor": { "coverage": 100, "thickness_tier": "MEDIUM" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_armor_helmet_basic",
+    "name": "Helmet",
+    "kind": "ARMOR",
+    "tags": ["armor", "helmet"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 2000,
+    "base_volume_ml": 2500,
+    "durability_max": 150,
+    "equip": { "slot": "HEAD", "layer": "ARMOR" },
+    "armor": { "coverage": 90, "thickness_tier": "MEDIUM" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_armor_gauntlets",
+    "name": "Gauntlets",
+    "kind": "ARMOR",
+    "tags": ["armor", "gauntlets"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1200,
+    "durability_max": 140,
+    "equip": { "slot": "HANDS", "layer": "ARMOR" },
+    "armor": { "coverage": 100, "thickness_tier": "LIGHT" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 12,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_armor_greaves",
+    "name": "Greaves",
+    "kind": "ARMOR",
+    "tags": ["armor", "greaves"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 3000,
+    "base_volume_ml": 3500,
+    "durability_max": 160,
+    "equip": { "slot": "LEGS", "layer": "ARMOR" },
+    "armor": { "coverage": 80, "thickness_tier": "MEDIUM" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 8,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_armor_boots",
+    "name": "Boots",
+    "kind": "ARMOR",
+    "tags": ["armor", "boots"],
+    "allowed_material_tags": ["metal", "leather"],
+    "base_mass_g": 1500,
+    "base_volume_ml": 2000,
+    "durability_max": 120,
+    "equip": { "slot": "FEET", "layer": "ARMOR" },
+    "armor": { "coverage": 100, "thickness_tier": "LIGHT" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  },
+  {
+    "id": "core_armor_shield_buckler",
+    "name": "Buckler",
+    "kind": "ARMOR",
+    "tags": ["armor", "shield"],
+    "allowed_material_tags": ["metal", "wood"],
+    "base_mass_g": 2000,
+    "base_volume_ml": 3000,
+    "durability_max": 140,
+    "equip": { "slot": "OFF_HAND" },
+    "armor": { "coverage": 30, "thickness_tier": "HEAVY" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 8,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    }
+  }
+]

@@ -30,6 +30,12 @@ public enum QuickMenuKind
     Build
 }
 
+public enum OrdersSubmenu
+{
+    None,
+    Haul
+}
+
 public enum ZoneSubmenu
 {
     None,
@@ -41,11 +47,15 @@ public enum ZoneSubmenu
 public enum PlacementMode
 {
     None,
+    // Stockpiles
     StockpileFirstCorner,
     StockpileSecondCorner,
     StockpilePresetSelect,
     StockpileDelete,
-    StockpileCopy
+    StockpileCopy,
+    // Orders
+    HaulFirstCorner,
+    HaulSecondCorner
 }
 
 public sealed class UiStore
@@ -54,7 +64,13 @@ public sealed class UiStore
     public DrawerId OpenDrawer { get; private set; } = DrawerId.None;
     public int DrawerTab { get; private set; } = 0;
     public QuickMenuKind QuickMenu { get; private set; } = QuickMenuKind.None;
+
+    // Creature/Item tracking state
+    public string? SelectedCreatureGuid { get; set; } = null;
+    public string? SelectedItemGuid { get; set; } = null;
+    public string ItemKindFilter { get; set; } = "all"; // all/resource/weapon/armor/tool/container/consumable
     public ZoneSubmenu ZoneMenu { get; private set; } = ZoneSubmenu.None;
+    public OrdersSubmenu OrdersMenu { get; private set; } = OrdersSubmenu.None;
     public PlacementMode PlaceMode { get; set; } = PlacementMode.None;
     public Point? HoverTile { get; private set; } = null;
 
@@ -70,7 +86,7 @@ public sealed class UiStore
     public readonly List<(Point pos, int z)> DebugDwarfs = new();
 
     // Debug menu state
-    public int DebugMenuTab { get; set; } = 0; // 0=Spawn, 1=Items
+    public int DebugMenuTab { get; set; } = 0; // 0=Status, 1=Creatures, 2=Items
     public string DebugSelectedCreature { get; set; } = "core_race_dwarf";
     public string DebugSelectedItem { get; set; } = "core_item_stone_generic";
 
@@ -108,6 +124,11 @@ public sealed class UiStore
     public void OpenZoneSubmenu(ZoneSubmenu submenu)
     {
         ZoneMenu = submenu;
+    }
+
+    public void OpenOrdersSubmenu(OrdersSubmenu submenu)
+    {
+        OrdersMenu = submenu;
     }
 
     public void StartPlacement(PlacementMode mode, int z)

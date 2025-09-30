@@ -78,7 +78,18 @@ namespace HumanFortress.Core.Content
 
         private void LoadTuningFiles(string registriesPath)
         {
-            var tuningFiles = new[] { "tuning.tile.json", "tuning.damage.json", "tuning.mapgen.json", "tuning.ore.json", "tuning.cavern.json", "tuning.navigation.json" };
+            var tuningFiles = new[]
+            {
+                "tuning.tile.json",
+                "tuning.damage.json",
+                "tuning.mapgen.json",
+                "tuning.ore.json",
+                "tuning.cavern.json",
+                "tuning.navigation.json",
+                // Added to support data-driven hauling/stockpile tuning
+                "tuning.hauling.json",
+                "tuning.stockpile.json"
+            };
 
             foreach (var file in tuningFiles)
             {

@@ -34,7 +34,11 @@
       "Bash(del \"C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\src\\HumanFortress.Core\\Commands\\StockpileCommands.cs\")",
       "Bash(del \"src\\HumanFortress.Core\\Commands\\StockpileCommands.cs\")",
       "Bash(del \"C:\\Users\\User\\Desktop\\humanfortress\\TheFortressSimulation\\data\\core\\items\\ingots.json\")",
-      "Bash(del \"data\\core\\items\\ingots.json\")"
+      "Bash(del \"data\\core\\items\\ingots.json\")",
+      "Bash(Select-String -Pattern \"GameStateManager|Creature|Item|FillWorld|World obtained\" -Context 0,1)",
+      "Bash(start /B HumanFortress.App.exe --test)",
+      "Bash(timeout:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

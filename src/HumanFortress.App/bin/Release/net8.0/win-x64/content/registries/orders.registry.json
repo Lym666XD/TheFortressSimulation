@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "orders": {
+    "haul": {
+      "id": "orders.haul",
+      "name": "Haul",
+      "tools": {
+        "rect": {
+          "id": "orders.haul.rect",
+          "shape": "rect",
+          "hotkey": "Z"
+        }
+      },
+      "hotkey": "F"
+    }
+  }
+}
+

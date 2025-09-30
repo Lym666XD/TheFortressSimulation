@@ -1,0 +1,275 @@
+[
+  {
+    "id": "core_item_fiber_wool",
+    "name": "Wool Fiber",
+    "kind": "RESOURCE",
+    "tags": ["textile", "fiber", "wool", "animal"],
+    "base_mass_g": 100,
+    "base_volume_ml": 500,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_fiber_cotton",
+    "name": "Cotton Fiber",
+    "kind": "RESOURCE",
+    "tags": ["textile", "fiber", "cotton", "plant"],
+    "base_mass_g": 100,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_fiber_linen",
+    "name": "Linen Fiber",
+    "kind": "RESOURCE",
+    "tags": ["textile", "fiber", "linen", "plant"],
+    "base_mass_g": 100,
+    "base_volume_ml": 550,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_fiber_silk",
+    "name": "Silk Fiber",
+    "kind": "RESOURCE",
+    "tags": ["textile", "fiber", "silk", "luxury"],
+    "base_mass_g": 100,
+    "base_volume_ml": 400,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 5000
+    }
+  },
+  {
+    "id": "core_item_thread_wool",
+    "name": "Wool Thread",
+    "kind": "RESOURCE",
+    "tags": ["textile", "thread", "wool"],
+    "base_mass_g": 100,
+    "base_volume_ml": 200,
+    "stack": {
+      "mode": "count",
+      "unit": "spool",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_thread_cotton",
+    "name": "Cotton Thread",
+    "kind": "RESOURCE",
+    "tags": ["textile", "thread", "cotton"],
+    "base_mass_g": 100,
+    "base_volume_ml": 200,
+    "stack": {
+      "mode": "count",
+      "unit": "spool",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_thread_linen",
+    "name": "Linen Thread",
+    "kind": "RESOURCE",
+    "tags": ["textile", "thread", "linen"],
+    "base_mass_g": 100,
+    "base_volume_ml": 200,
+    "stack": {
+      "mode": "count",
+      "unit": "spool",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_thread_silk",
+    "name": "Silk Thread",
+    "kind": "RESOURCE",
+    "tags": ["textile", "thread", "silk", "luxury"],
+    "base_mass_g": 50,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "count",
+      "unit": "spool",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_cloth_wool",
+    "name": "Wool Cloth",
+    "kind": "RESOURCE",
+    "tags": ["textile", "cloth", "wool"],
+    "base_mass_g": 500,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "bolt",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_cloth_cotton",
+    "name": "Cotton Cloth",
+    "kind": "RESOURCE",
+    "tags": ["textile", "cloth", "cotton"],
+    "base_mass_g": 400,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "bolt",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_cloth_linen",
+    "name": "Linen Cloth",
+    "kind": "RESOURCE",
+    "tags": ["textile", "cloth", "linen"],
+    "base_mass_g": 450,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "bolt",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_cloth_silk",
+    "name": "Silk Cloth",
+    "kind": "RESOURCE",
+    "tags": ["textile", "cloth", "silk", "luxury"],
+    "base_mass_g": 300,
+    "base_volume_ml": 800,
+    "stack": {
+      "mode": "count",
+      "unit": "bolt",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_leather_raw",
+    "name": "Raw Hide",
+    "kind": "RESOURCE",
+    "tags": ["leather", "raw", "animal"],
+    "base_mass_g": 2000,
+    "base_volume_ml": 2500,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["animal_type"]
+    }
+  },
+  {
+    "id": "core_item_leather_tanned",
+    "name": "Tanned Leather",
+    "kind": "RESOURCE",
+    "tags": ["leather", "tanned", "material"],
+    "base_mass_g": 1500,
+    "base_volume_ml": 2000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_leather_fine",
+    "name": "Fine Leather",
+    "kind": "RESOURCE",
+    "tags": ["leather", "fine", "luxury"],
+    "base_mass_g": 1400,
+    "base_volume_ml": 1800,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_rope_hemp",
+    "name": "Hemp Rope",
+    "kind": "RESOURCE",
+    "tags": ["rope", "hemp", "tool"],
+    "base_mass_g": 500,
+    "base_volume_ml": 800,
+    "stack": {
+      "mode": "count",
+      "unit": "coil",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_rope_silk",
+    "name": "Silk Rope",
+    "kind": "RESOURCE",
+    "tags": ["rope", "silk", "luxury", "tool"],
+    "base_mass_g": 300,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "coil",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_dye_red",
+    "name": "Red Dye",
+    "kind": "RESOURCE",
+    "tags": ["dye", "red", "color"],
+    "base_mass_g": 100,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 5000
+    }
+  },
+  {
+    "id": "core_item_dye_blue",
+    "name": "Blue Dye",
+    "kind": "RESOURCE",
+    "tags": ["dye", "blue", "color"],
+    "base_mass_g": 100,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 5000
+    }
+  },
+  {
+    "id": "core_item_dye_yellow",
+    "name": "Yellow Dye",
+    "kind": "RESOURCE",
+    "tags": ["dye", "yellow", "color"],
+    "base_mass_g": 100,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 5000
+    }
+  }
+]

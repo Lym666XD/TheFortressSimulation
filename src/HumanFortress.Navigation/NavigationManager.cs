@@ -51,7 +51,17 @@ public sealed class NavigationManager
     {
         var chunkX = worldX / HumanFortress.Simulation.World.Chunk.SIZE_XY;
         var chunkY = worldY / HumanFortress.Simulation.World.Chunk.SIZE_XY;
-        return GetNavData(new ChunkKey(chunkX, chunkY, z));
+        var key = new ChunkKey(chunkX, chunkY, z);
+        // Ensure nav exists on demand
+        var existing = GetNavData(key);
+        if (existing != null) return existing;
+        var chunk = _world.GetChunk(new HumanFortress.Simulation.World.ChunkKey(key.ChunkX, key.ChunkY, key.Z));
+        if (chunk != null)
+        {
+            RebuildChunkNavData(chunk);
+            return GetNavData(key);
+        }
+        return null;
     }
 
     /// <summary>

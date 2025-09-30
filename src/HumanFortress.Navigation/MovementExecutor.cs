@@ -9,12 +9,14 @@ public sealed class MovementExecutor
     private readonly Dictionary<uint, MovementState> _movementStates;
     private readonly IPathService _pathService;
     private readonly NavigationTuning _tuning;
+    private readonly int _stepDelay;
 
     public MovementExecutor(IPathService pathService, NavigationTuning? tuning = null)
     {
         _movementStates = new Dictionary<uint, MovementState>();
         _pathService = pathService;
         _tuning = tuning ?? NavigationTuning.Default;
+        _stepDelay = 2; // simple slowdown so movement is visible (ticks per step)
     }
 
     /// <summary>
@@ -30,6 +32,7 @@ public sealed class MovementExecutor
             Position = request.Source,
             StuckTicks = 0,
             LastProgress = 0,
+            StepWait = 0,
         };
     }
 
@@ -68,6 +71,15 @@ public sealed class MovementExecutor
                 return new MovementUpdate(MovementStatus.Stuck, state.Position, true, null);
             }
         }
+
+        // Delay to slow down visual movement
+        if (state.StepWait < _stepDelay)
+        {
+            state.StepWait++;
+            _movementStates[entityId] = state;
+            return new MovementUpdate(MovementStatus.Moving, state.Position, false, null);
+        }
+        state.StepWait = 0;
 
         // Get next step
         if (state.CurrentStep >= state.Path.Steps.Length)
@@ -175,6 +187,7 @@ public sealed class MovementExecutor
         public int StuckTicks;
         public int LastProgress;
         public int LastConnectivityVersion;
+        public int StepWait;
     }
 }
 

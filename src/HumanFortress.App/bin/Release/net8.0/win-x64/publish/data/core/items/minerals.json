@@ -1,0 +1,44 @@
+[
+  {
+    "id": "core_item_sand_silica",
+    "name": "Silica Sand",
+    "kind": "RESOURCE",
+    "tags": ["sand", "material", "granular"],
+    "fixed_material": "core_mat_mineral_sand_silica",
+    "base_mass_g": 1000,
+    "base_volume_ml": 700,
+    "stack": {
+      "mode": "charges",
+      "unit": "kg",
+      "max_per_stack": 100000
+    }
+  },
+  {
+    "id": "core_item_clay",
+    "name": "Clay",
+    "kind": "RESOURCE",
+    "tags": ["clay", "material", "moldable"],
+    "fixed_material": "core_mat_mineral_clay",
+    "base_mass_g": 1000,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "charges",
+      "unit": "kg",
+      "max_per_stack": 100000
+    }
+  },
+  {
+    "id": "core_item_gravel",
+    "name": "Gravel",
+    "kind": "RESOURCE",
+    "tags": ["gravel", "material", "construction"],
+    "fixed_material": "core_mat_mineral_gravel",
+    "base_mass_g": 1000,
+    "base_volume_ml": 800,
+    "stack": {
+      "mode": "charges",
+      "unit": "kg",
+      "max_per_stack": 100000
+    }
+  }
+]

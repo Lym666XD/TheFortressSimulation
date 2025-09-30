@@ -1,0 +1,10 @@
+{
+  "scoring": {
+    "k_distance": 1
+  },
+  "budget": {
+    "max_per_tick": 128,
+    "max_designations_per_tick": 8
+  }
+}
+

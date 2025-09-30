@@ -1,0 +1,21 @@
+{
+  "budgets": {
+    "max_zones_per_chunk": 32,
+    "max_cells_scanned_per_tick": 2048,
+    "max_pull_requests_per_zone": 20,
+    "max_pull_requests_per_tick": 100,
+    "max_haul_jobs_per_tick": 50,
+    "broker_time_budget_ms": 2
+  },
+  "thresholds": {
+    "default_hysteresis_low": 0.7,
+    "default_hysteresis_high": 0.9,
+    "dwell_ticks_min": 2000,
+    "stickiness_penalty": -5000
+  },
+  "scoring": {
+    "priority_multiplier": 10000,
+    "distance_cost_per_tile": 10,
+    "dwell_bonus_max": 100
+  }
+}

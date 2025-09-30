@@ -4,6 +4,12 @@
         <name>HumanFortress.App</name>
     </assembly>
     <members>
+        <member name="T:HumanFortress.App.Commands.CreateHaulOrderCommand">
+            <summary>
+            Command that creates a haul designation over a world-space rectangle at a given Z.
+            Executed on the main thread; OrdersManager is thread-safe for enqueue.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.GameStates.FortressPlayState">
             <summary>
             Fortress play state with simulation loop per UPDATE_ORDER.md.
@@ -59,6 +65,16 @@
             Active world (when in fortress play).
             </summary>
         </member>
+        <member name="P:HumanFortress.App.GameStates.GameStateManager.TickScheduler">
+            <summary>
+            Simulation tick scheduler.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.GameStates.GameStateManager.EnqueueCommand(HumanFortress.Core.Commands.ICommand)">
+            <summary>
+            Enqueue a simulation command.
+            </summary>
+        </member>
         <member name="M:HumanFortress.App.GameStates.GameStateManager.RegisterState(HumanFortress.App.GameStates.GameState)">
             <summary>
             Register a state.
@@ -97,6 +113,24 @@
         <member name="T:HumanFortress.App.GameStates.GameStateManager.SimulationContext">
             <summary>
             Simulation context implementation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Input.InputBindingsService">
+            <summary>
+            Loads and provides access to input bindings from content/registries/input.bindings.json.
+            Minimal v1 used by Orders quick menu rendering and key handling.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Input.OrdersRegistryService">
+            <summary>
+            Loads orders registry to provide display names for orders/tools.
+            File: content/registries/orders.registry.json
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Jobs.HaulJobSystem">
+            <summary>
+            Executes haul jobs by assigning creatures and moving them along paths.
+            v1 skeleton used in App layer to avoid project cycles.
             </summary>
         </member>
         <member name="T:HumanFortress.App.Logger">
@@ -153,6 +187,12 @@
             <summary>
             ScreenSurface specialized for the map area that exposes reliable mouse events
             for hover and left-click in local cell coordinates.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.OrdersUI">
+            <summary>
+            Renders the Orders quick menu and haul submenu.
+            Minimal v1: shows keys Z→F→Z and status messages during placement.
             </summary>
         </member>
         <member name="T:HumanFortress.App.UI.StockpileUI">

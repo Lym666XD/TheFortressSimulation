@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using SadConsole;
 using SadConsole.Input;
@@ -51,6 +51,9 @@ namespace HumanFortress.App.States
         private int _pathStartZ = 0;
         private StockpileManager? _stockpileManager;
         private StockpileUI? _stockpileUI;
+        private OrdersUI? _ordersUI;
+        private HumanFortress.App.Input.InputBindingsService _bindings = HumanFortress.App.Input.InputBindingsService.Instance;
+        private HumanFortress.App.Input.OrdersRegistryService _ordersRegistry = HumanFortress.App.Input.OrdersRegistryService.Instance;
 
         public FortressState()
         {
@@ -227,14 +230,14 @@ namespace HumanFortress.App.States
                 if (!WorldMapState.CurrentWorld.Success)
                 {
                     System.Console.WriteLine("[GenerateFortressMap] ERROR: CurrentWorld is null");
-                    _world = new World(FortressSize, 50);
+                    _world = GameStateManager.Instance.World;
                     return;
                 }
 
                 if (WorldMapState.CurrentWorld.Tiles == null)
                 {
                     System.Console.WriteLine("[GenerateFortressMap] WARNING: World tiles are null, using fallback");
-                    _world = new World(FortressSize, 50);
+                    _world = GameStateManager.Instance.World;
                     return;
                 }
 
@@ -244,7 +247,7 @@ namespace HumanFortress.App.States
                     EmbarkLocation.Y >= WorldMapState.CurrentWorld.Tiles.GetLength(1))
                 {
                     System.Console.WriteLine($"[GenerateFortressMap] ERROR: EmbarkLocation {EmbarkLocation} out of bounds");
-                    _world = new World(FortressSize, 50);
+                    _world = GameStateManager.Instance.World;
                     return;
                 }
 
@@ -264,10 +267,24 @@ namespace HumanFortress.App.States
                 _fortressMap = generator.Generate();
                 System.Console.WriteLine($"[GenerateFortressMap] Fortress map generated: {_fortressMap.Size}x{_fortressMap.Size} chunks");
 
-                // Convert to simulation world
-                System.Console.WriteLine("[GenerateFortressMap] Converting to simulation world");
-                _world = _fortressMap.ToSimulationWorld();
-                System.Console.WriteLine($"[GenerateFortressMap] World created: {_world.SizeInChunks}x{_world.SizeInChunks} chunks");
+                // Use GameStateManager's World and fill it with terrain data
+                System.Console.WriteLine("[GenerateFortressMap] Getting World from GameStateManager");
+                _world = GameStateManager.Instance.World;
+
+                if (_world == null)
+                {
+                    System.Console.WriteLine("[GenerateFortressMap] ERROR: GameStateManager.World is null");
+                    return;
+                }
+
+                System.Console.WriteLine($"[GenerateFortressMap] World obtained: {_world.SizeInChunks}x{_world.SizeInChunks} chunks");
+                System.Console.WriteLine($"[GenerateFortressMap] Creature definitions loaded: {_world.Creatures.DefinitionCount}");
+                System.Console.WriteLine($"[GenerateFortressMap] Item definitions loaded: {_world.Items.DefinitionCount}");
+
+                // Fill terrain data into the existing World
+                System.Console.WriteLine("[GenerateFortressMap] Filling world with terrain data");
+                _fortressMap.FillWorld(_world);
+                System.Console.WriteLine($"[GenerateFortressMap] World filled with terrain data");
 
                 // Initialize snapshot builder
                 System.Console.WriteLine("[GenerateFortressMap] Creating RenderSnapshotBuilder");
@@ -284,9 +301,15 @@ namespace HumanFortress.App.States
                 _navOverlay.SetNavigationManager(_navManager);
 
                 // Initialize stockpile system
-                System.Console.WriteLine("[GenerateFortressMap] Creating StockpileManager");
+                System.Console.WriteLine("[GenerateFortressMap] Creating StockpileManager & OrdersUI");
                 _stockpileManager = new StockpileManager();
                 _stockpileUI = new StockpileUI(_stockpileManager);
+                _ordersUI = new OrdersUI();
+
+                // Load input bindings and orders registry (data-driven UI wiring)
+                var baseDir = AppContext.BaseDirectory;
+                _bindings.Load(baseDir);
+                _ordersRegistry.Load(baseDir);
 
                 // Build initial snapshot
                 System.Console.WriteLine("[GenerateFortressMap] Building initial snapshot");
@@ -300,9 +323,9 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine($"[GenerateFortressMap] ERROR: {ex.Message}");
                 System.Console.WriteLine($"[GenerateFortressMap] Stack trace: {ex.StackTrace}");
 
-                // Create fallback world
-                System.Console.WriteLine("[GenerateFortressMap] Creating fallback world");
-                _world = new World(FortressSize > 0 ? FortressSize : 2, 50);
+                // Use GameStateManager's World even on error (it has loaded definitions)
+                System.Console.WriteLine("[GenerateFortressMap] Using GameStateManager.World despite error");
+                _world = GameStateManager.Instance.World;
             }
         }
         
@@ -319,15 +342,27 @@ namespace HumanFortress.App.States
             if (_uiSurface != null)
             {
                 _uiSurface.Clear();
-                UiRenderer.DrawTopBar(_uiSurface, _uiTick);
+                UiRenderer.DrawTopBar(_uiSurface, _uiTick, GameStateManager.Instance.TickScheduler);
                 UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
                 UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
-                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager);
+                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager, _world);
                 UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick);
 
-                // Draw stockpile-specific UI
+                // Draw orders & stockpile specific UI
                 if (_stockpileUI != null)
                 {
+                    // Orders quick menu
+                    if (_ordersUI != null && _ui.QuickMenu == QuickMenuKind.Orders)
+                    {
+                        if (_ui.OrdersMenu == OrdersSubmenu.None)
+                        {
+                            _ordersUI.DrawOrdersMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 10, 10);
+                        }
+                        else if (_ui.OrdersMenu == OrdersSubmenu.Haul)
+                        {
+                            _ordersUI.DrawHaulMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 12, 10);
+                        }
+                    }
                     // Draw zone menu if open
                     if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.None)
                     {
@@ -343,10 +378,14 @@ namespace HumanFortress.App.States
                     if (_ui.Context == UiContext.PlacingTool)
                     {
                         var mouseWorld = _lastMousePos ?? _cursorPos;
+                        // Orders haul placement prompt
+                        _ordersUI?.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
+                        // Stockpile placement prompt
                         _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
 
                         // Draw placement preview on map
-                        if (_ui.PlaceFirstCorner.HasValue && _ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+                        if (_ui.PlaceFirstCorner.HasValue &&
+                            (_ui.PlaceMode == PlacementMode.StockpileSecondCorner || _ui.PlaceMode == PlacementMode.HaulSecondCorner))
                         {
                             var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
                                 _mapSurface.Surface.Width, _mapSurface.Surface.Height);
@@ -638,6 +677,12 @@ namespace HumanFortress.App.States
             }
             }
 
+            // Render creatures and items on top of terrain
+            if (_world != null && _mapSurface != null)
+            {
+                RenderEntities(viewW, viewH);
+            }
+
             // Render navigation overlay if active
             if (_navOverlay != null && _world != null && _mapSurface != null)
             {
@@ -718,6 +763,115 @@ namespace HumanFortress.App.States
             }
 
             return (glyph, fg);
+        }
+
+        private void RenderEntities(int viewW, int viewH)
+        {
+            // Render all creatures on current Z level
+            var creatures = _world.Creatures.GetAllInstances()
+                .Where(c => c.Z == _currentZ && c.HP > 0)
+                .ToList();
+
+            foreach (var creature in creatures)
+            {
+                int screenX = creature.Position.X - _cameraPos.X;
+                int screenY = creature.Position.Y - _cameraPos.Y;
+
+                // Check if creature is in viewport
+                if (screenX >= 0 && screenX < viewW && screenY >= 0 && screenY < viewH)
+                {
+                    var (glyph, color) = GetCreatureDisplay(creature);
+                    _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Black);
+                }
+            }
+
+            // Render all items on current Z level
+            // Render all items on current Z level
+            var items = _world.Items.GetAllInstances()
+                .Where(i => i.Z == _currentZ && !i.IsCarried)
+                .ToList();
+
+            foreach (var item in items)
+            {
+                int screenX = item.Position.X - _cameraPos.X;
+                int screenY = item.Position.Y - _cameraPos.Y;
+
+                // Check if item is in viewport
+                if (screenX >= 0 && screenX < viewW && screenY >= 0 && screenY < viewH)
+                {
+                    // Only render items if no creature is on this tile
+                    bool hasCreature = creatures.Any(c => c.Position.X == item.Position.X && c.Position.Y == item.Position.Y);
+                    if (!hasCreature)
+                    {
+                        var (glyph, color) = GetItemDisplay(item);
+                        _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Black);
+                    }
+                }
+            }
+        }
+        private (int glyph, Color color) GetCreatureDisplay(HumanFortress.Simulation.Creatures.CreatureInstance creature)
+        {
+            // Get definition for better display info
+            var def = _world.Creatures.GetDefinition(creature.DefinitionId);
+
+            // Use first letter of name as default glyph
+            int glyph = '@'; // Default humanoid
+            Color color = Color.White;
+
+            if (def != null)
+            {
+                // Use first letter of creature type name
+                glyph = char.ToUpper(def.Name[0]);
+
+                // Color by tags
+                if (def.Tags.Contains("civilized"))
+                    color = Color.Cyan;
+                else if (def.Tags.Contains("hostile"))
+                    color = Color.Red;
+                else if (def.Tags.Contains("wildlife"))
+                    color = Color.Green;
+                else
+                    color = Color.White;
+            }
+
+            return (glyph, color);
+        }
+
+        private (int glyph, Color color) GetItemDisplay(HumanFortress.Simulation.Items.ItemInstance item)
+        {
+            var def = _world.Items.GetDefinition(item.DefinitionId);
+
+            int glyph = '?'; // Default unknown
+            Color color = Color.Gray;
+
+            if (def != null)
+            {
+                // Use Kind to determine glyph
+                glyph = def.Kind.ToLower() switch
+                {
+                    "resource" => '*',
+                    "weapon" => '/',
+                    "armor" => '[',
+                    "tool" => '&',
+                    "container" => 'U',
+                    "consumable" => '%',
+                    _ => '?'
+                };
+
+                // Color by material or kind
+                color = def.Kind.ToLower() switch
+                {
+                    "resource" => Color.Brown,
+                    "weapon" => Color.Silver,
+                    "armor" => Color.LightGray,
+                    "tool" => Color.Yellow,
+                    "container" => Color.DarkGoldenrod,
+                    "consumable" => Color.Green,
+                    _ => Color.Gray
+                };
+            }
+
+            return (glyph, color);
         }
 
         private void BuildSnapshot()
@@ -807,6 +961,33 @@ namespace HumanFortress.App.States
                 changed = true;
             }
 
+            // Simulation control: pause/speed
+            if (keyboard.IsKeyPressed(Keys.Space))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.TogglePause();
+                string status = scheduler.IsPaused ? "PAUSED" : $"Running at {scheduler.SpeedMultiplier:F2}x";
+                _ui.AddToast(status, _uiTick + 100);
+                Logger.Log($"[SIM] Space -> Pause toggled: {scheduler.IsPaused}");
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.CycleSpeedDown();
+                _ui.AddToast($"Speed: {scheduler.SpeedMultiplier:F2}x", _uiTick + 100);
+                Logger.Log($"[SIM] Speed decreased to {scheduler.SpeedMultiplier:F2}x");
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.CycleSpeedUp();
+                _ui.AddToast($"Speed: {scheduler.SpeedMultiplier:F2}x", _uiTick + 100);
+                Logger.Log($"[SIM] Speed increased to {scheduler.SpeedMultiplier:F2}x");
+                changed = true;
+            }
+
             // UI: help panel
             if (keyboard.IsKeyPressed(Keys.H))
             {
@@ -867,41 +1048,46 @@ namespace HumanFortress.App.States
             {
                 if (keyboard.IsKeyPressed(Keys.Tab))
                 {
-                    _ui.DebugMenuTab = (_ui.DebugMenuTab + 1) % 2;
+                    _ui.DebugMenuTab = (_ui.DebugMenuTab + 1) % 3; // 3 tabs: Status/Creatures/Items
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D0))
+                {
+                    _ui.DebugMenuTab = 0; // Status tab
                     changed = true;
                 }
                 else if (keyboard.IsKeyPressed(Keys.D1))
                 {
-                    if (_ui.DebugMenuTab == 0)
-                        _ui.DebugMenuTab = 0;
-                    else
+                    if (_ui.DebugMenuTab == 2) // Items tab - select stone
                         _ui.DebugSelectedItem = "core_item_stone_generic";
+                    else
+                        _ui.DebugMenuTab = 1; // Switch to creatures tab
                     changed = true;
                 }
                 else if (keyboard.IsKeyPressed(Keys.D2))
                 {
-                    if (_ui.DebugMenuTab == 0)
-                        _ui.DebugMenuTab = 1;
-                    else
+                    if (_ui.DebugMenuTab == 2) // Items tab - select iron
                         _ui.DebugSelectedItem = "core_item_ingot_iron";
+                    else
+                        _ui.DebugMenuTab = 2; // Switch to items tab
                     changed = true;
                 }
-                else if (keyboard.IsKeyPressed(Keys.D3) && _ui.DebugMenuTab == 1)
+                else if (keyboard.IsKeyPressed(Keys.D3) && _ui.DebugMenuTab == 2)
                 {
                     _ui.DebugSelectedItem = "core_item_wood_log";
                     changed = true;
                 }
-                else if (keyboard.IsKeyPressed(Keys.D4) && _ui.DebugMenuTab == 1)
+                else if (keyboard.IsKeyPressed(Keys.D4) && _ui.DebugMenuTab == 2)
                 {
                     _ui.DebugSelectedItem = "core_tool_mining_pickaxe";
                     changed = true;
                 }
-                else if (keyboard.IsKeyPressed(Keys.D5) && _ui.DebugMenuTab == 1)
+                else if (keyboard.IsKeyPressed(Keys.D5) && _ui.DebugMenuTab == 2)
                 {
                     _ui.DebugSelectedItem = "core_weapon_sword_short";
                     changed = true;
                 }
-                else if (_ui.DebugMenuTab == 0)
+                else if (_ui.DebugMenuTab == 1) // Creatures tab
                 {
                     // Creature selection
                     if (keyboard.IsKeyPressed(Keys.D))
@@ -963,6 +1149,26 @@ namespace HumanFortress.App.States
                     {
                         // Start copy mode
                         _ui.StartPlacement(PlacementMode.StockpileCopy, _currentZ);
+                        changed = true;
+                    }
+                }
+            }
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Orders)
+            {
+                if (_ui.OrdersMenu == OrdersSubmenu.None)
+                {
+                    // Orders main menu (data-driven)
+                    if (keyboard.IsKeyPressed(Keys.F) && HumanFortress.App.Input.InputBindingsService.Instance.IsActionForKey("menu.orders", "F", "orders.select.haul"))
+                    {
+                        _ui.OpenOrdersSubmenu(OrdersSubmenu.Haul);
+                        changed = true;
+                    }
+                }
+                else if (_ui.OrdersMenu == OrdersSubmenu.Haul)
+                {
+                    if (keyboard.IsKeyPressed(Keys.Z) && HumanFortress.App.Input.InputBindingsService.Instance.IsActionForKey("menu.orders", "Z", "orders.haul.rect"))
+                    {
+                        _ui.StartPlacement(PlacementMode.HaulFirstCorner, _currentZ);
                         changed = true;
                     }
                 }
@@ -1089,7 +1295,7 @@ namespace HumanFortress.App.States
                 return;
             }
 
-            // Compute path from previously set Start → current cursor
+            // Compute path from previously set Start ??current cursor
             var tuning = HumanFortress.Navigation.NavigationTuning.LoadFromContent();
             var astar = new HumanFortress.Navigation.DeterministicAStar(tuning);
             var flags = tuning.AllowDiagonals ? HumanFortress.Navigation.PathFlags.AllowDiagonal : HumanFortress.Navigation.PathFlags.None;
@@ -1219,7 +1425,7 @@ namespace HumanFortress.App.States
                     return true;
                 }
 
-                // Click inside quick menu area → show WIP toast
+                // Click inside quick menu area ??show WIP toast
                 if (_ui.QuickMenu != QuickMenuKind.None)
                 {
                     _ui.AddToast("This feature is coming soon", _uiTick + 100);
@@ -1406,6 +1612,51 @@ namespace HumanFortress.App.States
 
             Point worldPos = new Point(worldX, worldY);
 
+            // Handle debug spawn
+            if (_ui.DebugOpen && _world != null)
+            {
+                Logger.Log($"[DEBUG] Debug menu open, tab={_ui.DebugMenuTab}, world={_world != null}");
+
+                if (_ui.DebugMenuTab == 1) // Creatures tab
+                {
+                    Logger.Log($"[DEBUG] Attempting creature spawn: id={_ui.DebugSelectedCreature}, pos=({worldX},{worldY},{_currentZ})");
+                    Logger.Log($"[DEBUG] Creature definitions count: {_world.Creatures.DefinitionCount}");
+
+                    var guid = _world.Creatures.SpawnCreature(_ui.DebugSelectedCreature, worldPos, _currentZ, "player", _uiTick);
+                    if (guid.HasValue)
+                    {
+                        Logger.Log($"[DEBUG] SUCCESS: Spawned creature '{_ui.DebugSelectedCreature}' guid={guid} at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast($"Spawned {_ui.DebugSelectedCreature}", _uiTick + 100);
+                    }
+                    else
+                    {
+                        Logger.Log($"[DEBUG] FAILED: Could not spawn creature at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
+                    }
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.DebugMenuTab == 2) // Items tab
+                {
+                    Logger.Log($"[DEBUG] Attempting item spawn: id={_ui.DebugSelectedItem}, pos=({worldX},{worldY},{_currentZ})");
+                    Logger.Log($"[DEBUG] Item definitions count: {_world.Items.DefinitionCount}");
+
+                    var guid = _world.Items.SpawnItem(_ui.DebugSelectedItem, worldPos, _currentZ, 1, _uiTick);
+                    if (guid.HasValue)
+                    {
+                        Logger.Log($"[DEBUG] SUCCESS: Spawned item '{_ui.DebugSelectedItem}' guid={guid} at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast($"Spawned {_ui.DebugSelectedItem}", _uiTick + 100);
+                    }
+                    else
+                    {
+                        Logger.Log($"[DEBUG] FAILED: Could not spawn item at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
+                    }
+                    DrawUI();
+                    return;
+                }
+            }
+
             // Handle placement modes
             if (_ui.Context == UiContext.PlacingTool)
             {
@@ -1425,6 +1676,36 @@ namespace HumanFortress.App.States
                         _ui.PlaceSecondCorner = worldPos;
                         _ui.PlaceMode = PlacementMode.StockpilePresetSelect;
                         Logger.Log($"[STOCKPILE] Second corner at ({worldX},{worldY},{_currentZ})");
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.HaulFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.HaulSecondCorner;
+                    Logger.Log($"[HAUL] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.HaulSecondCorner)
+                {
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+
+                        // Compute rectangle and enqueue haul order command
+                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        var cmd = new HumanFortress.App.Commands.CreateHaulOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast("Haul order created", _uiTick + 120);
+                        Logger.Log($"[HAUL] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        _ui.CancelPlacement();
                         DrawUI();
                     }
                     return;
@@ -1480,7 +1761,7 @@ namespace HumanFortress.App.States
             DrawUI();
         }
 
-        private void CreateStockpile(string presetId)
+                private void CreateStockpile(string presetId)
         {
             if (_stockpileManager == null || !_ui.PlaceFirstCorner.HasValue || !_ui.PlaceSecondCorner.HasValue)
                 return;
@@ -1492,13 +1773,13 @@ namespace HumanFortress.App.States
             var zoneId = _stockpileManager.CreateZone($"Stockpile {_stockpileManager.GetAllZones().Count() + 1}",
                 new HumanFortress.Simulation.World.ChunkKey(corner1.X / 32, corner1.Y / 32, _currentZ), _uiTick);
 
-            // Calculate cells to add
+            // Calculate rectangle bounds
             int minX = Math.Min(corner1.X, corner2.X);
             int maxX = Math.Max(corner1.X, corner2.X);
             int minY = Math.Min(corner1.Y, corner2.Y);
             int maxY = Math.Max(corner1.Y, corner2.Y);
 
-            // Group cells by chunk - 检查地形和重叠
+            // Group cells by chunk; skip invalid tiles or overlap
             var cellsByChunk = new Dictionary<HumanFortress.Simulation.World.ChunkKey, List<int>>();
             int skippedInvalid = 0;
             int skippedOverlap = 0;
@@ -1512,7 +1793,6 @@ namespace HumanFortress.App.States
                     int localY = y % 32;
                     var chunkKey = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _currentZ);
 
-                    // 检查地形是否有效（必须是OpenWithFloor）
                     if (_world != null)
                     {
                         var chunk = _world.GetChunk(chunkKey);
@@ -1522,10 +1802,9 @@ namespace HumanFortress.App.States
                             if (tile.Kind != HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
                             {
                                 skippedInvalid++;
-                                continue; // 只能在开放地板上创建储存区
+                                continue; // Only create stockpiles on OpenWithFloor
                             }
 
-                            // 检查是否已有其他储存区
                             var stockpileData = chunk.GetStockpileData();
                             if (stockpileData != null)
                             {
@@ -1533,7 +1812,7 @@ namespace HumanFortress.App.States
                                 if (stockpileData.GetZoneAtCell(cellIndex) != 0)
                                 {
                                     skippedOverlap++;
-                                    continue; // 跳过已有储存区的格子
+                                    continue; // Skip cells already in a stockpile
                                 }
                             }
                         }
@@ -1546,7 +1825,7 @@ namespace HumanFortress.App.States
                 }
             }
 
-            // Generate diffs for adding cells
+            // Apply to per-chunk data
             foreach (var kvp in cellsByChunk)
             {
                 if (_world != null)
@@ -1565,7 +1844,7 @@ namespace HumanFortress.App.States
                 }
             }
 
-            // Update zone's member chunks
+            // Update zone membership for overlay rendering
             _stockpileManager.GetZone(zoneId)?.UpdateMemberChunks(cellsByChunk.Keys);
 
             var totalCells = cellsByChunk.Values.Sum(list => list.Count);
@@ -1576,10 +1855,8 @@ namespace HumanFortress.App.States
                 _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles, {skipMessage.TrimEnd(',', ' ')} skipped)", _uiTick + 150);
             else
                 _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles)", _uiTick + 150);
-            Logger.Log($"[STOCKPILE] Created zone {zoneId} with {cellsByChunk.Sum(kvp => kvp.Value.Count)} cells");
-        }
-
-        // Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
+            Logger.Log($"[STOCKPILE] Created zone {zoneId} with {totalCells} cells");
+        }// Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
         private void DrawTilePopup(ScreenSurface overlay)
         {
             if (_fortressMap == null || _world == null) return;
@@ -1641,3 +1918,4 @@ namespace HumanFortress.App.States
         }
     }
 }
+

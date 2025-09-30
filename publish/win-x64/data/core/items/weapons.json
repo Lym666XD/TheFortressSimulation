@@ -1,0 +1,136 @@
+[
+  {
+    "id": "core_weapon_sword_short",
+    "name": "Short Sword",
+    "kind": "WEAPON",
+    "tags": ["weapon", "blade", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 900,
+    "base_volume_ml": 900,
+    "durability_max": 150,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 8,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.0,
+      "attacks": [
+        { "type": "edge", "base": 12, "verb": "slash" },
+        { "type": "pierce", "base": 8, "verb": "stab" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_sword_long",
+    "name": "Long Sword",
+    "kind": "WEAPON",
+    "tags": ["weapon", "blade", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 1500,
+    "base_volume_ml": 1400,
+    "durability_max": 160,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.2,
+      "attacks": [
+        { "type": "edge", "base": 16, "verb": "slash" },
+        { "type": "pierce", "base": 10, "verb": "thrust" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_spear",
+    "name": "Spear",
+    "kind": "WEAPON",
+    "tags": ["weapon", "polearm", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 1200,
+    "base_volume_ml": 2000,
+    "durability_max": 140,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.1,
+      "attacks": [
+        { "type": "pierce", "base": 14, "verb": "thrust" },
+        { "type": "blunt", "base": 6, "verb": "bash" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_hammer_war",
+    "name": "War Hammer",
+    "kind": "WEAPON",
+    "tags": ["weapon", "hammer", "military"],
+    "allowed_material_tags": ["metal"],
+    "base_mass_g": 2000,
+    "base_volume_ml": 1800,
+    "durability_max": 200,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 6,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 1.4,
+      "attacks": [
+        { "type": "blunt", "base": 18, "verb": "smash" },
+        { "type": "pierce", "base": 4, "verb": "spike" }
+      ]
+    }
+  },
+  {
+    "id": "core_weapon_crossbow",
+    "name": "Crossbow",
+    "kind": "WEAPON",
+    "tags": ["weapon", "ranged", "military", "crossbow"],
+    "allowed_material_tags": ["metal", "wood"],
+    "base_mass_g": 3000,
+    "base_volume_ml": 4000,
+    "durability_max": 120,
+    "equip": { "slot": "MAIN_HAND" },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 5,
+      "equal_when": ["material", "quality", "condition"],
+      "requires_pristine": true,
+      "require_no_mods": true,
+      "require_no_enchant": true
+    },
+    "weapon": {
+      "speed": 2.0,
+      "attacks": [
+        { "type": "pierce", "base": 20, "verb": "shoot", "ranged": true }
+      ]
+    }
+  }
+]

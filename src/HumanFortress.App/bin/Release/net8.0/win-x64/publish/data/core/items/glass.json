@@ -1,0 +1,151 @@
+[
+  {
+    "id": "core_item_glass_cullet",
+    "name": "Glass Cullet",
+    "kind": "RESOURCE",
+    "tags": ["glass", "cullet", "recyclable"],
+    "base_mass_g": 200,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 200,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_glass_batch",
+    "name": "Glass Batch",
+    "kind": "RESOURCE",
+    "tags": ["glass", "batch", "granular"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 700,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_glass_sheet",
+    "name": "Glass Sheet",
+    "kind": "RESOURCE",
+    "tags": ["glass", "sheet", "construction"],
+    "base_mass_g": 2500,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_glass_bottle_empty",
+    "name": "Empty Glass Bottle",
+    "kind": "CONTAINER",
+    "tags": ["glass", "container", "bottle"],
+    "base_mass_g": 200,
+    "base_volume_ml": 750,
+    "container": {
+      "capacity_ml": 500,
+      "allow_tags": ["liquid"],
+      "sealed": true
+    },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 50,
+      "equal_when": [],
+      "requires_empty": true
+    }
+  },
+  {
+    "id": "core_item_glass_jar_empty",
+    "name": "Empty Glass Jar",
+    "kind": "CONTAINER",
+    "tags": ["glass", "container", "jar"],
+    "base_mass_g": 300,
+    "base_volume_ml": 1200,
+    "container": {
+      "capacity_ml": 1000,
+      "allow_tags": ["liquid", "powder", "preserve"],
+      "sealed": true
+    },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 30,
+      "equal_when": [],
+      "requires_empty": true
+    }
+  },
+  {
+    "id": "core_item_glass_flask_empty",
+    "name": "Empty Glass Flask",
+    "kind": "CONTAINER",
+    "tags": ["glass", "container", "flask", "laboratory"],
+    "base_mass_g": 150,
+    "base_volume_ml": 300,
+    "container": {
+      "capacity_ml": 250,
+      "allow_tags": ["liquid", "chemical"],
+      "sealed": true
+    },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 50,
+      "equal_when": [],
+      "requires_empty": true
+    }
+  },
+  {
+    "id": "core_item_glass_vial_empty",
+    "name": "Empty Glass Vial",
+    "kind": "CONTAINER",
+    "tags": ["glass", "container", "vial", "small"],
+    "base_mass_g": 20,
+    "base_volume_ml": 30,
+    "container": {
+      "capacity_ml": 20,
+      "allow_tags": ["liquid", "chemical", "potion"],
+      "sealed": true
+    },
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": [],
+      "requires_empty": true
+    }
+  },
+  {
+    "id": "core_item_glass_lens",
+    "name": "Glass Lens",
+    "kind": "RESOURCE",
+    "tags": ["glass", "lens", "optical"],
+    "base_mass_g": 50,
+    "base_volume_ml": 20,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_glass_orb",
+    "name": "Glass Orb",
+    "kind": "RESOURCE",
+    "tags": ["glass", "orb", "decorative"],
+    "base_mass_g": 500,
+    "base_volume_ml": 400,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["quality"]
+    }
+  }
+]

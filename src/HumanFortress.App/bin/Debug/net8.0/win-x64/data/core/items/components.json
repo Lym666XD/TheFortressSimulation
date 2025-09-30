@@ -1,0 +1,240 @@
+[
+  {
+    "id": "core_item_component_mechanical_small",
+    "name": "Small Mechanical Component",
+    "kind": "RESOURCE",
+    "tags": ["component", "mechanical", "small"],
+    "base_mass_g": 50,
+    "base_volume_ml": 30,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_component_mechanical_large",
+    "name": "Large Mechanical Component",
+    "kind": "RESOURCE",
+    "tags": ["component", "mechanical", "large"],
+    "base_mass_g": 500,
+    "base_volume_ml": 300,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_component_gear",
+    "name": "Gear",
+    "kind": "RESOURCE",
+    "tags": ["component", "mechanical", "gear"],
+    "base_mass_g": 100,
+    "base_volume_ml": 50,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 50,
+      "equal_when": ["material"]
+    }
+  },
+  {
+    "id": "core_item_component_spring",
+    "name": "Spring",
+    "kind": "RESOURCE",
+    "tags": ["component", "mechanical", "spring"],
+    "base_mass_g": 30,
+    "base_volume_ml": 40,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": ["material"]
+    }
+  },
+  {
+    "id": "core_item_component_screw",
+    "name": "Screw",
+    "kind": "RESOURCE",
+    "tags": ["component", "fastener", "screw"],
+    "base_mass_g": 5,
+    "base_volume_ml": 3,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 500,
+      "equal_when": ["material", "size"]
+    }
+  },
+  {
+    "id": "core_item_component_nail",
+    "name": "Nail",
+    "kind": "RESOURCE",
+    "tags": ["component", "fastener", "nail"],
+    "base_mass_g": 3,
+    "base_volume_ml": 2,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 1000,
+      "equal_when": ["material", "size"]
+    }
+  },
+  {
+    "id": "core_item_component_bolt",
+    "name": "Bolt",
+    "kind": "RESOURCE",
+    "tags": ["component", "fastener", "bolt"],
+    "base_mass_g": 10,
+    "base_volume_ml": 5,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 500,
+      "equal_when": ["material", "size"]
+    }
+  },
+  {
+    "id": "core_item_component_rivet",
+    "name": "Rivet",
+    "kind": "RESOURCE",
+    "tags": ["component", "fastener", "rivet"],
+    "base_mass_g": 2,
+    "base_volume_ml": 1,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 1000,
+      "equal_when": ["material", "size"]
+    }
+  },
+  {
+    "id": "core_item_component_chain",
+    "name": "Chain",
+    "kind": "RESOURCE",
+    "tags": ["component", "mechanical", "chain"],
+    "base_mass_g": 500,
+    "base_volume_ml": 200,
+    "stack": {
+      "mode": "count",
+      "unit": "meter",
+      "max_per_stack": 20,
+      "equal_when": ["material"]
+    }
+  },
+  {
+    "id": "core_item_component_wire",
+    "name": "Wire",
+    "kind": "RESOURCE",
+    "tags": ["component", "electrical", "wire"],
+    "base_mass_g": 100,
+    "base_volume_ml": 50,
+    "stack": {
+      "mode": "count",
+      "unit": "coil",
+      "max_per_stack": 50,
+      "equal_when": ["material"]
+    }
+  },
+  {
+    "id": "core_item_component_pipe",
+    "name": "Pipe",
+    "kind": "RESOURCE",
+    "tags": ["component", "plumbing", "pipe"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 500,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["material", "diameter"]
+    }
+  },
+  {
+    "id": "core_item_component_barrel",
+    "name": "Barrel Component",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "barrel"],
+    "base_mass_g": 800,
+    "base_volume_ml": 400,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["caliber", "quality"]
+    }
+  },
+  {
+    "id": "core_item_component_stock",
+    "name": "Gun Stock",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "stock", "wood"],
+    "base_mass_g": 1200,
+    "base_volume_ml": 2000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["material", "quality"]
+    }
+  },
+  {
+    "id": "core_item_component_trigger",
+    "name": "Trigger Mechanism",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "trigger"],
+    "base_mass_g": 150,
+    "base_volume_ml": 80,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_component_flintlock",
+    "name": "Flintlock Mechanism",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "flintlock"],
+    "base_mass_g": 200,
+    "base_volume_ml": 100,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_component_matchlock",
+    "name": "Matchlock Mechanism",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "matchlock"],
+    "base_mass_g": 250,
+    "base_volume_ml": 120,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": ["quality"]
+    }
+  },
+  {
+    "id": "core_item_component_wheellock",
+    "name": "Wheellock Mechanism",
+    "kind": "RESOURCE",
+    "tags": ["component", "firearm", "wheellock"],
+    "base_mass_g": 300,
+    "base_volume_ml": 150,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 10,
+      "equal_when": ["quality"]
+    }
+  }
+]

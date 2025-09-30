@@ -1,4 +1,4 @@
-[STARTUP] HumanFortress starting at 19/09/2025 4:16:35 PM
+[STARTUP] HumanFortress starting at 30/09/2025 2:27:13 PM
 [STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\game\fortress_debug.log
 [GameStateManager] ChangeState from  to MainMenu
 [GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
@@ -97,7 +97,51 @@ EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: True
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
+EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
 EmbarkPrepState ProcessKeyboard called, HasKeyPressed: False
@@ -167,7 +211,7 @@ Entered Fortress Play
 [GenerateFortressMap] Biome: Tundra, Elevation: 0.47
 [FortressState] Initialize completed successfully
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=24
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
@@ -175,38 +219,26 @@ Entered Fortress Play
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=26
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=27
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=28
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=29
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=30
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks
 [BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
-[BuildSnapshot] Building snapshot
-[BuildSnapshot] Snapshot built with 6 chunks
-[BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
-[BuildSnapshot] Building snapshot
-[BuildSnapshot] Snapshot built with 6 chunks
-[BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
-[BuildSnapshot] Building snapshot
-[BuildSnapshot] Snapshot built with 6 chunks
-[BuildSnapshot] Starting snapshot build
-[BuildSnapshot] Camera chunk: 0,0 at Z=25
+[BuildSnapshot] Camera chunk: 0,0 at Z=31
 [BuildSnapshot] Building snapshot
 [BuildSnapshot] Snapshot built with 6 chunks

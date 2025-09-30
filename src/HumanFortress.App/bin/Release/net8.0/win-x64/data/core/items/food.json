@@ -1,0 +1,731 @@
+[
+  {
+    "id": "core_item_crop_wheat",
+    "name": "Wheat",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "grain"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1200,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_barley",
+    "name": "Barley",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "grain"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1300,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_rye",
+    "name": "Rye",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "grain"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1250,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_oats",
+    "name": "Oats",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "grain"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1400,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_sugar_pod",
+    "name": "Sugar Pod",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "sugar"],
+    "base_mass_g": 500,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_flaxseed",
+    "name": "Flaxseed",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "oil", "seed"],
+    "base_mass_g": 500,
+    "base_volume_ml": 550,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_sesame",
+    "name": "Sesame Seeds",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "oil", "seed"],
+    "base_mass_g": 500,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crop_rapeseed",
+    "name": "Rapeseed",
+    "kind": "RESOURCE",
+    "tags": ["food", "crop", "oil", "seed"],
+    "base_mass_g": 500,
+    "base_volume_ml": 580,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crate_olive",
+    "name": "Crate of Olives",
+    "kind": "RESOURCE",
+    "tags": ["food", "fruit", "oil"],
+    "base_mass_g": 10000,
+    "base_volume_ml": 15000,
+    "stack": {
+      "mode": "count",
+      "unit": "crate",
+      "max_per_stack": 10,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crate_grape",
+    "name": "Crate of Grapes",
+    "kind": "RESOURCE",
+    "tags": ["food", "fruit", "wine"],
+    "base_mass_g": 10000,
+    "base_volume_ml": 12000,
+    "stack": {
+      "mode": "count",
+      "unit": "crate",
+      "max_per_stack": 10,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crate_apple",
+    "name": "Crate of Apples",
+    "kind": "RESOURCE",
+    "tags": ["food", "fruit"],
+    "base_mass_g": 10000,
+    "base_volume_ml": 13000,
+    "stack": {
+      "mode": "count",
+      "unit": "crate",
+      "max_per_stack": 10,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_crate_pear",
+    "name": "Crate of Pears",
+    "kind": "RESOURCE",
+    "tags": ["food", "fruit"],
+    "base_mass_g": 10000,
+    "base_volume_ml": 13000,
+    "stack": {
+      "mode": "count",
+      "unit": "crate",
+      "max_per_stack": 10,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_meat_raw_beef",
+    "name": "Raw Beef",
+    "kind": "RESOURCE",
+    "tags": ["food", "meat", "raw", "perishable"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_meat_raw_pork",
+    "name": "Raw Pork",
+    "kind": "RESOURCE",
+    "tags": ["food", "meat", "raw", "perishable"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_meat_raw_chicken",
+    "name": "Raw Chicken",
+    "kind": "RESOURCE",
+    "tags": ["food", "meat", "raw", "perishable"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1100,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_fish_raw",
+    "name": "Raw Fish",
+    "kind": "RESOURCE",
+    "tags": ["food", "fish", "raw", "perishable"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1100,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_egg_chicken",
+    "name": "Chicken Egg",
+    "kind": "RESOURCE",
+    "tags": ["food", "egg", "perishable"],
+    "base_mass_g": 50,
+    "base_volume_ml": 60,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_milk_raw",
+    "name": "Raw Milk",
+    "kind": "RESOURCE",
+    "tags": ["food", "dairy", "liquid", "perishable"],
+    "base_mass_g": 1030,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_cheese",
+    "name": "Cheese",
+    "kind": "RESOURCE",
+    "tags": ["food", "dairy", "preserved"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 900,
+    "stack": {
+      "mode": "count",
+      "unit": "wheel",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_butter",
+    "name": "Butter",
+    "kind": "RESOURCE",
+    "tags": ["food", "dairy", "fat"],
+    "base_mass_g": 500,
+    "base_volume_ml": 550,
+    "stack": {
+      "mode": "count",
+      "unit": "block",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_bread",
+    "name": "Bread",
+    "kind": "RESOURCE",
+    "tags": ["food", "baked", "prepared"],
+    "base_mass_g": 500,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "loaf",
+      "max_per_stack": 20,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_liquid_water_pure",
+    "name": "Pure Water",
+    "kind": "RESOURCE",
+    "tags": ["liquid", "water", "drinkable"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_liquid_oil_olive",
+    "name": "Olive Oil",
+    "kind": "RESOURCE",
+    "tags": ["food", "oil", "liquid", "cooking"],
+    "base_mass_g": 920,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_liquid_oil_vegetable",
+    "name": "Vegetable Oil",
+    "kind": "RESOURCE",
+    "tags": ["food", "oil", "liquid", "cooking"],
+    "base_mass_g": 920,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_liquid_syrup_sugar",
+    "name": "Sugar Syrup",
+    "kind": "RESOURCE",
+    "tags": ["food", "syrup", "liquid", "sweet"],
+    "base_mass_g": 1300,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_liquid_honey",
+    "name": "Honey",
+    "kind": "RESOURCE",
+    "tags": ["food", "sweet", "liquid", "natural"],
+    "base_mass_g": 1400,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 10000
+    }
+  },
+  {
+    "id": "core_item_liquid_beer",
+    "name": "Beer",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "beverage"],
+    "base_mass_g": 1010,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_wine",
+    "name": "Wine",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "beverage"],
+    "base_mass_g": 990,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_cider",
+    "name": "Cider",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "beverage"],
+    "base_mass_g": 1010,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_mead",
+    "name": "Mead",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "beverage", "honey"],
+    "base_mass_g": 1050,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_herb_hops",
+    "name": "Hops",
+    "kind": "RESOURCE",
+    "tags": ["food", "herb", "brewing"],
+    "base_mass_g": 100,
+    "base_volume_ml": 300,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_herb_gruit",
+    "name": "Gruit Herbs",
+    "kind": "RESOURCE",
+    "tags": ["food", "herb", "brewing"],
+    "base_mass_g": 100,
+    "base_volume_ml": 350,
+    "stack": {
+      "mode": "count",
+      "unit": "bundle",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_waste_food_residue",
+    "name": "Food Residue",
+    "kind": "RESOURCE",
+    "tags": ["waste", "organic", "compost"],
+    "base_mass_g": 500,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "pile",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_malt_base",
+    "name": "Malt Base",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "malt"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1200,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_malt_base_wet",
+    "name": "Wet Malt Base",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "malt", "wet"],
+    "base_mass_g": 1500,
+    "base_volume_ml": 1400,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_malt_quality",
+    "name": "Quality Malt",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "malt", "quality"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1100,
+    "stack": {
+      "mode": "count",
+      "unit": "bag",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_liquid_wort",
+    "name": "Wort",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "liquid", "wort"],
+    "base_mass_g": 1050,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_wort_hot",
+    "name": "Hot Wort",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "liquid", "wort", "hot"],
+    "base_mass_g": 1050,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_wort_cool",
+    "name": "Cool Wort",
+    "kind": "RESOURCE",
+    "tags": ["food", "brewing", "liquid", "wort", "cool"],
+    "base_mass_g": 1050,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_must_grape",
+    "name": "Grape Must",
+    "kind": "RESOURCE",
+    "tags": ["food", "wine", "liquid", "must"],
+    "base_mass_g": 1100,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_juice_fruit",
+    "name": "Fruit Juice",
+    "kind": "RESOURCE",
+    "tags": ["food", "juice", "liquid", "fruit"],
+    "base_mass_g": 1050,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_ale_unhopped",
+    "name": "Unhopped Ale",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "ale"],
+    "base_mass_g": 1010,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_liquid_beer_purity",
+    "name": "Purity Beer",
+    "kind": "RESOURCE",
+    "tags": ["food", "alcohol", "liquid", "beer", "quality"],
+    "base_mass_g": 1010,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "charges",
+      "unit": "ml",
+      "max_per_stack": 20000
+    }
+  },
+  {
+    "id": "core_item_paste_seed_oil",
+    "name": "Seed Oil Paste",
+    "kind": "RESOURCE",
+    "tags": ["food", "paste", "oil", "intermediate"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 900,
+    "stack": {
+      "mode": "count",
+      "unit": "batch",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_comb_honey",
+    "name": "Honeycomb",
+    "kind": "RESOURCE",
+    "tags": ["food", "honey", "natural"],
+    "base_mass_g": 500,
+    "base_volume_ml": 600,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_beeswax",
+    "name": "Beeswax",
+    "kind": "RESOURCE",
+    "tags": ["material", "wax", "natural"],
+    "base_mass_g": 200,
+    "base_volume_ml": 250,
+    "stack": {
+      "mode": "count",
+      "unit": "block",
+      "max_per_stack": 100,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_tallow",
+    "name": "Tallow",
+    "kind": "RESOURCE",
+    "tags": ["food", "fat", "animal"],
+    "base_mass_g": 900,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "block",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_lard",
+    "name": "Lard",
+    "kind": "RESOURCE",
+    "tags": ["food", "fat", "animal"],
+    "base_mass_g": 900,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "block",
+      "max_per_stack": 50,
+      "equal_when": []
+    }
+  },
+  {
+    "id": "core_item_bone",
+    "name": "Bone",
+    "kind": "RESOURCE",
+    "tags": ["bone", "material"],
+    "base_mass_g": 300,
+    "base_volume_ml": 400,
+    "stack": { "mode": "count", "unit": "piece", "max_per_stack": 50, "equal_when": [] }
+  },
+  {
+    "id": "core_item_powder_flour_coarse",
+    "name": "Coarse Flour",
+    "kind": "RESOURCE",
+    "tags": ["food", "powder", "flour"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1600,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_powder_flour",
+    "name": "Flour",
+    "kind": "RESOURCE",
+    "tags": ["food", "powder", "flour"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1500,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_powder_flour_fine",
+    "name": "Fine Flour",
+    "kind": "RESOURCE",
+    "tags": ["food", "powder", "flour", "fine"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1400,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_powder_sugar",
+    "name": "Sugar Powder",
+    "kind": "RESOURCE",
+    "tags": ["food", "powder", "sugar"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 1200,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  },
+  {
+    "id": "core_item_powder_salt",
+    "name": "Salt",
+    "kind": "RESOURCE",
+    "tags": ["food", "powder", "salt", "preservative"],
+    "base_mass_g": 1000,
+    "base_volume_ml": 900,
+    "stack": {
+      "mode": "charges",
+      "unit": "g",
+      "max_per_stack": 50000
+    }
+  }
+]

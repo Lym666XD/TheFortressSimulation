@@ -4,6 +4,209 @@
         <name>HumanFortress.Simulation</name>
     </assembly>
     <members>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureDefinition">
+            <summary>
+            Static definition of a creature type loaded from data/core/creatures/*.json
+            Based on CREATURE_SPEC.md
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureInstance">
+            <summary>
+            Runtime instance of a creature in the world
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureManager">
+            <summary>
+            Global manager for creature definitions and runtime instances.
+            Thread-safe for concurrent reads; writes use locks.
+            Follows data-driven principles per CREATURE_SPEC.md and UPDATE_ORDER.md
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.SetWorld(HumanFortress.Simulation.World.World)">
+            <summary>
+            Set world reference (called after World is created)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.LoadDefinitions(System.String)">
+            <summary>
+            Load creature definitions from data files.
+            Each file is wrapped in try-catch; errors are logged but don't stop loading.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.ValidateDefinition(HumanFortress.Simulation.Creatures.CreatureDefinition)">
+            <summary>
+            Validate creature definition (basic checks)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.IndexByTags(HumanFortress.Simulation.Creatures.CreatureDefinition)">
+            <summary>
+            Build tag index for fast queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.SpawnCreature(System.String,SadRogue.Primitives.Point,System.Int32,System.String,System.UInt64)">
+            <summary>
+            Spawn a creature at the specified world position.
+            Returns creature GUID on success, null on failure.
+            TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetAllDefinitions">
+            <summary>
+            Get all creature definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetByTag(System.String)">
+            <summary>
+            Get creature definitions by tag
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetDefinition(System.String)">
+            <summary>
+            Get definition by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetInstance(System.Guid)">
+            <summary>
+            Get instance by GUID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetAllInstances">
+            <summary>
+            Get all instances (creates a snapshot for thread safety)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemDefinition">
+            <summary>
+            Static definition of an item type loaded from data/core/items/*.json
+            Based on ITEMS_SPEC.md v3
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemInstance">
+            <summary>
+            Runtime instance of an item in the world
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemManager">
+            <summary>
+            Global manager for item definitions and runtime instances.
+            Thread-safe for concurrent reads; writes use locks.
+            Follows data-driven principles per ITEMS_SPEC.md and UPDATE_ORDER.md
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.SetDependencies(HumanFortress.Simulation.World.World,HumanFortress.Core.Content.Registry.ContentRegistry)">
+            <summary>
+            Set dependencies (called after initialization)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.LoadDefinitions(System.String)">
+            <summary>
+            Load item definitions from data files.
+            Each file is wrapped in try-catch; errors are logged but don't stop loading.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.ValidateDefinition(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Validate item definition (basic checks)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.IndexByKind(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Build kind index for category queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.IndexByTags(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Build tag index for fast queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.SpawnItem(System.String,SadRogue.Primitives.Point,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Spawn an item at the specified world position.
+            Returns item GUID on success, null on failure.
+            TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
+            TODO: Implement stack merging when spawning stackable items
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAllDefinitions">
+            <summary>
+            Get all item definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetByKind(System.String)">
+            <summary>
+            Get item definitions by kind (resource/weapon/armor/tool/container/consumable)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAvailableKinds">
+            <summary>
+            Get available kinds (for UI category display)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetByTag(System.String)">
+            <summary>
+            Get item definitions by tag
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetDefinition(System.String)">
+            <summary>
+            Get definition by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetInstance(System.Guid)">
+            <summary>
+            Get instance by GUID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAllInstances">
+            <summary>
+            Get all instances (creates a snapshot for thread safety)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.HaulDesignation">
+            <summary>
+            A haul designation created by player input (rectangle at a given Z).
+            Read in the read phase by the hauling system to generate moves.
+            Thread-safe lifetime: created from UI via command; consumed by HaulingSystem.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.HaulingSystem">
+            <summary>
+            Minimal v1 hauling system: reads haul designations, plans moves, and applies instant relocations.
+            Design for extensibility: later replace instant moves with creature-assigned jobs and path execution.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.HaulingSystem.DequeuePlannedMoves(System.Int32,System.Collections.Generic.IList{HumanFortress.Simulation.Orders.HaulingSystem.PlannedMove})">
+            <summary>
+            Dequeue up to max planned moves for job creation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.OrdersManager">
+            <summary>
+            Central store for player orders (designations), starting with Haul.
+            Thread-safe for enqueue/dequeue across UI thread and sim thread.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueHaul(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a haul designation for processing.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainHaulDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.HaulDesignation},System.Int32)">
+            <summary>
+            Drain at most maxCount haul designations into the provided list.
+            Returns number drained. Use in the Read phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetRecentHauls">
+            <summary>
+            Get a snapshot of recently created haul designations (for UI/debug).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetActiveHaulsSnapshot">
+            <summary>
+            Get snapshot of active haul designations (persistent until manually cleared).
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshot">
             <summary>
             Immutable per-tick snapshot for rendering per RENDERING_SNAPSHOT.md.

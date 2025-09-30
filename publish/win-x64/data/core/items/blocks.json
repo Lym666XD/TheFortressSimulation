@@ -1,0 +1,137 @@
+[
+  {
+    "id": "core_item_block_granite",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "granite"],
+    "fixed_material": "core_mat_stone_granite",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_marble",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "marble"],
+    "fixed_material": "core_mat_stone_marble",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_basalt",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "basalt"],
+    "fixed_material": "core_mat_stone_basalt",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_sandstone",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "sandstone"],
+    "fixed_material": "core_mat_stone_sandstone",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_shale",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "shale"],
+    "fixed_material": "core_mat_stone_shale",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_slate",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "slate"],
+    "fixed_material": "core_mat_stone_slate",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_quartzite",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "quartzite"],
+    "fixed_material": "core_mat_stone_quartzite",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_gneiss",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "gneiss"],
+    "fixed_material": "core_mat_stone_gneiss",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  },
+  {
+    "id": "core_item_block_obsidian",
+    "name": "Block",
+    "kind": "RESOURCE",
+    "tags": ["stone", "block", "material", "construction", "obsidian"],
+    "fixed_material": "core_mat_stone_obsidian",
+    "base_mass_g": 5000,
+    "base_volume_ml": 1000,
+    "stack": {
+      "mode": "count",
+      "unit": "piece",
+      "max_per_stack": 25,
+      "equal_when": ["fixed_material"]
+    }
+  }
+]
