@@ -206,6 +206,20 @@ public static class SimulationDiffApplicator
         item.CarriedBy = null;
         item.IsReserved = false;
         item.ReservedBy = null;
+
+        // After uncarrying at destination, attempt to merge with any stacks at the same tile
+        try
+        {
+            int removed = world.Items.MergeStacksAt(item.Position, item.Z);
+            if (removed > 0)
+            {
+                LogCallback?.Invoke($"[DIFF][Items] MergeStacksAt (uncarry) ({item.Position.X},{item.Position.Y},{item.Z}) removed={removed}");
+            }
+        }
+        catch (Exception ex)
+        {
+            LogCallback?.Invoke($"[DIFF][Items] MergeStacksAt (uncarry) exception: {ex.Message}");
+        }
     }
 
     private static (World.ChunkKey ck, int lx, int ly) DecodeTarget(DiffTarget target)

@@ -39,7 +39,10 @@
       "Bash(start /B HumanFortress.App.exe --test)",
       "Bash(timeout:*)",
       "Bash(findstr:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "WebFetch(domain:dwarffortresswiki.org)",
+      "WebFetch(domain:www.dwarffortresswiki.org)",
+      "WebFetch(domain:rimworldwiki.com)"
     ],
     "deny": [],
     "ask": []
