@@ -38,7 +38,8 @@
       "Bash(Select-String -Pattern \"GameStateManager|Creature|Item|FillWorld|World obtained\" -Context 0,1)",
       "Bash(start /B HumanFortress.App.exe --test)",
       "Bash(timeout:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

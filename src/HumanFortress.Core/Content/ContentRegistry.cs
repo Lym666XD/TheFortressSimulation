@@ -30,6 +30,7 @@ namespace HumanFortress.Core.Content
         private readonly Dictionary<string, ushort> _geologyHandles = new();
         private readonly Dictionary<ushort, string> _handleToMaterialId = new();
         private readonly Dictionary<ushort, string> _handleToGeologyId = new();
+        private readonly Dictionary<(string material, string kind), ushort> _geologyByMaterialAndKind = new();
 
         public IReadOnlyDictionary<string, MaterialData> Materials => _materials;
         public IReadOnlyDictionary<string, GeologyData> GeologyEntries => _geology;
@@ -66,6 +67,9 @@ namespace HumanFortress.Core.Content
             // Assign stable handles
             AssignHandles();
 
+            // Build fast geology index for (material,kind)
+            BuildGeologyMaterialKindIndex();
+
             // Validate cross-references
             ValidateCrossReferences();
 
@@ -74,6 +78,34 @@ namespace HumanFortress.Core.Content
             {
                 Console.WriteLine($"[ContentRegistry] {_errors.Count} errors during loading");
             }
+        }
+
+        private void BuildGeologyMaterialKindIndex()
+        {
+            _geologyByMaterialAndKind.Clear();
+            foreach (var kv in _geology)
+            {
+                var id = kv.Key;
+                var g = kv.Value;
+                try
+                {
+                    var mat = g.Material;
+                    var kind = g.TerrainBits?.Kind;
+                    if (string.IsNullOrWhiteSpace(mat) || string.IsNullOrWhiteSpace(kind)) continue;
+                    var handle = GetGeologyHandle(id);
+                    _geologyByMaterialAndKind[(mat, kind!)] = handle;
+                }
+                catch { }
+            }
+        }
+
+        public bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle)
+        {
+            if (string.IsNullOrWhiteSpace(materialId) || string.IsNullOrWhiteSpace(terrainKindName))
+            {
+                handle = 0; return false;
+            }
+            return _geologyByMaterialAndKind.TryGetValue((materialId, terrainKindName), out handle);
         }
 
         private void LoadTuningFiles(string registriesPath)
@@ -88,7 +120,9 @@ namespace HumanFortress.Core.Content
                 "tuning.navigation.json",
                 // Added to support data-driven hauling/stockpile tuning
                 "tuning.hauling.json",
-                "tuning.stockpile.json"
+                "tuning.stockpile.json",
+                // Mining tuning (dig time, drops)
+                "tuning.mining.json"
             };
 
             foreach (var file in tuningFiles)

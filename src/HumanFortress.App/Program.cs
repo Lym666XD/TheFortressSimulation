@@ -58,6 +58,11 @@ public static class Program
         var logFile = "fortress_debug.log";
         Logger.Initialize(logFile);
 
+        // Initialize logging callbacks for lower-level components (Simulation/Navigation layers)
+        HumanFortress.Navigation.NavigationManager.LogCallback = Logger.Log;
+        HumanFortress.Simulation.Items.ItemManager.LogCallback = Logger.Log;
+        HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback = Logger.Log;
+
         // Don't redirect console output - SadConsole needs it for rendering
         // System.Console.SetOut(logWriter);
         // System.Console.SetError(logWriter);

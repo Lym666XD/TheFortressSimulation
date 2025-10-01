@@ -52,6 +52,9 @@ namespace HumanFortress.App.States
         private StockpileManager? _stockpileManager;
         private StockpileUI? _stockpileUI;
         private OrdersUI? _ordersUI;
+        private ZonesUI? _zonesUI;
+        private BuildUI? _buildUI;
+        private StockpileQuickUI? _stockpileQuickUI;
         private HumanFortress.App.Input.InputBindingsService _bindings = HumanFortress.App.Input.InputBindingsService.Instance;
         private HumanFortress.App.Input.OrdersRegistryService _ordersRegistry = HumanFortress.App.Input.OrdersRegistryService.Instance;
 
@@ -290,9 +293,10 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine("[GenerateFortressMap] Creating RenderSnapshotBuilder");
                 _snapshotBuilder = new RenderSnapshotBuilder(_world);
 
-                // Initialize navigation manager
-                System.Console.WriteLine("[GenerateFortressMap] Creating NavigationManager");
-                _navManager = new NavigationManager(_world);
+                // Initialize navigation manager (shared from GameStateManager)
+                System.Console.WriteLine("[GenerateFortressMap] Using shared NavigationManager");
+                _navManager = GameStateManager.Instance.NavManager ?? new NavigationManager(_world);
+                // Rebuild after world is filled with terrain
                 _navManager.RebuildAll();
 
                 // Initialize navigation overlay
@@ -300,11 +304,14 @@ namespace HumanFortress.App.States
                 _navOverlay = new NavigationOverlay();
                 _navOverlay.SetNavigationManager(_navManager);
 
-                // Initialize stockpile system
-                System.Console.WriteLine("[GenerateFortressMap] Creating StockpileManager & OrdersUI");
-                _stockpileManager = new StockpileManager();
+                // Initialize stockpile system and UI classes
+                System.Console.WriteLine("[GenerateFortressMap] Wiring StockpileManager & UI classes");
+                _stockpileManager = _world.Stockpiles;
                 _stockpileUI = new StockpileUI(_stockpileManager);
                 _ordersUI = new OrdersUI();
+                _zonesUI = new ZonesUI();
+                _buildUI = new BuildUI();
+                _stockpileQuickUI = new StockpileQuickUI();
 
                 // Load input bindings and orders registry (data-driven UI wiring)
                 var baseDir = AppContext.BaseDirectory;
@@ -346,34 +353,11 @@ namespace HumanFortress.App.States
                 UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
                 UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
                 UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager, _world);
-                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick);
+                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick, _ordersUI, _zonesUI, _buildUI, _stockpileQuickUI);
 
                 // Draw orders & stockpile specific UI
                 if (_stockpileUI != null)
                 {
-                    // Orders quick menu
-                    if (_ordersUI != null && _ui.QuickMenu == QuickMenuKind.Orders)
-                    {
-                        if (_ui.OrdersMenu == OrdersSubmenu.None)
-                        {
-                            _ordersUI.DrawOrdersMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 10, 10);
-                        }
-                        else if (_ui.OrdersMenu == OrdersSubmenu.Haul)
-                        {
-                            _ordersUI.DrawHaulMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 12, 10);
-                        }
-                    }
-                    // Draw zone menu if open
-                    if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.None)
-                    {
-                        _stockpileUI.DrawZoneMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 10, 10);
-                    }
-                    // Draw stockpile submenu if open
-                    else if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.Stockpile)
-                    {
-                        _stockpileUI.DrawStockpileMenu(_uiSurface, _uiSurface.Surface.Width / 2 - 12, 10);
-                    }
-
                     // Draw placement mode UI
                     if (_ui.Context == UiContext.PlacingTool)
                     {
@@ -738,7 +722,8 @@ namespace HumanFortress.App.States
                     }
                     else
                     {
-                        glyph = geology?.Display.Glyph ?? '.';
+                        // For floors, prefer a dedicated floor glyph instead of geology's wall glyph
+                        glyph = '.';
                     }
                     break;
                 case HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor:
@@ -1119,59 +1104,25 @@ namespace HumanFortress.App.States
             }
 
             // Handle context-specific keys first
-            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Zones)
-            {
-                if (_ui.ZoneMenu == ZoneSubmenu.None)
-                {
-                    // Zone main menu
-                    if (keyboard.IsKeyPressed(Keys.Z))
-                    {
-                        _ui.OpenZoneSubmenu(ZoneSubmenu.Stockpile);
-                        changed = true;
-                    }
-                }
-                else if (_ui.ZoneMenu == ZoneSubmenu.Stockpile)
-                {
-                    // Stockpile submenu
-                    if (keyboard.IsKeyPressed(Keys.Z))
-                    {
-                        // Start stockpile creation
-                        _ui.StartPlacement(PlacementMode.StockpileFirstCorner, _currentZ);
-                        changed = true;
-                    }
-                    else if (keyboard.IsKeyPressed(Keys.OemComma))
-                    {
-                        // Start stockpile deletion
-                        _ui.StartPlacement(PlacementMode.StockpileDelete, _currentZ);
-                        changed = true;
-                    }
-                    else if (keyboard.IsKeyPressed(Keys.X))
-                    {
-                        // Start copy mode
-                        _ui.StartPlacement(PlacementMode.StockpileCopy, _currentZ);
-                        changed = true;
-                    }
-                }
-            }
+            // Orders Quick Menu
             else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Orders)
             {
-                if (_ui.OrdersMenu == OrdersSubmenu.None)
-                {
-                    // Orders main menu (data-driven)
-                    if (keyboard.IsKeyPressed(Keys.F) && HumanFortress.App.Input.InputBindingsService.Instance.IsActionForKey("menu.orders", "F", "orders.select.haul"))
-                    {
-                        _ui.OpenOrdersSubmenu(OrdersSubmenu.Haul);
-                        changed = true;
-                    }
-                }
-                else if (_ui.OrdersMenu == OrdersSubmenu.Haul)
-                {
-                    if (keyboard.IsKeyPressed(Keys.Z) && HumanFortress.App.Input.InputBindingsService.Instance.IsActionForKey("menu.orders", "Z", "orders.haul.rect"))
-                    {
-                        _ui.StartPlacement(PlacementMode.HaulFirstCorner, _currentZ);
-                        changed = true;
-                    }
-                }
+                HandleOrdersMenu(keyboard, ref changed);
+            }
+            // Zones Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Zones)
+            {
+                HandleZonesMenu(keyboard, ref changed);
+            }
+            // Build Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Build)
+            {
+                HandleBuildMenu(keyboard, ref changed);
+            }
+            // Stockpile Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Stockpile)
+            {
+                HandleStockpileMenu(keyboard, ref changed);
             }
             else if (_ui.Context == UiContext.PlacingTool)
             {
@@ -1200,12 +1151,13 @@ namespace HumanFortress.App.States
                     }
                 }
             }
-            // UI: quick menus Z/X/C (only in global context)
+            // UI: quick menus Z/X/C/V (only in global context)
             else if (_ui.Context == UiContext.Global)
             {
                 if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
                 else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
                 else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenQuickMenu(QuickMenuKind.Stockpile); Logger.Log($"[KEY] V -> QMenu={_ui.QuickMenu}"); changed = true; }
             }
 
             // Overlay cycle F9
@@ -1391,6 +1343,8 @@ namespace HumanFortress.App.States
                     return true;
                 if (HandleQuickClicksScreen(state.SurfaceCellPosition))
                     return true;
+                if (HandleQuickMenuClicksScreen(state.SurfaceCellPosition))
+                    return true;
             }
 
             // Handle mouse clicks for UI (map-relative)
@@ -1421,15 +1375,6 @@ namespace HumanFortress.App.States
                     if (cell.X >= center - 8 && cell.X < center - 8 + 9) { _ui.OpenQuickMenu(QuickMenuKind.Orders); }
                     else if (cell.X >= center + 2 && cell.X < center + 2 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Zones); }
                     else if (cell.X >= center + 12 && cell.X < center + 12 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Build); }
-                    DrawUI();
-                    return true;
-                }
-
-                // Click inside quick menu area ??show WIP toast
-                if (_ui.QuickMenu != QuickMenuKind.None)
-                {
-                    _ui.AddToast("This feature is coming soon", _uiTick + 100);
-                    Logger.Log($"[CLICK] Quick menu area clicked - qmenu={_ui.QuickMenu}");
                     DrawUI();
                     return true;
                 }
@@ -1505,26 +1450,120 @@ namespace HumanFortress.App.States
         {
             int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
             int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
-            int y = screenH - 2; // matches UiRenderer.DrawQuickIconsScreen
+            int y = screenH - 1; // bottom row, same as F1-F7 (matches UiRenderer.DrawQuickIconsScreen)
             if (screenCell.Y != y) return false;
 
             int center = screenW / 2;
             int buttonWidth = 5; // must match UiRenderer
             int gap = 2;
 
+            // 4 buttons: Z X C V (totalWidth = 4*5 + 3*2 = 26)
+            int totalWidth = (buttonWidth * 4) + (gap * 3);
+            int startX = center - totalWidth / 2;
+
             var buttons = new (int start, int end, QuickMenuKind kind)[]
             {
-                (center - (buttonWidth + gap) - buttonWidth / 2, center - (buttonWidth + gap) - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Orders),
-                (center - buttonWidth / 2, center - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Zones),
-                (center + (buttonWidth + gap) - buttonWidth / 2, center + (buttonWidth + gap) - buttonWidth / 2 + buttonWidth - 1, QuickMenuKind.Build),
+                (startX, startX + buttonWidth - 1, QuickMenuKind.Orders),
+                (startX + buttonWidth + gap, startX + buttonWidth + gap + buttonWidth - 1, QuickMenuKind.Zones),
+                (startX + (buttonWidth + gap) * 2, startX + (buttonWidth + gap) * 2 + buttonWidth - 1, QuickMenuKind.Build),
+                (startX + (buttonWidth + gap) * 3, startX + (buttonWidth + gap) * 3 + buttonWidth - 1, QuickMenuKind.Stockpile),
             };
 
             foreach (var b in buttons)
             {
                 if (screenCell.X >= b.start && screenCell.X <= b.end)
                 {
-                    _ui.OpenQuickMenu(b.kind);
+                    // If clicking current menu, toggle it off; otherwise switch to new menu
+                    if (_ui.QuickMenu == b.kind)
+                    {
+                        _ui.CancelPlacement();
+                    }
+                    else
+                    {
+                        _ui.OpenQuickMenu(b.kind);
+                    }
                     Logger.Log($"[CLICK] QuickIconsScreen kind={b.kind} cell=({screenCell.X},{screenCell.Y}) -> qmenu={_ui.QuickMenu}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Click handling for quick menu items (L1, L2, L3)
+        private bool HandleQuickMenuClicksScreen(Point screenCell)
+        {
+            if (_ui.QuickMenu == QuickMenuKind.None) return false;
+
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int centerX = screenW / 2;
+
+            // L1 menu positions (root popups) - buttons at screenH-1, menus end at screenH-2
+            if (_ui.QuickMenu == QuickMenuKind.Orders && _ui.OrdersMenu == OrdersSubmenu.None)
+            {
+                // Orders root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                // Check if click is inside popup (rows 1-6 are clickable menu items)
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Mining); }
+                    else if (row == 2) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Lumbering); }
+                    else if (row == 3) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Gather); }
+                    else if (row == 4) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Masonry); }
+                    else if (row == 5) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Haul); }
+                    else if (row == 6) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Creature); }
+                    else if (row == 7) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Other); }
+                    DrawUI();
+                    return true;
+                }
+            }
+            else if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.None)
+            {
+                // Zones root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenZoneSubmenu(ZoneSubmenu.Production); }
+                    else if (row == 2) { _ui.OpenZoneSubmenu(ZoneSubmenu.Civil); }
+                    else if (row == 3) { _ui.OpenZoneSubmenu(ZoneSubmenu.Public); }
+                    else if (row == 4) { _ui.OpenZoneSubmenu(ZoneSubmenu.Military); }
+                    else if (row == 5) { _ui.OpenZoneSubmenu(ZoneSubmenu.Management); }
+                    DrawUI();
+                    return true;
+                }
+            }
+            else if (_ui.QuickMenu == QuickMenuKind.Build && _ui.BuildMenu == BuildSubmenu.None)
+            {
+                // Build root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenBuildSubmenu(BuildSubmenu.Structural); }
+                    else if (row == 2) { _ui.OpenBuildSubmenu(BuildSubmenu.FunctionalStructure); }
+                    else if (row == 3) { _ui.OpenBuildSubmenu(BuildSubmenu.Workshop); }
+                    else if (row == 4) { _ui.OpenBuildSubmenu(BuildSubmenu.CivilFurniture); }
+                    else if (row == 5) { _ui.OpenBuildSubmenu(BuildSubmenu.UtilityFurniture); }
+                    DrawUI();
+                    return true;
+                }
+            }
+            else if (_ui.QuickMenu == QuickMenuKind.Stockpile && _ui.StockpileMenu == StockpileSubmenu.None)
+            {
+                // Stockpile root: height=6, y = screenH - 7
+                int x = (screenW - 30) / 2;
+                int y = screenH - 7;
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 3)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenStockpileSubmenu(StockpileSubmenu.Stockpile); }
                     DrawUI();
                     return true;
                 }
@@ -1670,7 +1709,6 @@ namespace HumanFortress.App.States
                 }
                 else if (_ui.PlaceMode == PlacementMode.StockpileSecondCorner)
                 {
-                    // 保存第二个角的坐标并进入预设选择
                     if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
                     {
                         _ui.PlaceSecondCorner = worldPos;
@@ -1705,6 +1743,34 @@ namespace HumanFortress.App.States
                         GameStateManager.Instance.EnqueueCommand(cmd);
                         _ui.AddToast("Haul order created", _uiTick + 120);
                         Logger.Log($"[HAUL] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        _ui.CancelPlacement();
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.MiningFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.MiningSecondCorner;
+                    Logger.Log($"[MINING] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.MiningSecondCorner)
+                {
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        var cmd = new HumanFortress.App.Commands.CreateMiningOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast("Mining order created", _uiTick + 120);
+                        Logger.Log($"[MINING] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
                         _ui.CancelPlacement();
                         DrawUI();
                     }
@@ -1861,8 +1927,8 @@ namespace HumanFortress.App.States
         {
             if (_fortressMap == null || _world == null) return;
             var surf = overlay.Surface;
-            int w = 38;
-            int h = 14;
+            int w = 42;
+            int h = 28;
             int x0 = surf.Width - w - 2;
             int y0 = 2;
             var bg = new Color(10, 10, 10, 220);
@@ -1871,9 +1937,8 @@ namespace HumanFortress.App.States
                 for (int xx = x0; xx < x0 + w; xx++)
                     surf.SetGlyph(xx, yy, ' ', Color.White, bg);
 
-            surf.Print(x0 + 2, y0, "TILE INFO", Color.Cyan);
-            surf.Print(x0 + 2, y0 + 1, $"World: {_tilePanelWorld.X},{_tilePanelWorld.Y}  Z:{_tilePanelZ}", Color.White);
-            surf.Print(x0 + 2, y0 + 2, "Layers L0..L7:", Color.Yellow);
+            surf.Print(x0 + 2, y0, "=== TILE INFO ===", Color.Cyan);
+            surf.Print(x0 + 2, y0 + 1, $"Pos: ({_tilePanelWorld.X},{_tilePanelWorld.Y},{_tilePanelZ})", Color.White);
 
             int chunkX = _tilePanelWorld.X / 32;
             int chunkY = _tilePanelWorld.Y / 32;
@@ -1888,33 +1953,221 @@ namespace HumanFortress.App.States
                 var geology = ContentRegistry.Instance.GetGeologyByHandle(tile.GeoMatId);
                 string geoId = geology?.Id ?? $"#${tile.GeoMatId}";
 
-                // L0: geology + terrain
-                surf.Print(x0 + 2, y0 + 4, $"L0: {geoId}", Color.Green);
-                string l0b = $"    Kind={tile.Kind} Nat={(tile.IsNatural?1:0)} Mod={(tile.IsModifiable?1:0)}";
-                surf.Print(x0 + 2, y0 + 5, l0b, Color.Gray);
+                int line = 3;
 
-                // L1: surface bits
-                string l1 = $"L1: Mud={(tile.HasMud?1:0)} Grass={(tile.HasGrass?1:0)} Snow={(tile.HasSnow?1:0)} Fert={tile.Fertility}";
-                surf.Print(x0 + 2, y0 + 6, l1, Color.Gray);
+                // === TERRAIN ===
+                surf.Print(x0 + 2, line++, "--- Terrain ---", Color.Yellow);
+                surf.Print(x0 + 2, line++, $"Kind: {tile.Kind}", tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor ? Color.Green : Color.White);
+                surf.Print(x0 + 2, line++, $"Geology: {geoId.Replace("core_geology_", "").Replace("core_terrain_", "")}", Color.Gray);
+                surf.Print(x0 + 2, line++, $"Natural: {tile.IsNatural}  Modifiable: {tile.IsModifiable}", Color.DarkGray);
+                line++;
 
-                // L2: reserved
-                surf.Print(x0 + 2, y0 + 7, "L2: (reserved)", Color.DarkGray);
+                // === SURFACE ===
+                surf.Print(x0 + 2, line++, "--- Surface ---", Color.Yellow);
+                surf.Print(x0 + 2, line++, $"Mud: {tile.HasMud}  Grass: {tile.HasGrass}  Snow: {tile.HasSnow}", Color.Gray);
+                surf.Print(x0 + 2, line++, $"Fertility: {tile.Fertility}", Color.DarkGray);
+                line++;
 
-                // L3: fluids
-                string l3 = $"L3: Fluid={tile.FluidKind} Depth={tile.FluidDepth}";
-                surf.Print(x0 + 2, y0 + 8, l3, Color.Gray);
+                // === ITEMS (L5) ===
+                surf.Print(x0 + 2, line++, "--- Items ---", Color.Yellow);
+                var items = _world.Items.GetAllInstances()
+                    .Where(i => i.Position.X == _tilePanelWorld.X && i.Position.Y == _tilePanelWorld.Y && i.Z == _tilePanelZ)
+                    .Take(5)
+                    .ToList();
+                if (items.Count > 0)
+                {
+                    foreach (var item in items)
+                    {
+                        var def = _world.Items.GetDefinition(item.DefinitionId);
+                        string itemName = def?.Name ?? item.DefinitionId;
+                        surf.Print(x0 + 2, line++, $"  {itemName} x{item.StackCount}", Color.LightGreen);
+                    }
+                    if (items.Count > 5)
+                        surf.Print(x0 + 2, line++, $"  ... +{items.Count - 5} more", Color.DarkGray);
+                }
+                else
+                {
+                    surf.Print(x0 + 2, line++, "  (none)", Color.DarkGray);
+                }
+                line++;
 
-                // L4..L6: reserved
-                surf.Print(x0 + 2, y0 + 9,  "L4: (reserved)", Color.DarkGray);
-                surf.Print(x0 + 2, y0 + 10, "L5: (reserved)", Color.DarkGray);
-                surf.Print(x0 + 2, y0 + 11, "L6: (reserved)", Color.DarkGray);
+                // === CREATURES (L6) ===
+                surf.Print(x0 + 2, line++, "--- Creatures ---", Color.Yellow);
+                var creatures = _world.Creatures.GetAllInstances()
+                    .Where(c => c.Position.X == _tilePanelWorld.X && c.Position.Y == _tilePanelWorld.Y && c.Z == _tilePanelZ)
+                    .Take(3)
+                    .ToList();
+                if (creatures.Count > 0)
+                {
+                    foreach (var creature in creatures)
+                    {
+                        var def = _world.Creatures.GetDefinition(creature.DefinitionId);
+                        string name = def?.Name ?? creature.DefinitionId;
+                        surf.Print(x0 + 2, line++, $"  {name} HP:{creature.HP}/{creature.MaxHP}", Color.LightBlue);
+                    }
+                }
+                else
+                {
+                    surf.Print(x0 + 2, line++, "  (none)", Color.DarkGray);
+                }
+                line++;
 
-                // L7: meta
-                string l7 = $"L7: Revealed={(tile.IsRevealed?1:0)} Forbid={(tile.IsForbidden?1:0)} Traffic={tile.TrafficLevel} Blood={(tile.HasBlood?1:0)}";
-                surf.Print(x0 + 2, y0 + 12, l7, Color.Gray);
+                // === FLUIDS (L3) ===
+                surf.Print(x0 + 2, line++, "--- Fluids ---", Color.Yellow);
+                surf.Print(x0 + 2, line++, $"Kind: {tile.FluidKind}  Depth: {tile.FluidDepth}", Color.Gray);
             }
 
             surf.Print(x0 + 2, y0 + h - 1, "ESC to close", Color.DarkGray);
+        }
+
+        // Handle Orders menu input (L2 and L3)
+        private void HandleOrdersMenu(Keyboard keyboard, ref bool changed)
+        {
+            if (_ui.OrdersMenu == OrdersSubmenu.None)
+            {
+                // L2 menu: select submenu
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Mining); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Lumbering); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Gather); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Masonry); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.F)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Haul); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.B)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Creature); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.G)) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Other); changed = true; }
+            }
+            else
+            {
+                // L3 menu: handle specific submenu actions
+                switch (_ui.OrdersMenu)
+                {
+                    case OrdersSubmenu.Mining:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Dig stairwell: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Dig ramp: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.V)) { _ui.AddToast("Dig channel: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.F)) { _ui.AddToast("Remove digging: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Lumbering:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.AddToast("Lumber: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Gather:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.AddToast("Gather plant: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Remove plant: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Masonry:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.AddToast("Smooth: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Engrave: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Track: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.V)) { _ui.AddToast("Carve gap: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Haul:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.StartPlacement(PlacementMode.HaulFirstCorner, _currentZ); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Emergency haul: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Creature:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.AddToast("Hunting: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Kill: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Tame: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.V)) { _ui.AddToast("Rescue: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                    case OrdersSubmenu.Other:
+                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.AddToast("Lock/disallow: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Unlock/allow: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Dump: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.V)) { _ui.AddToast("Remove dump: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.F)) { _ui.AddToast("Melt: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.T)) { _ui.AddToast("Remove melt: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.R)) { _ui.AddToast("Clean: WIP", _uiTick + 120); changed = true; }
+                        else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
+                        break;
+                }
+            }
+        }
+
+        // Handle Zones menu input (L2 and L3)
+        private void HandleZonesMenu(Keyboard keyboard, ref bool changed)
+        {
+            if (_ui.ZoneMenu == ZoneSubmenu.None)
+            {
+                // L2 menu: select submenu (Z=Production, X=Civil, C=Public, V=Military, F=Management)
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenZoneSubmenu(ZoneSubmenu.Production); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenZoneSubmenu(ZoneSubmenu.Civil); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenZoneSubmenu(ZoneSubmenu.Public); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenZoneSubmenu(ZoneSubmenu.Military); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.F)) { _ui.OpenZoneSubmenu(ZoneSubmenu.Management); changed = true; }
+            }
+            else
+            {
+                // L3 menu: all WIP for now
+                if (keyboard.IsKeyPressed(Keys.Z) || keyboard.IsKeyPressed(Keys.X) || keyboard.IsKeyPressed(Keys.C) ||
+                    keyboard.IsKeyPressed(Keys.V) || keyboard.IsKeyPressed(Keys.F) || keyboard.IsKeyPressed(Keys.G) ||
+                    keyboard.IsKeyPressed(Keys.R) || keyboard.IsKeyPressed(Keys.T))
+                {
+                    _ui.AddToast("Zone feature: WIP", _uiTick + 120);
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.OemComma))
+                {
+                    _ui.AddToast("Remove zone: WIP", _uiTick + 120);
+                    changed = true;
+                }
+            }
+        }
+
+        // Handle Build menu input (L2 only, no L3 for now)
+        private void HandleBuildMenu(Keyboard keyboard, ref bool changed)
+        {
+            if (_ui.BuildMenu == BuildSubmenu.None)
+            {
+                // L2 menu: select submenu
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenBuildSubmenu(BuildSubmenu.Structural); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenBuildSubmenu(BuildSubmenu.FunctionalStructure); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenBuildSubmenu(BuildSubmenu.Workshop); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenBuildSubmenu(BuildSubmenu.CivilFurniture); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.F)) { _ui.OpenBuildSubmenu(BuildSubmenu.UtilityFurniture); changed = true; }
+            }
+            else
+            {
+                // L2 selected but no L3 yet - show WIP toast for any key
+                if (keyboard.IsKeyPressed(Keys.Z) || keyboard.IsKeyPressed(Keys.X) || keyboard.IsKeyPressed(Keys.C) ||
+                    keyboard.IsKeyPressed(Keys.V) || keyboard.IsKeyPressed(Keys.F) || keyboard.IsKeyPressed(Keys.G) ||
+                    keyboard.IsKeyPressed(Keys.R) || keyboard.IsKeyPressed(Keys.T) || keyboard.IsKeyPressed(Keys.OemComma))
+                {
+                    _ui.AddToast("Build feature: WIP", _uiTick + 120);
+                    changed = true;
+                }
+            }
+        }
+
+        // Handle Stockpile menu input
+        private void HandleStockpileMenu(Keyboard keyboard, ref bool changed)
+        {
+            if (_ui.StockpileMenu == StockpileSubmenu.None)
+            {
+                // L2 menu
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenStockpileSubmenu(StockpileSubmenu.Stockpile); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Garbage dump: WIP", _uiTick + 120); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.AddToast("Remove zone: WIP", _uiTick + 120); changed = true; }
+            }
+            else
+            {
+                // L3 menu: Stockpile submenu
+                if (keyboard.IsKeyPressed(Keys.Z))
+                {
+                    _ui.StartPlacement(PlacementMode.StockpileFirstCorner, _currentZ);
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.OemComma))
+                {
+                    _ui.AddToast("Remove stockpile: WIP", _uiTick + 120);
+                    changed = true;
+                }
+            }
         }
     }
 }

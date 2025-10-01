@@ -25,10 +25,17 @@ public sealed class ItemManager
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, ItemInstance> _instances = new();
     private readonly object _instanceLock = new();
+    // Position index for fast per-tile queries
+    private readonly Dictionary<(int X,int Y,int Z), List<Guid>> _posIndex = new();
 
     // Dependencies
     private HumanFortress.Simulation.World.World? _world;
     private ContentRegistry? _contentRegistry;
+
+    /// <summary>
+    /// Optional logging callback (set by App layer to write to fortress_debug.log)
+    /// </summary>
+    public static Action<string>? LogCallback { get; set; }
 
     public int DefinitionCount => _definitions.Count;
     public int InstanceCount
@@ -39,6 +46,94 @@ public sealed class ItemManager
             {
                 return _instances.Count;
             }
+        }
+    }
+
+    private static (int,int,int) KeyFor(Point pos, int z) => (pos.X, pos.Y, z);
+    private void IndexAdd(Guid id, Point pos, int z)
+    {
+        var key = KeyFor(pos, z);
+        if (!_posIndex.TryGetValue(key, out var list)) { list = new List<Guid>(); _posIndex[key] = list; }
+        list.Add(id);
+    }
+    private void IndexRemove(Guid id, Point pos, int z)
+    {
+        var key = KeyFor(pos, z);
+        if (_posIndex.TryGetValue(key, out var list))
+        {
+            for (int i = list.Count - 1; i >= 0; i--) if (list[i] == id) list.RemoveAt(i);
+            if (list.Count == 0) _posIndex.Remove(key);
+        }
+    }
+
+    /// <summary>
+    /// Update item position and maintain position index.
+    /// </summary>
+    public void UpdateItemPosition(Guid id, Point oldPos, int oldZ, Point newPos, int newZ)
+    {
+        lock (_instanceLock)
+        {
+            if (_instances.TryGetValue(id, out var inst))
+            {
+                IndexRemove(id, oldPos, oldZ);
+                inst.Position = newPos;
+                inst.Z = newZ;
+                IndexAdd(id, newPos, newZ);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Merge stacks at a given world position (post-move consolidation).
+    /// Current policy: same DefinitionId at same (x,y,z) merge by increasing first instance's StackCount,
+    /// deleting the redundant instances. Returns number of instances removed.
+    /// </summary>
+    public int MergeStacksAt(Point worldPos, int z)
+    {
+        lock (_instanceLock)
+        {
+            var key = KeyFor(worldPos, z);
+            if (!_posIndex.TryGetValue(key, out var ids) || ids.Count <= 1)
+                return 0;
+
+            var byDef = new Dictionary<string, List<Guid>>();
+            foreach (var gid in ids)
+            {
+                if (!_instances.TryGetValue(gid, out var inst)) continue;
+                if (inst.IsCarried) continue;
+                if (!byDef.TryGetValue(inst.DefinitionId, out var list))
+                {
+                    list = new List<Guid>();
+                    byDef[inst.DefinitionId] = list;
+                }
+                list.Add(gid);
+            }
+
+            int removed = 0;
+            foreach (var kv in byDef)
+            {
+                var list = kv.Value;
+                if (list.Count <= 1) continue;
+                var targetId = list[0];
+                if (!_instances.TryGetValue(targetId, out var target)) continue;
+                int sum = target.StackCount;
+                for (int i = 1; i < list.Count; i++)
+                {
+                    var gid = list[i];
+                    if (_instances.TryGetValue(gid, out var other))
+                    {
+                        sum += other.StackCount;
+                        _instances.Remove(gid);
+                        removed++;
+                    }
+                }
+                target.StackCount = sum;
+                _posIndex[key] = new List<Guid> { targetId };
+                string msg = $"[ItemManager] MERGE: Consolidated {list.Count} stacks of '{target.DefinitionId}' at ({worldPos.X},{worldPos.Y},{z}) -> qty={target.StackCount}";
+                LogCallback?.Invoke(msg);
+                Console.WriteLine(msg);
+            }
+            return removed;
         }
     }
 
@@ -221,21 +316,52 @@ public sealed class ItemManager
                 return null;
             }
 
-            // Create instance
-            var guid = Guid.NewGuid();
-            var instance = new ItemInstance(guid, itemId, worldPos, z, quantity, currentTick);
-            instance.MaterialId = def.FixedMaterial;
-
+            // Check for existing stacks and merge if stackable (L5 layer)
             lock (_instanceLock)
             {
+                // Find existing items at same position with same itemId
+                var existingAtPos = _instances.Values
+                    .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z && i.DefinitionId == itemId)
+                    .ToList();
+
+                if (existingAtPos.Count > 0)
+                {
+                    // Stack with first existing item
+                    var existingItem = existingAtPos[0];
+                    existingItem.StackCount += quantity;
+                    string stackMsg = $"[ItemManager] SUCCESS: Stacked '{def.Name}' +{quantity} onto existing stack (guid={existingItem.Guid}, new qty={existingItem.StackCount}) at ({worldPos.X},{worldPos.Y},{z})";
+                    LogCallback?.Invoke(stackMsg);
+                    Console.WriteLine(stackMsg);
+                    return existingItem.Guid;
+                }
+
+                // Extra diagnostics: if no stack match but there are other items here, log what's present
+                var anyAtPos = _instances.Values
+                    .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z)
+                    .ToList();
+                if (anyAtPos.Count > 0)
+                {
+                    var byId = anyAtPos
+                        .GroupBy(i => i.DefinitionId)
+                        .Select(g => $"{g.Key}*{g.Sum(it => it.StackCount)}")
+                        .ToList();
+                    string diag = $"[ItemManager] STACK-CHECK: No stack match for id={itemId} at ({worldPos.X},{worldPos.Y},{z}); present={{{string.Join(", ", byId)}}}";
+                    LogCallback?.Invoke(diag);
+                    Console.WriteLine(diag);
+                }
+
+                // Create new instance
+                var guid = Guid.NewGuid();
+                var instance = new ItemInstance(guid, itemId, worldPos, z, quantity, currentTick);
+                instance.MaterialId = def.FixedMaterial;
                 _instances[guid] = instance;
+                IndexAdd(guid, worldPos, z);
+
+                string spawnMsg = $"[ItemManager] SUCCESS: Spawned '{def.Name}' (id={itemId}, guid={guid}, qty={quantity}) at ({worldPos.X},{worldPos.Y},{z})";
+                LogCallback?.Invoke(spawnMsg);
+                Console.WriteLine(spawnMsg);
+                return guid;
             }
-
-            // TODO: Write to Chunk L5 layer via Diff-Log (currently just tracking in manager)
-            // TODO: Check for existing stacks and merge if stackable
-            Console.WriteLine($"[ItemManager] SUCCESS: Spawned '{def.Name}' (id={itemId}, guid={guid}, qty={quantity}) at ({worldPos.X},{worldPos.Y},{z})");
-
-            return guid;
         }
         catch (Exception ex)
         {

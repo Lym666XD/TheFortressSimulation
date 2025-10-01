@@ -12,6 +12,11 @@ public sealed class NavigationManager
     private readonly HumanFortress.Simulation.World.World _world;
     private readonly NavigationTuning _tuning;
 
+    /// <summary>
+    /// Optional logging callback (set by App layer to write to fortress_debug.log)
+    /// </summary>
+    public static Action<string>? LogCallback { get; set; }
+
     public NavigationManager(HumanFortress.Simulation.World.World world)
     {
         _world = world;
@@ -52,16 +57,30 @@ public sealed class NavigationManager
         var chunkX = worldX / HumanFortress.Simulation.World.Chunk.SIZE_XY;
         var chunkY = worldY / HumanFortress.Simulation.World.Chunk.SIZE_XY;
         var key = new ChunkKey(chunkX, chunkY, z);
-        // Ensure nav exists on demand
+        // Ensure nav exists on demand and refresh if stale vs chunk connectivity
         var existing = GetNavData(key);
-        if (existing != null) return existing;
-        var chunk = _world.GetChunk(new HumanFortress.Simulation.World.ChunkKey(key.ChunkX, key.ChunkY, key.Z));
+        var simKey = new HumanFortress.Simulation.World.ChunkKey(key.ChunkX, key.ChunkY, key.Z);
+        var chunk = _world.GetChunk(simKey);
+        if (existing == null)
+        {
+            if (chunk != null)
+            {
+                RebuildChunkNavData(chunk);
+                return GetNavData(key);
+            }
+            return null;
+        }
+
         if (chunk != null)
         {
-            RebuildChunkNavData(chunk);
-            return GetNavData(key);
+            // If simulation chunk connectivity advanced since last nav rebuild, refresh nav now
+            if (existing.SourceConnectivityVersion != chunk.ConnectivityVersion)
+            {
+                RebuildChunkNavData(chunk);
+                return GetNavData(key);
+            }
         }
-        return null;
+        return existing;
     }
 
     /// <summary>
@@ -72,7 +91,11 @@ public sealed class NavigationManager
         var navKey = new ChunkKey(chunk.Key.ChunkX, chunk.Key.ChunkY, chunk.Key.Z);
         var navData = GetOrCreateNavData(navKey);
         var tiles = chunk.GetTilesCopy();
+        var oldVersion = navData.ConnectivityVersion;
         navData.RebuildFromTiles(tiles, _tuning);
+        navData.SourceConnectivityVersion = chunk.ConnectivityVersion;
+        var newVersion = navData.ConnectivityVersion;
+        LogCallback?.Invoke($"[NAV] RebuildChunkNavData chunk=({chunk.Key.ChunkX},{chunk.Key.ChunkY},{chunk.Key.Z}) version:{oldVersion}→{newVersion}");
 
         // Precompute ramp connectivity flags for O(1) neighbor expansion
         // UpRampMask: for ramp base at (x,y,z), bits 0..7 allow ascend to standable tiles at z+1 around (x,y)

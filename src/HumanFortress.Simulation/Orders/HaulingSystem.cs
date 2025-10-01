@@ -38,13 +38,9 @@ public sealed class HaulingSystem : ITick
     {
         _planned.Clear();
 
-        // Drain a bounded number of new haul designations
+        // Drain a bounded number of new haul designations (one-shot mode: no persistent active set)
         var desigs = new List<HaulDesignation>();
         _orders.DrainHaulDesignations(desigs, maxCount: 8); // small budget per tick
-        // Include persistent active designations as well so planning continues across ticks
-        var active = _orders.GetActiveHaulsSnapshot();
-        foreach (var a in active)
-            if (!desigs.Contains(a)) desigs.Add(a);
         if (desigs.Count == 0) return;
 
         // Build a list of candidate zones (accept-all or with filters)
@@ -55,14 +51,17 @@ public sealed class HaulingSystem : ITick
 
         foreach (var d in desigs)
         {
-            // Enumerate items in world rectangle at Z
+            // Enumerate items in world rectangle at Z that are not reserved/carried and not already in a stockpile cell
             var items = _world.Items.GetAllInstances()
-                .Where(i => i.Z == d.Z && d.WorldRect.Contains(i.Position) && !i.IsReserved && !i.IsCarried)
+                .Where(i => i.Z == d.Z && d.WorldRect.Contains(i.Position) && !i.IsCarried && !IsInStockpile(i))
                 .ToList();
 
             foreach (var item in items)
             {
                 if (plannedCount >= _maxPerTick) break;
+                // Skip if centrally reserved (TTL based)
+                if (_world.Reservations.IsItemReserved(item.Guid, tick)) continue;
+                if (item.IsReserved) continue;
 
                 // Choose nearest accepting zone cell (v1: first shard member cell)
                 if (!TryFindDestination(item, zones, out var destWorld, out var toZ))
@@ -82,6 +81,24 @@ public sealed class HaulingSystem : ITick
         }
     }
 
+    private bool IsInStockpile(Items.ItemInstance item)
+    {
+        int worldX = item.Position.X;
+        int worldY = item.Position.Y;
+        int z = item.Z;
+        int cx = worldX / Chunk.SIZE_XY;
+        int cy = worldY / Chunk.SIZE_XY;
+        int lx = worldX % Chunk.SIZE_XY;
+        int ly = worldY % Chunk.SIZE_XY;
+        var ck = new ChunkKey(cx, cy, z);
+        var chunk = _world.GetChunk(ck);
+        if (chunk == null) return false;
+        var stock = chunk.GetStockpileData();
+        if (stock == null) return false;
+        int cell = Chunk.LocalIndex(lx, ly);
+        return stock.GetZoneAtCell(cell) > 0;
+    }
+
     public void WriteTick(ulong tick)
     {
         if (_planned.Count == 0) return;
@@ -93,38 +110,8 @@ public sealed class HaulingSystem : ITick
 
     private List<StockpileZone> GetAllStockpileZones()
     {
-        // For now, scan all chunks for any ChunkStockpileData and gather unique zone IDs
-        var zones = new Dictionary<int, StockpileZone>();
-        var stockpileManager = new StockpileManager(); // Placeholder if no global manager; will collect from chunks
-
-        // Collect by visiting chunks (zones created via UI live in StockpileManager inside UI; here we reconstruct shards)
-        foreach (var chunk in _world.GetAllChunks())
-        {
-            var stock = chunk.GetStockpileData();
-            if (stock == null) continue;
-            foreach (var shard in stock.GetAllShards())
-            {
-                if (!zones.ContainsKey(shard.ZoneId))
-                {
-                    // Create a temporary zone with this shard only (v1)
-                    var z = new StockpileZone(shard.ZoneId, $"Zone {shard.ZoneId}", chunk.Key, 0);
-                    z.UpdateMemberChunks(new[] { shard.ChunkKey });
-                    zones[shard.ZoneId] = z;
-                }
-                else
-                {
-                    var z = zones[shard.ZoneId];
-                    var members = z.MemberChunks.ToList();
-                    if (!members.Contains(shard.ChunkKey))
-                    {
-                        members.Add(shard.ChunkKey);
-                        z.UpdateMemberChunks(members);
-                    }
-                }
-            }
-        }
-
-        return zones.Values.ToList();
+        // Authority source: World.Stockpiles
+        return _world.Stockpiles.GetAllZones().ToList();
     }
 
     private bool TryFindDestination(Items.ItemInstance item, List<StockpileZone> zones, out Point destWorld, out int destZ)

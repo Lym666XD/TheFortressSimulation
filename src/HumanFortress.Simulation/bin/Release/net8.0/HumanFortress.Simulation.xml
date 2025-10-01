@@ -82,6 +82,11 @@
             This runs after systems' Write phase per UPDATE_ORDER.
             </summary>
         </member>
+        <member name="P:HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback">
+            <summary>
+            Optional logging callback (set by App layer to write to fortress_debug.log)
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Items.ItemDefinition">
             <summary>
             Static definition of an item type loaded from data/core/items/*.json
@@ -98,6 +103,23 @@
             Global manager for item definitions and runtime instances.
             Thread-safe for concurrent reads; writes use locks.
             Follows data-driven principles per ITEMS_SPEC.md and UPDATE_ORDER.md
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemManager.LogCallback">
+            <summary>
+            Optional logging callback (set by App layer to write to fortress_debug.log)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.UpdateItemPosition(System.Guid,SadRogue.Primitives.Point,System.Int32,SadRogue.Primitives.Point,System.Int32)">
+            <summary>
+            Update item position and maintain position index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.MergeStacksAt(SadRogue.Primitives.Point,System.Int32)">
+            <summary>
+            Merge stacks at a given world position (post-move consolidation).
+            Current policy: same DefinitionId at same (x,y,z) merge by increasing first instance's StackCount,
+            deleting the redundant instances. Returns number of instances removed.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Items.ItemManager.SetDependencies(HumanFortress.Simulation.World.World,HumanFortress.Core.Content.Registry.ContentRegistry)">
@@ -169,6 +191,49 @@
             Get all instances (creates a snapshot for thread safety)
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiff">
+            <summary>
+            Immutable diff entry for Items layer operations (L5).
+            Applied during Write phase after Simulation diffs, but before building snapshots.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiffApplicator">
+            <summary>
+            Applies ItemsDiff operations (AddItem/RemoveItem) during Write phase.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiffLog">
+            <summary>
+            Thread-safe log for ItemsDiff operations per tick.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Jobs.ReservationManager">
+            <summary>
+            Central reservation manager for items/destinations.
+            v1.1.1 minimal: item-level reservations with TTL and holder.
+            Read-safe; writes happen in Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.TryReserveItem(System.Guid,System.Guid,System.UInt64)">
+            <summary>
+            Try reserve an item for a holder until expireTick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.ReleaseItem(System.Guid)">
+            <summary>
+            Release an item's reservation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.IsItemReserved(System.Guid,System.UInt64)">
+            <summary>
+            Check if item is reserved at tick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.GetItemReservationsSnapshot">
+            <summary>
+            Snapshot for UI/debugging.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.HaulDesignation">
             <summary>
             A haul designation created by player input (rectangle at a given Z).
@@ -187,6 +252,24 @@
             Dequeue up to max planned moves for job creation.
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningDesignation">
+            <summary>
+            A mining designation created by player input (rectangle at a given Z).
+            Read in the read phase by the mining system to generate planned digs.
+            Thread-safe lifetime: created from UI via command; consumed by MiningSystem.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningSystem">
+            <summary>
+            Mining planner: reads mining designations and produces PlannedDig DTOs.
+            Read phase only; no world mutation. Write phase hands off to executor inbox.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.MiningSystem.DequeuePlannedDigs(System.Int32,System.Collections.Generic.IList{HumanFortress.Simulation.Orders.MiningSystem.PlannedDig})">
+            <summary>
+            Dequeue up to max planned digs for job creation.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.OrdersManager">
             <summary>
             Central store for player orders (designations), starting with Haul.
@@ -196,6 +279,11 @@
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueHaul(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
             <summary>
             Enqueue a haul designation for processing.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMining(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a mining designation for processing.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainHaulDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.HaulDesignation},System.Int32)">
@@ -212,6 +300,11 @@
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetActiveHaulsSnapshot">
             <summary>
             Get snapshot of active haul designations (persistent until manually cleared).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningDesignation},System.Int32)">
+            <summary>
+            Drain mining designations into provided list (Read phase).
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshot">
@@ -1096,6 +1189,16 @@
         <member name="M:HumanFortress.Simulation.World.World.GetActiveChunks">
             <summary>
             Get all active chunks (L0/L1).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.MarkChunkDirty(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Mark chunk as dirty for navigation rebuild.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetAndClearDirtyChunks">
+            <summary>
+            Get and clear all dirty chunks for navigation rebuild.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.World.World.UpdateLOD(System.Int32,System.Int32,System.Int32)">

@@ -10,6 +10,12 @@
             Executed on the main thread; OrdersManager is thread-safe for enqueue.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Commands.CreateMiningOrderCommand">
+            <summary>
+            Command that creates a mining designation over a world-space rectangle at a given Z.
+            Executed on the main thread; OrdersManager is thread-safe for enqueue.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.GameStates.FortressPlayState">
             <summary>
             Fortress play state with simulation loop per UPDATE_ORDER.md.
@@ -133,6 +139,12 @@
             v1 skeleton used in App layer to avoid project cycles.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Jobs.MiningJobSystem">
+            <summary>
+            Executes mining jobs: move to adjacency, dig for N ticks, then commit terrain change and drops (TODO).
+            Minimal v1.1.1 skeleton: movement + staged progress + TODO for SetTerrain/AddItem via Diff.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.Logger">
             <summary>
             Simple file logger that doesn't interfere with SadConsole rendering.
@@ -183,6 +195,11 @@
             Test runner to verify Phase A implementation.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.UI.BuildUI">
+            <summary>
+            Renders the Build quick menu with L2 submenus (no L3 for now).
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.UI.MapScreenSurface">
             <summary>
             ScreenSurface specialized for the map area that exposes reliable mouse events
@@ -193,6 +210,12 @@
             <summary>
             Renders the Orders quick menu and haul submenu.
             Minimal v1: shows keys Z→F→Z and status messages during placement.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.StockpileQuickUI">
+            <summary>
+            Renders the Stockpile quick menu (V button).
+            Migrated from Zones (X) stockpile functionality.
             </summary>
         </member>
         <member name="T:HumanFortress.App.UI.StockpileUI">
@@ -254,6 +277,11 @@
         <member name="T:HumanFortress.App.UI.UiOverlaySurface">
             <summary>
             Full-screen UI overlay surface that captures mouse in overlay coordinates.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.ZonesUI">
+            <summary>
+            Renders the Zones quick menu with L2 and L3 submenus.
             </summary>
         </member>
     </members>

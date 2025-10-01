@@ -57,23 +57,28 @@ namespace HumanFortress.App.UI;
                 Logger.Log($"[UiRenderer.QuickIcons] anchor=({anchorX},{anchorY},{anchorWidth},{anchorHeight}) row={y} center={center}");
         }
 
-        // Draw quick icons centered one row above the bottom (overlay)
+        // Draw quick icons centered at the bottom row (same as F1-F7)
         public static void DrawQuickIconsScreen(ScreenSurface overlay, UiStore ui, ulong tick)
         {
             var surf = overlay.Surface;
-            int y = surf.Height - 2; // one row above bottom so drawer may cover it
+            int y = surf.Height - 1; // bottom row, same as F1-F7
             int center = surf.Width / 2;
             int buttonWidth = 5;
             int gap = 2;
-            int xZ = center - (buttonWidth + gap) - buttonWidth / 2;
-            int xX = center - buttonWidth / 2;
-            int xC = center + (buttonWidth + gap) - buttonWidth / 2;
+
+            // 4 buttons: Z X C V
+            int totalWidth = (buttonWidth * 4) + (gap * 3);
+            int startX = center - totalWidth / 2;
+
+            int xZ = startX;
+            int xX = startX + buttonWidth + gap;
+            int xC = startX + (buttonWidth + gap) * 2;
+            int xV = startX + (buttonWidth + gap) * 3;
 
             DrawSquareButton(surf, ref xZ, y, "Z", ui.QuickMenu == QuickMenuKind.Orders, buttonWidth);
-            xX = center - buttonWidth / 2; // reset exact center after ref move
             DrawSquareButton(surf, ref xX, y, "X", ui.QuickMenu == QuickMenuKind.Zones, buttonWidth);
-            xC = center + (buttonWidth + gap) - buttonWidth / 2;
             DrawSquareButton(surf, ref xC, y, "C", ui.QuickMenu == QuickMenuKind.Build, buttonWidth);
+            DrawSquareButton(surf, ref xV, y, "V", ui.QuickMenu == QuickMenuKind.Stockpile, buttonWidth);
 
             // if (tick % 50 == 0)
             //     Logger.Log($"[UiRenderer.QuickIconsScreen] overlay={surf.Width}x{surf.Height} row={y} center={center} width={buttonWidth}");
@@ -121,6 +126,10 @@ namespace HumanFortress.App.UI;
         {
             tabs = new[] { "Items", "Stockpiles", "Trade" };
         }
+        else if (ui.OpenDrawer == DrawerId.Work)
+        {
+            tabs = new[] { "Labor", "All Orders", "Settings" };
+        }
         else
         {
             tabs = new[] { "Tab 1", "Tab 2", "Tab 3" };
@@ -156,13 +165,17 @@ namespace HumanFortress.App.UI;
         }
         else if (ui.OpenDrawer == DrawerId.Work)
         {
-            if (ui.DrawerTab == 1 && world != null)
+            if (ui.DrawerTab == 0 && world != null)
+            {
+                DrawWorkOverviewTab(surf, y0 + 2);
+            }
+            else if (ui.DrawerTab == 1 && world != null)
             {
                 DrawWorkOrdersTab(surf, world, y0 + 2);
             }
             else
             {
-                surf.Print(2, y0 + 2, "(Overview coming soon)", Color.Gray);
+                surf.Print(2, y0 + 2, "(Configure coming soon)", Color.Gray);
             }
         }
         else
@@ -174,89 +187,181 @@ namespace HumanFortress.App.UI;
 
     private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY)
     {
-        var recent = world.Orders.GetRecentHauls();
-        surf.Print(2, startY, "== Work: Orders (Haul) ==", Color.Yellow);
+        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
+        surf.Print(2, startY, "== Work: All Orders (Detailed) ==", Color.Yellow);
         int y = startY + 2;
-        // Basic counters from job system
+
+        // === HAUL ORDERS ===
+        var haulOrders = world.Orders.GetRecentHauls();
+        var haulActive = world.Orders.GetActiveHaulsSnapshot();
+        var haulJobs = gsm.HaulJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.HaulJobSystem.ActiveJobView>();
+
+        surf.Print(2, y++, $"[HAUL] Recent Orders: {haulOrders.Count}  Active Designations: {haulActive.Count}  Active Jobs: {haulJobs.Count}", Color.Cyan);
+
+        // Show haul jobs with details
+        if (haulJobs.Count > 0)
+        {
+            surf.Print(4, y++, "Active Haul Jobs:", Color.Green);
+            foreach (var job in haulJobs.Take(5))
+            {
+                var workerShort = job.CreatureId.ToString().Substring(0, 8);
+                var itemShort = job.ItemId.ToString().Substring(0, 8);
+                surf.Print(6, y++, $"W:{workerShort} I:{itemShort} Stage:{job.Stage} -> ({job.Dest.X},{job.Dest.Y},{job.Dest.Z})", Color.White);
+            }
+            if (haulJobs.Count > 5)
+                surf.Print(6, y++, $"... and {haulJobs.Count - 5} more haul jobs", Color.DarkGray);
+        }
+
+        // Show recent haul orders
+        if (haulOrders.Count > 0)
+        {
+            surf.Print(4, y++, "Recent Haul Designations:", Color.Green);
+            foreach (var d in haulOrders.Take(3))
+            {
+                surf.Print(6, y++, $"Rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z} pri:{d.Priority}", Color.White);
+            }
+            if (haulOrders.Count > 3)
+                surf.Print(6, y++, $"... and {haulOrders.Count - 3} more designations", Color.DarkGray);
+        }
+        y++;
+
+        // === MINING ORDERS ===
+        var miningOrders = world.Orders.GetRecentMining();
+        var miningActive = world.Orders.GetActiveMiningSnapshot();
+        var miningJobs = gsm.MiningJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.MiningJobSystem.ActiveMiningJobView>();
+
+        surf.Print(2, y++, $"[MINING] Recent Orders: {miningOrders.Count}  Active Designations: {miningActive.Count}  Active Jobs: {miningJobs.Count}", Color.Cyan);
+
+        // Show mining jobs with details
+        if (miningJobs.Count > 0)
+        {
+            surf.Print(4, y++, "Active Mining Jobs:", Color.Green);
+            foreach (var job in miningJobs.Take(5))
+            {
+                var workerShort = job.WorkerId.ToString().Substring(0, 8);
+                var progress = job.RequiredTicks > 0 ? (job.ProgressTicks * 100 / job.RequiredTicks) : 0;
+                surf.Print(6, y++, $"W:{workerShort} Target:({job.Target.X},{job.Target.Y},{job.Z}) Stage:{job.Stage} Progress:{progress}%", Color.White);
+            }
+            if (miningJobs.Count > 5)
+                surf.Print(6, y++, $"... and {miningJobs.Count - 5} more mining jobs", Color.DarkGray);
+        }
+
+        // Show recent mining orders
+        if (miningOrders.Count > 0)
+        {
+            surf.Print(4, y++, "Recent Mining Designations:", Color.Green);
+            foreach (var d in miningOrders.Take(3))
+            {
+                surf.Print(6, y++, $"Rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z} pri:{d.Priority}", Color.White);
+            }
+            if (miningOrders.Count > 3)
+                surf.Print(6, y++, $"... and {miningOrders.Count - 3} more designations", Color.DarkGray);
+        }
+        y++;
+
+        // === JOB STATS ===
         try
         {
-            surf.Print(2, y++, $"Assigned: {HumanFortress.App.Jobs.JobStats.Assigned}  Completed: {HumanFortress.App.Jobs.JobStats.Completed}", Color.Cyan);
-            surf.Print(2, y++, $"NoPath: {HumanFortress.App.Jobs.JobStats.NoPath}  Requeued: {HumanFortress.App.Jobs.JobStats.Requeued}", Color.Cyan);
-            y++;
+            surf.Print(2, y++, "[STATS] Haul: Assigned:{0} Completed:{1} NoPath:{2} Requeued:{3}", Color.Yellow);
+            surf.Print(2, y - 1, $"[STATS] Haul: Assigned:{HumanFortress.App.Jobs.JobStats.Assigned} Completed:{HumanFortress.App.Jobs.JobStats.Completed} NoPath:{HumanFortress.App.Jobs.JobStats.NoPath} Requeued:{HumanFortress.App.Jobs.JobStats.Requeued}", Color.Yellow);
         }
         catch { /* if not available, skip */ }
-        if (recent.Count == 0)
+
+        if (haulOrders.Count == 0 && miningOrders.Count == 0 && haulJobs.Count == 0 && miningJobs.Count == 0)
         {
-            surf.Print(2, y, "No haul orders yet.", Color.Gray);
-            return;
-        }
-        int shown = 0;
-        foreach (var d in recent.Take(12))
-        {
-            surf.Print(2, y++, $"Haul rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z}", Color.White);
-            shown++;
-        }
-        if (recent.Count > shown)
-        {
-            surf.Print(2, y, $"... and {recent.Count - shown} more", Color.DarkGray);
+            surf.Print(2, startY + 4, "No work orders yet. Use Z menu to create orders.", Color.Gray);
         }
     }
 
-    // Draw quick menu (root only, minimal)
-    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick)
+    private static void DrawWorkOverviewTab(ICellSurface surf, int startY)
+    {
+        surf.Print(2, startY, "== Work: Creature Job Assignment ==", Color.Yellow);
+        surf.Print(2, startY + 2, "Reserved for future creature work assignment system.", Color.Gray);
+        surf.Print(2, startY + 4, "This tab will allow you to:", Color.DarkGray);
+        surf.Print(4, startY + 5, "- Assign creatures to specific job types", Color.DarkGray);
+        surf.Print(4, startY + 6, "- Set work priorities per creature", Color.DarkGray);
+        surf.Print(4, startY + 7, "- Manage labor allocation", Color.DarkGray);
+        surf.Print(2, startY + 9, "Use Tab 1 to view all active orders.", Color.Cyan);
+    }
+
+    // Draw quick menu (new compact popup-based UI)
+    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
         var surf = mapSurface.Surface;
-        int width = surf.Width - 4;
-        int height = Math.Max(8, (int)(surf.Height * 0.7));
-        int x0 = 2;
-        int y0 = surf.Height - 2 - height; // above dock row
-        if (tick % 50 == 0)
-            Logger.Log($"[UiRenderer.QuickMenu] size={surf.Width}x{surf.Height} x0={x0} y0={y0} height={height} kind={ui.QuickMenu}");
-        for (int y = y0; y < y0 + height; y++)
+        int centerX = surf.Width / 2;
+
+        // Button is at surf.Height - 1, menus should end at surf.Height - 2
+        // For L2/L3 side-by-side menus, they should be higher up (not too low)
+
+        // Orders menu
+        if (ui.QuickMenu == QuickMenuKind.Orders && ordersUI != null)
         {
-            for (int x = x0; x < x0 + width; x++)
+            if (ui.OrdersMenu == OrdersSubmenu.None)
             {
-                surf.SetGlyph(x, y, ' ', Color.White, new Color(25, 25, 25));
-            }
-        }
-        string title = ui.QuickMenu switch
-        {
-            QuickMenuKind.Orders => "Orders",
-            QuickMenuKind.Zones => "Zones",
-            QuickMenuKind.Build => "Build",
-            _ => "Menu"
-        };
-        surf.Print(x0 + 2, y0, $"-- {title} --", Color.Cyan);
-        // Orders menu buttons from input bindings (data-driven)
-        if (ui.QuickMenu == QuickMenuKind.Orders)
-        {
-            var bindings = HumanFortress.App.Input.InputBindingsService.Instance.GetContext("menu.orders");
-            int y = y0 + 2;
-            if (bindings.Count > 0)
-            {
-                foreach (var kv in bindings)
-                {
-                    var key = kv.Key; var action = kv.Value; var label = action switch
-                    {
-                        "orders.select.haul" => $"[{key}] Haul",
-                        "orders.haul.rect" => $"[{key}] Haul (Rect)",
-                        _ => $"[{key}] {action}"
-                    };
-                    surf.Print(x0 + 2, y++, label, Color.White);
-                }
+                // L1: height=8, y = surf.Height - 9 (ends at height-2, above button)
+                int x = (surf.Width - 30) / 2;
+                int y = surf.Height - 9;
+                ordersUI.DrawOrdersRootPopup(mapSurface, x, y);
             }
             else
             {
-                // Fallback placeholders per INPUT_SPEC (disabled)
-                surf.Print(x0 + 2, y++, "[F] Haul", Color.Gray);
-                surf.Print(x0 + 2, y++, "[Z] Haul (Rect)", Color.Gray);
+                // L2+L3: height=10, place at top of L2 menu (not centerY!)
+                // We want bottom at surf.Height - 2, so top is surf.Height - 2 - 10 + 1
+                int l2Y = surf.Height - 11;
+                ordersUI.DrawOrdersWithSubmenu(mapSurface, centerX, l2Y, ui.OrdersMenu);
             }
-            // Also draw placeholders for other orders (WIP buttons)
-            surf.Print(x0 + 26, y0 + 2, "[Z] Mining (WIP)", Color.DarkGray);
-            surf.Print(x0 + 26, y0 + 3, "[X] Lumber (WIP)", Color.DarkGray);
-            surf.Print(x0 + 26, y0 + 4, "[C] Gather (WIP)", Color.DarkGray);
-            surf.Print(x0 + 26, y0 + 5, "[V] Masonry (WIP)", Color.DarkGray);
+        }
+        // Zones menu
+        else if (ui.QuickMenu == QuickMenuKind.Zones && zonesUI != null)
+        {
+            if (ui.ZoneMenu == ZoneSubmenu.None)
+            {
+                // L1: height=8, y = surf.Height - 9
+                int x = (surf.Width - 30) / 2;
+                int y = surf.Height - 9;
+                zonesUI.DrawZonesRootPopup(mapSurface, x, y);
+            }
+            else
+            {
+                // L2+L3: height=8, place at top of L2 menu
+                int l2Y = surf.Height - 9;
+                zonesUI.DrawZonesWithSubmenu(mapSurface, centerX, l2Y, ui.ZoneMenu);
+            }
+        }
+        // Build menu
+        else if (ui.QuickMenu == QuickMenuKind.Build && buildUI != null)
+        {
+            if (ui.BuildMenu == BuildSubmenu.None)
+            {
+                // L1: height=8, y = surf.Height - 9
+                int x = (surf.Width - 30) / 2;
+                int y = surf.Height - 9;
+                buildUI.DrawBuildRootPopup(mapSurface, x, y);
+            }
+            else
+            {
+                // L2: height=8, place at top of L2 menu
+                int l2Y = surf.Height - 9;
+                buildUI.DrawBuildWithSubmenu(mapSurface, centerX, l2Y, ui.BuildMenu);
+            }
+        }
+        // Stockpile menu
+        else if (ui.QuickMenu == QuickMenuKind.Stockpile && stockpileUI != null)
+        {
+            if (ui.StockpileMenu == StockpileSubmenu.None)
+            {
+                // L1: height=6, y = surf.Height - 7
+                int x = (surf.Width - 30) / 2;
+                int y = surf.Height - 7;
+                stockpileUI.DrawStockpileRootPopup(mapSurface, x, y);
+            }
+            else
+            {
+                // L2+L3: height=6, place at top of L2 menu
+                int l2Y = surf.Height - 7;
+                stockpileUI.DrawStockpileWithSubmenu(mapSurface, centerX, l2Y, ui.StockpileMenu);
+            }
         }
     }
 

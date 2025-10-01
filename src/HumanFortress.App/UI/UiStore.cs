@@ -27,21 +27,46 @@ public enum QuickMenuKind
     None,
     Orders,
     Zones,
-    Build
+    Build,
+    Stockpile
 }
 
 public enum OrdersSubmenu
 {
     None,
-    Haul
+    Mining,
+    Lumbering,
+    Gather,
+    Masonry,
+    Haul,
+    Creature,
+    Other
 }
 
 public enum ZoneSubmenu
 {
     None,
-    Stockpile,
-    Room,
-    Activity
+    Production,
+    Civil,
+    Public,
+    Military,
+    Management
+}
+
+public enum BuildSubmenu
+{
+    None,
+    Structural,
+    FunctionalStructure,
+    Workshop,
+    CivilFurniture,
+    UtilityFurniture
+}
+
+public enum StockpileSubmenu
+{
+    None,
+    Stockpile
 }
 
 public enum PlacementMode
@@ -55,7 +80,9 @@ public enum PlacementMode
     StockpileCopy,
     // Orders
     HaulFirstCorner,
-    HaulSecondCorner
+    HaulSecondCorner,
+    MiningFirstCorner,
+    MiningSecondCorner
 }
 
 public sealed class UiStore
@@ -71,6 +98,8 @@ public sealed class UiStore
     public string ItemKindFilter { get; set; } = "all"; // all/resource/weapon/armor/tool/container/consumable
     public ZoneSubmenu ZoneMenu { get; private set; } = ZoneSubmenu.None;
     public OrdersSubmenu OrdersMenu { get; private set; } = OrdersSubmenu.None;
+    public BuildSubmenu BuildMenu { get; private set; } = BuildSubmenu.None;
+    public StockpileSubmenu StockpileMenu { get; private set; } = StockpileSubmenu.None;
     public PlacementMode PlaceMode { get; set; } = PlacementMode.None;
     public Point? HoverTile { get; private set; } = null;
 
@@ -131,6 +160,16 @@ public sealed class UiStore
         OrdersMenu = submenu;
     }
 
+    public void OpenBuildSubmenu(BuildSubmenu submenu)
+    {
+        BuildMenu = submenu;
+    }
+
+    public void OpenStockpileSubmenu(StockpileSubmenu submenu)
+    {
+        StockpileMenu = submenu;
+    }
+
     public void StartPlacement(PlacementMode mode, int z)
     {
         PlaceMode = mode;
@@ -145,7 +184,13 @@ public sealed class UiStore
         PlaceMode = PlacementMode.None;
         PlaceFirstCorner = null;
         PlaceSecondCorner = null;
-        Context = QuickMenu != QuickMenuKind.None ? UiContext.QuickMenu : UiContext.Global;
+        QuickMenu = QuickMenuKind.None;
+        OrdersMenu = OrdersSubmenu.None;
+        ZoneMenu = ZoneSubmenu.None;
+        BuildMenu = BuildSubmenu.None;
+        StockpileMenu = StockpileSubmenu.None;
+        OpenDrawer = DrawerId.None;
+        Context = UiContext.Global;
     }
 
     public void TabNext()
@@ -170,10 +215,25 @@ public sealed class UiStore
         }
         else if (Context == UiContext.QuickMenu)
         {
-            if (ZoneMenu != ZoneSubmenu.None)
+            if (OrdersMenu != OrdersSubmenu.None)
             {
-                // Back to zone menu
+                // Back from orders submenu to orders root
+                OrdersMenu = OrdersSubmenu.None;
+            }
+            else if (ZoneMenu != ZoneSubmenu.None)
+            {
+                // Back from zone submenu to zone root
                 ZoneMenu = ZoneSubmenu.None;
+            }
+            else if (BuildMenu != BuildSubmenu.None)
+            {
+                // Back from build submenu to build root
+                BuildMenu = BuildSubmenu.None;
+            }
+            else if (StockpileMenu != StockpileSubmenu.None)
+            {
+                // Back from stockpile submenu to stockpile root
+                StockpileMenu = StockpileSubmenu.None;
             }
             else
             {
@@ -198,8 +258,19 @@ public sealed class UiStore
 
     public void Cancel()
     {
-        // Cancel active tool or close submenu; for v1 just mirror Back()
-        Back();
+        // ESC/MouseRight always cancel to Global (global cancel behavior)
+        if (Context == UiContext.PlacingTool || Context == UiContext.QuickMenu || Context == UiContext.Drawer)
+        {
+            CancelPlacement();
+        }
+        else if (HelpOpen)
+        {
+            HelpOpen = false;
+        }
+        else if (DebugOpen)
+        {
+            DebugOpen = false;
+        }
     }
 
     public void SetHover(Point p)

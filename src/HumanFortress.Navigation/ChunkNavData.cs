@@ -36,6 +36,12 @@ namespace HumanFortress.Navigation;
     public int ConnectivityVersion { get; set; }
 
     /// <summary>
+    /// Snapshot of the simulation chunk's connectivity version that this nav was built from.
+    /// Used to detect staleness vs Simulation.World.Chunk.ConnectivityVersion.
+    /// </summary>
+    public ulong SourceConnectivityVersion { get; set; }
+
+    /// <summary>
     /// Chunk position in world.
     /// </summary>
     public ChunkKey Key { get; }
@@ -47,6 +53,7 @@ namespace HumanFortress.Navigation;
         NavCost = new ushort[TilesPerChunk];
         UpRampMask = new byte[TilesPerChunk];
         ConnectivityVersion = 0;
+        SourceConnectivityVersion = 0;
     }
 
     /// <summary>

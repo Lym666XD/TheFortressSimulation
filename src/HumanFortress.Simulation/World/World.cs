@@ -15,11 +15,15 @@ public sealed class World : IWorldReader
     private readonly ConcurrentDictionary<ChunkKey, Chunk> _chunks;
     private readonly int _sizeInChunks;
     private readonly int _maxZ;
+    private readonly System.Collections.Generic.HashSet<ChunkKey> _dirtyChunks = new();
+    private readonly object _dirtyLock = new();
 
     // Global managers (singleton per world)
     public CreatureManager Creatures { get; }
     public ItemManager Items { get; }
     public HumanFortress.Simulation.Orders.OrdersManager Orders { get; }
+    public HumanFortress.Simulation.Stockpile.StockpileManager Stockpiles { get; }
+    public HumanFortress.Simulation.Jobs.ReservationManager Reservations { get; }
 
     public World(int sizeInChunks, int maxZ)
     {
@@ -34,6 +38,8 @@ public sealed class World : IWorldReader
         Creatures = new CreatureManager();
         Items = new ItemManager();
         Orders = new HumanFortress.Simulation.Orders.OrdersManager();
+        Stockpiles = new HumanFortress.Simulation.Stockpile.StockpileManager();
+        Reservations = new HumanFortress.Simulation.Jobs.ReservationManager();
 
         // Set self-reference
         Creatures.SetWorld(this);
@@ -136,6 +142,30 @@ public sealed class World : IWorldReader
     public IEnumerable<Chunk> GetActiveChunks()
     {
         return _chunks.Values.Where(c => c.LODLevel <= 1);
+    }
+
+    /// <summary>
+    /// Mark chunk as dirty for navigation rebuild.
+    /// </summary>
+    public void MarkChunkDirty(ChunkKey key)
+    {
+        lock (_dirtyLock)
+        {
+            _dirtyChunks.Add(key);
+        }
+    }
+
+    /// <summary>
+    /// Get and clear all dirty chunks for navigation rebuild.
+    /// </summary>
+    public List<ChunkKey> GetAndClearDirtyChunks()
+    {
+        lock (_dirtyLock)
+        {
+            var list = new List<ChunkKey>(_dirtyChunks);
+            _dirtyChunks.Clear();
+            return list;
+        }
     }
 
     /// <summary>

@@ -5,6 +5,8 @@ using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Simulation.World;
+using HumanFortress.Navigation;
+using Path = System.IO.Path;
 
 namespace HumanFortress.App.GameStates;
 
@@ -22,11 +24,16 @@ public sealed class GameStateManager
     private readonly EventBus _eventBus;
     private readonly RngStreamManager _rngManager;
     private readonly DiffLog _diffLog;
+    private readonly HumanFortress.Simulation.Items.ItemsDiffLog _itemsDiffLog;
 
     private GameState? _currentState;
     private World? _world;
     private SimulationContext? _simContext;
     private HumanFortress.Simulation.Orders.HaulingSystem? _haulingPlanner;
+    private HumanFortress.App.Jobs.HaulJobSystem? _haulJobs;
+    private HumanFortress.Simulation.Orders.MiningSystem? _miningPlanner;
+    private HumanFortress.App.Jobs.MiningJobSystem? _miningJobs;
+    private NavigationManager? _navManager;
 
     public GameStateManager(ulong masterSeed)
     {
@@ -37,6 +44,7 @@ public sealed class GameStateManager
         _eventBus = new EventBus();
         _rngManager = new RngStreamManager(masterSeed);
         _diffLog = new DiffLog();
+        _itemsDiffLog = new HumanFortress.Simulation.Items.ItemsDiffLog();
     }
 
     /// <summary>
@@ -55,6 +63,10 @@ public sealed class GameStateManager
     public TickScheduler TickScheduler => _tickScheduler;
 
     public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => _haulingPlanner;
+    public HumanFortress.App.Jobs.HaulJobSystem? HaulJobs => _haulJobs;
+    public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => _miningPlanner;
+    public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => _miningJobs;
+    public NavigationManager? NavManager => _navManager;
 
     /// <summary>
     /// Enqueue a simulation command.
@@ -142,6 +154,8 @@ public sealed class GameStateManager
     {
         _world = new World(sizeInChunks, maxZ);
         _simContext = new SimulationContext(_diffLog, _world, _eventBus);
+        // Initialize shared NavigationManager bound to this world
+        _navManager = new NavigationManager(_world);
 
         // Load creature and item definitions
         // Try multiple possible paths for data files
@@ -219,13 +233,21 @@ public sealed class GameStateManager
             throw new InvalidOperationException("World not initialized");
 
         // Register systems with tick scheduler
+        // Mining planner produces planned digs from mining designations
+        _miningPlanner = new HumanFortress.Simulation.Orders.MiningSystem(_world, _world.Orders);
+        _tickScheduler.RegisterSystem(_miningPlanner);
+
+        // Mining job executor moves to adjacency and digs
+        _miningJobs = new HumanFortress.App.Jobs.MiningJobSystem(_world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager);
+        _tickScheduler.RegisterSystem(_miningJobs);
+
         // Hauling planner produces planned moves from haul designations
         _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders);
         _tickScheduler.RegisterSystem(_haulingPlanner);
 
         // Haul job executor assigns creatures and moves items along paths
-        var haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog);
-        _tickScheduler.RegisterSystem(haulJobs);
+        _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog, _navManager);
+        _tickScheduler.RegisterSystem(_haulJobs);
 
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;
@@ -259,8 +281,26 @@ public sealed class GameStateManager
     {
         // Merge and clear for next tick. In this phase, we could apply supported ops.
         var merged = _diffLog.MergeAndSort();
-        // Apply core diffs (creatures/items). Stockpile diffs are applied by StockpileDiffApplicator in its own pipeline.
         HumanFortress.Simulation.Diff.SimulationDiffApplicator.ApplyAll(_world!, merged);
         _diffLog.Clear();
+
+        // Apply Items diffs
+        var items = _itemsDiffLog.MergeAndSort();
+        HumanFortress.Simulation.Items.ItemsDiffApplicator.ApplyAll(_world!, items, tick);
+        _itemsDiffLog.Clear();
+
+        // Rebuild navigation for dirty chunks (after terrain changes)
+        var dirtyChunks = _world!.GetAndClearDirtyChunks();
+        if (dirtyChunks.Count > 0)
+        {
+            foreach (var ck in dirtyChunks)
+            {
+                var chunk = _world.GetChunk(ck);
+                if (chunk != null)
+                {
+                    _navManager?.RebuildChunkNavData(chunk);
+                }
+            }
+        }
     }
 }

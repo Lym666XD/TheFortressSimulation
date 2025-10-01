@@ -81,3 +81,4 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\data\core\recipes\core_recipes.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\orders.registry.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\tuning.hauling.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\content\registries\tuning.mining.json

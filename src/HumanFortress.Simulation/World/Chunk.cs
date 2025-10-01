@@ -62,8 +62,9 @@ public sealed class Chunk
             _tiles[index] = tile;
             LastModifiedTick = tick;
 
-            // Update connectivity version if passability changed
-            if (oldTile.IsWalkable != tile.IsWalkable)
+            // Update connectivity version if topology-relevant properties changed
+            // Bump on TerrainKind change or Walkable change to invalidate derived caches deterministically
+            if (oldTile.Kind != tile.Kind || oldTile.IsWalkable != tile.IsWalkable)
             {
                 ConnectivityVersion++;
             }

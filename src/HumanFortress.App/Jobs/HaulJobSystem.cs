@@ -26,20 +26,21 @@ public sealed class HaulJobSystem : ITick
     private readonly List<HaulingSystem.PlannedMove> _inboxBuffer = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<HaulingSystem.PlannedMove> _backlog = new();
 
-    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner, DiffLog? diffLog = null)
+    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner, DiffLog? diffLog = null, NavigationManager? sharedNav = null)
     {
         _world = world;
         _planner = planner;
-        _nav = new NavigationManager(world);
-        _paths = new PathService();
+        _nav = sharedNav ?? new NavigationManager(world);
+        _paths = new PathService(NavigationTuning.LoadFromContent());
         _navView = new WorldNavigationView(_nav, world);
         _move = new MovementExecutor(_paths);
         _diff = diffLog;
-        _nav.RebuildAll();
+        // Note: RebuildAll is performed after world generation (FortressState) using the shared manager.
     }
 
     public int Priority => UpdateOrder.Priority.Jobs;
     public string SystemId => "Jobs.HaulJobSystem";
+    public NavigationManager NavigationManager => _nav;
 
     public void ReadTick(ulong tick)
     {
@@ -103,6 +104,8 @@ public sealed class HaulJobSystem : ITick
                 {
                     it.IsReserved = true;
                     it.ReservedBy = worker.Guid;
+                    // Central reservation with TTL (current tick not propagated; use short TTL fallback)
+                    _world.Reservations.TryReserveItem(mv.ItemGuid, worker.Guid, 1000);
                 }
                 Logger.Log($"[HAULJOBS][{tick}] Assigned worker={worker.Guid} -> item={mv.ItemGuid} dest=({mv.To.X},{mv.To.Y},{mv.ToZ})");
                 assigned = true;
@@ -134,7 +137,7 @@ public sealed class HaulJobSystem : ITick
                 var src = update.Position;
                 Point3 goal = job.Stage == JobStage.ToItem ? GetItemPos(job) : job.Dest;
                 IWorldNavigationView view2 = _navView;
-                var req = new PathRequest(src, goal, MoveMode.Walk, PathFlags.None, SeedFrom(job.CreatureId, job.ItemId));
+                var req = new PathRequest(src, goal, MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(job.CreatureId, job.ItemId));
                 var path = _paths.Solve(in req, in view2);
                 if (path.Kind == PathResultKind.Found)
                     _move.BeginMovement(eid, req, path);
@@ -167,6 +170,8 @@ public sealed class HaulJobSystem : ITick
                     // Place item via Diff and clear carried state
                     EmitMoveItem(job.ItemId, job.Dest);
                     EmitUnmarkCarried(job.ItemId, job.Dest);
+                    // Release reservations
+                    _world.Reservations.ReleaseItem(job.ItemId);
                     finished.Add(job);
                     Logger.Log($"[HAULJOBS][{tick}] Completed haul item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) by worker={job.CreatureId}");
                     JobStats.Completed++;
@@ -211,6 +216,26 @@ public sealed class HaulJobSystem : ITick
         public Guid ItemId { get; set; }
         public Point3 Dest { get; set; }
         public JobStage Stage { get; set; }
+    }
+
+    public readonly record struct ActiveJobView(Guid CreatureId, Guid ItemId, Point3 FromOrCurrent, Point3 Dest, string Stage);
+
+    public List<ActiveJobView> GetActiveJobsSnapshot()
+    {
+        var list = new List<ActiveJobView>(_active.Count);
+        foreach (var j in _active)
+        {
+            var from = j.Stage == JobStage.ToItem ? GetItemPos(j) : GetCreaturePos(j.CreatureId);
+            list.Add(new ActiveJobView(j.CreatureId, j.ItemId, from, j.Dest, j.Stage.ToString()));
+        }
+        return list;
+    }
+
+    private Point3 GetCreaturePos(Guid creatureId)
+    {
+        var cr = _world.Creatures.GetInstance(creatureId);
+        if (cr == null) return new Point3(0, 0, 0);
+        return new Point3(cr.Position.X, cr.Position.Y, cr.Z);
     }
 
     private void EmitMoveCreatureDiff(uint entityId, Point3 position)
@@ -287,4 +312,3 @@ public static class JobStats
     public static int NoPath;
     public static int Requeued;
 }
-

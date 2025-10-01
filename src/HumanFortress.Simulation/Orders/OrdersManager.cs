@@ -13,6 +13,10 @@ public sealed class OrdersManager
     private readonly ConcurrentQueue<HaulDesignation> _recentHauls = new();
     private const int RecentCapacity = 32;
     private readonly ConcurrentBag<HaulDesignation> _activeHauls = new();
+    // Mining orders
+    private readonly ConcurrentQueue<MiningDesignation> _miningQueue = new();
+    private readonly ConcurrentQueue<MiningDesignation> _recentMining = new();
+    private readonly ConcurrentBag<MiningDesignation> _activeMining = new();
 
     /// <summary>
     /// Enqueue a haul designation for processing.
@@ -24,6 +28,18 @@ public sealed class OrdersManager
         _recentHauls.Enqueue(d);
         _activeHauls.Add(d);
         while (_recentHauls.Count > RecentCapacity && _recentHauls.TryDequeue(out _)) { }
+    }
+
+    /// <summary>
+    /// Enqueue a mining designation for processing.
+    /// </summary>
+    public void EnqueueMining(Rectangle worldRect, int z, int priority, ulong createdTick)
+    {
+        var d = new MiningDesignation(worldRect, z, priority, createdTick);
+        _miningQueue.Enqueue(d);
+        _recentMining.Enqueue(d);
+        _activeMining.Add(d);
+        while (_recentMining.Count > RecentCapacity && _recentMining.TryDequeue(out _)) { }
     }
 
     /// <summary>
@@ -55,5 +71,29 @@ public sealed class OrdersManager
     public List<HaulDesignation> GetActiveHaulsSnapshot()
     {
         return _activeHauls.ToList();
+    }
+
+    /// <summary>
+    /// Drain mining designations into provided list (Read phase).
+    /// </summary>
+    public int DrainMiningDesignations(ICollection<MiningDesignation> into, int maxCount)
+    {
+        int drained = 0;
+        while (drained < maxCount && _miningQueue.TryDequeue(out var desig))
+        {
+            into.Add(desig);
+            drained++;
+        }
+        return drained;
+    }
+
+    public List<MiningDesignation> GetRecentMining()
+    {
+        return _recentMining.ToList();
+    }
+
+    public List<MiningDesignation> GetActiveMiningSnapshot()
+    {
+        return _activeMining.ToList();
     }
 }
