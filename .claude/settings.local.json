@@ -42,7 +42,8 @@
       "Bash(powershell:*)",
       "WebFetch(domain:dwarffortresswiki.org)",
       "WebFetch(domain:www.dwarffortresswiki.org)",
-      "WebFetch(domain:rimworldwiki.com)"
+      "WebFetch(domain:rimworldwiki.com)",
+      "WebFetch(domain:docs.cataclysmdda.org)"
     ],
     "deny": [],
     "ask": []

@@ -438,3 +438,432 @@ Stack identity suggestions (used by def.stack.equal_when):
 - aliases.json may map old IDs to new core_* IDs.
 - All extension blocks are optional; missing blocks default to no effect.
 
+ITEMS_SPEC v4-int (Fixed-Point, Simplified) — English
+
+Status: proposed (ready to implement)
+Last updated: 2025-10-03 (Australia/Sydney)
+Works with: MATERIALS_SPEC v4-min (FX = 10,000) and your Placeables spec
+Runtime rule: integer-only. All dimensionless numbers are fixed-point FX=10,000 (1.0000 → 10000). No floats at runtime.
+
+0) Design Intent & Big Decisions
+
+No kind enum. Type is inferred from which feature blocks exist (equip, weapon, ammo, container, placeable_profile, use). tags are for filtering/UI only.
+
+No material_weights, no material choice on the item. Material selection is a recipe concern. The item either has a fixed_material or receives its material at craft time.
+
+Mass is authored, not derived. Authors set mass_g directly. We do not compute mass from volume×density (except optionally for standardized resources like ingots).
+
+Armor thickness & environment protection live per-region. thickness_factor_fx and env_protect are on equip.regions[].
+
+Encumbrance = mass effect × ergonomics × class factor. Mass uses a LUT; shape/ergonomics & small class factor live in shape_mod (top-level, shared by weapons/armor).
+
+Decoration/Engraving/Enchanting are unified on the item root (decor). If not allowed, simply omit or set allow_* = false.
+
+Value × Quality are merged. Authors keep quality_tier (−3..+3), but the compiler merges style/premium + quality into one value_mul_fx so runtime uses a single FX multiplier.
+
+Ingot volumes: Gold & Silver = 50 ml, all other metals = 100 ml. You may still author mass_g directly.
+
+Binding/soulbound: reserved as a concept; not encoded in this data structure yet.
+
+1) Fixed-Point Policy
+
+Global scale: FX = 10_000.
+
+All multipliers, coefficients, and probabilities are integers scaled by FX (e.g., +25% → 12500).
+
+Times are integers in milliseconds.
+
+Volumes in ml; masses in g; counts in piece.
+
+For powers/roots use LUTs + linear interpolation (no runtime floats).
+
+2) Top-Level Item
+type FX = number; // integer, 10000 == 1.0000
+
+Item {
+  id: string
+  name?: string
+  desc?: string
+  tags: string[]
+
+  // Material is chosen by the recipe. Item may fix it if needed:
+  fixed_material?: string
+
+  // Geometry / mass:
+  base_volume_ml: number         // storage/footprint only (no mass coupling)
+  mass_g?: number                // authored mass (recommended)
+
+  // Value & Quality (merged):
+  quality_tier?: number          // -3..+3 (default 0)
+  value_mul_fx?: FX              // single final FX multiplier (compiler merges quality + style)
+
+  // Stacking:
+  stack: StackBlock
+
+  // Feature blocks (presence implies type):
+  equip?: EquipBlock
+  weapon?: WeaponBlock
+  ammo?: AmmoBlock
+  container?: ContainerBlock
+  use?: UseBlock
+  placeable_profile?: PlaceableProfile   // see your Placeables spec
+
+  // Shape-wide modifiers (shared by armor/weapons; used for encumbrance):
+  shape_mod?: {
+    ergonomics_fx?: FX          // better ergonomics < 10000 (default 10000)
+    base_enc_points?: number    // encumbrance base points (additive)
+    class_enc_fx?: FX           // small class factor (e.g., hammers > swords); optional
+  }
+
+  // Decoration / Engraving / Enchanting (unified):
+  decor?: {
+    allow_inlay?: boolean
+    allow_engrave?: boolean
+    allow_enchant?: boolean
+    sockets?: { kind: "gem_small"|"gem_large"|"ornament"|"bossing", count: number }[]
+    engrave_slots?: number
+    enchant_slots?: number
+    description_templates?: string[]   // text templates for generated descriptions
+  }
+
+  // Visible inscriptions (includes engraving, history, quest notes, owner mark, etc.):
+  inscriptions?: Inscription[]
+}
+
+Inscription {
+  type: "engrave" | "history" | "quest" | "owner_mark"
+  text: string
+}
+
+2.1 Type inference (no kind)
+
+Schema should enforce a oneOf:
+
+Resource/misc: no equip/weapon/ammo/container/placeable_profile.
+
+Armor/Wearable: has equip.
+
+Weapon: has weapon.
+
+Ammo: has ammo.
+
+Container: has container.
+
+Placeable: has placeable_profile.
+
+3) Stacks
+StackBlock {
+  mode: "none" | "count" | "charges"
+  unit?: "piece" | "g" | "ml"    // required for charges; count uses "piece"
+  max_per_stack: number
+  equal_when: string[]           // e.g., ["material_id","quality","condition"]
+  requires_pristine?: boolean
+  require_no_mods?: boolean
+  require_no_enchant?: boolean
+  requires_empty?: boolean       // containers must be empty to stack
+}
+
+4) Encumbrance (with authored mass)
+
+Inputs:
+
+mass_g (authored),
+
+shape_mod.ergonomics_fx,
+
+shape_mod.class_enc_fx,
+
+shape_mod.base_enc_points.
+
+Process:
+
+M_mass_fx = LUT_mass( mass_g / m_ref_g )       // FX, LUT + linear interpolation
+M_enc_fx  = M_mass_fx × ergonomics_fx × class_enc_fx / FX^2
+enc_points_final = base_enc_points × M_enc_fx / FX
+
+
+Typical m_ref_g = 1000. If you ever want to ignore mass, set LUT_mass ≡ FX and drive feel entirely by ergonomics/class factors.
+
+5) EquipBlock (Armor / Wearables)
+
+You asked for regions as an array, with layer per region and environment protection per region.
+
+We do not track “different material layers per region” (that explodes complexity). Material is per item instance (or fixed), not per layer.
+
+type BodyRegionId =
+  "HEAD"|"FACE"|"NECK"|"TORSO"|"ARM_L"|"ARM_R"|"HAND_L"|"HAND_R"|
+  "LEG_L"|"LEG_R"|"FOOT_L"|"FOOT_R";
+
+type EquipLayer = "INNER"|"MID"|"OUTER"|"CLOAK"|"STRIPE"|"AURA";
+
+EquipBlock {
+  // optional slot shortcut; most logic is region-driven anyway:
+  slot?: "HEAD"|"TORSO"|"LEGS"|"HANDS"|"FEET"|"SHIELD"|"RING"|"AMULET"|"..."
+
+  regions: EquipRegion[]
+}
+
+EquipRegion {
+  id: BodyRegionId
+  coverage_pct: number              // 0..100
+  layer: EquipLayer                 // where this item sits on that body part
+  layers?: number                   // UI/crafting label only; not a physics stack
+  thickness_factor_fx?: FX          // default 10000; per-region thickness
+  env_protect?: number              // 0..100; with 100% coverage means full protection for that part
+}
+
+5.1 Armor protection math (summary)
+
+For each region:
+
+R_type(region) =
+  Base_R_item
+× R_type_mat_fx(material)     // from MATERIALS v4-min
+× thickness_factor_fx(region)
+× shape_mod_effects?          // if you model them as FX multipliers
+/ FX^n
+
+
+Combine regions by your coverage/overlap rules (area weights, diminishing returns, etc.).
+
+6) WeaponBlock & Attack Profiles
+WeaponBlock {
+  hands?: 1 | 2
+  reach_tiles?: number
+  handling_base_fx?: FX
+  accuracy_base_fx?: FX
+  attacks: AttackProfile[]
+}
+
+AttackProfile {
+  // melee
+  mode: "bash" | "cut" | "stab" | "shoot"
+  base_damage?: number
+  ap_hint_fx?: FX
+  windup_ms?: number
+  recovery_ms?: number
+
+  // ranged (when mode === "shoot"):
+  uses_ammo?: string
+  draw_time_ms?: number
+  cycle_time_ms?: number
+  reload_time_ms?: number
+  aim_time_ms?: number
+  recoil_base_fx?: FX
+  spread_base_moa?: number
+
+  verbs?: string[]
+  trait_tags?: string[]
+}
+
+6.1 Weapon final stats (integer)
+D_final[mode] = base_damage × M_mode_fx(material, mass) / FX
+t_final_ms    = (windup_ms + recovery_ms) × M_t_fx(material, mass) / FX
+hit_final     = accuracy_base_fx × M_hit_fx(material, mass) / FX
+
+
+The M_*_fx come from materials v4-min (hardness/toughness/rigidity + density if you use it), but your mass is authored now (not derived).
+
+7) Ammo
+AmmoBlock {
+  caliber_id?: string                // optional for firearms
+  compatible_weapons?: string[]      // usually omit; rely on uses_ammo matching
+  projectile_mass_g?: number
+  projectile_length_mm?: number
+  base_damage: { bash?: number, cut?: number, stab?: number }
+  armor_penetration_fx?: FX
+  velocity_class?: "low"|"med"|"high"|"very_high"
+}
+
+8) Containers
+ContainerBlock {
+  capacity_ml: number
+  accept_tags?: string[]     // e.g., ["liquid","powder","grain"]
+  leakproof?: boolean
+  pressure_ok?: boolean      // gas/pressure capable (future)
+  food_safe?: boolean
+}
+
+9) Use (Consumables)
+UseBlock {
+  effects: string[]          // e.g., "heal_small","warmth_small","stamina_boost"
+  charges_per_use: number
+}
+
+10) Placeable Profile
+
+Reference your PLACEABLE_SPEC.md. The item’s placeable_profile is the installable profile; when installed it becomes a placed instance that inherits material/quality/inscriptions etc. from the item.
+
+PlaceableProfile {
+  // shape/footprint/orientation/passability per your Placeables spec
+  // effects (beauty/comfort/etc.) live here as defined there
+}
+
+11) Value & Quality (merged)
+
+quality_tier ∈ {-3..+3}.
+
+Compiler merges quality and any style/premium factors into one value_mul_fx (e.g., −30%..+50%).
+
+Runtime price:
+
+final_value = base_value × value_mul_fx(material) × value_mul_fx(item) / FX^2
+
+
+(If you prefer, apply material first then item, but it’s one combined FX on the item side.)
+
+12) Durability → Stat Falloff (optional)
+
+Each item class may register LUTs for HP% → multipliers:
+
+damage_mul_fx(hp_pct)
+
+tohit_mul_fx(hp_pct)
+
+encumbrance_bonus(hp_pct) (additive or FX depending on your design)
+
+Evaluate by table + linear interpolation (integers).
+
+13) Ingots (standard volumes)
+
+Gold/Silver: base_volume_ml = 50
+
+All other metals: base_volume_ml = 100
+
+Mass either authored (mass_g) or derived at load time using material density×volume (optional, off by default).
+
+14) Reserved (not in data yet)
+
+Binding / Soulbound: ("soulbound"|"account"|"none") reserved concept; omitted from schema for now.
+
+Spell channels / arcane focus: not included. If needed later, add fields like spell_amp_slots or focus_gain_fx on the item or shape_mod.
+
+15) Examples
+15.1 Short Sword
+{
+  "id": "core_item_weapon_sword_short",
+  "name": "Short Sword",
+  "tags": ["weapon","melee","blade","one_handed"],
+  "fixed_material": "core_mat_metal_steel_tempered",
+  "mass_g": 900,
+  "base_volume_ml": 900,
+  "quality_tier": 0,
+  "value_mul_fx": 10000,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 8,
+             "equal_when": ["material_id","quality","condition"] },
+  "weapon": {
+    "reach_tiles": 1,
+    "handling_base_fx": 10000,
+    "accuracy_base_fx": 10000,
+    "attacks": [
+      { "mode": "cut",  "base_damage": 16, "ap_hint_fx": 9000, "windup_ms": 350, "recovery_ms": 350, "verbs": ["slash","cut"] },
+      { "mode": "stab", "base_damage": 12, "ap_hint_fx": 11000,"windup_ms": 300, "recovery_ms": 300, "verbs": ["stab","thrust"] }
+    ]
+  },
+  "shape_mod": { "ergonomics_fx": 9500, "base_enc_points": 3, "class_enc_fx": 9500 },
+  "decor": { "allow_inlay": true, "allow_engrave": true, "allow_enchant": true,
+             "sockets":[{"kind":"gem_small","count":1}], "engrave_slots":1, "enchant_slots":1 }
+}
+
+15.2 Milanese Breastplate (regions + layers + env protection)
+{
+  "id": "core_item_armor_breastplate_milanese",
+  "name": "Milanese Breastplate",
+  "tags": ["armor","plate"],
+  "fixed_material": "core_mat_metal_steel_tempered",
+  "mass_g": 8500,
+  "base_volume_ml": 9500,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 6,
+             "equal_when": ["material_id","quality","condition"] },
+  "equip": {
+    "regions": [
+      { "id": "TORSO", "coverage_pct": 100, "layer": "OUTER", "layers": 1, "thickness_factor_fx": 11000, "env_protect": 10 },
+      { "id": "NECK",  "coverage_pct": 30,  "layer": "OUTER", "layers": 1, "thickness_factor_fx": 10500, "env_protect": 5  }
+    ]
+  },
+  "shape_mod": { "ergonomics_fx": 9000, "base_enc_points": 8, "class_enc_fx": 10500 },
+  "decor": { "allow_inlay": true, "allow_engrave": true,
+             "sockets":[{"kind":"bossing","count":1}], "engrave_slots":1 }
+}
+
+15.3 Longbow & Arrow
+{
+  "id": "core_item_weapon_bow_long",
+  "name": "Longbow",
+  "tags": ["weapon","ranged","bow","two_handed"],
+  "fixed_material": "core_mat_wood_yew",
+  "mass_g": 1200,
+  "base_volume_ml": 3000,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 4,
+             "equal_when": ["material_id","quality","condition"] },
+  "weapon": {
+    "attacks": [
+      { "mode": "shoot", "uses_ammo": "arrow",
+        "draw_time_ms": 800, "aim_time_ms": 300, "recoil_base_fx": 9000,
+        "verbs": ["loose","shoot"] }
+    ]
+  },
+  "shape_mod": { "ergonomics_fx": 9000, "base_enc_points": 4, "class_enc_fx": 10000 }
+}
+
+{
+  "id": "core_ammo_arrow",
+  "name": "Arrow",
+  "tags": ["ammo","arrow"],
+  "fixed_material": "core_mat_wood_poplar",
+  "mass_g": 30,
+  "base_volume_ml": 50,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 100,
+             "equal_when": ["material_id","quality"] },
+  "ammo": {
+    "projectile_mass_g": 25,
+    "base_damage": { "stab": 10 },
+    "armor_penetration_fx": 10500,
+    "velocity_class": "med"
+  }
+}
+
+15.4 Ingots (standard volumes)
+{
+  "id": "core_item_ingot_gold",
+  "name": "Gold Ingot",
+  "tags": ["metal","ingot","precious"],
+  "fixed_material": "core_mat_metal_gold",
+  "base_volume_ml": 50,
+  "mass_g": 965,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 100,
+             "equal_when": ["fixed_material"] }
+}
+
+{
+  "id": "core_item_ingot_iron",
+  "name": "Iron Ingot",
+  "tags": ["metal","ingot","iron"],
+  "fixed_material": "core_mat_metal_iron",
+  "base_volume_ml": 100,
+  "mass_g": 785,
+  "stack": { "mode": "count", "unit": "piece", "max_per_stack": 50,
+             "equal_when": ["fixed_material"] }
+}
+
+16) Validation Checklist
+
+Integer-only runtime: all multipliers are FX integers (10000 = 1.0).
+
+No kind; type is inferred by block presence; schema oneOf enforces this.
+
+No material_weights on items; materials chosen by recipes (or via fixed_material).
+
+equip.regions[] is an array, holds layer, thickness_factor_fx, env_protect, and coverage_pct.
+
+Encumbrance uses authored mass_g + shape_mod ergonomics/class.
+
+Decoration is top-level (decor); omit or set allow_* = false if forbidden.
+
+Value×Quality compiled into one value_mul_fx.
+
+Ingots use 50 ml (gold/silver) and 100 ml (others) as standard volumes (optional mass derivation).
+
+Durability falloff LUTs are per-class (optional).
+
+If you want, I can now draft a JSON Schema (draft-07) for this spec (with oneOf type inference, FX integer checks, and full validation on equip.regions[]) and a v3→v4-int migration map (speed→windup/recovery, move thickness to regions, add mass_g, remove kind/material_weights, unify container fields, etc.).

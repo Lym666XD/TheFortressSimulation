@@ -703,3 +703,473 @@ Construction deconstruct: Returns 100% of materials_required as items.
 Mounted weapons: Backend uses Vehicle (is_static=true); frontend UI category "Defense Structures".
 
 Workshop footprint passability: nonblocking (workers and haulers walk on workshop cells).
+
+
+PLACEABLES SPEC — v1.2 (English, updated)
+
+Status: Ready for implementation
+Last Updated: 2025-10-03 (Australia/Sydney)
+Fits: Fortress-style deterministic pipeline (read-parallel / write-serialized), per-chunk indices & mailbox
+Upgrades: Replaces v1.1; removes obsolete fields, adds state machines, destruction rules, trap layering, and cache invalidation contracts
+
+0) Purpose & Scope
+
+This spec defines placeable world entities (furniture, workshops, utilities, traps, fixed defenses) and how they are authored, spawned, indexed, updated, and persisted. It aligns with the existing install/construct workflows, single-writer-per-chunk policy, and data-driven content model. 
+
+PLACEABLE_SPEC
+
+1) Design Principles
+
+DF-style installables: Craft items first, then install them; uninstall restores the same item GUID along with quality, material, decorations, and maker mark. 
+
+PLACEABLE_SPEC
+
+On-site constructions: Walls/floors/bridges/workshops are built from materials in place (no quality); deconstruct returns 100% of materials. 
+
+PLACEABLE_SPEC
+
+Determinism: Read→Barrier→Write; single writer per chunk; cross-chunk via mailbox; indices are per-chunk. 
+
+PLACEABLE_SPEC
+
+Data-driven: JSON, tags, no hardcoding; Zones read TagIndex, Jobs/Hauling use standard reservations. 
+
+PLACEABLE_SPEC
+
+Simplicity: Workshop materials and outputs live on the footprint cells; interrupted work resets to 0, no WIP entities. 
+
+PLACEABLE_SPEC
+
+2) Layer Integration (with TILE_SPEC v2)
+
+Authoritative layers are defined by the tile system (L0..L7). Placeables live where they affect topology and passability. 
+
+TILE_SPEC
+
+L0 TerrainBits — Terrain geometry/legality (walls, floor, open, ramps, stairs). Not authored by placeables. Changing L0 bumps connectivity. 
+
+TILE_SPEC
+
+L2 Constructions — All placeables with blockers/passables/state (doors, furniture, workshops, bridges, wells, device traps). Changing L2 bumps connectivity & nav caches. 
+
+TILE_SPEC
+
+L3 Fluids — Fluids & thresholds (indirectly affect nav). 
+
+TILE_SPEC
+
+L4 Fields — Hazards/LOS/decals (field traps like caltrops scatter, oil slick, smoke). L4 does not change topology; use local cost/visibility penalties. 
+
+TILE_SPEC
+
+L5 Items — Stacks dropped on cells (separate from L2). 
+
+TILE_SPEC
+
+L7 Meta — Revealed/traffic/polish/engraved visual flags (not topology). 
+
+TILE_SPEC
+
+Cache rebuild rules (binding):
+
+Rebuild NavMask / NavCost / UpRampMask on L0/L2 topology edits; L3 threshold changes; L7 traffic changes affect cost only. Bump ConnectivityVersion on topology changes. 
+
+TILE_SPEC
+
+3) Categories
+
+Furniture — beds, chairs, tables, cabinets, chests, doors, braziers/torches, bookshelves, statues; Installable items. 
+
+PLACEABLE_SPEC
+
+Workshops — carpentry, stoneworks, smelter, kiln, still, kitchen, forge, clothier, tanner, butcher; Constructions (5×5). 
+
+PLACEABLE_SPEC
+
+Utilities — bridges/gates, wells/cisterns, grates/hatches; Construction or Hybrid. 
+
+PLACEABLE_SPEC
+
+Traps — Device traps (L2) as Hybrids; Field traps (L4) as fields/decals. 
+
+PLACEABLE_SPEC
+
+Fixed defenses — ballista/trebuchet/catapult; front-end category, back-end uses Vehicle(is_static=true). 
+
+PLACEABLE_SPEC
+
+4) Data Model
+4.1 Installable items (extends ITEMS_SPEC v4-int)
+
+Installable items provide a placeable_profile on the item. Material/quality/decorations/maker mark come from the item and are preserved on uninstall (same item GUID). Do not define material filters on the placeable; recipes decide materials. 
+
+PLACEABLE_SPEC
+
+placeable_profile (on the item):
+
+{
+  "placeable_profile": {
+    "footprint": { "w": 2, "d": 1, "h": 1 },
+    "anchor": "topleft",
+    "orientation_mask": ["N","E","S","W"],
+    "passability": "blocking|doorway|nonblocking",
+    "requires_floor": true,
+    "clearance_h": 1,
+    "blocks_light": false,
+    "tags": ["furniture","sleep","bed"],
+    "effects": { "beauty": 2, "comfort": 3, "light_lumen": 0, "heat_w": 0 }
+  }
+}
+
+
+Notes: the item remains the single source of material, quality (−3..+3), decorations, maker mark, etc. 
+
+PLACEABLE_SPEC
+
+Breaking change from v1.1: allowed_material_tags under installable items is removed. It existed in v1.1 examples but is now deprecated; material selection belongs to the recipe layer. 
+
+PLACEABLE_SPEC
+
+4.2 Constructions registry
+
+Standalone constructions (no source item): walls, floors, workshops, utilities, bridges. Example fields: footprint, passability, floor/clearance, materials_required, build_time, required_skill, effects, and optional workshop/trap profiles. 
+
+PLACEABLE_SPEC
+
+{
+  "id": "core_construction_wall_stone",
+  "name": "Stone Wall",
+  "category": "construction",
+  "footprint": { "w": 1, "d": 1, "h": 1 },
+  "orientation_mask": ["N","E","S","W"],
+  "passability": "blocking",
+  "requires_floor": false,
+  "clearance_h": 1,
+  "blocks_light": true,
+  "materials_required": [{ "tag": "stone_block", "count": 4 }],
+  "build_time_ticks": 600,
+  "required_skill": "construction",
+  "skill_level_min": 0,
+  "effects": { "beauty": 1 }
+}
+
+
+PLACEABLE_SPEC
+
+4.3 Hybrids (well, trap base, etc.)
+
+Hybrid constructions require on-site materials plus specific items (installed into the hybrid). On deconstruct, return materials and respawn the installed items (original GUIDs). 
+
+PLACEABLE_SPEC
+
+4.4 PlaceableInstance (runtime)
+
+Runtime instance occupying cells; key fields include kind, definition ids, origin item GUID, world anchor/rotation, ownership, policy, quality/condition, workshop/trap states, etc.
+
+{
+  "guid": "p_6b1f",
+  "kind": "installable|construction|construction_site|hybrid",
+  "def_id": "core_item_furniture_bed",       // installable
+  "construction_id": null,                   // constructions/hybrids/sites
+  "source_item_guid": "i_93de",              // installable only
+
+  "anchor_world": { "x":120, "y":85, "z":10 },
+  "rotation": 1,                             // 0=N,1=E,2=S,3=W
+  "owner_faction_id": null,
+  "owner_creature_guid": null,
+  "use_policy": "public|faction|private",
+
+  "quality_tier": 0,                         // mirrors item (installable)
+  "condition_state": "Pristine",
+  "enabled": true,
+
+  "state_id": "closed|open|…",               // see §5 State Machine
+
+  "workshop_state": null,                    // optional
+  "trap_state": null,                        // optional
+  "destruction_state": null                  // optional: current hp/destroyed flag
+}
+
+
+PLACEABLE_SPEC
+
+5) State Machine (doors/windows/lamps/bridges)
+
+Certain placeables define named states with passability/visibility and explicit transitions (with latency). On transition, L2 topology or cost may change → see §10.
+
+"states": {
+  "closed": { "passability": "blocking", "blocks_light": true },
+  "open":   { "passability": "doorway",  "blocks_light": false }
+},
+"transitions": [
+  { "from": "closed", "to": "open",  "verb": "open",  "latency_ticks": 10 },
+  { "from": "open",   "to": "closed","verb": "close", "latency_ticks": 10 }
+]
+
+
+Designed to match door-like entities; authoring “doorway” passability for open state. 
+
+PLACEABLE_SPEC
+
+Transitions may specify SFX/VFX hooks; they always resolve deterministically within the chunk write/commit phases.
+
+6) Traps
+6.1 Device traps (L2)
+
+Implemented as hybrid constructions with installed items (e.g., mechanism+weapon).
+
+Live on L2 (they occupy the tile and can be de/constructed/destroyed).
+
+Example (pressure spike trap): footprint, passability (walk-over), trigger, reset, and damage source defined by installed weapon. 
+
+PLACEABLE_SPEC
+
+6.2 Field traps (L4)
+
+Pure field/decals such as caltrops scatter, oil spills, smoke.
+
+Live on L4; do not change topology. Provide move penalties, visibility modifiers, and/or tick/step damage. (Author as fields system assets; referenced by placeables if needed.)
+
+7) Destruction (Building-Destroyer compatibility)
+
+Add a destruction block to placeables that can be damaged or smashed by enemies:
+
+"destruction": {
+  "is_destroyable": true,
+  "destroyer_immune_tags": ["well","bridge","road","trap"],  // any tag grants immunity
+  "durability_points": 1200,                                 // structure HP
+  "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_small","dust_puff"] }
+}
+
+
+Enemies with a “building_destroyer” capability may target destroyable placeables unless they carry an immune tag (e.g., wells/bridges/roads/traps).
+
+When destroyed: clear L2 occupancy, apply on_destroy drops to L5, and bump caches as per §10.
+
+8) Effects
+
+Minimal, data-driven fields (expandable later):
+
+"effects": {
+  "beauty": int,
+  "comfort": int,
+  "light_lumen": int,
+  "heat_w": int
+}
+
+
+Note: Room scoring / cleanliness / facility auras are handled by Zones in this project and not part of placeable effects at this time.
+
+9) Authoring Registries
+
+Installables live in Items (content/registries/items/*.json with placeable_profile). They inherit material/quality/decor/inscriptions from the item and restore the same item GUID on uninstall. 
+
+PLACEABLE_SPEC
+
+Constructions live in content/registries/constructions.json. Workshops are also authored here (5×5, no quality). 
+
+PLACEABLE_SPEC
+
+10) Operations (Diffs) & Workflows
+10.1 Operations (API surface)
+
+Installable furniture: DesignateInstall → ReserveItem → HaulToInstallSite → InstallItem ; DesignateUninstall → UninstallToItem. 
+
+PLACEABLE_SPEC
+
+Constructions: DesignateConstruct → CreateConstructionSite → HaulMaterialToSite → BuildConstruction → CompleteConstruction; DesignateDeconstruct → Deconstruct (returns 100% materials). 
+
+PLACEABLE_SPEC
+
+Workshops: AddRecipeToQueue/Remove/Pause/Resume etc. 
+
+PLACEABLE_SPEC
+
+Traps: ArmTrap/DisarmTrap/TriggerTrap. 
+
+PLACEABLE_SPEC
+
+State: RequestTransition(placeable_guid, to_state) (validated against transitions).
+
+Destruction: ApplyDamage(placeable_guid, amount, source); destroy if durability_points ≤ 0.
+
+10.2 Install workflow (from item)
+
+Player picks spot (optionally filter by material/quality/nearest).
+
+Write: haul completes → InstallItem spawns the PlaceableInstance, writes passability into L2, updates TagIndex, removes the item from world but stores source_item_guid. Uninstall reverses the process. 
+
+PLACEABLE_SPEC
+
+10.3 Construct workflow (on-site)
+
+Create a construction site (temporary PlaceableInstance); it occupies cells and tracks materials_delivered by scanning items on footprint cells. If interrupted, progress resets to 0 (DF-style). On completion, consume materials, delete site, spawn final PlaceableInstance, update OccupancyMap/TagIndex/NavMask. 
+
+PLACEABLE_SPEC
+
+10.4 Workshop workflow
+
+Materials live on the 5×5 footprint; haulers place anywhere on footprint; crafters reserve and consume; outputs spawn on any free footprint cell (or adjacent if full). If interrupted, progress resets; reservations time out. 
+
+PLACEABLE_SPEC
+
+10.5 Hybrid workflow (well, trap base)
+
+Site + required items; builder installs items (removed from world, GUIDs stored); completion spawns hybrid; deconstruct returns materials and respawns installed items. 
+
+PLACEABLE_SPEC
+
+10.6 State & Cache Invalidation
+
+On state transition that changes passability/blocks_light (e.g., door open/close), treat as L2 topology/cost update and rebuild caches per-chunk; bump ConnectivityVersion. 
+
+TILE_SPEC
+
+11) Validation & Constraints
+
+No allowed_material_tags under installables (moved to Recipes). If present in legacy data, loader should warn and ignore. 
+
+PLACEABLE_SPEC
+
+Footprint must fit within chunk/world bounds; anchor respects OpenWithFloor support rules (no placement on OpenNoFloor). 
+
+TILE_SPEC
+
+Rotation uses orientation_mask. Autotiling resolves NESW based on L2 blocker first, then L0. 
+
+TILE_SPEC
+
+States must be closed sets; all transitions validated.
+
+Destruction: if is_destroyable=false or tags intersect destroyer_immune_tags, AI “building destroyer” must skip.
+
+Indices: Every write that changes L2 occupancy or passability must update OccupancyMap and TagIndex. 
+
+PLACEABLE_SPEC
+
+12) Examples (updated)
+12.1 Installable Door (L2, state machine)
+{
+  "id": "core_item_door_wood",
+  "tags": ["furniture","door"],
+  "placeable_profile": {
+    "footprint": { "w": 1, "d": 1, "h": 1 },
+    "anchor": "topleft",
+    "orientation_mask": ["N","E","S","W"],
+    "passability": "blocking",
+    "requires_floor": true,
+    "clearance_h": 2,
+    "blocks_light": true,
+    "tags": ["door"]
+  },
+  "states": {
+    "closed": { "passability": "blocking", "blocks_light": true },
+    "open":   { "passability": "doorway",  "blocks_light": false }
+  },
+  "transitions": [
+    { "from":"closed","to":"open","verb":"open","latency_ticks":10 },
+    { "from":"open","to":"closed","verb":"close","latency_ticks":10 }
+  ],
+  "destruction": { "is_destroyable": true, "destroyer_immune_tags": [], "durability_points": 250 }
+}
+
+12.2 Device Trap (L2 Hybrid)
+{
+  "id": "core_construction_trap_spike",
+  "category": "trap",
+  "footprint": { "w": 1, "d": 1, "h": 1 },
+  "passability": "nonblocking",
+  "requires_floor": true,
+  "materials_required": [{ "tag":"mechanism","count":1 }],
+  "hybrid_requirements": [{ "item_tag":"weapon_trap","count":1 }],
+  "build_time_ticks": 800,
+  "trap_profile": { "trigger":"pressure", "reset_time_ticks":100, "damage_source":"installed_weapon" },
+  "destruction": { "is_destroyable": true, "durability_points": 120 }
+}
+
+
+PLACEABLE_SPEC
+
+12.3 Field Trap (L4, hazards/LOS)
+{
+  "id": "field_caltrops_scatter",
+  "layer": "L4",
+  "field_kind": "caltrops",
+  "intensity": 3,
+  "los_block": false,
+  "move_penalty": 100,
+  "tick_damage": { "mode":"stab", "per_step": 2 }
+}
+
+12.4 Workshop (5×5, on-site construction)
+{
+  "id": "core_construction_workshop_carpentry",
+  "name": "Carpentry Workshop",
+  "category": "workshop",
+  "footprint": { "w": 5, "d": 5, "h": 1 },
+  "orientation_mask": ["N","E","S","W"],
+  "passability": "nonblocking",
+  "requires_floor": true,
+  "clearance_h": 2,
+  "blocks_light": false,
+  "materials_required": [
+    { "tag": "wood_log", "count": 10 },
+    { "tag": "stone_block", "count": 5 }
+  ],
+  "build_time_ticks": 2400,
+  "required_skill": "construction",
+  "skill_level_min": 2,
+  "effects": { "beauty": 0 },
+  "workshop_profile": {
+    "recipes": ["core_recipe_wooden_chair","core_recipe_wooden_table","core_recipe_wooden_door"],
+    "work_skill": "carpentry",
+    "max_queued_recipes": 10
+  }
+}
+
+
+PLACEABLE_SPEC
+
+13) Changelog (v1.2 vs v1.1)
+
+Removed: allowed_material_tags from installable item examples; materials are recipe-level (legacy data will be ignored with a warning). 
+
+PLACEABLE_SPEC
+
+Added: State machine support (states/transitions) for doors/windows/lamps/bridges; transitions have latency and update L2.
+
+Added: Destruction block (is_destroyable, destroyer_immune_tags, durability_points, on_destroy) for Building-Destroyer style AI.
+
+Clarified: Trap layering — device traps are L2 hybrids; field traps are L4 hazards (no topology changes).
+
+Bounded: Cache invalidation & ConnectivityVersion bump rules tied to L0/L2 edits and L3 thresholds. 
+
+TILE_SPEC
+
+Affirmed: Install/uninstall preserves same item GUID and all per-item properties (material, quality, decorations). 
+
+PLACEABLE_SPEC
+
+14) Compliance Checklist
+
+ All installable items define placeable_profile on the item; no material filters on placeables. 
+
+PLACEABLE_SPEC
+
+ All L2 entities specify passability and (if needed) states/transitions.
+
+ Device traps are authored as L2 hybrids; field traps as L4 fields.
+
+ Constructions list materials_required, build_time_ticks, and effects; workshops use 5×5 footprints. 
+
+PLACEABLE_SPEC
+
+ Every L0/L2 topology change bumps ConnectivityVersion; rebuild NavMask/NavCost/UpRampMask during commit. 
+
+TILE_SPEC
+
+ Uninstall restores the same item GUID with material/quality/decor. 
+
+PLACEABLE_SPEC
+
+This v1.2 is drop-in over v1.1: existing content remains valid except the deprecated allowed_material_tags on installables. New features (state/destruction) are additive.
