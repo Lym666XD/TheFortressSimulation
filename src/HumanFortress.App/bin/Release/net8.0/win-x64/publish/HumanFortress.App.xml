@@ -16,6 +16,22 @@
             Executed on the main thread; OrdersManager is thread-safe for enqueue.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Commands.CreateZoneCommand">
+            <summary>
+            Command to create a new zone with specified cells.
+            Executed on the main thread; ZoneManager is thread-safe for operations.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Commands.DeleteZoneCommand">
+            <summary>
+            Command to delete a zone entirely.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Commands.UpdateZoneCellsCommand">
+            <summary>
+            Command to add or remove cells from an existing zone.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.GameStates.FortressPlayState">
             <summary>
             Fortress play state with simulation loop per UPDATE_ORDER.md.
@@ -281,7 +297,47 @@
         </member>
         <member name="T:HumanFortress.App.UI.ZonesUI">
             <summary>
-            Renders the Zones quick menu with L2 and L3 submenus.
+            Renders the Zones quick menu with L2 and L3 submenus, zone overlay, and detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.GetZoneDefIdFromKey(HumanFortress.App.UI.ZoneSubmenu,System.Char)">
+            <summary>
+            Try to get zone definition ID from keyboard input.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.DrawPlacementMode(SadConsole.ScreenSurface,HumanFortress.App.UI.UiStore,SadRogue.Primitives.Point)">
+            <summary>
+            Draw placement mode prompt.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.RenderPlacementPreview(HumanFortress.App.UI.MapScreenSurface,SadRogue.Primitives.Point,SadRogue.Primitives.Point,SadRogue.Primitives.Rectangle,System.Boolean)">
+            <summary>
+            Render placement preview on map (only when zone menu is open).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.RenderOverlay(HumanFortress.App.UI.MapScreenSurface,HumanFortress.Simulation.World.World,System.Int32,SadRogue.Primitives.Rectangle,System.Boolean)">
+            <summary>
+            Render zone overlay on map (only when zone menu is open).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.DrawDetailPopup(SadConsole.ScreenSurface,HumanFortress.Simulation.World.World)">
+            <summary>
+            Draw zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.OpenDetailPopup(System.Int32)">
+            <summary>
+            Open zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.CloseDetailPopup">
+            <summary>
+            Close zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.IsDetailPopupOpen">
+            <summary>
+            Check if detail popup is open.
             </summary>
         </member>
     </members>

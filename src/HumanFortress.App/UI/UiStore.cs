@@ -15,6 +15,7 @@ public enum DrawerId
     None,
     Creature,
     Stock,
+    PlacementManagement,
     Work,
     Military,
     Country,
@@ -82,7 +83,11 @@ public enum PlacementMode
     HaulFirstCorner,
     HaulSecondCorner,
     MiningFirstCorner,
-    MiningSecondCorner
+    MiningSecondCorner,
+    // Zones
+    ZoneFirstCorner,
+    ZoneSecondCorner,
+    ZoneDelete
 }
 
 public sealed class UiStore
@@ -103,12 +108,15 @@ public sealed class UiStore
     public PlacementMode PlaceMode { get; set; } = PlacementMode.None;
     public Point? HoverTile { get; private set; } = null;
 
-    // Stockpile placement state
+    // Stockpile/Zone placement state
     public Point? PlaceFirstCorner { get; set; } = null;
     public Point? PlaceSecondCorner { get; set; } = null;
     public int PlaceZ { get; set; } = 0;
     public string? CopiedPreset { get; set; } = null;
     public int? CopiedPriority { get; set; } = null;
+
+    // Zone placement state
+    public string? SelectedZoneDefId { get; set; } = null;
     public bool HelpOpen { get; private set; } = false;
     public bool DebugOpen { get; private set; } = false;
     public bool PauseOpen { get; private set; } = false;
@@ -155,9 +163,19 @@ public sealed class UiStore
         ZoneMenu = submenu;
     }
 
+    public void CloseZoneSubmenu()
+    {
+        ZoneMenu = ZoneSubmenu.None;
+    }
+
     public void OpenOrdersSubmenu(OrdersSubmenu submenu)
     {
         OrdersMenu = submenu;
+    }
+
+    public void CloseOrdersSubmenu()
+    {
+        OrdersMenu = OrdersSubmenu.None;
     }
 
     public void OpenBuildSubmenu(BuildSubmenu submenu)
@@ -165,9 +183,19 @@ public sealed class UiStore
         BuildMenu = submenu;
     }
 
+    public void CloseBuildSubmenu()
+    {
+        BuildMenu = BuildSubmenu.None;
+    }
+
     public void OpenStockpileSubmenu(StockpileSubmenu submenu)
     {
         StockpileMenu = submenu;
+    }
+
+    public void CloseStockpileSubmenu()
+    {
+        StockpileMenu = StockpileSubmenu.None;
     }
 
     public void StartPlacement(PlacementMode mode, int z)

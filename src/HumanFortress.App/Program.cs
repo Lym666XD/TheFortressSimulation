@@ -102,6 +102,11 @@ public static class Program
 
         Game.Create(gameStartup);
         Game.Instance.Run();
+
+        // Shutdown game systems before disposing
+        Logger.Log("[SHUTDOWN] Game window closed, shutting down systems");
+        _gameStateManager?.Shutdown();
+
         Game.Instance.Dispose();
 
         // Clean up resources

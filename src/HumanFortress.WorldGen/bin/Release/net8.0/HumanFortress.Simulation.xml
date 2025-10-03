@@ -1070,6 +1070,16 @@
             Initialize stockpile data if not present. Write phase only.
             </summary>
         </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetZoneData">
+            <summary>
+            Get zone data for this chunk. Thread-safe for reads.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.EnsureZoneData">
+            <summary>
+            Initialize zone data if not present. Write phase only.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.World.ChunkKey">
             <summary>
             Unique chunk identifier.
@@ -1214,6 +1224,349 @@
         <member name="T:HumanFortress.Simulation.World.EdgeBand">
             <summary>
             Edge band directions for incident spawning.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ChunkZoneData">
+            <summary>
+            Per-chunk zone data including zone shards per ZONE_SPEC.md §4.3.
+            Thread-safe for reads during Read phase, mutations only in Write phase.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ChunkZoneData.DirtyGeneration">
+            <summary>
+            Dirty generation for cache invalidation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetZoneAtCell(System.Int32)">
+            <summary>
+            Get zone ID at a specific cell (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetShard(System.Int32)">
+            <summary>
+            Get shard for a zone (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetAllShards">
+            <summary>
+            Get all shards in this chunk (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.HasZone(System.Int32)">
+            <summary>
+            Check if zone has any cells in this chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.CreateOrUpdateShard(System.Int32,HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Create or update a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.AddCellsToZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.RemoveCellsFromZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.DeleteShard(System.Int32)">
+            <summary>
+            Delete a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneCoordinator">
+            <summary>
+            Coordinator for zone operations at the World level.
+            Provides high-level methods for zone creation, deletion, and cell management.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneCoordinator.Manager">
+            <summary>
+            Access to the underlying ZoneManager.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.CreateZoneFromRect(System.String,System.String,SadRogue.Primitives.Rectangle,System.Int32,System.UInt64)">
+            <summary>
+            Create a zone from a world-space rectangle at a given Z level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.AddCellsToZone(System.Int32,SadRogue.Primitives.Rectangle,System.Int32)">
+            <summary>
+            Add cells from a rectangle to an existing zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.RemoveCellsFromZone(System.Int32,SadRogue.Primitives.Rectangle,System.Int32)">
+            <summary>
+            Remove cells from a rectangle from an existing zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.DeleteZone(System.Int32)">
+            <summary>
+            Delete a zone entirely, removing it from all chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.GetZoneAtPosition(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get zone ID at a specific world position.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneDefinition">
+            <summary>
+            Content-driven zone definition loaded from zones.json per ZONE_SPEC.md §4.1.
+            Immutable template for creating zone instances.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Id">
+            <summary>
+            Unique identifier (e.g., "bedroom", "assembly", "lumbering").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Category">
+            <summary>
+            Category: production, civil, public, military, management.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.DisplayName">
+            <summary>
+            Display name for UI.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.UiHints">
+            <summary>
+            UI hints for rendering.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.DefaultPolicies">
+            <summary>
+            Default policies for this zone type.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Notes">
+            <summary>
+            Optional notes/description.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneUiHints">
+            <summary>
+            UI hints for zone visualization.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Glyph">
+            <summary>
+            Glyph character for display.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Color">
+            <summary>
+            Color in hex format (e.g., "#FFD700").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Keybind">
+            <summary>
+            Keybind hint (e.g., "Z", "X").
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZonePolicies">
+            <summary>
+            Zone policies (defaults from definition, can be overridden per instance).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZonePolicies.NavCostMode">
+            <summary>
+            Navigation cost mode: "none" or "restricted".
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZonePolicies.AllowsActions">
+            <summary>
+            List of allowed action types (future use).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneInstance">
+            <summary>
+            Runtime zone instance per ZONE_SPEC.md §4.2.
+            Represents a placed zone that can span multiple chunks.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.ZoneId">
+            <summary>
+            Unique zone instance identifier.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.DefId">
+            <summary>
+            Definition ID (e.g., "bedroom", "assembly").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Name">
+            <summary>
+            User-assigned name.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Priority">
+            <summary>
+            Priority level (0=Low, 1=Normal, 2=High, 3=Critical).
+            Used for tie-breaking when multiple zones overlap.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Subtype">
+            <summary>
+            Subtype: "auto", "indoor", "outdoor" (for Assembly auto-naming, deferred in v1).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.ZMode">
+            <summary>
+            Z-level mode: "single" (v1), "range" (future).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.HomeChunk">
+            <summary>
+            Home chunk where the zone was created (owns global properties).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.MemberChunks">
+            <summary>
+            Chunks that contain cells belonging to this zone.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.TotalCells">
+            <summary>
+            Total number of member cells across all chunks.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Policies">
+            <summary>
+            Optional policy overrides.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Enabled">
+            <summary>
+            Zone enabled/disabled state.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Generation">
+            <summary>
+            Generation counter, incremented on any configuration change.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.CreatedTick">
+            <summary>
+            Tick when this zone was created.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneInstance.UpdateMemberChunks(System.Collections.Generic.IEnumerable{HumanFortress.Simulation.World.ChunkKey})">
+            <summary>
+            Update member chunks when cells are added/removed.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneInstance.IncrementGeneration">
+            <summary>
+            Increment generation when configuration changes.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneManager">
+            <summary>
+            Global manager for zone instances per ZONE_SPEC.md.
+            Maintains zone definitions and runtime instances.
+            Thread-safe for reads during Read phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.RegisterDefinition(HumanFortress.Core.Content.ZoneDefinitionData)">
+            <summary>
+            Register a zone definition from content data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetDefinition(System.String)">
+            <summary>
+            Get zone definition by ID.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetAllDefinitions">
+            <summary>
+            Get all zone definitions.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.CreateZone(System.String,System.String,HumanFortress.Simulation.World.ChunkKey,System.UInt64)">
+            <summary>
+            Create a new zone instance.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetZone(System.Int32)">
+            <summary>
+            Get a zone by ID (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetAllZones">
+            <summary>
+            Get all zones (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetZonesByCategory(System.String)">
+            <summary>
+            Get zones by category.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.DeleteZone(System.Int32)">
+            <summary>
+            Delete a zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.UpdateZone(System.Int32,System.Action{HumanFortress.Simulation.Zones.ZoneInstance})">
+            <summary>
+            Update zone configuration.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.Clear">
+            <summary>
+            Clear all zones (for testing/reset).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneShard">
+            <summary>
+            Per-chunk fragment of a zone per ZONE_SPEC.md §4.3.
+            Maintains local member cells and candidate furniture caches.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.ZoneId">
+            <summary>
+            Zone ID this shard belongs to.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.ChunkKey">
+            <summary>
+            Chunk this shard is in.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.MemberCells">
+            <summary>
+            Member cells in this chunk (bitset for 32x32=1024 cells).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.CellCount">
+            <summary>
+            Number of member cells in this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.AddCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.RemoveCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.ContainsCell(System.Int32)">
+            <summary>
+            Check if a cell is part of this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.Clear">
+            <summary>
+            Clear all cells.
             </summary>
         </member>
     </members>

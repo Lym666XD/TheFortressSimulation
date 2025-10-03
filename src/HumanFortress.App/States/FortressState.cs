@@ -175,12 +175,24 @@ namespace HumanFortress.App.States
                 _uiSurface = new UiOverlaySurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
                 // Overlay actively handles clicks for dock/quick/debug
                 _uiSurface.UseMouse = true;
-                _uiSurface.UseKeyboard = false;
+                _uiSurface.UseKeyboard = true; // Enable keyboard for InputHandlerComponent
                 _uiSurface.FocusOnMouseClick = false; // don't steal focus
-                _uiSurface.LeftClickedLocal += OnOverlayLeftClickedLocal;
-                _uiSurface.MouseMovedLocal += OnOverlayMouseMovedLocal;
-                Logger.Log($"[INIT] UiOverlay size={_uiSurface.Surface.Width}x{_uiSurface.Surface.Height}");
 
+                // NEW: Use InputHandlerComponent for all UI input (replaces old click handlers)
+                var uiStateManager = new UI.UIStateManager(_ui);
+                var inputHandler = new UI.Components.InputHandlerComponent(
+                    uiStateManager,
+                    GameHost.Instance.ScreenCellsX,
+                    GameHost.Instance.ScreenCellsY
+                );
+                _uiSurface.SadComponents.Add(inputHandler);
+                Logger.Log($"[INIT] Added InputHandlerComponent to UiOverlay");
+
+                // Keep legacy handlers for map clicks (InputHandlerComponent handles UI buttons, then returns false)
+                _uiSurface.LeftClickedLocal += OnOverlayLeftClickedLocal;
+                _uiSurface.RightClickedLocal += OnOverlayRightClickedLocal;
+                _uiSurface.MouseMovedLocal += OnOverlayMouseMovedLocal; // Still needed for hover
+                Logger.Log($"[INIT] UiOverlay size={_uiSurface.Surface.Width}x{_uiSurface.Surface.Height}");
                 // Add to root surface
                 rootSurface.Children.Add(_mapSurface);
                 // Do not add info/tile panels as static right-side consoles; we'll draw a floating
@@ -390,6 +402,33 @@ namespace HumanFortress.App.States
                     }
                 }
 
+                // Render zone overlays (only when zone menu is open)
+                if (_world != null && _zonesUI != null)
+                {
+                    var mapViewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                        _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                    bool showZoneOverlay = _ui.QuickMenu == QuickMenuKind.Zones;
+
+                    _zonesUI.RenderOverlay(_mapSurface, _world, _currentZ, mapViewport, showZoneOverlay);
+
+                    // Draw zone placement preview
+                    if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
+                    {
+                        var mouseWorld = _lastMousePos ?? _cursorPos;
+                        _zonesUI.RenderPlacementPreview(_mapSurface,
+                            _ui.PlaceFirstCorner.Value, mouseWorld, mapViewport, true);
+                    }
+                }
+
+                // Draw zone placement mode prompt
+                _zonesUI?.DrawPlacementMode(_uiSurface, _ui, _lastMousePos ?? _cursorPos);
+
+                // Draw zone detail popup
+                if (_zonesUI?.IsDetailPopupOpen() == true && _world != null)
+                {
+                    _zonesUI.DrawDetailPopup(_uiSurface, _world);
+                }
+
                 // Controls/help moved to docs; no on-screen help overlay.
                 UiRenderer.DrawDebug(_uiSurface, _ui, _cursorPos, _currentZ, _zoomLevel, _cameraPos, FortressSize);
                 UiRenderer.DrawDebugUnits(_uiSurface, _ui, _cameraPos.X, _cameraPos.Y, _currentZ);
@@ -403,12 +442,12 @@ namespace HumanFortress.App.States
             }
         }
 
-        // Handle overlay local left-clicks for F1–F7 and Z/X/C buttons
+        // Handle overlay local left-clicks for F1–F8 and Z/X/C buttons
         private void OnOverlayLeftClickedLocal(Point local)
         {
             if (_uiSurface == null) return;
 
-            // Dock F1–F7 at bottom-left (bottom row)
+            // Dock F1–F8 at bottom-left (bottom row)
             int dockY = _uiSurface.Surface.Height - 1;
             int dockXStart = 1;
             int dockBtnW = 5;
@@ -417,34 +456,61 @@ namespace HumanFortress.App.States
             {
                 int rel = local.X - dockXStart;
                 int slot = rel / (dockBtnW + dockGap);
-                if (slot >= 0 && slot <= 6)
+
+                // Explicit mapping: slot -> DrawerId (F1-F8 order)
+                var slotMap = new DrawerId[]
                 {
-                    var id = (DrawerId)(slot + 1);
-                    _ui.OpenPanel(id);
+                    DrawerId.Creature,              // F1 (slot 0)
+                    DrawerId.Stock,                 // F2 (slot 1)
+                    DrawerId.Work,                  // F3 (slot 2)
+                    DrawerId.PlacementManagement,   // F4 (slot 3)
+                    DrawerId.Military,              // F5 (slot 4)
+                    DrawerId.Country,               // F6 (slot 5)
+                    DrawerId.World,                 // F7 (slot 6)
+                    DrawerId.Log                    // F8 (slot 7)
+                };
+
+                if (slot >= 0 && slot < slotMap.Length)
+                {
+                    _ui.OpenPanel(slotMap[slot]);
                     Logger.Log($"[CLICK-OVERLAY] Dock slot={slot} -> drawer={_ui.OpenDrawer}");
                     DrawUI();
                     return;
                 }
             }
 
-            // Quick Z/X/C one row above bottom (dock is bottom)
-            int quickY = _uiSurface.Surface.Height - 2;
+            // Quick ZXCV buttons (bottom row, same as F1-F8, centered)
+            int quickY = _uiSurface.Surface.Height - 1; // Same row as F1-F8
             if (local.Y == quickY)
             {
                 int center = _uiSurface.Surface.Width / 2;
-                int w = 5; int gap = 2;
+                int buttonWidth = 5;
+                int gap = 2;
+
+                // 4 buttons: Z X C V (same calculation as UiRenderer.DrawQuickIconsScreen)
+                int totalWidth = (buttonWidth * 4) + (gap * 3);
+                int startX = center - totalWidth / 2;
+
+                // Calculate button positions (exactly matching UiRenderer)
+                int xZ = startX;
+                int xX = startX + buttonWidth + gap;
+                int xC = startX + (buttonWidth + gap) * 2;
+                int xV = startX + (buttonWidth + gap) * 3;
+
                 var ranges = new (int start, int end, QuickMenuKind kind)[]
                 {
-                    (center - (w + gap) - w / 2, center - (w + gap) - w / 2 + w - 1, QuickMenuKind.Orders),
-                    (center - w / 2,               center - w / 2 + w - 1,               QuickMenuKind.Zones),
-                    (center + (w + gap) - w / 2,   center + (w + gap) - w / 2 + w - 1,   QuickMenuKind.Build),
+                    (xZ, xZ + buttonWidth - 1, QuickMenuKind.Orders),      // Z
+                    (xX, xX + buttonWidth - 1, QuickMenuKind.Zones),       // X
+                    (xC, xC + buttonWidth - 1, QuickMenuKind.Build),       // C
+                    (xV, xV + buttonWidth - 1, QuickMenuKind.Stockpile),   // V
                 };
+
                 foreach (var r in ranges)
                 {
                     if (local.X >= r.start && local.X <= r.end)
                     {
                         _ui.OpenQuickMenu(r.kind);
-                        Logger.Log($"[CLICK-OVERLAY] Quick kind={r.kind} -> qmenu={_ui.QuickMenu}");
+                        Logger.Log($"[CLICK-OVERLAY] Quick kind={r.kind} x=[{r.start},{r.end}] -> qmenu={_ui.QuickMenu}");
                         DrawUI();
                         return;
                     }
@@ -997,14 +1063,15 @@ namespace HumanFortress.App.States
                 changed = true;
             }
 
-            // UI: dock panels F1..F7
+            // UI: dock panels F1..F8
             if (keyboard.IsKeyPressed(Keys.F1)) { _ui.OpenPanel(DrawerId.Creature); Logger.Log($"[KEY] F1 -> Drawer={_ui.OpenDrawer}"); changed = true; }
             else if (keyboard.IsKeyPressed(Keys.F2)) { _ui.OpenPanel(DrawerId.Stock); Logger.Log($"[KEY] F2 -> Drawer={_ui.OpenDrawer}"); changed = true; }
             else if (keyboard.IsKeyPressed(Keys.F3)) { _ui.OpenPanel(DrawerId.Work); Logger.Log($"[KEY] F3 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F4)) { _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F5)) { _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F6)) { _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F7)) { _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F4)) { _ui.OpenPanel(DrawerId.PlacementManagement); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F5)) { _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F6)) { _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F7)) { _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F8)) { _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F8 -> Drawer={_ui.OpenDrawer}"); changed = true; }
             else if (keyboard.IsKeyPressed(Keys.F9))
             {
                 // Cycle navigation overlay modes
@@ -1355,14 +1422,15 @@ namespace HumanFortress.App.States
                 int yDock = _mapSurface.Surface.Height - 1;
                 if (cell.Y == yDock - 1) // moved up one row
                 {
-                    // Simple segmented buttons positions
-                    if (cell.X >= 0 && cell.X < 5) { _ui.OpenPanel(DrawerId.Creature); }
-                    else if (cell.X < 10) { _ui.OpenPanel(DrawerId.Stock); }
-                    else if (cell.X < 15) { _ui.OpenPanel(DrawerId.Work); }
-                    else if (cell.X < 20) { _ui.OpenPanel(DrawerId.Military); }
-                    else if (cell.X < 25) { _ui.OpenPanel(DrawerId.Country); }
-                    else if (cell.X < 30) { _ui.OpenPanel(DrawerId.World); }
-                    else if (cell.X < 35) { _ui.OpenPanel(DrawerId.Log); }
+                    // F1-F8 buttons (correct order: F1=Creature, F2=Stock, F3=Work, F4=PlacementManagement, F5=Military, F6=Country, F7=World, F8=Log)
+                    if (cell.X >= 0 && cell.X < 5) { _ui.OpenPanel(DrawerId.Creature); }              // F1
+                    else if (cell.X < 10) { _ui.OpenPanel(DrawerId.Stock); }                          // F2
+                    else if (cell.X < 15) { _ui.OpenPanel(DrawerId.Work); }                           // F3 (FIXED)
+                    else if (cell.X < 20) { _ui.OpenPanel(DrawerId.PlacementManagement); }            // F4 (FIXED)
+                    else if (cell.X < 25) { _ui.OpenPanel(DrawerId.Military); }                       // F5
+                    else if (cell.X < 30) { _ui.OpenPanel(DrawerId.Country); }                        // F6
+                    else if (cell.X < 35) { _ui.OpenPanel(DrawerId.World); }                          // F7
+                    else if (cell.X < 40) { _ui.OpenPanel(DrawerId.Log); }                            // F8
                     Logger.Log($"[CLICK] Dock click at cell=({cell.X},{cell.Y}) -> drawer={_ui.OpenDrawer}");
                     DrawUI();
                     return true;
@@ -1389,22 +1457,127 @@ namespace HumanFortress.App.States
 
             if (state.Mouse.RightClicked)
             {
+                Logger.Log($"[RIGHT-CLICK] Detected at screen=({state.SurfaceCellPosition.X},{state.SurfaceCellPosition.Y}), tilePanelOpen={_tilePanelOpen}, QuickMenu={_ui.QuickMenu}, OrdersMenu={_ui.OrdersMenu}, ZoneMenu={_ui.ZoneMenu}");
+                bool handled = false;
+
+                // Priority 1: Close tile panel if open
                 if (_tilePanelOpen)
                 {
+                    Logger.Log("[RIGHT-CLICK] Closing tile panel");
                     HideTilePanel();
+                    handled = true;
                 }
+                // Priority 2: Close zone detail popup if open
+                else if (_zonesUI?.IsDetailPopupOpen() == true)
+                {
+                    Logger.Log("[RIGHT-CLICK] Closing zone detail popup");
+                    _zonesUI.CloseDetailPopup();
+                    handled = true;
+                }
+                // Priority 3: Try closing stockpile edit popup
                 else if (_stockpileUI != null)
                 {
-                    // 先尝试关闭储存区编辑弹窗
+                    Logger.Log("[RIGHT-CLICK] Trying stockpile popup close");
+                    // Always try to close stockpile popup first
                     _stockpileUI.CloseEditPopup();
+
+                    // Then handle QuickMenu navigation
+                    if (_ui.QuickMenu != QuickMenuKind.None)
+                    {
+                        // If in L3 submenu, go back to L2
+                        if (_ui.OrdersMenu != OrdersSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing OrdersMenu submenu");
+                            _ui.CloseOrdersSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing ZoneMenu submenu");
+                            _ui.CloseZoneSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.BuildMenu != BuildSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing BuildMenu submenu");
+                            _ui.CloseBuildSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.StockpileMenu != StockpileSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing StockpileMenu submenu");
+                            _ui.CloseStockpileSubmenu();
+                            handled = true;
+                        }
+                        // If in L2 (no submenu), close the QuickMenu entirely
+                        else
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing QuickMenu entirely (was in L2)");
+                            _ui.CancelPlacement();
+                            handled = true;
+                        }
+                    }
+                    else
+                    {
+                        Logger.Log("[RIGHT-CLICK] General cancel (no QuickMenu)");
+                        _ui.Cancel();
+                        handled = true;
+                    }
+                }
+                // Priority 4: Step back from L3 submenu to L2 menu
+                else if (_ui.QuickMenu != QuickMenuKind.None)
+                {
+                    // If in L3 submenu, go back to L2
+                    if (_ui.OrdersMenu != OrdersSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing OrdersMenu submenu");
+                        _ui.CloseOrdersSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing ZoneMenu submenu");
+                        _ui.CloseZoneSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.BuildMenu != BuildSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing BuildMenu submenu");
+                        _ui.CloseBuildSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.StockpileMenu != StockpileSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing StockpileMenu submenu");
+                        _ui.CloseStockpileSubmenu();
+                        handled = true;
+                    }
+                    // If in L2 (no submenu), close the QuickMenu entirely
+                    else
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing QuickMenu entirely (was in L2)");
+                        _ui.CancelPlacement();
+                        handled = true;
+                    }
+                }
+                // Priority 5: General cancel (close drawer, etc.)
+                else
+                {
+                    Logger.Log("[RIGHT-CLICK] Priority 5: General cancel");
                     _ui.Cancel();
+                    handled = true;
+                }
+
+                if (handled)
+                {
+                    Logger.Log("[RIGHT-CLICK] Handled successfully, redrawing UI");
+                    DrawUI();
+                    return true;
                 }
                 else
                 {
-                    _ui.Cancel();
+                    Logger.Log("[RIGHT-CLICK] Not handled!");
                 }
-                DrawUI();
-                return true;
             }
 
             return base.ProcessMouse(state);
@@ -1421,21 +1594,28 @@ namespace HumanFortress.App.States
             int xStart = 1;
             int buttonWidth = 5; // must match UiRenderer.DrawDockScreen
             int gap = 1;
-            int[] xRanges = new int[7];
-            for (int i = 0; i < 7; i++)
+
+            // Explicit mapping: button index -> DrawerId (F1-F8 order)
+            var buttonMap = new DrawerId[]
             {
-                xRanges[i] = xStart + i * (buttonWidth + gap);
-            }
+                DrawerId.Creature,              // F1 (index 0)
+                DrawerId.Stock,                 // F2 (index 1)
+                DrawerId.Work,                  // F3 (index 2)
+                DrawerId.PlacementManagement,   // F4 (index 3)
+                DrawerId.Military,              // F5 (index 4)
+                DrawerId.Country,               // F6 (index 5)
+                DrawerId.World,                 // F7 (index 6)
+                DrawerId.Log                    // F8 (index 7)
+            };
 
             int x = screenCell.X;
-            for (int i = 0; i < 7; i++)
+            for (int i = 0; i < buttonMap.Length; i++)
             {
-                int start = xRanges[i];
+                int start = xStart + i * (buttonWidth + gap);
                 int end = start + buttonWidth - 1;
                 if (x >= start && x <= end)
                 {
-                    var id = (DrawerId)(i + 1); // enum values: 1..7 correspond to Creature..Log
-                    _ui.OpenPanel(id);
+                    _ui.OpenPanel(buttonMap[i]);
                     Logger.Log($"[CLICK] DockScreen i={i} cell=({screenCell.X},{screenCell.Y}) -> drawer={_ui.OpenDrawer}");
                     DrawUI();
                     return true;
@@ -1450,8 +1630,15 @@ namespace HumanFortress.App.States
         {
             int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
             int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
-            int y = screenH - 1; // bottom row, same as F1-F7 (matches UiRenderer.DrawQuickIconsScreen)
-            if (screenCell.Y != y) return false;
+            int y = screenH - 1; // bottom row, same as F1-F8 (matches UiRenderer.DrawQuickIconsScreen)
+
+            Logger.Log($"[CLICK-DEBUG] HandleQuickClicksScreen: screenCell=({screenCell.X},{screenCell.Y}), screenH={screenH}, y={y}");
+
+            if (screenCell.Y != y)
+            {
+                Logger.Log($"[CLICK-DEBUG] Y mismatch: screenCell.Y={screenCell.Y} != y={y}");
+                return false;
+            }
 
             int center = screenW / 2;
             int buttonWidth = 5; // must match UiRenderer
@@ -1469,10 +1656,14 @@ namespace HumanFortress.App.States
                 (startX + (buttonWidth + gap) * 3, startX + (buttonWidth + gap) * 3 + buttonWidth - 1, QuickMenuKind.Stockpile),
             };
 
+            Logger.Log($"[CLICK-DEBUG] Button ranges: Z=[{buttons[0].start},{buttons[0].end}], X=[{buttons[1].start},{buttons[1].end}], C=[{buttons[2].start},{buttons[2].end}], V=[{buttons[3].start},{buttons[3].end}]");
+
             foreach (var b in buttons)
             {
                 if (screenCell.X >= b.start && screenCell.X <= b.end)
                 {
+                    Logger.Log($"[CLICK] QuickIconsScreen HIT: kind={b.kind} cell=({screenCell.X},{screenCell.Y})");
+
                     // If clicking current menu, toggle it off; otherwise switch to new menu
                     if (_ui.QuickMenu == b.kind)
                     {
@@ -1482,12 +1673,13 @@ namespace HumanFortress.App.States
                     {
                         _ui.OpenQuickMenu(b.kind);
                     }
-                    Logger.Log($"[CLICK] QuickIconsScreen kind={b.kind} cell=({screenCell.X},{screenCell.Y}) -> qmenu={_ui.QuickMenu}");
+                    Logger.Log($"[CLICK] QuickIconsScreen result: qmenu={_ui.QuickMenu}");
                     DrawUI();
                     return true;
                 }
             }
 
+            Logger.Log($"[CLICK-DEBUG] No button hit for X={screenCell.X}");
             return false;
         }
 
@@ -1639,6 +1831,84 @@ namespace HumanFortress.App.States
             _cursorPos = _lastMousePos.Value;
         }
 
+        // Handle right-click on overlay: hierarchical back navigation
+        private void OnOverlayRightClickedLocal(Point local)
+        {
+            Logger.Log($"[RIGHT-CLICK-OVERLAY] Clicked at local=({local.X},{local.Y}), tilePanelOpen={_tilePanelOpen}, QuickMenu={_ui.QuickMenu}, OrdersMenu={_ui.OrdersMenu}, ZoneMenu={_ui.ZoneMenu}");
+
+            // Priority 1: Close tile panel if open
+            if (_tilePanelOpen)
+            {
+                Logger.Log("[RIGHT-CLICK-OVERLAY] Closing tile panel");
+                HideTilePanel();
+                DrawUI();
+                return;
+            }
+
+            // Priority 2: Close zone detail popup if open
+            if (_zonesUI?.IsDetailPopupOpen() == true)
+            {
+                Logger.Log("[RIGHT-CLICK-OVERLAY] Closing zone detail popup");
+                _zonesUI.CloseDetailPopup();
+                DrawUI();
+                return;
+            }
+
+            // Priority 3: Close stockpile edit popup if open
+            if (_stockpileUI != null)
+            {
+                Logger.Log("[RIGHT-CLICK-OVERLAY] Trying stockpile popup close");
+                _stockpileUI.CloseEditPopup();
+            }
+
+            // Priority 4: Step back from L3 submenu to L2, or L2 to close QuickMenu
+            if (_ui.QuickMenu != QuickMenuKind.None)
+            {
+                // If in L3 submenu, go back to L2
+                if (_ui.OrdersMenu != OrdersSubmenu.None)
+                {
+                    Logger.Log("[RIGHT-CLICK-OVERLAY] Closing OrdersMenu submenu (L3 -> L2)");
+                    _ui.CloseOrdersSubmenu();
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                {
+                    Logger.Log("[RIGHT-CLICK-OVERLAY] Closing ZoneMenu submenu (L3 -> L2)");
+                    _ui.CloseZoneSubmenu();
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.BuildMenu != BuildSubmenu.None)
+                {
+                    Logger.Log("[RIGHT-CLICK-OVERLAY] Closing BuildMenu submenu (L3 -> L2)");
+                    _ui.CloseBuildSubmenu();
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.StockpileMenu != StockpileSubmenu.None)
+                {
+                    Logger.Log("[RIGHT-CLICK-OVERLAY] Closing StockpileMenu submenu (L3 -> L2)");
+                    _ui.CloseStockpileSubmenu();
+                    DrawUI();
+                    return;
+                }
+                // If in L2 (no submenu), close the QuickMenu entirely
+                else
+                {
+                    Logger.Log("[RIGHT-CLICK-OVERLAY] Closing QuickMenu entirely (L2 -> Global)");
+                    _ui.CancelPlacement();
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Priority 5: General cancel (close drawer, etc.)
+            Logger.Log("[RIGHT-CLICK-OVERLAY] General cancel");
+            _ui.Cancel();
+            DrawUI();
+        }
+
         // Left-click on the map: handle placement modes or open tile info panel
         private void OnMapLeftClickedLocal(Point local)
         {
@@ -1776,6 +2046,59 @@ namespace HumanFortress.App.States
                     }
                     return;
                 }
+                else if (_ui.PlaceMode == PlacementMode.ZoneFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.ZoneSecondCorner;
+                    _ui.AddToast("Select second corner", _uiTick + 100);
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
+                {
+                    // Create zone using command
+                    var rect = SadRogue.Primitives.Rectangle.GetUnion(
+                        new SadRogue.Primitives.Rectangle(_ui.PlaceFirstCorner.Value, 1, 1),
+                        new SadRogue.Primitives.Rectangle(worldPos, 1, 1));
+
+                    if (_ui.SelectedZoneDefId != null && _world != null)
+                    {
+                        var cmd = new HumanFortress.App.Commands.CreateZoneCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick,
+                            _ui.SelectedZoneDefId,
+                            $"{_ui.SelectedZoneDefId}_zone",
+                            rect,
+                            _currentZ);
+
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast($"Created zone at ({rect.X},{rect.Y})", _uiTick + 150);
+                    }
+
+                    _ui.CancelPlacement();
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.ZoneDelete)
+                {
+                    // Get zone at clicked position
+                    int zoneId = _world?.Zones.GetZoneAtPosition(worldPos.X, worldPos.Y, _currentZ) ?? 0;
+                    if (zoneId > 0)
+                    {
+                        var cmd = new HumanFortress.App.Commands.DeleteZoneCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick,
+                            zoneId);
+
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast($"Deleted zone #{zoneId}", _uiTick + 150);
+                    }
+                    else
+                    {
+                        _ui.AddToast("No zone at this location", _uiTick + 100);
+                    }
+
+                    DrawUI();
+                    return;
+                }
                 else if (_ui.PlaceMode == PlacementMode.StockpileCopy)
                 {
                     // Check if clicking on a stockpile
@@ -1793,6 +2116,18 @@ namespace HumanFortress.App.States
             {
                 DrawUI();
                 return;
+            }
+
+            // In normal mode, clicking a zone cell opens detail popup
+            if (_ui.Context == UiContext.Global && _ui.QuickMenu == QuickMenuKind.Zones)
+            {
+                int zoneId = _world?.Zones.GetZoneAtPosition(worldPos.X, worldPos.Y, _currentZ) ?? 0;
+                if (zoneId > 0)
+                {
+                    _zonesUI?.OpenDetailPopup(zoneId);
+                    DrawUI();
+                    return;
+                }
             }
 
             _tilePanelWorld = worldPos;
@@ -2103,17 +2438,29 @@ namespace HumanFortress.App.States
             }
             else
             {
-                // L3 menu: all WIP for now
-                if (keyboard.IsKeyPressed(Keys.Z) || keyboard.IsKeyPressed(Keys.X) || keyboard.IsKeyPressed(Keys.C) ||
-                    keyboard.IsKeyPressed(Keys.V) || keyboard.IsKeyPressed(Keys.F) || keyboard.IsKeyPressed(Keys.G) ||
-                    keyboard.IsKeyPressed(Keys.R) || keyboard.IsKeyPressed(Keys.T))
+                // L3 menu: handle zone creation
+                char[] zoneKeys = { 'z', 'x', 'c', 'v', 'f', 'g', 'r', 't' };
+                foreach (var c in zoneKeys)
                 {
-                    _ui.AddToast("Zone feature: WIP", _uiTick + 120);
-                    changed = true;
+                    if (keyboard.IsKeyPressed((Keys)char.ToUpper(c)))
+                    {
+                        var defId = _zonesUI?.GetZoneDefIdFromKey(_ui.ZoneMenu, c);
+                        if (defId != null)
+                        {
+                            _ui.SelectedZoneDefId = defId;
+                            _ui.StartPlacement(PlacementMode.ZoneFirstCorner, _currentZ);
+                            _ui.AddToast($"Placing {defId} zone - select first corner", _uiTick + 150);
+                            changed = true;
+                        }
+                        break;
+                    }
                 }
-                else if (keyboard.IsKeyPressed(Keys.OemComma))
+
+                // Remove zone mode
+                if (keyboard.IsKeyPressed(Keys.OemComma))
                 {
-                    _ui.AddToast("Remove zone: WIP", _uiTick + 120);
+                    _ui.StartPlacement(PlacementMode.ZoneDelete, _currentZ);
+                    _ui.AddToast("Click zone to delete", _uiTick + 150);
                     changed = true;
                 }
             }

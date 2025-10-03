@@ -22,6 +22,7 @@ namespace HumanFortress.Core.Content
 
         private readonly Dictionary<string, MaterialData> _materials = new();
         private readonly Dictionary<string, GeologyData> _geology = new();
+        private readonly Dictionary<string, ZoneDefinitionData> _zones = new();
         private readonly Dictionary<string, JObject> _tuning = new();
         private readonly List<ContentError> _errors = new();
 
@@ -34,6 +35,7 @@ namespace HumanFortress.Core.Content
 
         public IReadOnlyDictionary<string, MaterialData> Materials => _materials;
         public IReadOnlyDictionary<string, GeologyData> GeologyEntries => _geology;
+        public IReadOnlyDictionary<string, ZoneDefinitionData> Zones => _zones;
         public IReadOnlyList<ContentError> Errors => _errors;
 
         private ContentRegistry() { }
@@ -64,6 +66,9 @@ namespace HumanFortress.Core.Content
             // Load geology/terrain
             LoadGeology(Path.Combine(registriesPath, "geology.json"), schemasPath);
 
+            // Load zones
+            LoadZones(Path.Combine(registriesPath, "zones.json"));
+
             // Assign stable handles
             AssignHandles();
 
@@ -73,11 +78,19 @@ namespace HumanFortress.Core.Content
             // Validate cross-references
             ValidateCrossReferences();
 
-            Console.WriteLine($"[ContentRegistry] Loaded: {_materials.Count} materials, {_geology.Count} geology entries");
+            Console.WriteLine($"[ContentRegistry] Loaded: {_materials.Count} materials, {_geology.Count} geology entries, {_zones.Count} zone definitions");
             if (_errors.Count > 0)
             {
                 Console.WriteLine($"[ContentRegistry] {_errors.Count} errors during loading");
             }
+        }
+
+        /// <summary>
+        /// Get zone definition data by ID.
+        /// </summary>
+        public ZoneDefinitionData? GetZoneDefinition(string id)
+        {
+            return _zones.TryGetValue(id, out var zone) ? zone : null;
         }
 
         private void BuildGeologyMaterialKindIndex()
@@ -222,6 +235,54 @@ namespace HumanFortress.Core.Content
             catch (Exception ex)
             {
                 _errors.Add(new ContentError("Geology", "geology.json", null, ex.Message));
+            }
+        }
+
+        private void LoadZones(string path)
+        {
+            if (!File.Exists(path))
+            {
+                _errors.Add(new ContentError("Zones", "zones.json", null, "File not found"));
+                return;
+            }
+
+            try
+            {
+                var json = File.ReadAllText(path);
+                var root = JObject.Parse(json);
+                var zonesArray = root["zones"] as JArray;
+
+                if (zonesArray != null)
+                {
+                    foreach (var zoneToken in zonesArray)
+                    {
+                        var zone = zoneToken.ToObject<ZoneDefinitionData>();
+                        if (zone == null)
+                        {
+                            _errors.Add(new ContentError("Zones", "zones.json", null, "Failed to parse zone definition"));
+                            continue;
+                        }
+
+                        if (string.IsNullOrEmpty(zone.Id))
+                        {
+                            _errors.Add(new ContentError("Zones", "zones.json", null, "Zone missing ID"));
+                            continue;
+                        }
+
+                        if (_zones.ContainsKey(zone.Id))
+                        {
+                            _errors.Add(new ContentError("Zones", "zones.json", zone.Id,
+                                $"Duplicate zone ID: {zone.Id}"));
+                            continue;
+                        }
+
+                        _zones[zone.Id] = zone;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _errors.Add(new ContentError("Zones", "zones.json", null, ex.Message));
             }
         }
 

@@ -12,6 +12,7 @@ namespace HumanFortress.App.UI
     {
         public event Action<Point>? MouseMovedLocal;   // local cell coords
         public event Action<Point>? LeftClickedLocal;  // local cell coords
+        public event Action<Point>? RightClickedLocal; // local cell coords
 
         public UiOverlaySurface(int width, int height) : base(width, height)
         {
@@ -33,6 +34,18 @@ namespace HumanFortress.App.UI
             base.OnMouseLeftClicked(state);
             var local = state.SurfaceCellPosition - Position;
             LeftClickedLocal?.Invoke(local);
+        }
+
+        public override bool ProcessMouse(MouseScreenObjectState state)
+        {
+            // Check for right-click and fire event
+            if (state.Mouse.RightClicked)
+            {
+                var local = state.SurfaceCellPosition - Position;
+                RightClickedLocal?.Invoke(local);
+            }
+
+            return base.ProcessMouse(state);
         }
     }
 }

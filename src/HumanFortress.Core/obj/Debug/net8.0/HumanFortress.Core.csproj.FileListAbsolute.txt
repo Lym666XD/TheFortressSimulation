@@ -2,6 +2,7 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\bin\Debug\net8.0\HumanFortress.Core.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\bin\Debug\net8.0\HumanFortress.Core.pdb
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\bin\Debug\net8.0\HumanFortress.Core.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.csproj.AssemblyReference.cache
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.AssemblyInfoInputs.cache
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.AssemblyInfo.cs
@@ -11,4 +12,3 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.xml
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.pdb
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\ref\HumanFortress.Core.dll
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Core\obj\Debug\net8.0\HumanFortress.Core.csproj.AssemblyReference.cache

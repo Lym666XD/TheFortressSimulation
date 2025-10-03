@@ -55,6 +55,12 @@
             Bumped when topology changes.
             </summary>
         </member>
+        <member name="P:HumanFortress.Navigation.ChunkNavData.SourceConnectivityVersion">
+            <summary>
+            Snapshot of the simulation chunk's connectivity version that this nav was built from.
+            Used to detect staleness vs Simulation.World.Chunk.ConnectivityVersion.
+            </summary>
+        </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.Key">
             <summary>
             Chunk position in world.
@@ -258,6 +264,11 @@
             <summary>
             Manages navigation data for all chunks.
             Creates and updates ChunkNavData during RebuildDerived phase.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Navigation.NavigationManager.LogCallback">
+            <summary>
+            Optional logging callback (set by App layer to write to fortress_debug.log)
             </summary>
         </member>
         <member name="M:HumanFortress.Navigation.NavigationManager.GetOrCreateNavData(HumanFortress.Navigation.ChunkKey)">

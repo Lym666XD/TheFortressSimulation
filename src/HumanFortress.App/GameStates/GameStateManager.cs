@@ -187,7 +187,14 @@ public sealed class GameStateManager
             _world.Items.SetDependencies(_world, HumanFortress.Core.Content.Registry.ContentRegistry.Instance);
             _world.Items.LoadDefinitions(dataPath);
 
-            Logger.Log($"[GameStateManager] Loaded {_world.Creatures.DefinitionCount} creatures, {_world.Items.DefinitionCount} items");
+            // Register zone definitions into ZoneManager
+            var contentRegistry = HumanFortress.Core.Content.ContentRegistry.Instance;
+            foreach (var zoneData in contentRegistry.Zones.Values)
+            {
+                _world.Zones.Manager.RegisterDefinition(zoneData);
+            }
+
+            Logger.Log($"[GameStateManager] Loaded {_world.Creatures.DefinitionCount} creatures, {_world.Items.DefinitionCount} items, {_world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
         }
         else
         {
@@ -275,6 +282,30 @@ public sealed class GameStateManager
         public ulong CurrentTick => 0; // Not currently propagated by scheduler
         public IWorldReader World => _world;
         public IEventBus EventBus => _eventBus;
+    }
+
+    /// <summary>
+    /// Shutdown and cleanup all systems before application exit.
+    /// </summary>
+    public void Shutdown()
+    {
+        Logger.Log("[GameStateManager] Shutdown requested");
+
+        // Stop simulation if running
+        if (_tickScheduler.IsRunning)
+        {
+            Logger.Log("[GameStateManager] Stopping tick scheduler");
+            _tickScheduler.Stop();
+        }
+
+        // Exit current state
+        if (_currentState != null)
+        {
+            Logger.Log($"[GameStateManager] Exiting current state: {_currentState.Type}");
+            _currentState.Exit();
+        }
+
+        Logger.Log("[GameStateManager] Shutdown complete");
     }
 
     private void OnPostTickApplyDiffs(ulong tick)

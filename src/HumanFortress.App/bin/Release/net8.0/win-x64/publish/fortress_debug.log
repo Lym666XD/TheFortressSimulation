@@ -1,0 +1,997 @@
+[STARTUP] HumanFortress starting at 3/10/2025 5:06:25 PM
+[STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\fortress_debug.log
+[STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\content
+[GameStateManager] ChangeState from  to MainMenu
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Enter on MainMenu
+Entered Main Menu
+[GameStateManager] Enter completed for MainMenu
+MainMenuState: Key pressed - N
+[GameStateManager] ChangeState from MainMenu to WorldGen
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on MainMenu
+[GameStateManager] Calling Enter on WorldGen
+[GameStateManager] Enter completed for WorldGen
+[GameStateManager] ChangeState from WorldGen to WorldMap
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldGen
+[GameStateManager] Calling Enter on WorldMap
+[GameStateManager] Enter completed for WorldMap
+[GameStateManager] ChangeState from WorldMap to EmbarkPrep
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on WorldMap
+[GameStateManager] Calling Enter on EmbarkPrep
+[GameStateManager] Enter completed for EmbarkPrep
+[GameStateManager] ChangeState from EmbarkPrep to FortressPlay
+[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
+[GameStateManager] Calling Exit on EmbarkPrep
+[GameStateManager] Calling Enter on FortressPlay
+Entered Fortress Play
+[GameStateManager] Loading creature and item definitions from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Release\net8.0\win-x64\publish\data\core
+[GameStateManager] Loaded 5 creatures, 308 items, 19 zone definitions
+[FOCUS] FortressState focused
+[GameStateManager] Enter completed for FortressPlay
+[GameStateManager] Starting simulation for FortressPlay
+[INIT] MapSurface size=116x36 pos=(2,2)
+[INIT] UiOverlay size=120x40
+[HAULJOBS][0] No planned moves dequeued.
+[HAULJOBS][1] No planned moves dequeued.
+[HAULJOBS][2] No planned moves dequeued.
+[HAULJOBS][3] No planned moves dequeued.
+[HAULJOBS][4] No planned moves dequeued.
+[HAULJOBS][5] No planned moves dequeued.
+[HAULJOBS][6] No planned moves dequeued.
+[HAULJOBS][7] No planned moves dequeued.
+[HAULJOBS][8] No planned moves dequeued.
+[HAULJOBS][9] No planned moves dequeued.
+[HAULJOBS][10] No planned moves dequeued.
+[HAULJOBS][11] No planned moves dequeued.
+[HAULJOBS][12] No planned moves dequeued.
+[HAULJOBS][13] No planned moves dequeued.
+[HAULJOBS][14] No planned moves dequeued.
+[HAULJOBS][15] No planned moves dequeued.
+[HAULJOBS][16] No planned moves dequeued.
+[NAV] RebuildChunkNavData chunk=(2,0,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,19) version:0→1
+[HAULJOBS][17] No planned moves dequeued.
+[NAV] RebuildChunkNavData chunk=(0,0,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,17) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,20) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,28) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,46) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,26) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,12) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,45) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,25) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,5) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,49) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,8) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,6) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,48) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,0) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,43) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,21) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,7) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,14) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,16) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,36) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,3,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,33) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,42) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,10) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,23) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,1,37) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,38) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,3,11) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,0,35) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,29) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,47) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,13) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,41) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,1) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,3) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,4) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,24) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,32) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,0,27) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,2,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,2,2) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,31) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,19) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,1,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,15) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,18) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,2,34) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,0,9) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,1,44) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,2,40) version:0→1
+[NAV] RebuildChunkNavData chunk=(1,1,39) version:0→1
+[NAV] RebuildChunkNavData chunk=(2,0,22) version:0→1
+[NAV] RebuildChunkNavData chunk=(3,3,30) version:0→1
+[NAV] RebuildChunkNavData chunk=(0,3,49) version:0→1
+[HAULJOBS][18] No planned moves dequeued.
+[HAULJOBS][19] No planned moves dequeued.
+[HAULJOBS][20] No planned moves dequeued.
+[HAULJOBS][21] No planned moves dequeued.
+[HAULJOBS][22] No planned moves dequeued.
+[HAULJOBS][23] No planned moves dequeued.
+[HAULJOBS][24] No planned moves dequeued.
+[HAULJOBS][25] No planned moves dequeued.
+[HAULJOBS][26] No planned moves dequeued.
+[HAULJOBS][27] No planned moves dequeued.
+[HAULJOBS][28] No planned moves dequeued.
+[HAULJOBS][29] No planned moves dequeued.
+[HAULJOBS][30] No planned moves dequeued.
+[HAULJOBS][31] No planned moves dequeued.
+[HAULJOBS][32] No planned moves dequeued.
+[HAULJOBS][33] No planned moves dequeued.
+[HAULJOBS][34] No planned moves dequeued.
+[HAULJOBS][35] No planned moves dequeued.
+[HAULJOBS][36] No planned moves dequeued.
+[HAULJOBS][37] No planned moves dequeued.
+[HAULJOBS][38] No planned moves dequeued.
+[HAULJOBS][39] No planned moves dequeued.
+[HAULJOBS][40] No planned moves dequeued.
+[HAULJOBS][41] No planned moves dequeued.
+[HAULJOBS][42] No planned moves dequeued.
+[HAULJOBS][43] No planned moves dequeued.
+[HAULJOBS][44] No planned moves dequeued.
+[HAULJOBS][45] No planned moves dequeued.
+[HAULJOBS][46] No planned moves dequeued.
+[HAULJOBS][47] No planned moves dequeued.
+[HAULJOBS][48] No planned moves dequeued.
+[HAULJOBS][49] No planned moves dequeued.
+[HAULJOBS][50] No planned moves dequeued.
+[HAULJOBS][51] No planned moves dequeued.
+[HAULJOBS][52] No planned moves dequeued.
+[HAULJOBS][53] No planned moves dequeued.
+[HAULJOBS][54] No planned moves dequeued.
+[HAULJOBS][55] No planned moves dequeued.
+[HAULJOBS][56] No planned moves dequeued.
+[HAULJOBS][57] No planned moves dequeued.
+[HAULJOBS][58] No planned moves dequeued.
+[HAULJOBS][59] No planned moves dequeued.
+[HAULJOBS][60] No planned moves dequeued.
+[HAULJOBS][61] No planned moves dequeued.
+[HAULJOBS][62] No planned moves dequeued.
+[HAULJOBS][63] No planned moves dequeued.
+[HAULJOBS][64] No planned moves dequeued.
+[HAULJOBS][65] No planned moves dequeued.
+[HAULJOBS][66] No planned moves dequeued.
+[HAULJOBS][67] No planned moves dequeued.
+[HAULJOBS][68] No planned moves dequeued.
+[HAULJOBS][69] No planned moves dequeued.
+[HAULJOBS][70] No planned moves dequeued.
+[HAULJOBS][71] No planned moves dequeued.
+[HAULJOBS][72] No planned moves dequeued.
+[HAULJOBS][73] No planned moves dequeued.
+[HAULJOBS][74] No planned moves dequeued.
+[HAULJOBS][75] No planned moves dequeued.
+[HAULJOBS][76] No planned moves dequeued.
+[HAULJOBS][77] No planned moves dequeued.
+[HAULJOBS][78] No planned moves dequeued.
+[HAULJOBS][79] No planned moves dequeued.
+[HAULJOBS][80] No planned moves dequeued.
+[HAULJOBS][81] No planned moves dequeued.
+[HAULJOBS][82] No planned moves dequeued.
+[HAULJOBS][83] No planned moves dequeued.
+[HAULJOBS][84] No planned moves dequeued.
+[HAULJOBS][85] No planned moves dequeued.
+[HAULJOBS][86] No planned moves dequeued.
+[HAULJOBS][87] No planned moves dequeued.
+[HAULJOBS][88] No planned moves dequeued.
+[HAULJOBS][89] No planned moves dequeued.
+[HAULJOBS][90] No planned moves dequeued.
+[HAULJOBS][91] No planned moves dequeued.
+[HAULJOBS][92] No planned moves dequeued.
+[HAULJOBS][93] No planned moves dequeued.
+[HAULJOBS][94] No planned moves dequeued.
+[HAULJOBS][95] No planned moves dequeued.
+[HAULJOBS][96] No planned moves dequeued.
+[HAULJOBS][97] No planned moves dequeued.
+[HAULJOBS][98] No planned moves dequeued.
+[HAULJOBS][99] No planned moves dequeued.
+[HAULJOBS][100] No planned moves dequeued.
+[HAULJOBS][101] No planned moves dequeued.
+[HAULJOBS][102] No planned moves dequeued.
+[HAULJOBS][103] No planned moves dequeued.
+[HAULJOBS][104] No planned moves dequeued.
+[HAULJOBS][105] No planned moves dequeued.
+[HAULJOBS][106] No planned moves dequeued.
+[HAULJOBS][107] No planned moves dequeued.
+[HAULJOBS][108] No planned moves dequeued.
+[HAULJOBS][109] No planned moves dequeued.
+[HAULJOBS][110] No planned moves dequeued.
+[HAULJOBS][111] No planned moves dequeued.
+[HAULJOBS][112] No planned moves dequeued.
+[HAULJOBS][113] No planned moves dequeued.
+[HAULJOBS][114] No planned moves dequeued.
+[HAULJOBS][115] No planned moves dequeued.
+[HAULJOBS][116] No planned moves dequeued.
+[HAULJOBS][117] No planned moves dequeued.
+[HAULJOBS][118] No planned moves dequeued.
+[HAULJOBS][119] No planned moves dequeued.
+[HAULJOBS][120] No planned moves dequeued.
+[HAULJOBS][121] No planned moves dequeued.
+[HAULJOBS][122] No planned moves dequeued.
+[HAULJOBS][123] No planned moves dequeued.
+[HAULJOBS][124] No planned moves dequeued.
+[HAULJOBS][125] No planned moves dequeued.
+[HAULJOBS][126] No planned moves dequeued.
+[HAULJOBS][127] No planned moves dequeued.
+[HAULJOBS][128] No planned moves dequeued.
+[HAULJOBS][129] No planned moves dequeued.
+[HAULJOBS][130] No planned moves dequeued.
+[HAULJOBS][131] No planned moves dequeued.
+[HAULJOBS][132] No planned moves dequeued.
+[HAULJOBS][133] No planned moves dequeued.
+[HAULJOBS][134] No planned moves dequeued.
+[HAULJOBS][135] No planned moves dequeued.
+[HAULJOBS][136] No planned moves dequeued.
+[HAULJOBS][137] No planned moves dequeued.
+[HAULJOBS][138] No planned moves dequeued.
+[HAULJOBS][139] No planned moves dequeued.
+[HAULJOBS][140] No planned moves dequeued.
+[HAULJOBS][141] No planned moves dequeued.
+[HAULJOBS][142] No planned moves dequeued.
+[HAULJOBS][143] No planned moves dequeued.
+[HAULJOBS][144] No planned moves dequeued.
+[HAULJOBS][145] No planned moves dequeued.
+[HAULJOBS][146] No planned moves dequeued.
+[HAULJOBS][147] No planned moves dequeued.
+[HAULJOBS][148] No planned moves dequeued.
+[HAULJOBS][149] No planned moves dequeued.
+[HAULJOBS][150] No planned moves dequeued.
+[HAULJOBS][151] No planned moves dequeued.
+[HAULJOBS][152] No planned moves dequeued.
+[HAULJOBS][153] No planned moves dequeued.
+[HAULJOBS][154] No planned moves dequeued.
+[HAULJOBS][155] No planned moves dequeued.
+[HAULJOBS][156] No planned moves dequeued.
+[HAULJOBS][157] No planned moves dequeued.
+[HAULJOBS][158] No planned moves dequeued.
+[HAULJOBS][159] No planned moves dequeued.
+[SHUTDOWN] Game shutting down normally

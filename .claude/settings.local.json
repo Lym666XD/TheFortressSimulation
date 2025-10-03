@@ -43,7 +43,10 @@
       "WebFetch(domain:dwarffortresswiki.org)",
       "WebFetch(domain:www.dwarffortresswiki.org)",
       "WebFetch(domain:rimworldwiki.com)",
-      "WebFetch(domain:docs.cataclysmdda.org)"
+      "WebFetch(domain:docs.cataclysmdda.org)",
+      "Bash(./build.bat)",
+      "Bash(Select-Object -Last 30)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

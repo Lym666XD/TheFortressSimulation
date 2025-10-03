@@ -1,5 +1,6 @@
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Stockpile;
+using HumanFortress.Simulation.Zones;
 
 namespace HumanFortress.Simulation.World;
 
@@ -18,6 +19,7 @@ public sealed class Chunk
     private readonly Dictionary<int, List<ItemStackRef>> _items;
     private readonly object _writeLock = new();
     private ChunkStockpileData? _stockpileData;
+    private ChunkZoneData? _zoneData;
 
     public ChunkKey Key { get; }
     public int LODLevel { get; set; }
@@ -151,6 +153,25 @@ public sealed class Chunk
         lock (_writeLock)
         {
             _stockpileData ??= new ChunkStockpileData();
+        }
+    }
+
+    /// <summary>
+    /// Get zone data for this chunk. Thread-safe for reads.
+    /// </summary>
+    public ChunkZoneData? GetZoneData()
+    {
+        return _zoneData;
+    }
+
+    /// <summary>
+    /// Initialize zone data if not present. Write phase only.
+    /// </summary>
+    public void EnsureZoneData()
+    {
+        lock (_writeLock)
+        {
+            _zoneData ??= new ChunkZoneData();
         }
     }
 }

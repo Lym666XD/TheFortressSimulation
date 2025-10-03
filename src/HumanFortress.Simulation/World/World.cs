@@ -24,6 +24,7 @@ public sealed class World : IWorldReader
     public HumanFortress.Simulation.Orders.OrdersManager Orders { get; }
     public HumanFortress.Simulation.Stockpile.StockpileManager Stockpiles { get; }
     public HumanFortress.Simulation.Jobs.ReservationManager Reservations { get; }
+    public HumanFortress.Simulation.Zones.ZoneCoordinator Zones { get; }
 
     public World(int sizeInChunks, int maxZ)
     {
@@ -40,6 +41,9 @@ public sealed class World : IWorldReader
         Orders = new HumanFortress.Simulation.Orders.OrdersManager();
         Stockpiles = new HumanFortress.Simulation.Stockpile.StockpileManager();
         Reservations = new HumanFortress.Simulation.Jobs.ReservationManager();
+
+        var zoneManager = new HumanFortress.Simulation.Zones.ZoneManager();
+        Zones = new HumanFortress.Simulation.Zones.ZoneCoordinator(this, zoneManager);
 
         // Set self-reference
         Creatures.SetWorld(this);

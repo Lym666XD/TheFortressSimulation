@@ -1,8 +1,3 @@
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.csproj.AssemblyReference.cache
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.AssemblyInfoInputs.cache
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.AssemblyInfo.cs
-C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.csproj.CoreCompileInputs.cache
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.WorldGen.deps.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.WorldGen.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.WorldGen.pdb
@@ -13,6 +8,11 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.Worl
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.Core.xml
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.Simulation.pdb
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\bin\Debug\net8.0\HumanFortress.Simulation.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.csproj.AssemblyReference.cache
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.AssemblyInfoInputs.cache
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.AssemblyInfo.cs
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.csproj.CoreCompileInputs.cache
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFor.F32FFDAB.Up2Date
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\HumanFortress.WorldGen.dll
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.WorldGen\obj\Debug\net8.0\refint\HumanFortress.WorldGen.dll

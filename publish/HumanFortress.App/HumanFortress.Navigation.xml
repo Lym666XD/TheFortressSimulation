@@ -55,6 +55,12 @@
             Bumped when topology changes.
             </summary>
         </member>
+        <member name="P:HumanFortress.Navigation.ChunkNavData.SourceConnectivityVersion">
+            <summary>
+            Snapshot of the simulation chunk's connectivity version that this nav was built from.
+            Used to detect staleness vs Simulation.World.Chunk.ConnectivityVersion.
+            </summary>
+        </member>
         <member name="P:HumanFortress.Navigation.ChunkNavData.Key">
             <summary>
             Chunk position in world.

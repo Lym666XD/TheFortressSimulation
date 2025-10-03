@@ -87,6 +87,11 @@
             Load all content from the content directory structure.
             </summary>
         </member>
+        <member name="M:HumanFortress.Core.Content.ContentRegistry.GetZoneDefinition(System.String)">
+            <summary>
+            Get zone definition data by ID.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Core.Content.MaterialData">
             <summary>
             Material data from JSON per MATERIALS_SPEC.md.
@@ -596,6 +601,11 @@
         <member name="T:HumanFortress.Core.Content.Registry.TerrainBitLayout">
             <summary>
             Describes the bit layout of the TerrainBits field
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Core.Content.ZoneDefinitionData">
+            <summary>
+            Content-driven zone definition data (DTO for JSON loading).
             </summary>
         </member>
         <member name="T:HumanFortress.Core.Events.EventBus">

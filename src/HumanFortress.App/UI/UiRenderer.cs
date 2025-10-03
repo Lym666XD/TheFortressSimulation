@@ -21,10 +21,11 @@ namespace HumanFortress.App.UI;
             DrawSquareButton(surf, ref x, y, "F1", ui.OpenDrawer == DrawerId.Creature, buttonWidth);
             DrawSquareButton(surf, ref x, y, "F2", ui.OpenDrawer == DrawerId.Stock, buttonWidth);
             DrawSquareButton(surf, ref x, y, "F3", ui.OpenDrawer == DrawerId.Work, buttonWidth);
-            DrawSquareButton(surf, ref x, y, "F4", ui.OpenDrawer == DrawerId.Military, buttonWidth);
-            DrawSquareButton(surf, ref x, y, "F5", ui.OpenDrawer == DrawerId.Country, buttonWidth);
-            DrawSquareButton(surf, ref x, y, "F6", ui.OpenDrawer == DrawerId.World, buttonWidth);
-            DrawSquareButton(surf, ref x, y, "F7", ui.OpenDrawer == DrawerId.Log, buttonWidth);
+            DrawSquareButton(surf, ref x, y, "F4", ui.OpenDrawer == DrawerId.PlacementManagement, buttonWidth);
+            DrawSquareButton(surf, ref x, y, "F5", ui.OpenDrawer == DrawerId.Military, buttonWidth);
+            DrawSquareButton(surf, ref x, y, "F6", ui.OpenDrawer == DrawerId.Country, buttonWidth);
+            DrawSquareButton(surf, ref x, y, "F7", ui.OpenDrawer == DrawerId.World, buttonWidth);
+            DrawSquareButton(surf, ref x, y, "F8", ui.OpenDrawer == DrawerId.Log, buttonWidth);
         }
 
         // Draw dock icons aligned to a specific anchor rectangle (eg. the map surface)
@@ -38,10 +39,11 @@ namespace HumanFortress.App.UI;
         DrawButton(surf, ref x, y, "[F1]", ui.OpenDrawer == DrawerId.Creature);
         DrawButton(surf, ref x, y, "[F2]", ui.OpenDrawer == DrawerId.Stock);
         DrawButton(surf, ref x, y, "[F3]", ui.OpenDrawer == DrawerId.Work);
-        DrawButton(surf, ref x, y, "[F4]", ui.OpenDrawer == DrawerId.Military);
-        DrawButton(surf, ref x, y, "[F5]", ui.OpenDrawer == DrawerId.Country);
-        DrawButton(surf, ref x, y, "[F6]", ui.OpenDrawer == DrawerId.World);
-        DrawButton(surf, ref x, y, "[F7]", ui.OpenDrawer == DrawerId.Log);
+        DrawButton(surf, ref x, y, "[F4]", ui.OpenDrawer == DrawerId.PlacementManagement);
+        DrawButton(surf, ref x, y, "[F5]", ui.OpenDrawer == DrawerId.Military);
+        DrawButton(surf, ref x, y, "[F6]", ui.OpenDrawer == DrawerId.Country);
+        DrawButton(surf, ref x, y, "[F7]", ui.OpenDrawer == DrawerId.World);
+        DrawButton(surf, ref x, y, "[F8]", ui.OpenDrawer == DrawerId.Log);
     }
 
         // Draw quick icons aligned near bottom-center of anchor rectangle
@@ -108,6 +110,7 @@ namespace HumanFortress.App.UI;
             DrawerId.Creature => "Creature Management",
             DrawerId.Stock => "Stock/Items Management",
             DrawerId.Work => "Work Management",
+            DrawerId.PlacementManagement => "Placement Management",
             DrawerId.Military => "Military Management",
             DrawerId.Country => "Country Management",
             DrawerId.World => "World Map / Diplomacy",
@@ -129,6 +132,10 @@ namespace HumanFortress.App.UI;
         else if (ui.OpenDrawer == DrawerId.Work)
         {
             tabs = new[] { "Labor", "All Orders", "Settings" };
+        }
+        else if (ui.OpenDrawer == DrawerId.PlacementManagement)
+        {
+            tabs = new[] { "Zones", "Stockpiles", "Settings" };
         }
         else
         {
@@ -177,6 +184,15 @@ namespace HumanFortress.App.UI;
             {
                 surf.Print(2, y0 + 2, "(Configure coming soon)", Color.Gray);
             }
+        }
+        else if (ui.OpenDrawer == DrawerId.PlacementManagement && world != null)
+        {
+            if (ui.DrawerTab == 0)
+                DrawZonesTab(surf, world, y0 + 2, height - 3);
+            else if (ui.DrawerTab == 1 && stockpileManager != null)
+                DrawStockpilesTab(surf, stockpileManager, y0 + 2);
+            else
+                surf.Print(2, y0 + 2, "(Settings coming soon)", Color.Gray);
         }
         else
         {
@@ -768,5 +784,40 @@ namespace HumanFortress.App.UI;
             surf.Print(x + 1, y, text, fg);
             x += text.Length + 2;
         surf.SetGlyph(x - 1, y, ' ', Color.White, bg);
+    }
+
+    private static void DrawZonesTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight)
+    {
+        surf.Print(2, startY, "All Zones:", Color.Yellow);
+
+        var zones = world.Zones.Manager.GetAllZones().ToList();
+        if (zones.Count == 0)
+        {
+            surf.Print(4, startY + 2, "No zones created yet", Color.Gray);
+            surf.Print(4, startY + 3, "Press X to open zone menu and create zones", Color.DarkGray);
+            return;
+        }
+
+        int line = startY + 2;
+        int maxLines = startY + maxHeight - 2;
+
+        surf.Print(4, line++, $"{"ID",-6} {"Name",-25} {"Type",-20} {"Cells",8}", Color.Gray);
+
+        foreach (var zone in zones.OrderBy(z => z.ZoneId))
+        {
+            if (line >= maxLines) break;
+
+            var def = world.Zones.Manager.GetDefinition(zone.DefId);
+            string typeName = def?.DisplayName ?? zone.DefId;
+            string name = zone.Name.Length > 24 ? zone.Name.Substring(0, 21) + "..." : zone.Name;
+            string type = typeName.Length > 19 ? typeName.Substring(0, 16) + "..." : typeName;
+
+            surf.Print(4, line++, $"{zone.ZoneId,-6} {name,-25} {type,-20} {zone.TotalCells,8}", Color.White);
+        }
+
+        if (zones.Count > (maxLines - startY - 2))
+        {
+            surf.Print(4, maxLines, $"... and {zones.Count - (maxLines - startY - 2)} more", Color.DarkGray);
+        }
     }
 }

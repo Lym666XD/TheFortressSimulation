@@ -139,7 +139,7 @@ public sealed class TickScheduler
         _tickThread = new Thread(TickLoop)
         {
             Name = "SimulationTick",
-            IsBackground = false
+            IsBackground = true  // Background thread will not prevent process exit
         };
         _tickThread.Start();
     }

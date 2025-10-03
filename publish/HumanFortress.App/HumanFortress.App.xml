@@ -16,6 +16,22 @@
             Executed on the main thread; OrdersManager is thread-safe for enqueue.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.Commands.CreateZoneCommand">
+            <summary>
+            Command to create a new zone with specified cells.
+            Executed on the main thread; ZoneManager is thread-safe for operations.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Commands.DeleteZoneCommand">
+            <summary>
+            Command to delete a zone entirely.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Commands.UpdateZoneCellsCommand">
+            <summary>
+            Command to add or remove cells from an existing zone.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.GameStates.FortressPlayState">
             <summary>
             Fortress play state with simulation loop per UPDATE_ORDER.md.
@@ -121,6 +137,11 @@
             Simulation context implementation.
             </summary>
         </member>
+        <member name="M:HumanFortress.App.GameStates.GameStateManager.Shutdown">
+            <summary>
+            Shutdown and cleanup all systems before application exit.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.Input.InputBindingsService">
             <summary>
             Loads and provides access to input bindings from content/registries/input.bindings.json.
@@ -198,6 +219,115 @@
         <member name="T:HumanFortress.App.UI.BuildUI">
             <summary>
             Renders the Build quick menu with L2 submenus (no L3 for now).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.ButtonLayoutCalculator">
+            <summary>
+            Single source of truth for all UI button positions and hit-testing.
+            Eliminates duplication between rendering and click detection logic.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.ButtonLayoutCalculator.ButtonInfo">
+            <summary>
+            Button information returned by layout calculations
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.CalculateDockButtons(System.Int32,System.Int32)">
+            <summary>
+            Calculate F1-F8 dock button positions (bottom-left of screen)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.CalculateQuickButtons(System.Int32,System.Int32)">
+            <summary>
+            Calculate Z/X/C/V quick menu button positions (bottom-center of screen)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.HitTestDockButtons(SadRogue.Primitives.Point,System.Int32,System.Int32)">
+            <summary>
+            Hit-test for dock buttons (F1-F8). Returns button index (0-7) or null.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.HitTestQuickButtons(SadRogue.Primitives.Point,System.Int32,System.Int32)">
+            <summary>
+            Hit-test for quick menu buttons (Z/X/C/V). Returns button index (0-3) or null.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.CalculateDrawerTabs(System.Int32,System.Int32,System.String[],System.Int32)">
+            <summary>
+            Calculate drawer tab button positions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ButtonLayoutCalculator.HitTestDrawerTabs(SadRogue.Primitives.Point,System.Int32,System.Int32,System.String[],System.Int32)">
+            <summary>
+            Hit-test for drawer tabs. Returns tab index or null.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.IUICommand">
+            <summary>
+            Interface for UI-only commands that modify UI state.
+            Unlike ICommand (simulation commands), these execute immediately and don't go through CommandQueue.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.Commands.IUICommand.Execute(HumanFortress.App.UI.UIStateManager)">
+            <summary>
+            Execute the UI command, modifying UI state directly.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.App.UI.Commands.IUICommand.CommandType">
+            <summary>
+            Command type for logging and debugging.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.ToggleDrawerCommand">
+            <summary>
+            Command to toggle drawer panel (F1-F8 buttons)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.ToggleQuickMenuCommand">
+            <summary>
+            Command to toggle quick menu (Z/X/C/V buttons)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.OpenSubmenuCommand">
+            <summary>
+            Command to open submenu (L2 → L3 navigation)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.NavigateBackCommand">
+            <summary>
+            Command to navigate back in UI hierarchy (hierarchical back)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.CancelCommand">
+            <summary>
+            Command to cancel current operation (ESC / Right-click)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.SwitchDrawerTabCommand">
+            <summary>
+            Command to switch drawer tab
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.ToggleHelpCommand">
+            <summary>
+            Command to toggle help panel
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.ToggleDebugCommand">
+            <summary>
+            Command to toggle debug panel
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Commands.TogglePauseCommand">
+            <summary>
+            Command to toggle pause menu
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Components.InputHandlerComponent">
+            <summary>
+            SadConsole component that handles all UI input (mouse + keyboard).
+            Converts input events into UI commands and executes them through UIStateManager.
+            Replaces the scattered click handlers in FortressState.
             </summary>
         </member>
         <member name="T:HumanFortress.App.UI.MapScreenSurface">
@@ -279,9 +409,125 @@
             Full-screen UI overlay surface that captures mouse in overlay coordinates.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.UI.UIStateManager">
+            <summary>
+            Manages UI state transitions and provides a clean API for UI commands.
+            Wraps UiStore and adds validation, logging, and event notifications.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.ToggleDrawer(HumanFortress.App.UI.DrawerId)">
+            <summary>
+            Toggle drawer panel (F1-F8 buttons)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.ToggleQuickMenu(HumanFortress.App.UI.QuickMenuKind)">
+            <summary>
+            Toggle quick menu (Z/X/C/V buttons)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.OpenSubmenu(System.Int32)">
+            <summary>
+            Open submenu within current quick menu
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.NavigateBack">
+            <summary>
+            Navigate back in UI hierarchy (hierarchical back navigation)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.Cancel">
+            <summary>
+            Cancel current operation (ESC / Right-click)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.SwitchDrawerTab(System.Int32)">
+            <summary>
+            Switch drawer tab (Tab key or mouse click)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.StartPlacement(HumanFortress.App.UI.PlacementMode,System.Int32)">
+            <summary>
+            Start placement mode for zones/stockpiles/orders
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.CancelPlacement">
+            <summary>
+            Cancel placement and return to global context
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.SetHoverTile(SadRogue.Primitives.Point)">
+            <summary>
+            Set hover tile for cursor preview
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.ToggleHelp">
+            <summary>
+            Toggle help panel
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.ToggleDebug">
+            <summary>
+            Toggle debug panel
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.TogglePause">
+            <summary>
+            Toggle pause menu
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.AddToast(System.String,System.UInt64)">
+            <summary>
+            Add toast notification
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.UIStateManager.PruneToasts(System.UInt64)">
+            <summary>
+            Clean up expired toasts
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.UI.ZonesUI">
             <summary>
-            Renders the Zones quick menu with L2 and L3 submenus.
+            Renders the Zones quick menu with L2 and L3 submenus, zone overlay, and detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.GetZoneDefIdFromKey(HumanFortress.App.UI.ZoneSubmenu,System.Char)">
+            <summary>
+            Try to get zone definition ID from keyboard input.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.DrawPlacementMode(SadConsole.ScreenSurface,HumanFortress.App.UI.UiStore,SadRogue.Primitives.Point)">
+            <summary>
+            Draw placement mode prompt.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.RenderPlacementPreview(HumanFortress.App.UI.MapScreenSurface,SadRogue.Primitives.Point,SadRogue.Primitives.Point,SadRogue.Primitives.Rectangle,System.Boolean)">
+            <summary>
+            Render placement preview on map (only when zone menu is open).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.RenderOverlay(HumanFortress.App.UI.MapScreenSurface,HumanFortress.Simulation.World.World,System.Int32,SadRogue.Primitives.Rectangle,System.Boolean)">
+            <summary>
+            Render zone overlay on map (only when zone menu is open).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.DrawDetailPopup(SadConsole.ScreenSurface,HumanFortress.Simulation.World.World)">
+            <summary>
+            Draw zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.OpenDetailPopup(System.Int32)">
+            <summary>
+            Open zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.CloseDetailPopup">
+            <summary>
+            Close zone detail popup.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.ZonesUI.IsDetailPopupOpen">
+            <summary>
+            Check if detail popup is open.
             </summary>
         </member>
     </members>
