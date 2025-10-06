@@ -2311,8 +2311,8 @@ namespace HumanFortress.App.States
                         _ui.AddToast($"Mining order created ({totalCells} tiles)", _uiTick + 120);
                         Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
                         Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
-                        // Highlight for 100 ticks; encode action in kind for renderer fill policy
-                        _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 100);
+                        // Highlight for shorter time; encode action in kind for renderer fill policy
+                        _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 30);
                         _ui.CancelPlacement();
                         DrawUI();
                     }
@@ -2822,4 +2822,3 @@ namespace HumanFortress.App.States
         }
     }
 }
-

@@ -1,0 +1,400 @@
+[MINING][486] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][486] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][486] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][486] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][486] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][486] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][486] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][487] No planned moves dequeued.
+[MINING][487] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][487] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][487] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][487] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][488] No planned moves dequeued.
+[MINING][488] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][488] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][488] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][488] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][489] No planned moves dequeued.
+[MINING][489] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][489] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][489] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][489] No adjacency for target=(23,29,23) id=1; requeue
+[MINING][490] Retrying 4 deferred stairwell segments
+[HAULJOBS][490] No planned moves dequeued.
+[MINING][490] Planned digs dequeued: 16; available workers: 4; ids=[1:16]
+[MINING][490] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (20,27,22) current=SolidWall expected=StairsUD
+[MINING][490] Stairwell seg=Middle at (20,27,22) id=1 blocked: no vertical connection; defer
+[MINING][490] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (21,27,22) current=SolidWall expected=StairsUD
+[MINING][490] Stairwell seg=Middle at (21,27,22) id=1 blocked: no vertical connection; defer
+[MINING][490] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][490] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][490] No adjacency for target=(23,29,23) id=1; requeue
+[MINING][490] Check skip: seg=Bottom at (22,29,21) current=SolidWall expected=StairsUp
+[MINING][490] Stairwell seg=Bottom at (22,29,21) id=1 blocked: no vertical connection; defer
+[MINING][490] Check skip: seg=Bottom at (23,29,21) current=SolidWall expected=StairsUp
+[MINING][490] Stairwell seg=Bottom at (23,29,21) id=1 blocked: no vertical connection; defer
+[HAULJOBS][491] No planned moves dequeued.
+[MINING][491] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][491] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][491] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][491] No adjacency for target=(23,29,23) id=1; requeue
+[MINING][492] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[HAULJOBS][492] No planned moves dequeued.
+[MINING][492] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][492] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][492] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][493] No planned moves dequeued.
+[MINING][493] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][493] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][493] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][493] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][494] No planned moves dequeued.
+[MINING][494] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][494] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][494] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][494] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][495] No planned moves dequeued.
+[MINING][495] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][495] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][495] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][495] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][496] No planned moves dequeued.
+[MINING][496] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][496] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][496] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][496] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][497] No planned moves dequeued.
+[MINING][497] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][497] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][497] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][497] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][498] No planned moves dequeued.
+[MINING][498] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][498] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][498] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][498] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][499] No planned moves dequeued.
+[MINING][499] Planned digs dequeued: 12; available workers: 4; ids=[1:12]
+[MINING][499] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][499] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][499] No adjacency for target=(23,29,23) id=1; requeue
+[HAULJOBS][500] No planned moves dequeued.
+[MINING][500] Retrying 4 deferred stairwell segments
+[MINING][500] Planned digs dequeued: 16; available workers: 4; ids=[1:16]
+[MINING][500] Check skip: seg=Middle at (20,27,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(20,27,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (21,27,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(21,27,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (22,27,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(22,27,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (22,27,22) current=SolidWall expected=StairsUD
+[MINING][500] Stairwell seg=Middle at (22,27,22) id=1 blocked: no vertical connection; defer
+[MINING][500] Check skip: seg=Middle at (23,27,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(23,27,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (23,27,22) current=SolidWall expected=StairsUD
+[MINING][500] Stairwell seg=Middle at (23,27,22) id=1 blocked: no vertical connection; defer
+[MINING][500] Check skip: seg=Middle at (20,28,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(20,28,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (20,28,22) current=SolidWall expected=StairsUD
+[MINING][500] Stairwell seg=Middle at (20,28,22) id=1 blocked: no vertical connection; defer
+[MINING][500] Check skip: seg=Middle at (21,28,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(21,28,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (21,28,22) current=SolidWall expected=StairsUD
+[MINING][500] Stairwell seg=Middle at (21,28,22) id=1 blocked: no vertical connection; defer
+[MINING][500] Check skip: seg=Middle at (22,28,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(22,28,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (23,28,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(23,28,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (20,29,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(20,29,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (21,29,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(21,29,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (22,29,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(22,29,23) id=1; requeue
+[MINING][500] Check skip: seg=Middle at (23,29,23) current=SolidWall expected=StairsUD
+[MINING][500] No adjacency for target=(23,29,23) id=1; requeue
+[SHUTDOWN] Game window closed, shutting down systems
+[GameStateManager] Shutdown requested
+[GameStateManager] Stopping tick scheduler
+[GameStateManager] Exiting current state: FortressPlay
+[GameStateManager] Shutdown complete
+[SHUTDOWN] Game shutting down normally
