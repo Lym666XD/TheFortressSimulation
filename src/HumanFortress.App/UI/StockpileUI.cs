@@ -40,7 +40,7 @@ public sealed class StockpileUI
         var fg = Color.White;
         var highlight = Color.Yellow;
 
-        // Menu box - 缩小高度
+        // Menu box - compact height
         DrawBox(surface, x, y, 20, 4, fg, bg);
         surface.Print(x + 1, y, " ZONES ", highlight);
 
@@ -57,7 +57,7 @@ public sealed class StockpileUI
         var fg = Color.White;
         var highlight = Color.Yellow;
 
-        // Menu box - 缩小高度
+        // Menu box - compact height
         DrawBox(surface, x, y, 25, 5, fg, bg);
         surface.Print(x + 1, y, " STOCKPILE ", highlight);
 

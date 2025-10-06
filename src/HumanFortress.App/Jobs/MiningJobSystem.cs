@@ -26,6 +26,8 @@ public sealed class MiningJobSystem : ITick
     private readonly List<MiningSystem.PlannedDig> _inboxBuffer = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<MiningSystem.PlannedDig> _backlog = new();
     private readonly HumanFortress.Simulation.Items.ItemsDiffLog? _itemsDiff;
+    // Recently completed tiles for short-lived completion highlight
+    private readonly System.Collections.Generic.List<(SadRogue.Primitives.Point Cell, int Z, ulong ExpireTick)> _recentCompleted = new();
     private readonly DiffLog? _diff;
 
     // Tile reservation: prevent multiple workers from mining the same tile
@@ -70,12 +72,45 @@ public sealed class MiningJobSystem : ITick
         {
             bool assigned = false;
 
+            // Light dependency for stairwell: require a carved stair on a neighboring Z before assigning middle/bottom
+            if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell &&
+                (pd.Segment == HumanFortress.Simulation.Orders.MiningSegment.Middle || pd.Segment == HumanFortress.Simulation.Orders.MiningSegment.Bottom))
+            {
+                if (!StairDependencySatisfied(pd.Cell, pd.Z))
+                {
+                    _backlog.Enqueue(pd);
+                    Logger.Log($"[MINING][{tick}] Gate stairwell seg={pd.Segment} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) waiting for adjacent layer stair");
+                    continue;
+                }
+            }
+
             // Skip if tile is already reserved
             var tileKey = (pd.Cell.X, pd.Cell.Y, pd.Z);
             if (_reservedTiles.Contains(tileKey))
             {
                 Logger.Log($"[MINING][{tick}] Tile ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) already reserved");
                 continue;
+            }
+
+            // Skip already-satisfied stairwell segments (idempotent): if target kind already matches, drop PD
+            if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell)
+            {
+                var t0 = _world.GetTile(pd.Cell.X, pd.Cell.Y, pd.Z);
+                if (t0 != null)
+                {
+                    var expected = pd.Segment switch
+                    {
+                        HumanFortress.Simulation.Orders.MiningSegment.Top => HumanFortress.Simulation.Tiles.TerrainKind.StairsDown,
+                        HumanFortress.Simulation.Orders.MiningSegment.Middle => HumanFortress.Simulation.Tiles.TerrainKind.StairsUD,
+                        HumanFortress.Simulation.Orders.MiningSegment.Bottom => HumanFortress.Simulation.Tiles.TerrainKind.StairsUp,
+                        _ => t0.Value.Kind
+                    };
+                    if (t0.Value.Kind == expected)
+                    {
+                        Logger.Log($"[MINING][{tick}] Skip stairwell seg={pd.Segment} already {expected} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z})");
+                        continue;
+                    }
+                }
             }
 
             // Determine adjacency: for Channel prefer strictly NESW; others allow diagonals and expand radius
@@ -132,6 +167,22 @@ public sealed class MiningJobSystem : ITick
         }
     }
 
+    private bool StairDependencySatisfied(SadRogue.Primitives.Point cell, int z)
+    {
+        bool HasStairAt(int zz)
+        {
+            var t = _world.GetTile(cell.X, cell.Y, zz);
+            if (t == null) return false;
+            var k = t.Value.Kind;
+            return k == HumanFortress.Simulation.Tiles.TerrainKind.StairsDown ||
+                   k == HumanFortress.Simulation.Tiles.TerrainKind.StairsUD ||
+                   k == HumanFortress.Simulation.Tiles.TerrainKind.StairsUp;
+        }
+        bool upOk = (z + 1) < _world.MaxZ && HasStairAt(z + 1);
+        bool downOk = (z - 1) >= 0 && HasStairAt(z - 1);
+        return upOk || downOk;
+    }
+
     public void WriteTick(ulong tick)
     {
         if (_active.Count == 0) return;
@@ -186,6 +237,20 @@ public sealed class MiningJobSystem : ITick
                 {
                     job.Stage = MiningStage.Digging;
                     Logger.Log($"[MINING][{tick}] Start digging by worker={job.WorkerId} at target=({job.Target.X},{job.Target.Y},{job.Z})");
+
+                    // Precarve one layer below as StairsUD to open vertical path without overshooting selection
+                    if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && job.Z > 0)
+                    {
+                        int bz = job.Z - 1;
+                        var below = _world.GetTile(job.Target.X, job.Target.Y, bz);
+                        if (below != null && below.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                        {
+                            EmitSetTerrainKind(job.Target, bz, HumanFortress.Simulation.Tiles.TerrainKind.StairsUD);
+                            foreach (var (dropId, qty) in ChooseDropsFor(below.Value.GeoMatId, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                                if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                            Logger.Log($"[MINING][{tick}] Precarve stair UD one layer at ({job.Target.X},{job.Target.Y},{bz})");
+                        }
+                    }
                 }
                 continue;
             }
@@ -199,8 +264,20 @@ public sealed class MiningJobSystem : ITick
                     var verifyTile = _world.GetTile(job.Target.X, job.Target.Y, job.Z);
                     if (verifyTile != null)
                     {
+                        // Channel safety: if occupied by a creature, requeue instead of carving under feet
+                        if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && AnyCreatureAt(job.Target, job.Z))
+                        {
+                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
+                            Logger.Log($"[MINING][{tick}] Channel target occupied at ({job.Target.X},{job.Target.Y},{job.Z}); requeue");
+                            // Release reservation and skip completion
+                            _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                            if (job.Z > 0) _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
+                            finished.Add(job);
+                            continue;
+                        }
                         job.Stage = MiningStage.Complete;
                         ApplyMiningResult(job);
+                        _recentCompleted.Add((job.Target, job.Z, tick + 100)); // short-lived completion highlight
                         Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} by {job.WorkerId}");
                     }
                     else
@@ -552,6 +629,41 @@ public sealed class MiningJobSystem : ITick
         int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, position.Z));
         var target = new DiffTarget(chunkId, localIndex, unchecked((int)entityId));
         _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, SystemId, Priority));
+    }
+
+    private void PrecarveStairChain(SadRogue.Primitives.Point cell, int zStart, ulong tick)
+    {
+        int bz = zStart - 1;
+        while (bz >= 0)
+        {
+            var below = _world.GetTile(cell.X, cell.Y, bz);
+            if (below == null) break;
+            if (below.Value.Kind != HumanFortress.Simulation.Tiles.TerrainKind.SolidWall) break;
+            EmitSetTerrainKind(cell, bz, HumanFortress.Simulation.Tiles.TerrainKind.StairsUD);
+            foreach (var (dropId, qty) in ChooseDropsFor(below.Value.GeoMatId, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(cell, zStart, dropId, qty);
+            Logger.Log($"[MINING][{tick}] Precarve stair UD at ({cell.X},{cell.Y},{bz}) for stairwell chain");
+            bz--;
+        }
+    }
+
+    public System.Collections.Generic.List<(SadRogue.Primitives.Point Cell, int Z)> GetRecentCompletions(ulong now)
+    {
+        for (int i = _recentCompleted.Count - 1; i >= 0; i--)
+        {
+            if (_recentCompleted[i].ExpireTick <= now) _recentCompleted.RemoveAt(i);
+        }
+        return _recentCompleted.Select(rc => (rc.Cell, rc.Z)).ToList();
+    }
+
+    private bool AnyCreatureAt(SadRogue.Primitives.Point cell, int z)
+    {
+        foreach (var c in _world.Creatures.GetAllInstances())
+        {
+            if (c.Z == z && c.Position.X == cell.X && c.Position.Y == cell.Y)
+                return true;
+        }
+        return false;
     }
 
     private (int X,int Y)? GetAdjacencyForAction(HumanFortress.Simulation.Orders.MiningAction action, int x, int y, int z)

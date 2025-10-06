@@ -1,0 +1,206 @@
+            if (_infoPanel != null) _infoPanel.Clear();
+            // Right-side map & status info removed per request; moved into Debug menu.
+
+            // Build tile info on demand; draw as overlay popup
+            RenderMap();
+
+            // Render UI overlays on top of map surface
+            if (_uiSurface != null)
+            {
+                _uiSurface.Clear();
+                UiRenderer.DrawTopBar(_uiSurface, _uiTick, GameStateManager.Instance.TickScheduler);
+                UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
+                UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
+                UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager, _world);
+                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick, _ordersUI, _zonesUI, _buildUI, _stockpileQuickUI, cameraOverride: _cameraPos, zOverride: _currentZ, world: _world);
+
+                // Draw orders & stockpile specific UI
+                if (_stockpileUI != null)
+                {
+                    // Draw placement mode UI
+                    if (_ui.Context == UiContext.PlacingTool)
+                    {
+                        var mouseWorld = _lastMousePos ?? _cursorPos;
+                        // Orders haul placement prompt
+                        _ordersUI?.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
+                        // Stockpile placement prompt
+                        _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
+
+                        // Draw placement preview on map
+                        if (_ui.PlaceFirstCorner.HasValue &&
+                            (_ui.PlaceMode == PlacementMode.StockpileSecondCorner || _ui.PlaceMode == PlacementMode.HaulSecondCorner))
+                        {
+                            var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                                _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                            _stockpileUI.RenderPlacementPreview(_mapSurface,
+                                _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
+                        }
+                    }
+
+                    // Draw edit popup if open
+                    _stockpileUI.DrawEditPopup(_uiSurface);
+
+                    // Render stockpile overlays on map
+                    if (_world != null)
+                    {
+                        var mapViewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                            _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                        _stockpileUI.RenderOverlay(_mapSurface, _world, _currentZ, mapViewport);
+                    }
+                }
+
+                // Render zone overlays (only when zone menu is open)
+                if (_world != null && _zonesUI != null)
+                {
+                    var mapViewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                        _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                    bool showZoneOverlay = _ui.QuickMenu == QuickMenuKind.Zones;
+
+                    _zonesUI.RenderOverlay(_mapSurface, _world, _currentZ, mapViewport, showZoneOverlay);
+
+                    // Draw zone placement preview
+                    if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
+                    {
+                        var mouseWorld = _lastMousePos ?? _cursorPos;
+                        _zonesUI.RenderPlacementPreview(_mapSurface,
+                            _ui.PlaceFirstCorner.Value, mouseWorld, mapViewport, true);
+                    }
+                }
+
+                // Draw zone placement mode prompt
+                _zonesUI?.DrawPlacementMode(_uiSurface, _ui, _lastMousePos ?? _cursorPos);
+
+                // Draw zone detail popup
+                if (_zonesUI?.IsDetailPopupOpen() == true && _world != null)
+                {
+                    _zonesUI.DrawDetailPopup(_uiSurface, _world);
+                }
+
+                // Controls/help moved to docs; no on-screen help overlay.
+                UiRenderer.DrawDebug(_uiSurface, _ui, _cursorPos, _currentZ, _zoomLevel, _cameraPos, FortressSize);
+                UiRenderer.DrawDebugUnits(_uiSurface, _ui, _cameraPos.X, _cameraPos.Y, _currentZ);
+                UiRenderer.DrawPause(_uiSurface, _ui);
+                UiRenderer.DrawToasts(_uiSurface, _ui, _uiTick);
+
+                if (_tilePanelOpen)
+                {
+                    DrawTilePopup(_uiSurface);
+                }
+            }
+        }
+
+        // Handle overlay local left-clicks for F1¨CF8 and Z/X/C buttons
+        private void OnOverlayLeftClickedLocal(Point local)
+        {
+            if (_uiSurface == null) return;
+
+            // Dock F1¨CF8 at bottom-left (bottom row)
+            int dockY = _uiSurface.Surface.Height - 1;
+            int dockXStart = 1;
+            int dockBtnW = 5;
+            int dockGap = 1;
+            if (local.Y == dockY && local.X >= dockXStart)
+            {
+                int rel = local.X - dockXStart;
+                int slot = rel / (dockBtnW + dockGap);
+
+                // Explicit mapping: slot -> DrawerId (F1-F8 order)
+                var slotMap = new DrawerId[]
+                {
+                    DrawerId.Creature,              // F1 (slot 0)
+                    DrawerId.Stock,                 // F2 (slot 1)
+                    DrawerId.Work,                  // F3 (slot 2)
+                    DrawerId.PlacementManagement,   // F4 (slot 3)
+                    DrawerId.Military,              // F5 (slot 4)
+                    DrawerId.Country,               // F6 (slot 5)
+                    DrawerId.World,                 // F7 (slot 6)
+                    DrawerId.Log                    // F8 (slot 7)
+                };
+
+                if (slot >= 0 && slot < slotMap.Length)
+                {
+                    _ui.OpenPanel(slotMap[slot]);
+                    Logger.Log($"[CLICK-OVERLAY] Dock slot={slot} -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Quick ZXCV buttons (bottom row, same as F1-F8, centered)
+            int quickY = _uiSurface.Surface.Height - 1; // Same row as F1-F8
+            if (local.Y == quickY)
+            {
+                int center = _uiSurface.Surface.Width / 2;
+                int buttonWidth = 5;
+                int gap = 2;
+
+                // 4 buttons: Z X C V (same calculation as UiRenderer.DrawQuickIconsScreen)
+                int totalWidth = (buttonWidth * 4) + (gap * 3);
+                int startX = center - totalWidth / 2;
+
+                // Calculate button positions (exactly matching UiRenderer)
+                int xZ = startX;
+                int xX = startX + buttonWidth + gap;
+                int xC = startX + (buttonWidth + gap) * 2;
+                int xV = startX + (buttonWidth + gap) * 3;
+
+                var ranges = new (int start, int end, QuickMenuKind kind)[]
+                {
+                    (xZ, xZ + buttonWidth - 1, QuickMenuKind.Orders),      // Z
+                    (xX, xX + buttonWidth - 1, QuickMenuKind.Zones),       // X
+                    (xC, xC + buttonWidth - 1, QuickMenuKind.Build),       // C
+                    (xV, xV + buttonWidth - 1, QuickMenuKind.Stockpile),   // V
+                };
+
+                foreach (var r in ranges)
+                {
+                    if (local.X >= r.start && local.X <= r.end)
+                    {
+                        _ui.OpenQuickMenu(r.kind);
+                        Logger.Log($"[CLICK-OVERLAY] Quick kind={r.kind} x=[{r.start},{r.end}] -> qmenu={_ui.QuickMenu}");
+                        DrawUI();
+                        return;
+                    }
+                }
+            }
+
+                // Debug menu spawn button (panel is centered and semi-transparent)
+                if (_ui.DebugOpen)
+                {
+                int surfW = _uiSurface.Surface.Width;
+                int surfH = _uiSurface.Surface.Height;
+                int width = Math.Min((int)(surfW * 0.7), surfW - 4);
+                int height = Math.Min((int)(surfH * 0.6), surfH - 4);
+                int x0 = (surfW - width) / 2;
+                int y0 = (surfH - height) / 2;
+                int btnX = x0 + 2; int btnY = y0 + 2; int btnW = 22;
+                if (local.Y == btnY && local.X >= btnX && local.X < btnX + btnW)
+                {
+                    Logger.Log($"[DEBUG] Spawn Dwarf click at cursor=({_cursorPos.X},{_cursorPos.Y},{_currentZ}) [overlay]");
+                    _ui.AddDebugDwarf(_cursorPos, _currentZ);
+                    _ui.AddToast("Spawned dwarf (debug marker)", _uiTick + 100);
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Pass-through: if click not on overlay controls, treat as map click for tile info
+            if (_mapSurface != null)
+            {
+                var mapLocal = new Point(local.X - _mapSurface.Position.X, local.Y - _mapSurface.Position.Y);
+                if (mapLocal.X >= 0 && mapLocal.X < _mapSurface.Surface.Width && mapLocal.Y >= 0 && mapLocal.Y < _mapSurface.Surface.Height)
+                {
+                    OnMapLeftClickedLocal(mapLocal);
+                    return;
+                }
+            }
+        }
+
+        private void UpdateTileInfo()
+        {
+            if (_tileInfoPanel == null || _fortressMap == null || !_tilePanelOpen) return;
+            _tileInfoPanel.Clear();
+
+            _tileInfoPanel.Print(0, 0, "=== TILE INFO ===", Color.Cyan);
+
+            // Selected world position

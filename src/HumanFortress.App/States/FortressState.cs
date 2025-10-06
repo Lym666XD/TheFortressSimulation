@@ -367,6 +367,9 @@ namespace HumanFortress.App.States
                 UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
                 UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager, _world);
                 UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick, _ordersUI, _zonesUI, _buildUI, _stockpileQuickUI, cameraOverride: _cameraPos, zOverride: _currentZ, world: _world);
+                // Mining job highlights: active targets and recent completions
+                UiRenderer.DrawMiningJobHighlights(_mapSurface, GameStateManager.Instance.MiningJobs, _cameraPos, _currentZ, _uiTick);
+                UiRenderer.DrawMiningCompletedHighlights(_mapSurface, GameStateManager.Instance.MiningJobs, _cameraPos, _currentZ, _uiTick);
 
                 // Draw orders & stockpile specific UI
                 if (_stockpileUI != null)
@@ -380,14 +383,27 @@ namespace HumanFortress.App.States
                         // Stockpile placement prompt
                         _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
 
-                        // Draw placement preview on map
-                        if (_ui.PlaceFirstCorner.HasValue &&
-                            (_ui.PlaceMode == PlacementMode.StockpileSecondCorner || _ui.PlaceMode == PlacementMode.HaulSecondCorner))
+                        // Draw placement preview on map（所有矩形类命令都高亮）
+                        if (_ui.PlaceFirstCorner.HasValue)
                         {
                             var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
                                 _mapSurface.Surface.Width, _mapSurface.Surface.Height);
-                            _stockpileUI.RenderPlacementPreview(_mapSurface,
-                                _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
+
+                            if (_ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+                            {
+                                _stockpileUI.RenderPlacementPreview(_mapSurface,
+                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
+                            }
+                            else if (_ui.PlaceMode == PlacementMode.HaulSecondCorner && _ordersUI != null)
+                            {
+                                _ordersUI.RenderPlacementPreview(_mapSurface,
+                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ);
+                            }
+                            else if (_ui.PlaceMode == PlacementMode.MiningSecondCorner && _ordersUI != null)
+                            {
+                                _ordersUI.RenderPlacementPreview(_mapSurface,
+                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ, _world, _ui.SelectedMiningAction);
+                            }
                         }
                     }
 
@@ -538,13 +554,24 @@ namespace HumanFortress.App.States
                 }
             }
 
-            // Pass-through: if click not on overlay controls, treat as map click for tile info
+            // Pass-through: if click not on overlay controls, treat as map click using lastMousePos for consistent world snapping
             if (_mapSurface != null)
             {
                 var mapLocal = new Point(local.X - _mapSurface.Position.X, local.Y - _mapSurface.Position.Y);
                 if (mapLocal.X >= 0 && mapLocal.X < _mapSurface.Surface.Width && mapLocal.Y >= 0 && mapLocal.Y < _mapSurface.Surface.Height)
                 {
-                    OnMapLeftClickedLocal(mapLocal);
+                    // Prefer using lastMousePos rather than recomputing coordinates to avoid off-by-one
+                    if (_lastMousePos.HasValue)
+                    {
+                        var worldPos = _lastMousePos.Value;
+                        // Synthesize a local that maps to this world pos to reuse the same handler code path
+                        var fakeLocal = new Point((worldPos.X - _cameraPos.X) * _zoomLevel, (worldPos.Y - _cameraPos.Y) * _zoomLevel);
+                        OnMapLeftClickedLocal(fakeLocal);
+                    }
+                    else
+                    {
+                        OnMapLeftClickedLocal(mapLocal);
+                    }
                     return;
                 }
             }
@@ -1951,13 +1978,21 @@ namespace HumanFortress.App.States
         private void OnMapLeftClickedLocal(Point local)
         {
             if (_mapSurface == null) return;
-            // Map-local to world
-            int worldX = _cameraPos.X + (local.X / _zoomLevel);
-            int worldY = _cameraPos.Y + (local.Y / _zoomLevel);
-            int maxPos = FortressSize * 32 - 1;
-            if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos) return;
-
-            Point worldPos = new Point(worldX, worldY);
+            // Use lastMousePos if available to avoid recomputing and risking off-by-one
+            Point worldPos;
+            if (_lastMousePos.HasValue)
+            {
+                worldPos = _lastMousePos.Value;
+            }
+            else
+            {
+                int wx = _cameraPos.X + (local.X / _zoomLevel);
+                int wy = _cameraPos.Y + (local.Y / _zoomLevel);
+                int maxPos = FortressSize * 32 - 1;
+                if (wx < 0 || wy < 0 || wx > maxPos || wy > maxPos) return;
+                worldPos = new Point(wx, wy);
+            }
+            int worldX = worldPos.X; int worldY = worldPos.Y;
 
             // Handle debug spawn
             if (_ui.DebugOpen && _world != null)
@@ -2069,9 +2104,10 @@ namespace HumanFortress.App.States
                     if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
                     {
                         _ui.PlaceSecondCorner = worldPos;
+                        // Use GetUnion to guarantee“包含右/下边界”的矩形（与 Zones/Stockpile 路径一致）
                         int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
-                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
                         int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
                         int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
                         var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
@@ -2108,8 +2144,9 @@ namespace HumanFortress.App.States
                             GameStateManager.Instance.TickScheduler.CurrentTick, rect, zMin, zMax, uiAction, priority: 50);
                         GameStateManager.Instance.EnqueueCommand(cmd);
 
-                        _ui.AddToast("Mining order created", _uiTick + 120);
-                        Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} validCells={validCount}");
+                        int totalCells = rect.Width * rect.Height;
+                        _ui.AddToast($"Mining order created ({validCount}/{totalCells})", _uiTick + 120);
+                        Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} validCells={validCount}/{totalCells}");
                         // Highlight for 100 ticks; encode action in kind for renderer fill policy
                         _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 100);
                         _ui.CancelPlacement();
@@ -2127,10 +2164,12 @@ namespace HumanFortress.App.States
                 }
                 else if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
                 {
-                    // Create zone using command
-                    var rect = SadRogue.Primitives.Rectangle.GetUnion(
-                        new SadRogue.Primitives.Rectangle(_ui.PlaceFirstCorner.Value, 1, 1),
-                        new SadRogue.Primitives.Rectangle(worldPos, 1, 1));
+                    // Create zone using command (inclusive rectangle)
+                    int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, worldPos.X);
+                    int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
+                    int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, worldPos.X);
+                    int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
+                    var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
                     if (_ui.SelectedZoneDefId != null && _world != null)
                     {

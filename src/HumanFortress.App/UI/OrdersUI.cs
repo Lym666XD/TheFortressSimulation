@@ -1,5 +1,6 @@
 using SadConsole;
 using SadRogue.Primitives;
+using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App.UI;
 
@@ -237,6 +238,30 @@ public sealed class OrdersUI
         surface.Print(x + 2, y + 2, "Right-Click: Cancel", Color.Gray);
         surface.Print(x + 2, y + 3, "ESC: Back", Color.Gray);
     }
+
+        // Render placement preview (rect outline and optional legal-cell fill for mining)
+        public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, Rectangle viewport, bool show, int currentZ, World? world = null, MiningAction? miningAction = null)
+        {
+            if (!show) return;
+            var rect = Rectangle.GetUnion(new Rectangle(first, 1, 1), new Rectangle(second, 1, 1));
+            var surf = mapSurface.Surface;
+            int x0 = rect.X - viewport.X;
+            int y0 = rect.Y - viewport.Y;
+            int x1 = x0 + rect.Width - 1;
+            int y1 = y0 + rect.Height - 1;
+
+            // Draw rectangle border using line glyphs with transparent background (no fill)
+            var fg = Color.Yellow;
+            var bg = new Color(0, 0, 0, 0);
+            void Put(int x, int y, int ch)
+            {
+                if (x >= 0 && x < surf.Width && y >= 0 && y < surf.Height)
+                    surf.SetGlyph(x, y, ch, fg, bg);
+            }
+            for (int x = x0; x <= x1; x++) { Put(x, y0, '─'); Put(x, y1, '─'); }
+            for (int y = y0; y <= y1; y++) { Put(x0, y, '│'); Put(x1, y, '│'); }
+            Put(x0, y0, '┌'); Put(x1, y0, '┐'); Put(x0, y1, '└'); Put(x1, y1, '┘');
+        }
 
         public void DrawPlacementMode(ScreenSurface surface, UiStore ui, Point mouseWorld)
         {

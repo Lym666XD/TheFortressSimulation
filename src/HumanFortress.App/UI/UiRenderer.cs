@@ -387,6 +387,39 @@ namespace HumanFortress.App.UI;
         DrawOrderHighlights(mapSurface, ui, camera: cam, currentZ: z, tick, world);
     }
 
+    public static void DrawMiningJobHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
+    {
+        if (jobs == null) return;
+        var surf = mapSurface.Surface;
+        bool flash = ((tick / 8) % 2) == 0;
+        var fg = flash ? Color.Cyan : Color.DarkCyan;
+        var bg = new Color(0,0,0,0);
+        foreach (var j in jobs.GetActiveJobsSnapshot())
+        {
+            if (j.Z != currentZ) continue;
+            int sx = j.Target.X - camera.X;
+            int sy = j.Target.Y - camera.Y;
+            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
+                surf.SetGlyph(sx, sy, '·', fg, bg);
+        }
+    }
+
+    public static void DrawMiningCompletedHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
+    {
+        if (jobs == null) return;
+        var surf = mapSurface.Surface;
+        var fg = new Color(255, 230, 0);
+        var bg = new Color(0,0,0,0);
+        foreach (var (cell, z) in jobs.GetRecentCompletions(tick))
+        {
+            if (z != currentZ) continue;
+            int sx = cell.X - camera.X;
+            int sy = cell.Y - camera.Y;
+            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
+                surf.SetGlyph(sx, sy, '·', fg, bg);
+        }
+    }
+
     private static void DrawOrderHighlights(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point camera, int currentZ, ulong tick, HumanFortress.Simulation.World.World? world)
     {
         var surf = mapSurface.Surface;
@@ -401,9 +434,15 @@ namespace HumanFortress.App.UI;
             int y0 = h.Rect.Y - camera.Y;
             int x1 = x0 + h.Rect.Width - 1;
             int y1 = y0 + h.Rect.Height - 1;
-            void Plot(int x,int y){ if (x>=0 && x<surf.Width && y>=0 && y<surf.Height) surf.SetGlyph(x,y,' ', Color.White, color.SetAlpha(60)); }
-            for (int x = x0; x <= x1; x++) { Plot(x, y0); Plot(x, y1); }
-            for (int y = y0; y <= y1; y++) { Plot(x0, y); Plot(x1, y); }
+            // Draw rectangle border using line glyphs and transparent background (no fill)
+            var fg = flash ? Color.Yellow : Color.Orange;
+            var bg = new Color(0,0,0,0);
+            void Put(int x, int y, int ch) { if (x>=0 && x<surf.Width && y>=0 && y<surf.Height) surf.SetGlyph(x,y,ch, fg, bg); }
+            for (int x = x0; x <= x1; x++) { Put(x, y0, '─'); Put(x, y1, '─'); }
+            for (int y = y0; y <= y1; y++) { Put(x0, y, '│'); Put(x1, y, '│'); }
+            Put(x0, y0, '┌'); Put(x1, y0, '┐'); Put(x0, y1, '└'); Put(x1, y1, '┘');
+
+            // 不再整体遮罩矩形，避免遮挡原 tile，可视仅保留边框 + 合法格浅填
 
             // If mining highlight and world provided, shade only actually affected cells
             // We support encoded kind pattern: "mining:<Action>" (e.g., mining:DigChannel)
@@ -412,7 +451,9 @@ namespace HumanFortress.App.UI;
                 string action = "";
                 int idx = h.Kind.IndexOf(':');
                 if (idx >= 0 && idx + 1 < h.Kind.Length) action = h.Kind.Substring(idx + 1);
-                var fillColor = new Color(200, 180, 0).SetAlpha(35);
+                // No fill block; instead draw a small center dot per legal tile with transparent background
+                var dotFg = new Color(255, 230, 0);
+                var dotBg = new Color(0,0,0,0);
                 bool IsFill(HumanFortress.Simulation.Tiles.TerrainKind k)
                 {
                     switch (action)
@@ -440,7 +481,7 @@ namespace HumanFortress.App.UI;
                         int sx = wx - camera.X;
                         int sy = wy - camera.Y;
                         if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
-                            surf.SetGlyph(sx, sy, ' ', Color.White, fillColor);
+                            surf.SetGlyph(sx, sy, '·', dotFg, dotBg);
                     }
                 }
 
