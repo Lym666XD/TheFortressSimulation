@@ -1,0 +1,9 @@
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Simulation.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Simulation.deps.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Simulation.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\Newtonsoft.Json.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\TheSadRogue.Primitives.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Core.dll
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Core.pdb
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Core.xml
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\obj\tmp_sim_build\HumanFortress.Simulation.xml

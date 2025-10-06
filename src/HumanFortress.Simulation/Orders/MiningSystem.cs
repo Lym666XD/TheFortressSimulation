@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Time;
@@ -13,6 +13,8 @@ namespace HumanFortress.Simulation.Orders;
 /// Mining planner: reads mining designations and produces PlannedDig DTOs.
 /// Read phase only; no world mutation. Write phase hands off to executor inbox.
 /// </summary>
+public enum MiningSegment { None, Top, Middle, Bottom }
+
 public sealed class MiningSystem : ITick
 {
     public static System.Action<string>? LogCallback;
@@ -23,8 +25,10 @@ public sealed class MiningSystem : ITick
     private readonly List<PlannedDig> _planned = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedDig> _outbox = new();
 
-    // Persistent active set to avoid losing interior tiles when exceeding per-tick budget.
-    private readonly List<ActiveRect> _active = new();
+    // Unified: persistent active designations (id -> cursor)
+    private readonly Dictionary<int, ActiveDesignation> _active = new();
+    // Persistent cancellation regions (RemoveDigging)
+    private readonly List<OrdersManager.MiningCancelRegion> _cancels = new();
 
     public MiningSystem(World.World world, OrdersManager orders, int maxPerTick = 128)
     {
@@ -40,45 +44,73 @@ public sealed class MiningSystem : ITick
     {
         _planned.Clear();
 
-        // Move new designations into persistent active set
-        var desigs = new List<MiningDesignation>();
-        _orders.DrainMiningDesignations(desigs, maxCount: 16);
-        foreach (var d in desigs)
+        // Drain new unified adds
+        var adds = new List<OrdersManager.MiningDesignation>();
+        int drainedAdds = _orders.DrainMiningAdds(adds, maxCount: 64);
+        if (drainedAdds > 0)
         {
-            _active.Add(new ActiveRect(d.WorldRect, d.Z, d.Priority));
+            var _msgA = "[MINING][PLAN] Adds drained: " + drainedAdds;
+            if (LogCallback != null) LogCallback(_msgA); else System.Console.WriteLine(_msgA);
+            foreach (var a in adds)
+            {
+                _active[a.Id] = new ActiveDesignation(a.Id, a.Rect, a.ZMin, a.ZMax, a.Action, a.Priority, a.CreatedTick);
+                var _msgD = $"[MINING][PLAN] Designation id={a.Id} action={a.Action} rect={a.Rect} z={a.ZMin}..{a.ZMax} layers={a.ZMax - a.ZMin + 1}";
+                if (LogCallback != null) LogCallback(_msgD); else System.Console.WriteLine(_msgD);
+            }
         }
 
-        // Process advanced designations as-needed (emits directly to _planned)
-        int plannedCount = 0;
-        ProcessAdvancedDesignations(_maxPerTick, ref plannedCount);
-
-        if (_active.Count == 0)
+        // Drain cancellations
+        var canc = new List<OrdersManager.MiningCancelRegion>();
+        int drainedCanc = _orders.DrainMiningCancels(canc, maxCount: 64);
+        if (drainedCanc > 0)
         {
-            return;
+            var _msgC = "[MINING][PLAN] Cancels drained: " + drainedCanc;
+            if (LogCallback != null) LogCallback(_msgC); else System.Console.WriteLine(_msgC);
+            _cancels.AddRange(canc);
         }
 
-        // Continue producing from persistent active rects
-        // Round-robin across active rects to fairly drain
-        int idx = 0;
-        while (plannedCount < _maxPerTick && _active.Count > 0 && idx < _active.Count)
-        {
-            var ar = _active[idx];
-            int emittedThisRect = 0;
-            while (plannedCount < _maxPerTick && TryNextDigFrom(ref ar, out var pd))
-            {
-                _planned.Add(pd);
-                plannedCount++;
-                emittedThisRect++;
-            }
+        if (_active.Count == 0) return;
 
-            if (ar.Done)
+        // Budgeted weighted round-robin by priority (desc)
+        int budget = _maxPerTick;
+        int producedTotal = 0;
+        var actives = _active.Values.Where(a => !a.Done).OrderByDescending(a => a.Priority).ThenBy(a => a.Id).ToList();
+        if (actives.Count == 0) return;
+
+        // Per-id production counter this tick for logging
+        var perId = new Dictionary<int, int>();
+
+        bool progress;
+        do
+        {
+            progress = false;
+            foreach (var ad in actives)
             {
-                _active.RemoveAt(idx); // do not advance idx
+                if (budget <= 0) break;
+                if (ad.Done) continue;
+                var cursor = ad; // struct copy
+                if (TryNextDigFrom(ref cursor, out var pd))
+                {
+                    _planned.Add(pd);
+                    producedTotal++;
+                    budget--;
+                    progress = true;
+                    if (!perId.ContainsKey(ad.Id)) perId[ad.Id] = 0;
+                    perId[ad.Id]++;
+                }
+                _active[ad.Id] = cursor;
             }
-            else
+            // refresh actives to skip completed ones in next round
+            actives = _active.Values.Where(a => !a.Done).OrderByDescending(a => a.Priority).ThenBy(a => a.Id).ToList();
+        } while (budget > 0 && progress && actives.Count > 0);
+
+        // Log per id added counts
+        if (perId.Count > 0)
+        {
+            foreach (var kv in perId)
             {
-                _active[idx] = ar;
-                idx++; // move to next rect
+                var _msgP = "[MINING][PLAN] id=" + kv.Key + " planned+=" + kv.Value;
+                if (LogCallback != null) LogCallback(_msgP); else System.Console.WriteLine(_msgP);
             }
         }
     }
@@ -104,164 +136,189 @@ public sealed class MiningSystem : ITick
     }
 
     // Drain advanced mining designations and expand into PlannedDig entries
-    private void ProcessAdvancedDesignations(int budget, ref int plannedCount)
+        // Unified scanner: attempt to produce one PD from the given active designation
+    private bool TryNextDigFrom(ref ActiveDesignation ad, out PlannedDig pd)
     {
-        var advList = new List<MiningAdvancedDesignation>();
-        _orders.DrainMiningAdvanced(advList, maxCount: 8);
-        if (advList.Count > 0)
+        // advance until a qualifying cell or done
+        int scannedCells = 0;
+        int rejectedByFilter = 0;
+
+        // For stairwells, scan from ZMax down to ZMin (reverse order to prioritize Top segments)
+        // For other actions, scan from ZMin up to ZMax (normal order)
+        bool isStairwell = ad.Action == MiningAction.DigStairwell;
+
+        while (true)
         {
-            var _msg3 = $"[MINING][PLAN] Advanced designations drained: {advList.Count}";
-            if (LogCallback != null) LogCallback(_msg3); else System.Console.WriteLine(_msg3);
-        }
-        foreach (var adv in advList)
-        {
-            if (plannedCount >= budget) break;
-            switch (adv.Action)
+            // Check Z bounds
+            if (isStairwell)
             {
-                case MiningAction.DigRamp:
-                    // Only plan for SolidWall at each z in range
-                    for (int z = adv.ZMin; z <= adv.ZMax && plannedCount < budget; z++)
-                    {
-                        for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
-                        for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
-                        {
-                            // Guard: only emit PD within rect bounds
-                            if (!adv.Rect.Contains(new Point(x, y)))
-                            {
-                                var _msg4 = $"[MINING][GUARD] PD outside rect: cell=({x},{y},{z}) rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height})";
-                                if (LogCallback != null) LogCallback(_msg4); else System.Console.WriteLine(_msg4);
-                                continue;
-                            }
-                            var t = _world.GetTile(x, y, z);
-                            if (t == null) continue;
-                            if (t.Value.Kind != TerrainKind.SolidWall) continue;
-                            ushort geo = t.Value.GeoMatId;
-                            byte tk = (byte)t.Value.Kind;
-                            _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.DigRamp, MiningSegment.None));
-                            plannedCount++;
-                        }
-                    }
-                    {
-                        var _msg5 = $"[MINING][PLAN] DigRamp expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
-                        if (LogCallback != null) LogCallback(_msg5); else System.Console.WriteLine(_msg5);
-                    }
-                    break;
-                case MiningAction.DigChannel:
-                    // Only plan for tiles with floor (OpenWithFloor) at each z
-                    for (int z = adv.ZMin; z <= adv.ZMax && plannedCount < budget; z++)
-                    {
-                        for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
-                        for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
-                        {
-                            var t = _world.GetTile(x, y, z);
-                            if (t == null) continue;
-                            if (t.Value.Kind != TerrainKind.OpenWithFloor) continue;
-                            ushort geo = t.Value.GeoMatId;
-                            byte tk = (byte)t.Value.Kind;
-                            _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.DigChannel, MiningSegment.None));
-                            plannedCount++;
-                        }
-                    }
-                    break;
-                case MiningAction.DigStairwell:
-                    // Stairwell can start from OpenWithFloor, SolidWall, or Ramp at top layer
-                    for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
-                    for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
-                    {
-                        var top = _world.GetTile(x, y, adv.ZMin);
-                        if (top == null) continue;
-                        var topKind = top.Value.Kind;
-                        if (topKind != TerrainKind.OpenWithFloor && topKind != TerrainKind.SolidWall && topKind != TerrainKind.Ramp) continue;
-                        int zMin = adv.ZMin;
-                        int zMax = adv.ZMax;
-                        if (zMin > zMax) { var tmp=zMin; zMin=zMax; zMax=tmp; }
-                        for (int z = zMin; z <= zMax && plannedCount < budget; z++)
-                        {
-                            var t = _world.GetTile(x, y, z);
-                            if (t == null) continue;
-                            ushort geo = t.Value.GeoMatId;
-                            byte tk = (byte)t.Value.Kind;
-                            MiningSegment seg = (z==zMin) ? MiningSegment.Top : (z==zMax ? MiningSegment.Bottom : MiningSegment.Middle);
-                            _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.DigStairwell, seg));
-                            plannedCount++;
-                        }
-                    }
-                    {
-                        var _msg6 = $"[MINING][PLAN] DigStairwell expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
-                        if (LogCallback != null) LogCallback(_msg6); else System.Console.WriteLine(_msg6);
-                    }
-                    break;
-                default:
-                    // Fallback: degrade to simple Dig on walls within rect for each z
-                    for (int z = adv.ZMin; z <= adv.ZMax && plannedCount < budget; z++)
-                    {
-                        for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
-                        for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
-                        {
-                            var t = _world.GetTile(x, y, z);
-                            if (t == null) continue;
-                            if (t.Value.Kind != TerrainKind.SolidWall && t.Value.Kind != TerrainKind.Ramp) continue;
-                            ushort geo = t.Value.GeoMatId;
-                            byte tk = (byte)t.Value.Kind;
-                            _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.Dig, MiningSegment.None));
-                            plannedCount++;
-                        }
-                    }
-                    {
-                        var _msg7 = $"[MINING][PLAN] Dig expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
-                        if (LogCallback != null) LogCallback(_msg7); else System.Console.WriteLine(_msg7);
-                    }
-                    break;
+                if (ad.CurZ < ad.ZMin) break;
             }
+            else
+            {
+                if (ad.CurZ > ad.ZMax) break;
+            }
+
+            for (; ad.CurY < ad.Rect.MaxExtentY; ad.CurY++, ad.CurX = ad.Rect.X)
+            {
+                for (; ad.CurX < ad.Rect.MaxExtentX; ad.CurX++)
+                {
+                    // cancellation check
+                    if (IsCanceled(ad.CurX, ad.CurY, ad.CurZ)) continue;
+
+                    var tileOpt = _world.GetTile(ad.CurX, ad.CurY, ad.CurZ);
+                    if (tileOpt == null) continue;
+                    var tile = tileOpt.Value;
+                    scannedCells++;
+                    var cell = new SadRogue.Primitives.Point(ad.CurX, ad.CurY);
+                    ushort geo = tile.GeoMatId;
+                    byte tk = (byte)tile.Kind;
+
+                    switch (ad.Action)
+                    {
+                        case MiningAction.Dig:
+                            if (tile.Kind != TerrainKind.SolidWall && tile.Kind != TerrainKind.Ramp) break;
+                            if (tile.Kind == TerrainKind.Ramp && !HasStandableAdjacency(ad.CurX, ad.CurY, ad.CurZ)) break;
+                            pd = new PlannedDig(cell, ad.CurZ, geo, tk, ad.Priority, SeedFrom(ad.CurX, ad.CurY, ad.CurZ), MiningAction.Dig, MiningSegment.None, ad.Id);
+                            AdvanceCursor(ref ad);
+                            return true;
+                        case MiningAction.DigRamp:
+                            if (tile.Kind != TerrainKind.SolidWall) break;
+                            pd = new PlannedDig(cell, ad.CurZ, geo, tk, ad.Priority, SeedFrom(ad.CurX, ad.CurY, ad.CurZ), MiningAction.DigRamp, MiningSegment.None, ad.Id);
+                            AdvanceCursor(ref ad);
+                            return true;
+                        case MiningAction.DigChannel:
+                            if (tile.Kind == TerrainKind.OpenNoFloor) break;
+                            pd = new PlannedDig(cell, ad.CurZ, geo, tk, ad.Priority, SeedFrom(ad.CurX, ad.CurY, ad.CurZ), MiningAction.DigChannel, MiningSegment.None, ad.Id);
+                            AdvanceCursor(ref ad);
+                            return true;
+                        case MiningAction.DigStairwell:
+                            // Skip single-layer stairwells (UI already showed toast)
+                            if (ad.ZMin == ad.ZMax) break;
+                            // Debug: log every tile scanned for stairwell
+                            if (scannedCells <= 10)
+                            {
+                                var _msgScan = $"[MINING][PLAN] Stairwell id={ad.Id} scan cell ({ad.CurX},{ad.CurY},{ad.CurZ}) kind={tile.Kind} ZMin={ad.ZMin} ZMax={ad.ZMax}";
+                                if (LogCallback != null) LogCallback(_msgScan); else System.Console.WriteLine(_msgScan);
+                            }
+                            // Stairwells can dig through SolidWall (rock) or on OpenWithFloor (existing floor)
+                            // Skip only air (OpenNoFloor) - can't build stairs in mid-air
+                            if (tile.Kind == TerrainKind.OpenNoFloor)
+                            {
+                                if (scannedCells <= 5) // only log first few rejections
+                                {
+                                    var _msg = $"[MINING][PLAN] Stairwell id={ad.Id} reject cell ({ad.CurX},{ad.CurY},{ad.CurZ}) kind={tile.Kind} (can't dig stairs in air)";
+                                    if (LogCallback != null) LogCallback(_msg); else System.Console.WriteLine(_msg);
+                                }
+                                rejectedByFilter++;
+                                break;
+                            }
+                            // Stairwell segment: Top=highest, Bottom=lowest, Middle=between
+                            // But allow digging in ANY order (user can dig bottom-up or top-down)
+                            var seg = (ad.CurZ == ad.ZMax) ? MiningSegment.Top : (ad.CurZ == ad.ZMin ? MiningSegment.Bottom : MiningSegment.Middle);
+                            pd = new PlannedDig(cell, ad.CurZ, geo, tk, ad.Priority, SeedFrom(ad.CurX, ad.CurY, ad.CurZ), MiningAction.DigStairwell, seg, ad.Id);
+                            var _msgPD = $"[MINING][PLAN] Stairwell id={ad.Id} PRODUCE PlannedDig at ({ad.CurX},{ad.CurY},{ad.CurZ}) seg={seg}";
+                            if (LogCallback != null) LogCallback(_msgPD); else System.Console.WriteLine(_msgPD);
+                            AdvanceCursor(ref ad);
+                            return true;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            // Y loop完成但没有找到符合条件的tile，推进到下一个Z层
+            if (ad.CurY >= ad.Rect.MaxExtentY)
+            {
+                ad.CurY = ad.Rect.Y;
+                ad.CurX = ad.Rect.X;
+                if (isStairwell)
+                    ad.CurZ--;
+                else
+                    ad.CurZ++;
+            }
+        }
+        if (rejectedByFilter > 0)
+        {
+            var _msgDone = $"[MINING][PLAN] Stairwell id={ad.Id} done: scanned={scannedCells} rejected={rejectedByFilter} (all non-SolidWall)";
+            if (LogCallback != null) LogCallback(_msgDone); else System.Console.WriteLine(_msgDone);
+        }
+        ad.MarkDone();
+        pd = default;
+        return false;
+    }
+
+    private bool IsCanceled(int x, int y, int z)
+    {
+        if (_cancels.Count == 0) return false;
+        var p = new SadRogue.Primitives.Point(x, y);
+        foreach (var c in _cancels)
+        {
+            if (z < c.ZMin || z > c.ZMax) continue;
+            if (c.Rect.Contains(p)) return true;
+        }
+        return false;
+    }
+
+    private static void AdvanceCursor(ref ActiveDesignation ad)
+    {
+        ad.CurX++;
+        if (ad.CurX >= ad.Rect.MaxExtentX)
+        {
+            ad.CurX = ad.Rect.X;
+            ad.CurY++;
+        }
+        if (ad.CurY >= ad.Rect.MaxExtentY)
+        {
+            ad.CurY = ad.Rect.Y;
+            // Stairwells scan downward (Z decreases), others scan upward (Z increases)
+            if (ad.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell)
+                ad.CurZ--;
+            else
+                ad.CurZ++;
+        }
+        // Check done: stairwell done when CurZ < ZMin, others done when CurZ > ZMax
+        if (ad.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell)
+        {
+            if (ad.CurZ < ad.ZMin) ad.MarkDone();
+        }
+        else
+        {
+            if (ad.CurZ > ad.ZMax) ad.MarkDone();
         }
     }
 
     private bool HasStandableAdjacency(int x, int y, int z)
     {
-        // Check N/E/S/W for standable tiles (open with floor or similar)
-        static IEnumerable<(int dx,int dy)> Adj() { yield return (0,-1); yield return (1,0); yield return (0,1); yield return (-1,0); }
-        foreach (var (dx, dy) in Adj())
+        bool Acceptable(int tx, int ty)
         {
-            var t = _world.GetTile(x + dx, y + dy, z);
-            if (t == null) continue;
-            if (t.Value.IsStandable) return true;
+            var t = _world.GetTile(tx, ty, z);
+            return t != null && t.Value.IsWalkable; // match Jobs-side Acceptable
         }
-        return false;
-    }
-
-    private bool TryNextDigFrom(ref ActiveRect ar, out PlannedDig pd)
-    {
-        // Row-major scan from cursor; emit a PD when hitting a SolidWall or (Ramp with adjacency)
-        for (; ar.CurY < ar.Rect.MaxExtentY; ar.CurY++, ar.CurX = ar.Rect.X)
+        // Prefer NESW
+        if (Acceptable(x, y - 1) || Acceptable(x + 1, y) || Acceptable(x, y + 1) || Acceptable(x - 1, y))
+            return true;
+        // Allow diagonals (match Jobs behaviour)
+        if (Acceptable(x + 1, y - 1) || Acceptable(x + 1, y + 1) || Acceptable(x - 1, y + 1) || Acceptable(x - 1, y - 1))
+            return true;
+        // Expand search radius slightly (r=2..3) along ring edges (match Jobs)
+        for (int r = 2; r <= 3; r++)
         {
-            for (; ar.CurX < ar.Rect.MaxExtentX; ar.CurX++)
+            for (int yy = y - r; yy <= y + r; yy++)
             {
-                var tileOpt = _world.GetTile(ar.CurX, ar.CurY, ar.Z);
-                if (tileOpt == null) continue;
-                var tile = tileOpt.Value;
-
-                if (tile.Kind != TerrainKind.SolidWall && tile.Kind != TerrainKind.Ramp) continue;
-                if (tile.Kind == TerrainKind.Ramp && !HasStandableAdjacency(ar.CurX, ar.CurY, ar.Z)) continue;
-
-                ushort geology = tile.GeoMatId;
-                byte terrainKind = (byte)tile.Kind;
-                pd = new PlannedDig(new Point(ar.CurX, ar.CurY), ar.Z, geology, terrainKind, ar.Priority, SeedFrom(ar.CurX, ar.CurY, ar.Z), MiningAction.Dig, MiningSegment.None);
-
-                // Advance cursor past this cell
-                ar.CurX++;
-                if (ar.CurX >= ar.Rect.MaxExtentX)
-                {
-                    ar.CurX = ar.Rect.X;
-                    ar.CurY++;
-                }
-                if (ar.CurY >= ar.Rect.MaxExtentY) ar.MarkDone();
-                return true;
+                int xx1 = x - r; int xx2 = x + r;
+                if (Acceptable(xx1, yy) || Acceptable(xx2, yy)) return true;
+            }
+            for (int xx = x - r + 1; xx <= x + r - 1; xx++)
+            {
+                int yy1 = y - r; int yy2 = y + r;
+                if (Acceptable(xx, yy1) || Acceptable(xx, yy2)) return true;
             }
         }
-        ar.MarkDone();
-        pd = default;
         return false;
     }
+
+    
 
     private static ulong SeedFrom(int x, int y, int z)
     {
@@ -275,7 +332,7 @@ public sealed class MiningSystem : ITick
         }
     }
 
-    public readonly record struct PlannedDig(Point Cell, int Z, ushort GeologyHandle, byte TerrainKind, int Priority, ulong Seed, MiningAction Action, MiningSegment Segment);
+    public readonly record struct PlannedDig(Point Cell, int Z, ushort GeologyHandle, byte TerrainKind, int Priority, ulong Seed, MiningAction Action, MiningSegment Segment, int DesignationId);
 
     /// <summary>
     /// Dequeue up to max planned digs for job creation.
@@ -292,22 +349,34 @@ public sealed class MiningSystem : ITick
     }
 }
 
-internal struct ActiveRect
+internal struct ActiveDesignation
 {
+    public int Id;
     public SadRogue.Primitives.Rectangle Rect;
-    public int Z;
-    public int Priority;
+    public int ZMin;
+    public int ZMax;
+    public int CurZ;
     public int CurX;
     public int CurY;
+    public HumanFortress.Simulation.Orders.MiningAction Action;
+    public int Priority;
+    public ulong CreatedTick;
     private bool _done;
     public bool Done => _done;
-    public ActiveRect(SadRogue.Primitives.Rectangle rect, int z, int priority)
+    public ActiveDesignation(int id, SadRogue.Primitives.Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action, int priority, ulong createdTick)
     {
+        Id = id;
         Rect = rect;
-        Z = z;
-        Priority = priority;
+        ZMin = Math.Min(zMin, zMax);
+        ZMax = Math.Max(zMin, zMax);
+        // For stairwells, start from ZMax (top layer) to generate Top segments first
+        // For other actions, start from ZMin
+        CurZ = (action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell) ? ZMax : ZMin;
         CurX = rect.X;
         CurY = rect.Y;
+        Action = action;
+        Priority = priority;
+        CreatedTick = createdTick;
         _done = false;
     }
     public void MarkDone() { _done = true; }

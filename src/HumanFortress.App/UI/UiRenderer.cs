@@ -1,4 +1,4 @@
-ï»¿using SadConsole;
+using SadConsole;
 using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.Simulation.Stockpile;
@@ -262,13 +262,13 @@ namespace HumanFortress.App.UI;
                 surf.Print(6, y++, $"... and {miningJobs.Count - 5} more mining jobs", Color.DarkGray);
         }
 
-        // Show recent mining orders
+        // Show recent mining orders (V2)
         if (miningOrders.Count > 0)
         {
             surf.Print(4, y++, "Recent Mining Designations:", Color.Green);
             foreach (var d in miningOrders.Take(3))
             {
-                surf.Print(6, y++, $"Rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z} pri:{d.Priority}", Color.White);
+                surf.Print(6, y++, $"Rect ({d.Rect.X},{d.Rect.Y}) {d.Rect.Width}x{d.Rect.Height} z={d.ZMin}..{d.ZMax} action={d.Action} pri:{d.Priority}", Color.White);
             }
             if (miningOrders.Count > 3)
                 surf.Print(6, y++, $"... and {miningOrders.Count - 3} more designations", Color.DarkGray);
@@ -402,7 +402,7 @@ namespace HumanFortress.App.UI;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
             {
                 // Draw with transparent background to avoid obscuring underlying terrain
-                surf.SetGlyph(sx, sy, 'Â·', fg, Color.Transparent);
+                surf.SetGlyph(sx, sy, '¡¤', fg, Color.Transparent);
             }
         }
     }
@@ -421,7 +421,7 @@ namespace HumanFortress.App.UI;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
             {
                 // Draw with transparent background to avoid obscuring underlying terrain
-                surf.SetGlyph(sx, sy, 'Â·', fg, Color.Transparent);
+                surf.SetGlyph(sx, sy, '¡¤', fg, Color.Transparent);
             }
         }
     }
@@ -446,24 +446,24 @@ namespace HumanFortress.App.UI;
             {
                 if (x >= 0 && x < surf.Width)
                 {
-                    if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x, y0, 'â”€', fg, Color.Transparent); }
-                    if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x, y1, 'â”€', fg, Color.Transparent); }
+                    if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x, y0, '©¤', fg, Color.Transparent); }
+                    if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x, y1, '©¤', fg, Color.Transparent); }
                 }
             }
             for (int y = y0; y <= y1; y++)
             {
                 if (y >= 0 && y < surf.Height)
                 {
-                    if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, y, 'â”‚', fg, Color.Transparent); }
-                    if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, y, 'â”‚', fg, Color.Transparent); }
+                    if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, y, '©¦', fg, Color.Transparent); }
+                    if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, y, '©¦', fg, Color.Transparent); }
                 }
             }
-            if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, 'â”Œ', fg, Color.Transparent); }
-            if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, 'â”', fg, Color.Transparent); }
-            if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, 'â””', fg, Color.Transparent); }
-            if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, 'â”˜', fg, Color.Transparent); }
+            if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '©°', fg, Color.Transparent); }
+            if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '©´', fg, Color.Transparent); }
+            if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '©¸', fg, Color.Transparent); }
+            if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '©¼', fg, Color.Transparent); }
 
-            // ä¸å†æ•´ä½“é®ç½©çŸ©å½¢ï¼Œé¿å…é®æŒ¡åŽŸ tileï¼Œå¯è§†ä»…ä¿ç•™è¾¹æ¡† + åˆæ³•æ ¼æµ…å¡«
+            // ²»ÔÙÕûÌåÕÚÕÖ¾ØÐÎ£¬±ÜÃâÕÚµ²Ô­ tile£¬¿ÉÊÓ½ö±£Áô±ß¿ò + ºÏ·¨¸ñÇ³Ìî
 
             // If mining highlight and world provided, shade only actually affected cells
             // We support encoded kind pattern: "mining:<Action>" (e.g., mining:DigChannel)
@@ -503,7 +503,7 @@ namespace HumanFortress.App.UI;
                         int sy = wy - camera.Y;
                         if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
                         {
-                            surf.SetGlyph(sx, sy, 'Â·', dotFg, Color.Transparent);
+                            surf.SetGlyph(sx, sy, '¡¤', dotFg, Color.Transparent);
                         }
                     }
                 }

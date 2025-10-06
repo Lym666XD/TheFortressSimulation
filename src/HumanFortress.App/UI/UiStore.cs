@@ -138,6 +138,9 @@ public sealed class UiStore
     public DebugItemCategory DebugItemCat { get; set; } = DebugItemCategory.Boulders;
     public int DebugItemPage { get; set; } = 0;
 
+    // UI hints toggle (for ineligible tile preview)
+    public bool ShowIneligibleHints { get; set; } = true;
+
     // Toasts (text + expire tick)
     public readonly List<(string text, ulong expireTick)> Toasts = new();
 

@@ -33,6 +33,9 @@ public sealed class MiningJobSystem : ITick
     // Tile reservation: prevent multiple workers from mining the same tile
     private readonly System.Collections.Generic.HashSet<(int x, int y, int z)> _reservedTiles = new();
 
+    // Deferred stairwell segments: blocked items checked every 10 ticks to avoid starving fresh queue
+    private readonly System.Collections.Generic.Queue<(MiningSystem.PlannedDig pd, ulong blockedTick)> _deferredStairwells = new();
+
     // Replan/timeout tuning
     private const int MaxFailedReplans = 10; // After N failed replans, release reservation and requeue
 
@@ -57,6 +60,21 @@ public sealed class MiningJobSystem : ITick
     {
         _paths.BeginTick();
         _inboxBuffer.Clear();
+
+        // Retry deferred stairwell segments every 10 ticks (give other layers time to complete)
+        if ((tick % 10UL) == 0UL)
+        {
+            int retried = 0;
+            while (_deferredStairwells.Count > 0)
+            {
+                var (pd, blockedTick) = _deferredStairwells.Dequeue();
+                _inboxBuffer.Add(pd);
+                retried++;
+            }
+            if (retried > 0)
+                Logger.Log($"[MINING][{tick}] Retrying {retried} deferred stairwell segments");
+        }
+
         while (_inboxBuffer.Count < 16 && _backlog.TryDequeue(out var retry))
             _inboxBuffer.Add(retry);
         if (_inboxBuffer.Count < 16)
@@ -69,39 +87,23 @@ public sealed class MiningJobSystem : ITick
         }
 
         var digs = _inboxBuffer
-            .OrderBy(p => p.Cell.Y).ThenBy(p => p.Cell.X).ThenBy(p => p.Z)
+            .OrderByDescending(p => p.Priority)
+            .ThenBy(p => p.Cell.Y).ThenBy(p => p.Cell.X).ThenBy(p => p.Z)
             .ToList();
         var creatures = _world.Creatures.GetAllInstances().OrderBy(c => c.Guid).ToList();
         if (digs.Count > 0)
         {
-            Logger.Log($"[MINING][{tick}] Planned digs dequeued: {digs.Count}; available workers: {creatures.Count()}");
+            // Aggregate digs by DesignationId for logging
+            var idGroups = digs.GroupBy(d => d.DesignationId).Select(g => $"{g.Key}:{g.Count()}").ToArray();
+            var idsStr = string.Join(",", idGroups);
+            Logger.Log($"[MINING][{tick}] Planned digs dequeued: {digs.Count}; available workers: {creatures.Count()}; ids=[{idsStr}]");
         }
         var busy = new HashSet<Guid>(_active.Select(a => a.WorkerId));
         foreach (var pd in digs)
         {
             bool assigned = false;
 
-            // Light dependency for stairwell: require a carved stair on a neighboring Z before assigning middle/bottom
-            if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell &&
-                (pd.Segment == HumanFortress.Simulation.Orders.MiningSegment.Middle || pd.Segment == HumanFortress.Simulation.Orders.MiningSegment.Bottom))
-            {
-                if (!StairDependencySatisfied(pd.Cell, pd.Z))
-                {
-                    _backlog.Enqueue(pd);
-                    Logger.Log($"[MINING][{tick}] Gate stairwell seg={pd.Segment} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) waiting for adjacent layer stair");
-                    continue;
-                }
-            }
-
-            // Skip if tile is already reserved
-            var tileKey = (pd.Cell.X, pd.Cell.Y, pd.Z);
-            if (_reservedTiles.Contains(tileKey))
-            {
-                Logger.Log($"[MINING][{tick}] Tile ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) already reserved");
-                continue;
-            }
-
-            // Skip already-satisfied stairwell segments (idempotent): if target kind already matches, drop PD
+            // Skip already-satisfied stairwell segments FIRST (before Gate check): if target kind already matches, drop PD
             if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell)
             {
                 var t0 = _world.GetTile(pd.Cell.X, pd.Cell.Y, pd.Z);
@@ -114,12 +116,67 @@ public sealed class MiningJobSystem : ITick
                         HumanFortress.Simulation.Orders.MiningSegment.Bottom => HumanFortress.Simulation.Tiles.TerrainKind.StairsUp,
                         _ => t0.Value.Kind
                     };
+                    Logger.Log($"[MINING][{tick}] Check skip: seg={pd.Segment} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) current={t0.Value.Kind} expected={expected}");
                     if (t0.Value.Kind == expected)
                     {
-                        Logger.Log($"[MINING][{tick}] Skip stairwell seg={pd.Segment} already {expected} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z})");
+                        Logger.Log($"[MINING][{tick}] Skip stairwell seg={pd.Segment} already {expected} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}");
                         continue;
                     }
                 }
+            }
+
+            // Gate check for stairwells: ensure vertical connectivity exists before digging
+            // Top segments can always be dug (starting point). Others need stairs above or below.
+            if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell)
+            {
+                if (pd.Segment != HumanFortress.Simulation.Orders.MiningSegment.Top)
+                {
+                    // Check if there's a stair connection above (z+1) or below (z-1) to reach this tile
+                    bool hasConnection = false;
+
+                    // Check above (z+1): need StairsDown or StairsUD
+                    var tileAbove = _world.GetTile(pd.Cell.X, pd.Cell.Y, pd.Z + 1);
+                    if (tileAbove != null)
+                    {
+                        var kindAbove = tileAbove.Value.Kind;
+                        if (kindAbove == HumanFortress.Simulation.Tiles.TerrainKind.StairsDown ||
+                            kindAbove == HumanFortress.Simulation.Tiles.TerrainKind.StairsUD)
+                        {
+                            hasConnection = true;
+                        }
+                    }
+
+                    // Check below (z-1): need StairsUp or StairsUD
+                    if (!hasConnection)
+                    {
+                        var tileBelow = _world.GetTile(pd.Cell.X, pd.Cell.Y, pd.Z - 1);
+                        if (tileBelow != null)
+                        {
+                            var kindBelow = tileBelow.Value.Kind;
+                            if (kindBelow == HumanFortress.Simulation.Tiles.TerrainKind.StairsUp ||
+                                kindBelow == HumanFortress.Simulation.Tiles.TerrainKind.StairsUD)
+                            {
+                                hasConnection = true;
+                            }
+                        }
+                    }
+
+                    if (!hasConnection)
+                    {
+                        // Defer blocked stairwell to avoid starving other layers in the queue
+                        _deferredStairwells.Enqueue((pd, tick));
+                        Logger.Log($"[MINING][{tick}] Stairwell seg={pd.Segment} at ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId} blocked: no vertical connection; defer");
+                        continue;
+                    }
+                }
+            }
+
+            // Skip if tile is already reserved
+            var tileKey = (pd.Cell.X, pd.Cell.Y, pd.Z);
+            if (_reservedTiles.Contains(tileKey))
+            {
+                Logger.Log($"[MINING][{tick}] Tile ({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId} already reserved");
+                continue;
             }
 
             // Determine adjacency: for Channel prefer strictly NESW; others allow diagonals and expand radius
@@ -127,7 +184,7 @@ public sealed class MiningJobSystem : ITick
             if (adj == null)
             {
                 _backlog.Enqueue(pd);
-                Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}); requeue");
+                Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}; requeue");
                 continue;
             }
             foreach (var worker in creatures)
@@ -156,7 +213,8 @@ public sealed class MiningJobSystem : ITick
                     AssignedTick = tick,
                     ReplanFailCount = 0,
                     Action = pd.Action,
-                    Segment = pd.Segment
+                    Segment = pd.Segment,
+                    DesignationId = pd.DesignationId
                 };
                 _move.BeginMovement(ToEntity(worker.Guid), req, path);
                 _active.Add(job);
@@ -164,14 +222,14 @@ public sealed class MiningJobSystem : ITick
                 _reservedTiles.Add(tileKey);  // Reserve the tile
                 if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && pd.Z > 0)
                     _reservedTiles.Add((pd.Cell.X, pd.Cell.Y, pd.Z - 1));
-                Logger.Log($"[MINING][{tick}] Assign worker={worker.Guid} target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) adj=({adj.Value.X},{adj.Value.Y},{pd.Z}) terrain={job.TerrainKind} ticks={requiredTicks}");
+                Logger.Log($"[MINING][{tick}] Assign worker={worker.Guid} target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId} adj=({adj.Value.X},{adj.Value.Y},{pd.Z}) terrain={job.TerrainKind} ticks={requiredTicks}");
                 assigned = true;
                 break;
             }
             if (!assigned)
             {
                 _backlog.Enqueue(pd);
-                Logger.Log($"[MINING][{tick}] No worker for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z})");
+                Logger.Log($"[MINING][{tick}] No worker for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}");
             }
         }
     }
@@ -203,8 +261,8 @@ public sealed class MiningJobSystem : ITick
             {
                 // Release reservation and requeue if worker disappeared (dead/removed)
                 _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
-                _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
-                Logger.Log($"[MINING][{tick}] Worker missing; release & requeue target=({job.Target.X},{job.Target.Y},{job.Z})");
+                _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, 0));
+                Logger.Log($"[MINING][{tick}] Worker missing; release & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}");
                 finished.Add(job);
                 continue;
             }
@@ -221,18 +279,18 @@ public sealed class MiningJobSystem : ITick
                     if (path.Kind == PathResultKind.Found)
                     {
                         _move.BeginMovement(eid, req, path);
-                        Logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind}");
+                        Logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind} id={job.DesignationId}");
                     }
                     else
                     {
                         job.ReplanFailCount++;
-                        Logger.Log($"[MINING][{tick}] Replan failed kind={path.Kind} worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) fails={job.ReplanFailCount}");
+                        Logger.Log($"[MINING][{tick}] Replan failed kind={path.Kind} worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) fails={job.ReplanFailCount} id={job.DesignationId}");
                         if (job.ReplanFailCount >= MaxFailedReplans)
                         {
                             // Timeout: release reservation and requeue
                             _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
-                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
-                            Logger.Log($"[MINING][{tick}] Release reservation & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) due to timeout (path={path.Kind})");
+                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, 0));
+                            Logger.Log($"[MINING][{tick}] Release reservation & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) id=0(backlog) seg={job.Segment} due to timeout (path={path.Kind})");
                             finished.Add(job);
                         }
                     }
@@ -245,7 +303,7 @@ public sealed class MiningJobSystem : ITick
                 if (update.Status == MovementStatus.Arrived || update.Status == MovementStatus.PathComplete)
                 {
                     job.Stage = MiningStage.Digging;
-                    Logger.Log($"[MINING][{tick}] Start digging by worker={job.WorkerId} at target=({job.Target.X},{job.Target.Y},{job.Z})");
+                    Logger.Log($"[MINING][{tick}] Start digging by worker={job.WorkerId} at target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}");
 
                     // Stairwell pre-open: when starting to dig a stair segment (Top/Middle/Bottom),
                     // open exactly z-1 as StairsUD if it is SolidWall and within valid z-range.
@@ -283,8 +341,8 @@ public sealed class MiningJobSystem : ITick
                         // Channel safety: if occupied by a creature OTHER THAN the current worker, requeue instead of carving under feet
                         if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && AnyCreatureAtExcept(job.Target, job.Z, job.WorkerId))
                         {
-                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
-                            Logger.Log($"[MINING][{tick}] Channel target occupied by other creature at ({job.Target.X},{job.Target.Y},{job.Z}); requeue");
+                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, 0));
+                            Logger.Log($"[MINING][{tick}] Channel target occupied by other creature at ({job.Target.X},{job.Target.Y},{job.Z}) id=0(backlog); requeue");
                             // Release reservation and skip completion
                             _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                             if (job.Z > 0) _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
@@ -294,11 +352,11 @@ public sealed class MiningJobSystem : ITick
                         job.Stage = MiningStage.Complete;
                         ApplyMiningResult(job);
                         _recentCompleted.Add((job.Target, job.Z, tick + 100)); // short-lived completion highlight
-                        Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} by {job.WorkerId}");
+                        Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} id={job.DesignationId} seg={job.Segment} by {job.WorkerId}");
                     }
                     else
                     {
-                        Logger.Log($"[MINING][{tick}] Tile ({job.Target.X},{job.Target.Y},{job.Z}) changed during dig, aborting");
+                        Logger.Log($"[MINING][{tick}] Tile ({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} changed during dig, aborting");
                     }
 
                     // Release reservation
@@ -718,7 +776,9 @@ public sealed class MiningJobSystem : ITick
         if (action != HumanFortress.Simulation.Orders.MiningAction.DigChannel)
             foreach (var (dx, dy) in Diag()) if (Acceptable(x + dx, y + dy)) return (x + dx, y + dy);
 
-        for (int r = 2; r <= 3; r++)
+        // Expanded search radius for stairwells (r=8) to handle multi-layer digging
+        int maxRadius = (action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell) ? 8 : 3;
+        for (int r = 2; r <= maxRadius; r++)
         {
             for (int yy = y - r; yy <= y + r; yy++)
             {
@@ -773,6 +833,7 @@ public sealed class MiningJobSystem : ITick
         public int ReplanFailCount { get; set; }
         public HumanFortress.Simulation.Orders.MiningAction Action { get; init; }
         public HumanFortress.Simulation.Orders.MiningSegment Segment { get; init; }
+        public int DesignationId { get; init; }
     }
 
     public readonly record struct ActiveMiningJobView(

@@ -384,20 +384,13 @@
             Mining action kinds for advanced mining orders.
             </summary>
         </member>
-        <member name="T:HumanFortress.Simulation.Orders.MiningDesignation">
-            <summary>
-            A mining designation created by player input (rectangle at a given Z).
-            Read in the read phase by the mining system to generate planned digs.
-            Thread-safe lifetime: created from UI via command; consumed by MiningSystem.
-            </summary>
-        </member>
         <member name="T:HumanFortress.Simulation.Orders.MiningOrderRules">
             <summary>
             Shared eligibility and counting rules for mining selections.
             Centralizes UI and command-side prechecks to avoid drift.
             </summary>
         </member>
-        <member name="T:HumanFortress.Simulation.Orders.MiningSystem">
+        <member name="T:HumanFortress.Simulation.Orders.MiningSegment">
             <summary>
             Mining planner: reads mining designations and produces PlannedDig DTOs.
             Read phase only; no world mutation. Write phase hands off to executor inbox.
@@ -421,13 +414,23 @@
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMining(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
             <summary>
-            Enqueue a mining designation for processing.
+            Legacy wrapper kept for compatibility: simple mining becomes Advanced DIG at single Z.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMiningAdvanced(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.MiningAction,System.Int32,System.UInt64)">
             <summary>
             Enqueue advanced mining order. DIG/DIG_RAMP decomposed into per-Z MiningDesignation immediately.
             Others queued for future handling.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningAdds(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.OrdersManager.MiningDesignation},System.Int32)">
+            <summary>
+            Drain new unified mining designations (V2) into provided list.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningCancels(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.OrdersManager.MiningCancelRegion},System.Int32)">
+            <summary>
+            Drain mining cancellation regions (RemoveDigging) into provided list.
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueConstruction(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.ConstructionShape,HumanFortress.Simulation.Orders.MaterialFilterSpec,System.Int32,System.UInt64)">
@@ -449,16 +452,6 @@
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetActiveHaulsSnapshot">
             <summary>
             Get snapshot of active haul designations (persistent until manually cleared).
-            </summary>
-        </member>
-        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningDesignation},System.Int32)">
-            <summary>
-            Drain mining designations into provided list (Read phase).
-            </summary>
-        </member>
-        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningAdvanced(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningAdvancedDesignation},System.Int32)">
-            <summary>
-            Drain advanced mining designations into provided list (Read phase).
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainConstructionDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.ConstructionDesignation},System.Int32)">

@@ -124,6 +124,24 @@ namespace HumanFortress.App.States
                         {
                             // Reverse scroll axis for Z-level
                             _currentZ = Math.Max(0, Math.Min(49, _currentZ - deltaWheel));
+
+                            // Update mining z-range if in MiningSecondCorner mode
+                            if (_ui.PlaceMode == PlacementMode.MiningSecondCorner)
+                            {
+                                _ui.PlaceZMax = _currentZ;
+                                // Also update selection tool z-range (without Shift key requirement)
+                                if (_selectionTool != null && _selectionTool.IsActive)
+                                {
+                                    // Directly adjust selectionTool's z-range by delta
+                                    _selectionTool.AdjustZRange(deltaWheel);
+                                    Logger.Log($"[ZLEVEL-UPDATE] Mining mode: updated PlaceZMax={_currentZ} and selectionTool z-range");
+                                }
+                                else
+                                {
+                                    Logger.Log($"[ZLEVEL-UPDATE] Mining mode: updated PlaceZMax={_currentZ}");
+                                }
+                            }
+
                             Logger.Log($"[ZLEVEL-UPDATE] delta={deltaWheel} -> Z={_currentZ}");
                         }
                     }
@@ -464,7 +482,7 @@ namespace HumanFortress.App.States
                         // Stockpile placement prompt
                         _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
 
-                        // Draw placement preview on map£¨ËùÓÐ¾ØÐÎÀàÃüÁî¶¼¸ßÁÁ£©
+                        // Draw placement preview on mapï¿½ï¿½ï¿½ï¿½ï¿½Ð¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î¶¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
                         if (_ui.PlaceFirstCorner.HasValue)
                         {
                             var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
@@ -483,7 +501,7 @@ namespace HumanFortress.App.States
                             else if (_ui.PlaceMode == PlacementMode.MiningSecondCorner && _ordersUI != null)
                             {
                                 _ordersUI.RenderPlacementPreview(_mapSurface,
-                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ, _world, _ui.SelectedMiningAction);
+                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ, _world, _ui.SelectedMiningAction, _ui.ShowIneligibleHints);
                             }
                         }
                     }
@@ -540,12 +558,12 @@ namespace HumanFortress.App.States
             }
         }
 
-        // Handle overlay local left-clicks for F1¨CF8 and Z/X/C buttons
+        // Handle overlay local left-clicks for F1ï¿½CF8 and Z/X/C buttons
         private void OnOverlayLeftClickedLocal(Point local)
         {
             if (_uiSurface == null) return;
 
-            // Dock F1¨CF8 at bottom-left (bottom row)
+            // Dock F1ï¿½CF8 at bottom-left (bottom row)
             int dockY = _uiSurface.Surface.Height - 1;
             int dockXStart = 1;
             int dockBtnW = 5;
@@ -1532,6 +1550,14 @@ namespace HumanFortress.App.States
                     // Regular scroll for Z-level
                     int delta = state.Mouse.ScrollWheelValueChange > 0 ? 1 : -1;
                     _currentZ = Math.Max(0, Math.Min(49, _currentZ - delta));
+
+                    // Update mining z-range if in MiningSecondCorner mode
+                    if (_ui.PlaceMode == PlacementMode.MiningSecondCorner)
+                    {
+                        _ui.PlaceZMax = _currentZ;
+                        Logger.Log($"[ZLEVEL] Mining mode: updated PlaceZMax={_currentZ}");
+                    }
+
                     Logger.Log($"[ZLEVEL] Wheel delta={delta} (reversed) -> Z={_currentZ}");
                     changed = true;
                 }
@@ -2222,10 +2248,11 @@ namespace HumanFortress.App.States
                 {
                     _ui.PlaceFirstCorner = worldPos;
                     _ui.PlaceZMin = _currentZ; // Save first click's Z as zMin
+                    _ui.PlaceZMax = _currentZ; // Initialize zMax to same level (will be updated by scroll)
                     _ui.PlaceMode = PlacementMode.MiningSecondCorner;
                     // Begin selection tool for live preview & z-range adjust
                     _selectionTool?.Begin(worldPos, _currentZ);
-                    Logger.Log($"[MINING] First corner at ({worldX},{worldY},{_currentZ})");
+                    Logger.Log($"[MINING] First corner at ({worldX},{worldY},{_currentZ}), zMin={_currentZ}, zMax={_currentZ}");
                     DrawUI();
                     return;
                 }
@@ -2261,9 +2288,16 @@ namespace HumanFortress.App.States
                             _ => HumanFortress.Simulation.Orders.MiningAction.Dig
                         };
 
-                        // UI ²»ÔÙ¾Ü¾ø£»½»¸øÃüÁî/¹æ»®Æ÷À´Ìø¹ýÎÞÐ§µ¥Ôª£¬±ÜÃâ UI ±ß½çµÄÎóÅÐ
+                        // UI ï¿½ï¿½ï¿½Ù¾Ü¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½æ»®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ UI ï¿½ß½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-                        // Ö±½ÓÈë¶Óµ½ Orders£¨Ïß³Ì°²È«£©£¬¹æ±ÜÃüÁî¶ÓÁÐµ÷¶È²îÒì
+                        // Ö±ï¿½ï¿½ï¿½ï¿½Óµï¿½ Ordersï¿½ï¿½ï¿½ß³Ì°ï¿½È«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½È²ï¿½ï¿½ï¿½
+                        // Single-layer stairwell validation: show toast but still enqueue (planner will skip)
+                        if (simAction == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && zMin == zMax)
+                        {
+                            _ui.AddToast($"Stairwell must dig between multiple levels", _uiTick + 180);
+                            Logger.Log($"[UI] Single-layer stairwell rejected at UI (z={zMin})");
+                        }
+
                         Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
                         if (_world != null)
                         {

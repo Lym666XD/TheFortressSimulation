@@ -240,7 +240,7 @@ public sealed class OrdersUI
     }
 
         // Render placement preview (rect outline and optional legal-cell fill for mining)
-        public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, Rectangle viewport, bool show, int currentZ, World? world = null, MiningAction? miningAction = null)
+        public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, Rectangle viewport, bool show, int currentZ, World? world = null, MiningAction? miningAction = null, bool showIneligibleHints = true)
         {
             if (!show) return;
             // Compute inclusive rectangle
@@ -282,9 +282,14 @@ public sealed class OrdersUI
                 if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '+', fg, Color.Transparent); }
             }
 
-            // Draw dots for tiles that will be affected (interior)
+            // Draw dots for tiles that will be affected (interior) and show eligible count
             if (world != null && miningAction.HasValue)
             {
+                int eligible = 0;
+                int ineligible = 0;
+                int total = rect.Width * rect.Height;
+                var lightGray = new Color(80, 80, 80);
+
                 for (int wy = rect.Y; wy < rect.MaxExtentY; wy++)
                 {
                     for (int wx = rect.X; wx < rect.MaxExtentX; wx++)
@@ -305,20 +310,43 @@ public sealed class OrdersUI
                                 willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
                                 break;
                             case MiningAction.DigStairwell:
-                                willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
+                                willDig = true; // Stairwell can dig any terrain (planner will filter single-layer)
                                 break;
                         }
+
+                        int sx = wx - viewport.X;
+                        int sy = wy - viewport.Y;
+                        bool inBounds = sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height;
+
                         if (willDig)
                         {
-                            int sx = wx - viewport.X;
-                            int sy = wy - viewport.Y;
-                            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
+                            eligible++;
+                            if (inBounds)
                             {
-                                // Draw with transparent background to avoid covering map glyphs
+                                // Draw yellow dot for eligible tiles
                                 surf.SetGlyph(sx, sy, '.', fg, Color.Transparent);
                             }
                         }
+                        else if (showIneligibleHints && inBounds)
+                        {
+                            // Sampled light gray dots for ineligible tiles: every other cell (checkerboard)
+                            if ((wx + wy) % 2 == 0)
+                            {
+                                surf.SetGlyph(sx, sy, '.', lightGray, Color.Transparent);
+                            }
+                            ineligible++;
+                        }
                     }
+                }
+                // Render a small hint with eligible/total near the selection
+                int labelX = x0;
+                int labelY = y0 - 1;
+                if (labelY < 0) labelY = y1 + 1;
+                if (labelX < 0) labelX = 0;
+                if (labelX + 14 < surf.Width && labelY >= 0 && labelY < surf.Height)
+                {
+                    var hint = $"{eligible}/{total} eligible";
+                    surf.Print(labelX, labelY, hint, Color.Cyan);
                 }
             }
         }

@@ -1,0 +1,2056 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>HumanFortress.Simulation</name>
+    </assembly>
+    <members>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureDefinition">
+            <summary>
+            Static definition of a creature type loaded from data/core/creatures/*.json
+            Based on CREATURE_SPEC.md
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureInstance">
+            <summary>
+            Runtime instance of a creature in the world
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Creatures.CreatureManager">
+            <summary>
+            Global manager for creature definitions and runtime instances.
+            Thread-safe for concurrent reads; writes use locks.
+            Follows data-driven principles per CREATURE_SPEC.md and UPDATE_ORDER.md
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.SetWorld(HumanFortress.Simulation.World.World)">
+            <summary>
+            Set world reference (called after World is created)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.LoadDefinitions(System.String)">
+            <summary>
+            Load creature definitions from data files.
+            Each file is wrapped in try-catch; errors are logged but don't stop loading.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.ValidateDefinition(HumanFortress.Simulation.Creatures.CreatureDefinition)">
+            <summary>
+            Validate creature definition (basic checks)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.IndexByTags(HumanFortress.Simulation.Creatures.CreatureDefinition)">
+            <summary>
+            Build tag index for fast queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.SpawnCreature(System.String,SadRogue.Primitives.Point,System.Int32,System.String,System.UInt64)">
+            <summary>
+            Spawn a creature at the specified world position.
+            Returns creature GUID on success, null on failure.
+            TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetAllDefinitions">
+            <summary>
+            Get all creature definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetByTag(System.String)">
+            <summary>
+            Get creature definitions by tag
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetDefinition(System.String)">
+            <summary>
+            Get definition by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetInstance(System.Guid)">
+            <summary>
+            Get instance by GUID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Creatures.CreatureManager.GetAllInstances">
+            <summary>
+            Get all instances (creates a snapshot for thread safety)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Diff.SimulationDiffApplicator">
+            <summary>
+            Applies core DiffLog operations to the simulation world (v1.1 minimal).
+            Handles MoveCreature, MoveItem, MarkCarried, UnmarkCarried.
+            This runs after systems' Write phase per UPDATE_ORDER.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback">
+            <summary>
+            Optional logging callback (set by App layer to write to fortress_debug.log)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemDefinition">
+            <summary>
+            Static definition of an item type loaded from data/core/items/*.json
+            Based on ITEMS_SPEC.md v4-int
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.FixedMaterial">
+            <summary>
+            Fixed material string ID (e.g. "core_mat_metal_iron")
+            Use this for raw resources like ingots, blocks, planks
+            Mutually exclusive with multi-material crafting (future)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.BaseVolumeML">
+            <summary>
+            Base volume in milliliters (mL), required
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.BaseMassG">
+            <summary>
+            Base mass in grams (g), optional
+            If null, mass is calculated from material density × volume
+            Use this for items with air gaps or composite materials
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.FixedMassG">
+            <summary>
+            Fixed mass in grams (g), optional
+            Overrides material-based calculation (e.g. for feathers, balloons)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemInstance">
+            <summary>
+            Runtime instance of an item in the world
+            Based on ITEMS_SPEC v4-int §17
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.MaterialId">
+            <summary>
+            Material string ID (references MaterialRegistry)
+            Null if item uses fixed_material from definition
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.Position">
+            <summary>
+            World position (always set, represents last known position even if carried/contained)
+            Use IsOnGround to check if item is actually at this position
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.ContainedBy">
+            <summary>
+            Container GUID (if inside container, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.CarriedBy">
+            <summary>
+            Creature GUID (if in inventory, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.EquippedBy">
+            <summary>
+            Creature GUID (if equipped, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.InstalledAt">
+            <summary>
+            Placeable installation data (if installed as furniture/workstation)
+            When set, item is installed at InstalledAt.AnchorWorld instead of Position
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.IsOnGround">
+            <summary>
+            Helper: check if item is on ground (not carried/contained/equipped/installed)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.ReservationTokens">
+            <summary>
+            Reservation tokens for job system (replaces old IsReserved/ReservedBy)
+            Multiple jobs can reserve portions of a stack
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemManager">
+            <summary>
+            Global manager for item definitions and runtime instances.
+            Thread-safe for concurrent reads; writes use locks.
+            Follows data-driven principles per ITEMS_SPEC.md and UPDATE_ORDER.md
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemManager.LogCallback">
+            <summary>
+            Optional logging callback (set by App layer to write to fortress_debug.log)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.UpdateItemPosition(System.Guid,SadRogue.Primitives.Point,System.Int32,SadRogue.Primitives.Point,System.Int32)">
+            <summary>
+            Update item position and maintain position index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.MergeStacksAt(SadRogue.Primitives.Point,System.Int32)">
+            <summary>
+            Merge stacks at a given world position (post-move consolidation).
+            Current policy: same DefinitionId at same (x,y,z) merge by increasing first instance's StackCount,
+            deleting the redundant instances. Returns number of instances removed.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.SetDependencies(HumanFortress.Simulation.World.World,HumanFortress.Core.Content.Registry.ContentRegistry)">
+            <summary>
+            Set dependencies (called after initialization)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.LoadDefinitions(System.String)">
+            <summary>
+            Load item definitions from data files.
+            Each file is wrapped in try-catch; errors are logged but don't stop loading.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.ValidateDefinition(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Validate item definition (basic checks)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.IndexByKind(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Build kind index for category queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.IndexByTags(HumanFortress.Simulation.Items.ItemDefinition)">
+            <summary>
+            Build tag index for fast queries
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.SpawnItem(System.String,SadRogue.Primitives.Point,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Spawn an item at the specified world position.
+            Returns item GUID on success, null on failure.
+            TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
+            TODO: Implement stack merging when spawning stackable items
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAllDefinitions">
+            <summary>
+            Get all item definitions
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetByKind(System.String)">
+            <summary>
+            Get item definitions by kind (resource/weapon/armor/tool/container/consumable)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAvailableKinds">
+            <summary>
+            Get available kinds (for UI category display)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetByTag(System.String)">
+            <summary>
+            Get item definitions by tag
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetDefinition(System.String)">
+            <summary>
+            Get definition by ID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetInstance(System.Guid)">
+            <summary>
+            Get instance by GUID
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Items.ItemManager.GetAllInstances">
+            <summary>
+            Get all instances (creates a snapshot for thread safety)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiff">
+            <summary>
+            Immutable diff entry for Items layer operations (L5).
+            Applied during Write phase after Simulation diffs, but before building snapshots.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiffApplicator">
+            <summary>
+            Applies ItemsDiff operations (AddItem/RemoveItem) during Write phase.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Items.ItemsDiffLog">
+            <summary>
+            Thread-safe log for ItemsDiff operations per tick.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Jobs.ReservationManager">
+            <summary>
+            Central reservation manager for items/destinations.
+            v1.1.1 minimal: item-level reservations with TTL and holder.
+            Read-safe; writes happen in Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.TryReserveItem(System.Guid,System.Guid,System.UInt64)">
+            <summary>
+            Try reserve an item for a holder until expireTick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.ReleaseItem(System.Guid)">
+            <summary>
+            Release an item's reservation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.IsItemReserved(System.Guid,System.UInt64)">
+            <summary>
+            Check if item is reserved at tick.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Jobs.ReservationManager.GetItemReservationsSnapshot">
+            <summary>
+            Snapshot for UI/debugging.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionDesignation">
+            <summary>
+            Construction designation for L0 structural builds (wall/floor/ramp/stairs).
+            Supports multi-Z prisms per DF-style input: top Z places stairs down, bottom Z places stairs up, middle Z places UD.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionShape">
+            <summary>
+            Target structural kinds we support in L0 construction.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.PlannedBuild">
+            <summary>
+            Planned build DTO emitted by ConstructionSystem.ReadTick.
+            Carries final target kind and optional geology handle selected by material resolver.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.PlannedBuild.#ctor(SadRogue.Primitives.Point,System.Int32,HumanFortress.Simulation.Tiles.TerrainKind,System.UInt16,HumanFortress.Simulation.Orders.ConstructionShape,System.Int32,System.UInt64)">
+            <summary>
+            Planned build DTO emitted by ConstructionSystem.ReadTick.
+            Carries final target kind and optional geology handle selected by material resolver.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MaterialFilterSpec">
+            <summary>
+            Filter specification for selecting materials/items for construction.
+            Can be reused by L2 furniture and future workshop recipes.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.PreferredMaterialId">
+            <summary>
+            Optional concrete material ID (e.g., "core_mat_stone_granite"). If set, takes precedence.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.Tags">
+            <summary>
+            Tag filters (e.g., ["construction","block","stone"]).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.CategoryKey">
+            <summary>
+            Optional UI/cache category key (e.g., "l0.floor", "l0.wall").
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionSystem">
+            <summary>
+            Planner for L0 structural construction. Reads ConstructionDesignation and produces PlannedBuilds.
+            - Multi-Z prism support: top layer -> StairsDown, bottom -> StairsUp, middle -> StairsUD when Shape=Stairs.
+            - Material resolution: queries ContentRegistry for (material, kind) → geology handle, with last-used preference cache.
+            - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.ConstructionSystem.PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind,System.UInt16)">
+            <summary>
+            Helper to pack SetTerrain args with optional geology override (plan A: existing opcode).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.HaulDesignation">
+            <summary>
+            A haul designation created by player input (rectangle at a given Z).
+            Read in the read phase by the hauling system to generate moves.
+            Thread-safe lifetime: created from UI via command; consumed by HaulingSystem.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.HaulingSystem">
+            <summary>
+            Minimal v1 hauling system: reads haul designations, plans moves, and applies instant relocations.
+            Design for extensibility: later replace instant moves with creature-assigned jobs and path execution.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.HaulingSystem.DequeuePlannedMoves(System.Int32,System.Collections.Generic.IList{HumanFortress.Simulation.Orders.HaulingSystem.PlannedMove})">
+            <summary>
+            Dequeue up to max planned moves for job creation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningAction">
+            <summary>
+            Mining action kinds for advanced mining orders.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningDesignation">
+            <summary>
+            A mining designation created by player input (rectangle at a given Z).
+            Read in the read phase by the mining system to generate planned digs.
+            Thread-safe lifetime: created from UI via command; consumed by MiningSystem.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningOrderRules">
+            <summary>
+            Shared eligibility and counting rules for mining selections.
+            Centralizes UI and command-side prechecks to avoid drift.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningSystem">
+            <summary>
+            Mining planner: reads mining designations and produces PlannedDig DTOs.
+            Read phase only; no world mutation. Write phase hands off to executor inbox.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.MiningSystem.DequeuePlannedDigs(System.Int32,System.Collections.Generic.IList{HumanFortress.Simulation.Orders.MiningSystem.PlannedDig})">
+            <summary>
+            Dequeue up to max planned digs for job creation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.OrdersManager">
+            <summary>
+            Central store for player orders (designations), starting with Haul.
+            Thread-safe for enqueue/dequeue across UI thread and sim thread.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueHaul(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a haul designation for processing.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMining(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a mining designation for processing.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMiningAdvanced(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.MiningAction,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue advanced mining order. DIG/DIG_RAMP decomposed into per-Z MiningDesignation immediately.
+            Others queued for future handling.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningAdds(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.OrdersManager.MiningDesignationV2},System.Int32)">
+            <summary>
+            Drain new unified mining designations (V2) into provided list.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningCancels(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.OrdersManager.MiningCancelRegion},System.Int32)">
+            <summary>
+            Drain mining cancellation regions (RemoveDigging) into provided list.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueConstruction(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.ConstructionShape,HumanFortress.Simulation.Orders.MaterialFilterSpec,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a construction designation (may span multiple Z).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainHaulDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.HaulDesignation},System.Int32)">
+            <summary>
+            Drain at most maxCount haul designations into the provided list.
+            Returns number drained. Use in the Read phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetRecentHauls">
+            <summary>
+            Get a snapshot of recently created haul designations (for UI/debug).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.GetActiveHaulsSnapshot">
+            <summary>
+            Get snapshot of active haul designations (persistent until manually cleared).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningDesignation},System.Int32)">
+            <summary>
+            Drain mining designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningAdvanced(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningAdvancedDesignation},System.Int32)">
+            <summary>
+            Drain advanced mining designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainConstructionDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.ConstructionDesignation},System.Int32)">
+            <summary>
+            Drain construction designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.ChunkPlaceableData">
+             <summary>
+             Chunk-level placeable storage (Layer 2: placeables/constructions)
+             Stores placeable instances owned by this chunk.
+             For multi-chunk large placeables (e.g., 5×5 workshop spanning multiple chunks),
+             only the primary chunk owns the instance; other chunks store external references.
+            
+             NOTE: Will be serialized to chunk saves when save system is implemented.
+             Currently stored in memory only via Chunk._placeableData.
+             </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.GetPlaceableAt(System.Int32)">
+            <summary>
+            Get placeable at local cell index (resolves both owned and external)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.AddPlaceable(System.Int32,HumanFortress.Simulation.Placeables.PlaceableInstance)">
+            <summary>
+            Add owned placeable at local cell index.
+            Caller MUST call SyncToFurnitureCell and BumpConnectivityVersion separately.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.RemovePlaceable(System.Int32)">
+            <summary>
+            Remove owned placeable at local cell index
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.AddExternalRef(System.Int32,System.Guid)">
+            <summary>
+            Add external reference to placeable owned by another chunk
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.RemoveExternalRef(System.Int32)">
+            <summary>
+            Remove external reference at local cell index
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.GetAllOwnedPlaceables">
+            <summary>
+            Get all owned placeables
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.TryGetOwnedAt(System.Int32,HumanFortress.Simulation.Placeables.PlaceableInstance@)">
+            <summary>
+            Try get owned placeable at local cell index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.HasPlaceableAt(System.Int32)">
+            <summary>
+            Check if cell has any placeable (owned or external ref)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.Clear">
+            <summary>
+            Clear all placeable data
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.SyncToFurnitureCell(HumanFortress.Simulation.World.Chunk,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Synchronize placeable to FurnitureCell layer.
+            Called after AddPlaceable to update L2 derived cache.
+            PlaceableInstance (authoritative) → FurnitureRef → FurnitureCell (derived)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.IsBlockingPassability(HumanFortress.Simulation.Placeables.PlaceableInstance)">
+            <summary>
+            Check if placeable has blocking passability
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.UnsyncFromFurnitureCell(HumanFortress.Simulation.World.Chunk,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Remove placeable from FurnitureCell layer.
+            Called before RemovePlaceable to update L2 derived cache.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableFactory">
+            <summary>
+            Factory helpers for placeable instances.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableFactory.CreateConstructionGhost(SadRogue.Primitives.Point,System.Int32,System.UInt64,System.String)">
+            <summary>
+            Create a non-blocking construction ghost (1x1) at position for a planned L0 build.
+            Deterministic GUID by position + tickSeed.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableInstance">
+             <summary>
+             Runtime placeable instance stored in chunk.
+             Can be created from:
+             - Installable: ItemInstance with PlaceableProfile (preserves quality, material, decorations)
+             - Construction: Built on-site from ConstructionDefinition (quality always 0)
+            
+             NOTE: PlaceableData is serialized to chunk saves when save system is implemented.
+             Currently stored in memory only via Chunk.PlaceableData layer.
+             </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Guid">
+            <summary>
+            Unique GUID for this placeable instance
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Kind">
+            <summary>
+            Placeable kind (Installable from item, or Construction built on-site)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.DefinitionId">
+            <summary>
+            Definition ID (item def ID for Installable, construction def ID for Construction)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Position">
+            <summary>
+            World position (anchor point, top-left for MVP)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Z">
+            <summary>
+            Z-level
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Footprint">
+            <summary>
+            Footprint dimensions (stored directly, no rotation in MVP)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemGuid">
+            <summary>
+            Source item GUID (reference only, for uninstall tracking)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemMaterial">
+            <summary>
+            Source item material ID (preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemQuality">
+            <summary>
+            Source item quality tier (preserved for uninstall)
+            Only set for Installable kind (-3 to +3)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemDecorations">
+            <summary>
+            Source item decorations (inlays, engravings, sockets - preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemMaker">
+            <summary>
+            Source item maker (crafter GUID - preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Effects">
+            <summary>
+            Environmental effects (computed at install/build time)
+            For Installable: base effects + quality modifier
+            For Construction: fixed effects (quality always 0)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Passability">
+            <summary>
+            Passability mode (Blocking/Nonblocking/Doorway). Defaults to Nonblocking for ghosts.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.IsGhost">
+            <summary>
+            True if this is a temporary construction ghost placeholder.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.DoorState">
+            <summary>
+            Door state (only if passability=doorway)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.OwnerFactionId">
+            <summary>
+            Owner faction ID
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.OwnerCreatureGuid">
+            <summary>
+            Owner creature GUID
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Forbidden">
+            <summary>
+            Forbidden flag (blocks usage)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.HitPoints">
+            <summary>
+            Current hit points
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.MaxHitPoints">
+            <summary>
+            Maximum hit points (calculated from material and size)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateFromItem(HumanFortress.Simulation.Items.ItemInstance,HumanFortress.Simulation.Items.ItemDefinition,SadRogue.Primitives.Point,System.Int32,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create placeable instance from installed item
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateFromConstruction(HumanFortress.Core.Content.Registry.ConstructionDefinition,SadRogue.Primitives.Point,System.Int32,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create placeable instance from construction
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateItemFromPlaceable(HumanFortress.Simulation.Placeables.PlaceableInstance,HumanFortress.Simulation.Items.ItemDefinition,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create item instance from uninstalled placeable (generates NEW GUID per SPEC §15.6)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableKind">
+            <summary>
+            Placeable kind (Installable from item, or Construction built on-site)
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Placeables.PlaceableKind.Installable">
+            <summary>
+            Installable from item (has source_item_* fields, preserves quality/material/decorations)
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Placeables.PlaceableKind.Construction">
+            <summary>
+            Built on-site from construction definition (no source item, quality always 0)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.DoorState">
+            <summary>
+            Door state component (only for placeables with passability=doorway)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.DoorState.IsOpen">
+            <summary>
+            Is door currently open (affects passability)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.DoorState.IsLocked">
+            <summary>
+            Is door locked (blocks opening)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableManager">
+            <summary>
+            Manager for placeable operations across chunks.
+            Handles collision detection, cross-chunk footprints, and two-phase placement protocol.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.CheckCollision(HumanFortress.Simulation.World.World,SadRogue.Primitives.Point,System.Int32,HumanFortress.Core.Content.Registry.Footprint)">
+            <summary>
+            Check if placeable can be placed at position without collision.
+            Validates full footprint across all chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.PlacePlaceable(HumanFortress.Simulation.World.World,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Place placeable instance with full cross-chunk footprint handling.
+            Uses two-phase protocol for deterministic cross-chunk writes.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.RemoveGhostAt(HumanFortress.Simulation.World.World,SadRogue.Primitives.Point,System.Int32,System.String,System.UInt64)">
+            <summary>
+            Remove ghost placeable at anchor position if present.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.GetAffectedChunks(SadRogue.Primitives.Point,System.Int32,HumanFortress.Core.Content.Registry.Footprint)">
+            <summary>
+            Get all chunks affected by placeable footprint.
+            Used for cross-chunk collision detection and placement.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.CollisionResult">
+            <summary>
+            Result of collision detection
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshot">
+            <summary>
+            Immutable per-tick snapshot for rendering per RENDERING_SNAPSHOT.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshotBuilder">
+            <summary>
+            Builds immutable render snapshots from world state per RENDERING_SNAPSHOT.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Rendering.RenderSnapshotBuilder.BuildSnapshot(HumanFortress.Simulation.Rendering.CameraInfo,HumanFortress.Simulation.Rendering.ViewportInfo,System.UInt64)">
+            <summary>
+            Build snapshot after simulation commits, per section 2.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Rendering.TileRegistry">
+            <summary>
+            Registry for tile visual data.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.ChunkStockpileData">
+            <summary>
+            Per-chunk stockpile data including zone shards and item indexing.
+            Thread-safe for reads during Read phase, mutations only in Write phase per STOCKPILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ChunkStockpileData.DirtyGeneration">
+            <summary>
+            Dirty generation for cache invalidation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetZoneAtCell(System.Int32)">
+            <summary>
+            Get zones at a specific cell (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetShard(System.Int32)">
+            <summary>
+            Get shard for a zone (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetAllShards">
+            <summary>
+            Get all shards in this chunk (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetItemsByTag(System.String)">
+            <summary>
+            Get items by tag (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetItemsInZone(System.Int32)">
+            <summary>
+            Get items in a zone (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.GetLooseItems">
+            <summary>
+            Get loose items not in any zone (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.CreateOrUpdateShard(System.Int32,HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Create or update a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.AddCellsToZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.RemoveCellsFromZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.DeleteShard(System.Int32)">
+            <summary>
+            Delete a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.OnItemPlaced(System.Int32,System.Int32,System.Int32,System.Collections.Generic.List{System.String})">
+            <summary>
+            Update item placement (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.OnItemRemoved(System.Int32,System.Int32,System.Int32,System.Collections.Generic.List{System.String})">
+            <summary>
+            Update item removal (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.TryReserveSlot(System.Int32)">
+            <summary>
+            Reserve a slot in a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ChunkStockpileData.ReleaseSlot(System.Int32)">
+            <summary>
+            Release a reserved slot (Write phase only).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileDiffOp">
+            <summary>
+            Diff operations for stockpile system per STOCKPILE_SPEC.md.
+            Follows the Diff-Log pattern from CONCURRENCY_MODEL.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileDiff">
+            <summary>
+            Immutable diff entry for stockpile operations.
+            Generated during Read phase, applied during Write phase.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.Op">
+            <summary>
+            Operation to perform.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.TargetChunk">
+            <summary>
+            Target chunk for this operation.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.ZoneId">
+            <summary>
+            Zone ID for this operation.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.CellIndex">
+            <summary>
+            Cell index within chunk (-1 if N/A).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.ItemHandle">
+            <summary>
+            Item handle (0 if N/A).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.Quantity">
+            <summary>
+            Quantity for operations involving amounts.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.Priority">
+            <summary>
+            Priority for merge ordering.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.SystemId">
+            <summary>
+            System that generated this diff.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.LocalSeq">
+            <summary>
+            Local sequence number for stable ordering.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.JobId">
+            <summary>
+            Job ID for reservation tracking.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileDiff.Data">
+            <summary>
+            Additional data for specific operations.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileDiff.GetSortKey">
+            <summary>
+            Create a deterministic sort key for merge ordering.
+            Per STOCKPILE_SPEC: cellIndex → priority(desc) → op → zoneId → itemHandle → systemId → localSeq
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileDiffApplicator">
+            <summary>
+            Applies stockpile diffs during Write phase.
+            Per STOCKPILE_SPEC.md section 7: deterministic merge and atomic application.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileDiffApplicator.ApplyDiffs(HumanFortress.Simulation.World.Chunk,System.Collections.Generic.List{HumanFortress.Simulation.Stockpile.StockpileDiff})">
+            <summary>
+            Apply a batch of stockpile diffs to a chunk.
+            Called during Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileDiffApplicator.ApplyDiff(HumanFortress.Simulation.World.Chunk,HumanFortress.Simulation.Stockpile.StockpileDiff)">
+            <summary>
+            Apply a single diff to a chunk.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileFilter">
+            <summary>
+            Filter determining which items a stockpile zone accepts.
+            Data-driven per STOCKPILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileFilter.Mode">
+            <summary>
+            Filter mode (whitelist or blacklist).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileFilter.Tags">
+            <summary>
+            Item tags to filter by.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileFilter.ItemIds">
+            <summary>
+            Specific item IDs to filter by.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileFilter.Materials">
+            <summary>
+            Material IDs to filter by.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileFilter.Accepts(HumanFortress.Simulation.Stockpile.ItemStackRef,HumanFortress.Core.Content.ContentRegistry)">
+            <summary>
+            Check if this filter accepts the given item.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileFilter.FromPreset(HumanFortress.Simulation.Stockpile.StockpilePreset)">
+            <summary>
+            Create a filter from a preset definition.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.FilterMode">
+            <summary>
+            Filter mode for stockpile zones.
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Stockpile.FilterMode.Whitelist">
+            <summary>
+            Only accept items matching the filter criteria.
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Stockpile.FilterMode.Blacklist">
+            <summary>
+            Accept all items except those matching the filter criteria.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpilePreset">
+            <summary>
+            Stockpile preset loaded from JSON.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.ItemDefinition">
+            <summary>
+            Temporary item definition placeholder.
+            TODO: Replace with actual item system integration.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.ItemStackRef">
+            <summary>
+            Reference to an item stack with stockpile-related properties.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ItemStackRef.Handle">
+            <summary>
+            Unique handle for this item stack.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ItemStackRef.LastZoneId">
+            <summary>
+            Last zone this item was in (for stickiness).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ItemStackRef.PlacedTick">
+            <summary>
+            Tick when this item was placed (for dwell time).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ItemStackRef.Reserved">
+            <summary>
+            Whether this item is reserved by a haul job.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ItemStackRef.ReservedByJobId">
+            <summary>
+            Job that has reserved this item.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker">
+            <summary>
+            Single arbitration point for matching stockpile pull requests with available items.
+            Per STOCKPILE_SPEC.md section 3: Broker ensures deterministic matching and prevents ping-pong.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.GenerateHaulJobs(System.UInt64)">
+            <summary>
+            Main broker entry point called during Read phase.
+            Collects requests and items, performs matching, outputs haul job diffs.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.CollectPullRequests">
+            <summary>
+            Collect pull requests from all active chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.GenerateChunkPullRequests(HumanFortress.Simulation.World.Chunk)">
+            <summary>
+            Generate pull requests for a single chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.CollectAvailableItems(System.UInt64)">
+            <summary>
+            Collect available items from all chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.CollectChunkItems(HumanFortress.Simulation.World.Chunk,System.UInt64)">
+            <summary>
+            Collect available items from a single chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.MatchRequestsToItems(System.Collections.Generic.List{HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.PullRequest},System.Collections.Generic.List{HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.AvailableItem},System.UInt64)">
+            <summary>
+            Match pull requests to available items using deterministic scoring.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.CalculateIntegerScore(HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.AvailableItem,HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.PullRequest,System.UInt64)">
+            <summary>
+            Calculate integer score for item-zone matching.
+            Per STOCKPILE_SPEC section 4.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.ConvertToHaulJobDiffs(System.Collections.Generic.List{HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.HaulJob})">
+            <summary>
+            Convert matched haul jobs to diffs.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.PullRequest">
+            <summary>
+            Pull request from a zone.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.AvailableItem">
+            <summary>
+            Available item for hauling.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileHaulingBroker.HaulJob">
+            <summary>
+            Haul job to be created.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileTuning">
+            <summary>
+            Tuning parameters for stockpile system.
+            Loaded from tuning.stockpile.json per STOCKPILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileManager">
+            <summary>
+            Global manager for stockpile zones.
+            Maintains zone definitions and coordinates with chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileManager.CreateZone(System.String,HumanFortress.Simulation.World.ChunkKey,System.UInt64)">
+            <summary>
+            Create a new stockpile zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileManager.GetZone(System.Int32)">
+            <summary>
+            Get a zone by ID (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileManager.GetAllZones">
+            <summary>
+            Get all zones (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileManager.DeleteZone(System.Int32)">
+            <summary>
+            Delete a zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileManager.UpdateZone(System.Int32,System.Action{HumanFortress.Simulation.Stockpile.StockpileZone})">
+            <summary>
+            Update zone configuration.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileMessageType">
+            <summary>
+            Message types for cross-chunk stockpile coordination.
+            Per STOCKPILE_SPEC.md section 6.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileMessage">
+            <summary>
+            Cross-chunk message for stockpile operations.
+            Sent via Actor mailbox per CONCURRENCY_MODEL.md.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.Type">
+            <summary>
+            Message type.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.ZoneId">
+            <summary>
+            Zone ID this message relates to.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.ItemHandle">
+            <summary>
+            Item handle for haul operations.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.Quantity">
+            <summary>
+            Quantity being hauled.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.SourceChunk">
+            <summary>
+            Source chunk for the operation.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.DestChunk">
+            <summary>
+            Destination chunk for the operation.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.CellIndex">
+            <summary>
+            Cell index at destination.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.JobId">
+            <summary>
+            Job ID for tracking.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileMessage.LocalSeq">
+            <summary>
+            Local sequence for deterministic ordering.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileMessage.HaulJobAssigned(System.Int32,System.Int32,System.Int32,System.Int32,HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.ChunkKey,System.Int32,System.Int32)">
+            <summary>
+            Create a haul job assigned message.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileMessage.HaulJobComplete(System.Int32,System.Int32,System.Int32,HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.ChunkKey,System.Int32)">
+            <summary>
+            Create a haul job complete message.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileMessage.HaulJobCancelled(System.Int32,System.Int32,HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.ChunkKey,System.Int32)">
+            <summary>
+            Create a haul job cancelled message.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileMessage.GetDrainSortKey(System.UInt64)">
+            <summary>
+            Get deterministic sort key for mailbox draining.
+            Per CONCURRENCY_MODEL: tick → sourceChunk.Hash → localSeq
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.StockpileZone">
+            <summary>
+            Represents a stockpile zone that can span multiple chunks.
+            Global definition per STOCKPILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.ZoneId">
+            <summary>
+            Unique zone identifier.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.Name">
+            <summary>
+            Display name for the zone.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.HomeChunk">
+            <summary>
+            Home chunk where the zone was created (owns global properties).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.Filter">
+            <summary>
+            Filter determining which items this zone accepts.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.Priority">
+            <summary>
+            Priority level (0=Low, 1=Normal, 2=High, 3=Critical).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.TargetStacks">
+            <summary>
+            Target number of stacks to maintain.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.HysteresisLow">
+            <summary>
+            Start pulling items when stack count falls below this threshold.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.HysteresisHigh">
+            <summary>
+            Stop pulling items when stack count exceeds this threshold.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.Generation">
+            <summary>
+            Generation counter, incremented on any configuration change.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.CreatedTick">
+            <summary>
+            Tick when this zone was created.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.StockpileZone.MemberChunks">
+            <summary>
+            Chunks that contain cells belonging to this zone (immutable after creation).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileZone.UpdateMemberChunks(System.Collections.Generic.IEnumerable{HumanFortress.Simulation.World.ChunkKey})">
+            <summary>
+            Update member chunks when cells are added/removed.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.StockpileZone.IncrementGeneration">
+            <summary>
+            Increment generation when configuration changes.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.ZonePriority">
+            <summary>
+            Priority levels for stockpile zones.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Stockpile.ZoneShard">
+            <summary>
+            Per-chunk fragment of a stockpile zone.
+            Maintains local member cells and capacity tracking per STOCKPILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.ZoneId">
+            <summary>
+            Zone ID this shard belongs to.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.ChunkKey">
+            <summary>
+            Chunk this shard is in.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.MemberCells">
+            <summary>
+            Member cells in this chunk (bitset for 32x32=1024 cells).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.Capacity">
+            <summary>
+            Number of cells that can hold items.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.UsedSlots">
+            <summary>
+            Number of cells currently occupied.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.ReservedSlots">
+            <summary>
+            Number of cells reserved for incoming items.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Stockpile.ZoneShard.IncomingCount">
+            <summary>
+            Number of items in transit to this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.AddCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.RemoveCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.ContainsCell(System.Int32)">
+            <summary>
+            Check if a cell is part of this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.TryReserveSlot">
+            <summary>
+            Reserve a slot for an incoming item.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.ReleaseSlot">
+            <summary>
+            Release a reserved slot.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.OccupySlot">
+            <summary>
+            Mark a slot as occupied.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.FreeSlot">
+            <summary>
+            Mark a slot as free.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.UpdateIncoming(System.Int32)">
+            <summary>
+            Update incoming count.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.GetFillRatio">
+            <summary>
+            Get fill ratio for this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Stockpile.ZoneShard.GetAvailableCapacity">
+            <summary>
+            Get available capacity.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TerrainBitOps">
+            <summary>
+            Canonical terrain bit operations per TILES_MATERIALS_ARCHITECTURE.md.
+            This is the single source of truth for TerrainBits encoding/decoding.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetKind(System.UInt16)">
+            <summary>
+            Extract TerrainKind from TerrainBits (bits 0-3).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.IsNatural(System.UInt16)">
+            <summary>
+            Check if terrain is natural (bit 6).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.IsModifiable(System.UInt16)">
+            <summary>
+            Check if terrain is modifiable (bit 6).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.CreateTerrainBits(HumanFortress.Simulation.Tiles.TerrainKind,System.Boolean,System.Boolean)">
+            <summary>
+            Create TerrainBits from components (v2).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetKind(System.UInt16,HumanFortress.Simulation.Tiles.TerrainKind)">
+            <summary>
+            Modify terrain kind while preserving other bits.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetNatural(System.UInt16,System.Boolean)">
+            <summary>
+            Set natural flag.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.SetModifiable(System.UInt16,System.Boolean)">
+            <summary>
+            Set modifiable flag.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetDirectionOffset(System.Byte)">
+            <summary>
+            Get direction offsets for ramp navigation.
+            Direction encoding: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.CanAscendRamp(System.Int32,System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Check if approach direction is valid for ascending a ramp (helper used in UI/tests).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TerrainBitOps.GetRampDestination(System.Int32,System.Int32,System.Int32,System.Byte)">
+            <summary>
+            Get destination position when ascending a ramp.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TileBase">
+            <summary>
+            Base tile structure per TILE_SPEC.md.
+            Size: 10 bytes (may be padded by CLR).
+            Immutable for thread safety - use atomic replacement for updates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TileBase.WithTerrain(System.UInt16)">
+            <summary>
+            Create a modified copy with new terrain bits.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Tiles.TileBase.WithFluid(System.Byte,System.Byte)">
+            <summary>
+            Create a modified copy with new fluid.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.TerrainKind">
+            <summary>
+            Terrain types per TILE_SPEC.md.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Tiles.RampDirection">
+            <summary>
+            Ramp directions helper enum retained for offsets.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.Chunk">
+            <summary>
+            Fixed-size chunk of tiles per CHUNK_AND_DATA_LAYOUT.md.
+            Default 32x32 cells per Z-level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetTile(System.Int32,System.Int32)">
+            <summary>
+            Get tile at local coordinates. Thread-safe for reads.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.SetTile(System.Int32,System.Int32,HumanFortress.Simulation.Tiles.TileBase,System.UInt64)">
+            <summary>
+            Set tile at local coordinates. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetFurniture(System.Int32,System.Int32)">
+            <summary>
+            Get furniture at position. Thread-safe.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.PlaceFurniture(System.Int32,System.Int32,HumanFortress.Simulation.World.FurnitureRef,System.Boolean,System.UInt64)">
+            <summary>
+            Place furniture. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetTilesCopy">
+            <summary>
+            Get all tiles for batch operations. Creates a copy for thread safety.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.LocalIndex(System.Int32,System.Int32)">
+            <summary>
+            Convert local coordinates to index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.IndexToLocal(System.Int32)">
+            <summary>
+            Convert index to local coordinates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetStockpileData">
+            <summary>
+            Get stockpile data for this chunk. Thread-safe for reads.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.EnsureStockpileData">
+            <summary>
+            Initialize stockpile data if not present. Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetZoneData">
+            <summary>
+            Get zone data for this chunk. Thread-safe for reads.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.EnsureZoneData">
+            <summary>
+            Initialize zone data if not present. Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetPlaceableData">
+            <summary>
+            Get placeable data for this chunk. Thread-safe for reads.
+            NOTE: PlaceableData will be serialized to chunk saves when save system is implemented.
+            Currently stored in memory only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.EnsurePlaceableData">
+            <summary>
+            Initialize placeable data if not present. Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.RemoveFurnitureAt(System.Int32,System.Int32,System.Guid,System.UInt64)">
+            <summary>
+            Remove a furniture reference at a cell matching the given placeable GUID.
+            Returns true if a blocking ref was removed (connectivity changed).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.BumpConnectivityVersion">
+            <summary>
+            Bump connectivity version to invalidate derived caches.
+            Called when L0 or L2 topology changes (tiles, furniture, placeables).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.MarkTileDirty(System.Int32,System.UInt64)">
+            <summary>
+            Mark tile and neighbors dirty for cache rebuild.
+            Called when L0 or L2 changes affect pathfinding/LOS.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ChunkKey">
+            <summary>
+            Unique chunk identifier.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FurnitureCell">
+            <summary>
+            L2 overlay - furniture/constructions.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FurnitureRef">
+            <summary>
+            Reference to furniture/placeable instance.
+            MIGRATION: Old system uses Id + TypeId, new system uses PlaceableGuid.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.FieldCell">
+            <summary>
+            L4 overlay - fields (gases/decals).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ItemStackRef">
+            <summary>
+            L5 overlay - item stacks.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.ChunkLifecycleManager">
+            <summary>
+            Manages chunk lifecycle and LOD transitions per SIM_LOD_POLICY.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.UpdateLODLevels(System.Int32,System.Int32,System.Int32,System.UInt64)">
+            <summary>
+            Update LOD levels based on camera and heat per section 1.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.AddHeat(HumanFortress.Simulation.World.ChunkKey,System.UInt64)">
+            <summary>
+            Add heat to a chunk (combat, fire, etc).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.PinChunk(HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.PinReason)">
+            <summary>
+            Pin a chunk for a reason (UI focus, etc).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.ChunkLifecycleManager.UnpinChunk(HumanFortress.Simulation.World.ChunkKey,HumanFortress.Simulation.World.PinReason)">
+            <summary>
+            Unpin a chunk.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.LODLevel">
+            <summary>
+            LOD levels per SIM_LOD_POLICY.md section 0.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.PinReason">
+            <summary>
+            Reasons to pin a chunk at higher LOD.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.World">
+            <summary>
+            World manager handling chunks and LOD per SIM_LOD_POLICY.md.
+            Fortress size: N×N chunks, N ∈ [2..8]; chunk = 32×32×Z tiles.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.SizeInChunks">
+            <summary>
+            Size of the world in chunks (N for N×N).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.SizeInTiles">
+            <summary>
+            Size of the world in tiles.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.World.World.MaxZ">
+            <summary>
+            Maximum Z level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetOrCreateChunk(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Get or create a chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetChunk(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Get chunk if it exists.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetTile(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get tile at world coordinates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.SetTile(System.Int32,System.Int32,System.Int32,HumanFortress.Simulation.Tiles.TileBase,System.UInt64)">
+            <summary>
+            Set tile at world coordinates. Must be called only during Write phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.IsValidPosition(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Check if position is valid.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetAllChunks">
+            <summary>
+            Get all chunks in the world.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetChunkAt(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get chunk at chunk coordinates.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetActiveChunks">
+            <summary>
+            Get all active chunks (L0/L1).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.MarkChunkDirty(HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Mark chunk as dirty for navigation rebuild.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetAndClearDirtyChunks">
+            <summary>
+            Get and clear all dirty chunks for navigation rebuild.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.UpdateLOD(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Update LOD levels based on player focus per SIM_LOD_POLICY.md.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.World.GetEdgeBandChunks">
+            <summary>
+            Get chunks that need edge-band checking for incidents.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.World.EdgeBand">
+            <summary>
+            Edge band directions for incident spawning.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ChunkZoneData">
+            <summary>
+            Per-chunk zone data including zone shards per ZONE_SPEC.md §4.3.
+            Thread-safe for reads during Read phase, mutations only in Write phase.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ChunkZoneData.DirtyGeneration">
+            <summary>
+            Dirty generation for cache invalidation.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetZoneAtCell(System.Int32)">
+            <summary>
+            Get zone ID at a specific cell (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetShard(System.Int32)">
+            <summary>
+            Get shard for a zone (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.GetAllShards">
+            <summary>
+            Get all shards in this chunk (Read-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.HasZone(System.Int32)">
+            <summary>
+            Check if zone has any cells in this chunk.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.CreateOrUpdateShard(System.Int32,HumanFortress.Simulation.World.ChunkKey)">
+            <summary>
+            Create or update a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.AddCellsToZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.RemoveCellsFromZone(System.Int32,System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from a zone (Write phase only).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ChunkZoneData.DeleteShard(System.Int32)">
+            <summary>
+            Delete a zone shard (Write phase only).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneCoordinator">
+            <summary>
+            Coordinator for zone operations at the World level.
+            Provides high-level methods for zone creation, deletion, and cell management.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneCoordinator.Manager">
+            <summary>
+            Access to the underlying ZoneManager.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.CreateZoneFromRect(System.String,System.String,SadRogue.Primitives.Rectangle,System.Int32,System.UInt64)">
+            <summary>
+            Create a zone from a world-space rectangle at a given Z level.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.AddCellsToZone(System.Int32,SadRogue.Primitives.Rectangle,System.Int32)">
+            <summary>
+            Add cells from a rectangle to an existing zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.RemoveCellsFromZone(System.Int32,SadRogue.Primitives.Rectangle,System.Int32)">
+            <summary>
+            Remove cells from a rectangle from an existing zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.DeleteZone(System.Int32)">
+            <summary>
+            Delete a zone entirely, removing it from all chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneCoordinator.GetZoneAtPosition(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Get zone ID at a specific world position.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneDefinition">
+            <summary>
+            Content-driven zone definition loaded from zones.json per ZONE_SPEC.md §4.1.
+            Immutable template for creating zone instances.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Id">
+            <summary>
+            Unique identifier (e.g., "bedroom", "assembly", "lumbering").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Category">
+            <summary>
+            Category: production, civil, public, military, management.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.DisplayName">
+            <summary>
+            Display name for UI.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.UiHints">
+            <summary>
+            UI hints for rendering.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.DefaultPolicies">
+            <summary>
+            Default policies for this zone type.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneDefinition.Notes">
+            <summary>
+            Optional notes/description.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneUiHints">
+            <summary>
+            UI hints for zone visualization.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Glyph">
+            <summary>
+            Glyph character for display.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Color">
+            <summary>
+            Color in hex format (e.g., "#FFD700").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneUiHints.Keybind">
+            <summary>
+            Keybind hint (e.g., "Z", "X").
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZonePolicies">
+            <summary>
+            Zone policies (defaults from definition, can be overridden per instance).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZonePolicies.NavCostMode">
+            <summary>
+            Navigation cost mode: "none" or "restricted".
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZonePolicies.AllowsActions">
+            <summary>
+            List of allowed action types (future use).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneInstance">
+            <summary>
+            Runtime zone instance per ZONE_SPEC.md §4.2.
+            Represents a placed zone that can span multiple chunks.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.ZoneId">
+            <summary>
+            Unique zone instance identifier.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.DefId">
+            <summary>
+            Definition ID (e.g., "bedroom", "assembly").
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Name">
+            <summary>
+            User-assigned name.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Priority">
+            <summary>
+            Priority level (0=Low, 1=Normal, 2=High, 3=Critical).
+            Used for tie-breaking when multiple zones overlap.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Subtype">
+            <summary>
+            Subtype: "auto", "indoor", "outdoor" (for Assembly auto-naming, deferred in v1).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.ZMode">
+            <summary>
+            Z-level mode: "single" (v1), "range" (future).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.HomeChunk">
+            <summary>
+            Home chunk where the zone was created (owns global properties).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.MemberChunks">
+            <summary>
+            Chunks that contain cells belonging to this zone.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.TotalCells">
+            <summary>
+            Total number of member cells across all chunks.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Policies">
+            <summary>
+            Optional policy overrides.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Enabled">
+            <summary>
+            Zone enabled/disabled state.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.Generation">
+            <summary>
+            Generation counter, incremented on any configuration change.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneInstance.CreatedTick">
+            <summary>
+            Tick when this zone was created.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneInstance.UpdateMemberChunks(System.Collections.Generic.IEnumerable{HumanFortress.Simulation.World.ChunkKey})">
+            <summary>
+            Update member chunks when cells are added/removed.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneInstance.IncrementGeneration">
+            <summary>
+            Increment generation when configuration changes.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneManager">
+            <summary>
+            Global manager for zone instances per ZONE_SPEC.md.
+            Maintains zone definitions and runtime instances.
+            Thread-safe for reads during Read phase.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.RegisterDefinition(HumanFortress.Core.Content.ZoneDefinitionData)">
+            <summary>
+            Register a zone definition from content data.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetDefinition(System.String)">
+            <summary>
+            Get zone definition by ID.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetAllDefinitions">
+            <summary>
+            Get all zone definitions.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.CreateZone(System.String,System.String,HumanFortress.Simulation.World.ChunkKey,System.UInt64)">
+            <summary>
+            Create a new zone instance.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetZone(System.Int32)">
+            <summary>
+            Get a zone by ID (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetAllZones">
+            <summary>
+            Get all zones (thread-safe).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.GetZonesByCategory(System.String)">
+            <summary>
+            Get zones by category.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.DeleteZone(System.Int32)">
+            <summary>
+            Delete a zone.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.UpdateZone(System.Int32,System.Action{HumanFortress.Simulation.Zones.ZoneInstance})">
+            <summary>
+            Update zone configuration.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneManager.Clear">
+            <summary>
+            Clear all zones (for testing/reset).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Zones.ZoneShard">
+            <summary>
+            Per-chunk fragment of a zone per ZONE_SPEC.md §4.3.
+            Maintains local member cells and candidate furniture caches.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.ZoneId">
+            <summary>
+            Zone ID this shard belongs to.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.ChunkKey">
+            <summary>
+            Chunk this shard is in.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.MemberCells">
+            <summary>
+            Member cells in this chunk (bitset for 32x32=1024 cells).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Zones.ZoneShard.CellCount">
+            <summary>
+            Number of member cells in this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.AddCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Add cells to this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.RemoveCells(System.Collections.Generic.IEnumerable{System.Int32})">
+            <summary>
+            Remove cells from this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.ContainsCell(System.Int32)">
+            <summary>
+            Check if a cell is part of this shard.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Zones.ZoneShard.Clear">
+            <summary>
+            Clear all cells.
+            </summary>
+        </member>
+    </members>
+</doc>
