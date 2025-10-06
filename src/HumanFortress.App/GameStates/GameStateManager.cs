@@ -269,7 +269,190 @@ public sealed class GameStateManager
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;
 
+        // Ensure we have initial workers to execute jobs (spawn dwarves on nearby standable tiles)
+        TrySpawnInitialWorkers();
+
+        // Optional self-test: enqueue a mining order automatically for reproducible logs
+        if (Program.AutoDig)
+        {
+            try
+            {
+                SelfTestAutoDig();
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[AUTO-DIG] ERROR: {ex.Message}");
+            }
+        }
+
         _tickScheduler.Start();
+    }
+
+    /// <summary>
+    /// Self-test helper: find a SolidWall near world center at a mid Z and enqueue a 1x1 Dig order.
+    /// Logs in the same format as UI direct enqueue for comparison.
+    /// </summary>
+    private void SelfTestAutoDig()
+    {
+        if (_world == null) return;
+        int tiles = _world.SizeInTiles;
+        int cx = tiles / 2;
+        int cy = tiles / 2;
+
+        int zMid = Math.Max(0, Math.Min(_world.MaxZ - 1, _world.MaxZ / 2));
+        int zMin = 0;
+        int zMax = Math.Max(0, _world.MaxZ - 1);
+
+        int? foundX = null, foundY = null, foundZ = null;
+        // First, search an expanding ring around center across all Z
+        for (int z = zMin; z <= zMax && foundX == null; z++)
+        {
+            for (int r = 0; r <= Math.Max(cx, cy) && foundX == null; r++)
+            {
+                for (int dx = -r; dx <= r && foundX == null; dx++)
+                {
+                    int dy1 = r - Math.Abs(dx);
+                    foreach (int dy in new int[] { -dy1, dy1 })
+                    {
+                        int x = cx + dx;
+                        int y = cy + dy;
+                        if (x < 0 || y < 0 || x >= tiles || y >= tiles) continue;
+                        var t = _world.GetTile(x, y, z);
+                        if (t == null) continue;
+                        // Prefer SolidWall (Dig action accepts SolidWall and Ramp)
+                        if (t.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                        {
+                            foundX = x; foundY = y; foundZ = z;
+                            break;
+                        }
+                        // Fallback: allow Ramp as a dig target as well
+                        if (t.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp)
+                        {
+                            foundX = x; foundY = y; foundZ = z;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // If not found near center, fall back to exhaustive scan
+        if (foundX == null)
+        {
+            for (int z = zMin; z <= zMax && foundX == null; z++)
+            {
+                for (int y = 0; y < tiles && foundX == null; y++)
+                {
+                    for (int x = 0; x < tiles && foundX == null; x++)
+                    {
+                        var t = _world.GetTile(x, y, z);
+                        if (t == null) continue;
+                        var k = t.Value.Kind;
+                        if (k == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || k == HumanFortress.Simulation.Tiles.TerrainKind.Ramp)
+                        {
+                            foundX = x; foundY = y; foundZ = z;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (foundX == null)
+        {
+            Logger.Log("[AUTO-DIG] No SolidWall or Ramp found anywhere; skip.");
+            return;
+        }
+
+        var rect = new SadRogue.Primitives.Rectangle(foundX.Value, foundY.Value, 1, 1);
+        int z0 = foundZ!.Value;
+        // Emit the same UI log format for consistency
+        Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={z0} zMax={z0} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+        _world.Orders.EnqueueMiningAdvanced(
+            rect,
+            z0,
+            z0,
+            HumanFortress.Simulation.Orders.MiningAction.Dig,
+            priority: 50,
+            createdTick: _tickScheduler.CurrentTick
+        );
+        Logger.Log($"[AUTO-DIG] Enqueued test Dig at ({rect.X},{rect.Y},{z0})");
+    }
+
+    /// <summary>
+    /// Spawn a minimal set of initial workers if none exist, so mining/hauling can proceed.
+    /// Looks for OpenWithFloor tiles near world center across a small radius and surface-ish Z range.
+    /// </summary>
+    private void TrySpawnInitialWorkers(int desired = 5)
+    {
+        if (_world == null) return;
+        if (_world.Creatures.InstanceCount > 0) return;
+
+        try
+        {
+            int tiles = _world.SizeInTiles;
+            int cx = tiles / 2;
+            int cy = tiles / 2;
+
+            // Heuristic Z window around mid-depth (surface-ish)
+            int zMid = Math.Max(0, Math.Min(_world.MaxZ - 1, _world.MaxZ / 2));
+            int zMin = Math.Max(0, zMid - 5);
+            int zMax = Math.Min(_world.MaxZ - 1, zMid + 5);
+
+            int spawned = 0;
+            int radiusMax = Math.Max(4, tiles / 8);
+            for (int r = 0; r <= radiusMax && spawned < desired; r++)
+            {
+                for (int z = zMin; z <= zMax && spawned < desired; z++)
+                {
+                    // Scan a diamond ring at radius r around (cx,cy)
+                    for (int dx = -r; dx <= r && spawned < desired; dx++)
+                    {
+                        int dy1 = r - Math.Abs(dx);
+                        foreach (int dy in new int[] { -dy1, dy1 })
+                        {
+                            int wx = cx + dx;
+                            int wy = cy + dy;
+                            if (wx < 0 || wy < 0 || wx >= tiles || wy >= tiles) continue;
+                            var t = _world.GetTile(wx, wy, z);
+                            if (t == null) continue;
+                            if (!t.Value.IsStandable) continue; // require OpenWithFloor
+
+                            var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
+                            if (guid.HasValue)
+                            {
+                                spawned++;
+                                if (spawned >= desired) break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Fallback: exhaustive scan for any standable tile across the map
+            if (spawned < desired)
+            {
+                for (int z = 0; z < _world.MaxZ && spawned < desired; z++)
+                {
+                    for (int wy = 0; wy < tiles && spawned < desired; wy++)
+                    {
+                        for (int wx = 0; wx < tiles && spawned < desired; wx++)
+                        {
+                            var t = _world.GetTile(wx, wy, z);
+                            if (t == null || !t.Value.IsStandable) continue;
+                            var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
+                            if (guid.HasValue) spawned++;
+                        }
+                    }
+                }
+            }
+
+            Logger.Log($"[SIM] Initial workers spawned: {spawned}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Log($"[SIM] Spawn initial workers failed: {ex.Message}");
+        }
     }
 
     /// <summary>

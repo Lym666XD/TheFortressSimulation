@@ -15,6 +15,7 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 public sealed class MiningSystem : ITick
 {
+    public static System.Action<string>? LogCallback;
     private readonly World.World _world;
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
@@ -84,7 +85,19 @@ public sealed class MiningSystem : ITick
 
     public void WriteTick(ulong tick)
     {
-        if (_planned.Count == 0) return;
+        if (_planned.Count == 0)
+        {
+            if ((tick % 60UL) == 0UL)
+            {
+                var _msg = "[MINING][PLAN] WriteTick: no planned digs";
+                if (LogCallback != null) LogCallback(_msg); else System.Console.WriteLine(_msg);
+            }
+            return;
+        }
+        {
+            var _msg2 = $"[MINING][PLAN] WriteTick: enqueuing planned digs: {_planned.Count}";
+            if (LogCallback != null) LogCallback(_msg2); else System.Console.WriteLine(_msg2);
+        }
         foreach (var p in _planned)
             _outbox.Enqueue(p);
         _planned.Clear();
@@ -95,6 +108,11 @@ public sealed class MiningSystem : ITick
     {
         var advList = new List<MiningAdvancedDesignation>();
         _orders.DrainMiningAdvanced(advList, maxCount: 8);
+        if (advList.Count > 0)
+        {
+            var _msg3 = $"[MINING][PLAN] Advanced designations drained: {advList.Count}";
+            if (LogCallback != null) LogCallback(_msg3); else System.Console.WriteLine(_msg3);
+        }
         foreach (var adv in advList)
         {
             if (plannedCount >= budget) break;
@@ -107,6 +125,13 @@ public sealed class MiningSystem : ITick
                         for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
                         for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
                         {
+                            // Guard: only emit PD within rect bounds
+                            if (!adv.Rect.Contains(new Point(x, y)))
+                            {
+                                var _msg4 = $"[MINING][GUARD] PD outside rect: cell=({x},{y},{z}) rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height})";
+                                if (LogCallback != null) LogCallback(_msg4); else System.Console.WriteLine(_msg4);
+                                continue;
+                            }
                             var t = _world.GetTile(x, y, z);
                             if (t == null) continue;
                             if (t.Value.Kind != TerrainKind.SolidWall) continue;
@@ -115,6 +140,10 @@ public sealed class MiningSystem : ITick
                             _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.DigRamp, MiningSegment.None));
                             plannedCount++;
                         }
+                    }
+                    {
+                        var _msg5 = $"[MINING][PLAN] DigRamp expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
+                        if (LogCallback != null) LogCallback(_msg5); else System.Console.WriteLine(_msg5);
                     }
                     break;
                 case MiningAction.DigChannel:
@@ -135,12 +164,14 @@ public sealed class MiningSystem : ITick
                     }
                     break;
                 case MiningAction.DigStairwell:
-                    // Only over OpenWithFloor at top; emit per-level segments
+                    // Stairwell can start from OpenWithFloor, SolidWall, or Ramp at top layer
                     for (int y = adv.Rect.Y; y < adv.Rect.MaxExtentY && plannedCount < budget; y++)
                     for (int x = adv.Rect.X; x < adv.Rect.MaxExtentX && plannedCount < budget; x++)
                     {
                         var top = _world.GetTile(x, y, adv.ZMin);
-                        if (top == null || top.Value.Kind != TerrainKind.OpenWithFloor) continue;
+                        if (top == null) continue;
+                        var topKind = top.Value.Kind;
+                        if (topKind != TerrainKind.OpenWithFloor && topKind != TerrainKind.SolidWall && topKind != TerrainKind.Ramp) continue;
                         int zMin = adv.ZMin;
                         int zMax = adv.ZMax;
                         if (zMin > zMax) { var tmp=zMin; zMin=zMax; zMax=tmp; }
@@ -154,6 +185,10 @@ public sealed class MiningSystem : ITick
                             _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.DigStairwell, seg));
                             plannedCount++;
                         }
+                    }
+                    {
+                        var _msg6 = $"[MINING][PLAN] DigStairwell expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
+                        if (LogCallback != null) LogCallback(_msg6); else System.Console.WriteLine(_msg6);
                     }
                     break;
                 default:
@@ -171,6 +206,10 @@ public sealed class MiningSystem : ITick
                             _planned.Add(new PlannedDig(new Point(x, y), z, geo, tk, adv.Priority, SeedFrom(x,y,z), MiningAction.Dig, MiningSegment.None));
                             plannedCount++;
                         }
+                    }
+                    {
+                        var _msg7 = $"[MINING][PLAN] Dig expanded rect=({adv.Rect.X},{adv.Rect.Y},{adv.Rect.Width}x{adv.Rect.Height}) z={adv.ZMin}..{adv.ZMax} planned+={plannedCount}";
+                        if (LogCallback != null) LogCallback(_msg7); else System.Console.WriteLine(_msg7);
                     }
                     break;
             }

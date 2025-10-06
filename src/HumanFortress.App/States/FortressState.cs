@@ -1,4 +1,4 @@
-锘縰sing System;
+using System;
 using System.Linq;
 using SadConsole;
 using SadConsole.Input;
@@ -13,6 +13,7 @@ using HumanFortress.WorldGen;
 using HumanFortress.Core.Content;
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
+using HumanFortress.App.UI.Selection;
 using HumanFortress.Navigation;
 using HumanFortress.Simulation.Stockpile;
 using ChunkKey = HumanFortress.Simulation.World.ChunkKey;
@@ -58,6 +59,9 @@ namespace HumanFortress.App.States
         private StockpileQuickUI? _stockpileQuickUI;
         private HumanFortress.App.Input.InputBindingsService _bindings = HumanFortress.App.Input.InputBindingsService.Instance;
         private HumanFortress.App.Input.OrdersRegistryService _ordersRegistry = HumanFortress.App.Input.OrdersRegistryService.Instance;
+        // New: world-screen mapper and drag selection tool for low-coupling selection handling
+        private IWorldCoordinateMapper? _coordMapper;
+        private ISelectionTool? _selectionTool;
 
         public FortressState()
         {
@@ -100,17 +104,28 @@ namespace HumanFortress.App.States
                 if (mouse != null && mouse.ScrollWheelValueChange != 0)
                 {
                     bool ctrlHeld = keyboard != null && (keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl));
-                    int deltaWheel = mouse.ScrollWheelValueChange > 0 ? 1 : -1;
-                    if (ctrlHeld)
+                    bool shiftHeld = keyboard != null && (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift));
+                    // Selection tool: Shift+wheel adjusts z-range of active selection (non-destructive to zoom/Z)
+                    if (_selectionTool != null && _selectionTool.IsActive && shiftHeld)
                     {
-                        _zoomLevel = Math.Max(1, Math.Min(4, _zoomLevel + deltaWheel));
-                        Logger.Log($"[ZOOM-UPDATE] delta={deltaWheel} -> zoom={_zoomLevel}");
+                        int zDelta = mouse.ScrollWheelValueChange > 0 ? 1 : -1;
+                        _selectionTool.AdjustZRange(zDelta);
+                        Logger.Log($"[SELECT] z-range {(zDelta>0?"+":"-")}{Math.Abs(zDelta)}");
                     }
                     else
                     {
-                        // Reverse scroll axis for Z-level
-                        _currentZ = Math.Max(0, Math.Min(49, _currentZ - deltaWheel));
-                        Logger.Log($"[ZLEVEL-UPDATE] delta={deltaWheel} -> Z={_currentZ}");
+                        int deltaWheel = mouse.ScrollWheelValueChange > 0 ? 1 : -1;
+                        if (ctrlHeld)
+                        {
+                            _zoomLevel = Math.Max(1, Math.Min(4, _zoomLevel + deltaWheel));
+                            Logger.Log($"[ZOOM-UPDATE] delta={deltaWheel} -> zoom={_zoomLevel}");
+                        }
+                        else
+                        {
+                            // Reverse scroll axis for Z-level
+                            _currentZ = Math.Max(0, Math.Min(49, _currentZ - deltaWheel));
+                            Logger.Log($"[ZLEVEL-UPDATE] delta={deltaWheel} -> Z={_currentZ}");
+                        }
                     }
                 }
             }
@@ -157,6 +172,13 @@ namespace HumanFortress.App.States
                 _enhancedMouseHooked = true;
                 System.Console.WriteLine("[FortressState] Map surface created");
                 Logger.Log($"[INIT] MapSurface size={_mapSurface.Surface.Width}x{_mapSurface.Surface.Height} pos={_mapSurface.Position}");
+                // Init coordinate mapper and selection tool (Mining/Haul/Zone can share)
+                _coordMapper = new WorldCoordinateMapper();
+                _selectionTool = new DragRectSelectionTool(FortressSize * 32);
+                _selectionTool.Started += s => { _ui.PlaceZMin = s.ZMin; _ui.PlaceZMax = s.ZMax; };
+                _selectionTool.Changed += s => { _ui.PlaceZMin = s.ZMin; _ui.PlaceZMax = s.ZMax; DrawUI(); };
+                _selectionTool.Completed += s => { _ui.PlaceZMin = s.ZMin; _ui.PlaceZMax = s.ZMax; };
+                _selectionTool.Canceled += () => { DrawUI(); };
 
                 _infoPanel = new SadConsole.Console(35, 20);
                 _infoPanel.Position = new Point(84, 2);
@@ -316,6 +338,65 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine("[GenerateFortressMap] Creating NavigationOverlay");
                 _navOverlay = new NavigationOverlay();
                 _navOverlay.SetNavigationManager(_navManager);
+                // Auto-dig self-test: after world is filled, enqueue a small mining order to exercise Planner->Jobs
+                if (HumanFortress.App.Program.AutoDig && _world != null)
+                {
+                    try
+                    {
+                        int tiles = _world.SizeInTiles;
+                        int cx = tiles / 2, cy = tiles / 2;
+                        int zMin = 0, zMax = Math.Max(0, _world.MaxZ - 1);
+                        bool found = false;
+                        int fx = 0, fy = 0, fz = 0;
+                        for (int z = zMin; z <= zMax && !found; z++)
+                        {
+                            for (int r = 0; r <= Math.Max(cx, cy) && !found; r++)
+                            {
+                                for (int dx = -r; dx <= r && !found; dx++)
+                                {
+                                    int dy1 = r - Math.Abs(dx);
+                                    foreach (int dy in new int[] { -dy1, dy1 })
+                                    {
+                                        int x = cx + dx; int y = cy + dy;
+                                        if (x < 0 || y < 0 || x >= tiles || y >= tiles) continue;
+                                        var t = _world.GetTile(x, y, z);
+                                        if (t == null) continue;
+                                        var k = t.Value.Kind;
+                                        if (k == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || k == HumanFortress.Simulation.Tiles.TerrainKind.Ramp)
+                                        { fx = x; fy = y; fz = z; found = true; break; }
+                                    }
+                                }
+                            }
+                        }
+                        if (found)
+                        {
+                            var rect = new SadRogue.Primitives.Rectangle(fx, fy, 1, 1);
+                            Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={fz} zMax={fz} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                            _world.Orders.EnqueueMiningAdvanced(rect, fz, fz,
+                                HumanFortress.Simulation.Orders.MiningAction.Dig,
+                                priority: 50,
+                                createdTick: HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick);
+                            Logger.Log($"[AUTO-DIG] Enqueued test Dig at ({fx},{fy},{fz}) after world fill");
+                        }
+                        else
+                        {
+                            // Fallback: issue a 1x1 order at map center on current Z even if it may yield 0 PD
+                            int cz = Math.Max(0, Math.Min(_world.MaxZ - 1, _currentZ));
+                            int cx2 = tiles / 2, cy2 = tiles / 2;
+                            var rect2 = new SadRogue.Primitives.Rectangle(cx2, cy2, 1, 1);
+                            Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={cz} zMax={cz} rect=({rect2.X},{rect2.Y},{rect2.Width}x{rect2.Height})");
+                            _world.Orders.EnqueueMiningAdvanced(rect2, cz, cz,
+                                HumanFortress.Simulation.Orders.MiningAction.Dig,
+                                priority: 50,
+                                createdTick: HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick);
+                            Logger.Log($"[AUTO-DIG] Enqueued fallback Dig at ({rect2.X},{rect2.Y},{cz})");
+                        }
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Logger.Log($"[AUTO-DIG] ERROR (UI phase): {ex.Message}");
+                    }
+                }
 
                 // Initialize stockpile system and UI classes
                 System.Console.WriteLine("[GenerateFortressMap] Wiring StockpileManager & UI classes");
@@ -383,7 +464,7 @@ namespace HumanFortress.App.States
                         // Stockpile placement prompt
                         _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
 
-                        // Draw placement preview on map锛堟墍鏈夌煩褰㈢被鍛戒护閮介珮浜級
+                        // Draw placement preview on map（所有矩形类命令都高亮）
                         if (_ui.PlaceFirstCorner.HasValue)
                         {
                             var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
@@ -459,12 +540,12 @@ namespace HumanFortress.App.States
             }
         }
 
-        // Handle overlay local left-clicks for F1鈥揊8 and Z/X/C buttons
+        // Handle overlay local left-clicks for F1–F8 and Z/X/C buttons
         private void OnOverlayLeftClickedLocal(Point local)
         {
             if (_uiSurface == null) return;
 
-            // Dock F1鈥揊8 at bottom-left (bottom row)
+            // Dock F1–F8 at bottom-left (bottom row)
             int dockY = _uiSurface.Surface.Height - 1;
             int dockXStart = 1;
             int dockBtnW = 5;
@@ -636,38 +717,17 @@ namespace HumanFortress.App.States
         // Count valid mining cells in selection for UI-side precheck (avoid empty orders)
         private int CountValidMiningCells(HumanFortress.Simulation.World.World world, SadRogue.Primitives.Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action)
         {
-            int count = 0;
-            for (int z = zMin; z <= zMax; z++)
-            {
-                for (int y = rect.Y; y < rect.MaxExtentY; y++)
-                {
-                    for (int x = rect.X; x < rect.MaxExtentX; x++)
-                    {
-                        var tile = world.GetTile(x, y, z);
-                        if (tile == null) continue;
-                        var kind = tile.Value.Kind;
-                        switch (action)
-                        {
-                            case HumanFortress.Simulation.Orders.MiningAction.Dig:
-                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) count++;
-                                break;
-                            case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
-                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall) count++;
-                                break;
-                            case HumanFortress.Simulation.Orders.MiningAction.DigChannel:
-                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) count++;
-                                break;
-                            case HumanFortress.Simulation.Orders.MiningAction.DigStairwell:
-                                if (z == zMin && kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) count++;
-                                break;
-                            default:
-                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) count++;
-                                break;
-                        }
-                    }
-                }
-            }
-            return count;
+            return HumanFortress.Simulation.Orders.MiningOrderRules.CountEligible(world, rect, zMin, zMax, action);
+        }
+
+        // Single source-of-truth rectangle helper: returns an inclusive rectangle from two corners
+        private Rectangle ComputeRectInclusive(Point a, Point b)
+        {
+            int x = Math.Min(a.X, b.X);
+            int y = Math.Min(a.Y, b.Y);
+            int w = Math.Abs(a.X - b.X) + 1;
+            int h = Math.Abs(a.Y - b.Y) + 1;
+            return new Rectangle(x, y, w, h);
         }
 
         private string GetTerrainDescription(string geologyId)
@@ -726,7 +786,7 @@ namespace HumanFortress.App.States
                     if (worldX < 0 || worldX >= maxWorldSize ||
                         worldY < 0 || worldY >= maxWorldSize)
                     {
-                        _mapSurface.SetGlyph(sx, sy, '#', Color.DarkGray);
+                        _mapSurface.SetGlyph(sx, sy, '#', Color.DarkGray, Color.Transparent);
                         continue;
                     }
 
@@ -762,7 +822,7 @@ namespace HumanFortress.App.States
                     if (worldX == _cursorPos.X && worldY == _cursorPos.Y && _zoomLevel == 1)
                     {
                         // Draw cursor
-                        _mapSurface.SetGlyph(sx, sy, 'X', Color.Yellow, Color.DarkGray);
+                        _mapSurface.SetGlyph(sx, sy, 'X', Color.Yellow, Color.Transparent);
                     }
                     else if (_zoomLevel > 1)
                     {
@@ -775,19 +835,19 @@ namespace HumanFortress.App.States
                                 _mapSurface.SetGlyph(sx + zx, sy + zy,
                                     isCursor ? 'X' : glyph,
                                     isCursor ? Color.Yellow : color,
-                                    isCursor ? Color.DarkGray : Color.Black);
+                                    isCursor ? Color.DarkGray : Color.Transparent);
                             }
                         }
                     }
                     else
                     {
-                        _mapSurface.SetGlyph(sx, sy, glyph, color);
+                        _mapSurface.SetGlyph(sx, sy, glyph, color, Color.Transparent);
                     }
                 }
                 else
                 {
                     // No world data available
-                    _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray);
+                    _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray, Color.Transparent);
                 }
             }
             }
@@ -897,7 +957,7 @@ namespace HumanFortress.App.States
                 if (screenX >= 0 && screenX < viewW && screenY >= 0 && screenY < viewH)
                 {
                     var (glyph, color) = GetCreatureDisplay(creature);
-                    _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Black);
+                    _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Transparent);
                 }
             }
 
@@ -920,10 +980,10 @@ namespace HumanFortress.App.States
                     if (!hasCreature)
                     {
                         var (glyph, color) = GetItemDisplay(item);
-                        _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Black);
-                    }
+                    _mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Transparent);
                 }
             }
+        }
         }
         private (int glyph, Color color) GetCreatureDisplay(HumanFortress.Simulation.Creatures.CreatureInstance creature)
         {
@@ -1068,12 +1128,28 @@ namespace HumanFortress.App.States
             }
             else if (keyboard.IsKeyPressed(Keys.Q))
             {
-                _currentZ = Math.Max(0, _currentZ - 1);
+                // Shift+Q adjusts active selection z-range upward (toward smaller zMin)
+                if (_selectionTool != null && _selectionTool.IsActive && (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _selectionTool.AdjustZRange(-1);
+                }
+                else
+                {
+                    _currentZ = Math.Max(0, _currentZ - 1);
+                }
                 changed = true;
             }
             else if (keyboard.IsKeyPressed(Keys.E))
             {
-                _currentZ = Math.Min(49, _currentZ + 1);
+                // Shift+E adjusts active selection z-range downward (toward larger zMax)
+                if (_selectionTool != null && _selectionTool.IsActive && (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _selectionTool.AdjustZRange(+1);
+                }
+                else
+                {
+                    _currentZ = Math.Min(49, _currentZ + 1);
+                }
                 changed = true;
             }
 
@@ -1812,6 +1888,48 @@ namespace HumanFortress.App.States
                     return true;
                 }
             }
+            else if (_ui.QuickMenu == QuickMenuKind.Orders && _ui.OrdersMenu == OrdersSubmenu.Mining)
+            {
+                // L3 Mining box: width=28, height=8; position computed in UiRenderer.DrawOrdersWithSubmenu
+                // centerY was l2Y = screenH - 11; l3X = centerX + 2; l3Y = l2Y
+                int l3X = centerX + 2;
+                int l3Y = screenH - 11;
+                int width = 28;
+                int height = 8;
+                if (screenCell.X >= l3X && screenCell.X < l3X + width && screenCell.Y >= l3Y && screenCell.Y < l3Y + height)
+                {
+                    // Clickable rows are y+1..y+6, map to actions
+                    int row = screenCell.Y - l3Y;
+                    if (row >= 1 && row <= 6)
+                    {
+                        switch (row)
+                        {
+                            case 1:
+                                _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.Dig;
+                                break;
+                            case 2:
+                                _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigStairwell;
+                                break;
+                            case 3:
+                                _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigRamp;
+                                break;
+                            case 4:
+                                _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigChannel;
+                                break;
+                            case 5:
+                                _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.RemoveDigging;
+                                break;
+                            default:
+                                break;
+                        }
+                        // Begin placement mode for mining
+                        _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                        _ui.AddToast("Mining: select first corner", _uiTick + 120);
+                        DrawUI();
+                        return true;
+                    }
+                }
+            }
             else if (_ui.QuickMenu == QuickMenuKind.Stockpile && _ui.StockpileMenu == StockpileSubmenu.None)
             {
                 // Stockpile root: height=6, y = screenH - 7
@@ -1873,6 +1991,10 @@ namespace HumanFortress.App.States
 
             _lastMousePos = new Point(worldX, worldY);
             _cursorPos = _lastMousePos.Value; // follow mouse
+            if (_selectionTool != null && _selectionTool.IsActive)
+            {
+                _selectionTool.Update(_cursorPos);
+            }
             if (_uiTick % 10 == 0)
                 Logger.Log($"[MOUSE-EVT] Hover world=({_cursorPos.X},{_cursorPos.Y},{_currentZ}) local=({local.X},{local.Y}) camera=({_cameraPos.X},{_cameraPos.Y}) zoom={_zoomLevel}");
             UpdateTileInfo();
@@ -1900,6 +2022,15 @@ namespace HumanFortress.App.States
         private void OnOverlayRightClickedLocal(Point local)
         {
             Logger.Log($"[RIGHT-CLICK-OVERLAY] Clicked at local=({local.X},{local.Y}), tilePanelOpen={_tilePanelOpen}, QuickMenu={_ui.QuickMenu}, OrdersMenu={_ui.OrdersMenu}, ZoneMenu={_ui.ZoneMenu}");
+
+            // Cancel active selection (if any)
+            if (_selectionTool != null && _selectionTool.IsActive)
+            {
+                _selectionTool.Cancel();
+                _ui.CancelPlacement();
+                DrawUI();
+                return;
+            }
 
             // Priority 1: Close tile panel if open
             if (_tilePanelOpen)
@@ -2075,17 +2206,13 @@ namespace HumanFortress.App.States
                     {
                         _ui.PlaceSecondCorner = worldPos;
 
-                        // Compute rectangle and enqueue haul order command
-                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
-                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
-                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
-                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
-                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        // Compute inclusive rectangle using single helper
+                        var rect = ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
                         var cmd = new HumanFortress.App.Commands.CreateHaulOrderCommand(
                             GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
                         GameStateManager.Instance.EnqueueCommand(cmd);
                         _ui.AddToast("Haul order created", _uiTick + 120);
-                        Logger.Log($"[HAUL] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
                         _ui.CancelPlacement();
                         DrawUI();
                     }
@@ -2094,7 +2221,10 @@ namespace HumanFortress.App.States
                 else if (_ui.PlaceMode == PlacementMode.MiningFirstCorner)
                 {
                     _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceZMin = _currentZ; // Save first click's Z as zMin
                     _ui.PlaceMode = PlacementMode.MiningSecondCorner;
+                    // Begin selection tool for live preview & z-range adjust
+                    _selectionTool?.Begin(worldPos, _currentZ);
                     Logger.Log($"[MINING] First corner at ({worldX},{worldY},{_currentZ})");
                     DrawUI();
                     return;
@@ -2104,15 +2234,22 @@ namespace HumanFortress.App.States
                     if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
                     {
                         _ui.PlaceSecondCorner = worldPos;
-                        // Use GetUnion to guarantee鈥滃寘鍚彸/涓嬭竟鐣屸�濈殑鐭╁舰锛堜笌 Zones/Stockpile 璺緞涓�鑷达級
-                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
-                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
-                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
-                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
-                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        _ui.PlaceZMax = _currentZ; // Save second click's Z as zMax (fallback when no z-adjust)
+                        // Prefer selection tool result if active
+                        Selection3D sel = default;
+                        if (_selectionTool != null && _selectionTool.IsActive)
+                        {
+                            sel = _selectionTool.Complete();
+                        }
+                        // Compute inclusive rectangle using tool or helper
+                        bool useTool = sel.XY.Width > 1 || sel.XY.Height > 1;
+                        var rect = useTool
+                            ? sel.XY
+                            : ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
 
-                        int zMin = _ui.PlaceZMin;
-                        int zMax = _ui.PlaceZMax;
+                        // z-range: prefer tool's z when using tool; else fallback to UI fields
+                        int zMin = useTool ? Math.Min(sel.ZMin, sel.ZMax) : Math.Min(_ui.PlaceZMin, _ui.PlaceZMax);
+                        int zMax = useTool ? Math.Max(sel.ZMin, sel.ZMax) : Math.Max(_ui.PlaceZMin, _ui.PlaceZMax);
                         var uiAction = _ui.SelectedMiningAction;
                         var simAction = uiAction switch
                         {
@@ -2124,29 +2261,22 @@ namespace HumanFortress.App.States
                             _ => HumanFortress.Simulation.Orders.MiningAction.Dig
                         };
 
-                        int validCount = 0;
+                        // UI 不再拒绝；交给命令/规划器来跳过无效单元，避免 UI 边界的误判
+
+                        // 直接入队到 Orders（线程安全），规避命令队列调度差异
+                        Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
                         if (_world != null)
                         {
-                            validCount = CountValidMiningCells(_world, rect, zMin, zMax, simAction);
+                            _world.Orders.EnqueueMiningAdvanced(rect, zMin, zMax,
+                                simAction,
+                                priority: 50,
+                                createdTick: GameStateManager.Instance.TickScheduler.CurrentTick);
                         }
-
-                        if (validCount <= 0)
-                        {
-                            _ui.AddToast("No diggable tiles in selection", _uiTick + 150);
-                            Logger.Log($"[MINING] UI rejected empty selection action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
-                            _ui.CancelPlacement();
-                            DrawUI();
-                            return;
-                        }
-
-                        // Enqueue advanced mining order (CreateAdvancedMiningOrderCommand has its own safeguard too)
-                        var cmd = new HumanFortress.App.Commands.CreateAdvancedMiningOrderCommand(
-                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, zMin, zMax, uiAction, priority: 50);
-                        GameStateManager.Instance.EnqueueCommand(cmd);
 
                         int totalCells = rect.Width * rect.Height;
-                        _ui.AddToast($"Mining order created ({validCount}/{totalCells})", _uiTick + 120);
-                        Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} validCells={validCount}/{totalCells}");
+                        _ui.AddToast($"Mining order created ({totalCells} tiles)", _uiTick + 120);
+                        Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                        Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
                         // Highlight for 100 ticks; encode action in kind for renderer fill policy
                         _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 100);
                         _ui.CancelPlacement();

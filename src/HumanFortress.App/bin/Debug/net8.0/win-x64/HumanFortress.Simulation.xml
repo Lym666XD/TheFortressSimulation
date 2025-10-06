@@ -391,6 +391,12 @@
             Thread-safe lifetime: created from UI via command; consumed by MiningSystem.
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningOrderRules">
+            <summary>
+            Shared eligibility and counting rules for mining selections.
+            Centralizes UI and command-side prechecks to avoid drift.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.MiningSystem">
             <summary>
             Mining planner: reads mining designations and produces PlannedDig DTOs.
@@ -448,6 +454,11 @@
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningDesignation},System.Int32)">
             <summary>
             Drain mining designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningAdvanced(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningAdvancedDesignation},System.Int32)">
+            <summary>
+            Drain advanced mining designations into provided list (Read phase).
             </summary>
         </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainConstructionDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.ConstructionDesignation},System.Int32)">

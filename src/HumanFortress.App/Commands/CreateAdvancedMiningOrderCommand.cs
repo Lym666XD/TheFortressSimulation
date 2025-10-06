@@ -49,47 +49,22 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
                 UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
                 _ => HumanFortress.Simulation.Orders.MiningAction.Dig
             };
-            // Pre-validate selection has at least one valid cell; otherwise do not enqueue (avoid no-op orders)
-            if (!HasAnyValidMiningCell(world, _worldRect, _zMin, _zMax, act))
-            {
-                HumanFortress.App.Logger.Log($"[MINING] No diggable tiles in selection for action={act} rect=({_worldRect.X},{_worldRect.Y},{_worldRect.Width}x{_worldRect.Height}) z={_zMin}..{_zMax}");
-                return;
-            }
+            // Always enqueue; planner will skip if nothing eligible. This avoids false negatives at UI boundary.
             world.Orders.EnqueueMiningAdvanced(_worldRect, _zMin, _zMax, act, _priority, context.CurrentTick);
         }
     }
 
     private static bool HasAnyValidMiningCell(World world, Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action)
     {
-        for (int z = zMin; z <= zMax; z++)
+        try
         {
-            for (int y = rect.Y; y < rect.MaxExtentY; y++)
-            for (int x = rect.X; x < rect.MaxExtentX; x++)
-            {
-                var tile = world.GetTile(x, y, z);
-                if (tile == null) continue;
-                var kind = tile.Value.Kind;
-                switch (action)
-                {
-                    case HumanFortress.Simulation.Orders.MiningAction.Dig:
-                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) return true;
-                        break;
-                    case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
-                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall) return true;
-                        break;
-                    case HumanFortress.Simulation.Orders.MiningAction.DigChannel:
-                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) return true;
-                        break;
-                    case HumanFortress.Simulation.Orders.MiningAction.DigStairwell:
-                        if (z == zMin && kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) return true;
-                        break;
-                    default:
-                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) return true;
-                        break;
-                }
-            }
+            int n = HumanFortress.Simulation.Orders.MiningOrderRules.CountEligible(world, rect, zMin, zMax, action);
+            return n > 0;
         }
-        return false;
+        catch
+        {
+            return false;
+        }
     }
 
     public byte[] Serialize()

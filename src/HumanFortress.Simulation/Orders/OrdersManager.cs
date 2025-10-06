@@ -9,6 +9,7 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 public sealed class OrdersManager
 {
+    public static System.Action<string>? LogCallback;
     private readonly ConcurrentQueue<HaulDesignation> _haulQueue = new();
     private readonly ConcurrentQueue<HaulDesignation> _recentHauls = new();
     private const int RecentCapacity = 32;
@@ -54,7 +55,10 @@ public sealed class OrdersManager
     /// </summary>
     public void EnqueueMiningAdvanced(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
     {
-        _miningAdvQueue.Enqueue(new MiningAdvancedDesignation(worldRect, zMin, zMax, action, priority, createdTick));
+        var adv = new MiningAdvancedDesignation(worldRect, zMin, zMax, action, priority, createdTick);
+        _miningAdvQueue.Enqueue(adv);
+        var msg = $"[ORDERS] MiningAdvanced enqueued action={action} rect=({worldRect.X},{worldRect.Y},{worldRect.Width}x{worldRect.Height}) z={zMin}..{zMax} pri={priority}";
+        if (LogCallback != null) LogCallback(msg); else System.Console.WriteLine(msg);
     }
 
     /// <summary>

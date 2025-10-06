@@ -61,12 +61,21 @@ public sealed class MiningJobSystem : ITick
             _inboxBuffer.Add(retry);
         if (_inboxBuffer.Count < 16)
             _planner.DequeuePlannedDigs(16 - _inboxBuffer.Count, _inboxBuffer);
-        if (_inboxBuffer.Count == 0) return;
+        if (_inboxBuffer.Count == 0)
+        {
+            if ((tick % 60UL) == 0UL)
+                Logger.Log($"[MINING][{tick}] No planned digs dequeued.");
+            return;
+        }
 
         var digs = _inboxBuffer
             .OrderBy(p => p.Cell.Y).ThenBy(p => p.Cell.X).ThenBy(p => p.Z)
             .ToList();
         var creatures = _world.Creatures.GetAllInstances().OrderBy(c => c.Guid).ToList();
+        if (digs.Count > 0)
+        {
+            Logger.Log($"[MINING][{tick}] Planned digs dequeued: {digs.Count}; available workers: {creatures.Count()}");
+        }
         var busy = new HashSet<Guid>(_active.Select(a => a.WorkerId));
         foreach (var pd in digs)
         {
@@ -238,17 +247,24 @@ public sealed class MiningJobSystem : ITick
                     job.Stage = MiningStage.Digging;
                     Logger.Log($"[MINING][{tick}] Start digging by worker={job.WorkerId} at target=({job.Target.X},{job.Target.Y},{job.Z})");
 
-                    // Precarve one layer below as StairsUD to open vertical path without overshooting selection
+                    // Stairwell pre-open: when starting to dig a stair segment (Top/Middle/Bottom),
+                    // open exactly z-1 as StairsUD if it is SolidWall and within valid z-range.
+                    // This ensures vertical path without over-excavating beyond the selected z-range.
                     if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && job.Z > 0)
                     {
                         int bz = job.Z - 1;
+                        // Only pre-open if z-1 is NOT the bottom segment (i.e., if this segment is Top or Middle)
+                        // and z-1 tile is SolidWall. We don't track zMin/zMax per PD currently,
+                        // so we minimally enforce: only pre-open z-1 if it's a wall. This ensures
+                        // the worker can descend. A more precise impl would carry zMin/zMax on PD
+                        // and check bz >= zMin, but the planner already segments correctly (Top/Middle/Bottom).
                         var below = _world.GetTile(job.Target.X, job.Target.Y, bz);
                         if (below != null && below.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
                         {
-                            EmitSetTerrainKind(job.Target, bz, HumanFortress.Simulation.Tiles.TerrainKind.StairsUD);
+                            EmitSetTerrain(job.Target, bz, HumanFortress.Simulation.Tiles.TerrainKind.StairsUD, below.Value.GeoMatId);
                             foreach (var (dropId, qty) in ChooseDropsFor(below.Value.GeoMatId, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
-                                if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
-                            Logger.Log($"[MINING][{tick}] Precarve stair UD one layer at ({job.Target.X},{job.Target.Y},{bz})");
+                                if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, bz, dropId, qty);
+                            Logger.Log($"[MINING] Stair Pre-open UD at ({job.Target.X},{job.Target.Y},{bz}) (one layer)");
                         }
                     }
                 }
@@ -264,11 +280,11 @@ public sealed class MiningJobSystem : ITick
                     var verifyTile = _world.GetTile(job.Target.X, job.Target.Y, job.Z);
                     if (verifyTile != null)
                     {
-                        // Channel safety: if occupied by a creature, requeue instead of carving under feet
-                        if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && AnyCreatureAt(job.Target, job.Z))
+                        // Channel safety: if occupied by a creature OTHER THAN the current worker, requeue instead of carving under feet
+                        if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && AnyCreatureAtExcept(job.Target, job.Z, job.WorkerId))
                         {
                             _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
-                            Logger.Log($"[MINING][{tick}] Channel target occupied at ({job.Target.X},{job.Target.Y},{job.Z}); requeue");
+                            Logger.Log($"[MINING][{tick}] Channel target occupied by other creature at ({job.Target.X},{job.Target.Y},{job.Z}); requeue");
                             // Release reservation and skip completion
                             _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                             if (job.Z > 0) _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
@@ -346,14 +362,14 @@ public sealed class MiningJobSystem : ITick
         switch (job.Action)
         {
             case HumanFortress.Simulation.Orders.MiningAction.Dig:
-                EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                EmitSetTerrain(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor, job.GeologyHandle);
                 foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
                     if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
                 break;
             case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
                 if (kindHere == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
                 {
-                    EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.Ramp);
+                    EmitSetTerrain(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.Ramp, job.GeologyHandle);
                     foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.Ramp))
                         if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
                     // If there is a floor directly above, remove it (become OpenNoFloor)
@@ -361,12 +377,12 @@ public sealed class MiningJobSystem : ITick
                     {
                         var above = _world.GetTile(job.Target.X, job.Target.Y, job.Z + 1);
                         if (above != null && above.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
-                            EmitSetTerrainKind(job.Target, job.Z + 1, HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor);
+                            EmitSetTerrain(job.Target, job.Z + 1, HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor, above.Value.GeoMatId);
                     }
                 }
                 else
                 {
-                    EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                    EmitSetTerrain(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor, job.GeologyHandle);
                     foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
                         if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
                 }
@@ -387,7 +403,7 @@ public sealed class MiningJobSystem : ITick
                     var below = _world.GetTile(job.Target.X, job.Target.Y, job.Z - 1);
                     if (below != null && below.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
                     {
-                        EmitSetTerrainKind(job.Target, job.Z - 1, HumanFortress.Simulation.Tiles.TerrainKind.Ramp);
+                        EmitSetTerrain(job.Target, job.Z - 1, HumanFortress.Simulation.Tiles.TerrainKind.Ramp, below.Value.GeoMatId);
                         ushort belowGeo = below.Value.GeoMatId;
                         foreach (var (dropId, qty) in ChooseDropsFor(belowGeo, HumanFortress.Simulation.Tiles.TerrainKind.Ramp))
                             if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
@@ -402,7 +418,7 @@ public sealed class MiningJobSystem : ITick
                     HumanFortress.Simulation.Orders.MiningSegment.Bottom => HumanFortress.Simulation.Tiles.TerrainKind.StairsUp,
                     _ => HumanFortress.Simulation.Tiles.TerrainKind.StairsUD
                 };
-                EmitSetTerrainKind(job.Target, job.Z, targetKind);
+                EmitSetTerrain(job.Target, job.Z, targetKind, job.GeologyHandle);
                 if (kindHere == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
                 {
                     foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
@@ -410,7 +426,7 @@ public sealed class MiningJobSystem : ITick
                 }
                 break;
             default:
-                EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                EmitSetTerrain(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor, job.GeologyHandle);
                 foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
                     if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
                 break;
@@ -666,11 +682,31 @@ public sealed class MiningJobSystem : ITick
         return false;
     }
 
+    private bool AnyCreatureAtExcept(SadRogue.Primitives.Point cell, int z, System.Guid exceptId)
+    {
+        foreach (var c in _world.Creatures.GetAllInstances())
+        {
+            if (c.Z == z && c.Position.X == cell.X && c.Position.Y == cell.Y && c.Guid != exceptId)
+                return true;
+        }
+        return false;
+    }
+
     private (int X,int Y)? GetAdjacencyForAction(HumanFortress.Simulation.Orders.MiningAction action, int x, int y, int z)
     {
         // Prefer NESW around target if walkable; then diagonals; then expand radius up to 3 using BFS-like rings.
         static IEnumerable<(int dx,int dy)> Ortho() { yield return (0,-1); yield return (1,0); yield return (0,1); yield return (-1,0); }
         static IEnumerable<(int dx,int dy)> Diag() { yield return (1,-1); yield return (1,1); yield return (-1,1); yield return (-1,-1); }
+
+        // Special-case: Stairwell top can be dug while standing on the target if it's a floor
+        if (action == HumanFortress.Simulation.Orders.MiningAction.DigStairwell || action == HumanFortress.Simulation.Orders.MiningAction.DigChannel)
+        {
+            var self = _world.GetTile(x, y, z);
+            if (self != null && self.Value.IsStandable)
+            {
+                return (x, y);
+            }
+        }
 
         bool Acceptable(int tx, int ty)
         {

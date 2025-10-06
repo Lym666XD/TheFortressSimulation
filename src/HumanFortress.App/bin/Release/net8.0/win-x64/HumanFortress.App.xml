@@ -145,6 +145,18 @@
             Handle input for current state.
             </summary>
         </member>
+        <member name="M:HumanFortress.App.GameStates.GameStateManager.SelfTestAutoDig">
+            <summary>
+            Self-test helper: find a SolidWall near world center at a mid Z and enqueue a 1x1 Dig order.
+            Logs in the same format as UI direct enqueue for comparison.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.GameStates.GameStateManager.TrySpawnInitialWorkers(System.Int32)">
+            <summary>
+            Spawn a minimal set of initial workers if none exist, so mining/hauling can proceed.
+            Looks for OpenWithFloor tiles near world center across a small radius and surface-ish Z range.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.GameStates.GameStateManager.SimulationContext">
             <summary>
             Simulation context implementation.
@@ -359,6 +371,22 @@
             <summary>
             Renders the Orders quick menu and haul submenu.
             Minimal v1: shows keys Z→F→Z and status messages during placement.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Selection.Selection3D">
+            <summary>
+            Immutable 3D selection (XY rectangle + Z range). Inclusive bounds.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.App.UI.Selection.Selection3D.#ctor(SadRogue.Primitives.Rectangle,System.Int32,System.Int32)">
+            <summary>
+            Immutable 3D selection (XY rectangle + Z range). Inclusive bounds.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.UI.Selection.WorldCoordinateMapper">
+            <summary>
+            Converts between screen-space cells and world-space cells for the map surface,
+            respecting the map surface position on screen, camera world top-left, zoom and bounds.
             </summary>
         </member>
         <member name="T:HumanFortress.App.UI.StockpileQuickUI">

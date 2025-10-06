@@ -243,24 +243,84 @@ public sealed class OrdersUI
         public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, Rectangle viewport, bool show, int currentZ, World? world = null, MiningAction? miningAction = null)
         {
             if (!show) return;
-            var rect = Rectangle.GetUnion(new Rectangle(first, 1, 1), new Rectangle(second, 1, 1));
+            // Compute inclusive rectangle
+            int x = Math.Min(first.X, second.X);
+            int y = Math.Min(first.Y, second.Y);
+            int w = Math.Abs(first.X - second.X) + 1;
+            int h = Math.Abs(first.Y - second.Y) + 1;
+            var rect = new Rectangle(x, y, w, h);
+
             var surf = mapSurface.Surface;
             int x0 = rect.X - viewport.X;
             int y0 = rect.Y - viewport.Y;
             int x1 = x0 + rect.Width - 1;
             int y1 = y0 + rect.Height - 1;
 
-            // Draw rectangle border using line glyphs with transparent background (no fill)
             var fg = Color.Yellow;
-            var bg = new Color(0, 0, 0, 0);
-            void Put(int x, int y, int ch)
+            // Draw rectangle border only for non-mining previews to avoid black edge artifacts in mining mode
+            if (!miningAction.HasValue)
             {
-                if (x >= 0 && x < surf.Width && y >= 0 && y < surf.Height)
-                    surf.SetGlyph(x, y, ch, fg, bg);
+                for (int xx = x0; xx <= x1; xx++)
+                {
+                    if (xx >= 0 && xx < surf.Width)
+                    {
+                        if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(xx, y0, '-', fg, Color.Transparent); }
+                        if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(xx, y1, '-', fg, Color.Transparent); }
+                    }
+                }
+                for (int yy = y0; yy <= y1; yy++)
+                {
+                    if (yy >= 0 && yy < surf.Height)
+                    {
+                        if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, yy, '|', fg, Color.Transparent); }
+                        if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, yy, '|', fg, Color.Transparent); }
+                    }
+                }
+                if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '+', fg, Color.Transparent); }
+                if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '+', fg, Color.Transparent); }
+                if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '+', fg, Color.Transparent); }
+                if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '+', fg, Color.Transparent); }
             }
-            for (int x = x0; x <= x1; x++) { Put(x, y0, '─'); Put(x, y1, '─'); }
-            for (int y = y0; y <= y1; y++) { Put(x0, y, '│'); Put(x1, y, '│'); }
-            Put(x0, y0, '┌'); Put(x1, y0, '┐'); Put(x0, y1, '└'); Put(x1, y1, '┘');
+
+            // Draw dots for tiles that will be affected (interior)
+            if (world != null && miningAction.HasValue)
+            {
+                for (int wy = rect.Y; wy < rect.MaxExtentY; wy++)
+                {
+                    for (int wx = rect.X; wx < rect.MaxExtentX; wx++)
+                    {
+                        var tile = world.GetTile(wx, wy, currentZ);
+                        if (tile == null) continue;
+                        bool willDig = false;
+                        switch (miningAction.Value)
+                        {
+                            case MiningAction.Dig:
+                                willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall ||
+                                          tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp;
+                                break;
+                            case MiningAction.DigRamp:
+                                willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall;
+                                break;
+                            case MiningAction.DigChannel:
+                                willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
+                                break;
+                            case MiningAction.DigStairwell:
+                                willDig = tile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
+                                break;
+                        }
+                        if (willDig)
+                        {
+                            int sx = wx - viewport.X;
+                            int sy = wy - viewport.Y;
+                            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
+                            {
+                                // Draw with transparent background to avoid covering map glyphs
+                                surf.SetGlyph(sx, sy, '.', fg, Color.Transparent);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public void DrawPlacementMode(ScreenSurface surface, UiStore ui, Point mouseWorld)

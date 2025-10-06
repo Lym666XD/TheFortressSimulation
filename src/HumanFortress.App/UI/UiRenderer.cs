@@ -393,14 +393,17 @@ namespace HumanFortress.App.UI;
         var surf = mapSurface.Surface;
         bool flash = ((tick / 8) % 2) == 0;
         var fg = flash ? Color.Cyan : Color.DarkCyan;
-        var bg = new Color(0,0,0,0);
+        var bg = Color.Transparent;
         foreach (var j in jobs.GetActiveJobsSnapshot())
         {
             if (j.Z != currentZ) continue;
             int sx = j.Target.X - camera.X;
             int sy = j.Target.Y - camera.Y;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
-                surf.SetGlyph(sx, sy, '·', fg, bg);
+            {
+                // Draw with transparent background to avoid obscuring underlying terrain
+                surf.SetGlyph(sx, sy, '·', fg, Color.Transparent);
+            }
         }
     }
 
@@ -409,14 +412,17 @@ namespace HumanFortress.App.UI;
         if (jobs == null) return;
         var surf = mapSurface.Surface;
         var fg = new Color(255, 230, 0);
-        var bg = new Color(0,0,0,0);
+        var bg = Color.Transparent;
         foreach (var (cell, z) in jobs.GetRecentCompletions(tick))
         {
             if (z != currentZ) continue;
             int sx = cell.X - camera.X;
             int sy = cell.Y - camera.Y;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
-                surf.SetGlyph(sx, sy, '·', fg, bg);
+            {
+                // Draw with transparent background to avoid obscuring underlying terrain
+                surf.SetGlyph(sx, sy, '·', fg, Color.Transparent);
+            }
         }
     }
 
@@ -434,13 +440,28 @@ namespace HumanFortress.App.UI;
             int y0 = h.Rect.Y - camera.Y;
             int x1 = x0 + h.Rect.Width - 1;
             int y1 = y0 + h.Rect.Height - 1;
-            // Draw rectangle border using line glyphs and transparent background (no fill)
+            // Draw rectangle border with transparent background, so we don't cover map glyphs
             var fg = flash ? Color.Yellow : Color.Orange;
-            var bg = new Color(0,0,0,0);
-            void Put(int x, int y, int ch) { if (x>=0 && x<surf.Width && y>=0 && y<surf.Height) surf.SetGlyph(x,y,ch, fg, bg); }
-            for (int x = x0; x <= x1; x++) { Put(x, y0, '─'); Put(x, y1, '─'); }
-            for (int y = y0; y <= y1; y++) { Put(x0, y, '│'); Put(x1, y, '│'); }
-            Put(x0, y0, '┌'); Put(x1, y0, '┐'); Put(x0, y1, '└'); Put(x1, y1, '┘');
+            for (int x = x0; x <= x1; x++)
+            {
+                if (x >= 0 && x < surf.Width)
+                {
+                    if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x, y0, '─', fg, Color.Transparent); }
+                    if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x, y1, '─', fg, Color.Transparent); }
+                }
+            }
+            for (int y = y0; y <= y1; y++)
+            {
+                if (y >= 0 && y < surf.Height)
+                {
+                    if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, y, '│', fg, Color.Transparent); }
+                    if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, y, '│', fg, Color.Transparent); }
+                }
+            }
+            if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '┌', fg, Color.Transparent); }
+            if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '┐', fg, Color.Transparent); }
+            if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '└', fg, Color.Transparent); }
+            if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '┘', fg, Color.Transparent); }
 
             // 不再整体遮罩矩形，避免遮挡原 tile，可视仅保留边框 + 合法格浅填
 
@@ -453,7 +474,7 @@ namespace HumanFortress.App.UI;
                 if (idx >= 0 && idx + 1 < h.Kind.Length) action = h.Kind.Substring(idx + 1);
                 // No fill block; instead draw a small center dot per legal tile with transparent background
                 var dotFg = new Color(255, 230, 0);
-                var dotBg = new Color(0,0,0,0);
+                var dotBg = Color.Transparent;
                 bool IsFill(HumanFortress.Simulation.Tiles.TerrainKind k)
                 {
                     switch (action)
@@ -481,7 +502,9 @@ namespace HumanFortress.App.UI;
                         int sx = wx - camera.X;
                         int sy = wy - camera.Y;
                         if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
-                            surf.SetGlyph(sx, sy, '·', dotFg, dotBg);
+                        {
+                            surf.SetGlyph(sx, sy, '·', dotFg, Color.Transparent);
+                        }
                     }
                 }
 

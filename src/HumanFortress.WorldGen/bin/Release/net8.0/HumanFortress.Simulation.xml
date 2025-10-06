@@ -391,6 +391,12 @@
             Thread-safe lifetime: created from UI via command; consumed by MiningSystem.
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningOrderRules">
+            <summary>
+            Shared eligibility and counting rules for mining selections.
+            Centralizes UI and command-side prechecks to avoid drift.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.MiningSystem">
             <summary>
             Mining planner: reads mining designations and produces PlannedDig DTOs.

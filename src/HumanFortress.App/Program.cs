@@ -15,6 +15,7 @@ namespace HumanFortress.App;
 public static class Program
 {
     private static GameStateManager? _gameStateManager;
+    internal static bool AutoDig { get; private set; } = false;
 
     public static void Main(string[] args)
     {
@@ -37,6 +38,12 @@ public static class Program
         {
             TestCrash();
             return;
+        }
+
+        // Optional self-test: auto enqueue a dig order after world init
+        if (args.Any(a => string.Equals(a, "--auto-dig", StringComparison.OrdinalIgnoreCase)))
+        {
+            AutoDig = true;
         }
 
         // Normalize working directory to executable base; helps native DLL discovery
@@ -62,6 +69,8 @@ public static class Program
         HumanFortress.Navigation.NavigationManager.LogCallback = Logger.Log;
         HumanFortress.Simulation.Items.ItemManager.LogCallback = Logger.Log;
         HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback = Logger.Log;
+        HumanFortress.Simulation.Orders.OrdersManager.LogCallback = Logger.Log;
+        HumanFortress.Simulation.Orders.MiningSystem.LogCallback = Logger.Log;
 
         // Don't redirect console output - SadConsole needs it for rendering
         // System.Console.SetOut(logWriter);
@@ -169,8 +178,18 @@ public static class Program
         _gameStateManager.RegisterState(new EmbarkPrepStateWrapper());
         _gameStateManager.RegisterState(new FortressPlayState());
 
-        // Start at main menu - this will set the screen
-        _gameStateManager.TransitionTo(GameStateType.MainMenu);
+        // In auto-dig mode, jump straight to FortressPlay to run simulation and enqueue test dig
+        if (AutoDig)
+        {
+            // Set a safe default fortress size for automated run
+            FortressState.FortressSize = (FortressState.FortressSize >= 2 && FortressState.FortressSize <= 8) ? FortressState.FortressSize : 2;
+            _gameStateManager.TransitionTo(GameStateType.FortressPlay);
+        }
+        else
+        {
+            // Start at main menu - this will set the screen
+            _gameStateManager.TransitionTo(GameStateType.MainMenu);
+        }
     }
 
     private static void OnFrameUpdate(object? sender, GameHost gameHost)

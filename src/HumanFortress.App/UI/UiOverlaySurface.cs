@@ -20,6 +20,9 @@ namespace HumanFortress.App.UI
             UseKeyboard = false;
             FocusOnMouseClick = false; // never steal kb focus
             MoveToFrontOnMouseClick = false;
+            // Ensure overlay does not cover map unless explicitly drawn
+            this.Surface.DefaultBackground = Color.Transparent;
+            this.Surface.DefaultForeground = Color.Transparent;
         }
 
         protected override void OnMouseMove(MouseScreenObjectState state)
@@ -49,4 +52,3 @@ namespace HumanFortress.App.UI
         }
     }
 }
-
