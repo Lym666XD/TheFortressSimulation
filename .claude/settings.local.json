@@ -46,7 +46,9 @@
       "WebFetch(domain:docs.cataclysmdda.org)",
       "Bash(./build.bat)",
       "Bash(Select-Object -Last 30)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(del datacoreitemsfurniture_civil.json)",
+      "Bash(del datacoreitemsfurniture_utility.json)"
     ],
     "deny": [],
     "ask": []

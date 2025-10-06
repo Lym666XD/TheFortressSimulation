@@ -238,11 +238,11 @@ public sealed class OrdersUI
         surface.Print(x + 2, y + 3, "ESC: Back", Color.Gray);
     }
 
-    public void DrawPlacementMode(ScreenSurface surface, UiStore ui, Point mouseWorld)
-    {
-        var statusY = surface.Height - 2;
-        switch (ui.PlaceMode)
+        public void DrawPlacementMode(ScreenSurface surface, UiStore ui, Point mouseWorld)
         {
+            var statusY = surface.Height - 2;
+            switch (ui.PlaceMode)
+            {
             case PlacementMode.HaulFirstCorner:
                 surface.Print(2, statusY, "[HAUL] Click first corner - ESC to cancel", Color.Yellow);
                 break;
@@ -257,7 +257,7 @@ public sealed class OrdersUI
                 }
                 break;
             case PlacementMode.MiningFirstCorner:
-                surface.Print(2, statusY, "[MINING] Click first corner - ESC to cancel", Color.Cyan);
+                surface.Print(2, statusY, $"[MINING] Click first corner  Z-range: {ui.PlaceZMin}..{ui.PlaceZMax} - ESC to cancel", Color.Cyan);
                 break;
             case PlacementMode.MiningSecondCorner:
                 if (ui.PlaceFirstCorner.HasValue)
@@ -265,12 +265,25 @@ public sealed class OrdersUI
                     var size = (System.Math.Abs(mouseWorld.X - ui.PlaceFirstCorner.Value.X) + 1,
                                  System.Math.Abs(mouseWorld.Y - ui.PlaceFirstCorner.Value.Y) + 1);
                     surface.Print(2, statusY,
-                        $"[MINING] Click opposite corner - {size.Item1}x{size.Item2} tiles - ESC to cancel",
+                        $"[MINING] Click opposite corner - {size.Item1}x{size.Item2} tiles  Z-range: {ui.PlaceZMin}..{ui.PlaceZMax} - ESC to cancel",
                         Color.Cyan);
                 }
                 break;
+                case PlacementMode.ConstructionFirstCorner:
+                    surface.Print(2, statusY, "[BUILD] Click first corner - ESC to cancel", Color.Yellow);
+                    break;
+                case PlacementMode.ConstructionSecondCorner:
+                    if (ui.PlaceFirstCorner.HasValue)
+                    {
+                        var size = (System.Math.Abs(mouseWorld.X - ui.PlaceFirstCorner.Value.X) + 1,
+                                     System.Math.Abs(mouseWorld.Y - ui.PlaceFirstCorner.Value.Y) + 1);
+                        surface.Print(2, statusY,
+                            $"[BUILD] Click opposite corner - {size.Item1}x{size.Item2} tiles - ESC to cancel",
+                            Color.Yellow);
+                    }
+                    break;
+            }
         }
-    }
 
     private void DrawBox(ScreenSurface surface, int x, int y, int width, int height,
         Color fg, Color bg)

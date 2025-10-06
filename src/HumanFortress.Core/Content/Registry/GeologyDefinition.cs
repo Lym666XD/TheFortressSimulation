@@ -76,8 +76,8 @@ public class GeologyDefinition
         // Apply terrain kind multiplier
         baseCost = (byte)(baseCost * terrainKind.Navigation.CostMultiplier);
 
-        // Apply material modifier (as percentage)
-        baseCost = (byte)(baseCost * material.Navigation.MoveCostModifier / 100);
+        // Apply material modifier (additive, per v4 spec)
+        baseCost = (byte)(baseCost + material.Navigation.MoveCostAdd);
 
         // Clamp to valid range
         return (byte)Math.Clamp(baseCost, (byte)1, (byte)255);

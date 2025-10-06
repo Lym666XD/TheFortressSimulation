@@ -1173,3 +1173,448 @@ TILE_SPEC
 PLACEABLE_SPEC
 
 This v1.2 is drop-in over v1.1: existing content remains valid except the deprecated allowed_material_tags on installables. New features (state/destruction) are additive.
+
+---
+
+## 15) Implementation Edge Cases & Resolutions (v1.3 Addendum)
+
+Status: Normative
+Last Updated: 2025-10-03
+
+This section documents critical edge cases discovered during implementation planning and their binding resolutions.
+
+### 15.1 Cross-Chunk Placeables
+
+**Problem**: A 5×5 workshop may span multiple chunk boundaries (chunks are 32×32).
+
+**Resolution**:
+- **Allowed with anchor ownership**: Placeables may span chunks; the anchor chunk owns the PlaceableInstance.
+- **OccupancyMap**: Anchor chunk stores the full PlaceableInstance; other chunks store occupancy references pointing to anchor.
+- **TagIndex**: Only anchor chunk indexes the placeable by tags.
+- **Write phase**: Only anchor chunk's writer modifies the PlaceableInstance; spanning chunks update occupancy in their own write phases.
+
+**Implementation note**: Cross-chunk queries (e.g., "find all workshops in area") must check all involved chunks' occupancy maps.
+
+### 15.2 Construction Site Material Reservation
+
+**Problem**: Materials delivered to construction site cells might be hauled away before construction completes.
+
+**Resolution**:
+- **Immediate reservation**: When HaulingSystem delivers materials to a construction site, those items are immediately reserved (`item.IsReserved = true`, `item.ReservedBy = construction_site_guid`).
+- **Reservation TTL**: Use ReservationManager with appropriate TTL (e.g., `currentTick + 10000`).
+- **materials_delivered tracking**: Construction site scans footprint cells and counts reserved items matching required tags.
+- **Builder workflow**: Builder consumes reserved items; if materials go missing (reservation expired or item destroyed), construction fails and site remains as incomplete.
+
+**Fail-safe**: If construction is designated for deconstruct before completion, release all material reservations.
+
+### 15.3 Workshop Footprint Item Management
+
+**Problem**: Workshop footprints (5×5 = 25 cells) hold both input materials and output items; how to distinguish reserved vs ready-to-haul?
+
+**Resolution**:
+- **Item stacking**: Items can stack infinitely on a single cell (current design), so 25 cells cannot "fill up."
+- **Reservation semantics**:
+  - Materials reserved for active recipe: `item.IsReserved = true`, `item.ReservedBy = workshop_guid or job_guid`.
+  - Finished outputs: `item.IsReserved = false`.
+- **HaulingSystem**: Only hauls unreserved items from workshop footprint.
+- **Overflow handling**: Outputs spawn on any free footprint cell; if all cells have items (stacked), spawn on same cell (stacking).
+
+**Edge case - wrong material**: Recipe validation happens at craft-time; if reserved item doesn't match recipe requirements (e.g., tag matches but specific properties don't), crafting fails and materials are unreserved after timeout.
+
+### 15.4 Door Lock State (Simplified State Machine)
+
+**Problem**: Complex state machines (closed/opening/open/closing) with latency and conflict resolution add unnecessary complexity.
+
+**Resolution - Simplified Model**:
+- **Two effective states**:
+  - `locked = false` → passability = `"doorway"` (creatures can path through; movement system handles "opening" implicitly)
+  - `locked = true` → passability = `"blocking"` (impassable)
+- **No transition latency**: Lock/unlock operations are instant (applied in write phase).
+- **Operations**:
+  - `LockDoor(placeable_guid)` → sets `door_state.locked = true`, updates L2 passability, rebuilds NavMask.
+  - `UnlockDoor(placeable_guid)` → sets `door_state.locked = false`, updates L2 passability, rebuilds NavMask.
+- **Conflict resolution**: Multiple lock/unlock requests in same tick are idempotent (last writer wins by stable diff sort).
+
+**PlaceableInstance door state**:
+```json
+{
+  "door_state": {
+    "locked": false,
+    "owner_creature_guid": null,  // optional: for "forbid" mechanics
+    "access_policy": "public"      // "public" | "faction" | "private"
+  }
+}
+```
+
+**Deprecated**: The complex state machine with `states`, `transitions`, and `latency_ticks` from §5 is replaced by this simplified lock/unlock model for doors. Bridges/traps may still use multi-state machines if needed, but doors use boolean lock only.
+
+### 15.5 Hybrid Construction Atomicity
+
+**Problem**: Hybrid constructions (e.g., traps with mechanism + components) require both materials and specific items; can builder start work if only partial requirements are met?
+
+**Resolution - All-or-Nothing**:
+- **Ready condition**: Construction site is `ready_to_build` only when:
+  - All `materials_required` are delivered and reserved.
+  - All `hybrid_requirements` items are delivered and reserved.
+- **Builder assignment**: ConstructionJobSystem only assigns builders to sites where `ready_to_build == true`.
+- **Haul coordination**: HaulingJobSystem generates haul jobs for all missing materials/items until site is ready.
+- **Atomicity**: Builder consumes all materials and items in a single operation on completion; no partial consumption.
+
+**Edge case - item stolen during build**: If a reserved hybrid item is destroyed/stolen after build starts, build fails, progress resets to 0, and site returns to "waiting for materials" state.
+
+**Example - Spike Trap**:
+```json
+{
+  "materials_required": [{ "tag": "mechanism", "count": 1 }],
+  "hybrid_requirements": [{ "item_tag": "spike_component", "count": 1 }],
+  "ready_to_build": false  // Must have 1 mechanism + 1 spike_component
+}
+```
+
+Note: Trap design simplified to use generic components instead of weapons (§15.9).
+
+### 15.6 Uninstall Item GUID Handling
+
+**Problem**: Uninstalling furniture should restore "the same item" with quality/material/decorations, but original GUID might conflict or content definitions might have changed.
+
+**Resolution - Generate New GUID, Preserve Properties**:
+- **New GUID**: Uninstall always generates a fresh `Guid.NewGuid()` to avoid collisions.
+- **Preserved properties**: Copy from PlaceableInstance:
+  - `material` (string ID, e.g., `"core_mat_metal_iron"`)
+  - `quality_tier` (int −3..+3)
+  - `decorations` (array, if saved)
+  - `maker_mark` (string, if saved)
+  - `inscriptions` (string, if saved)
+- **Content migration**: Use ItemRegistry.ResolveItem with alias support; if item def is missing/renamed, log warning and use fallback item def.
+- **Player perception**: Players see identical item properties, don't notice GUID change.
+
+**PlaceableInstance required save fields**:
+```json
+{
+  "source_item_guid": "...",           // reference only (not restored)
+  "source_item_def_id": "core_item_furniture_bed",
+  "source_item_material": "core_mat_wood_oak",
+  "source_item_quality": 2,
+  "source_item_decorations": [...],
+  "source_item_maker": "Urist McMason"
+}
+```
+
+### 15.7 NavMask Rebuild Batching
+
+**Problem**: Multiple L2 topology changes in a single tick (e.g., 100 doors lock/unlock, workshops constructed/deconstructed) could trigger redundant NavMask rebuilds.
+
+**Resolution - Per-Chunk-Commit Batching**:
+- **Write phase**: ChunkWriter applies all diffs in stable sorted order; tracks `topologyChanged` flag.
+- **Commit phase**: After all diffs applied, if `topologyChanged == true`:
+  1. Rebuild `NavMask[1024]` for entire chunk.
+  2. Rebuild `NavCost[1024]` for entire chunk.
+  3. Rebuild `UpRampMask[1024]` for ramp cells.
+  4. Bump `ConnectivityVersion` once.
+- **Topology-affecting diffs**:
+  - `InstallPlaceable` / `UninstallPlaceable`
+  - `CompleteConstruction` / `DeconstructPlaceable`
+  - `LockDoor` / `UnlockDoor` (changes passability)
+  - `DestroyPlaceable`
+- **Performance**: 100 diffs in one chunk → 1 rebuild, not 100.
+
+**Pseudocode**:
+```csharp
+public void ApplyDiffs(List<DiffOp> diffs, ulong currentTick)
+{
+    bool topologyChanged = false;
+    foreach (var diff in diffs.OrderBy(StableSort))
+    {
+        ApplyDiff(diff);
+        if (AffectsTopology(diff)) topologyChanged = true;
+    }
+    if (topologyChanged)
+    {
+        RebuildNavMask();
+        RebuildNavCost();
+        RebuildUpRampMask();
+        ConnectivityVersion++;
+    }
+}
+```
+
+### 15.8 Construction Site Passability
+
+**Problem**: Should a construction site (temporary placeable) inherit the target construction's passability, or use a fixed passability?
+
+**Resolution - Fixed Nonblocking**:
+- **All construction sites**: `passability = "nonblocking"` regardless of target construction type.
+- **Rationale**:
+  - Allows builders and haulers to walk onto site cells.
+  - Prevents creatures from being "trapped" when site spawns.
+  - Builder can work from any footprint cell or adjacent.
+- **Occupancy**: Construction site still marks cells as occupied in OccupancyMap (prevents overlapping constructions).
+- **Visual**: UI shows construction site sprite/glyph; creatures can walk over it.
+
+**Edge case - wall construction site**: Even though final wall is `blocking`, the construction site itself is `nonblocking` during build.
+
+### 15.9 Trap Simplification
+
+**Problem**: Original spec required hybrid traps with weapons (mechanism + weapon_trap item); complex to manage weapon damage/durability.
+
+**Resolution - Component-Based Traps**:
+- **Spike trap example**:
+```json
+{
+  "id": "core_construction_trap_spike",
+  "materials_required": [{ "tag": "mechanism", "count": 1 }],
+  "hybrid_requirements": [{ "item_tag": "spike_component", "count": 1 }],
+  "trap_profile": {
+    "trigger": "pressure",
+    "reset_time_ticks": 100,
+    "damage": { "type": "stab", "amount": 15 }  // fixed damage, not from weapon
+  }
+}
+```
+- **No weapon items**: Use generic components with fixed damage values.
+- **Simpler**: No weapon durability, quality, or material variance in v1 traps.
+
+**Future**: Can add weapon-based traps later if needed.
+
+### 15.10 Material Overflow on Deconstruct
+
+**Problem**: Deconstructing a 5×5 workshop returns many material items; where do they spawn if footprint cells are occupied?
+
+**Resolution - Random Placement with Stacking**:
+- **Spawn strategy**: For each material item to spawn:
+  1. Pick random cell from footprint (uniform distribution).
+  2. Spawn item on that cell (items stack infinitely, so no "full" cells).
+- **No overflow queue**: With infinite stacking, overflow is not possible.
+- **Determinism**: Use seeded RNG (e.g., `hash(placeable_guid + material_index)`) for deterministic placement.
+
+**Example**:
+```csharp
+foreach (var (materialTag, count) in materials_to_return)
+{
+    for (int i = 0; i < count; i++)
+    {
+        var cellIndex = SeededRandom(placeable.Guid, materialTag, i) % footprint.Count;
+        var worldPos = footprint[cellIndex];
+        SpawnItem(materialTag, worldPos);
+    }
+}
+```
+
+### 15.11 Content Versioning for Placeables
+
+**Problem**: Loading old save games where item/construction definitions have been renamed, deleted, or changed.
+
+**Resolution - Alias System + Fallback**:
+- **Item resolution**:
+```csharp
+public ItemDefinition? ResolveItem(string id, ContentVersion? saveVersion = null)
+{
+    // Direct lookup
+    if (_itemsById.TryGetValue(id, out var item)) return item;
+
+    // Alias lookup
+    if (_aliases.TryGetValue(id, out var newId))
+    {
+        Log($"[ItemRegistry] Migrated '{id}' → '{newId}'");
+        return _itemsById.GetValueOrDefault(newId);
+    }
+
+    // Fallback
+    Log($"[ItemRegistry] Missing item '{id}', using fallback");
+    return GetFallbackItem("missing_furniture");
+}
+```
+- **Construction resolution**: Same pattern with ConstructionRegistry.
+- **Graceful degradation**: Missing definitions replaced with fallback placeables (visible but functional).
+- **Save compatibility**: String IDs allow migration; numeric handles never saved.
+
+**Fallback items**:
+- `missing_furniture` (generic furniture sprite, no effects)
+- `missing_construction` (generic wall sprite, blocking)
+- `missing_workshop` (5×5 nonblocking, no recipes)
+
+### 15.12 Destruction and Cache Invalidation
+
+**Problem**: When a placeable is destroyed (by Building Destroyer AI), how to handle cache invalidation and item drops?
+
+**Resolution**:
+- **Write phase**: `DestroyPlaceable` diff applied:
+  1. Remove from OccupancyMap.
+  2. Remove from TagIndex.
+  3. Clear L2 passability.
+  4. Mark `topologyChanged = true`.
+  5. Spawn salvage items (per `on_destroy.drop_rules`).
+- **Commit phase**: Rebuild NavMask/NavCost, bump ConnectivityVersion.
+- **Immunity check**: Before emitting destroy diff, validate placeable doesn't have immune tags.
+
+**on_destroy drop rules**:
+- `"none"`: No salvage.
+- `"salvage_some"`: Return 30% of materials as items.
+- `"salvage_all"`: Return 100% (same as deconstruct).
+
+### 15.13 Faction Ownership and Access Control
+
+**Problem**: Placeables (doors, furniture, workshops) need ownership tracking and access control for multi-faction gameplay.
+
+**Resolution - Simplified Faction-Only Ownership**:
+
+**PlaceableInstance ownership fields**:
+```json
+{
+  "owner_faction_id": "faction_player",     // null = neutral/unclaimed
+  "use_policy": "public"                    // "public" | "faction" | "forbidden"
+}
+```
+
+**Ownership semantics**:
+- **owner_faction_id**: Which faction owns/built this placeable.
+  - Set when construction completes (builder's faction).
+  - Set when item is installed (installer's faction).
+  - `null` for neutral/wild placeables (ruins, natural features).
+  - All placeables are faction-level only; no personal ownership.
+
+- **use_policy**: Access control rules.
+  - `"public"`: Anyone can use (default for most furniture/workshops).
+  - `"faction"`: Only owner faction members can use.
+  - `"forbidden"`: No one can use (for doors: blocks all pathing; for workshops: no recipe queue).
+
+**Access validation**:
+```csharp
+public bool CanUse(Guid creatureGuid, PlaceableInstance placeable)
+{
+    // Forbidden: no one can use
+    if (placeable.use_policy == "forbidden") return false;
+
+    // Public: always allow
+    if (placeable.use_policy == "public") return true;
+
+    // Faction policy: check creature's faction
+    if (placeable.use_policy == "faction")
+    {
+        var creature = GetCreature(creatureGuid);
+        return creature.FactionId == placeable.owner_faction_id;
+    }
+
+    return false;
+}
+```
+
+**Door lock and access**:
+```json
+{
+  "owner_faction_id": "faction_player",
+  "use_policy": "faction",
+  "door_state": {
+    "locked": false
+  }
+}
+```
+
+- **Unlocked + public**: Passability = `"doorway"`, anyone can path through.
+- **Unlocked + faction**: Passability = `"doorway"` for owner faction; enemy creatures see as `"blocking"`.
+- **Unlocked + forbidden**: Passability = `"blocking"` for everyone (acts as permanent obstruction).
+- **Locked**: Always `"blocking"` for everyone (including owner faction).
+
+**Pathfinding integration**:
+```csharp
+// When computing NavMask for a creature
+public byte GetDoorPassability(PlaceableInstance door, Guid creatureGuid)
+{
+    if (door.door_state.locked) return Passability.Blocking;
+    if (!CanUse(creatureGuid, door)) return Passability.Blocking;
+    return Passability.Doorway;
+}
+```
+
+**Workshop ownership**:
+```json
+{
+  "owner_faction_id": "faction_player",
+  "use_policy": "faction",      // Only player faction crafters can queue recipes
+  "workshop_state": {
+    "queued_recipes": [...],
+    "current_job_guid": null
+  }
+}
+```
+
+- Crafter assignment checks: `CanUse(crafter.Guid, workshop)` before creating CraftJob.
+- Enemy factions cannot use captured workshops unless ownership is transferred (conquest mechanic, future).
+
+**Furniture access (beds, chairs, tables)**:
+- **Simplified**: No personal ownership; rooms/beds assigned via separate zone system (not placeable-level).
+- `use_policy = "faction"` → only faction members can sleep in beds, sit in chairs.
+- Room assignment system (future) can track "preferred bed per creature" but ownership stays at faction level.
+
+**Claiming and transfer**:
+- **Initial ownership**: Set to builder/installer's faction on completion.
+- **Claiming neutral placeables**: Designate "Claim" action → creature walks to placeable → sets owner_faction_id to creature's faction.
+- **Conquest transfer**: When faction is defeated, all their placeables become neutral (owner_faction_id = null) or transfer to victor (future).
+
+**Uninstall/deconstruct ownership**:
+- Only owner faction can designate uninstall/deconstruct.
+- Neutral placeables (owner_faction_id = null) can be claimed by anyone before deconstruct.
+- Spawned items inherit owner_faction_id (prevent stealing from friendly factions).
+- Deconstructed materials spawn as owned by the faction that issued the order.
+
+**Edge cases**:
+1. **Faction eliminated**: All faction-owned placeables become neutral (owner_faction_id = null, use_policy = "public").
+
+2. **Door forbid mechanic**: Player sets `use_policy = "forbidden"` to prevent all pathing through door (haulers, enemies, everyone).
+   - Useful for traffic control without locking.
+   - Can be toggled back to "public" or "faction" anytime.
+
+3. **Multi-faction fortresses**: Each faction builds their own workshops/doors with faction ownership; access control prevents conflicts.
+
+4. **Allied factions**: Use `use_policy = "public"` to allow allied faction members to use workshops/pass through doors.
+
+**UI implications**:
+- Placeable info panel shows: "Owner: Player Faction" or "Unclaimed".
+- Door designation UI: `[L] Lock/Unlock`, `[F] Forbid`, `[A] Allow (Public)`, `[R] Restrict (Faction)`.
+- Workshop designation UI: `[O] Set Owner Faction` (conquest/claiming).
+- Bed/furniture: No personal ownership UI; room assignment handled separately.
+
+**Save/load**:
+- `owner_faction_id` saved as string ID (e.g., `"faction_player"`).
+- Faction registry resolves IDs on load; missing factions default to neutral (owner_faction_id = null).
+
+### 15.14 Future: Multi-Z Placeables
+
+**Problem**: Current footprint `{ "w": 5, "d": 5, "h": 1 }` supports single-layer only; future buildings may span multiple Z levels.
+
+**Resolution - Reserved for Later**:
+- **v1 restriction**: All placeables have `h = 1`.
+- **Future support**: When `h > 1`:
+  - Occupancy spans Z layers `[anchor.z, anchor.z + h)`.
+  - Each Z layer updates its own L2 and NavMask.
+  - Vertical connectivity handled by stairs/ramps (separate from placeable).
+- **Schema**: `h` field already present; loaders should validate `h == 1` for v1.
+
+---
+
+## 16) Summary of Binding Decisions
+
+| Topic | Decision |
+|-------|----------|
+| Cross-chunk placeables | Allowed; anchor chunk owns PlaceableInstance |
+| Construction material reservation | Immediate reservation on delivery |
+| Workshop item stacking | Infinite stacking; no overflow issues |
+| Door state machine | Simplified: locked boolean only, no latency |
+| Hybrid construction atomicity | All-or-nothing: all materials + items required before build |
+| Uninstall GUID handling | Generate new GUID, preserve properties |
+| NavMask rebuild batching | Per-chunk-commit: batch all changes, rebuild once |
+| Construction site passability | Always nonblocking |
+| Trap design | Component-based with fixed damage (no weapons) |
+| Deconstruct material spawn | Random placement with stacking |
+| Content versioning | Alias system + fallback items |
+| Destruction | Topology change + salvage drops |
+| Faction ownership | Faction-only: owner_faction_id + use_policy (no personal ownership) |
+| Door access control | Public/faction/forbidden policy + locked state |
+| Workshop ownership | Faction-level only; crafter assignment checks CanUse |
+| Furniture ownership | Faction-level; room/bed assignment via separate zone system |
+| Ownership transfer | Claim neutral, conquest (future); faction eliminated → neutral |
+| Multi-Z placeables | Reserved for future (v1: h=1 only) |
+
+---
+
+PLACEABLE_SPEC v1.3 - Ready for Implementation

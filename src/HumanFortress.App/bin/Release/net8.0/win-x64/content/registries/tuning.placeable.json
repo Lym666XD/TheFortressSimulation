@@ -1,0 +1,113 @@
+{
+  "$schema": "../schemas/tuning.schema.json",
+  "version": "1.0.0",
+  "_comment": "Placeable system tuning constants",
+
+  "quality": {
+    "_comment": "Quality tier effects on placeable stats (-3 to +3)",
+    "beauty_per_tier": 1,
+    "comfort_per_tier": 1,
+    "min_tier": -3,
+    "max_tier": 3
+  },
+
+  "passability": {
+    "_comment": "Passability modes for pathfinding integration",
+    "blocking": {
+      "walkable": false,
+      "blocks_los": true,
+      "description": "Wall-like, completely blocks movement and line of sight"
+    },
+    "nonblocking": {
+      "walkable": true,
+      "blocks_los": false,
+      "description": "Passable, can walk through freely"
+    },
+    "doorway": {
+      "walkable_when_open": true,
+      "blocks_los_when_closed": true,
+      "requires_door_state": true,
+      "description": "Door-like, passability depends on open/closed state"
+    }
+  },
+
+  "installation": {
+    "_comment": "Installation and deconstruction rules",
+    "install_time_base_ticks": 200,
+    "deconstruct_time_base_ticks": 150,
+    "material_recovery_rate": 1.0,
+    "preserve_item_on_uninstall": true
+  },
+
+  "construction": {
+    "_comment": "Construction building rules",
+    "material_recovery_rate": 1.0,
+    "quality_tier_always_zero": true,
+    "skill_xp_per_build_tick": 1
+  },
+
+  "clearance": {
+    "_comment": "Clearance validation rules",
+    "check_above_footprint": true,
+    "allow_overlap_nonblocking": false
+  },
+
+  "orientation": {
+    "_comment": "Orientation rotation mapping (0=N, 1=E, 2=S, 3=W)",
+    "rotation_degrees": [0, 90, 180, 270],
+    "default_rotation": 0
+  },
+
+  "effects": {
+    "_comment": "Environmental effects ranges and defaults",
+    "beauty_range": [-10, 10],
+    "comfort_range": [0, 10],
+    "light_lumen_max": 2000,
+    "heat_w_max": 1000
+  },
+
+  "storage": {
+    "_comment": "Storage capacity rules",
+    "default_max_volume_ml": 500000,
+    "default_max_slots": 50,
+    "allow_unrestricted_storage": true
+  },
+
+  "doors": {
+    "_comment": "Door state and pathfinding integration",
+    "default_locked": false,
+    "default_open": false,
+    "open_cost_ticks": 20,
+    "close_cost_ticks": 20,
+    "closed_blocks_movement": true,
+    "requires_passability_doorway": true
+  },
+
+  "durability": {
+    "_comment": "Hit points and damage system",
+    "default_max_hp": 100,
+    "hp_per_volume_ml": 0.001,
+    "material_hp_multiplier": {
+      "stone": 2.0,
+      "metal": 3.0,
+      "wood": 1.0,
+      "default": 1.0
+    },
+    "condition_thresholds": {
+      "pristine": 1.0,
+      "good": 0.9,
+      "worn": 0.7,
+      "damaged": 0.5,
+      "poor": 0.2,
+      "terrible": 0.0
+    }
+  },
+
+  "collision": {
+    "_comment": "Collision detection and placement validation",
+    "check_full_footprint": true,
+    "require_walkable_tiles": true,
+    "allow_overlap_external_refs": false,
+    "cross_chunk_validation": true
+  }
+}

@@ -33,6 +33,8 @@ public sealed class GameStateManager
     private HumanFortress.App.Jobs.HaulJobSystem? _haulJobs;
     private HumanFortress.Simulation.Orders.MiningSystem? _miningPlanner;
     private HumanFortress.App.Jobs.MiningJobSystem? _miningJobs;
+    private HumanFortress.Simulation.Orders.ConstructionSystem? _constructionPlanner;
+    private HumanFortress.App.Jobs.ConstructionJobSystem? _constructionJobs;
     private NavigationManager? _navManager;
 
     public GameStateManager(ulong masterSeed)
@@ -66,6 +68,8 @@ public sealed class GameStateManager
     public HumanFortress.App.Jobs.HaulJobSystem? HaulJobs => _haulJobs;
     public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => _miningPlanner;
     public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => _miningJobs;
+    public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => _constructionPlanner;
+    public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => _constructionJobs;
     public NavigationManager? NavManager => _navManager;
 
     /// <summary>
@@ -255,6 +259,12 @@ public sealed class GameStateManager
         // Haul job executor assigns creatures and moves items along paths
         _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog, _navManager);
         _tickScheduler.RegisterSystem(_haulJobs);
+
+        // L0 Construction planner and job executor
+        _constructionPlanner = new HumanFortress.Simulation.Orders.ConstructionSystem(_world, _world.Orders);
+        _tickScheduler.RegisterSystem(_constructionPlanner);
+        _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(_world, _constructionPlanner, _diffLog);
+        _tickScheduler.RegisterSystem(_constructionJobs);
 
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;

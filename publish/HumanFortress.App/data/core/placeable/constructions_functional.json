@@ -1,0 +1,233 @@
+{
+  "$schema": "../../../content/schemas/constructions.schema.json",
+  "version": "1.0.0",
+  "_comment": "Functional structures - doors, hatches, fortifications, pillars (L2 overlays)",
+  "constructions": [
+    {
+      "_comment": "=== DOORS ===",
+      "id": "core_construction_door_wood",
+      "name": "Wooden Door",
+      "category": "functional",
+      "tags": ["door", "entrance", "wood"],
+      "materials_required": [
+        { "tag": "wood_log", "count": 3 }
+      ],
+      "build_time_ticks": 400,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N", "E", "S", "W"],
+        "passability": "doorway",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": true,
+        "tags": ["door"],
+        "effects": { "beauty": 1, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      },
+      "door_state_default": {
+        "locked": false
+      }
+    },
+    {
+      "id": "core_construction_door_stone",
+      "name": "Stone Door",
+      "category": "functional",
+      "tags": ["door", "entrance", "stone"],
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 600,
+      "required_skill": "masonry",
+      "skill_level_min": 1,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N", "E", "S", "W"],
+        "passability": "doorway",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": true,
+        "tags": ["door"],
+        "effects": { "beauty": 2, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      },
+      "door_state_default": {
+        "locked": false
+      }
+    },
+    {
+      "id": "core_construction_door_metal",
+      "name": "Metal Door",
+      "category": "functional",
+      "tags": ["door", "entrance", "metal", "secure"],
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 6 }
+      ],
+      "build_time_ticks": 800,
+      "required_skill": "metalworking",
+      "skill_level_min": 2,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N", "E", "S", "W"],
+        "passability": "doorway",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": true,
+        "tags": ["door", "secure"],
+        "effects": { "beauty": 1, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      },
+      "door_state_default": {
+        "locked": false
+      }
+    },
+    {
+      "_comment": "=== HATCHES ===",
+      "id": "core_construction_hatch_wood",
+      "name": "Wooden Hatch",
+      "category": "functional",
+      "tags": ["hatch", "trapdoor", "wood"],
+      "materials_required": [
+        { "tag": "wood_log", "count": 2 }
+      ],
+      "build_time_ticks": 300,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "doorway",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": ["hatch"],
+        "effects": { "beauty": 0, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      },
+      "door_state_default": {
+        "locked": false
+      }
+    },
+    {
+      "id": "core_construction_hatch_metal",
+      "name": "Metal Hatch",
+      "category": "functional",
+      "tags": ["hatch", "trapdoor", "metal", "secure"],
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 4 }
+      ],
+      "build_time_ticks": 500,
+      "required_skill": "metalworking",
+      "skill_level_min": 1,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "doorway",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": true,
+        "tags": ["hatch", "secure"],
+        "effects": { "beauty": 1, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      },
+      "door_state_default": {
+        "locked": false
+      }
+    },
+    {
+      "_comment": "=== FORTIFICATIONS ===",
+      "id": "core_construction_fortification_stone",
+      "name": "Stone Fortification",
+      "category": "fortification",
+      "tags": ["fortification", "defense", "stone"],
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 600,
+      "required_skill": "masonry",
+      "skill_level_min": 1,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "blocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": ["fortification", "defense"],
+        "effects": { "beauty": 1, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      }
+    },
+    {
+      "_comment": "=== PILLARS ===",
+      "id": "core_construction_pillar_wood",
+      "name": "Wooden Pillar",
+      "category": "structural",
+      "tags": ["pillar", "support", "wood"],
+      "materials_required": [
+        { "tag": "wood_log", "count": 3 }
+      ],
+      "build_time_ticks": 400,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": ["pillar", "support"],
+        "effects": { "beauty": 1, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      }
+    },
+    {
+      "id": "core_construction_pillar_stone",
+      "name": "Stone Pillar",
+      "category": "structural",
+      "tags": ["pillar", "support", "stone"],
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 600,
+      "required_skill": "masonry",
+      "skill_level_min": 1,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": ["pillar", "support"],
+        "effects": { "beauty": 2, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      }
+    },
+    {
+      "id": "core_construction_pillar_metal",
+      "name": "Metal Pillar",
+      "category": "structural",
+      "tags": ["pillar", "support", "metal"],
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 5 }
+      ],
+      "build_time_ticks": 800,
+      "required_skill": "metalworking",
+      "skill_level_min": 2,
+      "placeable_profile": {
+        "footprint": { "w": 1, "d": 1, "h": 1 },
+        "anchor": "topleft",
+        "orientation_mask": ["N"],
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": ["pillar", "support"],
+        "effects": { "beauty": 3, "comfort": 0, "light_lumen": 0, "heat_w": 0 }
+      }
+    }
+  ]
+}

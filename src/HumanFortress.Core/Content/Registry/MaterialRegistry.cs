@@ -10,9 +10,12 @@ namespace HumanFortress.Core.Content.Registry;
 public class MaterialRegistry
 {
     private readonly Dictionary<ushort, MaterialDefinition> _materialsById = new();
-    private readonly Dictionary<string, ushort> _materialsByName = new();
+    private readonly Dictionary<string, ushort> _materialsByStringId = new();  // string ID → numeric ID
+    private readonly Dictionary<string, ushort> _materialsByName = new();  // legacy compatibility
     private readonly Dictionary<string, ushort> _aliases = new();
     private readonly List<MaterialDefinition> _allMaterials = new();
+
+    private ushort _nextNumericId = 10;  // Start after reserved IDs (0-9)
 
     public ContentVersion Version { get; private set; }
     public string ContentHash { get; private set; } = "";
@@ -36,9 +39,14 @@ public class MaterialRegistry
         // Add reserved materials
         AddReservedMaterials();
 
-        // Add all materials
-        foreach (var material in materials)
+        // Sort materials by StringId for stable ID assignment across loads
+        var sortedMaterials = materials.OrderBy(m => m.StringId).ToList();
+
+        // Assign numeric IDs and add materials
+        foreach (var material in sortedMaterials)
         {
+            // Assign next available numeric ID
+            material.Id = _nextNumericId++;
             AddMaterial(material);
         }
 
@@ -56,26 +64,27 @@ public class MaterialRegistry
         // Validate
         material.Validate();
 
-        // Check for duplicate ID
+        // Check for duplicate numeric ID
         if (_materialsById.ContainsKey(material.Id))
         {
             throw new InvalidOperationException(
-                $"Duplicate material ID {material.Id}: '{material.Name}' and '{_materialsById[material.Id].Name}'");
+                $"Duplicate material numeric ID {material.Id}: '{material.StringId}' and '{_materialsById[material.Id].StringId}'");
         }
 
-        // Check for duplicate name
-        if (_materialsByName.ContainsKey(material.Name))
+        // Check for duplicate string ID
+        if (_materialsByStringId.ContainsKey(material.StringId))
         {
             throw new InvalidOperationException(
-                $"Duplicate material name '{material.Name}'");
+                $"Duplicate material string ID '{material.StringId}'");
         }
 
         // Add to registries
         _materialsById[material.Id] = material;
-        _materialsByName[material.Name] = material.Id;
+        _materialsByStringId[material.StringId] = material.Id;
+        _materialsByName[material.Name] = material.Id;  // legacy
         _allMaterials.Add(material);
 
-        // Add aliases
+        // Add aliases (both to string ID and name)
         foreach (var alias in material.Aliases)
         {
             if (_aliases.ContainsKey(alias))
@@ -96,69 +105,86 @@ public class MaterialRegistry
         var none = new MaterialDefinition
         {
             Id = None,
+            StringId = "none",
             Name = "none",
             Category = "special",
+            Tags = new HashSet<string> { "special", "empty" },
+            DensitySolid = 0,
             Display = new DisplayProperties { Glyph = ' ', Foreground = ConsoleColor.Black },
-            Physical = new PhysicalProperties { Density = 0 },
-            Navigation = new NavigationProperties
+            Navigation = new MaterialNavigation
             {
-                MoveCostModifier = 100,
-                Friction = 1.0f
+                MoveCostAdd = 0,
+                FrictionMulFx = FixedPoint.FX
             }
         };
         _materialsById[None] = none;
+        _materialsByStringId["none"] = None;
         _materialsByName["none"] = None;
 
         // Void (MAX) - out of bounds
         var voidMat = new MaterialDefinition
         {
             Id = Void,
+            StringId = "void",
             Name = "void",
             Category = "special",
+            Tags = new HashSet<string> { "special", "impassable" },
+            DensitySolid = 0,
             Display = new DisplayProperties { Glyph = ' ', Foreground = ConsoleColor.Black },
-            Physical = new PhysicalProperties { Density = 0 },
-            Navigation = new NavigationProperties
+            Navigation = new MaterialNavigation
             {
-                MoveCostModifier = 255,
-                Friction = 1.0f
+                MoveCostAdd = 50,
+                FrictionMulFx = FixedPoint.FX
             }
         };
         _materialsById[Void] = voidMat;
+        _materialsByStringId["void"] = Void;
         _materialsByName["void"] = Void;
 
         // Air (MAX-1) - empty space
         var air = new MaterialDefinition
         {
             Id = Air,
+            StringId = "air",
             Name = "air",
-            Category = "special",
+            Category = "gas",
+            Tags = new HashSet<string> { "gas", "empty" },
+            DensitySolid = 1,
             Display = new DisplayProperties { Glyph = ' ', Foreground = ConsoleColor.Black },
-            Physical = new PhysicalProperties { Density = 1.2f },
-            Navigation = new NavigationProperties
+            Navigation = new MaterialNavigation
             {
-                MoveCostModifier = 100,
-                Friction = 1.0f
+                MoveCostAdd = 0,
+                FrictionMulFx = FixedPoint.FX
             }
         };
         _materialsById[Air] = air;
+        _materialsByStringId["air"] = Air;
         _materialsByName["air"] = Air;
 
         // Bedrock (MAX-2) - unbreakable boundary
         var bedrock = new MaterialDefinition
         {
             Id = Bedrock,
+            StringId = "bedrock",
             Name = "bedrock",
-            Category = "special",
+            Category = "stone",
+            Tags = new HashSet<string> { "stone", "unbreakable", "impassable" },
+            DensitySolid = 10000,
             Display = new DisplayProperties { Glyph = '#', Foreground = ConsoleColor.DarkGray },
-            Physical = new PhysicalProperties { Density = 10000, Hardness = 10, Toughness = 100 },
-            Navigation = new NavigationProperties
+            Mechanics = new MaterialMechanics
             {
-                MoveCostModifier = 255,
-                Friction = 1.0f
+                HardnessEdgeFx = FixedPoint.FX * 10, // Extremely hard
+                ToughnessFracFx = FixedPoint.FX * 10, // Extremely tough
+                RigidityFx = FixedPoint.FX * 10 // Extremely rigid
             },
-            Mining = new MiningProperties { Mineable = false }
+            Navigation = new MaterialNavigation
+            {
+                MoveCostAdd = 50,
+                FrictionMulFx = FixedPoint.FX
+            }
         };
         _materialsById[Bedrock] = bedrock;
+        _materialsByStringId["bedrock"] = Bedrock;
         _materialsByName["bedrock"] = Bedrock;
     }
 
@@ -275,14 +301,36 @@ public class MaterialRegistry
     }
 
     /// <summary>
+    /// Resolve material string ID to numeric ID (supports aliases)
+    /// </summary>
+    public ushort? ResolveStringId(string stringId)
+    {
+        // Try direct string ID first
+        if (_materialsByStringId.TryGetValue(stringId, out var id))
+        {
+            return id;
+        }
+
+        // Try aliases
+        if (_aliases.TryGetValue(stringId, out id))
+        {
+            return id;
+        }
+
+        return null;
+    }
+
+    /// <summary>
     /// Clear the registry
     /// </summary>
     private void Clear()
     {
         _materialsById.Clear();
+        _materialsByStringId.Clear();
         _materialsByName.Clear();
         _aliases.Clear();
         _allMaterials.Clear();
+        _nextNumericId = 10;  // Reset ID counter
     }
 
     /// <summary>

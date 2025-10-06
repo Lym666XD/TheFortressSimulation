@@ -135,7 +135,9 @@ namespace HumanFortress.Core.Content
                 "tuning.hauling.json",
                 "tuning.stockpile.json",
                 // Mining tuning (dig time, drops)
-                "tuning.mining.json"
+                "tuning.mining.json",
+                // L0 construction material costs
+                "tuning.construction.json"
             };
 
             foreach (var file in tuningFiles)

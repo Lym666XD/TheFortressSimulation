@@ -1,0 +1,552 @@
+{
+  "$schema": "../schemas/workshop_attachments.schema.json",
+  "version": "1.0.0",
+  "attachments": [
+    {
+      "_comment": "=== WOODWORKING ATTACHMENTS ===",
+      "id": "core_attach_wood_saw_hand_frame",
+      "name": "Hand Saw Frame",
+      "slot": "sawline",
+      "era": "classic",
+      "upgrade_to": "core_attach_wood_saw_pit",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 4 },
+        { "tag": "metal_ingot", "count": 1 }
+      ],
+      "build_time_ticks": 600,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["saw", "cut"]
+    },
+    {
+      "id": "core_attach_wood_saw_pit",
+      "name": "Pit Saw Bench",
+      "slot": "sawline",
+      "era": "medieval",
+      "upgrade_to": "core_attach_wood_saw_water",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 8 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 800,
+      "effects": { "throughput_mult_fx": 12500 },
+      "tags": ["saw", "cut", "water_optional"]
+    },
+    {
+      "id": "core_attach_wood_saw_water",
+      "name": "Water-Powered Saw Shed",
+      "slot": "sawline",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 12 },
+        { "tag": "metal_ingot", "count": 4 },
+        { "tag": "mechanism", "count": 2 }
+      ],
+      "build_time_ticks": 1200,
+      "effects": { "throughput_mult_fx": 15000 },
+      "tags": ["saw", "cut", "water"]
+    },
+    {
+      "id": "core_attach_wood_joinery_bench",
+      "name": "Joinery Bench",
+      "slot": "joinery",
+      "era": "classic",
+      "upgrade_to": "core_attach_wood_joinery_fixture_drill",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 6 }
+      ],
+      "build_time_ticks": 500,
+      "effects": { "time_mult_fx": 10000 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_joinery_fixture_drill",
+      "name": "Clamps & Lever Drill",
+      "slot": "joinery",
+      "era": "medieval",
+      "upgrade_to": "core_attach_wood_joinery_planer_bench",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 8 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 700,
+      "effects": { "time_mult_fx": 9000 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_joinery_planer_bench",
+      "name": "Planer/Drill Bench & Jigs",
+      "slot": "joinery",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 10 },
+        { "tag": "metal_ingot", "count": 3 },
+        { "tag": "mechanism", "count": 1 }
+      ],
+      "build_time_ticks": 1000,
+      "effects": { "time_mult_fx": 8000 },
+      "tags": ["joinery", "assembly"]
+    },
+    {
+      "id": "core_attach_wood_lathe_foot",
+      "name": "Foot-Powered Lathe",
+      "slot": "lathe",
+      "era": "medieval",
+      "upgrade_to": "core_attach_wood_lathe_improved",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 8 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 900,
+      "effects": { "throughput_mult_fx": 10500 },
+      "tags": ["lathe", "turn"]
+    },
+    {
+      "id": "core_attach_wood_lathe_improved",
+      "name": "Improved Lathe",
+      "slot": "lathe",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 12 },
+        { "tag": "metal_ingot", "count": 4 },
+        { "tag": "mechanism", "count": 1 }
+      ],
+      "build_time_ticks": 1200,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["lathe", "turn"]
+    },
+    {
+      "_comment": "=== STONEWORKS ATTACHMENTS ===",
+      "id": "core_attach_stone_cut_handbench",
+      "name": "Hand Cleaving Bench",
+      "slot": "cutting",
+      "era": "classic",
+      "upgrade_to": "core_attach_stone_cut_watersaw",
+      "materials_required": [
+        { "tag": "stone_block", "count": 6 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 800,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["cut"]
+    },
+    {
+      "id": "core_attach_stone_cut_watersaw",
+      "name": "Water-Powered Stone Saw",
+      "slot": "cutting",
+      "era": "medieval",
+      "upgrade_to": "core_attach_stone_cut_framesaw_polisher",
+      "materials_required": [
+        { "tag": "stone_block", "count": 10 },
+        { "tag": "metal_ingot", "count": 4 },
+        { "tag": "mechanism", "count": 2 }
+      ],
+      "build_time_ticks": 1400,
+      "effects": { "throughput_mult_fx": 12500 },
+      "tags": ["cut", "waterpower"]
+    },
+    {
+      "id": "core_attach_stone_cut_framesaw_polisher",
+      "name": "Frame Saw & Polisher",
+      "slot": "cutting",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "stone_block", "count": 12 },
+        { "tag": "metal_ingot", "count": 6 },
+        { "tag": "mechanism", "count": 3 }
+      ],
+      "build_time_ticks": 1800,
+      "effects": { "throughput_mult_fx": 15000 },
+      "tags": ["cut", "polish", "waterpower"]
+    },
+    {
+      "id": "core_attach_stone_form_chisel_rack",
+      "name": "Chiseling Rack",
+      "slot": "forming",
+      "era": "classic",
+      "upgrade_to": "core_attach_stone_form_hoist_jigs",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 6 },
+        { "tag": "metal_ingot", "count": 3 }
+      ],
+      "build_time_ticks": 700,
+      "effects": { "time_mult_fx": 10000 },
+      "tags": ["form"]
+    },
+    {
+      "id": "core_attach_stone_form_hoist_jigs",
+      "name": "Hoist & Positioning Jigs",
+      "slot": "forming",
+      "era": "medieval",
+      "upgrade_to": "core_attach_stone_form_template_lathe",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 10 },
+        { "tag": "metal_ingot", "count": 5 },
+        { "tag": "rope", "count": 4 }
+      ],
+      "build_time_ticks": 1000,
+      "effects": { "time_mult_fx": 9000 },
+      "tags": ["form", "rigging"]
+    },
+    {
+      "id": "core_attach_stone_form_template_lathe",
+      "name": "Templates, Lathe & Grinder",
+      "slot": "forming",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "stone_block", "count": 8 },
+        { "tag": "metal_ingot", "count": 8 },
+        { "tag": "mechanism", "count": 2 }
+      ],
+      "build_time_ticks": 1500,
+      "effects": { "time_mult_fx": 8000 },
+      "tags": ["form", "lathe", "waterpower"]
+    },
+    {
+      "_comment": "=== METALWORKS ATTACHMENTS ===",
+      "id": "core_attach_metal_forge_clay_hearth",
+      "name": "Clay Hearth",
+      "slot": "forge",
+      "era": "classic",
+      "upgrade_to": "core_attach_metal_forge_brick",
+      "materials_required": [
+        { "tag": "fire_clay", "count": 10 },
+        { "tag": "stone_block", "count": 5 }
+      ],
+      "build_time_ticks": 900,
+      "effects": { "heat_efficiency_fx": 10000 },
+      "tags": ["forge", "heat"]
+    },
+    {
+      "id": "core_attach_metal_forge_brick",
+      "name": "Brick Forge",
+      "slot": "forge",
+      "era": "medieval",
+      "upgrade_to": "core_attach_metal_forge_reverberatory",
+      "materials_required": [
+        { "tag": "fire_clay", "count": 15 },
+        { "tag": "stone_block", "count": 10 }
+      ],
+      "build_time_ticks": 1200,
+      "effects": { "heat_efficiency_fx": 12000 },
+      "tags": ["forge", "heat", "brick"]
+    },
+    {
+      "id": "core_attach_metal_forge_reverberatory",
+      "name": "Reverberatory Forge",
+      "slot": "forge",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "fire_clay", "count": 20 },
+        { "tag": "stone_block", "count": 15 },
+        { "tag": "metal_ingot", "count": 5 }
+      ],
+      "build_time_ticks": 1800,
+      "effects": { "heat_efficiency_fx": 14000 },
+      "tags": ["forge", "heat", "reverberatory"]
+    },
+    {
+      "id": "core_attach_metal_anvil_iron",
+      "name": "Iron Anvil",
+      "slot": "anvil",
+      "era": "classic",
+      "upgrade_to": "core_attach_metal_anvil_steel",
+      "materials_required": [
+        { "tag": "metal_ingot_iron", "count": 8 }
+      ],
+      "build_time_ticks": 600,
+      "effects": { "quality_bonus_fx": 0 },
+      "tags": ["anvil", "iron"]
+    },
+    {
+      "id": "core_attach_metal_anvil_steel",
+      "name": "Steel Anvil",
+      "slot": "anvil",
+      "era": "medieval",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "metal_ingot_steel", "count": 10 }
+      ],
+      "build_time_ticks": 800,
+      "effects": { "quality_bonus_fx": 1000 },
+      "tags": ["anvil", "steel"]
+    },
+    {
+      "_comment": "=== KITCHEN ATTACHMENTS ===",
+      "id": "core_attach_kitchen_heat_open_hearth",
+      "name": "Open Hearth",
+      "slot": "heat_station",
+      "era": "classic",
+      "upgrade_to": "core_attach_kitchen_heat_cauldron_hearth",
+      "materials_required": [
+        { "tag": "stone_block", "count": 6 },
+        { "tag": "fire_clay", "count": 3 }
+      ],
+      "build_time_ticks": 500,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["heat", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_heat_cauldron_hearth",
+      "name": "Cauldron Hearth",
+      "slot": "heat_station",
+      "era": "medieval",
+      "upgrade_to": "core_attach_kitchen_heat_brick_oven_hearth",
+      "materials_required": [
+        { "tag": "stone_block", "count": 8 },
+        { "tag": "fire_clay", "count": 5 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 700,
+      "effects": { "throughput_mult_fx": 10500 },
+      "tags": ["heat", "cauldron", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_heat_brick_oven_hearth",
+      "name": "Brick Oven & Hearth",
+      "slot": "heat_station",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "stone_block", "count": 12 },
+        { "tag": "fire_clay", "count": 8 },
+        { "tag": "metal_ingot", "count": 3 }
+      ],
+      "build_time_ticks": 1000,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["heat", "brick_oven", "hearth"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_block",
+      "name": "Chopping Block",
+      "slot": "prep_station",
+      "era": "classic",
+      "upgrade_to": "core_attach_kitchen_prep_board",
+      "materials_required": [
+        { "tag": "wood_log", "count": 2 }
+      ],
+      "build_time_ticks": 300,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["prep", "chopping"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_board",
+      "name": "Butcher's Block & Kneading Board",
+      "slot": "prep_station",
+      "era": "medieval",
+      "upgrade_to": "core_attach_kitchen_prep_tiled_table",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 6 },
+        { "tag": "metal_ingot", "count": 1 }
+      ],
+      "build_time_ticks": 500,
+      "effects": { "throughput_mult_fx": 10500 },
+      "tags": ["prep", "kneading"]
+    },
+    {
+      "id": "core_attach_kitchen_prep_tiled_table",
+      "name": "Tiled Prep Table",
+      "slot": "prep_station",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "stone_block", "count": 6 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 700,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["prep", "tiled"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_clay_dome",
+      "name": "Clay Dome Oven",
+      "slot": "baking_station",
+      "era": "classic",
+      "upgrade_to": "core_attach_kitchen_bake_stone_oven",
+      "materials_required": [
+        { "tag": "fire_clay", "count": 8 }
+      ],
+      "build_time_ticks": 600,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["baking", "clay_oven"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_stone_oven",
+      "name": "Stone Bread Oven",
+      "slot": "baking_station",
+      "era": "medieval",
+      "upgrade_to": "core_attach_kitchen_bake_brick_oven",
+      "materials_required": [
+        { "tag": "stone_block", "count": 10 },
+        { "tag": "fire_clay", "count": 6 }
+      ],
+      "build_time_ticks": 900,
+      "effects": { "throughput_mult_fx": 10600 },
+      "tags": ["baking", "stone_oven"]
+    },
+    {
+      "id": "core_attach_kitchen_bake_brick_oven",
+      "name": "Vented Brick Bake Oven",
+      "slot": "baking_station",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "stone_block", "count": 12 },
+        { "tag": "fire_clay", "count": 10 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 1200,
+      "effects": { "throughput_mult_fx": 11200 },
+      "tags": ["baking", "brick_oven", "vented"]
+    },
+    {
+      "_comment": "=== KITCHEN ROAST STATION (missing from original) ===",
+      "id": "core_attach_kitchen_roast_spit",
+      "name": "Open Spit",
+      "slot": "roast_station",
+      "era": "classic",
+      "upgrade_to": "core_attach_kitchen_roast_rotisserie",
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 2 },
+        { "tag": "wood_log", "count": 3 }
+      ],
+      "build_time_ticks": 400,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["roast", "spit"]
+    },
+    {
+      "id": "core_attach_kitchen_roast_rotisserie",
+      "name": "Crank Rotisserie",
+      "slot": "roast_station",
+      "era": "medieval",
+      "upgrade_to": "core_attach_kitchen_roast_clockwork",
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 4 },
+        { "tag": "mechanism", "count": 1 }
+      ],
+      "build_time_ticks": 600,
+      "effects": { "throughput_mult_fx": 10500 },
+      "tags": ["roast", "rotisserie"]
+    },
+    {
+      "id": "core_attach_kitchen_roast_clockwork",
+      "name": "Clockwork Rotisserie",
+      "slot": "roast_station",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "metal_ingot", "count": 6 },
+        { "tag": "mechanism", "count": 2 }
+      ],
+      "build_time_ticks": 800,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["roast", "clockwork"]
+    },
+    {
+      "_comment": "=== MINER WORKSHOP ATTACHMENTS ===",
+      "id": "core_attach_miner_pickaxe_rack",
+      "name": "Pickaxe Rack",
+      "slot": "pickaxe_rack",
+      "era": "classic",
+      "upgrade_to": "core_attach_miner_tool_sharpener",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 4 }
+      ],
+      "build_time_ticks": 300,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["mining", "tools"]
+    },
+    {
+      "id": "core_attach_miner_tool_sharpener",
+      "name": "Tool Sharpening Station",
+      "slot": "pickaxe_rack",
+      "era": "medieval",
+      "upgrade_to": "core_attach_miner_advanced_tools",
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 },
+        { "tag": "metal_ingot", "count": 2 }
+      ],
+      "build_time_ticks": 500,
+      "effects": { "throughput_mult_fx": 10500 },
+      "tags": ["mining", "sharpen"]
+    },
+    {
+      "id": "core_attach_miner_advanced_tools",
+      "name": "Advanced Mining Tools",
+      "slot": "pickaxe_rack",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "metal_ingot_steel", "count": 4 }
+      ],
+      "build_time_ticks": 700,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["mining", "advanced"]
+    },
+    {
+      "_comment": "=== PRECISE WORKS ATTACHMENTS ===",
+      "id": "core_attach_precise_lathe_jeweler",
+      "name": "Jeweler's Lathe",
+      "slot": "fine_lathe",
+      "era": "medieval",
+      "upgrade_to": "core_attach_precise_lathe_precision",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 8 },
+        { "tag": "metal_ingot", "count": 4 }
+      ],
+      "build_time_ticks": 900,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["lathe", "precision"]
+    },
+    {
+      "id": "core_attach_precise_lathe_precision",
+      "name": "Precision Toolmaker's Lathe",
+      "slot": "fine_lathe",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 12 },
+        { "tag": "metal_ingot", "count": 6 },
+        { "tag": "mechanism", "count": 2 }
+      ],
+      "build_time_ticks": 1200,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["lathe", "precision"]
+    },
+    {
+      "_comment": "=== ENCHANTER ATTACHMENTS ===",
+      "id": "core_attach_enchant_rune_bench",
+      "name": "Rune Carving Bench",
+      "slot": "rune_carving",
+      "era": "medieval",
+      "upgrade_to": "core_attach_enchant_rune_precision",
+      "materials_required": [
+        { "tag": "wood_plank", "count": 8 },
+        { "tag": "gem", "count": 2 }
+      ],
+      "build_time_ticks": 1000,
+      "effects": { "throughput_mult_fx": 10000 },
+      "tags": ["rune", "carving"]
+    },
+    {
+      "id": "core_attach_enchant_rune_precision",
+      "name": "Precision Rune Tools",
+      "slot": "rune_carving",
+      "era": "renaissance",
+      "upgrade_to": null,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 12 },
+        { "tag": "metal_ingot", "count": 4 },
+        { "tag": "gem", "count": 4 }
+      ],
+      "build_time_ticks": 1400,
+      "effects": { "throughput_mult_fx": 11000 },
+      "tags": ["rune", "precision"]
+    }
+  ]
+}

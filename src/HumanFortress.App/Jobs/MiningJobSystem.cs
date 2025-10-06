@@ -31,6 +31,9 @@ public sealed class MiningJobSystem : ITick
     // Tile reservation: prevent multiple workers from mining the same tile
     private readonly System.Collections.Generic.HashSet<(int x, int y, int z)> _reservedTiles = new();
 
+    // Replan/timeout tuning
+    private const int MaxFailedReplans = 10; // After N failed replans, release reservation and requeue
+
     public MiningJobSystem(HumanFortress.Simulation.World.World world, MiningSystem planner, DiffLog? diffLog = null, HumanFortress.Simulation.Items.ItemsDiffLog? itemsDiff = null, NavigationManager? sharedNav = null)
     {
         _world = world;
@@ -75,11 +78,12 @@ public sealed class MiningJobSystem : ITick
                 continue;
             }
 
-            // Determine adjacency (N,E,S,W) first walkable
-            var adj = GetAdjacency(pd.Cell.X, pd.Cell.Y, pd.Z);
+            // Determine adjacency: for Channel prefer strictly NESW; others allow diagonals and expand radius
+            var adj = GetAdjacencyForAction(pd.Action, pd.Cell.X, pd.Cell.Y, pd.Z);
             if (adj == null)
             {
                 _backlog.Enqueue(pd);
+                Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}); requeue");
                 continue;
             }
             foreach (var worker in creatures)
@@ -103,12 +107,19 @@ public sealed class MiningJobSystem : ITick
                     ProgressTicks = 0,
                     RequiredTicks = requiredTicks,
                     GeologyHandle = pd.GeologyHandle,
-                    TerrainKind = (HumanFortress.Simulation.Tiles.TerrainKind)pd.TerrainKind
+                    TerrainKind = (HumanFortress.Simulation.Tiles.TerrainKind)pd.TerrainKind,
+                    Priority = pd.Priority,
+                    AssignedTick = tick,
+                    ReplanFailCount = 0,
+                    Action = pd.Action,
+                    Segment = pd.Segment
                 };
                 _move.BeginMovement(ToEntity(worker.Guid), req, path);
                 _active.Add(job);
                 busy.Add(worker.Guid);
                 _reservedTiles.Add(tileKey);  // Reserve the tile
+                if (pd.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && pd.Z > 0)
+                    _reservedTiles.Add((pd.Cell.X, pd.Cell.Y, pd.Z - 1));
                 Logger.Log($"[MINING][{tick}] Assign worker={worker.Guid} target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) adj=({adj.Value.X},{adj.Value.Y},{pd.Z}) terrain={job.TerrainKind} ticks={requiredTicks}");
                 assigned = true;
                 break;
@@ -128,7 +139,15 @@ public sealed class MiningJobSystem : ITick
         foreach (var job in _active)
         {
             var worker = _world.Creatures.GetInstance(job.WorkerId);
-            if (worker == null) { finished.Add(job); continue; }
+            if (worker == null)
+            {
+                // Release reservation and requeue if worker disappeared (dead/removed)
+                _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
+                Logger.Log($"[MINING][{tick}] Worker missing; release & requeue target=({job.Target.X},{job.Target.Y},{job.Z})");
+                finished.Add(job);
+                continue;
+            }
             uint eid = ToEntity(worker.Guid);
 
             if (job.Stage == MiningStage.ToAdj)
@@ -140,8 +159,23 @@ public sealed class MiningJobSystem : ITick
                     IWorldNavigationView view2 = _navView;
                     var path = _paths.Solve(in req, in view2);
                     if (path.Kind == PathResultKind.Found)
+                    {
                         _move.BeginMovement(eid, req, path);
-                    Logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind}");
+                        Logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind}");
+                    }
+                    else
+                    {
+                        job.ReplanFailCount++;
+                        Logger.Log($"[MINING][{tick}] Replan failed kind={path.Kind} worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) fails={job.ReplanFailCount}");
+                        if (job.ReplanFailCount >= MaxFailedReplans)
+                        {
+                            // Timeout: release reservation and requeue
+                            _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                            _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment));
+                            Logger.Log($"[MINING][{tick}] Release reservation & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) due to timeout (path={path.Kind})");
+                            finished.Add(job);
+                        }
+                    }
                     continue;
                 }
 
@@ -161,23 +195,13 @@ public sealed class MiningJobSystem : ITick
                 job.ProgressTicks++;
                 if (job.ProgressTicks >= job.RequiredTicks)
                 {
-                    // Verify tile hasn't changed (edge case: other system modified terrain)
+                    // Verify target exists then apply action-specific result
                     var verifyTile = _world.GetTile(job.Target.X, job.Target.Y, job.Z);
-                    if (verifyTile != null && (verifyTile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || verifyTile.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp))
+                    if (verifyTile != null)
                     {
                         job.Stage = MiningStage.Complete;
-                        // Emit SetTerrain (Wall/Ramp -> OpenWithFloor) via Diff
-                        EmitSetTerrainOpen(job.Target, job.Z);
-                        // Spawn drops via ItemsDiff (geology-based, quantity depends on terrain type)
-                        var drops = ChooseDropsFor(job.GeologyHandle, job.TerrainKind);
-                        foreach (var (dropId, qty) in drops)
-                        {
-                            if (!string.IsNullOrEmpty(dropId) && qty > 0)
-                            {
-                                EmitAddItem(job.Target, job.Z, dropId, qty);
-                            }
-                        }
-                        Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) terrain={job.TerrainKind} by {job.WorkerId} drops={drops.Count}");
+                        ApplyMiningResult(job);
+                        Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} by {job.WorkerId}");
                     }
                     else
                     {
@@ -186,6 +210,8 @@ public sealed class MiningJobSystem : ITick
 
                     // Release reservation
                     _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                    if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && job.Z > 0)
+                        _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
                     finished.Add(job);
                 }
             }
@@ -206,6 +232,112 @@ public sealed class MiningJobSystem : ITick
         var target = new DiffTarget(chunkId, localIndex);
         ulong args = (ulong)HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor; // low 8 bits store new kind
         _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, SystemId, Priority, args));
+    }
+
+    private void EmitSetTerrainKind(SadRogue.Primitives.Point cell, int z, HumanFortress.Simulation.Tiles.TerrainKind kind)
+    {
+        if (_diff == null) return;
+        int chunkX = cell.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = cell.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = cell.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = cell.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, z));
+        var target = new DiffTarget(chunkId, localIndex);
+        ulong args = (ulong)kind;
+        _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, SystemId, Priority, args));
+    }
+
+    private void EmitSetTerrain(SadRogue.Primitives.Point cell, int z, HumanFortress.Simulation.Tiles.TerrainKind kind, ushort overrideGeology)
+    {
+        if (_diff == null) return;
+        int chunkX = cell.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int chunkY = cell.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localX = cell.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localY = cell.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int localIndex = localY * HumanFortress.Simulation.World.Chunk.SIZE_XY + localX;
+        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, z));
+        var target = new DiffTarget(chunkId, localIndex);
+        ulong args = (ulong)kind | ((ulong)overrideGeology << 8);
+        _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, SystemId, Priority, args));
+    }
+
+    private void ApplyMiningResult(ActiveMiningJob job)
+    {
+        var here = _world.GetTile(job.Target.X, job.Target.Y, job.Z);
+        HumanFortress.Simulation.Tiles.TerrainKind? kindHere = here != null ? here.Value.Kind : (HumanFortress.Simulation.Tiles.TerrainKind?)null;
+        switch (job.Action)
+        {
+            case HumanFortress.Simulation.Orders.MiningAction.Dig:
+                EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                    if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                break;
+            case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
+                if (kindHere == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                {
+                    EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.Ramp);
+                    foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.Ramp))
+                        if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                    // If there is a floor directly above, remove it (become OpenNoFloor)
+                    if (job.Z + 1 < _world.MaxZ)
+                    {
+                        var above = _world.GetTile(job.Target.X, job.Target.Y, job.Z + 1);
+                        if (above != null && above.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
+                            EmitSetTerrainKind(job.Target, job.Z + 1, HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor);
+                    }
+                }
+                else
+                {
+                    EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                    foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                        if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                }
+                break;
+            case HumanFortress.Simulation.Orders.MiningAction.DigChannel:
+                // Try override geology to 'air' for open space
+                ushort airGeo = 0;
+                try
+                {
+                    var reg = HumanFortress.Core.Content.ContentRegistry.Instance;
+                    if (reg.TryGetGeologyHandleByMaterialAndKind("air", HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor.ToString(), out var h))
+                        airGeo = h;
+                }
+                catch { }
+                EmitSetTerrain(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor, airGeo);
+                if (job.Z > 0)
+                {
+                    var below = _world.GetTile(job.Target.X, job.Target.Y, job.Z - 1);
+                    if (below != null && below.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                    {
+                        EmitSetTerrainKind(job.Target, job.Z - 1, HumanFortress.Simulation.Tiles.TerrainKind.Ramp);
+                        ushort belowGeo = below.Value.GeoMatId;
+                        foreach (var (dropId, qty) in ChooseDropsFor(belowGeo, HumanFortress.Simulation.Tiles.TerrainKind.Ramp))
+                            if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                    }
+                }
+                break;
+            case HumanFortress.Simulation.Orders.MiningAction.DigStairwell:
+                var targetKind = job.Segment switch
+                {
+                    HumanFortress.Simulation.Orders.MiningSegment.Top => HumanFortress.Simulation.Tiles.TerrainKind.StairsDown,
+                    HumanFortress.Simulation.Orders.MiningSegment.Middle => HumanFortress.Simulation.Tiles.TerrainKind.StairsUD,
+                    HumanFortress.Simulation.Orders.MiningSegment.Bottom => HumanFortress.Simulation.Tiles.TerrainKind.StairsUp,
+                    _ => HumanFortress.Simulation.Tiles.TerrainKind.StairsUD
+                };
+                EmitSetTerrainKind(job.Target, job.Z, targetKind);
+                if (kindHere == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                {
+                    foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                        if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                }
+                break;
+            default:
+                EmitSetTerrainKind(job.Target, job.Z, HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor);
+                foreach (var (dropId, qty) in ChooseDropsFor(job.GeologyHandle, HumanFortress.Simulation.Tiles.TerrainKind.SolidWall))
+                    if (!string.IsNullOrEmpty(dropId) && qty > 0) EmitAddItem(job.Target, job.Z, dropId, qty);
+                break;
+        }
     }
 
     private int CalculateRequiredTicks(ushort geologyHandle, HumanFortress.Simulation.Tiles.TerrainKind terrainKind)
@@ -422,13 +554,36 @@ public sealed class MiningJobSystem : ITick
         _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, SystemId, Priority));
     }
 
-    private (int X,int Y)? GetAdjacency(int x, int y, int z)
+    private (int X,int Y)? GetAdjacencyForAction(HumanFortress.Simulation.Orders.MiningAction action, int x, int y, int z)
     {
-        var dirs = new (int dx,int dy)[] { (0,-1),(1,0),(0,1),(-1,0) };
-        foreach (var (dx, dy) in dirs)
+        // Prefer NESW around target if walkable; then diagonals; then expand radius up to 3 using BFS-like rings.
+        static IEnumerable<(int dx,int dy)> Ortho() { yield return (0,-1); yield return (1,0); yield return (0,1); yield return (-1,0); }
+        static IEnumerable<(int dx,int dy)> Diag() { yield return (1,-1); yield return (1,1); yield return (-1,1); yield return (-1,-1); }
+
+        bool Acceptable(int tx, int ty)
         {
-            var t = _world.GetTile(x + dx, y + dy, z);
-            if (t != null && t.Value.IsStandable) return (x + dx, y + dy);
+            var t = _world.GetTile(tx, ty, z);
+            return t != null && t.Value.IsWalkable; // allow floors, ramps, stairs as adjacency
+        }
+
+        foreach (var (dx, dy) in Ortho()) if (Acceptable(x + dx, y + dy)) return (x + dx, y + dy);
+        if (action != HumanFortress.Simulation.Orders.MiningAction.DigChannel)
+            foreach (var (dx, dy) in Diag()) if (Acceptable(x + dx, y + dy)) return (x + dx, y + dy);
+
+        for (int r = 2; r <= 3; r++)
+        {
+            for (int yy = y - r; yy <= y + r; yy++)
+            {
+                int xx1 = x - r; int xx2 = x + r;
+                if (Acceptable(xx1, yy)) return (xx1, yy);
+                if (Acceptable(xx2, yy)) return (xx2, yy);
+            }
+            for (int xx = x - r + 1; xx <= x + r - 1; xx++)
+            {
+                int yy1 = y - r; int yy2 = y + r;
+                if (Acceptable(xx, yy1)) return (xx, yy1);
+                if (Acceptable(xx, yy2)) return (xx, yy2);
+            }
         }
         return null;
     }
@@ -465,6 +620,11 @@ public sealed class MiningJobSystem : ITick
         public int RequiredTicks { get; set; }
         public ushort GeologyHandle { get; init; }
         public HumanFortress.Simulation.Tiles.TerrainKind TerrainKind { get; init; }
+        public int Priority { get; init; }
+        public ulong AssignedTick { get; init; }
+        public int ReplanFailCount { get; set; }
+        public HumanFortress.Simulation.Orders.MiningAction Action { get; init; }
+        public HumanFortress.Simulation.Orders.MiningSegment Segment { get; init; }
     }
 
     public readonly record struct ActiveMiningJobView(

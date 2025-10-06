@@ -60,33 +60,53 @@ public static class SimulationDiffApplicator
         var chunk = world.GetChunk(ck);
         if (chunk == null) return;
 
-        // Get current tile and set new kind from Args (low 8 bits)
+        // Get current tile and set new kind from Args
         var tile = chunk.GetTile(lx, ly);
         var kindVal = (byte)(op.Args & 0xFF);
         var newKind = (HumanFortress.Simulation.Tiles.TerrainKind)kindVal;
+        // Optional geology override in Args[8..23] (16 bits). 0 = no override.
+        ushort overrideGeo = (ushort)((op.Args >> 8) & 0xFFFF);
+
+        // Base bits: update kind
         var bits = HumanFortress.Simulation.Tiles.TerrainBitOps.SetKind(tile.TerrainBits, newKind);
+        // If this diff comes from construction systems, mark as constructed and set Modifiable per policy.
+        if (op.SystemId.StartsWith("Orders.Construction", StringComparison.Ordinal) ||
+            op.SystemId.StartsWith("Jobs.Construction", StringComparison.Ordinal))
+        {
+            bits = HumanFortress.Simulation.Tiles.TerrainBitOps.SetNatural(bits, false);
+            bool modifiable = ck.Z > 0; // per policy: bottommost Z is non-modifiable
+            bits = HumanFortress.Simulation.Tiles.TerrainBitOps.SetModifiable(bits, modifiable);
+        }
 
         // Normalize geology handle to a variant that matches newKind (e.g., wall_rock_x -> floor_rock_x)
         // If a matching geology entry with same material and desired kind exists, switch GeoMatId accordingly.
         ushort newGeoHandle = tile.GeoMatId;
         try
         {
-            if (newKind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
+            if (overrideGeo != 0)
             {
+                newGeoHandle = overrideGeo;
+            }
+            else
+            {
+                // Derive new geology from current material across all kinds
                 var reg = HumanFortress.Core.Content.ContentRegistry.Instance;
                 var geo = reg.GetGeologyByHandle(tile.GeoMatId);
-                if (geo != null && reg.TryGetGeologyHandleByMaterialAndKind(geo.Material, "OpenWithFloor", out var handle))
-                {
+                if (geo != null && reg.TryGetGeologyHandleByMaterialAndKind(geo.Material, newKind.ToString(), out var handle))
                     newGeoHandle = handle;
-                }
             }
         }
         catch { /* fallback to existing GeoMatId on any error */ }
 
+        // Clear surface bits if this became open space (channel cut), since topsoil shouldn't remain
+        byte newSurface = tile.SurfaceBits;
+        if (newKind == HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor)
+            newSurface = 0;
+
         var newTile = new HumanFortress.Simulation.Tiles.TileBase(
             newGeoHandle,
             bits,
-            tile.SurfaceBits,
+            newSurface,
             tile.FluidKind,
             tile.FluidDepth,
             tile.MetaBits,

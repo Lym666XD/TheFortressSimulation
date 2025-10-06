@@ -44,9 +44,32 @@ public class ContentRegistry
             // Load schemas for validation
             var schemas = await LoadSchemasAsync(Path.Combine(contentPath, "schemas"));
 
-            // Load and validate materials
-            var materialsFile = Path.Combine(contentPath, "registries", "materials.json");
-            var materials = await LoadMaterialsAsync(materialsFile, schemas);
+            // Load and validate materials (prefer authoring format, fall back to registry format)
+            var materialsAuthoring = Path.Combine(contentPath, "registries", "materials.authoring.json");
+            var materialsRegistry = Path.Combine(contentPath, "registries", "materials.registry.json");
+            var materialsLegacy = Path.Combine(contentPath, "registries", "materials.json");
+
+            string materialsFile;
+            bool isAuthoringFormat = true;
+
+            if (File.Exists(materialsAuthoring))
+            {
+                materialsFile = materialsAuthoring;
+                Console.WriteLine("[ContentRegistry] Loading materials from authoring format");
+            }
+            else if (File.Exists(materialsRegistry))
+            {
+                materialsFile = materialsRegistry;
+                isAuthoringFormat = false;
+                Console.WriteLine("[ContentRegistry] Loading materials from registry format");
+            }
+            else
+            {
+                materialsFile = materialsLegacy;
+                Console.WriteLine("[ContentRegistry] Loading materials from legacy format");
+            }
+
+            var materials = await LoadMaterialsAsync(materialsFile, schemas, isAuthoringFormat);
 
             // Load and validate terrain kinds
             var terrainKindsFile = Path.Combine(contentPath, "registries", "terrain_kinds.json");
@@ -76,6 +99,26 @@ public class ContentRegistry
             IsLoaded = true;
             Console.WriteLine($"[ContentRegistry] Content loaded successfully. Version: {Version}, Hash: {ContentHash}");
             Console.WriteLine($"[ContentRegistry] Validation: {ValidationResult.Warnings.Count} warnings, {ValidationResult.Errors.Count} errors");
+
+            // Print validation errors
+            if (ValidationResult.Errors.Count > 0)
+            {
+                Console.WriteLine("[ContentRegistry] Errors:");
+                foreach (var error in ValidationResult.Errors)
+                {
+                    Console.WriteLine($"  - {error}");
+                }
+            }
+
+            // Print validation warnings
+            if (ValidationResult.Warnings.Count > 0)
+            {
+                Console.WriteLine("[ContentRegistry] Warnings:");
+                foreach (var warning in ValidationResult.Warnings)
+                {
+                    Console.WriteLine($"  - {warning}");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -119,7 +162,7 @@ public class ContentRegistry
     /// <summary>
     /// Load materials from JSON
     /// </summary>
-    private async Task<List<MaterialDefinition>> LoadMaterialsAsync(string file, Dictionary<string, JsonDocument> schemas)
+    private async Task<List<MaterialDefinition>> LoadMaterialsAsync(string file, Dictionary<string, JsonDocument> schemas, bool isAuthoringFormat = true)
     {
         if (!File.Exists(file))
         {
@@ -138,9 +181,40 @@ public class ContentRegistry
 
         // Parse materials
         var materials = new List<MaterialDefinition>();
-        if (doc.RootElement.TryGetProperty("materials", out var materialsElem))
+
+        // Handle both array format and object format with "materials" property
+        JsonElement materialsElem;
+        if (doc.RootElement.ValueKind == JsonValueKind.Array)
         {
-            foreach (var elem in materialsElem.EnumerateArray())
+            materialsElem = doc.RootElement;
+        }
+        else if (doc.RootElement.TryGetProperty("materials", out var matProp))
+        {
+            materialsElem = matProp;
+        }
+        else
+        {
+            ValidationResult.Errors.Add($"Invalid materials file format: {file}");
+            return materials;
+        }
+
+        foreach (var elem in materialsElem.EnumerateArray())
+        {
+            try
+            {
+                var material = MaterialParser.ParseMaterial(elem, isAuthoringFormat);
+                materials.Add(material);
+            }
+            catch (Exception ex)
+            {
+                ValidationResult.Errors.Add($"Error parsing material: {ex.Message}");
+            }
+        }
+
+        // Old code for backwards compatibility - only use if MaterialParser fails
+        if (materials.Count == 0 && doc.RootElement.TryGetProperty("materials", out var oldMaterialsElem))
+        {
+            foreach (var elem in oldMaterialsElem.EnumerateArray())
             {
                 try
                 {
@@ -161,216 +235,13 @@ public class ContentRegistry
     }
 
     /// <summary>
-    /// Parse a material definition from JSON
+    /// Parse a material definition from JSON using the new v4 parser
     /// </summary>
     private MaterialDefinition ParseMaterialDefinition(JsonElement elem)
     {
-        var material = new MaterialDefinition
-        {
-            Id = elem.GetProperty("id").GetUInt16(),
-            Name = elem.GetProperty("name").GetString() ?? "",
-            Category = elem.GetProperty("category").GetString() ?? ""
-        };
-
-        // Parse aliases
-        if (elem.TryGetProperty("aliases", out var aliases))
-        {
-            foreach (var alias in aliases.EnumerateArray())
-            {
-                material.Aliases.Add(alias.GetString() ?? "");
-            }
-        }
-
-        // Parse display properties
-        if (elem.TryGetProperty("display", out var display))
-        {
-            material.Display = ParseDisplayProperties(display);
-        }
-
-        // Parse physical properties
-        if (elem.TryGetProperty("physical", out var physical))
-        {
-            material.Physical = ParsePhysicalProperties(physical);
-        }
-
-        // Parse navigation properties
-        if (elem.TryGetProperty("navigation", out var navigation))
-        {
-            material.Navigation = ParseNavigationProperties(navigation);
-        }
-
-        // Parse mining properties
-        if (elem.TryGetProperty("mining", out var mining))
-        {
-            material.Mining = ParseMiningProperties(mining);
-        }
-
-        // Parse temperature properties
-        if (elem.TryGetProperty("temperature", out var temperature))
-        {
-            material.Temperature = ParseTemperatureProperties(temperature);
-        }
-
-        // Parse value properties
-        if (elem.TryGetProperty("value", out var value))
-        {
-            material.Value = ParseValueProperties(value);
-        }
-
-        // Parse tags
-        if (elem.TryGetProperty("tags", out var tags))
-        {
-            foreach (var tag in tags.EnumerateArray())
-            {
-                material.Tags.Add(tag.GetString() ?? "");
-            }
-        }
-
-        return material;
-    }
-
-    private DisplayProperties ParseDisplayProperties(JsonElement elem)
-    {
-        var props = new DisplayProperties();
-
-        if (elem.TryGetProperty("glyph", out var glyph))
-        {
-            var str = glyph.GetString();
-            if (!string.IsNullOrEmpty(str))
-                props.Glyph = str[0];
-        }
-
-        if (elem.TryGetProperty("foreground", out var fg))
-        {
-            if (Enum.TryParse<ConsoleColor>(fg.GetString(), out var color))
-                props.Foreground = color;
-        }
-
-        if (elem.TryGetProperty("background", out var bg))
-        {
-            if (Enum.TryParse<ConsoleColor>(bg.GetString(), out var color))
-                props.Background = color;
-        }
-
-        return props;
-    }
-
-    private PhysicalProperties ParsePhysicalProperties(JsonElement elem)
-    {
-        var props = new PhysicalProperties();
-
-        if (elem.TryGetProperty("density", out var density))
-            props.Density = density.GetSingle();
-
-        if (elem.TryGetProperty("hardness", out var hardness))
-            props.Hardness = hardness.GetInt32();
-
-        if (elem.TryGetProperty("toughness", out var toughness))
-            props.Toughness = toughness.GetInt32();
-
-        if (elem.TryGetProperty("elasticity", out var elasticity))
-            props.Elasticity = elasticity.GetSingle();
-
-        if (elem.TryGetProperty("friction", out var friction))
-            props.Friction = friction.GetSingle();
-
-        return props;
-    }
-
-    private NavigationProperties ParseNavigationProperties(JsonElement elem)
-    {
-        var props = new NavigationProperties();
-
-        if (elem.TryGetProperty("moveCostModifier", out var moveCostModifier))
-            props.MoveCostModifier = moveCostModifier.GetByte();
-
-        if (elem.TryGetProperty("friction", out var friction))
-            props.Friction = friction.GetSingle();
-
-        if (elem.TryGetProperty("hazardLevel", out var hazardLevel))
-            props.HazardLevel = hazardLevel.GetInt32();
-
-        if (elem.TryGetProperty("hazardType", out var hazardType))
-            props.HazardType = hazardType.GetString() ?? "none";
-
-        if (elem.TryGetProperty("slippery", out var slippery))
-            props.Slippery = slippery.GetBoolean();
-
-        if (elem.TryGetProperty("sticky", out var sticky))
-            props.Sticky = sticky.GetBoolean();
-
-        return props;
-    }
-
-    private MiningProperties ParseMiningProperties(JsonElement elem)
-    {
-        var props = new MiningProperties();
-
-        if (elem.TryGetProperty("mineable", out var mineable))
-            props.Mineable = mineable.GetBoolean();
-
-        if (elem.TryGetProperty("diggingTime", out var diggingTime))
-            props.DiggingTime = diggingTime.GetInt32();
-
-        if (elem.TryGetProperty("toolRequired", out var toolRequired))
-            props.ToolRequired = toolRequired.GetString() ?? "pick";
-
-        if (elem.TryGetProperty("minToolLevel", out var minToolLevel))
-            props.MinToolLevel = minToolLevel.GetInt32();
-
-        if (elem.TryGetProperty("yields", out var yields))
-        {
-            foreach (var yield in yields.EnumerateArray())
-            {
-                props.Yields.Add(new MiningYield
-                {
-                    Material = yield.GetProperty("material").GetString() ?? "",
-                    Min = yield.GetProperty("min").GetInt32(),
-                    Max = yield.GetProperty("max").GetInt32(),
-                    Probability = yield.TryGetProperty("probability", out var prob) ? prob.GetSingle() : 1.0f
-                });
-            }
-        }
-
-        return props;
-    }
-
-    private TemperatureProperties ParseTemperatureProperties(JsonElement elem)
-    {
-        var props = new TemperatureProperties();
-
-        if (elem.TryGetProperty("meltingPoint", out var meltingPoint))
-            props.MeltingPoint = meltingPoint.GetSingle();
-
-        if (elem.TryGetProperty("boilingPoint", out var boilingPoint))
-            props.BoilingPoint = boilingPoint.GetSingle();
-
-        if (elem.TryGetProperty("ignitionPoint", out var ignitionPoint))
-            props.IgnitionPoint = ignitionPoint.GetSingle();
-
-        if (elem.TryGetProperty("heatCapacity", out var heatCapacity))
-            props.HeatCapacity = heatCapacity.GetSingle();
-
-        if (elem.TryGetProperty("thermalConductivity", out var thermalConductivity))
-            props.ThermalConductivity = thermalConductivity.GetSingle();
-
-        return props;
-    }
-
-    private ValueProperties ParseValueProperties(JsonElement elem)
-    {
-        var props = new ValueProperties();
-
-        if (elem.TryGetProperty("baseValue", out var baseValue))
-            props.BaseValue = baseValue.GetSingle();
-
-        if (elem.TryGetProperty("rarity", out var rarity))
-            props.Rarity = rarity.GetString() ?? "common";
-
-        if (elem.TryGetProperty("tradeable", out var tradeable))
-            props.Tradeable = tradeable.GetBoolean();
-
-        return props;
+        // Use the new MaterialParser which supports both v3 (legacy) and v4 formats
+        // Assume authoring format (human-readable values) - parser will auto-convert to FX
+        return MaterialParser.ParseMaterial(elem, isAuthoringFormat: true);
     }
 
     /// <summary>

@@ -7,6 +7,7 @@ using HumanFortress.Core.World;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Rendering;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Orders;
 using HumanFortress.App.GameStates;
 using HumanFortress.WorldGen;
 using HumanFortress.Core.Content;
@@ -365,7 +366,7 @@ namespace HumanFortress.App.States
                 UiRenderer.DrawDockScreen(_uiSurface, _ui, _uiTick); // moved to bottom-most row
                 UiRenderer.DrawQuickIconsScreen(_uiSurface, _ui, _uiTick); // one row above bottom
                 UiRenderer.DrawDrawer(_uiSurface, _ui, _uiTick, _stockpileManager, _world);
-                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick, _ordersUI, _zonesUI, _buildUI, _stockpileQuickUI);
+                UiRenderer.DrawQuickMenu(_uiSurface, _ui, _uiTick, _ordersUI, _zonesUI, _buildUI, _stockpileQuickUI, cameraOverride: _cameraPos, zOverride: _currentZ, world: _world);
 
                 // Draw orders & stockpile specific UI
                 if (_stockpileUI != null)
@@ -603,6 +604,43 @@ namespace HumanFortress.App.States
         {
             _tilePanelOpen = false;
             _tileInfoPanel?.Clear();
+        }
+
+        // Count valid mining cells in selection for UI-side precheck (avoid empty orders)
+        private int CountValidMiningCells(HumanFortress.Simulation.World.World world, SadRogue.Primitives.Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action)
+        {
+            int count = 0;
+            for (int z = zMin; z <= zMax; z++)
+            {
+                for (int y = rect.Y; y < rect.MaxExtentY; y++)
+                {
+                    for (int x = rect.X; x < rect.MaxExtentX; x++)
+                    {
+                        var tile = world.GetTile(x, y, z);
+                        if (tile == null) continue;
+                        var kind = tile.Value.Kind;
+                        switch (action)
+                        {
+                            case HumanFortress.Simulation.Orders.MiningAction.Dig:
+                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) count++;
+                                break;
+                            case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
+                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall) count++;
+                                break;
+                            case HumanFortress.Simulation.Orders.MiningAction.DigChannel:
+                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) count++;
+                                break;
+                            case HumanFortress.Simulation.Orders.MiningAction.DigStairwell:
+                                if (z == zMin && kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) count++;
+                                break;
+                            default:
+                                if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) count++;
+                                break;
+                        }
+                    }
+                }
+            }
+            return count;
         }
 
         private string GetTerrainDescription(string geologyId)
@@ -2036,11 +2074,44 @@ namespace HumanFortress.App.States
                         int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
                         int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
                         var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
-                        var cmd = new HumanFortress.App.Commands.CreateMiningOrderCommand(
-                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
+
+                        int zMin = _ui.PlaceZMin;
+                        int zMax = _ui.PlaceZMax;
+                        var uiAction = _ui.SelectedMiningAction;
+                        var simAction = uiAction switch
+                        {
+                            HumanFortress.App.UI.MiningAction.Dig => HumanFortress.Simulation.Orders.MiningAction.Dig,
+                            HumanFortress.App.UI.MiningAction.DigStairwell => HumanFortress.Simulation.Orders.MiningAction.DigStairwell,
+                            HumanFortress.App.UI.MiningAction.DigRamp => HumanFortress.Simulation.Orders.MiningAction.DigRamp,
+                            HumanFortress.App.UI.MiningAction.DigChannel => HumanFortress.Simulation.Orders.MiningAction.DigChannel,
+                            HumanFortress.App.UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
+                            _ => HumanFortress.Simulation.Orders.MiningAction.Dig
+                        };
+
+                        int validCount = 0;
+                        if (_world != null)
+                        {
+                            validCount = CountValidMiningCells(_world, rect, zMin, zMax, simAction);
+                        }
+
+                        if (validCount <= 0)
+                        {
+                            _ui.AddToast("No diggable tiles in selection", _uiTick + 150);
+                            Logger.Log($"[MINING] UI rejected empty selection action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
+                            _ui.CancelPlacement();
+                            DrawUI();
+                            return;
+                        }
+
+                        // Enqueue advanced mining order (CreateAdvancedMiningOrderCommand has its own safeguard too)
+                        var cmd = new HumanFortress.App.Commands.CreateAdvancedMiningOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, zMin, zMax, uiAction, priority: 50);
                         GameStateManager.Instance.EnqueueCommand(cmd);
+
                         _ui.AddToast("Mining order created", _uiTick + 120);
-                        Logger.Log($"[MINING] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} validCells={validCount}");
+                        // Highlight for 100 ticks; encode action in kind for renderer fill policy
+                        _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 100);
                         _ui.CancelPlacement();
                         DrawUI();
                     }
@@ -2375,11 +2446,41 @@ namespace HumanFortress.App.States
                 switch (_ui.OrdersMenu)
                 {
                     case OrdersSubmenu.Mining:
-                        if (keyboard.IsKeyPressed(Keys.Z)) { _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ); changed = true; }
-                        else if (keyboard.IsKeyPressed(Keys.X)) { _ui.AddToast("Dig stairwell: WIP", _uiTick + 120); changed = true; }
-                        else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Dig ramp: WIP", _uiTick + 120); changed = true; }
-                        else if (keyboard.IsKeyPressed(Keys.V)) { _ui.AddToast("Dig channel: WIP", _uiTick + 120); changed = true; }
-                        else if (keyboard.IsKeyPressed(Keys.F)) { _ui.AddToast("Remove digging: WIP", _uiTick + 120); changed = true; }
+                        if (keyboard.IsKeyPressed(Keys.Z))
+                        {
+                            _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.Dig;
+                            _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                            _ui.AddToast("Mining: Dig - select first corner", _uiTick + 120);
+                            changed = true;
+                        }
+                        else if (keyboard.IsKeyPressed(Keys.X))
+                        {
+                            _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigStairwell;
+                            _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                            _ui.AddToast("Mining: Stairwell - select first corner", _uiTick + 120);
+                            changed = true;
+                        }
+                        else if (keyboard.IsKeyPressed(Keys.C))
+                        {
+                            _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigRamp;
+                            _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                            _ui.AddToast("Mining: Ramp - select first corner", _uiTick + 120);
+                            changed = true;
+                        }
+                        else if (keyboard.IsKeyPressed(Keys.V))
+                        {
+                            _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.DigChannel;
+                            _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                            _ui.AddToast("Mining: Channel - select first corner", _uiTick + 120);
+                            changed = true;
+                        }
+                        else if (keyboard.IsKeyPressed(Keys.F))
+                        {
+                            _ui.SelectedMiningAction = HumanFortress.App.UI.MiningAction.RemoveDigging;
+                            _ui.StartPlacement(PlacementMode.MiningFirstCorner, _currentZ);
+                            _ui.AddToast("Mining: Remove designations - select first corner", _uiTick + 120);
+                            changed = true;
+                        }
                         else if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CancelPlacement(); changed = true; }
                         break;
                     case OrdersSubmenu.Lumbering:

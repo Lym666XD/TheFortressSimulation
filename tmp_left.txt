@@ -1,0 +1,540 @@
+                    return;
+                }
+            }
+        }
+
+        private void UpdateTileInfo()
+        {
+            if (_tileInfoPanel == null || _fortressMap == null || !_tilePanelOpen) return;
+            _tileInfoPanel.Clear();
+
+            _tileInfoPanel.Print(0, 0, "=== TILE INFO ===", Color.Cyan);
+
+            // Selected world position
+            Point checkPos = _tilePanelWorld;
+
+            if (checkPos.X >= 0 && checkPos.X < FortressSize * 32 &&
+                checkPos.Y >= 0 && checkPos.Y < FortressSize * 32)
+            {
+                int chunkX = checkPos.X / 32;
+                int chunkY = checkPos.Y / 32;
+                int localX = checkPos.X % 32;
+                int localY = checkPos.Y % 32;
+
+                var chunk = _fortressMap.GetChunk(chunkX, chunkY);
+                var geologyId = chunk.GetGeologyId(localX, localY, _tilePanelZ);
+
+                _tileInfoPanel.Print(0, 2, $"Position: {checkPos.X},{checkPos.Y}", Color.White);
+                _tileInfoPanel.Print(0, 3, $"Chunk: {chunkX},{chunkY}", Color.Gray);
+                _tileInfoPanel.Print(0, 4, $"Local: {localX},{localY}", Color.Gray);
+                _tileInfoPanel.Print(0, 6, $"Terrain: {geologyId}", Color.Green);
+
+                // Add terrain description
+                string desc = GetTerrainDescription(geologyId);
+                _tileInfoPanel.Print(0, 8, "Description:", Color.Yellow);
+
+                // Word wrap description
+                var words = desc.Split(' ');
+                int line = 9;
+                int col = 0;
+                foreach (var word in words)
+                {
+                    if (col + word.Length > 33)
+                    {
+                        line++;
+                        col = 0;
+                    }
+                    if (line < 17) // Don't overflow panel
+                    {
+                        _tileInfoPanel.Print(col, line, word + " ", Color.DarkGray);
+                        col += word.Length + 1;
+                    }
+                }
+            }
+        }
+
+        private void HideTilePanel()
+        {
+            _tilePanelOpen = false;
+            _tileInfoPanel?.Clear();
+        }
+
+        private string GetTerrainDescription(string geologyId)
+        {
+            // Get data-driven description from content registry
+            var geology = ContentRegistry.Instance.GetGeology(geologyId);
+            var material = geology != null ? ContentRegistry.Instance.GetMaterial(geology.Material) : null;
+
+            if (geology != null && material != null)
+            {
+                var tags = string.Join(", ", geology.Tags);
+                var properties = new List<string>();
+
+                if (geology.Properties.Mineable) properties.Add("mineable");
+                if (geology.Properties.Buildable) properties.Add("buildable");
+                if (geology.Properties.Smoothable) properties.Add("smoothable");
+                if (geology.Properties.Flammable) properties.Add("flammable");
+
+                var durability = material.Struct.Durability;
+                var value = material.Valuebaleness;
+
+                return $"{tags}. Durability: {durability:F0}. Value: {value:F1}x. {string.Join(", ", properties)}.";
+            }
+
+            return "Unknown terrain type.";
+        }
+        
+        private void RenderMap()
+        {
+            try
+            {
+                if (_mapSurface == null) return;
+                _mapSurface.Clear();
+
+                if (_fortressMap == null)
+                {
+                    System.Console.WriteLine("[RenderMap] WARNING: FortressMap is null");
+                    return;
+                }
+
+            // Calculate view bounds
+            int maxWorldSize = FortressSize * 32;
+
+            // Render visible area from fortress map data
+            int viewW = _mapSurface.Surface.Width;
+            int viewH = _mapSurface.Surface.Height;
+            for (int sx = 0; sx < viewW; sx++)
+            {
+                for (int sy = 0; sy < viewH; sy++)
+                {
+                    // Calculate world position based on zoom
+                    int worldX = _cameraPos.X + (sx / _zoomLevel);
+                    int worldY = _cameraPos.Y + (sy / _zoomLevel);
+
+                    // Check if out of bounds
+                    if (worldX < 0 || worldX >= maxWorldSize ||
+                        worldY < 0 || worldY >= maxWorldSize)
+                    {
+                        _mapSurface.SetGlyph(sx, sy, '#', Color.DarkGray);
+                        continue;
+                    }
+
+                    int currentChunkX = worldX / 32;
+                    int currentChunkY = worldY / 32;
+                    int localX = worldX % 32;
+                    int localY = worldY % 32;
+
+                    // Get tile from simulation world
+                    if (_world != null)
+                    {
+                        var chunkKey = new HumanFortress.Simulation.World.ChunkKey(currentChunkX, currentChunkY, _currentZ);
+                        var simChunk = _world.GetChunk(chunkKey);
+
+                        int glyph;
+                        Color color;
+
+                        if (simChunk != null)
+                        {
+                            var tile = simChunk.GetTile(localX, localY);
+                            var display = GetTileDisplay(tile);
+                            glyph = display.glyph;
+                            color = display.color;
+                        }
+                        else
+                        {
+                            // Fallback for chunks that don't exist
+                            glyph = '#';
+                            color = Color.DarkGray;
+                        }
+
+                    // Draw terrain or cursor
+                    if (worldX == _cursorPos.X && worldY == _cursorPos.Y && _zoomLevel == 1)
+                    {
+                        // Draw cursor
+                        _mapSurface.SetGlyph(sx, sy, 'X', Color.Yellow, Color.DarkGray);
+                    }
+                    else if (_zoomLevel > 1)
+                    {
+                        // When zoomed, draw each tile multiple times
+                        for (int zx = 0; zx < _zoomLevel && sx + zx < viewW; zx++)
+                        {
+                            for (int zy = 0; zy < _zoomLevel && sy + zy < viewH; zy++)
+                            {
+                                bool isCursor = (worldX == _cursorPos.X && worldY == _cursorPos.Y);
+                                _mapSurface.SetGlyph(sx + zx, sy + zy,
+                                    isCursor ? 'X' : glyph,
+                                    isCursor ? Color.Yellow : color,
+                                    isCursor ? Color.DarkGray : Color.Black);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _mapSurface.SetGlyph(sx, sy, glyph, color);
+                    }
+                }
+                else
+                {
+                    // No world data available
+                    _mapSurface.SetGlyph(sx, sy, '?', Color.DarkGray);
+                }
+                    return true;
+                }
+            }
+
+            if (state.Mouse.RightClicked)
+            {
+                Logger.Log($"[RIGHT-CLICK] Detected at screen=({state.SurfaceCellPosition.X},{state.SurfaceCellPosition.Y}), tilePanelOpen={_tilePanelOpen}, QuickMenu={_ui.QuickMenu}, OrdersMenu={_ui.OrdersMenu}, ZoneMenu={_ui.ZoneMenu}");
+                bool handled = false;
+
+                // Priority 1: Close tile panel if open
+                if (_tilePanelOpen)
+                {
+                    Logger.Log("[RIGHT-CLICK] Closing tile panel");
+                    HideTilePanel();
+                    handled = true;
+                }
+                // Priority 2: Close zone detail popup if open
+                else if (_zonesUI?.IsDetailPopupOpen() == true)
+                {
+                    Logger.Log("[RIGHT-CLICK] Closing zone detail popup");
+                    _zonesUI.CloseDetailPopup();
+                    handled = true;
+                }
+                // Priority 3: Try closing stockpile edit popup
+                else if (_stockpileUI != null)
+                {
+                    Logger.Log("[RIGHT-CLICK] Trying stockpile popup close");
+                    // Always try to close stockpile popup first
+                    _stockpileUI.CloseEditPopup();
+
+                    // Then handle QuickMenu navigation
+                    if (_ui.QuickMenu != QuickMenuKind.None)
+                    {
+                        // If in L3 submenu, go back to L2
+                        if (_ui.OrdersMenu != OrdersSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing OrdersMenu submenu");
+                            _ui.CloseOrdersSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing ZoneMenu submenu");
+                            _ui.CloseZoneSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.BuildMenu != BuildSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing BuildMenu submenu");
+                            _ui.CloseBuildSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.StockpileMenu != StockpileSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing StockpileMenu submenu");
+                            _ui.CloseStockpileSubmenu();
+                            handled = true;
+                        }
+                        // If in L2 (no submenu), close the QuickMenu entirely
+                        else
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing QuickMenu entirely (was in L2)");
+                            _ui.CancelPlacement();
+                            handled = true;
+                        }
+                    }
+                    else
+                    {
+                        Logger.Log("[RIGHT-CLICK] General cancel (no QuickMenu)");
+                        _ui.Cancel();
+                        handled = true;
+                    }
+                }
+                // Priority 4: Step back from L3 submenu to L2 menu
+                else if (_ui.QuickMenu != QuickMenuKind.None)
+                {
+                    // If in L3 submenu, go back to L2
+                    if (_ui.OrdersMenu != OrdersSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing OrdersMenu submenu");
+                        _ui.CloseOrdersSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing ZoneMenu submenu");
+                        _ui.CloseZoneSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.BuildMenu != BuildSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing BuildMenu submenu");
+                        _ui.CloseBuildSubmenu();
+                        handled = true;
+                    }
+                    else if (_ui.StockpileMenu != StockpileSubmenu.None)
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing StockpileMenu submenu");
+                        _ui.CloseStockpileSubmenu();
+                        handled = true;
+                    }
+                    // If in L2 (no submenu), close the QuickMenu entirely
+                    else
+                    {
+                        Logger.Log("[RIGHT-CLICK] Priority 4: Closing QuickMenu entirely (was in L2)");
+                        _ui.CancelPlacement();
+                        handled = true;
+                    }
+                }
+                // Priority 5: General cancel (close drawer, etc.)
+                else
+                {
+                    Logger.Log("[RIGHT-CLICK] Priority 5: General cancel");
+                    _ui.Cancel();
+                    handled = true;
+                }
+
+                if (handled)
+                {
+                    Logger.Log("[RIGHT-CLICK] Handled successfully, redrawing UI");
+                    DrawUI();
+                    return true;
+                }
+                else
+                {
+                    Logger.Log("[RIGHT-CLICK] Not handled!");
+                }
+            }
+
+            return base.ProcessMouse(state);
+        }
+
+        // Click handling for bottom-left dock drawn at screen coordinates
+        private bool HandleDockClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 1; // moved to bottom row
+            if (screenCell.Y != y) return false;
+
+            int xStart = 1;
+            int buttonWidth = 5; // must match UiRenderer.DrawDockScreen
+            int gap = 1;
+
+            // Explicit mapping: button index -> DrawerId (F1-F8 order)
+            var buttonMap = new DrawerId[]
+            {
+                DrawerId.Creature,              // F1 (index 0)
+                DrawerId.Stock,                 // F2 (index 1)
+                DrawerId.Work,                  // F3 (index 2)
+                DrawerId.PlacementManagement,   // F4 (index 3)
+                DrawerId.Military,              // F5 (index 4)
+                DrawerId.Country,               // F6 (index 5)
+                DrawerId.World,                 // F7 (index 6)
+                DrawerId.Log                    // F8 (index 7)
+            };
+
+            int x = screenCell.X;
+            for (int i = 0; i < buttonMap.Length; i++)
+            {
+                int start = xStart + i * (buttonWidth + gap);
+                int end = start + buttonWidth - 1;
+                if (x >= start && x <= end)
+                {
+                    _ui.OpenPanel(buttonMap[i]);
+                    Logger.Log($"[CLICK] DockScreen i={i} cell=({screenCell.X},{screenCell.Y}) -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Click handling for bottom-center quick icons drawn at screen coordinates
+        private bool HandleQuickClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 1; // bottom row, same as F1-F8 (matches UiRenderer.DrawQuickIconsScreen)
+        {
+            if (_mapSurface == null) return;
+            // Map-local to world
+            int worldX = _cameraPos.X + (local.X / _zoomLevel);
+            int worldY = _cameraPos.Y + (local.Y / _zoomLevel);
+            int maxPos = FortressSize * 32 - 1;
+            if (worldX < 0 || worldY < 0 || worldX > maxPos || worldY > maxPos) return;
+
+            Point worldPos = new Point(worldX, worldY);
+
+            // Handle debug spawn
+            if (_ui.DebugOpen && _world != null)
+            {
+                Logger.Log($"[DEBUG] Debug menu open, tab={_ui.DebugMenuTab}, world={_world != null}");
+
+                if (_ui.DebugMenuTab == 1) // Creatures tab
+                {
+                    Logger.Log($"[DEBUG] Attempting creature spawn: id={_ui.DebugSelectedCreature}, pos=({worldX},{worldY},{_currentZ})");
+                    Logger.Log($"[DEBUG] Creature definitions count: {_world.Creatures.DefinitionCount}");
+
+                    var guid = _world.Creatures.SpawnCreature(_ui.DebugSelectedCreature, worldPos, _currentZ, "player", _uiTick);
+                    if (guid.HasValue)
+                    {
+                        Logger.Log($"[DEBUG] SUCCESS: Spawned creature '{_ui.DebugSelectedCreature}' guid={guid} at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast($"Spawned {_ui.DebugSelectedCreature}", _uiTick + 100);
+                    }
+                    else
+                    {
+                        Logger.Log($"[DEBUG] FAILED: Could not spawn creature at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
+                    }
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.DebugMenuTab == 2) // Items tab
+                {
+                    Logger.Log($"[DEBUG] Attempting item spawn: id={_ui.DebugSelectedItem}, pos=({worldX},{worldY},{_currentZ})");
+                    Logger.Log($"[DEBUG] Item definitions count: {_world.Items.DefinitionCount}");
+
+                    var guid = _world.Items.SpawnItem(_ui.DebugSelectedItem, worldPos, _currentZ, 1, _uiTick);
+                    if (guid.HasValue)
+                    {
+                        Logger.Log($"[DEBUG] SUCCESS: Spawned item '{_ui.DebugSelectedItem}' guid={guid} at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast($"Spawned {_ui.DebugSelectedItem}", _uiTick + 100);
+                    }
+                    else
+                    {
+                        Logger.Log($"[DEBUG] FAILED: Could not spawn item at ({worldX},{worldY},{_currentZ})");
+                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
+                    }
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // Handle placement modes
+            if (_ui.Context == UiContext.PlacingTool)
+            {
+                if (_ui.PlaceMode == PlacementMode.StockpileFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.StockpileSecondCorner;
+                    Logger.Log($"[STOCKPILE] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+                {
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+                        _ui.PlaceMode = PlacementMode.StockpilePresetSelect;
+                        Logger.Log($"[STOCKPILE] Second corner at ({worldX},{worldY},{_currentZ})");
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.HaulFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.HaulSecondCorner;
+                    Logger.Log($"[HAUL] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.HaulSecondCorner)
+                {
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+
+                        // Compute rectangle and enqueue haul order command
+                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        var cmd = new HumanFortress.App.Commands.CreateHaulOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast("Haul order created", _uiTick + 120);
+                        Logger.Log($"[HAUL] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        _ui.CancelPlacement();
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.MiningFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.MiningSecondCorner;
+                    Logger.Log($"[MINING] First corner at ({worldX},{worldY},{_currentZ})");
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.MiningSecondCorner)
+                {
+                    if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+                    {
+                        _ui.PlaceSecondCorner = worldPos;
+                        int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, _ui.PlaceSecondCorner.Value.X);
+                        int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, _ui.PlaceSecondCorner.Value.Y);
+                        var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+                        var cmd = new HumanFortress.App.Commands.CreateMiningOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick, rect, _currentZ, priority: 50);
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast("Mining order created", _uiTick + 120);
+                        Logger.Log($"[MINING] Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+                        _ui.CancelPlacement();
+                        DrawUI();
+                    }
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.ZoneFirstCorner)
+                {
+                    _ui.PlaceFirstCorner = worldPos;
+                    _ui.PlaceMode = PlacementMode.ZoneSecondCorner;
+                    _ui.AddToast("Select second corner", _uiTick + 100);
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
+                {
+                    // Create zone using command
+                    var rect = SadRogue.Primitives.Rectangle.GetUnion(
+                        new SadRogue.Primitives.Rectangle(_ui.PlaceFirstCorner.Value, 1, 1),
+                        new SadRogue.Primitives.Rectangle(worldPos, 1, 1));
+
+                    if (_ui.SelectedZoneDefId != null && _world != null)
+                    {
+                        var cmd = new HumanFortress.App.Commands.CreateZoneCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick,
+                            _ui.SelectedZoneDefId,
+                            $"{_ui.SelectedZoneDefId}_zone",
+                            rect,
+                            _currentZ);
+
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast($"Created zone at ({rect.X},{rect.Y})", _uiTick + 150);
+                    }
+
+                    _ui.CancelPlacement();
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.ZoneDelete)
+                {
+                    // Get zone at clicked position
+                    int zoneId = _world?.Zones.GetZoneAtPosition(worldPos.X, worldPos.Y, _currentZ) ?? 0;
+                    if (zoneId > 0)
+                    {
+                        var cmd = new HumanFortress.App.Commands.DeleteZoneCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick,
+                            zoneId);
+
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        _ui.AddToast($"Deleted zone #{zoneId}", _uiTick + 150);
+                    }

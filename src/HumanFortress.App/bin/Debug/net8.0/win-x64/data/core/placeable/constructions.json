@@ -1,0 +1,564 @@
+{
+  "$schema": "../schemas/constructions.schema.json",
+  "version": "1.0.0",
+  "constructions": [
+    {
+      "_comment": "=== BASIC STRUCTURES ===",
+      "id": "core_construction_wall_stone",
+      "name": "Stone Wall",
+      "category": "wall",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "blocking",
+      "requires_floor": false,
+      "clearance_h": 1,
+      "blocks_light": true,
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 600,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "effects": { "beauty": 1 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1500,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone", "dust_puff"] }
+      }
+    },
+    {
+      "id": "core_construction_wall_wood",
+      "name": "Wood Wall",
+      "category": "wall",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "blocking",
+      "requires_floor": false,
+      "clearance_h": 1,
+      "blocks_light": true,
+      "materials_required": [
+        { "tag": "wood_log", "count": 3 }
+      ],
+      "build_time_ticks": 400,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "effects": { "beauty": 0 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 800,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "splinter"] }
+      }
+    },
+    {
+      "id": "core_construction_floor_stone",
+      "name": "Stone Floor",
+      "category": "floor",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 2 }
+      ],
+      "build_time_ticks": 300,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "effects": { "beauty": 2 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": ["road"],
+        "durability_points": 1200,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_floor_wood",
+      "name": "Wood Floor",
+      "category": "floor",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_plank", "count": 3 }
+      ],
+      "build_time_ticks": 200,
+      "required_skill": "construction",
+      "skill_level_min": 0,
+      "effects": { "beauty": 1 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 600,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood"] }
+      }
+    },
+    {
+      "id": "core_construction_ramp_stone",
+      "name": "Stone Ramp",
+      "category": "ramp",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 3 }
+      ],
+      "build_time_ticks": 500,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": 0 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1000,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_stairs_up",
+      "name": "Stairs Up",
+      "category": "stairs",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 800,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": 0 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1200,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_stairs_down",
+      "name": "Stairs Down",
+      "category": "stairs",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 4 }
+      ],
+      "build_time_ticks": 800,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": 0 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1200,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_stone"] }
+      }
+    },
+    {
+      "_comment": "=== WORKSHOPS (5x5) ===",
+      "id": "core_construction_workshop_woodworking",
+      "name": "Woodworking Workshop",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 10 },
+        { "tag": "stone_block", "count": 5 }
+      ],
+      "build_time_ticks": 2400,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": 0 },
+      "workshop_profile": {
+        "work_skill": "carpentry",
+        "max_queued_recipes": 10,
+        "attachment_slots": ["sawline", "joinery", "lathe", "drying"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 2000,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_stoneworks",
+      "name": "Stoneworks",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 15 },
+        { "tag": "wood_log", "count": 5 }
+      ],
+      "build_time_ticks": 2400,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": 0 },
+      "workshop_profile": {
+        "work_skill": "masonry",
+        "max_queued_recipes": 10,
+        "attachment_slots": ["cutting", "forming", "engraving"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 2500,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_metalworks",
+      "name": "Metalworking Shop",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 12 },
+        { "tag": "metal_ingot", "count": 5 },
+        { "tag": "wood_log", "count": 3 }
+      ],
+      "build_time_ticks": 3000,
+      "required_skill": "construction",
+      "skill_level_min": 3,
+      "effects": { "beauty": -1 },
+      "workshop_profile": {
+        "work_skill": "metalworking",
+        "max_queued_recipes": 8,
+        "attachment_slots": ["forge", "anvil", "tooling", "quench"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 2200,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone", "debris_metal"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_smelter",
+      "name": "Smeltery",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 3,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 20 },
+        { "tag": "fire_clay", "count": 10 }
+      ],
+      "build_time_ticks": 3500,
+      "required_skill": "construction",
+      "skill_level_min": 3,
+      "effects": { "beauty": -2, "heat_w": 500 },
+      "workshop_profile": {
+        "work_skill": "smelting",
+        "max_queued_recipes": 6,
+        "attachment_slots": ["furnace", "bellows", "crucible", "molds"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 3000,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone", "ash_cloud"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_kitchen",
+      "name": "Kitchen",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 8 },
+        { "tag": "wood_log", "count": 8 },
+        { "tag": "fire_clay", "count": 4 }
+      ],
+      "build_time_ticks": 2200,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": 0, "heat_w": 200 },
+      "workshop_profile": {
+        "work_skill": "cooking",
+        "max_queued_recipes": 12,
+        "attachment_slots": ["heat_station", "prep_station", "baking_station", "roast_station"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1800,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "debris_stone"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_craftshop",
+      "name": "Craftshop",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 12 },
+        { "tag": "stone_block", "count": 3 }
+      ],
+      "build_time_ticks": 2000,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": 1 },
+      "workshop_profile": {
+        "work_skill": "crafting",
+        "max_queued_recipes": 10,
+        "attachment_slots": ["workbench", "toolrack", "storage"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1600,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_butchery",
+      "name": "Butcher Shop",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 10 },
+        { "tag": "wood_log", "count": 5 }
+      ],
+      "build_time_ticks": 1800,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": -3 },
+      "workshop_profile": {
+        "work_skill": "butchery",
+        "max_queued_recipes": 8,
+        "attachment_slots": ["cutting_table", "hanging_rack", "salting_station"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1700,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone", "blood_splatter"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_tannery",
+      "name": "Tannery",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 12 },
+        { "tag": "stone_block", "count": 8 }
+      ],
+      "build_time_ticks": 2200,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": -4 },
+      "workshop_profile": {
+        "work_skill": "leatherworking",
+        "max_queued_recipes": 8,
+        "attachment_slots": ["soaking_vat", "drying_rack", "finishing_table"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1800,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "foul_mist"] }
+      }
+    },
+    {
+      "id": "core_construction_workshop_tailor",
+      "name": "Tailor Shop",
+      "category": "workshop",
+      "footprint": { "w": 5, "d": 5, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 2,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 10 },
+        { "tag": "stone_block", "count": 5 }
+      ],
+      "build_time_ticks": 2000,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": 2 },
+      "workshop_profile": {
+        "work_skill": "tailoring",
+        "max_queued_recipes": 10,
+        "attachment_slots": ["loom", "spinning_wheel", "sewing_table", "dyeing_vat"]
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": [],
+        "durability_points": 1500,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "fabric_scatter"] }
+      }
+    },
+    {
+      "_comment": "=== UTILITIES ===",
+      "id": "core_construction_bridge_wood",
+      "name": "Wooden Bridge",
+      "category": "utility",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": false,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 4 }
+      ],
+      "build_time_ticks": 600,
+      "required_skill": "construction",
+      "skill_level_min": 1,
+      "effects": { "beauty": 0 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": ["bridge"],
+        "durability_points": 1000,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_wood", "splash"] }
+      }
+    },
+    {
+      "id": "core_construction_bridge_stone",
+      "name": "Stone Bridge",
+      "category": "utility",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N", "E", "S", "W"],
+      "passability": "nonblocking",
+      "requires_floor": false,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 6 }
+      ],
+      "build_time_ticks": 900,
+      "required_skill": "construction",
+      "skill_level_min": 2,
+      "effects": { "beauty": 1 },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": ["bridge"],
+        "durability_points": 2000,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_stone", "splash"] }
+      }
+    },
+    {
+      "_comment": "=== TRAPS (Hybrids) ===",
+      "id": "core_construction_trap_spike",
+      "name": "Spike Trap",
+      "category": "trap",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 0,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "stone_block", "count": 2 }
+      ],
+      "hybrid_requirements": [
+        { "item_tag": "mechanism", "count": 1 },
+        { "item_tag": "spike_component", "count": 1 }
+      ],
+      "build_time_ticks": 800,
+      "required_skill": "mechanic",
+      "skill_level_min": 1,
+      "effects": { "beauty": -1 },
+      "trap_profile": {
+        "trigger": "pressure",
+        "reset_time_ticks": 100,
+        "damage": { "type": "stab", "amount": 15 }
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": ["trap"],
+        "durability_points": 600,
+        "on_destroy": { "drop_rules": "salvage_some", "fx": ["debris_stone", "metal_clatter"] }
+      }
+    },
+    {
+      "id": "core_construction_trap_cage",
+      "name": "Cage Trap",
+      "category": "trap",
+      "footprint": { "w": 1, "d": 1, "h": 1 },
+      "orientation_mask": ["N"],
+      "passability": "nonblocking",
+      "requires_floor": true,
+      "clearance_h": 1,
+      "blocks_light": false,
+      "materials_required": [
+        { "tag": "wood_log", "count": 2 }
+      ],
+      "hybrid_requirements": [
+        { "item_tag": "mechanism", "count": 1 },
+        { "item_tag": "cage", "count": 1 }
+      ],
+      "build_time_ticks": 700,
+      "required_skill": "mechanic",
+      "skill_level_min": 1,
+      "effects": { "beauty": -1 },
+      "trap_profile": {
+        "trigger": "pressure",
+        "reset_time_ticks": 0,
+        "damage": { "type": "capture", "amount": 0 }
+      },
+      "destruction": {
+        "is_destroyable": true,
+        "destroyer_immune_tags": ["trap"],
+        "durability_points": 500,
+        "on_destroy": { "drop_rules": "salvage_all", "fx": ["debris_wood"] }
+      }
+    }
+  ]
+}

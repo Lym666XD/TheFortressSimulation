@@ -90,6 +90,27 @@ public static class Program
             Logger.Close();
         };
 
+        // Headless init-only mode: initialize world (loads items/creatures/zones) then exit
+        if (args.Length > 0 && args[0] == "--init-only")
+        {
+            try
+            {
+                var gsm = new GameStateManager(12345);
+                // Use small world size just to trigger definitions loading
+                gsm.InitializeWorld(sizeInChunks: 2, maxZ: 50);
+                Logger.Log("[HEADLESS] Init-only completed");
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[HEADLESS] ERROR: {ex.Message}");
+            }
+            finally
+            {
+                Logger.Close();
+            }
+            return;
+        }
+
         // Initialize SadConsole per UI_AND_INPUT_MODEL.md
         Settings.WindowTitle = "HumanFortress";
 

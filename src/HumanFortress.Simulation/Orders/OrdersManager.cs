@@ -17,6 +17,12 @@ public sealed class OrdersManager
     private readonly ConcurrentQueue<MiningDesignation> _miningQueue = new();
     private readonly ConcurrentQueue<MiningDesignation> _recentMining = new();
     private readonly ConcurrentBag<MiningDesignation> _activeMining = new();
+    // Advanced mining
+    private readonly ConcurrentQueue<MiningAdvancedDesignation> _miningAdvQueue = new();
+    // Construction orders
+    private readonly ConcurrentQueue<ConstructionDesignation> _constructionQueue = new();
+    private readonly ConcurrentQueue<ConstructionDesignation> _recentConstruction = new();
+    private readonly ConcurrentBag<ConstructionDesignation> _activeConstruction = new();
 
     /// <summary>
     /// Enqueue a haul designation for processing.
@@ -40,6 +46,27 @@ public sealed class OrdersManager
         _recentMining.Enqueue(d);
         _activeMining.Add(d);
         while (_recentMining.Count > RecentCapacity && _recentMining.TryDequeue(out _)) { }
+    }
+
+    /// <summary>
+    /// Enqueue advanced mining order. DIG/DIG_RAMP decomposed into per-Z MiningDesignation immediately.
+    /// Others queued for future handling.
+    /// </summary>
+    public void EnqueueMiningAdvanced(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
+    {
+        _miningAdvQueue.Enqueue(new MiningAdvancedDesignation(worldRect, zMin, zMax, action, priority, createdTick));
+    }
+
+    /// <summary>
+    /// Enqueue a construction designation (may span multiple Z).
+    /// </summary>
+    public void EnqueueConstruction(Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority, ulong createdTick)
+    {
+        var d = new ConstructionDesignation(worldRect, zMin, zMax, shape, filter, priority, createdTick);
+        _constructionQueue.Enqueue(d);
+        _recentConstruction.Enqueue(d);
+        _activeConstruction.Add(d);
+        while (_recentConstruction.Count > RecentCapacity && _recentConstruction.TryDequeue(out _)) { }
     }
 
     /// <summary>
@@ -96,4 +123,35 @@ public sealed class OrdersManager
     {
         return _activeMining.ToList();
     }
+
+    /// <summary>
+    /// Drain advanced mining designations into provided list (Read phase).
+    /// </summary>
+    public int DrainMiningAdvanced(ICollection<MiningAdvancedDesignation> into, int maxCount)
+    {
+        int drained = 0;
+        while (drained < maxCount && _miningAdvQueue.TryDequeue(out var adv))
+        {
+            into.Add(adv);
+            drained++;
+        }
+        return drained;
+    }
+
+    /// <summary>
+    /// Drain construction designations into provided list (Read phase).
+    /// </summary>
+    public int DrainConstructionDesignations(ICollection<ConstructionDesignation> into, int maxCount)
+    {
+        int drained = 0;
+        while (drained < maxCount && _constructionQueue.TryDequeue(out var desig))
+        {
+            into.Add(desig);
+            drained++;
+        }
+        return drained;
+    }
+
+    public List<ConstructionDesignation> GetRecentConstruction() => _recentConstruction.ToList();
+    public List<ConstructionDesignation> GetActiveConstructionSnapshot() => _activeConstruction.ToList();
 }

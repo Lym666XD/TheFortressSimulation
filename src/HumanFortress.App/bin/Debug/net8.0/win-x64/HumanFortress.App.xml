@@ -4,6 +4,19 @@
         <name>HumanFortress.App</name>
     </assembly>
     <members>
+        <member name="T:HumanFortress.App.Commands.CreateAdvancedMiningOrderCommand">
+            <summary>
+            Command that creates an advanced mining designation with z-range and mining action.
+            For now, OrdersManager will decompose DIG/DIG_RAMP into per-Z MiningDesignation.
+            Other actions are queued for future handling.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Commands.CreateConstructionOrderCommand">
+            <summary>
+            Command that creates a construction designation (L0 structural) over a world-space rectangle across z-range.
+            Executed on main thread; OrdersManager is thread-safe for enqueue.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.Commands.CreateHaulOrderCommand">
             <summary>
             Command that creates a haul designation over a world-space rectangle at a given Z.
@@ -152,6 +165,12 @@
             <summary>
             Loads orders registry to provide display names for orders/tools.
             File: content/registries/orders.registry.json
+            </summary>
+        </member>
+        <member name="T:HumanFortress.App.Jobs.ConstructionJobSystem">
+            <summary>
+            Executes structural construction (L0). Consumes PlannedBuild from ConstructionSystem and emits DiffOps.
+            Ghost removal is TODO (requires placeable index by GUID or position lookup helpers).
             </summary>
         </member>
         <member name="T:HumanFortress.App.Jobs.HaulJobSystem">

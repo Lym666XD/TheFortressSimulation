@@ -1,0 +1,320 @@
+        {
+            if (_mapSurface == null || _fortressMap == null) return false;
+
+            bool changed = false;
+
+            // Ensure keyboard focus stays on FortressState while handling mouse
+            if (!IsFocused) IsFocused = true;
+
+            // Keep keyboard focus on this state so panels remain interactive after clicks
+            this.IsFocused = true;
+
+            // Get mouse position relative to map surface
+            var mousePos = new Point(state.SurfaceCellPosition.X - _mapSurface.Position.X,
+                                     state.SurfaceCellPosition.Y - _mapSurface.Position.Y);
+
+            // Check if mouse is over the map
+            if (mousePos.X >= 0 && mousePos.X < _mapSurface.Surface.Width && mousePos.Y >= 0 && mousePos.Y < _mapSurface.Surface.Height)
+            {
+                // Calculate world position from mouse
+                int worldX = _cameraPos.X + (mousePos.X / _zoomLevel);
+                int worldY = _cameraPos.Y + (mousePos.Y / _zoomLevel);
+                int maxPos = FortressSize * 32 - 1;
+
+                if (worldX >= 0 && worldX <= maxPos && worldY >= 0 && worldY <= maxPos)
+                {
+                    _lastMousePos = new Point(worldX, worldY);
+                    _cursorPos = _lastMousePos.Value; // follow mouse
+                    Logger.Log($"[MOUSE] Hover tile world=({_cursorPos.X},{_cursorPos.Y},{_currentZ})");
+                    changed = true;
+                    UpdateTileInfo();
+                }
+            }
+            else
+            {
+                _lastMousePos = null;
+            }
+
+            // Handle mouse wheel for Z-level changes or zoom
+            if (state.Mouse.ScrollWheelValueChange != 0)
+            {
+                // Check if Ctrl is held using the Keyboard state
+                var keyboard = GameHost.Instance?.Keyboard;
+                bool ctrlHeld = keyboard != null &&
+                    (keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl));
+
+                if (ctrlHeld)
+                {
+                    // Ctrl+Scroll for zoom
+                    int delta = state.Mouse.ScrollWheelValueChange > 0 ? 1 : -1;
+                    _zoomLevel = Math.Max(1, Math.Min(4, _zoomLevel + delta));
+                    Logger.Log($"[ZOOM] Ctrl+Wheel delta={delta} -> zoom={_zoomLevel}");
+                    changed = true;
+                }
+                else
+                {
+                    // Regular scroll for Z-level
+                    int delta = state.Mouse.ScrollWheelValueChange > 0 ? 1 : -1;
+                    _currentZ = Math.Max(0, Math.Min(49, _currentZ - delta));
+                    Logger.Log($"[ZLEVEL] Wheel delta={delta} (reversed) -> Z={_currentZ}");
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                UpdateCameraToFollowCursor();
+                BuildSnapshot();
+                DrawUI();
+            }
+
+            // First: screen-level dock buttons (bottom-left of console)
+            if (state.Mouse.LeftClicked)
+            {
+                if (HandleDockClicksScreen(state.SurfaceCellPosition))
+                    return true;
+                if (HandleQuickClicksScreen(state.SurfaceCellPosition))
+                    return true;
+                if (HandleQuickMenuClicksScreen(state.SurfaceCellPosition))
+                    return true;
+            }
+
+            // Handle mouse clicks for UI (map-relative)
+            if (state.Mouse.LeftClicked)
+            {
+                // Hit-test dock and quick icons by map-surface coordinates
+                var cell = state.SurfaceCellPosition - _mapSurface.Position;
+                int yDock = _mapSurface.Surface.Height - 1;
+                if (cell.Y == yDock - 1) // moved up one row
+                {
+                    // F1-F8 buttons (correct order: F1=Creature, F2=Stock, F3=Work, F4=PlacementManagement, F5=Military, F6=Country, F7=World, F8=Log)
+                    if (cell.X >= 0 && cell.X < 5) { _ui.OpenPanel(DrawerId.Creature); }              // F1
+                    else if (cell.X < 10) { _ui.OpenPanel(DrawerId.Stock); }                          // F2
+                    else if (cell.X < 15) { _ui.OpenPanel(DrawerId.Work); }                           // F3 (FIXED)
+                    else if (cell.X < 20) { _ui.OpenPanel(DrawerId.PlacementManagement); }            // F4 (FIXED)
+                    else if (cell.X < 25) { _ui.OpenPanel(DrawerId.Military); }                       // F5
+                    else if (cell.X < 30) { _ui.OpenPanel(DrawerId.Country); }                        // F6
+                    else if (cell.X < 35) { _ui.OpenPanel(DrawerId.World); }                          // F7
+                    else if (cell.X < 40) { _ui.OpenPanel(DrawerId.Log); }                            // F8
+                    Logger.Log($"[CLICK] Dock click at cell=({cell.X},{cell.Y}) -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return true;
+                }
+
+                int center = _mapSurface.Surface.Width / 2;
+                int quickY = yDock;
+                if (cell.Y == quickY)
+                {
+                    if (cell.X >= center - 8 && cell.X < center - 8 + 9) { _ui.OpenQuickMenu(QuickMenuKind.Orders); }
+                    else if (cell.X >= center + 2 && cell.X < center + 2 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Zones); }
+                    else if (cell.X >= center + 12 && cell.X < center + 12 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Build); }
+                    DrawUI();
+                    return true;
+                }
+
+                // If click inside the map and not on UI, open tile panel
+                if (cell.X >= 0 && cell.X < _mapSurface.Surface.Width && cell.Y >= 0 && cell.Y < _mapSurface.Surface.Height)
+                {
+                    OnMapLeftClickedLocal(cell);
+                    return true;
+                }
+            }
+
+            if (state.Mouse.RightClicked)
+            {
+                Logger.Log($"[RIGHT-CLICK] Detected at screen=({state.SurfaceCellPosition.X},{state.SurfaceCellPosition.Y}), tilePanelOpen={_tilePanelOpen}, QuickMenu={_ui.QuickMenu}, OrdersMenu={_ui.OrdersMenu}, ZoneMenu={_ui.ZoneMenu}");
+                bool handled = false;
+
+                // Priority 1: Close tile panel if open
+                if (_tilePanelOpen)
+                {
+                    Logger.Log("[RIGHT-CLICK] Closing tile panel");
+                    HideTilePanel();
+                    handled = true;
+                }
+                // Priority 2: Close zone detail popup if open
+                else if (_zonesUI?.IsDetailPopupOpen() == true)
+                {
+                    Logger.Log("[RIGHT-CLICK] Closing zone detail popup");
+                    _zonesUI.CloseDetailPopup();
+                    handled = true;
+                }
+                // Priority 3: Try closing stockpile edit popup
+                else if (_stockpileUI != null)
+                {
+                    Logger.Log("[RIGHT-CLICK] Trying stockpile popup close");
+                    // Always try to close stockpile popup first
+                    _stockpileUI.CloseEditPopup();
+
+                    // Then handle QuickMenu navigation
+                    if (_ui.QuickMenu != QuickMenuKind.None)
+                    {
+                        // If in L3 submenu, go back to L2
+                        if (_ui.OrdersMenu != OrdersSubmenu.None)
+                        {
+                            Logger.Log("[RIGHT-CLICK] Closing OrdersMenu submenu");
+                            _ui.CloseOrdersSubmenu();
+                            handled = true;
+                        }
+                        else if (_ui.ZoneMenu != ZoneSubmenu.None)
+                        {
+        }
+
+        // Click handling for bottom-left dock drawn at screen coordinates
+        private bool HandleDockClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 1; // moved to bottom row
+            if (screenCell.Y != y) return false;
+
+            int xStart = 1;
+            int buttonWidth = 5; // must match UiRenderer.DrawDockScreen
+            int gap = 1;
+
+            // Explicit mapping: button index -> DrawerId (F1-F8 order)
+            var buttonMap = new DrawerId[]
+            {
+                DrawerId.Creature,              // F1 (index 0)
+                DrawerId.Stock,                 // F2 (index 1)
+                DrawerId.Work,                  // F3 (index 2)
+                DrawerId.PlacementManagement,   // F4 (index 3)
+                DrawerId.Military,              // F5 (index 4)
+                DrawerId.Country,               // F6 (index 5)
+                DrawerId.World,                 // F7 (index 6)
+                DrawerId.Log                    // F8 (index 7)
+            };
+
+            int x = screenCell.X;
+            for (int i = 0; i < buttonMap.Length; i++)
+            {
+                int start = xStart + i * (buttonWidth + gap);
+                int end = start + buttonWidth - 1;
+                if (x >= start && x <= end)
+                {
+                    _ui.OpenPanel(buttonMap[i]);
+                    Logger.Log($"[CLICK] DockScreen i={i} cell=({screenCell.X},{screenCell.Y}) -> drawer={_ui.OpenDrawer}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Click handling for bottom-center quick icons drawn at screen coordinates
+        private bool HandleQuickClicksScreen(Point screenCell)
+        {
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int y = screenH - 1; // bottom row, same as F1-F8 (matches UiRenderer.DrawQuickIconsScreen)
+
+            Logger.Log($"[CLICK-DEBUG] HandleQuickClicksScreen: screenCell=({screenCell.X},{screenCell.Y}), screenH={screenH}, y={y}");
+
+            if (screenCell.Y != y)
+            {
+                Logger.Log($"[CLICK-DEBUG] Y mismatch: screenCell.Y={screenCell.Y} != y={y}");
+                return false;
+            }
+
+            int center = screenW / 2;
+            int buttonWidth = 5; // must match UiRenderer
+            int gap = 2;
+
+            // 4 buttons: Z X C V (totalWidth = 4*5 + 3*2 = 26)
+            int totalWidth = (buttonWidth * 4) + (gap * 3);
+            int startX = center - totalWidth / 2;
+
+            var buttons = new (int start, int end, QuickMenuKind kind)[]
+            {
+                (startX, startX + buttonWidth - 1, QuickMenuKind.Orders),
+                (startX + buttonWidth + gap, startX + buttonWidth + gap + buttonWidth - 1, QuickMenuKind.Zones),
+                (startX + (buttonWidth + gap) * 2, startX + (buttonWidth + gap) * 2 + buttonWidth - 1, QuickMenuKind.Build),
+                (startX + (buttonWidth + gap) * 3, startX + (buttonWidth + gap) * 3 + buttonWidth - 1, QuickMenuKind.Stockpile),
+            };
+
+            Logger.Log($"[CLICK-DEBUG] Button ranges: Z=[{buttons[0].start},{buttons[0].end}], X=[{buttons[1].start},{buttons[1].end}], C=[{buttons[2].start},{buttons[2].end}], V=[{buttons[3].start},{buttons[3].end}]");
+
+            foreach (var b in buttons)
+            {
+                if (screenCell.X >= b.start && screenCell.X <= b.end)
+                {
+                    Logger.Log($"[CLICK] QuickIconsScreen HIT: kind={b.kind} cell=({screenCell.X},{screenCell.Y})");
+
+                    // If clicking current menu, toggle it off; otherwise switch to new menu
+                    if (_ui.QuickMenu == b.kind)
+                    {
+                        _ui.CancelPlacement();
+                    }
+                    else
+                    {
+                        _ui.OpenQuickMenu(b.kind);
+                    }
+                    Logger.Log($"[CLICK] QuickIconsScreen result: qmenu={_ui.QuickMenu}");
+                    DrawUI();
+                    return true;
+                }
+            }
+
+            Logger.Log($"[CLICK-DEBUG] No button hit for X={screenCell.X}");
+            return false;
+        }
+
+        // Click handling for quick menu items (L1, L2, L3)
+        private bool HandleQuickMenuClicksScreen(Point screenCell)
+        {
+            if (_ui.QuickMenu == QuickMenuKind.None) return false;
+
+            int screenW = GameHost.Instance?.ScreenCellsX ?? 0;
+            int screenH = GameHost.Instance?.ScreenCellsY ?? 0;
+            int centerX = screenW / 2;
+
+            // L1 menu positions (root popups) - buttons at screenH-1, menus end at screenH-2
+            if (_ui.QuickMenu == QuickMenuKind.Orders && _ui.OrdersMenu == OrdersSubmenu.None)
+            {
+                // Orders root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                // Check if click is inside popup (rows 1-6 are clickable menu items)
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Mining); }
+                    else if (row == 2) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Lumbering); }
+                    else if (row == 3) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Gather); }
+                    else if (row == 4) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Masonry); }
+                    else if (row == 5) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Haul); }
+                    else if (row == 6) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Creature); }
+                    else if (row == 7) { _ui.OpenOrdersSubmenu(OrdersSubmenu.Other); }
+                    DrawUI();
+                    return true;
+                }
+            }
+            else if (_ui.QuickMenu == QuickMenuKind.Zones && _ui.ZoneMenu == ZoneSubmenu.None)
+            {
+                // Zones root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenZoneSubmenu(ZoneSubmenu.Production); }
+                    else if (row == 2) { _ui.OpenZoneSubmenu(ZoneSubmenu.Civil); }
+                    else if (row == 3) { _ui.OpenZoneSubmenu(ZoneSubmenu.Public); }
+                    else if (row == 4) { _ui.OpenZoneSubmenu(ZoneSubmenu.Military); }
+                    else if (row == 5) { _ui.OpenZoneSubmenu(ZoneSubmenu.Management); }
+                    DrawUI();
+                    return true;
+                }
+            }
+            else if (_ui.QuickMenu == QuickMenuKind.Build && _ui.BuildMenu == BuildSubmenu.None)
+            {
+                // Build root: height=8, y = screenH - 9
+                int x = (screenW - 30) / 2;
+                int y = screenH - 9;
+                if (screenCell.X >= x + 2 && screenCell.X < x + 30 && screenCell.Y >= y + 1 && screenCell.Y <= y + 6)
+                {
+                    int row = screenCell.Y - y;
+                    if (row == 1) { _ui.OpenBuildSubmenu(BuildSubmenu.Structural); }
+                    else if (row == 2) { _ui.OpenBuildSubmenu(BuildSubmenu.FunctionalStructure); }
+                    else if (row == 3) { _ui.OpenBuildSubmenu(BuildSubmenu.Workshop); }

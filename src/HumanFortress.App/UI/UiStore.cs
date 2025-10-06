@@ -84,6 +84,9 @@ public enum PlacementMode
     HaulSecondCorner,
     MiningFirstCorner,
     MiningSecondCorner,
+    // Build (Construction)
+    ConstructionFirstCorner,
+    ConstructionSecondCorner,
     // Zones
     ZoneFirstCorner,
     ZoneSecondCorner,
@@ -108,10 +111,16 @@ public sealed class UiStore
     public PlacementMode PlaceMode { get; set; } = PlacementMode.None;
     public Point? HoverTile { get; private set; } = null;
 
+    // Build/Construction selection state
+    public HumanFortress.Simulation.Orders.ConstructionShape SelectedConstructionShape { get; set; } = HumanFortress.Simulation.Orders.ConstructionShape.Wall;
+    public MiningAction SelectedMiningAction { get; set; } = MiningAction.Dig;
+
     // Stockpile/Zone placement state
     public Point? PlaceFirstCorner { get; set; } = null;
     public Point? PlaceSecondCorner { get; set; } = null;
     public int PlaceZ { get; set; } = 0;
+    public int PlaceZMin { get; set; } = 0;
+    public int PlaceZMax { get; set; } = 0;
     public string? CopiedPreset { get; set; } = null;
     public int? CopiedPriority { get; set; } = null;
 
@@ -125,7 +134,9 @@ public sealed class UiStore
     // Debug menu state
     public int DebugMenuTab { get; set; } = 0; // 0=Status, 1=Creatures, 2=Items
     public string DebugSelectedCreature { get; set; } = "core_race_dwarf";
-    public string DebugSelectedItem { get; set; } = "core_item_stone_generic";
+    public string DebugSelectedItem { get; set; } = "core_item_boulder_granite";
+    public DebugItemCategory DebugItemCat { get; set; } = DebugItemCategory.Boulders;
+    public int DebugItemPage { get; set; } = 0;
 
     // Toasts (text + expire tick)
     public readonly List<(string text, ulong expireTick)> Toasts = new();
@@ -202,6 +213,8 @@ public sealed class UiStore
     {
         PlaceMode = mode;
         PlaceZ = z;
+        PlaceZMin = z;
+        PlaceZMax = z;
         PlaceFirstCorner = null;
         PlaceSecondCorner = null;
         Context = UiContext.PlacingTool;
@@ -212,6 +225,8 @@ public sealed class UiStore
         PlaceMode = PlacementMode.None;
         PlaceFirstCorner = null;
         PlaceSecondCorner = null;
+        PlaceZMin = 0;
+        PlaceZMax = 0;
         QuickMenu = QuickMenuKind.None;
         OrdersMenu = OrdersSubmenu.None;
         ZoneMenu = ZoneSubmenu.None;
@@ -331,6 +346,34 @@ public sealed class UiStore
         Toasts.Add((text, expireTick));
     }
 
+    // === Recent order highlights ===
+    public struct OrderHighlight
+    {
+        public string Kind; // mining/construction/haul/zone/stockpile
+        public SadRogue.Primitives.Rectangle Rect;
+        public int ZMin;
+        public int ZMax;
+        public ulong ExpireTick;
+    }
+
+    private readonly List<OrderHighlight> _highlights = new();
+
+    public void AddHighlight(string kind, SadRogue.Primitives.Rectangle rect, int zMin, int zMax, ulong expireTick)
+    {
+        _highlights.Add(new OrderHighlight { Kind = kind, Rect = rect, ZMin = zMin, ZMax = zMax, ExpireTick = expireTick });
+    }
+
+    public IReadOnlyList<OrderHighlight> GetHighlights() => _highlights;
+
+    public void PruneHighlights(ulong nowTick)
+    {
+        for (int i = _highlights.Count - 1; i >= 0; i--)
+        {
+            if (_highlights[i].ExpireTick <= nowTick)
+                _highlights.RemoveAt(i);
+        }
+    }
+
     public void PruneToasts(ulong nowTick)
     {
         for (int i = Toasts.Count - 1; i >= 0; i--)
@@ -339,4 +382,23 @@ public sealed class UiStore
                 Toasts.RemoveAt(i);
         }
     }
+}
+
+public enum DebugItemCategory
+{
+    Boulders,
+    Blocks,
+    Logs,
+    Planks,
+    Tools,
+    Weapons
+}
+
+public enum MiningAction
+{
+    Dig,
+    DigStairwell,
+    DigRamp,
+    DigChannel,
+    RemoveDigging
 }

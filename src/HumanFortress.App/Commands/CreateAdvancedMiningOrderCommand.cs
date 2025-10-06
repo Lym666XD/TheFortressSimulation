@@ -1,0 +1,109 @@
+using System;
+using System.IO;
+using HumanFortress.Core.Commands;
+using HumanFortress.Core.Simulation;
+using HumanFortress.Simulation.World;
+using HumanFortress.Simulation.Orders;
+using HumanFortress.App.UI;
+using SadRogue.Primitives;
+
+namespace HumanFortress.App.Commands;
+
+/// <summary>
+/// Command that creates an advanced mining designation with z-range and mining action.
+/// For now, OrdersManager will decompose DIG/DIG_RAMP into per-Z MiningDesignation.
+/// Other actions are queued for future handling.
+/// </summary>
+public sealed class CreateAdvancedMiningOrderCommand : ICommand
+{
+    public ulong Tick { get; }
+    public Guid CommandId { get; } = Guid.NewGuid();
+    public string CommandType => "orders.mining.advanced_rect";
+
+    private readonly Rectangle _worldRect;
+    private readonly int _zMin;
+    private readonly int _zMax;
+    private readonly UI.MiningAction _action;
+    private readonly int _priority;
+
+    public CreateAdvancedMiningOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, UI.MiningAction action, int priority = 50)
+    {
+        Tick = tick;
+        _worldRect = worldRect;
+        _zMin = Math.Min(zMin, zMax);
+        _zMax = Math.Max(zMin, zMax);
+        _action = action;
+        _priority = priority;
+    }
+
+    public void Execute(ISimulationContext context)
+    {
+        if (context.World is World world)
+        {
+            var act = _action switch
+            {
+                UI.MiningAction.Dig => HumanFortress.Simulation.Orders.MiningAction.Dig,
+                UI.MiningAction.DigStairwell => HumanFortress.Simulation.Orders.MiningAction.DigStairwell,
+                UI.MiningAction.DigRamp => HumanFortress.Simulation.Orders.MiningAction.DigRamp,
+                UI.MiningAction.DigChannel => HumanFortress.Simulation.Orders.MiningAction.DigChannel,
+                UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
+                _ => HumanFortress.Simulation.Orders.MiningAction.Dig
+            };
+            // Pre-validate selection has at least one valid cell; otherwise do not enqueue (avoid no-op orders)
+            if (!HasAnyValidMiningCell(world, _worldRect, _zMin, _zMax, act))
+            {
+                HumanFortress.App.Logger.Log($"[MINING] No diggable tiles in selection for action={act} rect=({_worldRect.X},{_worldRect.Y},{_worldRect.Width}x{_worldRect.Height}) z={_zMin}..{_zMax}");
+                return;
+            }
+            world.Orders.EnqueueMiningAdvanced(_worldRect, _zMin, _zMax, act, _priority, context.CurrentTick);
+        }
+    }
+
+    private static bool HasAnyValidMiningCell(World world, Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action)
+    {
+        for (int z = zMin; z <= zMax; z++)
+        {
+            for (int y = rect.Y; y < rect.MaxExtentY; y++)
+            for (int x = rect.X; x < rect.MaxExtentX; x++)
+            {
+                var tile = world.GetTile(x, y, z);
+                if (tile == null) continue;
+                var kind = tile.Value.Kind;
+                switch (action)
+                {
+                    case HumanFortress.Simulation.Orders.MiningAction.Dig:
+                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) return true;
+                        break;
+                    case HumanFortress.Simulation.Orders.MiningAction.DigRamp:
+                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall) return true;
+                        break;
+                    case HumanFortress.Simulation.Orders.MiningAction.DigChannel:
+                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) return true;
+                        break;
+                    case HumanFortress.Simulation.Orders.MiningAction.DigStairwell:
+                        if (z == zMin && kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) return true;
+                        break;
+                    default:
+                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp) return true;
+                        break;
+                }
+            }
+        }
+        return false;
+    }
+
+    public byte[] Serialize()
+    {
+        using var ms = new MemoryStream();
+        using var bw = new BinaryWriter(ms);
+        bw.Write((int)_worldRect.X);
+        bw.Write((int)_worldRect.Y);
+        bw.Write((int)_worldRect.Width);
+        bw.Write((int)_worldRect.Height);
+        bw.Write(_zMin);
+        bw.Write(_zMax);
+        bw.Write((byte)_action);
+        bw.Write(_priority);
+        return ms.ToArray();
+    }
+}

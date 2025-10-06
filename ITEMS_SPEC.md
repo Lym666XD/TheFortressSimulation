@@ -867,3 +867,391 @@ Ingots use 50 ml (gold/silver) and 100 ml (others) as standard volumes (optional
 Durability falloff LUTs are per-class (optional).
 
 If you want, I can now draft a JSON Schema (draft-07) for this spec (with oneOf type inference, FX integer checks, and full validation on equip.regions[]) and a v3→v4-int migration map (speed→windup/recovery, move thickness to regions, add mass_g, remove kind/material_weights, unify container fields, etc.).
+
+17) Runtime Item Instance Examples (Comprehensive)
+
+These examples show the complete runtime state for various item types, including all quality/faction/decoration/ownership fields that may exist on instances.
+
+17.1 Masterwork Iron Short Sword (Quality +3, with improvements)
+```json
+{
+  "guid": "i_a7f3e2d1",
+  "def_id": "core_item_weapon_sword_short",
+  "material_id": "core_mat_metal_iron",
+  "stack_count": 1,
+
+  "owner_faction_id": "faction_player_fortress",
+  "owner_creature_guid": "c_89ab3421",
+  "use_policy": "private",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 3,
+  "artifact": false,
+  "condition_state": "Pristine",
+
+  "crafted_by": "c_smith_7f3a",
+  "maker_faction_id": "faction_player_fortress",
+  "style_tag": "style_dwarven_angular",
+
+  "improvements": [
+    {
+      "type": "engraving",
+      "subject": "image_fortress_founding",
+      "quality_tier": 2,
+      "added_by": "c_engraver_2b9f",
+      "added_at_tick": 1523400
+    },
+    {
+      "type": "gem_inlay",
+      "material_id": "core_mat_gem_ruby",
+      "socket_index": 0,
+      "quality_tier": 1,
+      "added_by": "c_jeweler_4e2c",
+      "added_at_tick": 1598200
+    }
+  ],
+
+  "pos": { "x": 120, "y": 85, "z": 10 },
+  "contained_by": null,
+
+  "spawned_at_tick": 1450000,
+  "content_version": "4.0.0"
+}
+```
+
+17.2 Common Copper Dagger (Quality 0, unreserved resource)
+```json
+{
+  "guid": "i_b8c4d9e2",
+  "def_id": "core_weapon_dagger",
+  "material_id": "core_mat_metal_copper",
+  "stack_count": 1,
+
+  "owner_faction_id": null,
+  "owner_creature_guid": null,
+  "use_policy": "public",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 0,
+  "artifact": false,
+  "condition_state": "Pristine",
+
+  "crafted_by": null,
+  "maker_faction_id": null,
+  "style_tag": null,
+
+  "improvements": [],
+
+  "pos": { "x": 45, "y": 102, "z": 8 },
+  "contained_by": null,
+
+  "spawned_at_tick": 980000,
+  "content_version": "4.0.0"
+}
+```
+
+17.3 Oak Bed (Furniture, Quality +1, faction-owned)
+```json
+{
+  "guid": "i_c7d2f4a3",
+  "def_id": "core_item_furniture_bed",
+  "material_id": "core_mat_wood_oak",
+  "stack_count": 1,
+
+  "owner_faction_id": "faction_player_fortress",
+  "owner_creature_guid": "c_noble_5d8a",
+  "use_policy": "private",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 1,
+  "artifact": false,
+  "condition_state": "Pristine",
+
+  "crafted_by": "c_carpenter_3f1b",
+  "maker_faction_id": "faction_player_fortress",
+  "style_tag": "style_human_ornate",
+
+  "improvements": [
+    {
+      "type": "engraving",
+      "subject": "image_geometric_pattern",
+      "quality_tier": 1,
+      "added_by": "c_carpenter_3f1b",
+      "added_at_tick": 1120500
+    }
+  ],
+
+  "installed_at": { "x": 78, "y": 61, "z": 12, "rotation": 1 },
+  "pos": null,
+  "contained_by": null,
+
+  "spawned_at_tick": 1118000,
+  "content_version": "4.0.0"
+}
+```
+
+17.4 Iron Ingot Stack (Resource, count stack, no quality)
+```json
+{
+  "guid": "i_d9e3a5b4",
+  "def_id": "core_item_ingot_iron",
+  "material_id": "core_mat_metal_iron",
+  "stack_count": 25,
+
+  "owner_faction_id": null,
+  "owner_creature_guid": null,
+  "use_policy": "public",
+  "forbidden": false,
+  "reservation_tokens": [
+    {
+      "job_guid": "j_smelt_8a7f",
+      "reserved_count": 5,
+      "expires_at_tick": 2145800
+    }
+  ],
+
+  "quality_tier": 0,
+  "artifact": false,
+  "condition_state": "N/A",
+
+  "crafted_by": null,
+  "maker_faction_id": null,
+  "style_tag": null,
+
+  "improvements": [],
+
+  "pos": { "x": 92, "y": 103, "z": 9 },
+  "contained_by": null,
+
+  "spawned_at_tick": 2100000,
+  "content_version": "4.0.0"
+}
+```
+
+17.5 Fresh Meat (Consumable, charges stack, perishable)
+```json
+{
+  "guid": "i_e4a6b7c8",
+  "def_id": "core_item_meat_fresh",
+  "material_id": "core_mat_organic_beef",
+  "stack_count": 3500,
+
+  "owner_faction_id": null,
+  "owner_creature_guid": null,
+  "use_policy": "public",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 0,
+  "artifact": false,
+  "condition_state": "Fresh",
+
+  "crafted_by": null,
+  "maker_faction_id": null,
+  "style_tag": null,
+
+  "improvements": [],
+
+  "perishable": {
+    "freshness_state": "fresh",
+    "freshness_bucket": 2,
+    "spoil_at_tick": 2850000,
+    "spoil_stage": 0
+  },
+
+  "pos": null,
+  "contained_by": "i_barrel_food_3c2d",
+
+  "spawned_at_tick": 2650000,
+  "content_version": "4.0.0"
+}
+```
+
+17.6 Legendary Artifact Steel Breastplate (Artifact, Quality +5)
+```json
+{
+  "guid": "i_f5b8c9d1",
+  "def_id": "core_armor_breastplate",
+  "material_id": "core_mat_metal_steel",
+  "stack_count": 1,
+
+  "owner_faction_id": "faction_player_fortress",
+  "owner_creature_guid": "c_champion_7e4f",
+  "use_policy": "private",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 5,
+  "artifact": true,
+  "artifact_name": "Stormbreaker's Aegis",
+  "condition_state": "Pristine",
+
+  "crafted_by": "c_armorsmith_legendary_9a2b",
+  "maker_faction_id": "faction_player_fortress",
+  "style_tag": "style_dwarven_master",
+
+  "improvements": [
+    {
+      "type": "engraving",
+      "subject": "image_legendary_battle_dragonslayer",
+      "quality_tier": 5,
+      "added_by": "c_armorsmith_legendary_9a2b",
+      "added_at_tick": 3250100
+    },
+    {
+      "type": "gem_inlay",
+      "material_id": "core_mat_gem_diamond",
+      "socket_index": 0,
+      "quality_tier": 4,
+      "added_by": "c_jeweler_master_6c3f",
+      "added_at_tick": 3251800
+    },
+    {
+      "type": "bossing",
+      "material_id": "core_mat_metal_gold",
+      "pattern": "geometric_sunburst",
+      "quality_tier": 3,
+      "added_by": "c_metalcrafter_8d5a",
+      "added_at_tick": 3253200
+    }
+  ],
+
+  "equipped_by": "c_champion_7e4f",
+  "pos": null,
+  "contained_by": null,
+
+  "spawned_at_tick": 3250000,
+  "content_version": "4.0.0"
+}
+```
+
+17.7 Worn Leather Armor (Quality -2, damaged condition)
+```json
+{
+  "guid": "i_g6c9d8e2",
+  "def_id": "core_armor_leather",
+  "material_id": "core_mat_leather_cow",
+  "stack_count": 1,
+
+  "owner_faction_id": "faction_goblin_raiders",
+  "owner_creature_guid": null,
+  "use_policy": "faction",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": -2,
+  "artifact": false,
+  "condition_state": "Damaged",
+
+  "crafted_by": null,
+  "maker_faction_id": "faction_goblin_raiders",
+  "style_tag": "style_goblin_crude",
+
+  "improvements": [],
+
+  "durability_current": 45,
+  "durability_max": 100,
+
+  "pos": { "x": 201, "y": 156, "z": 11 },
+  "contained_by": null,
+
+  "spawned_at_tick": 1850000,
+  "content_version": "4.0.0"
+}
+```
+
+17.8 Waterskin (Container, carried by creature)
+```json
+{
+  "guid": "i_h7d1e9f3",
+  "def_id": "core_container_waterskin",
+  "material_id": "core_mat_leather_pig",
+  "stack_count": 1,
+
+  "owner_faction_id": null,
+  "owner_creature_guid": "c_traveler_4b7e",
+  "use_policy": "private",
+  "forbidden": false,
+  "reservation_tokens": [],
+
+  "quality_tier": 0,
+  "artifact": false,
+  "condition_state": "Pristine",
+
+  "crafted_by": null,
+  "maker_faction_id": null,
+  "style_tag": null,
+
+  "improvements": [],
+
+  "container_contents": [
+    {
+      "item_guid": "i_water_charges_9c3a",
+      "quantity": 850
+    }
+  ],
+
+  "carried_by": "c_traveler_4b7e",
+  "pos": null,
+  "contained_by": null,
+
+  "spawned_at_tick": 1680000,
+  "content_version": "4.0.0"
+}
+```
+
+Field Explanations:
+
+**Core Identity**:
+- `guid`: Unique instance identifier (generated at spawn)
+- `def_id`: Reference to item definition from items.json
+- `material_id`: Chosen material (null if fixed_material in definition)
+- `stack_count`: Number of items (count mode) or charges (charges mode)
+
+**Ownership & Access**:
+- `owner_faction_id`: Faction that owns this item (null = unowned)
+- `owner_creature_guid`: Individual owner creature (null = faction/public)
+- `use_policy`: "public" | "faction" | "private" (access control)
+- `forbidden`: Player-marked forbidden flag (prevents hauling)
+- `reservation_tokens`: Active job reservations on this stack
+
+**Quality & Condition**:
+- `quality_tier`: -3 (awful) to +5 (legendary), 0 = standard
+- `artifact`: True if unique named artifact
+- `artifact_name`: Display name for artifacts (optional)
+- `condition_state`: "Pristine" | "Good" | "Worn" | "Damaged" | "Broken"
+- `durability_current/max`: Numeric durability (optional, for degradable items)
+
+**Provenance (Quality ≥ +3 or Artifact)**:
+- `crafted_by`: Creature GUID of maker
+- `maker_faction_id`: Faction of maker at craft time
+- `style_tag`: Cultural style applied (affects appearance/value)
+
+**Improvements (Quality ≥ +3 or Artifact)**:
+- `improvements[]`: Array of decorations/engravings/inlays
+  - `type`: "engraving" | "gem_inlay" | "bossing" | "enchantment"
+  - `subject/pattern`: Content descriptor
+  - `material_id`: For inlays/bossing
+  - `quality_tier`: Quality of the improvement itself
+  - `added_by`: Creature who added the improvement
+  - `added_at_tick`: Tick when added
+
+**Perishable (Food/Drink only)**:
+- `perishable.freshness_state`: "fresh" | "aging" | "stale" | "rotten"
+- `perishable.freshness_bucket`: Integer bucket for stack merging
+- `perishable.spoil_at_tick`: Tick when it spoils to next stage
+- `perishable.spoil_stage`: 0-3, progressive decay
+
+**Location**:
+- `pos`: World coordinates {x, y, z} if on ground
+- `contained_by`: Container item GUID if inside container
+- `carried_by`: Creature GUID if in inventory
+- `equipped_by`: Creature GUID if equipped
+- `installed_at`: Placeable installation data {x, y, z, rotation}
+
+**System Metadata**:
+- `spawned_at_tick`: Tick when instance was created
+- `content_version`: Schema version for save compatibility

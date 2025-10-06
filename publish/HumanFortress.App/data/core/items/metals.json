@@ -1,20 +1,5 @@
 [
   {
-    "id": "core_item_ingot_iron",
-    "name": "Iron Ingot",
-    "kind": "RESOURCE",
-    "tags": ["metal", "ingot", "iron"],
-    "fixed_material": "core_mat_metal_iron",
-    "base_mass_g": 1000,
-    "base_volume_ml": 1000,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 50,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
     "id": "core_item_ingot_iron_wrought",
     "name": "Wrought Iron Ingot",
     "kind": "RESOURCE",
@@ -26,7 +11,7 @@
       "mode": "count",
       "unit": "piece",
       "max_per_stack": 50,
-      "equal_when": ["fixed_material", "quality"]
+      "equal_when": ["fixed_material"]
     }
   },
   {
@@ -64,14 +49,14 @@
     "name": "Refined Steel Ingot",
     "kind": "RESOURCE",
     "tags": ["metal", "ingot", "steel", "refined"],
-    "fixed_material": "core_mat_metal_steel_tempered",
+    "fixed_material": "core_mat_metal_steel_refined",
     "base_mass_g": 1000,
     "base_volume_ml": 1000,
     "stack": {
       "mode": "count",
       "unit": "piece",
       "max_per_stack": 50,
-      "equal_when": ["fixed_material", "quality"]
+      "equal_when": ["fixed_material"]
     }
   },
   {
@@ -195,136 +180,17 @@
     }
   },
   {
-    "id": "core_item_metal_scrap_iron",
+    "id": "core_item_metal_scrap",
     "name": "Iron Scrap",
     "kind": "RESOURCE",
     "tags": ["metal", "scrap", "iron", "recyclable"],
-    "fixed_material": "core_mat_metal_iron",
+    "fixed_material": "core_mat_metal_generic",
     "base_mass_g": 500,
     "base_volume_ml": 200,
     "stack": {
       "mode": "count",
       "unit": "piece",
       "max_per_stack": 100,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_scrap_copper",
-    "name": "Copper Scrap",
-    "kind": "RESOURCE",
-    "tags": ["metal", "scrap", "copper", "recyclable"],
-    "fixed_material": "core_mat_metal_copper",
-    "base_mass_g": 500,
-    "base_volume_ml": 200,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 100,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_scrap_mixed",
-    "name": "Mixed Metal Scrap",
-    "kind": "RESOURCE",
-    "tags": ["metal", "scrap", "mixed", "recyclable"],
-    "base_mass_g": 500,
-    "base_volume_ml": 250,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 100,
-      "equal_when": []
-    }
-  },
-  {
-    "id": "core_item_metal_wire_iron",
-    "name": "Iron Wire",
-    "kind": "RESOURCE",
-    "tags": ["metal", "wire", "iron"],
-    "fixed_material": "core_mat_metal_iron",
-    "base_mass_g": 100,
-    "base_volume_ml": 50,
-    "stack": {
-      "mode": "count",
-      "unit": "coil",
-      "max_per_stack": 100,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_wire_copper",
-    "name": "Copper Wire",
-    "kind": "RESOURCE",
-    "tags": ["metal", "wire", "copper", "conductor"],
-    "fixed_material": "core_mat_metal_copper",
-    "base_mass_g": 100,
-    "base_volume_ml": 50,
-    "stack": {
-      "mode": "count",
-      "unit": "coil",
-      "max_per_stack": 100,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_sheet_iron",
-    "name": "Iron Sheet",
-    "kind": "RESOURCE",
-    "tags": ["metal", "sheet", "iron"],
-    "fixed_material": "core_mat_metal_iron",
-    "base_mass_g": 2000,
-    "base_volume_ml": 500,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 25,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_sheet_copper",
-    "name": "Copper Sheet",
-    "kind": "RESOURCE",
-    "tags": ["metal", "sheet", "copper"],
-    "fixed_material": "core_mat_metal_copper",
-    "base_mass_g": 2000,
-    "base_volume_ml": 500,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 25,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_rod_iron",
-    "name": "Iron Rod",
-    "kind": "RESOURCE",
-    "tags": ["metal", "rod", "iron"],
-    "fixed_material": "core_mat_metal_iron",
-    "base_mass_g": 500,
-    "base_volume_ml": 100,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 50,
-      "equal_when": ["fixed_material"]
-    }
-  },
-  {
-    "id": "core_item_metal_rod_steel",
-    "name": "Steel Rod",
-    "kind": "RESOURCE",
-    "tags": ["metal", "rod", "steel"],
-    "fixed_material": "core_mat_metal_steel_tempered",
-    "base_mass_g": 500,
-    "base_volume_ml": 100,
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 50,
       "equal_when": ["fixed_material"]
     }
   }

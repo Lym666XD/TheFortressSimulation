@@ -33,7 +33,7 @@ public sealed class BuildUI
         var highlight = Color.Yellow;
         var activeBg = new Color(40, 40, 0, 220);
 
-        // L2 menu (centered, no L3 for now)
+        // L2 menu (centered)
         int l2Width = 30;
         int l2Height = 8;
         int l2X = centerX - l2Width / 2;
@@ -48,6 +48,26 @@ public sealed class BuildUI
         DrawMenuOption(surface, l2X + 2, l2Y + 4, "[V] Civil Furniture", activeSubmenu == BuildSubmenu.CivilFurniture, fg, activeBg);
         DrawMenuOption(surface, l2X + 2, l2Y + 5, "[F] Utility Furniture", activeSubmenu == BuildSubmenu.UtilityFurniture, fg, activeBg);
         surface.Print(l2X + 2, l2Y + 6, "ESC: Cancel", Color.Gray);
+
+        // L3 menu for active submenu
+        if (activeSubmenu == BuildSubmenu.Structural)
+        {
+            DrawStructuralL3(surface, l2X + l2Width + 2, l2Y);
+        }
+    }
+
+    private void DrawStructuralL3(ScreenSurface surface, int x, int y)
+    {
+        var bg = new Color(0, 0, 0, 200);
+        var fg = Color.White;
+        var highlight = Color.Yellow;
+        DrawBox(surface, x, y, 26, 8, fg, bg);
+        surface.Print(x + 1, y, " STRUCTURAL ", highlight);
+        surface.Print(x + 2, y + 1, "[Z] Wall", fg);
+        surface.Print(x + 2, y + 2, "[X] Floor", fg);
+        surface.Print(x + 2, y + 3, "[C] Ramp", fg);
+        surface.Print(x + 2, y + 4, "[V] Stairs", fg);
+        surface.Print(x + 2, y + 6, "[,] Cancel", Color.Gray);
     }
 
     private void DrawMenuOption(ScreenSurface surface, int x, int y, string text, bool active, Color fg, Color activeBg)

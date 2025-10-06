@@ -1,0 +1,300 @@
+        {
+            bool changed = false;
+            int maxPos = FortressSize * 32 - 1;
+            int moveSpeed = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift) ? 5 : 1;
+
+            // Move camera with WASD (continuous while held)
+            if (keyboard.IsKeyDown(Keys.W))
+            {
+                _cameraPos = new Point(_cameraPos.X, _cameraPos.Y - moveSpeed);
+                changed = true;
+            }
+            else if (keyboard.IsKeyDown(Keys.S))
+            {
+                _cameraPos = new Point(_cameraPos.X, _cameraPos.Y + moveSpeed);
+                changed = true;
+            }
+            else if (keyboard.IsKeyDown(Keys.A))
+            {
+                _cameraPos = new Point(_cameraPos.X - moveSpeed, _cameraPos.Y);
+                changed = true;
+            }
+            else if (keyboard.IsKeyDown(Keys.D))
+            {
+                _cameraPos = new Point(_cameraPos.X + moveSpeed, _cameraPos.Y);
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.Q))
+            {
+                _currentZ = Math.Max(0, _currentZ - 1);
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.E))
+            {
+                _currentZ = Math.Min(49, _currentZ + 1);
+                changed = true;
+            }
+
+            // Simulation control: pause/speed
+            if (keyboard.IsKeyPressed(Keys.Space))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.TogglePause();
+                string status = scheduler.IsPaused ? "PAUSED" : $"Running at {scheduler.SpeedMultiplier:F2}x";
+                _ui.AddToast(status, _uiTick + 100);
+                Logger.Log($"[SIM] Space -> Pause toggled: {scheduler.IsPaused}");
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.CycleSpeedDown();
+                _ui.AddToast($"Speed: {scheduler.SpeedMultiplier:F2}x", _uiTick + 100);
+                Logger.Log($"[SIM] Speed decreased to {scheduler.SpeedMultiplier:F2}x");
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add))
+            {
+                var scheduler = GameStateManager.Instance.TickScheduler;
+                scheduler.CycleSpeedUp();
+                _ui.AddToast($"Speed: {scheduler.SpeedMultiplier:F2}x", _uiTick + 100);
+                Logger.Log($"[SIM] Speed increased to {scheduler.SpeedMultiplier:F2}x");
+                changed = true;
+            }
+
+            // UI: help panel
+            if (keyboard.IsKeyPressed(Keys.H))
+            {
+                _ui.ToggleHelp();
+                changed = true;
+            }
+
+            // UI: debug menu - support ` / ~ via OEM detection or F12 fallback
+            if (keyboard.IsKeyPressed(Keys.F12) || (keyboard.KeysPressed.Count > 0 && keyboard.KeysPressed.Any(k =>
+                {
+                    var name = k.Key.ToString();
+                    return name.Contains("OemTilde", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem3", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("OemGrave", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem8", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Oem7", StringComparison.OrdinalIgnoreCase)
+                        || name.Contains("Backquote", StringComparison.OrdinalIgnoreCase);
+                })))
+            {
+                _ui.ToggleDebug();
+                Logger.Log($"[DEBUG] Toggle debug menu -> { _ui.DebugOpen }");
+                changed = true;
+            }
+
+            // UI: dock panels F1..F8
+            if (keyboard.IsKeyPressed(Keys.F1)) { _ui.OpenPanel(DrawerId.Creature); Logger.Log($"[KEY] F1 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F2)) { _ui.OpenPanel(DrawerId.Stock); Logger.Log($"[KEY] F2 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F3)) { _ui.OpenPanel(DrawerId.Work); Logger.Log($"[KEY] F3 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F4)) { _ui.OpenPanel(DrawerId.PlacementManagement); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F5)) { _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F6)) { _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F7)) { _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F8)) { _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F8 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F9))
+            {
+                // Cycle navigation overlay modes
+                _navOverlay?.CycleMode();
+                _ui.AddToast($"Overlay: {_navOverlay?.CurrentMode}", _uiTick + 150);
+                changed = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.F10))
+            {
+                var ctrl = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+                if (ctrl)
+                {
+                    _navOverlay?.ClearPath();
+                    _pathStart = null;
+                    _ui.AddToast("Path cleared", _uiTick + 120);
+                }
+                else
+                {
+                    HandlePathToolF10();
+                }
+                changed = true;
+            }
+
+            // Handle debug menu keys when open
+            if (_ui.DebugOpen)
+            {
+                if (keyboard.IsKeyPressed(Keys.Tab))
+                {
+                    _ui.DebugMenuTab = (_ui.DebugMenuTab + 1) % 3; // 3 tabs: Status/Creatures/Items
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D0))
+                {
+                    _ui.DebugMenuTab = 0; // Status tab
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D1))
+                {
+                    if (_ui.DebugMenuTab == 2) // Items tab - select stone
+                        _ui.DebugSelectedItem = "core_item_stone_generic";
+                    else
+                        _ui.DebugMenuTab = 1; // Switch to creatures tab
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D2))
+                {
+                    if (_ui.DebugMenuTab == 2) // Items tab - select iron
+                        _ui.DebugSelectedItem = "core_item_ingot_iron";
+                    else
+                        _ui.DebugMenuTab = 2; // Switch to items tab
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D3) && _ui.DebugMenuTab == 2)
+                {
+                    _ui.DebugSelectedItem = "core_item_wood_log";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D4) && _ui.DebugMenuTab == 2)
+                {
+                    _ui.DebugSelectedItem = "core_tool_mining_pickaxe";
+                    changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.D5) && _ui.DebugMenuTab == 2)
+                {
+                    _ui.DebugSelectedItem = "core_weapon_sword_short";
+                    changed = true;
+                }
+                else if (_ui.DebugMenuTab == 1) // Creatures tab
+                {
+                    // Creature selection
+                    if (keyboard.IsKeyPressed(Keys.D))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_dwarf";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.H))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_human";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.G))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_goblin";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.E))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_elf";
+                        changed = true;
+                    }
+                    else if (keyboard.IsKeyPressed(Keys.O))
+                    {
+                        _ui.DebugSelectedCreature = "core_race_orc";
+                        changed = true;
+                    }
+                }
+            }
+
+            // Handle context-specific keys first
+            // Orders Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Orders)
+            {
+                HandleOrdersMenu(keyboard, ref changed);
+            }
+            // Zones Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Zones)
+            {
+                HandleZonesMenu(keyboard, ref changed);
+            }
+            // Build Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Build)
+            {
+                HandleBuildMenu(keyboard, ref changed);
+            }
+            // Stockpile Quick Menu
+            else if (_ui.Context == UiContext.QuickMenu && _ui.QuickMenu == QuickMenuKind.Stockpile)
+            {
+                HandleStockpileMenu(keyboard, ref changed);
+            }
+            else if (_ui.Context == UiContext.PlacingTool)
+            {
+                // Handle preset selection
+                if (_ui.PlaceMode == PlacementMode.StockpilePresetSelect)
+                {
+                    for (int i = 1; i <= 9; i++)
+                    {
+                        if (keyboard.IsKeyPressed((Keys)(Keys.D1 + i - 1)))
+                        {
+                            var presetId = _stockpileUI?.HandlePresetSelection(i);
+                            if (presetId != null)
+                            {
+                                CreateStockpile(presetId);
+                                _ui.CancelPlacement();
+                                changed = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (keyboard.IsKeyPressed(Keys.Enter))
+                    {
+                        CreateStockpile("all");
+                        _ui.CancelPlacement();
+                        changed = true;
+                    }
+                }
+            }
+            // UI: quick menus Z/X/C/V (only in global context)
+            else if (_ui.Context == UiContext.Global)
+            {
+                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenQuickMenu(QuickMenuKind.Stockpile); Logger.Log($"[KEY] V -> QMenu={_ui.QuickMenu}"); changed = true; }
+            }
+
+            // Overlay cycle F9
+            if (keyboard.IsKeyPressed(Keys.F9) && _navOverlay != null)
+            {
+                _navOverlay.CycleMode();
+                if (_navOverlay.CurrentMode == NavigationOverlay.OverlayMode.FlowField)
+                    _navOverlay.SetTarget(_cursorPos);
+                changed = true;
+            }
+
+            // Drawer tab cycling
+            if (_ui.Context == UiContext.Drawer)
+            {
+                if (keyboard.IsKeyPressed(Keys.Tab) && !(keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _ui.TabNext(); changed = true;
+                }
+                else if (keyboard.IsKeyPressed(Keys.Tab) && (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift)))
+                {
+                    _ui.TabPrev(); changed = true;
+                }
+            }
+
+            if (keyboard.IsKeyPressed(Keys.Escape))
+            {
+                // Priority order: tile panel -> stockpile edit -> placement mode -> submenus -> main menus
+                if (_tilePanelOpen)
+                {
+                    HideTilePanel();
+                    changed = true;
+                }
+                else if (_stockpileUI != null)
+                {
+                    // Always close edit popup first
+                    _stockpileUI.CloseEditPopup();
+
+                    // Then handle placement or menu states
+                    if (_ui.Context == UiContext.PlacingTool)
+                    {
+                        _ui.CancelPlacement();
+                    }
+                    else
+                    {
+                        _ui.Back();
+                    }
+                    changed = true;
+                }
+                // If no UI open, toggle pause overlay instead of exiting immediately
+                else if (_ui.OpenDrawer == DrawerId.None && _ui.QuickMenu == QuickMenuKind.None && !_ui.HelpOpen && !_ui.DebugOpen)

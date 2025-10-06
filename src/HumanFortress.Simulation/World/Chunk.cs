@@ -1,6 +1,7 @@
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Zones;
+using HumanFortress.Simulation.Placeables;
 
 namespace HumanFortress.Simulation.World;
 
@@ -20,6 +21,7 @@ public sealed class Chunk
     private readonly object _writeLock = new();
     private ChunkStockpileData? _stockpileData;
     private ChunkZoneData? _zoneData;
+    private ChunkPlaceableData? _placeableData;
 
     public ChunkKey Key { get; }
     public int LODLevel { get; set; }
@@ -174,6 +176,92 @@ public sealed class Chunk
             _zoneData ??= new ChunkZoneData();
         }
     }
+
+    /// <summary>
+    /// Get placeable data for this chunk. Thread-safe for reads.
+    /// NOTE: PlaceableData will be serialized to chunk saves when save system is implemented.
+    /// Currently stored in memory only.
+    /// </summary>
+    public ChunkPlaceableData? GetPlaceableData()
+    {
+        return _placeableData;
+    }
+
+    /// <summary>
+    /// Initialize placeable data if not present. Write phase only.
+    /// </summary>
+    public void EnsurePlaceableData()
+    {
+        lock (_writeLock)
+        {
+            _placeableData ??= new ChunkPlaceableData();
+        }
+    }
+
+    /// <summary>
+    /// Remove a furniture reference at a cell matching the given placeable GUID.
+    /// Returns true if a blocking ref was removed (connectivity changed).
+    /// </summary>
+    public bool RemoveFurnitureAt(int x, int y, Guid placeableGuid, ulong tick)
+    {
+        if (x < 0 || x >= SIZE_XY || y < 0 || y >= SIZE_XY)
+            throw new ArgumentOutOfRangeException();
+
+        lock (_writeLock)
+        {
+            int index = y * SIZE_XY + x;
+            bool blockerRemoved = false;
+            if (_furniture.TryGetValue(index, out var cell))
+            {
+                if (cell.Blocker?.IsPlaceable == true && cell.Blocker.Value.PlaceableGuid == placeableGuid)
+                {
+                    cell.Blocker = null;
+                    blockerRemoved = true;
+                }
+
+                if (cell.Passables != null)
+                {
+                    cell.Passables.RemoveAll(fr => fr.IsPlaceable && fr.PlaceableGuid == placeableGuid);
+                    if (cell.Passables.Count == 0) cell.Passables = null;
+                }
+
+                if (blockerRemoved)
+                {
+                    ConnectivityVersion++;
+                }
+                LastModifiedTick = tick;
+            }
+
+            return blockerRemoved;
+        }
+    }
+
+    /// <summary>
+    /// Bump connectivity version to invalidate derived caches.
+    /// Called when L0 or L2 topology changes (tiles, furniture, placeables).
+    /// </summary>
+    public void BumpConnectivityVersion()
+    {
+        lock (_writeLock)
+        {
+            ConnectivityVersion++;
+        }
+    }
+
+    /// <summary>
+    /// Mark tile and neighbors dirty for cache rebuild.
+    /// Called when L0 or L2 changes affect pathfinding/LOS.
+    /// </summary>
+    public void MarkTileDirty(int localIndex, ulong tick)
+    {
+        lock (_writeLock)
+        {
+            LastModifiedTick = tick;
+            // TODO: Actual dirty marking system (DirtyTileSet) not yet implemented
+            // For now, just bump ConnectivityVersion
+            ConnectivityVersion++;
+        }
+    }
 }
 
 /// <summary>
@@ -225,18 +313,32 @@ public sealed class FurnitureCell
 }
 
 /// <summary>
-/// Reference to furniture instance.
+/// Reference to furniture/placeable instance.
+/// MIGRATION: Old system uses Id + TypeId, new system uses PlaceableGuid.
 /// </summary>
 public readonly struct FurnitureRef
 {
-    public readonly int Id;
-    public readonly ushort TypeId;
+    public readonly int Id;  // Legacy: numeric ID
+    public readonly ushort TypeId;  // Legacy: type ID
+    public readonly Guid PlaceableGuid;  // New: GUID reference to PlaceableInstance
 
+    // Legacy constructor (will be deprecated)
     public FurnitureRef(int id, ushort typeId)
     {
         Id = id;
         TypeId = typeId;
+        PlaceableGuid = Guid.Empty;
     }
+
+    // New constructor (use this for placeables)
+    public FurnitureRef(Guid placeableGuid)
+    {
+        Id = 0;
+        TypeId = 0;
+        PlaceableGuid = placeableGuid;
+    }
+
+    public bool IsPlaceable => PlaceableGuid != Guid.Empty;
 }
 
 /// <summary>

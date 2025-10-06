@@ -3,13 +3,36 @@
 [TEST-CRASH] Setting up embark location
 [TEST-CRASH] Generating test world
 [TEST-CRASH] Initializing world
+[CreatureManager] Loaded 5 creature definitions from 1 files (0 errors)
+[ItemManager] ERROR: Failed to load furniture.json: The JSON value could not be converted to System.Collections.Generic.List`1[HumanFortress.Simulation.Items.ItemDefinition]. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
+[ItemManager] ERROR: Invalid definition 'core_weapon_cannon_swivel' in weapons_ranged.json: Item 'core_weapon_cannon_swivel' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_weapon_cannon_saker' in weapons_ranged.json: Item 'core_weapon_cannon_saker' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_weapon_mortar' in weapons_ranged.json: Item 'core_weapon_mortar' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_ammo_arrow' in weapons_ranged.json: Item 'core_ammo_arrow' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_bolt' in weapons_ranged.json: Item 'core_ammo_bolt' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_bullet_lead' in weapons_ranged.json: Item 'core_ammo_bullet_lead' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_dart' in weapons_ranged.json: Item 'core_ammo_dart' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_cannonball' in weapons_ranged.json: Item 'core_ammo_cannonball' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_cannonball_small' in weapons_ranged.json: Item 'core_ammo_cannonball_small' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_mortar_shell' in weapons_ranged.json: Item 'core_ammo_mortar_shell' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_grapeshot' in weapons_ranged.json: Item 'core_ammo_grapeshot' has invalid kind: AMMO
+[ItemManager] Loaded 293 item definitions from 20 files (12 errors)
+[ItemManager] Indexed 5 kinds: armor, resource, container, tool, weapon
 [TEST-CRASH] Attempting to transition to FortressPlay
-[GameStateManager] ChangeState from  to FortressPlay
-[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
-[GameStateManager] Calling Enter on FortressPlay
-Entered Fortress Play
+[CreatureManager] Loaded 5 creature definitions from 1 files (0 errors)
+[ItemManager] ERROR: Failed to load furniture.json: The JSON value could not be converted to System.Collections.Generic.List`1[HumanFortress.Simulation.Items.ItemDefinition]. Path: $ | LineNumber: 0 | BytePositionInLine: 1.
+[ItemManager] ERROR: Invalid definition 'core_weapon_cannon_swivel' in weapons_ranged.json: Item 'core_weapon_cannon_swivel' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_weapon_cannon_saker' in weapons_ranged.json: Item 'core_weapon_cannon_saker' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_weapon_mortar' in weapons_ranged.json: Item 'core_weapon_mortar' has invalid kind: SIEGE_WEAPON
+[ItemManager] ERROR: Invalid definition 'core_ammo_arrow' in weapons_ranged.json: Item 'core_ammo_arrow' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_bolt' in weapons_ranged.json: Item 'core_ammo_bolt' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_bullet_lead' in weapons_ranged.json: Item 'core_ammo_bullet_lead' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_dart' in weapons_ranged.json: Item 'core_ammo_dart' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_cannonball' in weapons_ranged.json: Item 'core_ammo_cannonball' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_cannonball_small' in weapons_ranged.json: Item 'core_ammo_cannonball_small' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_mortar_shell' in weapons_ranged.json: Item 'core_ammo_mortar_shell' has invalid kind: AMMO
+[ItemManager] ERROR: Invalid definition 'core_ammo_grapeshot' in weapons_ranged.json: Item 'core_ammo_grapeshot' has invalid kind: AMMO
+[ItemManager] Loaded 293 item definitions from 20 files (12 errors)
+[ItemManager] Indexed 5 kinds: armor, resource, container, tool, weapon
 [FortressState] Constructor called - deferred initialization
-[FortressPlayState] GameHost not initialized, deferring screen setup
-[GameStateManager] Enter completed for FortressPlay
-[GameStateManager] Starting simulation for FortressPlay
 [TEST-CRASH] Test completed without crash!

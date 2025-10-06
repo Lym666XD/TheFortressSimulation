@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
@@ -49,6 +50,97 @@ public sealed class ItemManager
         }
     }
 
+    private ItemDefinition? ParseFurnitureItem(JsonElement elem)
+    {
+        // Minimal robust mapper for furniture.json schema
+        try
+        {
+            var def = new ItemDefinition();
+            def.Id = elem.TryGetProperty("id", out var idEl) ? idEl.GetString() ?? string.Empty : string.Empty;
+            def.Name = elem.TryGetProperty("name", out var nEl) ? nEl.GetString() : null;
+            def.Kind = "placeable";
+            if (elem.TryGetProperty("tags", out var tagsEl) && tagsEl.ValueKind == JsonValueKind.Array)
+            {
+                var tags = new List<string>();
+                foreach (var t in tagsEl.EnumerateArray()) if (t.ValueKind == JsonValueKind.String) tags.Add(t.GetString()!);
+                def.Tags = tags.ToArray();
+            }
+            if (elem.TryGetProperty("base_volume_ml", out var volEl) && volEl.ValueKind == JsonValueKind.Number)
+                def.BaseVolumeML = volEl.GetInt32();
+            if (elem.TryGetProperty("base_mass_g", out var massEl) && massEl.ValueKind == JsonValueKind.Number)
+                def.BaseMassG = massEl.GetInt32();
+
+            if (elem.TryGetProperty("stack", out var stackEl) && stackEl.ValueKind == JsonValueKind.Object)
+            {
+                var sb = new StackBlock();
+                if (stackEl.TryGetProperty("mode", out var modeEl) && modeEl.ValueKind == JsonValueKind.String)
+                {
+                    var m = modeEl.GetString()?.ToLowerInvariant();
+                    sb.Mode = m switch { "none" => StackMode.None, "charges" => StackMode.Charges, _ => StackMode.Count };
+                }
+                if (stackEl.TryGetProperty("unit", out var unitEl) && unitEl.ValueKind == JsonValueKind.String)
+                    sb.Unit = unitEl.GetString();
+                if (stackEl.TryGetProperty("max_per_stack", out var mpsEl) && mpsEl.ValueKind == JsonValueKind.Number)
+                    sb.MaxPerStack = mpsEl.GetInt32();
+                def.Stack = sb;
+            }
+
+            if (elem.TryGetProperty("placeable_profile", out var ppEl) && ppEl.ValueKind == JsonValueKind.Object)
+            {
+                var pp = new HumanFortress.Core.Content.Registry.PlaceableProfile();
+                if (ppEl.TryGetProperty("footprint", out var fpEl) && fpEl.ValueKind == JsonValueKind.Object)
+                {
+                    int w = fpEl.TryGetProperty("w", out var wEl) && wEl.ValueKind == JsonValueKind.Number ? wEl.GetInt32() : 1;
+                    int d = fpEl.TryGetProperty("d", out var dEl) && dEl.ValueKind == JsonValueKind.Number ? dEl.GetInt32() : 1;
+                    int h = fpEl.TryGetProperty("h", out var hEl) && hEl.ValueKind == JsonValueKind.Number ? hEl.GetInt32() : 1;
+                    pp.Footprint = new HumanFortress.Core.Content.Registry.Footprint(w, d, h);
+                }
+                if (ppEl.TryGetProperty("passability", out var pasEl) && pasEl.ValueKind == JsonValueKind.String)
+                {
+                    var s = pasEl.GetString()?.ToLowerInvariant();
+                    var mode = s switch
+                    {
+                        "blocking" => HumanFortress.Core.Content.Registry.PassabilityMode.Blocking,
+                        "doorway" => HumanFortress.Core.Content.Registry.PassabilityMode.Doorway,
+                        _ => HumanFortress.Core.Content.Registry.PassabilityMode.Nonblocking
+                    };
+                    pp.Passability = mode;
+                }
+                if (ppEl.TryGetProperty("requires_floor", out var rfEl) && rfEl.ValueKind == JsonValueKind.True || rfEl.ValueKind == JsonValueKind.False)
+                    pp.RequiresFloor = rfEl.GetBoolean();
+                if (ppEl.TryGetProperty("clearance_h", out var chEl) && chEl.ValueKind == JsonValueKind.Number)
+                    pp.ClearanceH = chEl.GetInt32();
+                if (ppEl.TryGetProperty("blocks_light", out var blEl) && blEl.ValueKind == JsonValueKind.True || blEl.ValueKind == JsonValueKind.False)
+                    pp.BlocksLight = blEl.GetBoolean();
+                if (ppEl.TryGetProperty("tags", out var ptEl) && ptEl.ValueKind == JsonValueKind.Array)
+                {
+                    var list = new List<string>();
+                    foreach (var t in ptEl.EnumerateArray()) if (t.ValueKind == JsonValueKind.String) list.Add(t.GetString()!);
+                    pp.Tags = list.ToArray();
+                }
+                if (ppEl.TryGetProperty("effects", out var efEl) && efEl.ValueKind == JsonValueKind.Object)
+                {
+                    var eff = new HumanFortress.Core.Content.Registry.EffectsBlock();
+                    if (efEl.TryGetProperty("beauty", out var bEl) && bEl.ValueKind == JsonValueKind.Number) eff.Beauty = bEl.GetInt32();
+                    if (efEl.TryGetProperty("comfort", out var cEl) && cEl.ValueKind == JsonValueKind.Number) eff.Comfort = cEl.GetInt32();
+                    if (efEl.TryGetProperty("light_lumen", out var lEl) && lEl.ValueKind == JsonValueKind.Number) eff.LightLumen = lEl.GetInt32();
+                    if (efEl.TryGetProperty("heat_w", out var hEl2) && hEl2.ValueKind == JsonValueKind.Number) eff.HeatW = hEl2.GetInt32();
+                    pp.Effects = eff;
+                }
+                def.PlaceableProfile = pp;
+            }
+
+            // Ensure tag
+            var tagsSet = new HashSet<string>(def.Tags ?? Array.Empty<string>());
+            tagsSet.Add("furniture");
+            def.Tags = tagsSet.ToArray();
+            return def;
+        }
+        catch (Exception ex)
+        {
+            throw new InvalidOperationException(ex.Message, ex);
+        }
+    }
     private static (int,int,int) KeyFor(Point pos, int z) => (pos.X, pos.Y, z);
     private void IndexAdd(Guid id, Point pos, int z)
     {
@@ -173,14 +265,50 @@ public sealed class ItemManager
                     PropertyNameCaseInsensitive = true,
                     ReadCommentHandling = JsonCommentHandling.Skip
                 };
+                // Support enums represented as strings in JSON (e.g., "count" for StackMode.Count)
+                options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
 
-                var defs = JsonSerializer.Deserialize<List<ItemDefinition>>(json, options);
+                List<ItemDefinition>? defs = null;
+                // Detect envelope { items: [...] } (e.g., furniture.json schema)
+                try
+                {
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("items", out var itemsElem))
+                    {
+                        var list = new List<ItemDefinition>();
+                        foreach (var elem in itemsElem.EnumerateArray())
+                        {
+                            try
+                            {
+                                var def = ParseFurnitureItem(elem);
+                                if (def != null) list.Add(def);
+                            }
+                            catch (Exception ex)
+                            {
+                                var emsg = $"[ItemManager] ERROR: furniture entry invalid in {System.IO.Path.GetFileName(file)}: {ex.Message}";
+                                Console.WriteLine(emsg);
+                                LogCallback?.Invoke(emsg);
+                                failed++;
+                            }
+                        }
+                        defs = list;
+                    }
+                }
+                catch { }
+
+                defs ??= JsonSerializer.Deserialize<List<ItemDefinition>>(json, options);
                 if (defs == null) continue;
 
                 foreach (var def in defs)
                 {
                     try
                     {
+                        // Normalize furniture kinds -> placeable if tagged
+                        if (!new[] { "resource", "weapon", "armor", "tool", "container", "consumable", "placeable" }.Contains(def.Kind.ToLower()))
+                        {
+                            if (def.Tags.Any(t => string.Equals(t, "furniture", StringComparison.OrdinalIgnoreCase)))
+                                def.Kind = "placeable";
+                        }
                         ValidateDefinition(def);
                         _definitions[def.Id] = def;
                         IndexByKind(def);
@@ -189,20 +317,28 @@ public sealed class ItemManager
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[ItemManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}");
+                        var msg = $"[ItemManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}";
+                        Console.WriteLine(msg);
+                        LogCallback?.Invoke(msg);
                         failed++;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ItemManager] ERROR: Failed to load {Path.GetFileName(file)}: {ex.Message}");
+                var msg = $"[ItemManager] ERROR: Failed to load {System.IO.Path.GetFileName(file)}: {ex.Message}";
+                Console.WriteLine(msg);
+                LogCallback?.Invoke(msg);
                 failed++;
             }
         }
 
-        Console.WriteLine($"[ItemManager] Loaded {loaded} item definitions from {files.Length} files ({failed} errors)");
-        Console.WriteLine($"[ItemManager] Indexed {_kindIndex.Count} kinds: {string.Join(", ", _kindIndex.Keys)}");
+        var summary = $"[ItemManager] Loaded {loaded} item definitions from {files.Length} files ({failed} errors)";
+        Console.WriteLine(summary);
+        LogCallback?.Invoke(summary);
+        var kindsMsg = $"[ItemManager] Indexed {_kindIndex.Count} kinds: {string.Join(", ", _kindIndex.Keys)}";
+        Console.WriteLine(kindsMsg);
+        LogCallback?.Invoke(kindsMsg);
     }
 
     /// <summary>

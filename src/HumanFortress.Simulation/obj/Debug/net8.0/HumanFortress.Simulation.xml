@@ -90,12 +90,82 @@
         <member name="T:HumanFortress.Simulation.Items.ItemDefinition">
             <summary>
             Static definition of an item type loaded from data/core/items/*.json
-            Based on ITEMS_SPEC.md v3
+            Based on ITEMS_SPEC.md v4-int
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.FixedMaterial">
+            <summary>
+            Fixed material string ID (e.g. "core_mat_metal_iron")
+            Use this for raw resources like ingots, blocks, planks
+            Mutually exclusive with multi-material crafting (future)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.BaseVolumeML">
+            <summary>
+            Base volume in milliliters (mL), required
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.BaseMassG">
+            <summary>
+            Base mass in grams (g), optional
+            If null, mass is calculated from material density × volume
+            Use this for items with air gaps or composite materials
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemDefinition.FixedMassG">
+            <summary>
+            Fixed mass in grams (g), optional
+            Overrides material-based calculation (e.g. for feathers, balloons)
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.Items.ItemInstance">
             <summary>
             Runtime instance of an item in the world
+            Based on ITEMS_SPEC v4-int §17
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.MaterialId">
+            <summary>
+            Material string ID (references MaterialRegistry)
+            Null if item uses fixed_material from definition
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.Position">
+            <summary>
+            World position (always set, represents last known position even if carried/contained)
+            Use IsOnGround to check if item is actually at this position
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.ContainedBy">
+            <summary>
+            Container GUID (if inside container, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.CarriedBy">
+            <summary>
+            Creature GUID (if in inventory, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.EquippedBy">
+            <summary>
+            Creature GUID (if equipped, Position becomes irrelevant)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.InstalledAt">
+            <summary>
+            Placeable installation data (if installed as furniture/workstation)
+            When set, item is installed at InstalledAt.AnchorWorld instead of Position
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.IsOnGround">
+            <summary>
+            Helper: check if item is on ground (not carried/contained/equipped/installed)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Items.ItemInstance.ReservationTokens">
+            <summary>
+            Reservation tokens for job system (replaces old IsReserved/ReservedBy)
+            Multiple jobs can reserve portions of a stack
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.Items.ItemManager">
@@ -234,6 +304,63 @@
             Snapshot for UI/debugging.
             </summary>
         </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionDesignation">
+            <summary>
+            Construction designation for L0 structural builds (wall/floor/ramp/stairs).
+            Supports multi-Z prisms per DF-style input: top Z places stairs down, bottom Z places stairs up, middle Z places UD.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionShape">
+            <summary>
+            Target structural kinds we support in L0 construction.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.PlannedBuild">
+            <summary>
+            Planned build DTO emitted by ConstructionSystem.ReadTick.
+            Carries final target kind and optional geology handle selected by material resolver.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.PlannedBuild.#ctor(SadRogue.Primitives.Point,System.Int32,HumanFortress.Simulation.Tiles.TerrainKind,System.UInt16,HumanFortress.Simulation.Orders.ConstructionShape,System.Int32,System.UInt64)">
+            <summary>
+            Planned build DTO emitted by ConstructionSystem.ReadTick.
+            Carries final target kind and optional geology handle selected by material resolver.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MaterialFilterSpec">
+            <summary>
+            Filter specification for selecting materials/items for construction.
+            Can be reused by L2 furniture and future workshop recipes.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.PreferredMaterialId">
+            <summary>
+            Optional concrete material ID (e.g., "core_mat_stone_granite"). If set, takes precedence.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.Tags">
+            <summary>
+            Tag filters (e.g., ["construction","block","stone"]).
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Orders.MaterialFilterSpec.CategoryKey">
+            <summary>
+            Optional UI/cache category key (e.g., "l0.floor", "l0.wall").
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.ConstructionSystem">
+            <summary>
+            Planner for L0 structural construction. Reads ConstructionDesignation and produces PlannedBuilds.
+            - Multi-Z prism support: top layer -> StairsDown, bottom -> StairsUp, middle -> StairsUD when Shape=Stairs.
+            - Material resolution: queries ContentRegistry for (material, kind) → geology handle, with last-used preference cache.
+            - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.ConstructionSystem.PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind,System.UInt16)">
+            <summary>
+            Helper to pack SetTerrain args with optional geology override (plan A: existing opcode).
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.HaulDesignation">
             <summary>
             A haul designation created by player input (rectangle at a given Z).
@@ -250,6 +377,11 @@
         <member name="M:HumanFortress.Simulation.Orders.HaulingSystem.DequeuePlannedMoves(System.Int32,System.Collections.Generic.IList{HumanFortress.Simulation.Orders.HaulingSystem.PlannedMove})">
             <summary>
             Dequeue up to max planned moves for job creation.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Orders.MiningAction">
+            <summary>
+            Mining action kinds for advanced mining orders.
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.Orders.MiningDesignation">
@@ -286,6 +418,17 @@
             Enqueue a mining designation for processing.
             </summary>
         </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueMiningAdvanced(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.MiningAction,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue advanced mining order. DIG/DIG_RAMP decomposed into per-Z MiningDesignation immediately.
+            Others queued for future handling.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.EnqueueConstruction(SadRogue.Primitives.Rectangle,System.Int32,System.Int32,HumanFortress.Simulation.Orders.ConstructionShape,HumanFortress.Simulation.Orders.MaterialFilterSpec,System.Int32,System.UInt64)">
+            <summary>
+            Enqueue a construction designation (may span multiple Z).
+            </summary>
+        </member>
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainHaulDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.HaulDesignation},System.Int32)">
             <summary>
             Drain at most maxCount haul designations into the provided list.
@@ -305,6 +448,294 @@
         <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainMiningDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.MiningDesignation},System.Int32)">
             <summary>
             Drain mining designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Orders.OrdersManager.DrainConstructionDesignations(System.Collections.Generic.ICollection{HumanFortress.Simulation.Orders.ConstructionDesignation},System.Int32)">
+            <summary>
+            Drain construction designations into provided list (Read phase).
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.ChunkPlaceableData">
+             <summary>
+             Chunk-level placeable storage (Layer 2: placeables/constructions)
+             Stores placeable instances owned by this chunk.
+             For multi-chunk large placeables (e.g., 5×5 workshop spanning multiple chunks),
+             only the primary chunk owns the instance; other chunks store external references.
+            
+             NOTE: Will be serialized to chunk saves when save system is implemented.
+             Currently stored in memory only via Chunk._placeableData.
+             </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.GetPlaceableAt(System.Int32)">
+            <summary>
+            Get placeable at local cell index (resolves both owned and external)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.AddPlaceable(System.Int32,HumanFortress.Simulation.Placeables.PlaceableInstance)">
+            <summary>
+            Add owned placeable at local cell index.
+            Caller MUST call SyncToFurnitureCell and BumpConnectivityVersion separately.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.RemovePlaceable(System.Int32)">
+            <summary>
+            Remove owned placeable at local cell index
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.AddExternalRef(System.Int32,System.Guid)">
+            <summary>
+            Add external reference to placeable owned by another chunk
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.RemoveExternalRef(System.Int32)">
+            <summary>
+            Remove external reference at local cell index
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.GetAllOwnedPlaceables">
+            <summary>
+            Get all owned placeables
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.TryGetOwnedAt(System.Int32,HumanFortress.Simulation.Placeables.PlaceableInstance@)">
+            <summary>
+            Try get owned placeable at local cell index.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.HasPlaceableAt(System.Int32)">
+            <summary>
+            Check if cell has any placeable (owned or external ref)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.Clear">
+            <summary>
+            Clear all placeable data
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.SyncToFurnitureCell(HumanFortress.Simulation.World.Chunk,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Synchronize placeable to FurnitureCell layer.
+            Called after AddPlaceable to update L2 derived cache.
+            PlaceableInstance (authoritative) → FurnitureRef → FurnitureCell (derived)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.IsBlockingPassability(HumanFortress.Simulation.Placeables.PlaceableInstance)">
+            <summary>
+            Check if placeable has blocking passability
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.ChunkPlaceableData.UnsyncFromFurnitureCell(HumanFortress.Simulation.World.Chunk,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Remove placeable from FurnitureCell layer.
+            Called before RemovePlaceable to update L2 derived cache.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableFactory">
+            <summary>
+            Factory helpers for placeable instances.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableFactory.CreateConstructionGhost(SadRogue.Primitives.Point,System.Int32,System.UInt64,System.String)">
+            <summary>
+            Create a non-blocking construction ghost (1x1) at position for a planned L0 build.
+            Deterministic GUID by position + tickSeed.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableInstance">
+             <summary>
+             Runtime placeable instance stored in chunk.
+             Can be created from:
+             - Installable: ItemInstance with PlaceableProfile (preserves quality, material, decorations)
+             - Construction: Built on-site from ConstructionDefinition (quality always 0)
+            
+             NOTE: PlaceableData is serialized to chunk saves when save system is implemented.
+             Currently stored in memory only via Chunk.PlaceableData layer.
+             </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Guid">
+            <summary>
+            Unique GUID for this placeable instance
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Kind">
+            <summary>
+            Placeable kind (Installable from item, or Construction built on-site)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.DefinitionId">
+            <summary>
+            Definition ID (item def ID for Installable, construction def ID for Construction)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Position">
+            <summary>
+            World position (anchor point, top-left for MVP)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Z">
+            <summary>
+            Z-level
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Footprint">
+            <summary>
+            Footprint dimensions (stored directly, no rotation in MVP)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemGuid">
+            <summary>
+            Source item GUID (reference only, for uninstall tracking)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemMaterial">
+            <summary>
+            Source item material ID (preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemQuality">
+            <summary>
+            Source item quality tier (preserved for uninstall)
+            Only set for Installable kind (-3 to +3)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemDecorations">
+            <summary>
+            Source item decorations (inlays, engravings, sockets - preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.SourceItemMaker">
+            <summary>
+            Source item maker (crafter GUID - preserved for uninstall)
+            Only set for Installable kind
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Effects">
+            <summary>
+            Environmental effects (computed at install/build time)
+            For Installable: base effects + quality modifier
+            For Construction: fixed effects (quality always 0)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Passability">
+            <summary>
+            Passability mode (Blocking/Nonblocking/Doorway). Defaults to Nonblocking for ghosts.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.IsGhost">
+            <summary>
+            True if this is a temporary construction ghost placeholder.
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.DoorState">
+            <summary>
+            Door state (only if passability=doorway)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.OwnerFactionId">
+            <summary>
+            Owner faction ID
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.OwnerCreatureGuid">
+            <summary>
+            Owner creature GUID
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.Forbidden">
+            <summary>
+            Forbidden flag (blocks usage)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.HitPoints">
+            <summary>
+            Current hit points
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.PlaceableInstance.MaxHitPoints">
+            <summary>
+            Maximum hit points (calculated from material and size)
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateFromItem(HumanFortress.Simulation.Items.ItemInstance,HumanFortress.Simulation.Items.ItemDefinition,SadRogue.Primitives.Point,System.Int32,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create placeable instance from installed item
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateFromConstruction(HumanFortress.Core.Content.Registry.ConstructionDefinition,SadRogue.Primitives.Point,System.Int32,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create placeable instance from construction
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableInstance.CreateItemFromPlaceable(HumanFortress.Simulation.Placeables.PlaceableInstance,HumanFortress.Simulation.Items.ItemDefinition,System.UInt64,HumanFortress.Core.Content.Registry.PlaceableTuning)">
+            <summary>
+            Create item instance from uninstalled placeable (generates NEW GUID per SPEC §15.6)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableKind">
+            <summary>
+            Placeable kind (Installable from item, or Construction built on-site)
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Placeables.PlaceableKind.Installable">
+            <summary>
+            Installable from item (has source_item_* fields, preserves quality/material/decorations)
+            </summary>
+        </member>
+        <member name="F:HumanFortress.Simulation.Placeables.PlaceableKind.Construction">
+            <summary>
+            Built on-site from construction definition (no source item, quality always 0)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.DoorState">
+            <summary>
+            Door state component (only for placeables with passability=doorway)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.DoorState.IsOpen">
+            <summary>
+            Is door currently open (affects passability)
+            </summary>
+        </member>
+        <member name="P:HumanFortress.Simulation.Placeables.DoorState.IsLocked">
+            <summary>
+            Is door locked (blocks opening)
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.PlaceableManager">
+            <summary>
+            Manager for placeable operations across chunks.
+            Handles collision detection, cross-chunk footprints, and two-phase placement protocol.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.CheckCollision(HumanFortress.Simulation.World.World,SadRogue.Primitives.Point,System.Int32,HumanFortress.Core.Content.Registry.Footprint)">
+            <summary>
+            Check if placeable can be placed at position without collision.
+            Validates full footprint across all chunks.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.PlacePlaceable(HumanFortress.Simulation.World.World,HumanFortress.Simulation.Placeables.PlaceableInstance,System.UInt64)">
+            <summary>
+            Place placeable instance with full cross-chunk footprint handling.
+            Uses two-phase protocol for deterministic cross-chunk writes.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.RemoveGhostAt(HumanFortress.Simulation.World.World,SadRogue.Primitives.Point,System.Int32,System.String,System.UInt64)">
+            <summary>
+            Remove ghost placeable at anchor position if present.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.Placeables.PlaceableManager.GetAffectedChunks(SadRogue.Primitives.Point,System.Int32,HumanFortress.Core.Content.Registry.Footprint)">
+            <summary>
+            Get all chunks affected by placeable footprint.
+            Used for cross-chunk collision detection and placement.
+            </summary>
+        </member>
+        <member name="T:HumanFortress.Simulation.Placeables.CollisionResult">
+            <summary>
+            Result of collision detection
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.Rendering.RenderSnapshot">
@@ -1080,6 +1511,36 @@
             Initialize zone data if not present. Write phase only.
             </summary>
         </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.GetPlaceableData">
+            <summary>
+            Get placeable data for this chunk. Thread-safe for reads.
+            NOTE: PlaceableData will be serialized to chunk saves when save system is implemented.
+            Currently stored in memory only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.EnsurePlaceableData">
+            <summary>
+            Initialize placeable data if not present. Write phase only.
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.RemoveFurnitureAt(System.Int32,System.Int32,System.Guid,System.UInt64)">
+            <summary>
+            Remove a furniture reference at a cell matching the given placeable GUID.
+            Returns true if a blocking ref was removed (connectivity changed).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.BumpConnectivityVersion">
+            <summary>
+            Bump connectivity version to invalidate derived caches.
+            Called when L0 or L2 topology changes (tiles, furniture, placeables).
+            </summary>
+        </member>
+        <member name="M:HumanFortress.Simulation.World.Chunk.MarkTileDirty(System.Int32,System.UInt64)">
+            <summary>
+            Mark tile and neighbors dirty for cache rebuild.
+            Called when L0 or L2 changes affect pathfinding/LOS.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.World.ChunkKey">
             <summary>
             Unique chunk identifier.
@@ -1092,7 +1553,8 @@
         </member>
         <member name="T:HumanFortress.Simulation.World.FurnitureRef">
             <summary>
-            Reference to furniture instance.
+            Reference to furniture/placeable instance.
+            MIGRATION: Old system uses Id + TypeId, new system uses PlaceableGuid.
             </summary>
         </member>
         <member name="T:HumanFortress.Simulation.World.FieldCell">

@@ -301,7 +301,7 @@ namespace HumanFortress.App.UI;
     }
 
     // Draw quick menu (new compact popup-based UI)
-    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null)
+        public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
         var surf = mapSurface.Surface;
@@ -379,6 +379,89 @@ namespace HumanFortress.App.UI;
                 stockpileUI.DrawStockpileWithSubmenu(mapSurface, centerX, l2Y, ui.StockpileMenu);
             }
         }
+
+        // Prune expired highlights and draw recent order highlights on map (after menus)
+        ui.PruneHighlights(tick);
+        var cam = cameraOverride ?? new SadRogue.Primitives.Point(0, 0);
+        var z = zOverride ?? ui.PlaceZ;
+        DrawOrderHighlights(mapSurface, ui, camera: cam, currentZ: z, tick, world);
+    }
+
+    private static void DrawOrderHighlights(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point camera, int currentZ, ulong tick, HumanFortress.Simulation.World.World? world)
+    {
+        var surf = mapSurface.Surface;
+        var highlights = ui.GetHighlights();
+        if (highlights.Count == 0) return;
+        bool flash = ((tick / 10) % 2) == 0;
+        var color = flash ? Color.Yellow : Color.Orange;
+        foreach (var h in highlights)
+        {
+            if (currentZ < h.ZMin || currentZ > h.ZMax) continue;
+            int x0 = h.Rect.X - camera.X;
+            int y0 = h.Rect.Y - camera.Y;
+            int x1 = x0 + h.Rect.Width - 1;
+            int y1 = y0 + h.Rect.Height - 1;
+            void Plot(int x,int y){ if (x>=0 && x<surf.Width && y>=0 && y<surf.Height) surf.SetGlyph(x,y,' ', Color.White, color.SetAlpha(60)); }
+            for (int x = x0; x <= x1; x++) { Plot(x, y0); Plot(x, y1); }
+            for (int y = y0; y <= y1; y++) { Plot(x0, y); Plot(x1, y); }
+
+            // If mining highlight and world provided, shade only actually affected cells
+            // We support encoded kind pattern: "mining:<Action>" (e.g., mining:DigChannel)
+            if (world != null && h.Kind.StartsWith("mining", System.StringComparison.OrdinalIgnoreCase))
+            {
+                string action = "";
+                int idx = h.Kind.IndexOf(':');
+                if (idx >= 0 && idx + 1 < h.Kind.Length) action = h.Kind.Substring(idx + 1);
+                var fillColor = new Color(200, 180, 0).SetAlpha(35);
+                bool IsFill(HumanFortress.Simulation.Tiles.TerrainKind k)
+                {
+                    switch (action)
+                    {
+                        case nameof(MiningAction.DigRamp):
+                            return k == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall;
+                        case nameof(MiningAction.DigChannel):
+                            return k == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
+                        case nameof(MiningAction.DigStairwell):
+                            // Only show fill on top layer to indicate starting floor
+                            return currentZ == h.ZMin && k == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor;
+                        default:
+                            // Dig and others: walls and ramps
+                            return k == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall || k == HumanFortress.Simulation.Tiles.TerrainKind.Ramp;
+                    }
+                }
+
+                for (int wx = h.Rect.X; wx < h.Rect.X + h.Rect.Width; wx++)
+                {
+                    for (int wy = h.Rect.Y; wy < h.Rect.Y + h.Rect.Height; wy++)
+                    {
+                        var toptile = world.GetTile(wx, wy, currentZ);
+                        if (toptile == null) continue;
+                        if (!IsFill(toptile.Value.Kind)) continue;
+                        int sx = wx - camera.X;
+                        int sy = wy - camera.Y;
+                        if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
+                            surf.SetGlyph(sx, sy, ' ', Color.White, fillColor);
+                    }
+                }
+
+                // Optional: stairwell top/bottom markers for z-min/z-max
+                if (action == nameof(MiningAction.DigStairwell))
+                {
+                    if (currentZ == h.ZMin)
+                    {
+                        int sx = x0 + 1, sy = y0 + 1;
+                        if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
+                            surf.Print(sx, sy, "Top", Color.Cyan);
+                    }
+                    else if (currentZ == h.ZMax)
+                    {
+                        int sx = x0 + 1, sy = y0 + 1;
+                        if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
+                            surf.Print(sx, sy, "Bottom", Color.Cyan);
+                    }
+                }
+            }
+        }
     }
 
     public static void DrawHelp(ScreenSurface mapSurface, UiStore ui)
@@ -437,7 +520,7 @@ namespace HumanFortress.App.UI;
         surf.Print(x0 + 2, y0 + 3, "ESC resume | M main menu", Color.White);
     }
 
-    public static void DrawDebug(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point cursor, int currentZ, int zoomLevel, SadRogue.Primitives.Point camera, int fortressSize)
+    public static void DrawDebug(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point cursor, int currentZ, int zoomLevel, SadRogue.Primitives.Point camera, int fortressSize, HumanFortress.Simulation.World.World? world = null)
     {
         if (!ui.DebugOpen) return;
         var surf = mapSurface.Surface;
@@ -508,14 +591,32 @@ namespace HumanFortress.App.UI;
         else // Items tab
         {
             surf.Print(x0 + 2, y0 + 2, "Spawn Item:", Color.Yellow);
-            surf.Print(x0 + 2, y0 + 3, "[1] Stone", ui.DebugSelectedItem.Contains("stone") ? Color.White : Color.DarkGray);
-            surf.Print(x0 + 2, y0 + 4, "[2] Iron Ingot", ui.DebugSelectedItem.Contains("iron") ? Color.White : Color.DarkGray);
-            surf.Print(x0 + 2, y0 + 5, "[3] Wood Log", ui.DebugSelectedItem.Contains("wood") ? Color.White : Color.DarkGray);
-            surf.Print(x0 + 2, y0 + 6, "[4] Pickaxe", ui.DebugSelectedItem.Contains("pickaxe") ? Color.White : Color.DarkGray);
-            surf.Print(x0 + 2, y0 + 7, "[5] Sword", ui.DebugSelectedItem.Contains("sword") ? Color.White : Color.DarkGray);
+            // Category pills
+            int catX = x0 + 2;
+            WritePill(surf, ref catX, y0 + 3, "[B] Boulders", ui.DebugItemCat == DebugItemCategory.Boulders ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Boulders ? Color.Yellow : new Color(40,40,40));
+            WritePill(surf, ref catX, y0 + 3, "[K] Blocks", ui.DebugItemCat == DebugItemCategory.Blocks ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Blocks ? Color.Yellow : new Color(40,40,40));
+            WritePill(surf, ref catX, y0 + 3, "[L] Logs", ui.DebugItemCat == DebugItemCategory.Logs ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Logs ? Color.Yellow : new Color(40,40,40));
+            WritePill(surf, ref catX, y0 + 3, "[P] Planks", ui.DebugItemCat == DebugItemCategory.Planks ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Planks ? Color.Yellow : new Color(40,40,40));
+            WritePill(surf, ref catX, y0 + 3, "[T] Tools", ui.DebugItemCat == DebugItemCategory.Tools ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Tools ? Color.Yellow : new Color(40,40,40));
+            WritePill(surf, ref catX, y0 + 3, "[W] Weapons", ui.DebugItemCat == DebugItemCategory.Weapons ? Color.Black : Color.White, ui.DebugItemCat == DebugItemCategory.Weapons ? Color.Yellow : new Color(40,40,40));
 
-            surf.Print(x0 + 2, y0 + 9, $"Selected: {GetItemName(ui.DebugSelectedItem)}", Color.Cyan);
-            surf.Print(x0 + 2, y0 + 11, "Click map to spawn at mouse position", Color.Green);
+            var itemIds = GetDebugItemsForCategory(world, ui.DebugItemCat).ToList();
+
+            // Show first 10 items with [1]-[0] keys
+            int listY = y0 + 5;
+            int shown = 0;
+            foreach (var id in itemIds.Take(10))
+            {
+                int idx = shown == 9 ? 0 : (shown + 1);
+                bool sel = ui.DebugSelectedItem == id;
+                var color = sel ? Color.White : Color.DarkGray;
+                surf.Print(x0 + 4, listY, $"[{idx}] {GetItemNameOrId(world, id)}", color);
+                listY++;
+                shown++;
+            }
+
+            surf.Print(x0 + 2, listY + 1, $"Selected: {GetItemNameOrId(world, ui.DebugSelectedItem)}", Color.Cyan);
+            surf.Print(x0 + 2, listY + 3, "Click map to spawn at mouse position", Color.Green);
         }
     }
 
@@ -536,12 +637,91 @@ namespace HumanFortress.App.UI;
     {
         return id switch
         {
-            "core_item_stone_generic" => "Stone",
-            "core_item_ingot_iron" => "Iron Ingot",
-            "core_item_wood_log" => "Wood Log",
+            "core_item_boulder_granite" => "Stone",
+            "core_item_ingot_iron_wrought" => "Iron Ingot",
+            "core_item_log_oak" => "Wood Log",
             "core_tool_mining_pickaxe" => "Pickaxe",
             "core_weapon_sword_short" => "Short Sword",
             _ => "Unknown"
+        };
+    }
+
+    private static string GetItemNameOrId(HumanFortress.Simulation.World.World? world, string id)
+    {
+        if (world == null)
+        {
+            var name = GetItemName(id);
+            return name == "Unknown" ? id : name;
+        }
+        var def = world.Items.GetDefinition(id);
+        if (def == null)
+        {
+            var name = GetItemName(id);
+            return name == "Unknown" ? id : name;
+        }
+        // If name is generic (e.g., "Boulder"/"Block"/"Plank") try append material friendly name
+        var baseName = string.IsNullOrWhiteSpace(def.Name) ? "Unknown" : def.Name!;
+        if (!string.IsNullOrEmpty(def.FixedMaterial) && IsGenericResourceName(baseName))
+        {
+            var matNice = MaterialSuffixFriendly(def.FixedMaterial!);
+            if (!string.IsNullOrEmpty(matNice))
+                return $"{baseName} ({matNice})";
+        }
+        return baseName;
+    }
+
+    private static bool IsGenericResourceName(string name)
+    {
+        var n = name.ToLowerInvariant();
+        return n == "boulder" || n == "block" || n == "plank" || n == "log";
+    }
+
+    private static string MaterialSuffixFriendly(string materialId)
+    {
+        // materialId example: "core_mat_stone_granite" -> "Granite"
+        try
+        {
+            var parts = materialId.Split('_');
+            if (parts.Length >= 1)
+            {
+                var last = parts[^1];
+                if (last.Length > 0)
+                {
+                    return char.ToUpperInvariant(last[0]) + last.Substring(1).Replace('_', ' ');
+                }
+            }
+        }
+        catch { }
+        return materialId;
+    }
+
+    private static System.Collections.Generic.IEnumerable<string> GetDebugItemsForCategory(HumanFortress.Simulation.World.World? world, DebugItemCategory cat)
+    {
+        if (world == null)
+        {
+            return cat switch
+            {
+                DebugItemCategory.Boulders => new[] { "core_item_boulder_granite", "core_item_boulder_marble" },
+                DebugItemCategory.Blocks   => new[] { "core_item_block_stone", "core_item_block_wood" },
+                DebugItemCategory.Logs     => new[] { "core_item_log_oak", "core_item_log_pine" },
+                DebugItemCategory.Planks   => new[] { "core_item_plank_oak", "core_item_plank_pine" },
+                DebugItemCategory.Tools    => new[] { "core_tool_mining_pickaxe" },
+                DebugItemCategory.Weapons  => new[] { "core_weapon_sword_short" },
+                _ => System.Array.Empty<string>()
+            };
+        }
+
+        var defs = world.Items.GetAllDefinitions();
+        bool Prefix(string s, string p) => s.StartsWith(p);
+        return cat switch
+        {
+            DebugItemCategory.Boulders => defs.Select(d => d.Id).Where(id => Prefix(id, "core_item_boulder_")).OrderBy(s => s),
+            DebugItemCategory.Blocks   => defs.Select(d => d.Id).Where(id => Prefix(id, "core_item_block_")).OrderBy(s => s),
+            DebugItemCategory.Logs     => defs.Select(d => d.Id).Where(id => Prefix(id, "core_item_log_")).OrderBy(s => s),
+            DebugItemCategory.Planks   => defs.Select(d => d.Id).Where(id => Prefix(id, "core_item_plank_")).OrderBy(s => s),
+            DebugItemCategory.Tools    => defs.Select(d => d.Id).Where(id => Prefix(id, "core_tool_")).OrderBy(s => s),
+            DebugItemCategory.Weapons  => defs.Select(d => d.Id).Where(id => Prefix(id, "core_weapon_")).OrderBy(s => s),
+            _ => System.Array.Empty<string>()
         };
     }
 

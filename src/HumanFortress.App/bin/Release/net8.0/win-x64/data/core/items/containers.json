@@ -1,6 +1,6 @@
 [
   {
-    "id": "core_container_waterskin_small",
+    "id": "core_container_waterskin",
     "name": "Waterskin",
     "kind": "CONTAINER",
     "tags": ["container", "leather"],
@@ -11,25 +11,6 @@
       "mode": "count",
       "unit": "piece",
       "max_per_stack": 20,
-      "equal_when": ["quality", "condition"],
-      "requires_pristine": true,
-      "require_no_mods": true,
-      "require_no_enchant": true,
-      "requires_empty": true
-    }
-  },
-  {
-    "id": "core_container_waterskin_large",
-    "name": "Waterskin",
-    "kind": "CONTAINER",
-    "tags": ["container", "leather"],
-    "base_mass_g": 300,
-    "base_volume_ml": 800,
-    "container": { "capacity_ml": 5000, "allow_tags": ["liquid"], "sealed": true },
-    "stack": {
-      "mode": "count",
-      "unit": "piece",
-      "max_per_stack": 15,
       "equal_when": ["quality", "condition"],
       "requires_pristine": true,
       "require_no_mods": true,
@@ -95,12 +76,12 @@
     }
   },
   {
-    "id": "core_container_chest",
-    "name": "Chest",
+    "id": "core_container_flask",
+    "name": "Flask",
     "kind": "CONTAINER",
-    "tags": ["container", "furniture", "storage"],
-    "base_mass_g": 20000,
-    "base_volume_ml": 50000,
+    "tags": ["container", "glass", "storage"],
+    "base_mass_g": 500,
+    "base_volume_ml": 250,
     "container": { "capacity_ml": 200000, "sealed": false },
     "stack": {
       "mode": "count",

@@ -1,0 +1,415 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/items.schema.json",
+  "title": "Items Registry Schema",
+  "description": "Schema for item definitions (v4-int: tag-based type inference, FX=10000)",
+  "type": "object",
+  "required": ["$schema", "version", "items"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference"
+    },
+    "version": {
+      "type": "string",
+      "description": "Registry version (semver)"
+    },
+    "_comment": {
+      "type": "string",
+      "description": "Optional file-level comment"
+    },
+    "items": {
+      "type": "array",
+      "description": "Array of item definitions",
+      "items": {
+        "$ref": "#/definitions/Item"
+      }
+    }
+  },
+  "definitions": {
+    "Item": {
+      "type": "object",
+      "required": ["id", "name", "category", "tags", "base_volume_ml"],
+      "properties": {
+        "_comment": {
+          "type": "string",
+          "description": "Optional comment for this item"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_]+$",
+          "description": "Unique item definition ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name (material-agnostic)"
+        },
+        "category": {
+          "type": "string",
+          "description": "Primary category for UI grouping"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "description": "Tags for filtering, type inference, and gameplay mechanics"
+        },
+        "fixed_material": {
+          "type": "string",
+          "description": "Optional fixed material ID (only for items where material is identity, e.g. ingots)"
+        },
+        "base_volume_ml": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Base volume in milliliters (required)"
+        },
+        "base_mass_g": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Base mass in grams (optional, can be calculated from recipe/material)"
+        },
+        "stack": {
+          "$ref": "#/definitions/StackBlock",
+          "description": "Stacking behavior (full block structure)"
+        },
+        "stack_mode": {
+          "type": "string",
+          "enum": ["none", "count", "charges"],
+          "description": "DEPRECATED: Use stack block instead. Kept for backward compatibility."
+        },
+        "placeable_profile": {
+          "$ref": "#/definitions/PlaceableProfile",
+          "description": "Optional placeable profile for installable items"
+        },
+        "weapon": {
+          "$ref": "#/definitions/WeaponBlock",
+          "description": "Optional weapon statistics"
+        },
+        "equip": {
+          "$ref": "#/definitions/EquipBlock",
+          "description": "Optional equipment/armor statistics"
+        },
+        "shape_mod": {
+          "$ref": "#/definitions/ShapeModBlock",
+          "description": "Optional shape modifiers for ergonomics/encumbrance"
+        },
+        "decor": {
+          "$ref": "#/definitions/DecorBlock",
+          "description": "Optional decoration options (inlay, engrave, sockets)"
+        },
+        "storage_capacity": {
+          "$ref": "#/definitions/StorageCapacityBlock",
+          "description": "Optional storage capacity (requires placeable_profile)"
+        },
+        "door_state_default": {
+          "$ref": "#/definitions/DoorStateBlock",
+          "description": "Optional door state (requires placeable_profile with passability=doorway)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["storage_capacity"]
+          },
+          "then": {
+            "required": ["placeable_profile"],
+            "properties": {
+              "placeable_profile": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["door_state_default"]
+          },
+          "then": {
+            "required": ["placeable_profile"],
+            "properties": {
+              "placeable_profile": {
+                "type": "object",
+                "required": ["passability"],
+                "properties": {
+                  "passability": {
+                    "const": "doorway"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "StackBlock": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["none", "count", "charges"],
+          "description": "Stacking mode: none (no stacking), count (identical items), charges (consumable units)"
+        },
+        "max_per_stack": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Maximum items/charges per stack (required if mode != none)"
+        },
+        "unit": {
+          "type": "string",
+          "enum": ["piece", "g", "ml"],
+          "description": "Unit for charges mode (required if mode=charges)"
+        },
+        "equal_when": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["material", "quality", "condition", "enchantment"]
+          },
+          "description": "Conditions that must match for items to stack (optional)"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "enum": ["count", "charges"]
+              }
+            }
+          },
+          "then": {
+            "required": ["max_per_stack"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "charges"
+              }
+            }
+          },
+          "then": {
+            "required": ["unit"]
+          }
+        }
+      ]
+    },
+    "PlaceableProfile": {
+      "type": "object",
+      "required": ["footprint", "passability", "requires_floor", "clearance_h", "blocks_light", "tags", "effects"],
+      "properties": {
+        "footprint": {
+          "type": "object",
+          "required": ["w", "d", "h"],
+          "properties": {
+            "w": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Width (x-axis, tiles)"
+            },
+            "d": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Depth (y-axis, tiles)"
+            },
+            "h": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Height (z-axis, tiles)"
+            }
+          }
+        },
+        "passability": {
+          "type": "string",
+          "enum": ["blocking", "nonblocking", "doorway"],
+          "description": "Pathfinding passability: blocking (wall-like), nonblocking (can walk through), doorway (requires door state)"
+        },
+        "requires_floor": {
+          "type": "boolean",
+          "description": "Whether this placeable requires a floor tile beneath it"
+        },
+        "clearance_h": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Required vertical clearance in tiles above the footprint"
+        },
+        "blocks_light": {
+          "type": "boolean",
+          "description": "Whether this placeable blocks light propagation"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Tags for placeable-specific filtering (e.g., room requirements, furniture_bed)"
+        },
+        "effects": {
+          "$ref": "#/definitions/EffectsBlock",
+          "description": "Environmental effects (base values, quality modifier applied at install time)"
+        }
+      }
+    },
+    "EffectsBlock": {
+      "type": "object",
+      "required": ["beauty", "comfort", "light_lumen", "heat_w"],
+      "properties": {
+        "beauty": {
+          "type": "integer",
+          "description": "Beauty value (discrete integer, can be negative)"
+        },
+        "comfort": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Comfort value (discrete integer, non-negative)"
+        },
+        "light_lumen": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Light output in lumens (discrete integer)"
+        },
+        "heat_w": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Heat output in watts (discrete integer)"
+        }
+      }
+    },
+    "StorageCapacityBlock": {
+      "type": "object",
+      "required": ["volume_ml", "slots"],
+      "properties": {
+        "volume_ml": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Total storage volume in milliliters"
+        },
+        "slots": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of storage slots"
+        },
+        "allowed_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional whitelist of allowed item tags (omit for unrestricted storage)"
+        }
+      }
+    },
+    "DoorStateBlock": {
+      "type": "object",
+      "required": ["locked"],
+      "properties": {
+        "locked": {
+          "type": "boolean",
+          "description": "Default locked state (false = unlocked by default)"
+        }
+      }
+    },
+    "WeaponBlock": {
+      "type": "object",
+      "required": ["damage_type", "base_damage", "attack_speed_ms", "reach_tiles"],
+      "properties": {
+        "damage_type": {
+          "type": "string",
+          "enum": ["slash", "pierce", "blunt", "special"],
+          "description": "Primary damage type"
+        },
+        "base_damage": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Base damage value (modified by material/quality)"
+        },
+        "attack_speed_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "description": "Attack speed in milliseconds"
+        },
+        "reach_tiles": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Attack reach in tiles"
+        },
+        "skill_tag": {
+          "type": "string",
+          "description": "Required skill tag (e.g., 'skill_sword', 'skill_axe')"
+        }
+      }
+    },
+    "EquipBlock": {
+      "type": "object",
+      "required": ["slot", "coverage_tags"],
+      "properties": {
+        "slot": {
+          "type": "string",
+          "enum": ["head", "torso", "legs", "feet", "hands", "shield", "back"],
+          "description": "Equipment slot"
+        },
+        "coverage_tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Body parts covered (e.g., ['head', 'eyes'])"
+        },
+        "armor_value": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Base armor value (modified by material/quality)"
+        },
+        "dodge_penalty_fx": {
+          "type": "integer",
+          "description": "Dodge penalty as FX (10000 = -1.0 dodge, can be negative for bonus)"
+        }
+      }
+    },
+    "ShapeModBlock": {
+      "type": "object",
+      "properties": {
+        "ergonomics_fx": {
+          "type": "integer",
+          "description": "Ergonomics modifier as FX (10000 = 1.0 = neutral, higher = better, lower = worse)"
+        },
+        "base_enc_points": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Base encumbrance points (absolute value)"
+        },
+        "class_enc_fx": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Class-based encumbrance multiplier as FX (10000 = 1.0)"
+        }
+      }
+    },
+    "DecorBlock": {
+      "type": "object",
+      "properties": {
+        "allow_inlay": {
+          "type": "boolean",
+          "description": "Whether this item can have inlaid materials"
+        },
+        "allow_engrave": {
+          "type": "boolean",
+          "description": "Whether this item can be engraved"
+        },
+        "sockets": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of gem sockets"
+        },
+        "beauty_mult_fx": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Multiplier for decoration effects on beauty (FX, 10000 = 1.0)"
+        }
+      }
+    }
+  }
+}

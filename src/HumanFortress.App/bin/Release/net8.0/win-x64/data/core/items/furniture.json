@@ -1,0 +1,742 @@
+{
+  "$schema": "../../../content/schemas/items.schema.json",
+  "version": "1.0.0",
+  "_comment": "All furniture items - installable items with placeable_profile",
+  "items": [
+    {
+      "_comment": "=== BEDS ===",
+      "id": "core_item_furniture_bed",
+      "name": "Bed",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "bed",
+        "sleep"
+      ],
+      "base_volume_ml": 80000,
+      "base_mass_g": 20000,
+      "stack": {
+        "mode": "none"
+      },
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "sleep",
+          "bed"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 3,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    },
+    {
+      "_comment": "=== SEATING ===",
+      "id": "core_item_furniture_chair",
+      "name": "Chair",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "chair",
+        "seating"
+      ],
+      "base_volume_ml": 40000,
+      "base_mass_g": 8000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "seating",
+          "chair"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 2,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== TABLES ===",
+      "id": "core_item_furniture_table",
+      "name": "Table",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "table",
+        "dining"
+      ],
+      "base_volume_ml": 60000,
+      "base_mass_g": 15000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 2,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "dining",
+          "table"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== STORAGE ===",
+      "id": "core_item_furniture_chest",
+      "name": "Chest",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "storage",
+        "chest"
+      ],
+      "base_volume_ml": 100000,
+      "base_mass_g": 25000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "storage",
+          "chest"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 300000,
+        "slots": 30
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_cabinet",
+      "name": "Cabinet",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "storage",
+        "cabinet"
+      ],
+      "base_volume_ml": 80000,
+      "base_mass_g": 20000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "storage",
+          "cabinet"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 200000,
+        "slots": 20
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== DECORATIVE ===",
+      "id": "core_item_furniture_statue",
+      "name": "Statue",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "statue",
+        "decorative"
+      ],
+      "base_volume_ml": 200000,
+      "base_mass_g": 150000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "statue",
+          "decorative"
+        ],
+        "effects": {
+          "beauty": 5,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_bookcase",
+      "name": "Bookcase",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "bookcase",
+        "storage",
+        "library"
+      ],
+      "base_volume_ml": 150000,
+      "base_mass_g": 35000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "bookcase",
+          "storage",
+          "library"
+        ],
+        "effects": {
+          "beauty": 3,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 400000,
+        "slots": 50,
+        "allowed_tags": [
+          "book",
+          "scroll",
+          "document"
+        ]
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_display",
+      "name": "Display Case",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "display",
+        "decorative"
+      ],
+      "base_volume_ml": 100000,
+      "base_mass_g": 30000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "display",
+          "decorative"
+        ],
+        "effects": {
+          "beauty": 4,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 50000,
+        "slots": 10,
+        "allowed_tags": [
+          "artifact",
+          "craft",
+          "treasure",
+          "figurine",
+          "jewelry"
+        ]
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== SANITATION ===",
+      "id": "core_item_furniture_basin",
+      "name": "Basin",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "basin",
+        "sanitation",
+        "water"
+      ],
+      "base_volume_ml": 50000,
+      "base_mass_g": 40000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "basin",
+          "sanitation"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_toilet",
+      "name": "Toilet",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "toilet",
+        "sanitation"
+      ],
+      "base_volume_ml": 80000,
+      "base_mass_g": 60000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "toilet",
+          "sanitation"
+        ],
+        "effects": {
+          "beauty": -1,
+          "comfort": 2,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_bathtub",
+      "name": "Bathtub",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "bathtub",
+        "sanitation",
+        "luxury"
+      ],
+      "base_volume_ml": 250000,
+      "base_mass_g": 200000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 2,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "bathtub",
+          "sanitation",
+          "luxury"
+        ],
+        "effects": {
+          "beauty": 3,
+          "comfort": 4,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== BURIAL ===",
+      "id": "core_item_furniture_burial",
+      "name": "Coffin",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "burial",
+        "coffin",
+        "death"
+      ],
+      "base_volume_ml": 200000,
+      "base_mass_g": 80000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 2,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 1,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "burial",
+          "coffin"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 250000,
+        "slots": 1,
+        "allowed_tags": [
+          "corpse",
+          "remains"
+        ]
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_slab",
+      "name": "Memorial Slab",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "slab",
+        "memorial",
+        "death"
+      ],
+      "base_volume_ml": 100000,
+      "base_mass_g": 150000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "slab",
+          "memorial"
+        ],
+        "effects": {
+          "beauty": 3,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== RELIGIOUS ===",
+      "id": "core_item_furniture_altar",
+      "name": "Altar",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "altar",
+        "religious",
+        "temple"
+      ],
+      "base_volume_ml": 300000,
+      "base_mass_g": 250000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 2,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "altar",
+          "religious"
+        ],
+        "effects": {
+          "beauty": 5,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== LIGHTING ===",
+      "id": "core_item_furniture_torch",
+      "name": "Torch",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "light",
+        "torch"
+      ],
+      "base_volume_ml": 5000,
+      "base_mass_g": 1000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": false,
+        "clearance_h": 0,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "light",
+          "torch"
+        ],
+        "effects": {
+          "beauty": 0,
+          "comfort": 0,
+          "light_lumen": 300,
+          "heat_w": 50
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_brazier",
+      "name": "Brazier",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "light",
+        "brazier"
+      ],
+      "base_volume_ml": 30000,
+      "base_mass_g": 15000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "light",
+          "brazier"
+        ],
+        "effects": {
+          "beauty": 3,
+          "comfort": 0,
+          "light_lumen": 500,
+          "heat_w": 200
+        }
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "_comment": "=== MILITARY FURNITURE ===",
+      "id": "core_item_furniture_weapon_rack",
+      "name": "Weapon Rack",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "military",
+        "weapon_rack"
+      ],
+      "base_volume_ml": 60000,
+      "base_mass_g": 15000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "military",
+          "weapon_rack"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 50000,
+        "slots": 10,
+        "allowed_tags": [
+          "weapon"
+        ]
+      },
+      "stack": {
+        "mode": "none"
+      }
+    },
+    {
+      "id": "core_item_furniture_armor_stand",
+      "name": "Armor Stand",
+      "category": "furniture",
+      "tags": [
+        "furniture",
+        "military",
+        "armor_stand"
+      ],
+      "base_volume_ml": 70000,
+      "base_mass_g": 18000,
+      "placeable_profile": {
+        "footprint": {
+          "w": 1,
+          "d": 1,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 2,
+        "blocks_light": false,
+        "tags": [
+          "furniture",
+          "military",
+          "armor_stand"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      },
+      "storage_capacity": {
+        "volume_ml": 80000,
+        "slots": 8,
+        "allowed_tags": [
+          "armor",
+          "clothing"
+        ]
+      },
+      "stack": {
+        "mode": "none"
+      }
+    }
+  ]
+}

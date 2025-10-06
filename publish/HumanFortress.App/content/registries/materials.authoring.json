@@ -1,353 +1,1990 @@
 [
   {
+    "_comment": "=== RESERVED & FALLBACK MATERIALS (ID 0-9) === (was numeric ID 1)",
+    "id": "core_mat_air",
+    "aliases": [
+      "air"
+    ],
+    "tags": [
+      "gas",
+      "empty"
+    ],
+    "density_solid": 1,
+    "hardness_edge": 0,
+    "toughness_frac": 0,
+    "rigidity": 0,
+    "electric_category": "insulator",
+    "mana_conductivity": 100,
+    "value_mul": 0,
+    "beauty_mul": 0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_stone_generic",
+    "aliases": [
+      "stone_generic",
+      "generic_stone"
+    ],
+    "tags": [
+      "stone",
+      "generic",
+      "fallback"
+    ],
+    "density_solid": 2500,
+    "hardness_edge": 65,
+    "toughness_frac": 60,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 30,
+    "value_mul": 1.0,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.2
+    }
+  },
+  {
+    "id": "core_mat_mineral_generic",
+    "aliases": [
+      "mineral_generic",
+      "generic_mineral"
+    ],
+    "tags": [
+      "mineral",
+      "generic",
+      "fallback"
+    ],
+    "density_solid": 2000,
+    "hardness_edge": 40,
+    "toughness_frac": 30,
+    "rigidity": 60,
+    "electric_category": "insulator",
+    "mana_conductivity": 50,
+    "value_mul": 0.5,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_metal_generic",
+    "aliases": [
+      "metal_generic",
+      "generic_metal",
+      "scrap_metal"
+    ],
+    "tags": [
+      "metal",
+      "generic",
+      "fallback",
+      "scrap"
+    ],
+    "density_solid": 7000,
+    "hardness_edge": 45,
+    "toughness_frac": 70,
+    "rigidity": 80,
+    "electric_category": "conductor",
+    "mana_conductivity": 30,
+    "value_mul": 0.5,
+    "beauty_mul": 0.2,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_organic_generic",
+    "aliases": [
+      "organic_generic",
+      "generic_organic"
+    ],
+    "tags": [
+      "organic",
+      "generic",
+      "fallback"
+    ],
+    "density_solid": 800,
+    "hardness_edge": 15,
+    "toughness_frac": 40,
+    "rigidity": 35,
+    "electric_category": "insulator",
+    "mana_conductivity": 80,
+    "value_mul": 0.3,
+    "beauty_mul": 0.4,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.5
+    }
+  },
+  {
+    "id": "core_mat_liquid_water",
+    "aliases": [
+      "water",
+      "liquid_water"
+    ],
+    "tags": [
+      "liquid",
+      "water"
+    ],
+    "density_solid": 1000,
+    "hardness_edge": 0,
+    "toughness_frac": 0,
+    "rigidity": 0,
+    "electric_category": "semi",
+    "mana_conductivity": 90,
+    "value_mul": 0.01,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.0
+    },
+    "navigation": {
+      "move_cost_add": 30,
+      "friction_mul": 0.3,
+      "hazard_level": 3,
+      "hazard_type": "drowning"
+    }
+  },
+  {
+    "_comment": "=== STONES (ID 10-29) === (was numeric ID 10)",
     "id": "core_mat_stone_granite",
-    "tags": ["stone", "igneous", "hard"],
+    "aliases": [
+      "granite"
+    ],
+    "tags": [
+      "stone",
+      "igneous",
+      "hard",
+      "buildable"
+    ],
     "density_solid": 2750,
-    "resists": {"bash": 70, "cut": 85, "stab": 80, "acid": 40, "fire": 75, "cold": 85, "electric": 20, "arcane": 15},
-    "env": {"insulation": 15, "waterproof": 60, "breathability": 0, "chem_protect": 30},
-    "struct": {"durability": 90, "rigidity": 95},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
+    "hardness_edge": 75,
+    "toughness_frac": 65,
+    "rigidity": 90,
+    "electric_category": "insulator",
     "mana_conductivity": 25,
-    "beautifulness": 60,
-    "valuebaleness": 1.2,
-    "thermo": {"melt_point_c": 1215}
+    "value_mul": 1.2,
+    "beauty_mul": 1.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.4
+    }
   },
   {
     "id": "core_mat_stone_marble",
-    "tags": ["stone", "metamorphic", "decorative", "flux"],
+    "aliases": [
+      "marble"
+    ],
+    "tags": [
+      "stone",
+      "metamorphic",
+      "decorative",
+      "flux"
+    ],
     "density_solid": 2700,
-    "resists": {"bash": 65, "cut": 75, "stab": 70, "acid": 20, "fire": 70, "cold": 80, "electric": 15, "arcane": 20},
-    "env": {"insulation": 12, "waterproof": 55, "breathability": 0, "chem_protect": 20},
-    "struct": {"durability": 80, "rigidity": 85},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
+    "hardness_edge": 60,
+    "toughness_frac": 50,
+    "rigidity": 80,
+    "electric_category": "insulator",
     "mana_conductivity": 30,
-    "beautifulness": 85,
-    "valuebaleness": 2.5,
-    "thermo": {"melt_point_c": 1200}
+    "value_mul": 2.5,
+    "beauty_mul": 1.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.2
+    }
   },
   {
     "id": "core_mat_stone_basalt",
-    "tags": ["stone", "volcanic", "dark"],
+    "aliases": [
+      "basalt"
+    ],
+    "tags": [
+      "stone",
+      "volcanic",
+      "dark"
+    ],
     "density_solid": 3000,
-    "resists": {"bash": 75, "cut": 80, "stab": 75, "acid": 50, "fire": 90, "cold": 85, "electric": 10, "arcane": 10},
-    "env": {"insulation": 20, "waterproof": 65, "breathability": 0, "chem_protect": 35},
-    "struct": {"durability": 85, "rigidity": 90},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
+    "hardness_edge": 78,
+    "toughness_frac": 70,
+    "rigidity": 85,
+    "electric_category": "insulator",
     "mana_conductivity": 15,
-    "beautifulness": 45,
-    "valuebaleness": 0.9,
-    "thermo": {"melt_point_c": 1260}
+    "value_mul": 0.9,
+    "beauty_mul": 0.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.5
+    }
   },
   {
     "id": "core_mat_stone_sandstone",
-    "tags": ["stone", "sedimentary", "soft"],
-    "density_solid": 2300,
-    "resists": {"bash": 50, "cut": 60, "stab": 55, "acid": 25, "fire": 60, "cold": 70, "electric": 25, "arcane": 25},
-    "env": {"insulation": 10, "waterproof": 40, "breathability": 5, "chem_protect": 15},
-    "struct": {"durability": 65, "rigidity": 70},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 35,
-    "beautifulness": 50,
-    "valuebaleness": 0.8,
-    "thermo": {"melt_point_c": 1100}
+    "aliases": [
+      "sandstone"
+    ],
+    "tags": [
+      "stone",
+      "sedimentary",
+      "soft"
+    ],
+    "density_solid": 2200,
+    "hardness_edge": 45,
+    "toughness_frac": 35,
+    "rigidity": 60,
+    "electric_category": "insulator",
+    "mana_conductivity": 40,
+    "value_mul": 0.7,
+    "beauty_mul": 0.6,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.8
+    }
   },
   {
     "id": "core_mat_stone_limestone",
-    "tags": ["stone", "sedimentary", "common"],
-    "density_solid": 2500,
-    "resists": {"bash": 55, "cut": 65, "stab": 60, "acid": 15, "fire": 65, "cold": 75, "electric": 20, "arcane": 30},
-    "env": {"insulation": 12, "waterproof": 45, "breathability": 2, "chem_protect": 10},
-    "struct": {"durability": 70, "rigidity": 75},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 40,
-    "beautifulness": 55,
-    "valuebaleness": 1.0,
-    "thermo": {"melt_point_c": 1150}
+    "aliases": [
+      "limestone"
+    ],
+    "tags": [
+      "stone",
+      "sedimentary",
+      "flux"
+    ],
+    "density_solid": 2600,
+    "hardness_edge": 50,
+    "toughness_frac": 40,
+    "rigidity": 70,
+    "electric_category": "insulator",
+    "mana_conductivity": 35,
+    "value_mul": 0.8,
+    "beauty_mul": 0.7,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.9
+    }
   },
   {
     "id": "core_mat_stone_shale",
-    "tags": ["stone", "sedimentary", "layered"],
+    "aliases": [
+      "shale"
+    ],
+    "tags": [
+      "stone",
+      "sedimentary",
+      "layered"
+    ],
     "density_solid": 2400,
-    "resists": {"bash": 45, "cut": 55, "stab": 50, "acid": 30, "fire": 55, "cold": 65, "electric": 30, "arcane": 35},
-    "env": {"insulation": 8, "waterproof": 35, "breathability": 8, "chem_protect": 12},
-    "struct": {"durability": 55, "rigidity": 60},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
+    "hardness_edge": 40,
+    "toughness_frac": 25,
+    "rigidity": 50,
+    "electric_category": "insulator",
     "mana_conductivity": 45,
-    "beautifulness": 40,
-    "valuebaleness": 0.7,
-    "thermo": {"melt_point_c": 1050}
-  },
-  {
-    "id": "core_mat_soil_dirt",
-    "tags": ["soil", "organic", "soft"],
-    "density_solid": 1600,
-    "resists": {"bash": 10, "cut": 5, "stab": 3, "acid": 5, "fire": 10, "cold": 20, "electric": 50, "arcane": 60},
-    "env": {"insulation": 25, "waterproof": 5, "breathability": 70, "chem_protect": 2},
-    "struct": {"durability": 15, "rigidity": 5},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 70,
-    "beautifulness": 10,
-    "valuebaleness": 0.1,
-    "thermo": {}
-  },
-  {
-    "id": "core_mat_soil_grass",
-    "tags": ["soil", "organic", "vegetation"],
-    "density_solid": 1500,
-    "resists": {"bash": 12, "cut": 8, "stab": 5, "acid": 8, "fire": 5, "cold": 25, "electric": 45, "arcane": 65},
-    "env": {"insulation": 30, "waterproof": 8, "breathability": 80, "chem_protect": 3},
-    "struct": {"durability": 20, "rigidity": 8},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 75,
-    "beautifulness": 25,
-    "valuebaleness": 0.2,
-    "thermo": {"ignition_point_c": 300}
-  },
-  {
-    "id": "core_mat_soil_sand",
-    "tags": ["soil", "granular", "loose"],
-    "density_solid": 1700,
-    "resists": {"bash": 8, "cut": 3, "stab": 2, "acid": 50, "fire": 40, "cold": 30, "electric": 60, "arcane": 40},
-    "env": {"insulation": 20, "waterproof": 2, "breathability": 90, "chem_protect": 5},
-    "struct": {"durability": 10, "rigidity": 2},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 50,
-    "beautifulness": 15,
-    "valuebaleness": 0.1,
-    "thermo": {"melt_point_c": 1700}
-  },
-  {
-    "id": "core_mat_soil_mud",
-    "tags": ["soil", "wet", "soft"],
-    "density_solid": 1800,
-    "resists": {"bash": 5, "cut": 2, "stab": 1, "acid": 10, "fire": 20, "cold": 15, "electric": 30, "arcane": 70},
-    "env": {"insulation": 15, "waterproof": 0, "breathability": 50, "chem_protect": 1},
-    "struct": {"durability": 8, "rigidity": 1},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 80,
-    "beautifulness": 5,
-    "valuebaleness": 0.05,
-    "thermo": {}
-  },
-  {
-    "id": "core_mat_snow",
-    "tags": ["frozen", "water", "cold"],
-    "density_solid": 500,
-    "resists": {"bash": 3, "cut": 2, "stab": 1, "acid": 80, "fire": 0, "cold": 100, "electric": 70, "arcane": 50},
-    "env": {"insulation": 50, "waterproof": 10, "breathability": 60, "chem_protect": 0},
-    "struct": {"durability": 5, "rigidity": 3},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 60,
-    "beautifulness": 30,
-    "valuebaleness": 0.01,
-    "thermo": {"melt_point_c": 0}
-  },
-  {
-    "id": "core_mat_ore_iron",
-    "tags": ["ore", "metal", "valuable"],
-    "density_solid": 5000,
-    "resists": {"bash": 60, "cut": 70, "stab": 65, "acid": 25, "fire": 65, "cold": 75, "electric": 20, "arcane": 25},
-    "env": {"insulation": 8, "waterproof": 50, "breathability": 0, "chem_protect": 20},
-    "struct": {"durability": 75, "rigidity": 80},
-    "work": {"forgeable": true, "weldable": false, "carveable": false},
-    "mana_conductivity": 30,
-    "beautifulness": 35,
-    "valuebaleness": 3.0,
-    "thermo": {"melt_point_c": 1538}
-  },
-  {
-    "id": "core_mat_ore_gold",
-    "tags": ["ore", "precious", "valuable"],
-    "density_solid": 19300,
-    "resists": {"bash": 45, "cut": 50, "stab": 45, "acid": 90, "fire": 70, "cold": 80, "electric": 5, "arcane": 40},
-    "env": {"insulation": 5, "waterproof": 60, "breathability": 0, "chem_protect": 50},
-    "struct": {"durability": 50, "rigidity": 40},
-    "work": {"forgeable": true, "weldable": true, "carveable": false},
-    "mana_conductivity": 20,
-    "beautifulness": 95,
-    "valuebaleness": 50.0,
-    "thermo": {"melt_point_c": 1064}
+    "value_mul": 0.6,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.7
+    }
   },
   {
     "id": "core_mat_stone_slate",
-    "tags": ["stone", "metamorphic", "layered"],
-    "density_solid": 2700,
-    "resists": {"bash": 60, "cut": 70, "stab": 65, "acid": 35, "fire": 70, "cold": 80, "electric": 25, "arcane": 30},
-    "env": {"insulation": 14, "waterproof": 50, "breathability": 1, "chem_protect": 25},
-    "struct": {"durability": 75, "rigidity": 80},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 35,
-    "beautifulness": 55,
-    "valuebaleness": 1.1,
-    "thermo": {"melt_point_c": 1200}
+    "aliases": [
+      "slate"
+    ],
+    "tags": [
+      "stone",
+      "metamorphic",
+      "layered"
+    ],
+    "density_solid": 2800,
+    "hardness_edge": 55,
+    "toughness_frac": 45,
+    "rigidity": 75,
+    "electric_category": "insulator",
+    "mana_conductivity": 30,
+    "value_mul": 1.1,
+    "beauty_mul": 0.9,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.1
+    }
   },
   {
     "id": "core_mat_stone_quartzite",
-    "tags": ["stone", "metamorphic", "hard"],
+    "aliases": [
+      "quartzite"
+    ],
+    "tags": [
+      "stone",
+      "metamorphic",
+      "hard",
+      "glass"
+    ],
     "density_solid": 2650,
-    "resists": {"bash": 72, "cut": 82, "stab": 77, "acid": 45, "fire": 78, "cold": 85, "electric": 18, "arcane": 20},
-    "env": {"insulation": 16, "waterproof": 58, "breathability": 0, "chem_protect": 32},
-    "struct": {"durability": 88, "rigidity": 92},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 28,
-    "beautifulness": 58,
-    "valuebaleness": 1.3,
-    "thermo": {"melt_point_c": 1470}
+    "hardness_edge": 80,
+    "toughness_frac": 60,
+    "rigidity": 88,
+    "electric_category": "insulator",
+    "mana_conductivity": 20,
+    "value_mul": 1.3,
+    "beauty_mul": 1.1,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.6
+    }
   },
   {
     "id": "core_mat_stone_gneiss",
-    "tags": ["stone", "metamorphic", "banded"],
-    "density_solid": 2800,
-    "resists": {"bash": 68, "cut": 78, "stab": 73, "acid": 38, "fire": 73, "cold": 82, "electric": 22, "arcane": 25},
-    "env": {"insulation": 15, "waterproof": 55, "breathability": 0, "chem_protect": 28},
-    "struct": {"durability": 82, "rigidity": 87},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 32,
-    "beautifulness": 62,
-    "valuebaleness": 1.4,
-    "thermo": {"melt_point_c": 1250}
+    "aliases": [
+      "gneiss"
+    ],
+    "tags": [
+      "stone",
+      "metamorphic",
+      "banded"
+    ],
+    "density_solid": 2700,
+    "hardness_edge": 70,
+    "toughness_frac": 58,
+    "rigidity": 82,
+    "electric_category": "insulator",
+    "mana_conductivity": 28,
+    "value_mul": 1.0,
+    "beauty_mul": 1.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.3
+    }
   },
   {
     "id": "core_mat_stone_obsidian",
-    "tags": ["stone", "igneous", "volcanic", "glass"],
-    "density_solid": 2400,
-    "resists": {"bash": 40, "cut": 90, "stab": 85, "acid": 60, "fire": 80, "cold": 85, "electric": 5, "arcane": 15},
-    "env": {"insulation": 12, "waterproof": 70, "breathability": 0, "chem_protect": 40},
-    "struct": {"durability": 45, "rigidity": 85},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
+    "aliases": [
+      "obsidian"
+    ],
+    "tags": [
+      "stone",
+      "volcanic",
+      "glass",
+      "sharp"
+    ],
+    "density_solid": 2350,
+    "hardness_edge": 85,
+    "toughness_frac": 20,
+    "rigidity": 90,
+    "electric_category": "insulator",
+    "mana_conductivity": 60,
+    "value_mul": 3.0,
+    "beauty_mul": 2.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.8
+    }
+  },
+  {
+    "id": "core_mat_stone_kimberlite",
+    "aliases": [
+      "kimberlite"
+    ],
+    "tags": [
+      "stone",
+      "volcanic",
+      "gem_bearing",
+      "rare"
+    ],
+    "density_solid": 2800,
+    "hardness_edge": 65,
+    "toughness_frac": 55,
+    "rigidity": 78,
+    "electric_category": "insulator",
+    "mana_conductivity": 70,
+    "value_mul": 8.0,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.3
+    }
+  },
+  {
+    "_comment": "=== METALS - BASE (ID 30-39) === (was numeric ID 30)",
+    "id": "core_mat_metal_iron",
+    "aliases": [
+      "iron",
+      "ferrum",
+      "wrought_iron"
+    ],
+    "tags": [
+      "metal",
+      "ferrous",
+      "forgeable"
+    ],
+    "density_solid": 7870,
+    "hardness_edge": 50,
+    "toughness_frac": 85,
+    "rigidity": 95,
+    "electric_category": "conductor",
+    "mana_conductivity": 30,
+    "value_mul": 3.0,
+    "beauty_mul": 0.6,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_metal_copper",
+    "aliases": [
+      "copper",
+      "cuprum"
+    ],
+    "tags": [
+      "metal",
+      "nonferrous",
+      "forgeable",
+      "conductor"
+    ],
+    "density_solid": 8960,
+    "hardness_edge": 35,
+    "toughness_frac": 75,
+    "rigidity": 70,
+    "electric_category": "conductor",
+    "mana_conductivity": 15,
+    "value_mul": 4.0,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.8
+    }
+  },
+  {
+    "id": "core_mat_metal_tin",
+    "aliases": [
+      "tin",
+      "stannum"
+    ],
+    "tags": [
+      "metal",
+      "nonferrous",
+      "forgeable",
+      "soft"
+    ],
+    "density_solid": 7310,
+    "hardness_edge": 20,
+    "toughness_frac": 45,
+    "rigidity": 50,
+    "electric_category": "conductor",
+    "mana_conductivity": 25,
+    "value_mul": 2.5,
+    "beauty_mul": 0.8,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.6
+    }
+  },
+  {
+    "id": "core_mat_metal_gold",
+    "aliases": [
+      "gold",
+      "aurum"
+    ],
+    "tags": [
+      "metal",
+      "precious",
+      "forgeable",
+      "noble"
+    ],
+    "density_solid": 19300,
+    "hardness_edge": 25,
+    "toughness_frac": 50,
+    "rigidity": 40,
+    "electric_category": "conductor",
+    "mana_conductivity": 20,
+    "value_mul": 50.0,
+    "beauty_mul": 2.5,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.6
+    }
+  },
+  {
+    "id": "core_mat_metal_silver",
+    "aliases": [
+      "silver",
+      "argentum"
+    ],
+    "tags": [
+      "metal",
+      "precious",
+      "forgeable",
+      "noble"
+    ],
+    "density_solid": 10490,
+    "hardness_edge": 28,
+    "toughness_frac": 55,
+    "rigidity": 45,
+    "electric_category": "conductor",
+    "mana_conductivity": 120,
+    "value_mul": 35.0,
+    "beauty_mul": 2.2,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.7
+    }
+  },
+  {
+    "id": "core_mat_metal_lead",
+    "aliases": [
+      "lead",
+      "plumbum"
+    ],
+    "tags": [
+      "metal",
+      "heavy",
+      "soft",
+      "toxic"
+    ],
+    "density_solid": 11340,
+    "hardness_edge": 15,
+    "toughness_frac": 40,
+    "rigidity": 30,
+    "electric_category": "conductor",
     "mana_conductivity": 10,
-    "beautifulness": 70,
-    "valuebaleness": 2.0,
-    "thermo": {"melt_point_c": 1200}
+    "value_mul": 1.5,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": true,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.5
+    }
+  },
+  {
+    "id": "core_mat_metal_zinc",
+    "aliases": [
+      "zinc"
+    ],
+    "tags": [
+      "metal",
+      "nonferrous",
+      "galvanizing"
+    ],
+    "density_solid": 7140,
+    "hardness_edge": 30,
+    "toughness_frac": 35,
+    "rigidity": 55,
+    "electric_category": "conductor",
+    "mana_conductivity": 22,
+    "value_mul": 2.0,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": true,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.9
+    }
+  },
+  {
+    "_comment": "=== METALS - ALLOYS (ID 40-44) === (was numeric ID 40)",
+    "id": "core_mat_metal_steel_tempered",
+    "aliases": [
+      "steel",
+      "tempered_steel"
+    ],
+    "tags": [
+      "metal",
+      "ferrous",
+      "alloy",
+      "forgeable",
+      "superior"
+    ],
+    "density_solid": 7850,
+    "hardness_edge": 70,
+    "toughness_frac": 90,
+    "rigidity": 98,
+    "electric_category": "conductor",
+    "mana_conductivity": 25,
+    "value_mul": 8.0,
+    "beauty_mul": 1.2,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 1.5
+    }
+  },
+  {
+    "id": "core_mat_metal_steel_refined",
+    "aliases": [
+      "refined_steel",
+      "high_carbon_steel"
+    ],
+    "tags": [
+      "metal",
+      "ferrous",
+      "alloy",
+      "forgeable",
+      "masterwork"
+    ],
+    "density_solid": 7850,
+    "hardness_edge": 75,
+    "toughness_frac": 92,
+    "rigidity": 99,
+    "electric_category": "conductor",
+    "mana_conductivity": 22,
+    "value_mul": 12.0,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 1.8
+    }
+  },
+  {
+    "id": "core_mat_metal_bronze",
+    "aliases": [
+      "bronze"
+    ],
+    "tags": [
+      "metal",
+      "alloy",
+      "forgeable",
+      "ancient"
+    ],
+    "density_solid": 8730,
+    "hardness_edge": 55,
+    "toughness_frac": 70,
+    "rigidity": 85,
+    "electric_category": "conductor",
+    "mana_conductivity": 18,
+    "value_mul": 5.0,
+    "beauty_mul": 1.3,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.9
+    }
+  },
+  {
+    "id": "core_mat_metal_brass",
+    "aliases": [
+      "brass"
+    ],
+    "tags": [
+      "metal",
+      "alloy",
+      "forgeable",
+      "decorative"
+    ],
+    "density_solid": 8530,
+    "hardness_edge": 40,
+    "toughness_frac": 65,
+    "rigidity": 75,
+    "electric_category": "conductor",
+    "mana_conductivity": 20,
+    "value_mul": 4.5,
+    "beauty_mul": 1.8,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 0.8
+    }
+  },
+  {
+    "_comment": "=== METALS - FANTASY (ID 45-47) === (was numeric ID 45)",
+    "id": "core_mat_metal_adamantine",
+    "aliases": [
+      "adamantine",
+      "adamant"
+    ],
+    "tags": [
+      "metal",
+      "fantasy",
+      "legendary",
+      "indestructible"
+    ],
+    "density_solid": 5000,
+    "hardness_edge": 150,
+    "toughness_frac": 140,
+    "rigidity": 120,
+    "electric_category": "semi",
+    "mana_conductivity": 180,
+    "value_mul": 500.0,
+    "beauty_mul": 5.0,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 5.0
+    }
+  },
+  {
+    "id": "core_mat_metal_mithril",
+    "aliases": [
+      "mithril",
+      "mithral",
+      "true_silver"
+    ],
+    "tags": [
+      "metal",
+      "fantasy",
+      "legendary",
+      "light"
+    ],
+    "density_solid": 3500,
+    "hardness_edge": 110,
+    "toughness_frac": 120,
+    "rigidity": 95,
+    "electric_category": "conductor",
+    "mana_conductivity": 200,
+    "value_mul": 300.0,
+    "beauty_mul": 4.0,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 3.0
+    }
+  },
+  {
+    "id": "core_mat_metal_orichalcum",
+    "aliases": [
+      "orichalcum",
+      "mountain_copper"
+    ],
+    "tags": [
+      "metal",
+      "fantasy",
+      "rare",
+      "magical"
+    ],
+    "density_solid": 9200,
+    "hardness_edge": 95,
+    "toughness_frac": 100,
+    "rigidity": 98,
+    "electric_category": "conductor",
+    "mana_conductivity": 150,
+    "value_mul": 150.0,
+    "beauty_mul": 3.5,
+    "work": {
+      "forgeable": true,
+      "weldable": true,
+      "carveable": false,
+      "process_difficulty_mul": 2.5
+    }
+  },
+  {
+    "_comment": "=== WOOD & ORGANIC (ID 50-69) === (was numeric ID 50)",
+    "id": "core_mat_wood_oak",
+    "aliases": [
+      "oak",
+      "oak_wood"
+    ],
+    "tags": [
+      "wood",
+      "hardwood",
+      "organic"
+    ],
+    "density_solid": 750,
+    "hardness_edge": 20,
+    "toughness_frac": 60,
+    "rigidity": 50,
+    "electric_category": "insulator",
+    "mana_conductivity": 80,
+    "value_mul": 1.5,
+    "beauty_mul": 1.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.6
+    }
+  },
+  {
+    "id": "core_mat_wood_pine",
+    "aliases": [
+      "pine",
+      "pine_wood"
+    ],
+    "tags": [
+      "wood",
+      "softwood",
+      "organic"
+    ],
+    "density_solid": 550,
+    "hardness_edge": 15,
+    "toughness_frac": 45,
+    "rigidity": 40,
+    "electric_category": "insulator",
+    "mana_conductivity": 85,
+    "value_mul": 1.0,
+    "beauty_mul": 1.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.4
+    }
+  },
+  {
+    "_comment": "=== SOIL & SOFT MATERIALS (ID 70-89) === (was numeric ID 70)",
+    "id": "core_mat_soil_dirt",
+    "aliases": [
+      "dirt",
+      "soil"
+    ],
+    "tags": [
+      "soil",
+      "organic",
+      "soft"
+    ],
+    "density_solid": 1600,
+    "hardness_edge": 5,
+    "toughness_frac": 8,
+    "rigidity": 3,
+    "electric_category": "semi",
+    "mana_conductivity": 70,
+    "value_mul": 0.1,
+    "beauty_mul": 0.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.2
+    }
+  },
+  {
+    "id": "core_mat_soil_sand",
+    "aliases": [
+      "sand"
+    ],
+    "tags": [
+      "soil",
+      "granular",
+      "loose",
+      "glass"
+    ],
+    "density_solid": 1700,
+    "hardness_edge": 3,
+    "toughness_frac": 2,
+    "rigidity": 1,
+    "electric_category": "insulator",
+    "mana_conductivity": 50,
+    "value_mul": 0.1,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.1
+    }
+  },
+  {
+    "id": "core_mat_soil_grass",
+    "aliases": [
+      "grass",
+      "grassland"
+    ],
+    "tags": [
+      "soil",
+      "organic",
+      "vegetation"
+    ],
+    "density_solid": 1500,
+    "hardness_edge": 2,
+    "toughness_frac": 5,
+    "rigidity": 2,
+    "electric_category": "semi",
+    "mana_conductivity": 90,
+    "value_mul": 0.1,
+    "beauty_mul": 0.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.1
+    }
+  },
+  {
+    "id": "core_mat_soil_mud",
+    "aliases": [
+      "mud"
+    ],
+    "tags": [
+      "soil",
+      "wet",
+      "sticky"
+    ],
+    "density_solid": 1800,
+    "hardness_edge": 1,
+    "toughness_frac": 3,
+    "rigidity": 1,
+    "electric_category": "semi",
+    "mana_conductivity": 75,
+    "value_mul": 0.05,
+    "beauty_mul": 0.1,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.1
+    },
+    "navigation": {
+      "move_cost_add": 20,
+      "friction_mul": 0.5,
+      "hazard_level": 1,
+      "hazard_type": "slippery"
+    }
+  },
+  {
+    "id": "core_mat_snow",
+    "aliases": [
+      "snow"
+    ],
+    "tags": [
+      "frozen",
+      "cold",
+      "soft"
+    ],
+    "density_solid": 300,
+    "hardness_edge": 1,
+    "toughness_frac": 2,
+    "rigidity": 1,
+    "electric_category": "insulator",
+    "mana_conductivity": 60,
+    "value_mul": 0.01,
+    "beauty_mul": 1.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.1
+    },
+    "navigation": {
+      "move_cost_add": 15,
+      "friction_mul": 0.7,
+      "hazard_level": 2,
+      "hazard_type": "cold"
+    }
+  },
+  {
+    "_comment": "=== MINERALS & ORES (ID 90-129) === (was numeric ID 90)",
+    "id": "core_mat_mineral_stone_generic",
+    "aliases": [
+      "ore_stone",
+      "gangue"
+    ],
+    "tags": [
+      "mineral",
+      "ore",
+      "stone"
+    ],
+    "density_solid": 2300,
+    "hardness_edge": 55,
+    "toughness_frac": 40,
+    "rigidity": 70,
+    "electric_category": "insulator",
+    "mana_conductivity": 35,
+    "value_mul": 0.5,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
   },
   {
     "id": "core_mat_ore_chalk",
-    "tags": ["ore", "sedimentary", "flux", "soft"],
-    "density_solid": 2300,
-    "resists": {"bash": 40, "cut": 45, "stab": 40, "acid": 10, "fire": 55, "cold": 65, "electric": 30, "arcane": 40},
-    "env": {"insulation": 10, "waterproof": 30, "breathability": 10, "chem_protect": 8},
-    "struct": {"durability": 45, "rigidity": 50},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 45,
-    "beautifulness": 35,
-    "valuebaleness": 0.6,
-    "thermo": {"melt_point_c": 1100}
+    "aliases": [
+      "chalk"
+    ],
+    "tags": [
+      "mineral",
+      "flux",
+      "soft"
+    ],
+    "density_solid": 1500,
+    "hardness_edge": 10,
+    "toughness_frac": 12,
+    "rigidity": 20,
+    "electric_category": "insulator",
+    "mana_conductivity": 40,
+    "value_mul": 0.8,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.3
+    }
   },
   {
     "id": "core_mat_ore_dolomite",
-    "tags": ["ore", "sedimentary", "flux"],
+    "aliases": [
+      "dolomite"
+    ],
+    "tags": [
+      "mineral",
+      "flux",
+      "carbonate"
+    ],
     "density_solid": 2850,
-    "resists": {"bash": 58, "cut": 68, "stab": 63, "acid": 18, "fire": 68, "cold": 78, "electric": 22, "arcane": 32},
-    "env": {"insulation": 13, "waterproof": 48, "breathability": 1, "chem_protect": 12},
-    "struct": {"durability": 72, "rigidity": 77},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 38,
-    "beautifulness": 52,
-    "valuebaleness": 1.1,
-    "thermo": {"melt_point_c": 1180}
-  },
-  {
-    "id": "core_mat_ore_coal",
-    "tags": ["ore", "fuel", "carbon"],
-    "density_solid": 1400,
-    "resists": {"bash": 30, "cut": 35, "stab": 30, "acid": 70, "fire": 5, "cold": 50, "electric": 40, "arcane": 35},
-    "env": {"insulation": 25, "waterproof": 20, "breathability": 15, "chem_protect": 15},
-    "struct": {"durability": 35, "rigidity": 40},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 40,
-    "beautifulness": 20,
-    "valuebaleness": 1.5,
-    "thermo": {"ignition_point_c": 700}
+    "hardness_edge": 58,
+    "toughness_frac": 45,
+    "rigidity": 75,
+    "electric_category": "insulator",
+    "mana_conductivity": 32,
+    "value_mul": 1.0,
+    "beauty_mul": 0.6,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.1
+    }
   },
   {
     "id": "core_mat_ore_graphite",
-    "tags": ["ore", "carbon", "conductor"],
-    "density_solid": 2200,
-    "resists": {"bash": 25, "cut": 30, "stab": 25, "acid": 85, "fire": 95, "cold": 90, "electric": 2, "arcane": 30},
-    "env": {"insulation": 30, "waterproof": 40, "breathability": 5, "chem_protect": 35},
-    "struct": {"durability": 30, "rigidity": 35},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
-    "mana_conductivity": 20,
-    "beautifulness": 30,
-    "valuebaleness": 2.5,
-    "thermo": {"melt_point_c": 3650}
+    "aliases": [
+      "graphite"
+    ],
+    "tags": [
+      "mineral",
+      "carbon",
+      "conductor",
+      "lubricant"
+    ],
+    "density_solid": 2260,
+    "hardness_edge": 5,
+    "toughness_frac": 10,
+    "rigidity": 8,
+    "electric_category": "conductor",
+    "mana_conductivity": 25,
+    "value_mul": 2.5,
+    "beauty_mul": 0.4,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.4
+    }
   },
   {
     "id": "core_mat_ore_gypsum",
-    "tags": ["ore", "mineral", "ceramic", "soft"],
+    "aliases": [
+      "gypsum"
+    ],
+    "tags": [
+      "mineral",
+      "ceramic",
+      "soft"
+    ],
     "density_solid": 2320,
-    "resists": {"bash": 35, "cut": 40, "stab": 35, "acid": 15, "fire": 50, "cold": 60, "electric": 35, "arcane": 45},
-    "env": {"insulation": 12, "waterproof": 25, "breathability": 12, "chem_protect": 10},
-    "struct": {"durability": 40, "rigidity": 45},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 50,
-    "beautifulness": 40,
-    "valuebaleness": 0.7,
-    "thermo": {"melt_point_c": 1450}
+    "hardness_edge": 12,
+    "toughness_frac": 15,
+    "rigidity": 25,
+    "electric_category": "insulator",
+    "mana_conductivity": 35,
+    "value_mul": 0.9,
+    "beauty_mul": 0.6,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.5
+    }
   },
   {
     "id": "core_mat_ore_talc",
-    "tags": ["ore", "mineral", "soft", "lubricant"],
+    "aliases": [
+      "talc",
+      "soapstone"
+    ],
+    "tags": [
+      "mineral",
+      "soft",
+      "lubricant"
+    ],
     "density_solid": 2750,
-    "resists": {"bash": 20, "cut": 25, "stab": 20, "acid": 40, "fire": 60, "cold": 70, "electric": 40, "arcane": 50},
-    "env": {"insulation": 18, "waterproof": 35, "breathability": 8, "chem_protect": 20},
-    "struct": {"durability": 25, "rigidity": 30},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 55,
-    "beautifulness": 45,
-    "valuebaleness": 0.9,
-    "thermo": {"melt_point_c": 1500}
+    "hardness_edge": 8,
+    "toughness_frac": 8,
+    "rigidity": 10,
+    "electric_category": "insulator",
+    "mana_conductivity": 45,
+    "value_mul": 1.2,
+    "beauty_mul": 0.7,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.3
+    }
   },
   {
     "id": "core_mat_ore_kaolinite",
-    "tags": ["ore", "mineral", "ceramic", "clay"],
+    "aliases": [
+      "kaolinite",
+      "clay"
+    ],
+    "tags": [
+      "mineral",
+      "clay",
+      "ceramic"
+    ],
     "density_solid": 2600,
-    "resists": {"bash": 38, "cut": 43, "stab": 38, "acid": 20, "fire": 65, "cold": 70, "electric": 32, "arcane": 42},
-    "env": {"insulation": 14, "waterproof": 28, "breathability": 10, "chem_protect": 12},
-    "struct": {"durability": 42, "rigidity": 47},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 48,
-    "beautifulness": 38,
-    "valuebaleness": 0.8,
-    "thermo": {"melt_point_c": 1750}
+    "hardness_edge": 15,
+    "toughness_frac": 18,
+    "rigidity": 30,
+    "electric_category": "insulator",
+    "mana_conductivity": 55,
+    "value_mul": 1.0,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.6
+    }
   },
   {
     "id": "core_mat_ore_feldspar",
-    "tags": ["ore", "mineral", "ceramic", "glass"],
-    "density_solid": 2550,
-    "resists": {"bash": 52, "cut": 62, "stab": 57, "acid": 28, "fire": 62, "cold": 72, "electric": 28, "arcane": 35},
-    "env": {"insulation": 13, "waterproof": 42, "breathability": 3, "chem_protect": 18},
-    "struct": {"durability": 62, "rigidity": 68},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 40,
-    "beautifulness": 48,
-    "valuebaleness": 1.0,
-    "thermo": {"melt_point_c": 1200}
+    "aliases": [
+      "feldspar"
+    ],
+    "tags": [
+      "mineral",
+      "ceramic",
+      "glass"
+    ],
+    "density_solid": 2560,
+    "hardness_edge": 62,
+    "toughness_frac": 42,
+    "rigidity": 72,
+    "electric_category": "insulator",
+    "mana_conductivity": 30,
+    "value_mul": 1.1,
+    "beauty_mul": 0.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.2
+    }
   },
   {
     "id": "core_mat_ore_quartz",
-    "tags": ["ore", "mineral", "glass", "crystal"],
+    "aliases": [
+      "quartz_ore"
+    ],
+    "tags": [
+      "mineral",
+      "glass",
+      "crystal"
+    ],
     "density_solid": 2650,
-    "resists": {"bash": 65, "cut": 75, "stab": 70, "acid": 50, "fire": 75, "cold": 82, "electric": 15, "arcane": 22},
-    "env": {"insulation": 16, "waterproof": 60, "breathability": 0, "chem_protect": 30},
-    "struct": {"durability": 78, "rigidity": 85},
-    "work": {"forgeable": false, "weldable": false, "carveable": true},
-    "mana_conductivity": 25,
-    "beautifulness": 65,
-    "valuebaleness": 1.8,
-    "thermo": {"melt_point_c": 1670}
+    "hardness_edge": 72,
+    "toughness_frac": 25,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 90,
+    "value_mul": 2.0,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.4
+    }
   },
   {
-    "id": "core_mat_air",
-    "tags": ["gas", "empty"],
-    "density_solid": 1,
-    "resists": {"bash": 0, "cut": 0, "stab": 0, "acid": 0, "fire": 0, "cold": 0, "electric": 0, "arcane": 0},
-    "env": {"insulation": 0, "waterproof": 0, "breathability": 100, "chem_protect": 0},
-    "struct": {"durability": 0, "rigidity": 0},
-    "work": {"forgeable": false, "weldable": false, "carveable": false},
+    "id": "core_mat_mineral_saltpeter",
+    "aliases": [
+      "saltpeter",
+      "niter"
+    ],
+    "tags": [
+      "mineral",
+      "chemical",
+      "gunpowder"
+    ],
+    "density_solid": 2109,
+    "hardness_edge": 25,
+    "toughness_frac": 15,
+    "rigidity": 30,
+    "electric_category": "insulator",
+    "mana_conductivity": 40,
+    "value_mul": 5.0,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.5
+    }
+  },
+  {
+    "id": "core_mat_mineral_sulfur",
+    "aliases": [
+      "sulfur",
+      "brimstone"
+    ],
+    "tags": [
+      "mineral",
+      "chemical",
+      "gunpowder",
+      "alchemy"
+    ],
+    "density_solid": 2070,
+    "hardness_edge": 18,
+    "toughness_frac": 10,
+    "rigidity": 20,
+    "electric_category": "insulator",
+    "mana_conductivity": 60,
+    "value_mul": 4.0,
+    "beauty_mul": 0.4,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.4
+    }
+  },
+  {
+    "id": "core_mat_mineral_borax",
+    "aliases": [
+      "borax"
+    ],
+    "tags": [
+      "mineral",
+      "flux",
+      "chemical"
+    ],
+    "density_solid": 1730,
+    "hardness_edge": 22,
+    "toughness_frac": 18,
+    "rigidity": 28,
+    "electric_category": "insulator",
+    "mana_conductivity": 38,
+    "value_mul": 3.0,
+    "beauty_mul": 0.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.5
+    }
+  },
+  {
+    "id": "core_mat_mineral_mica",
+    "aliases": [
+      "mica"
+    ],
+    "tags": [
+      "mineral",
+      "insulator",
+      "ceramic"
+    ],
+    "density_solid": 2830,
+    "hardness_edge": 28,
+    "toughness_frac": 22,
+    "rigidity": 35,
+    "electric_category": "insulator",
+    "mana_conductivity": 42,
+    "value_mul": 2.0,
+    "beauty_mul": 1.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.8
+    }
+  },
+  {
+    "id": "core_mat_mineral_sylvite",
+    "aliases": [
+      "sylvite"
+    ],
+    "tags": [
+      "mineral",
+      "salt",
+      "chemical"
+    ],
+    "density_solid": 1990,
+    "hardness_edge": 20,
+    "toughness_frac": 12,
+    "rigidity": 25,
+    "electric_category": "insulator",
+    "mana_conductivity": 35,
+    "value_mul": 3.0,
+    "beauty_mul": 0.4,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.6
+    }
+  },
+  {
+    "id": "core_mat_mineral_periclase",
+    "aliases": [
+      "periclase"
+    ],
+    "tags": [
+      "mineral",
+      "refractory"
+    ],
+    "density_solid": 3580,
+    "hardness_edge": 68,
+    "toughness_frac": 48,
+    "rigidity": 80,
+    "electric_category": "insulator",
+    "mana_conductivity": 28,
+    "value_mul": 4.0,
+    "beauty_mul": 0.6,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.3
+    }
+  },
+  {
+    "_comment": "=== GEMS (ID 130-179) === (was numeric ID 130)",
+    "id": "core_mat_gem_quartz",
+    "aliases": [
+      "quartz_gem",
+      "rock_crystal"
+    ],
+    "tags": [
+      "gem",
+      "quartz",
+      "common"
+    ],
+    "density_solid": 2650,
+    "hardness_edge": 72,
+    "toughness_frac": 25,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 110,
+    "value_mul": 2.0,
+    "beauty_mul": 2.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.5
+    }
+  },
+  {
+    "id": "core_mat_gem_amethyst",
+    "aliases": [
+      "amethyst"
+    ],
+    "tags": [
+      "gem",
+      "quartz",
+      "purple",
+      "uncommon"
+    ],
+    "density_solid": 2650,
+    "hardness_edge": 72,
+    "toughness_frac": 25,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 125,
+    "value_mul": 3.0,
+    "beauty_mul": 3.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.5
+    }
+  },
+  {
+    "id": "core_mat_gem_citrine",
+    "aliases": [
+      "citrine"
+    ],
+    "tags": [
+      "gem",
+      "quartz",
+      "yellow",
+      "uncommon"
+    ],
+    "density_solid": 2650,
+    "hardness_edge": 72,
+    "toughness_frac": 25,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 115,
+    "value_mul": 2.5,
+    "beauty_mul": 2.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.5
+    }
+  },
+  {
+    "id": "core_mat_gem_chalcedony",
+    "aliases": [
+      "chalcedony"
+    ],
+    "tags": [
+      "gem",
+      "chalcedony",
+      "common"
+    ],
+    "density_solid": 2600,
+    "hardness_edge": 68,
+    "toughness_frac": 28,
+    "rigidity": 80,
+    "electric_category": "insulator",
     "mana_conductivity": 100,
-    "beautifulness": 0,
-    "valuebaleness": 0,
-    "thermo": {}
+    "value_mul": 2.0,
+    "beauty_mul": 2.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.4
+    }
+  },
+  {
+    "id": "core_mat_gem_agate",
+    "aliases": [
+      "agate"
+    ],
+    "tags": [
+      "gem",
+      "chalcedony",
+      "banded",
+      "common"
+    ],
+    "density_solid": 2600,
+    "hardness_edge": 68,
+    "toughness_frac": 30,
+    "rigidity": 80,
+    "electric_category": "insulator",
+    "mana_conductivity": 105,
+    "value_mul": 2.5,
+    "beauty_mul": 2.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.4
+    }
+  },
+  {
+    "id": "core_mat_gem_carnelian",
+    "aliases": [
+      "carnelian"
+    ],
+    "tags": [
+      "gem",
+      "chalcedony",
+      "red",
+      "uncommon"
+    ],
+    "density_solid": 2600,
+    "hardness_edge": 68,
+    "toughness_frac": 28,
+    "rigidity": 80,
+    "electric_category": "insulator",
+    "mana_conductivity": 108,
+    "value_mul": 2.8,
+    "beauty_mul": 2.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.4
+    }
+  },
+  {
+    "id": "core_mat_gem_garnet",
+    "aliases": [
+      "garnet"
+    ],
+    "tags": [
+      "gem",
+      "garnet",
+      "red",
+      "uncommon"
+    ],
+    "density_solid": 4200,
+    "hardness_edge": 75,
+    "toughness_frac": 32,
+    "rigidity": 88,
+    "electric_category": "insulator",
+    "mana_conductivity": 95,
+    "value_mul": 4.0,
+    "beauty_mul": 3.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.6
+    }
+  },
+  {
+    "id": "core_mat_gem_lapis",
+    "aliases": [
+      "lapis_lazuli",
+      "lapis"
+    ],
+    "tags": [
+      "gem",
+      "lapis",
+      "blue",
+      "rare",
+      "pigment"
+    ],
+    "density_solid": 2750,
+    "hardness_edge": 55,
+    "toughness_frac": 35,
+    "rigidity": 70,
+    "electric_category": "insulator",
+    "mana_conductivity": 140,
+    "value_mul": 8.0,
+    "beauty_mul": 5.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.3
+    }
+  },
+  {
+    "id": "core_mat_gem_turquoise",
+    "aliases": [
+      "turquoise"
+    ],
+    "tags": [
+      "gem",
+      "turquoise",
+      "blue",
+      "uncommon"
+    ],
+    "density_solid": 2760,
+    "hardness_edge": 58,
+    "toughness_frac": 30,
+    "rigidity": 72,
+    "electric_category": "insulator",
+    "mana_conductivity": 120,
+    "value_mul": 4.5,
+    "beauty_mul": 3.8,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.3
+    }
+  },
+  {
+    "id": "core_mat_gem_malachite",
+    "aliases": [
+      "malachite"
+    ],
+    "tags": [
+      "gem",
+      "malachite",
+      "green",
+      "common",
+      "copper"
+    ],
+    "density_solid": 3900,
+    "hardness_edge": 42,
+    "toughness_frac": 25,
+    "rigidity": 60,
+    "electric_category": "insulator",
+    "mana_conductivity": 110,
+    "value_mul": 3.0,
+    "beauty_mul": 3.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.1
+    }
+  },
+  {
+    "id": "core_mat_gem_azurite",
+    "aliases": [
+      "azurite"
+    ],
+    "tags": [
+      "gem",
+      "azurite",
+      "blue",
+      "uncommon",
+      "copper"
+    ],
+    "density_solid": 3770,
+    "hardness_edge": 45,
+    "toughness_frac": 28,
+    "rigidity": 65,
+    "electric_category": "insulator",
+    "mana_conductivity": 115,
+    "value_mul": 3.5,
+    "beauty_mul": 3.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.2
+    }
+  },
+  {
+    "id": "core_mat_gem_amber",
+    "aliases": [
+      "amber"
+    ],
+    "tags": [
+      "gem",
+      "amber",
+      "organic",
+      "uncommon"
+    ],
+    "density_solid": 1100,
+    "hardness_edge": 22,
+    "toughness_frac": 35,
+    "rigidity": 30,
+    "electric_category": "insulator",
+    "mana_conductivity": 130,
+    "value_mul": 5.0,
+    "beauty_mul": 4.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.8
+    }
+  },
+  {
+    "id": "core_mat_gem_jet",
+    "aliases": [
+      "jet"
+    ],
+    "tags": [
+      "gem",
+      "jet",
+      "black",
+      "organic",
+      "uncommon"
+    ],
+    "density_solid": 1330,
+    "hardness_edge": 28,
+    "toughness_frac": 32,
+    "rigidity": 40,
+    "electric_category": "insulator",
+    "mana_conductivity": 105,
+    "value_mul": 3.5,
+    "beauty_mul": 3.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.9
+    }
+  },
+  {
+    "id": "core_mat_gem_pearl",
+    "aliases": [
+      "pearl"
+    ],
+    "tags": [
+      "gem",
+      "pearl",
+      "organic",
+      "rare",
+      "luxury"
+    ],
+    "density_solid": 2700,
+    "hardness_edge": 35,
+    "toughness_frac": 20,
+    "rigidity": 45,
+    "electric_category": "insulator",
+    "mana_conductivity": 150,
+    "value_mul": 20.0,
+    "beauty_mul": 6.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.5
+    }
+  },
+  {
+    "id": "core_mat_gem_coral",
+    "aliases": [
+      "coral",
+      "red_coral"
+    ],
+    "tags": [
+      "gem",
+      "coral",
+      "organic",
+      "rare"
+    ],
+    "density_solid": 2700,
+    "hardness_edge": 38,
+    "toughness_frac": 22,
+    "rigidity": 50,
+    "electric_category": "insulator",
+    "mana_conductivity": 135,
+    "value_mul": 12.0,
+    "beauty_mul": 4.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 1.2
+    }
+  },
+  {
+    "id": "core_mat_gem_ruby",
+    "aliases": [
+      "ruby"
+    ],
+    "tags": [
+      "gem",
+      "corundum",
+      "red",
+      "precious",
+      "rare"
+    ],
+    "density_solid": 4000,
+    "hardness_edge": 90,
+    "toughness_frac": 45,
+    "rigidity": 95,
+    "electric_category": "insulator",
+    "mana_conductivity": 160,
+    "value_mul": 40.0,
+    "beauty_mul": 10.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 2.5
+    }
+  },
+  {
+    "id": "core_mat_gem_sapphire",
+    "aliases": [
+      "sapphire"
+    ],
+    "tags": [
+      "gem",
+      "corundum",
+      "blue",
+      "precious",
+      "rare"
+    ],
+    "density_solid": 4000,
+    "hardness_edge": 90,
+    "toughness_frac": 45,
+    "rigidity": 95,
+    "electric_category": "insulator",
+    "mana_conductivity": 155,
+    "value_mul": 40.0,
+    "beauty_mul": 10.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 2.5
+    }
+  },
+  {
+    "id": "core_mat_gem_emerald",
+    "aliases": [
+      "emerald"
+    ],
+    "tags": [
+      "gem",
+      "beryl",
+      "green",
+      "precious",
+      "rare"
+    ],
+    "density_solid": 2700,
+    "hardness_edge": 78,
+    "toughness_frac": 35,
+    "rigidity": 88,
+    "electric_category": "insulator",
+    "mana_conductivity": 165,
+    "value_mul": 50.0,
+    "beauty_mul": 12.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 2.3
+    }
+  },
+  {
+    "id": "core_mat_gem_diamond",
+    "aliases": [
+      "diamond"
+    ],
+    "tags": [
+      "gem",
+      "diamond",
+      "precious",
+      "legendary"
+    ],
+    "density_solid": 3520,
+    "hardness_edge": 100,
+    "toughness_frac": 50,
+    "rigidity": 100,
+    "electric_category": "insulator",
+    "mana_conductivity": 200,
+    "value_mul": 100.0,
+    "beauty_mul": 20.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 5.0
+    }
+  },
+  {
+    "_comment": "=== SPECIAL MATERIALS (ID 180-199) === (was numeric ID 180)",
+    "id": "core_mat_glass_clear",
+    "aliases": [
+      "glass",
+      "clear_glass"
+    ],
+    "tags": [
+      "glass",
+      "transparent",
+      "brittle"
+    ],
+    "density_solid": 2500,
+    "hardness_edge": 60,
+    "toughness_frac": 15,
+    "rigidity": 85,
+    "electric_category": "insulator",
+    "mana_conductivity": 40,
+    "value_mul": 2.0,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.2
+    }
+  },
+  {
+    "id": "core_mat_ceramic",
+    "aliases": [
+      "ceramic",
+      "pottery"
+    ],
+    "tags": [
+      "ceramic",
+      "fired",
+      "brittle"
+    ],
+    "density_solid": 2400,
+    "hardness_edge": 68,
+    "toughness_frac": 18,
+    "rigidity": 88,
+    "electric_category": "insulator",
+    "mana_conductivity": 50,
+    "value_mul": 1.5,
+    "beauty_mul": 1.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_ice",
+    "aliases": [
+      "ice",
+      "frozen_water"
+    ],
+    "tags": [
+      "frozen",
+      "cold",
+      "temporary"
+    ],
+    "density_solid": 917,
+    "hardness_edge": 15,
+    "toughness_frac": 10,
+    "rigidity": 20,
+    "electric_category": "insulator",
+    "mana_conductivity": 75,
+    "value_mul": 0.01,
+    "beauty_mul": 1.5,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.3
+    },
+    "navigation": {
+      "move_cost_add": 10,
+      "friction_mul": 0.2,
+      "hazard_level": 3,
+      "hazard_type": "slippery"
+    }
   }
 ]

@@ -1,92 +1,134 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "material.v3.schema.json",
-  "type": "object",
-  "required": ["id", "tags", "density_solid", "resists", "env", "struct"],
-  "properties": {
-    "id": {
-      "type": "string",
-      "pattern": "^[a-z0-9_]+$"
-    },
-    "tags": {
-      "type": "array",
-      "items": {"type": "string"}
-    },
-    "density_solid": {
-      "type": "number",
-      "minimum": 1
-    },
-    "resists": {
-      "type": "object",
-      "required": ["bash", "cut", "stab", "acid", "fire", "cold", "electric", "arcane"],
-      "properties": {
-        "bash": {"type": "number", "minimum": 0, "maximum": 200},
-        "cut": {"type": "number", "minimum": 0, "maximum": 200},
-        "stab": {"type": "number", "minimum": 0, "maximum": 200},
-        "acid": {"type": "number", "minimum": 0, "maximum": 200},
-        "fire": {"type": "number", "minimum": 0, "maximum": 200},
-        "cold": {"type": "number", "minimum": 0, "maximum": 200},
-        "electric": {"type": "number", "minimum": 0, "maximum": 200},
-        "arcane": {"type": "number", "minimum": 0, "maximum": 200}
+  "$id": "material.authoring.v4.schema.json",
+  "title": "Material Authoring Format",
+  "description": "Human-readable authoring format for materials (string IDs, percentages)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id", "tags", "density_solid", "hardness_edge", "toughness_frac", "rigidity"],
+    "properties": {
+      "_comment": {
+        "type": "string",
+        "description": "Optional comment for organization"
       },
-      "additionalProperties": false
-    },
-    "env": {
-      "type": "object",
-      "required": ["insulation", "waterproof", "breathability", "chem_protect"],
-      "properties": {
-        "insulation": {"type": "number", "minimum": 0, "maximum": 100},
-        "waterproof": {"type": "number", "minimum": 0, "maximum": 100},
-        "breathability": {"type": "number", "minimum": 0, "maximum": 100},
-        "chem_protect": {"type": "number", "minimum": 0, "maximum": 100}
+      "id": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*$",
+        "description": "String material ID (e.g., 'core_mat_metal_iron')"
       },
-      "additionalProperties": false
-    },
-    "struct": {
-      "type": "object",
-      "required": ["durability", "rigidity"],
-      "properties": {
-        "durability": {"type": "number", "minimum": 0, "maximum": 100},
-        "rigidity": {"type": "number", "minimum": 0, "maximum": 100}
+      "aliases": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
+        "description": "Alternative names for backward compatibility"
       },
-      "additionalProperties": false
-    },
-    "work": {
-      "type": "object",
-      "properties": {
-        "forgeable": {"type": "boolean"},
-        "weldable": {"type": "boolean"},
-        "carveable": {"type": "boolean"}
+      "tags": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Material tags for categorization and behavior"
       },
-      "additionalProperties": false
-    },
-    "mana_conductivity": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 100
-    },
-    "mana_capacity": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 100
-    },
-    "beautifulness": {
-      "type": "integer",
-      "minimum": 0,
-      "maximum": 100
-    },
-    "valuebaleness": {
-      "type": "number",
-      "minimum": 0
-    },
-    "thermo": {
-      "type": "object",
-      "properties": {
-        "ignition_point_c": {"type": "number", "minimum": 0},
-        "melt_point_c": {"type": "number", "minimum": 0}
+      "density_solid": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Density in kg/m³"
       },
-      "additionalProperties": false
-    }
-  },
-  "additionalProperties": false
+      "hardness_edge": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Edge/cutting hardness (0-100%)"
+      },
+      "toughness_frac": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Fracture toughness (0-100%)"
+      },
+      "rigidity": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Material rigidity (0-100%)"
+      },
+      "electric_category": {
+        "type": "string",
+        "enum": ["conductor", "semiconductor", "insulator"],
+        "description": "Electrical conductivity category"
+      },
+      "mana_conductivity": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Magical conductivity (0-100%)"
+      },
+      "value_mul": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Economic value multiplier"
+      },
+      "beauty_mul": {
+        "type": "number",
+        "minimum": 0,
+        "description": "Beauty value multiplier"
+      },
+      "work": {
+        "type": "object",
+        "properties": {
+          "forgeable": {
+            "type": "boolean",
+            "description": "Can be forged"
+          },
+          "weldable": {
+            "type": "boolean",
+            "description": "Can be welded"
+          },
+          "carveable": {
+            "type": "boolean",
+            "description": "Can be carved"
+          },
+          "process_difficulty_mul": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Processing difficulty multiplier"
+          }
+        },
+        "additionalProperties": false
+      },
+      "navigation": {
+        "type": "object",
+        "properties": {
+          "move_cost_add": {
+            "type": "number",
+            "description": "Movement cost modifier"
+          },
+          "friction_mul": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Friction multiplier"
+          }
+        },
+        "additionalProperties": false
+      },
+      "thermo": {
+        "type": "object",
+        "properties": {
+          "ignition_point_c": {
+            "type": "number",
+            "description": "Ignition temperature in Celsius"
+          },
+          "melt_point_c": {
+            "type": "number",
+            "description": "Melting temperature in Celsius"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "additionalProperties": false
+  }
 }

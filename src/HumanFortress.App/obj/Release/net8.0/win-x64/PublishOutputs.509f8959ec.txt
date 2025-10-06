@@ -17,12 +17,15 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.mining.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.navigation.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.ore.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.placeable.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.stockpile.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\tuning.tile.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\registries\zones.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\aliases.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\biome_template.schema.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\constructions.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\geology.schema.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\items.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\material.authoring.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\materials.registry.schema.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\content\schemas\terrain_kinds.schema.json
@@ -34,6 +37,7 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\components.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\containers.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\food.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\furniture.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\gems.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\glass.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\liquids.json
@@ -46,6 +50,12 @@ C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\weapons_melee.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\weapons_ranged.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\items\wood.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\constructions.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\constructions_functional.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\constructions_traps.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\terrain_designations.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\workshops.json
+C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\placeable\workshop_attachments.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\data\core\recipes\core_recipes.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\HumanFortress.App.deps.json
 C:\Users\User\Desktop\humanfortress\TheFortressSimulation\publish\HumanFortress.App\HumanFortress.App.runtimeconfig.json
