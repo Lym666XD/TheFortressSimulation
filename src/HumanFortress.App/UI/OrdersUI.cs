@@ -256,30 +256,28 @@ public sealed class OrdersUI
             int x1 = x0 + rect.Width - 1;
             int y1 = y0 + rect.Height - 1;
 
-            var fg = Color.Yellow;
-            // Draw rectangle border only for non-mining previews to avoid black edge artifacts in mining mode
+            var gold = new Color(255, 230, 0);
+            // For non-mining (e.g., Haul), show gold dots only on eligible cells; no border overlay
             if (!miningAction.HasValue)
             {
-                for (int xx = x0; xx <= x1; xx++)
+                if (world != null)
                 {
-                    if (xx >= 0 && xx < surf.Width)
+                    for (int wy = rect.Y; wy < rect.MaxExtentY; wy++)
                     {
-                        if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(xx, y0, '-', fg, Color.Transparent); }
-                        if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(xx, y1, '-', fg, Color.Transparent); }
+                        for (int wx = rect.X; wx < rect.MaxExtentX; wx++)
+                        {
+                            // Eligibility for Haul: any ground item present at (wx,wy,currentZ)
+                            bool hasItem = world.Items.GetAllInstances()
+                                .Any(i => i.Z == currentZ && i.Position.X == wx && i.Position.Y == wy && i.IsOnGround && !i.Forbidden);
+                            if (!hasItem) continue;
+                            int sx = wx - viewport.X;
+                            int sy = wy - viewport.Y;
+                            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
+                                surf.SetGlyph(sx, sy, '.', gold, Color.Transparent);
+                        }
                     }
                 }
-                for (int yy = y0; yy <= y1; yy++)
-                {
-                    if (yy >= 0 && yy < surf.Height)
-                    {
-                        if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, yy, '|', fg, Color.Transparent); }
-                        if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, yy, '|', fg, Color.Transparent); }
-                    }
-                }
-                if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '+', fg, Color.Transparent); }
-                if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '+', fg, Color.Transparent); }
-                if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '+', fg, Color.Transparent); }
-                if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '+', fg, Color.Transparent); }
+                return;
             }
 
             // Draw dots for tiles that will be affected (interior) and show eligible count
@@ -323,19 +321,11 @@ public sealed class OrdersUI
                             eligible++;
                             if (inBounds)
                             {
-                                // Draw yellow dot for eligible tiles
-                                surf.SetGlyph(sx, sy, '.', fg, Color.Transparent);
+                                // Draw gold dot for eligible tiles
+                                surf.SetGlyph(sx, sy, '.', gold, Color.Transparent);
                             }
                         }
-                        else if (showIneligibleHints && inBounds)
-                        {
-                            // Sampled light gray dots for ineligible tiles: every other cell (checkerboard)
-                            if ((wx + wy) % 2 == 0)
-                            {
-                                surf.SetGlyph(sx, sy, '.', lightGray, Color.Transparent);
-                            }
-                            ineligible++;
-                        }
+                        // else: do not draw ineligible hints; keep original tile visible
                     }
                 }
                 // Render a small hint with eligible/total near the selection

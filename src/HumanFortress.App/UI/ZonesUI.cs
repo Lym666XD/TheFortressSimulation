@@ -250,7 +250,7 @@ public sealed class ZonesUI
         if (!show) return;
 
         var rect = Rectangle.GetUnion(new Rectangle(first, 1, 1), new Rectangle(second, 1, 1));
-
+        var gold = new Color(255, 230, 0);
         for (int wx = rect.X; wx < rect.X + rect.Width; wx++)
         {
             for (int wy = rect.Y; wy < rect.Y + rect.Height; wy++)
@@ -260,8 +260,7 @@ public sealed class ZonesUI
                 {
                     int sx = wx - viewport.X;
                     int sy = wy - viewport.Y;
-                    mapSurface.Surface.SetForeground(sx, sy, Color.Cyan);
-                    mapSurface.Surface.SetBackground(sx, sy, new Color(0, 100, 100, 100));
+                    mapSurface.Surface.SetGlyph(sx, sy, '.', gold, Color.Transparent);
                 }
             }
         }

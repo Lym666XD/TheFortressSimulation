@@ -496,7 +496,7 @@ namespace HumanFortress.App.States
                             else if (_ui.PlaceMode == PlacementMode.HaulSecondCorner && _ordersUI != null)
                             {
                                 _ordersUI.RenderPlacementPreview(_mapSurface,
-                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ);
+                                    _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ, _world);
                             }
                             else if (_ui.PlaceMode == PlacementMode.MiningSecondCorner && _ordersUI != null)
                             {

@@ -192,32 +192,16 @@ public sealed class StockpileUI
         Rectangle viewport, bool valid)
     {
         var rect = CreateRectangle(corner1, corner2);
-        var color = valid ? Color.Green.SetAlpha(100) : Color.Red.SetAlpha(100);
-
+        if (!valid) return; // invalid: keep original tiles (no overlay)
+        var gold = new Color(255, 230, 0);
         for (int x = rect.X; x < rect.X + rect.Width; x++)
         {
             for (int y = rect.Y; y < rect.Y + rect.Height; y++)
             {
                 var screenX = x - viewport.X;
                 var screenY = y - viewport.Y;
-
-                if (screenX >= 0 && screenX < mapSurface.Width &&
-                    screenY >= 0 && screenY < mapSurface.Height)
-                {
-                    // Draw border or fill
-                    bool isBorder = x == rect.X || x == rect.X + rect.Width - 1 ||
-                                   y == rect.Y || y == rect.Y + rect.Height - 1;
-
-                    if (isBorder)
-                    {
-                        mapSurface.SetGlyph(screenX, screenY, '+', color);
-                    }
-                    else
-                    {
-                        // Tint the existing tile
-                        mapSurface.SetGlyph(screenX, screenY, ' ', color.SetAlpha(50));
-                    }
-                }
+                if (screenX >= 0 && screenX < mapSurface.Width && screenY >= 0 && screenY < mapSurface.Height)
+                    mapSurface.SetGlyph(screenX, screenY, '.', gold, Color.Transparent);
             }
         }
     }
