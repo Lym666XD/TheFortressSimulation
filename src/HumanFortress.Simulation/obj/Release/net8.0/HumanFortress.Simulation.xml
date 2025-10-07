@@ -401,6 +401,12 @@
             Dequeue up to max planned digs for job creation.
             </summary>
         </member>
+        <member name="M:HumanFortress.Simulation.Orders.MiningSystem.IsTileCanceled(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Query if a tile is covered by any active cancellation region.
+            Read-safe; consumed by job executors to drop or abort work reliably.
+            </summary>
+        </member>
         <member name="T:HumanFortress.Simulation.Orders.OrdersManager">
             <summary>
             Central store for player orders (designations), starting with Haul.

@@ -347,6 +347,15 @@ public sealed class MiningSystem : ITick
         }
         return n;
     }
+
+    /// <summary>
+    /// Query if a tile is covered by any active cancellation region.
+    /// Read-safe; consumed by job executors to drop or abort work reliably.
+    /// </summary>
+    public bool IsTileCanceled(int x, int y, int z)
+    {
+        return IsCanceled(x, y, z);
+    }
 }
 
 internal struct ActiveDesignation

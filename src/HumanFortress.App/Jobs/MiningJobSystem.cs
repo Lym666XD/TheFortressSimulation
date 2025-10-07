@@ -120,6 +120,12 @@ public sealed class MiningJobSystem : ITick
         foreach (var pd in digs)
         {
             bool assigned = false;
+            // Drop canceled planned digs immediately
+            if (_planner.IsTileCanceled(pd.Cell.X, pd.Cell.Y, pd.Z))
+            {
+                Logger.Log($"[MINING][{tick}] Drop canceled target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}");
+                continue;
+            }
 
             // Stairwell skip/fast-path: if Middle already UD due to pre-open, do NOT drop.
             // We still run a tiny job to trigger pre-open of the next layer.
@@ -213,7 +219,8 @@ public sealed class MiningJobSystem : ITick
             var adj = GetAdjacencyForAction(pd.Action, pd.Cell.X, pd.Cell.Y, pd.Z);
             if (adj == null)
             {
-                _backlog.Enqueue(pd);
+                if (!_planner.IsTileCanceled(pd.Cell.X, pd.Cell.Y, pd.Z))
+                    _backlog.Enqueue(pd);
                 Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}; requeue");
                 continue;
             }
@@ -263,7 +270,8 @@ public sealed class MiningJobSystem : ITick
             }
             if (!assigned)
             {
-                _backlog.Enqueue(pd);
+                if (!_planner.IsTileCanceled(pd.Cell.X, pd.Cell.Y, pd.Z))
+                    _backlog.Enqueue(pd);
                 Logger.Log($"[MINING][{tick}] No worker for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}");
             }
         }
@@ -291,6 +299,16 @@ public sealed class MiningJobSystem : ITick
         var finished = new List<ActiveMiningJob>();
         foreach (var job in _active)
         {
+            // Abort and release canceled jobs
+            if (_planner.IsTileCanceled(job.Target.X, job.Target.Y, job.Z))
+            {
+                _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && job.Z > 0)
+                    _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
+                Logger.Log($"[MINING][{tick}] Cancel job at target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}; release worker={job.WorkerId}");
+                finished.Add(job);
+                continue;
+            }
             var worker = _world.Creatures.GetInstance(job.WorkerId);
             if (worker == null)
             {
@@ -322,8 +340,9 @@ public sealed class MiningJobSystem : ITick
                         Logger.Log($"[MINING][{tick}] Replan failed kind={path.Kind} worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) fails={job.ReplanFailCount} id={job.DesignationId}");
                         if (job.ReplanFailCount >= MaxFailedReplans)
                         {
-                            // Timeout: release reservation and requeue
-                            _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                        // Timeout: release reservation and requeue (unless canceled)
+                        _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+                        if (!_planner.IsTileCanceled(job.Target.X, job.Target.Y, job.Z))
                             _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, job.DesignationId));
                             Logger.Log($"[MINING][{tick}] Release reservation & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) id=0(backlog) seg={job.Segment} due to timeout (path={path.Kind})");
                             finished.Add(job);
@@ -385,7 +404,7 @@ public sealed class MiningJobSystem : ITick
                         }
                         job.Stage = MiningStage.Complete;
                         ApplyMiningResult(job);
-                        _recentCompleted.Add((job.Target, job.Z, tick + 25)); // shorter-lived completion highlight
+                        // Removed completion highlight to avoid covering tiles/items/creatures
                         Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} id={job.DesignationId} seg={job.Segment} by {job.WorkerId}");
                     }
                     else
