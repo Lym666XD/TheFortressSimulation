@@ -148,3 +148,98 @@ public sealed class ActiveMiningJob {
     public TerrainKind TerrainKind { get; init; }    // NEW
 }
 ```
+
+15) Architecture Overview & Stairwell Deep-Dive (Critical)
+
+15.1 Z-Axis Conventions (Internal vs. Player UI)
+
+- Internal world coordinates: Z increases upward; lower Z values are deeper.
+- Player expectation in the UI: Scrolling "up" means digging down (deeper layers).
+- Mapping for DigStairwell only: OrdersManager inverts the UI zMin..zMax range into an internal range that digs downward from the starting Z.
+  - Example: Player selects z=25..29 (start at ground 25, drag upward). Orders become actual z=21..25 internally (digging down from 25 to 21).
+- Segment indices follow internal Z: Top = highest Z in designation (ZMax); Bottom = lowest Z (ZMin); Middle = between.
+
+15.2 Data Flow
+
+- UI -> OrdersManager: Advanced mining orders enqueued with stairwell Z inversion applied.
+- MiningSystem (Planner, Read): Scans rectangles per Z layer; emits immutable PlannedDig DTOs into a planner outbox. For stairwells, it starts at ZMax and scans downward to prioritize Top, then Middle, then Bottom.
+- MiningJobSystem (Executor, Write): Dequeues PlannedDig, assigns workers, moves, digs, and applies diffs (terrain writes + drops + movement).
+- Diff Applicator: Mutates world tiles/items with deterministic ordering.
+
+15.3 Planner Rules (Stairwell)
+
+- Scan order: CurZ starts at ZMax and decrements per completed XY slice.
+- Terrain filter per layer:
+  - Allowed: SolidWall (rock) and OpenWithFloor (floor) – both can host stairs.
+  - Rejected: OpenNoFloor – cannot place stairs in mid-air.
+- Segment assignment by Z:
+  - Top (Z == ZMax) -> expected final terrain: StairsDown.
+  - Bottom (Z == ZMin) -> StairsUp.
+  - Middle -> StairsUD.
+
+15.4 Executor Queueing & Prioritization
+
+- Inbox capacity per tick: 16 PlannedDig.
+- Source order (to avoid starvation):
+  1) Dequeue from planner outbox first.
+  2) Dequeue from _backlog while room remains.
+  3) Only if room remains and every 10 ticks, dequeue from _deferredStairwells.
+- Sorting before assignment (deterministic):
+  - Primary: Priority descending.
+  - Stairwell only: Segment order Top -> Middle -> Bottom, then XY stable, then Z descending (higher Z first).
+  - Other actions: XY stable, then Z ascending.
+
+15.5 Stairwell Connectivity Gate & Pre-Open
+
+- Gate check (non-Top segments): requires a stair above or below at the same XY to ensure vertical approachability prior to digging.
+  - Above (z+1): StairsDown or StairsUD.
+  - Below (z-1): StairsUp or StairsUD.
+- Pre-open rule (connectivity bootstrapping): When a worker starts digging a stair segment at Z, if z-1 is SolidWall, set it to StairsUD to establish the next connection.
+  - Applies to Top and Middle only (never Bottom) to avoid pre-opening outside the selected range.
+  - Drops are only spawned when converting from SolidWall (guarded in Apply phase), so pre-open does not duplicate drops where the tile is already open.
+- Middle "already satisfied" fast-path: If a Middle tile is already StairsUD (e.g., from the previous segment's pre-open), it still produces a tiny, 1-tick job rather than being dropped. This keeps the downward pre-open chain advancing to the next layer.
+
+15.6 Skip / Idempotency Semantics
+
+- If the target tile already matches its expected final terrain, the PlannedDig may be dropped as a no-op. Exception: Middle stair segments are not dropped; they fast-complete to propagate pre-open further downward.
+- Drops are spawned only when the current terrain is SolidWall.
+
+15.7 Known Pitfalls & Fixes (Post-mortem)
+
+- "Stairwell digs only two layers"
+  - Cause: Deferred queue starving fresh stair segments and stairwell ordering erased by generic Z-ascending job sort. Bottom/Middle repeatedly failed the gate and re-entered deferred, blocking Middle layers needed for connectivity.
+  - Fixes: Prioritize planner then backlog then deferred (10-tick cadence, only if room). Add stairwell-aware sort (Top->Middle->Bottom, Z descending). Keep Middle jobs even if UD (1-tick fast-path) to push the pre-open chain.
+- Pre-open outside selection
+  - Cause: Pre-opening on Bottom segments created stairs below the designated Z range.
+  - Fix: Disable pre-open for Bottom segments; apply only to Top/Middle.
+- Traceability loss in backlog
+  - Cause: Re-queued jobs were pushed with DesignationId=0.
+  - Fix: Preserve original DesignationId in all requeues.
+
+15.8 UI Highlights & Lifetimes (Yellow Marks)
+
+- Recent order rectangle highlight (yellow/orange border): expires quickly; TTL reduced from 100 to 30 UI ticks.
+- Mining completion highlight (gold dot per tile): TTL reduced from 100 to 25 simulation ticks.
+- Goal: keep feedback visible but avoid long-lived overlays during large digs.
+
+15.9 Troubleshooting & Log Queries
+
+- Verify stairwell production order:
+  - Search: "PRODUCE PlannedDig" with seg=Top|Middle|Bottom.
+- Check assignment flow and counts:
+  - "Planned digs dequeued" (IDs and batch sizes).
+- Gate/deferral signals:
+  - "blocked: no vertical connection; defer" (every 10 ticks at most; not starving planner).
+- Skip/fast-complete signals:
+  - "Check skip: seg=... current=... expected=...", "Skip stairwell seg=... already ...".
+
+15.10 Validation Checklist (Stairwell)
+
+- Top at ZMax completes and pre-opens ZMax-1.
+- Middle at ZMax-1 runs (1 tick if already UD) and pre-opens ZMax-2.
+- Repeats until Bottom at ZMin; no pre-open at Bottom; final terrain chain is Down / UD* / Up.
+- No jobs are starved by deferred entries; planner drains every tick under budget.
+
+15.11 Documentation Consistency Note
+
+- This spec supersedes prior drafts that stated "Z increases downward." The engine defines Z increasing upward internally; the stairwell UI range is inverted in OrdersManager to match player expectations.
