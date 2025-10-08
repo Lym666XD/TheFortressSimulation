@@ -367,6 +367,11 @@
             for hover and left-click in local cell coordinates.
             </summary>
         </member>
+        <member name="T:HumanFortress.App.UI.MenuSurface">
+            <summary>
+            ScreenSurface specialized for menu that exposes mouse events.
+            </summary>
+        </member>
         <member name="T:HumanFortress.App.UI.OrdersUI">
             <summary>
             Renders the Orders quick menu and haul submenu.

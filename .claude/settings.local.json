@@ -50,7 +50,9 @@
       "Bash(del datacoreitemsfurniture_civil.json)",
       "Bash(del datacoreitemsfurniture_utility.json)",
       "Bash(tee:*)",
-      "Bash(Select-Object -Last 20)"
+      "Bash(Select-Object -Last 20)",
+      "Bash(del \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")",
+      "Bash(del /f \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")"
     ],
     "deny": [],
     "ask": []
