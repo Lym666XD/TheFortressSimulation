@@ -1,8 +1,0 @@
-[STARTUP] HumanFortress starting at 5/10/2025 5:06:33 PM
-[STARTUP] Log file: C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\fortress_debug.log
-[STARTUP] Content loaded successfully from C:\Users\User\Desktop\humanfortress\TheFortressSimulation\src\HumanFortress.App\bin\Debug\net8.0\win-x64\content
-[GameStateManager] ChangeState from  to MainMenu
-[GameStateManager] States registered: MainMenu, WorldGen, WorldMap, EmbarkPrep, FortressPlay
-[GameStateManager] Calling Enter on MainMenu
-Entered Main Menu
-[GameStateManager] Enter completed for MainMenu
