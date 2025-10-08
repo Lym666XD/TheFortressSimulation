@@ -52,7 +52,8 @@
       "Bash(tee:*)",
       "Bash(Select-Object -Last 20)",
       "Bash(del \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")",
-      "Bash(del /f \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")"
+      "Bash(del /f \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
