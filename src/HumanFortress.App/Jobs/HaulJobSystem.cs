@@ -25,8 +25,22 @@ public sealed class HaulJobSystem : ITick
     private readonly List<ActiveJob> _active = new();
     private readonly List<HaulingSystem.PlannedMove> _inboxBuffer = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<HaulingSystem.PlannedMove> _backlog = new();
+    private readonly System.Collections.Generic.HashSet<System.Guid> _backlogIds = new();
+    private readonly System.Collections.Generic.Dictionary<System.Guid, ulong> _backlogEnqueueTick = new();
+    private const int CreatureReserveTtlTicks = 200; // refresh each WriteTick
+    public int LastIntakeCount { get; private set; } = 0;
+    private readonly int _maxIntakePerTick;
+    private readonly int _carryoverMaxTicks;
 
-    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner, DiffLog? diffLog = null, NavigationManager? sharedNav = null)
+    private int _lastCompletedTotal;
+    private int _lastRequeuedTotal;
+    private int _lastNoPathTotal;
+
+    public readonly record struct JobStatsSnapshot(int Intake, int Active, int Backlog, int CompletedDelta, int RequeuedDelta, int NoPathDelta, int CarryoverOld);
+    private JobStatsSnapshot _lastStats;
+    public JobStatsSnapshot GetLastStatsSnapshot() => _lastStats;
+
+    public HaulJobSystem(HumanFortress.Simulation.World.World world, HaulingSystem planner, DiffLog? diffLog = null, NavigationManager? sharedNav = null, int intakeBudget = 16, int carryoverMaxTicks = 8)
     {
         _world = world;
         _planner = planner;
@@ -35,6 +49,8 @@ public sealed class HaulJobSystem : ITick
         _navView = new WorldNavigationView(_nav, world);
         _move = new MovementExecutor(_paths);
         _diff = diffLog;
+        _maxIntakePerTick = Math.Max(1, intakeBudget);
+        _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
         // Note: RebuildAll is performed after world generation (FortressState) using the shared manager.
     }
 
@@ -46,15 +62,21 @@ public sealed class HaulJobSystem : ITick
     {
         _paths.BeginTick();
         _inboxBuffer.Clear();
-        // First, drain backlog (retry moves)
-        while (_inboxBuffer.Count < 16 && _backlog.TryDequeue(out var retry))
+        // First, drain backlog (retry moves) and free the ID for future requeues if needed
+        while (_inboxBuffer.Count < _maxIntakePerTick && _backlog.TryDequeue(out var retry))
+        {
             _inboxBuffer.Add(retry);
+            _backlogIds.Remove(retry.ItemGuid);
+            _backlogEnqueueTick.Remove(retry.ItemGuid);
+        }
         // Then, new planned moves from planner
-        if (_inboxBuffer.Count < 16)
-            _planner.DequeuePlannedMoves(16 - _inboxBuffer.Count, _inboxBuffer);
+        if (_inboxBuffer.Count < _maxIntakePerTick)
+            _planner.DequeuePlannedMoves(_maxIntakePerTick - _inboxBuffer.Count, _inboxBuffer);
+        LastIntakeCount = _inboxBuffer.Count;
         if (_inboxBuffer.Count == 0)
         {
-            Logger.Log($"[HAULJOBS][{tick}] No planned moves dequeued.");
+            if ((tick % 60UL) == 0UL)
+                Logger.Log($"[HAULJOBS][{tick}] No planned moves dequeued.");
             return;
         }
 
@@ -80,12 +102,17 @@ public sealed class HaulJobSystem : ITick
             {
                 if (worker.HP <= 0) continue; // allow cross-Z by pathfinding
                 if (busy.Contains(worker.Guid)) continue; // already on a job
+                // Cross-system exclusivity: try reserve the creature
+                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick + CreatureReserveTtlTicks, jobId: $"haul:{mv.ItemGuid}"))
+                    continue;
                 var req = new PathRequest(new Point3(worker.Position.X, worker.Position.Y, worker.Z), new Point3(mv.From.X, mv.From.Y, mv.FromZ), MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(worker.Guid, mv.ItemGuid));
                 var path = _paths.Solve(in req, in view);
                 if (path.Kind != PathResultKind.Found)
                 {
                     Logger.Log($"[HAULJOBS][{tick}] No path to item for worker={worker.Guid} from=({worker.Position.X},{worker.Position.Y},{worker.Z}) to=({mv.From.X},{mv.From.Y},{mv.FromZ})");
                     JobStats.NoPath++;
+                    // Release reservation since we failed to start a path
+                    _world.Reservations.ReleaseCreature(worker.Guid);
                     continue;
                 }
                 var job = new ActiveJob
@@ -114,12 +141,45 @@ public sealed class HaulJobSystem : ITick
             }
             if (!assigned)
             {
-                // Requeue for retry next tick
-                _backlog.Enqueue(mv);
-                Logger.Log($"[HAULJOBS][{tick}] No available worker for item={mv.ItemGuid}; requeue.");
-                JobStats.Requeued++;
+                // Requeue for retry next tick, but avoid duplicates for the same item
+                if (_backlogIds.Add(mv.ItemGuid))
+                {
+                    _backlog.Enqueue(mv);
+                    _backlogEnqueueTick[mv.ItemGuid] = tick;
+                    JobStats.Requeued++;
+                    Logger.Log($"[HAULJOBS][{tick}] No available worker for item={mv.ItemGuid}; requeue.");
+                }
+                else
+                {
+                    Logger.Log($"[HAULJOBS][{tick}] No worker for item={mv.ItemGuid}; already queued, skip duplicate.");
+                }
             }
         }
+
+        // Build per-tick stats snapshot
+        int completedDelta = JobStats.Completed - _lastCompletedTotal;
+        int requeuedDelta = JobStats.Requeued - _lastRequeuedTotal;
+        int noPathDelta = JobStats.NoPath - _lastNoPathTotal;
+        _lastCompletedTotal = JobStats.Completed;
+        _lastRequeuedTotal = JobStats.Requeued;
+        _lastNoPathTotal = JobStats.NoPath;
+
+        // Count carryover items older than threshold
+        int carryoverOld = 0;
+        foreach (var kv in _backlogEnqueueTick)
+        {
+            if (tick > kv.Value && (tick - kv.Value) >= (ulong)_carryoverMaxTicks)
+                carryoverOld++;
+        }
+
+        _lastStats = new JobStatsSnapshot(
+            Intake: LastIntakeCount,
+            Active: _active.Count,
+            Backlog: _backlog.Count,
+            CompletedDelta: completedDelta,
+            RequeuedDelta: requeuedDelta,
+            NoPathDelta: noPathDelta,
+            CarryoverOld: carryoverOld);
     }
 
     public void WriteTick(ulong tick)
@@ -129,8 +189,10 @@ public sealed class HaulJobSystem : ITick
         foreach (var job in _active)
         {
             var cr = _world.Creatures.GetInstance(job.CreatureId);
-            if (cr == null) { finished.Add(job); continue; }
+            if (cr == null) { finished.Add(job); _world.Reservations.ReleaseCreature(job.CreatureId); continue; }
             uint eid = ToEntity(cr.Guid);
+            // refresh creature reservation TTL while job is active
+            _world.Reservations.TryReserveCreature(job.CreatureId, SystemId, tick + CreatureReserveTtlTicks, jobId: $"haul:{job.ItemId}");
             var update = _move.UpdateMovement(eid, _navView);
             if (update.NeedsReplan)
             {
@@ -172,6 +234,7 @@ public sealed class HaulJobSystem : ITick
                     EmitUnmarkCarried(job.ItemId, job.Dest);
                     // Release reservations
                     _world.Reservations.ReleaseItem(job.ItemId);
+                    _world.Reservations.ReleaseCreature(job.CreatureId);
                     finished.Add(job);
                     Logger.Log($"[HAULJOBS][{tick}] Completed haul item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) by worker={job.CreatureId}");
                     JobStats.Completed++;
@@ -230,6 +293,8 @@ public sealed class HaulJobSystem : ITick
         }
         return list;
     }
+
+    public int GetBacklogCount() => _backlog.Count;
 
     private Point3 GetCreaturePos(Guid creatureId)
     {

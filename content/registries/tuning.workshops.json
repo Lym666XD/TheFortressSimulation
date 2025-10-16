@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "max_queued_recipes_default": 10,
+  "craft_ticks_per_volume": 1,
+  "workers_per_workshop": 1,
+  "io_scan_radius": 2
+}

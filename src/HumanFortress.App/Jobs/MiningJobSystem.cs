@@ -29,6 +29,9 @@ public sealed class MiningJobSystem : ITick
     // Recently completed tiles for short-lived completion highlight
     private readonly System.Collections.Generic.List<(SadRogue.Primitives.Point Cell, int Z, ulong ExpireTick)> _recentCompleted = new();
     private readonly DiffLog? _diff;
+    private readonly int _maxIntakePerTick;
+    private readonly int _carryoverMaxTicks;
+    private const int CreatureReserveTtlTicks = 200;
 
     // Tile reservation: prevent multiple workers from mining the same tile
     private readonly System.Collections.Generic.HashSet<(int x, int y, int z)> _reservedTiles = new();
@@ -36,10 +39,13 @@ public sealed class MiningJobSystem : ITick
     // Deferred stairwell segments: blocked items checked every 10 ticks to avoid starving fresh queue
     private readonly System.Collections.Generic.Queue<(MiningSystem.PlannedDig pd, ulong blockedTick)> _deferredStairwells = new();
 
+    // Backpressure metadata for backlog items (by designation id)
+    private readonly System.Collections.Generic.Dictionary<int, ulong> _backlogEnqueueTick = new();
+
     // Replan/timeout tuning
     private const int MaxFailedReplans = 10; // After N failed replans, release reservation and requeue
 
-    public MiningJobSystem(HumanFortress.Simulation.World.World world, MiningSystem planner, DiffLog? diffLog = null, HumanFortress.Simulation.Items.ItemsDiffLog? itemsDiff = null, NavigationManager? sharedNav = null)
+    public MiningJobSystem(HumanFortress.Simulation.World.World world, MiningSystem planner, DiffLog? diffLog = null, HumanFortress.Simulation.Items.ItemsDiffLog? itemsDiff = null, NavigationManager? sharedNav = null, int intakeBudget = 16, int carryoverMaxTicks = 8)
     {
         _world = world;
         _planner = planner;
@@ -49,8 +55,12 @@ public sealed class MiningJobSystem : ITick
         _move = new MovementExecutor(_paths);
         _diff = diffLog;
         _itemsDiff = itemsDiff;
+        _maxIntakePerTick = Math.Max(1, intakeBudget);
+        _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
         // Note: RebuildAll is performed after world generation (FortressState) using the shared manager.
     }
+
+    public int LastIntakeCount { get; private set; } = 0;
 
     public int Priority => UpdateOrder.Priority.Jobs;
     public string SystemId => "Jobs.MiningJobSystem";
@@ -63,19 +73,22 @@ public sealed class MiningJobSystem : ITick
 
         // Prioritize fresh planned digs to avoid starvation from deferred items
         // 1) Pull from planner first
-        _planner.DequeuePlannedDigs(16, _inboxBuffer);
+        _planner.DequeuePlannedDigs(_maxIntakePerTick, _inboxBuffer);
 
         // 2) Then drain backlog if room remains
-        while (_inboxBuffer.Count < 16 && _backlog.TryDequeue(out var retry))
+        while (_inboxBuffer.Count < _maxIntakePerTick && _backlog.TryDequeue(out var retry))
+        {
             _inboxBuffer.Add(retry);
+            _backlogEnqueueTick.Remove(retry.DesignationId);
+        }
 
         // 3) Finally, only on a 10-tick cadence, retry deferred stairwell segments
         //    and only if there is room remaining. This prevents blocked middles/bottoms
         //    from starving fresh Top/Middle segments needed to establish connectivity.
-        if (_inboxBuffer.Count < 16 && (tick % 10UL) == 0UL)
+        if (_inboxBuffer.Count < _maxIntakePerTick && (tick % 10UL) == 0UL)
         {
             int retried = 0;
-            while (_inboxBuffer.Count < 16 && _deferredStairwells.Count > 0)
+            while (_inboxBuffer.Count < _maxIntakePerTick && _deferredStairwells.Count > 0)
             {
                 var (pd, blockedTick) = _deferredStairwells.Dequeue();
                 _inboxBuffer.Add(pd);
@@ -91,6 +104,7 @@ public sealed class MiningJobSystem : ITick
                 Logger.Log($"[MINING][{tick}] No planned digs dequeued.");
             return;
         }
+        LastIntakeCount = _inboxBuffer.Count;
 
         // Deterministic ordering with stairwell-friendly prioritization:
         // - Priority desc
@@ -220,7 +234,10 @@ public sealed class MiningJobSystem : ITick
             if (adj == null)
             {
                 if (!_planner.IsTileCanceled(pd.Cell.X, pd.Cell.Y, pd.Z))
+                {
                     _backlog.Enqueue(pd);
+                    _backlogEnqueueTick[pd.DesignationId] = tick;
+                }
                 Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}; requeue");
                 continue;
             }
@@ -228,11 +245,17 @@ public sealed class MiningJobSystem : ITick
             {
                 if (worker.HP <= 0) continue;
                 if (busy.Contains(worker.Guid)) continue;
+                // Cross-system exclusivity: try reserve worker for this mining job
+                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick + CreatureReserveTtlTicks, jobId: $"mine:{pd.DesignationId}"))
+                    continue;
                 var req = new PathRequest(new Point3(worker.Position.X, worker.Position.Y, worker.Z), new Point3(adj.Value.X, adj.Value.Y, pd.Z), MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(worker.Guid, pd.Cell));
                 IWorldNavigationView view = _navView;
                 var path = _paths.Solve(in req, in view);
                 if (path.Kind != PathResultKind.Found)
+                {
+                    _world.Reservations.ReleaseCreature(worker.Guid);
                     continue;
+                }
 
                 var requiredTicks = CalculateRequiredTicks(pd.GeologyHandle, (HumanFortress.Simulation.Tiles.TerrainKind)pd.TerrainKind);
                 // If Middle is already UD, make it complete almost instantly to trigger pre-open for the next layer
@@ -275,6 +298,7 @@ public sealed class MiningJobSystem : ITick
                 Logger.Log($"[MINING][{tick}] No worker for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}");
             }
         }
+        UpdateStats(tick);
     }
 
     private bool StairDependencySatisfied(SadRogue.Primitives.Point cell, int z)
@@ -295,7 +319,7 @@ public sealed class MiningJobSystem : ITick
 
     public void WriteTick(ulong tick)
     {
-        if (_active.Count == 0) return;
+        if (_active.Count == 0) { UpdateStats(tick); return; }
         var finished = new List<ActiveMiningJob>();
         foreach (var job in _active)
         {
@@ -306,6 +330,7 @@ public sealed class MiningJobSystem : ITick
                 if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && job.Z > 0)
                     _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
                 Logger.Log($"[MINING][{tick}] Cancel job at target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}; release worker={job.WorkerId}");
+                _world.Reservations.ReleaseCreature(job.WorkerId);
                 finished.Add(job);
                 continue;
             }
@@ -315,11 +340,15 @@ public sealed class MiningJobSystem : ITick
                 // Release reservation and requeue if worker disappeared (dead/removed)
                 _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                 _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, job.DesignationId));
+                _backlogEnqueueTick[job.DesignationId] = tick;
                 Logger.Log($"[MINING][{tick}] Worker missing; release & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}");
+                _world.Reservations.ReleaseCreature(job.WorkerId);
                 finished.Add(job);
                 continue;
             }
             uint eid = ToEntity(worker.Guid);
+            // refresh reservation TTL while active
+            _world.Reservations.TryReserveCreature(job.WorkerId, SystemId, tick + CreatureReserveTtlTicks, jobId: $"mine:{job.DesignationId}");
 
             if (job.Stage == MiningStage.ToAdj)
             {
@@ -343,8 +372,12 @@ public sealed class MiningJobSystem : ITick
                         // Timeout: release reservation and requeue (unless canceled)
                         _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                         if (!_planner.IsTileCanceled(job.Target.X, job.Target.Y, job.Z))
+                        {
                             _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, job.DesignationId));
+                            _backlogEnqueueTick[job.DesignationId] = tick;
+                        }
                             Logger.Log($"[MINING][{tick}] Release reservation & requeue target=({job.Target.X},{job.Target.Y},{job.Z}) id=0(backlog) seg={job.Segment} due to timeout (path={path.Kind})");
+                            _world.Reservations.ReleaseCreature(job.WorkerId);
                             finished.Add(job);
                         }
                     }
@@ -395,10 +428,12 @@ public sealed class MiningJobSystem : ITick
                         if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && AnyCreatureAtExcept(job.Target, job.Z, job.WorkerId))
                         {
                             _backlog.Enqueue(new MiningSystem.PlannedDig(job.Target, job.Z, job.GeologyHandle, (byte)job.TerrainKind, job.Priority, 0UL, job.Action, job.Segment, job.DesignationId));
+                            _backlogEnqueueTick[job.DesignationId] = tick;
                             Logger.Log($"[MINING][{tick}] Channel target occupied by other creature at ({job.Target.X},{job.Target.Y},{job.Z}) id=0(backlog); requeue");
                             // Release reservation and skip completion
                             _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                             if (job.Z > 0) _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
+                            _world.Reservations.ReleaseCreature(job.WorkerId);
                             finished.Add(job);
                             continue;
                         }
@@ -416,12 +451,14 @@ public sealed class MiningJobSystem : ITick
                     _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
                     if (job.Action == HumanFortress.Simulation.Orders.MiningAction.DigChannel && job.Z > 0)
                         _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
+                    _world.Reservations.ReleaseCreature(job.WorkerId);
                     finished.Add(job);
                 }
             }
         }
         if (finished.Count > 0)
             foreach (var f in finished) _active.Remove(f);
+        UpdateStats(tick);
     }
 
     private void EmitSetTerrainOpen(SadRogue.Primitives.Point cell, int z)
@@ -913,6 +950,31 @@ public sealed class MiningJobSystem : ITick
                 j.RequiredTicks));
         }
         return list;
+    }
+
+    public int GetBacklogCount() => _backlog.Count;
+    public int GetDeferredCount() => _deferredStairwells.Count;
+    public int GetReservedTileCount() => _reservedTiles.Count;
+
+    public readonly record struct JobStatsSnapshot(int Intake, int Active, int Backlog, int Deferred, int ReservedTiles, int CarryoverOld);
+    private JobStatsSnapshot _lastStats;
+    public JobStatsSnapshot GetLastStatsSnapshot() => _lastStats;
+
+    private void UpdateStats(ulong tick)
+    {
+        int carryoverOld = 0;
+        foreach (var kv in _backlogEnqueueTick)
+        {
+            if (tick > kv.Value && (tick - kv.Value) >= (ulong)_carryoverMaxTicks)
+                carryoverOld++;
+        }
+        _lastStats = new JobStatsSnapshot(
+            Intake: LastIntakeCount,
+            Active: _active.Count,
+            Backlog: _backlog.Count,
+            Deferred: _deferredStairwells.Count,
+            ReservedTiles: _reservedTiles.Count,
+            CarryoverOld: carryoverOld);
     }
 
     private static int EncodeChunkId(HumanFortress.Simulation.World.ChunkKey ck)

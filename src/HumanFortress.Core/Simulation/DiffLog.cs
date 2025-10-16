@@ -93,32 +93,79 @@ public sealed class DiffLog
             // Sort by stable key for determinism
             _operations.Sort((a, b) => a.SortKey.CompareTo(b.SortKey));
 
-            // Resolve conflicts (last writer wins within same target)
+            // Resolve conflicts
             var merged = new List<DiffOp>();
-            DiffOp? lastOp = null;
 
-            foreach (var op in _operations)
+            // For MoveCreature, merge by entity id (one op per entity per tick)
+            var moveByEntity = new Dictionary<int, int>(); // entityId -> index in merged
+
+            // For other ops, track last op by (chunkId, localIndex, op) to apply priority rule
+            var lastByTarget = new Dictionary<(int,int,DiffOpType), int>();
+
+            for (int i = 0; i < _operations.Count; i++)
             {
-                if (lastOp.HasValue &&
-                    op.Target.ChunkId == lastOp.Value.Target.ChunkId &&
-                    op.Target.LocalIndex == lastOp.Value.Target.LocalIndex &&
-                    op.Op == lastOp.Value.Op)
+                var op = _operations[i];
+                if (op.Op == DiffOpType.MoveCreature && op.Target.EntityId >= 0)
                 {
-                    // Same operation on same target - keep higher priority
-                    if (op.Priority <= lastOp.Value.Priority)
+                    if (moveByEntity.TryGetValue(op.Target.EntityId, out int idx))
                     {
-                        merged[merged.Count - 1] = op;
+                        var incumbent = merged[idx];
+                        if (IsBetter(op, incumbent))
+                        {
+                            merged[idx] = op;
+                        }
+                        // else drop
                     }
+                    else
+                    {
+                        moveByEntity[op.Target.EntityId] = merged.Count;
+                        merged.Add(op);
+                    }
+                    continue;
+                }
+
+                var key = (op.Target.ChunkId, op.Target.LocalIndex, op.Op);
+                if (lastByTarget.TryGetValue(key, out int prevIdx))
+                {
+                    var prev = merged[prevIdx];
+                    if (IsBetter(op, prev))
+                    {
+                        merged[prevIdx] = op;
+                    }
+                    // else keep previous
                 }
                 else
                 {
+                    lastByTarget[key] = merged.Count;
                     merged.Add(op);
                 }
-                lastOp = op;
             }
 
             return merged;
         }
+    }
+
+    private static bool IsBetter(in DiffOp candidate, in DiffOp incumbent)
+    {
+        // Lower Priority value means higher priority in this codebase
+        if (candidate.Priority != incumbent.Priority)
+            return candidate.Priority < incumbent.Priority;
+
+        int ca = SystemPrecedence(candidate.SystemId);
+        int cb = SystemPrecedence(incumbent.SystemId);
+        if (ca != cb) return ca < cb;
+
+        // Fallback: later sortkey wins to keep behavior similar to previous last-writer-wins
+        return candidate.SortKey >= incumbent.SortKey;
+    }
+
+    private static int SystemPrecedence(string systemId)
+    {
+        // Smaller is stronger
+        if (systemId.StartsWith("Jobs.Mining", StringComparison.Ordinal)) return 0;
+        if (systemId.StartsWith("Jobs.Haul", StringComparison.Ordinal)) return 1;
+        if (systemId.StartsWith("Jobs.Construction", StringComparison.Ordinal)) return 2;
+        return 3;
     }
 
     /// <summary>

@@ -17,6 +17,7 @@ public sealed class ConstructionJobSystem : ITick
     private readonly DiffLog? _diff;
     private readonly List<PlannedBuild> _buffer = new();
     private readonly int _maxPerTick;
+    public int LastIntakeCount { get; private set; } = 0;
 
     public ConstructionJobSystem(HumanFortress.Simulation.World.World world, ConstructionSystem planner, DiffLog? diffLog = null, int maxPerTick = 256)
     {
@@ -33,6 +34,7 @@ public sealed class ConstructionJobSystem : ITick
     {
         _buffer.Clear();
         _planner.DequeuePlannedBuilds(_maxPerTick, _buffer);
+        LastIntakeCount = _buffer.Count;
     }
 
     public void WriteTick(ulong tick)

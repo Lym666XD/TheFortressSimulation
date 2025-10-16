@@ -248,3 +248,23 @@ Budgets are enforced; if exceeded, fallback to coarser rendering (reduced row de
 Changing /content/registries/tuning.ui.json or /input.bindings.json triggers a UI-only hot reload; UiStore remains, reducers rebind constants; current panel focus retained.
 
 Renderer tileset/theme updates swap at barrier.
+
+17) Build Quick Menu & Structural Placement (New)
+
+- Quick chord: `C` opens Build menu. L2 submenus: `Z=Structural`, `X=Functional`, `C=Workshop`, `V=Civil Furniture`, `F=Utility Furniture`.
+- Structural (L3): `Z=Wall`, `X=Floor`, `C=Ramp`, `V=Stairs (WIP)`.
+- Placement state machine: `ConstructionFirstCorner → ConstructionSecondCorner` on current Z only (multi‑Z stairs reserved).
+- After second corner, UI posts `orders.construction.rect` with `{world_rect, z_min=z_max=currentZ, shape, filter}`.
+- Ghosts: Read phase places L2 non‑blocking construction ghosts per cell for visualization/claiming; Write phase applies L0 changes.
+
+18) Material Filter (Form‑first)
+
+- Invocation: Optional panel at Structural L3 before confirm; if absent, planner uses last‑used or default material.
+- Form‑first: choose required form (e.g., `stone_block` for L0); Material is optional (specific id or tags).
+- Memory: `MaterialSelectionService` remembers last choice by `category_key` (`l0.wall/floor/ramp/stairs`).
+- L0 behavior (v1): does not consume items; the filter only maps to a geology handle (material+kind) for the terrain look. A future `ConsumeMaterials=true` mode will generate haul lists.
+
+19) Debug Menu & Items Drawer UX (New)
+
+- Debug item spawn now validates against `tile.IsWalkable` instead of `OpenWithFloor`, allowing ramps/stairs tiles.
+- Items (F2) drawer shows concrete names; generic resources such as "Boulder/Block/Log/Plank" append material, e.g., `Boulder (Granite)`.

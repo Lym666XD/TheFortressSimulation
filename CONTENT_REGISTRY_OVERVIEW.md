@@ -72,6 +72,15 @@ All sets ordered by (packTier asc, id lex asc).
 
 Any hash/snapshot is content-hash of normalized JSON (canonical order, no whitespace).
 
+2.1 Constructions/Workshops (Data paths)
+
+- Source files (base pack): `data/core/placeable/*.json`.
+  - Includes: `constructions.json`, `constructions_functional.json`, `constructions_traps.json`, `workshops.json`, and attachments.
+- Schema: `content/schemas/constructions.schema.json`.
+- Runtime carrier: `ConstructionDefinition` and `ConstructionRegistry` (Core layer).
+- Integration status: currently not wired into `ContentRegistry.LoadContent`; the App layer should add a loader pass during world init to parse these files and publish to `ConstructionRegistry`.
+- Tuning: `content/registries/tuning.workshops.json` provides global defaults (`max_queued_recipes_default`, `craft_ticks_per_volume`, `workers_per_workshop`, `io_scan_radius`); per‑workshop profiles may override.
+
 3) Merge Semantics (Normative)
 3.1 Object identity
 Identity key: id:string (must be unique within a content kind).

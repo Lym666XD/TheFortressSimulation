@@ -36,6 +36,8 @@ public sealed class GameStateManager
     private HumanFortress.Simulation.Orders.ConstructionSystem? _constructionPlanner;
     private HumanFortress.App.Jobs.ConstructionJobSystem? _constructionJobs;
     private NavigationManager? _navManager;
+    private HumanFortress.App.Jobs.UnifiedJobsOrchestrator? _jobsOrchestrator;
+    private HumanFortress.App.Jobs.SchedulerTunings? _schedulerTunings;
 
     public GameStateManager(ulong masterSeed)
     {
@@ -71,6 +73,7 @@ public sealed class GameStateManager
     public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => _constructionPlanner;
     public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => _constructionJobs;
     public NavigationManager? NavManager => _navManager;
+    public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => _jobsOrchestrator;
 
     /// <summary>
     /// Enqueue a simulation command.
@@ -243,28 +246,39 @@ public sealed class GameStateManager
         if (_world == null)
             throw new InvalidOperationException("World not initialized");
 
-        // Register systems with tick scheduler
-        // Mining planner produces planned digs from mining designations
+        // Instantiate planners (not registered directly)
         _miningPlanner = new HumanFortress.Simulation.Orders.MiningSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_miningPlanner);
-
-        // Mining job executor moves to adjacency and digs
-        _miningJobs = new HumanFortress.App.Jobs.MiningJobSystem(_world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager);
-        _tickScheduler.RegisterSystem(_miningJobs);
-
-        // Hauling planner produces planned moves from haul designations
         _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_haulingPlanner);
-
-        // Haul job executor assigns creatures and moves items along paths
-        _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog, _navManager);
-        _tickScheduler.RegisterSystem(_haulJobs);
-
-        // L0 Construction planner and job executor
         _constructionPlanner = new HumanFortress.Simulation.Orders.ConstructionSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_constructionPlanner);
-        _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(_world, _constructionPlanner, _diffLog);
-        _tickScheduler.RegisterSystem(_constructionJobs);
+
+        // Load scheduler tunings (fallback to defaults when missing)
+        var baseDir = AppContext.BaseDirectory;
+        _schedulerTunings = HumanFortress.App.Jobs.SchedulerTunings.LoadFromContent(baseDir);
+
+        // Executors (honor per-tick intake budgets & backpressure window)
+        _miningJobs = new HumanFortress.App.Jobs.MiningJobSystem(
+            _world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager,
+            intakeBudget: _schedulerTunings.Mining.PlanPerTick,
+            carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks);
+        _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(
+            _world, _haulingPlanner, _diffLog, _navManager,
+            intakeBudget: _schedulerTunings.Hauling.PlanPerTick,
+            carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks);
+        _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(
+            _world, _constructionPlanner, _diffLog,
+            maxPerTick: _schedulerTunings.Construction.PlanPerTick);
+
+        // Register unified jobs orchestrator (v1 single-threaded orchestration)
+        _jobsOrchestrator = new HumanFortress.App.Jobs.UnifiedJobsOrchestrator(
+            _haulingPlanner,
+            _miningPlanner,
+            _constructionPlanner,
+            _haulJobs,
+            _miningJobs,
+            _constructionJobs,
+            _schedulerTunings
+        );
+        _tickScheduler.RegisterSystem(_jobsOrchestrator);
 
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;
@@ -416,7 +430,8 @@ public sealed class GameStateManager
                             if (wx < 0 || wy < 0 || wx >= tiles || wy >= tiles) continue;
                             var t = _world.GetTile(wx, wy, z);
                             if (t == null) continue;
-                            if (!t.Value.IsStandable) continue; // require OpenWithFloor
+                            // Prefer standable floors; fallback to any walkable (ramp/slope/stairs) if floors are scarce
+                            if (!(t.Value.IsStandable || t.Value.IsWalkable)) continue;
 
                             var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
                             if (guid.HasValue)
@@ -439,7 +454,7 @@ public sealed class GameStateManager
                         for (int wx = 0; wx < tiles && spawned < desired; wx++)
                         {
                             var t = _world.GetTile(wx, wy, z);
-                            if (t == null || !t.Value.IsStandable) continue;
+                            if (t == null || !(t.Value.IsStandable || t.Value.IsWalkable)) continue;
                             var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
                             if (guid.HasValue) spawned++;
                         }

@@ -394,7 +394,9 @@ public enum DebugItemCategory
     Logs,
     Planks,
     Tools,
-    Weapons
+    Weapons,
+    Ammo,
+    SiegeWeapons
 }
 
 public enum MiningAction

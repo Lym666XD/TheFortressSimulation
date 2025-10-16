@@ -309,6 +309,23 @@ public sealed class ItemManager
                             if (def.Tags.Any(t => string.Equals(t, "furniture", StringComparison.OrdinalIgnoreCase)))
                                 def.Kind = "placeable";
                         }
+                        // Enrich generic resource names with material for better UX in drawers/debug
+                        if (!string.IsNullOrWhiteSpace(def.FixedMaterial) && IsGenericResourceName(def.Name))
+                        {
+                            var oldName = def.Name;
+                            var mat = MaterialSuffixFriendly(def.FixedMaterial!);
+                            if (!string.IsNullOrEmpty(mat))
+                            {
+                                def.Name = $"{mat} {def.Name}";
+                                // DEBUG: Log name enrichment for boulders
+                                if (def.Id.Contains("boulder"))
+                                {
+                                    var msg = $"[ItemManager] Boulder name enriched: id={def.Id} '{oldName}' -> '{def.Name}' (mat={def.FixedMaterial})";
+                                    Console.WriteLine(msg);
+                                    LogCallback?.Invoke(msg);
+                                }
+                            }
+                        }
                         ValidateDefinition(def);
                         _definitions[def.Id] = def;
                         IndexByKind(def);
@@ -341,6 +358,31 @@ public sealed class ItemManager
         LogCallback?.Invoke(kindsMsg);
     }
 
+    // === Helpers (display/UX) ===
+    private static bool IsGenericResourceName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        var n = name.Trim().ToLowerInvariant();
+        return n == "boulder" || n == "block" || n == "plank" || n == "log";
+    }
+
+    private static string MaterialSuffixFriendly(string materialId)
+    {
+        // Example: "core_mat_stone_granite" -> "Granite"
+        try
+        {
+            var parts = materialId.Split('_');
+            if (parts.Length >= 1)
+            {
+                var last = parts[^1];
+                if (!string.IsNullOrEmpty(last))
+                    return char.ToUpperInvariant(last[0]) + last.Substring(1).Replace('_', ' ');
+            }
+        }
+        catch { }
+        return materialId;
+    }
+
     /// <summary>
     /// Validate item definition (basic checks)
     /// </summary>
@@ -353,7 +395,7 @@ public sealed class ItemManager
             throw new ArgumentException($"Item '{def.Id}' has no name");
 
         // Validate kind is valid
-        var validKinds = new[] { "resource", "weapon", "armor", "tool", "container", "consumable", "placeable" };
+        var validKinds = new[] { "resource", "weapon", "armor", "tool", "container", "consumable", "placeable", "ammo", "siege_weapon" };
         if (!validKinds.Contains(def.Kind.ToLower()))
             throw new ArgumentException($"Item '{def.Id}' has invalid kind: {def.Kind}");
 
@@ -442,11 +484,12 @@ public sealed class ItemManager
 
             Console.WriteLine($"[ItemManager] Chunk found, getting tile...");
 
-            // Validate tile is walkable (OpenWithFloor)
+            // Validate tile supports spawning items.
+            // Policy change: allow any walkable tile (floor/ramp/stairs) not just OpenWithFloor.
             var tile = chunk.GetTile(localX, localY);
             Console.WriteLine($"[ItemManager] Tile kind: {tile.Kind}");
 
-            if (tile.Kind != TerrainKind.OpenWithFloor)
+            if (!tile.IsWalkable)
             {
                 Console.WriteLine($"[ItemManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
                 return null;
