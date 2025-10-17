@@ -1,0 +1,294 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_pottery",
+      "name": "Pottery Workshop",
+      "tags": [
+        "workshop",
+        "ceramic",
+        "pottery",
+        "building_materials"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1200,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "pottery"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 100,
+          "heat_w": 200
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_pottery_clay_trough",
+      "name": "Clay Pit & Puddling Trough",
+      "slot": "clay_prep",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_clay_levigation_basin",
+      "tags": [
+        "clay",
+        "prep",
+        "puddling"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_clay_levigation_basin",
+      "name": "Levigating Basins & Rakes",
+      "slot": "clay_prep",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_clay_sieves_settling",
+      "tags": [
+        "clay",
+        "levigation",
+        "settle"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_clay_sieves_settling",
+      "name": "Fine Sieves & Settling Tanks",
+      "slot": "clay_prep",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "clay",
+        "refine",
+        "sieve"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_form_hand",
+      "name": "Hand Forming Boards",
+      "slot": "form_station",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_form_kick_wheel",
+      "tags": [
+        "form",
+        "handbuild"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_form_kick_wheel",
+      "name": "Kick Wheel",
+      "slot": "form_station",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_form_treadle_wheel_gauges",
+      "tags": [
+        "form",
+        "wheel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_form_treadle_wheel_gauges",
+      "name": "Treadle Wheel & Gauges",
+      "slot": "form_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "form",
+        "treadle",
+        "precision"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_kiln_pit",
+      "name": "Pit Kiln",
+      "slot": "kiln",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_kiln_updraft",
+      "tags": [
+        "kiln",
+        "earthenware"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_kiln_updraft",
+      "name": "Updraft Kiln",
+      "slot": "kiln",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_kiln_downdraft_stoneware",
+      "tags": [
+        "kiln",
+        "updraft",
+        "earthenware"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_kiln_downdraft_stoneware",
+      "name": "Downdraft/Stoneware Kiln",
+      "slot": "kiln",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "kiln",
+        "downdraft",
+        "stoneware"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_dry_rack",
+      "name": "Drying Racks",
+      "slot": "drying",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_dry_shed",
+      "tags": [
+        "dry",
+        "greenware"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_dry_shed",
+      "name": "Ventilated Drying Shed",
+      "slot": "drying",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_dry_heated_room",
+      "tags": [
+        "dry",
+        "shed"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_dry_heated_room",
+      "name": "Heated Drying Room",
+      "slot": "drying",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "dry",
+        "heated"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_glaze_ash_vat",
+      "name": "Ash Glaze Vat",
+      "slot": "glaze_station",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_glaze_lead_pot",
+      "tags": [
+        "glaze",
+        "ash"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_glaze_lead_pot",
+      "name": "Lead-Glaze Pot & Stirrer",
+      "slot": "glaze_station",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_glaze_tin_pan",
+      "tags": [
+        "glaze",
+        "lead"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_glaze_tin_pan",
+      "name": "Tin-Opaque Glaze Pan",
+      "slot": "glaze_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "glaze",
+        "tin"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_salt_port",
+      "name": "Salt Glaze Ports",
+      "slot": "salt_glaze_port",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "glaze",
+        "salt"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_tile_press_frame",
+      "name": "Tile Frame & Moulds",
+      "slot": "tile_press",
+      "era": "C",
+      "upgrade_to": "core_attach_pottery_tile_press_lever",
+      "tags": [
+        "tile",
+        "mould"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_tile_press_lever",
+      "name": "Lever Tile Press",
+      "slot": "tile_press",
+      "era": "M",
+      "upgrade_to": "core_attach_pottery_tile_press_screw",
+      "tags": [
+        "tile",
+        "press"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pottery_tile_press_screw",
+      "name": "Screw Tile Press",
+      "slot": "tile_press",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "tile",
+        "press"
+      ],
+      "power_w": 0
+    }
+  ]
+}

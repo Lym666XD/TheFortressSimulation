@@ -1,0 +1,145 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_fuel_alkali_works",
+      "name": "Fuel & Alkali Works",
+      "tags": [
+        "fuel",
+        "alkali",
+        "charcoal",
+        "potash"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [
+        "carbonize",
+        "leach",
+        "crystallize"
+      ],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1400,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "fuel",
+          "charcoal"
+        ],
+        "effects": {
+          "beauty": -3,
+          "comfort": 0,
+          "light_lumen": 100,
+          "heat_w": 300
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_carbonize_charcoal_pit",
+      "name": "Charcoal Pit",
+      "slot": "carbonize",
+      "era": "C",
+      "upgrade_to": "core_attach_carbonize_mound_kiln",
+      "tags": [
+        "carbonize"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_carbonize_mound_kiln",
+      "name": "Mounded Charcoal Kiln",
+      "slot": "carbonize",
+      "era": "M",
+      "upgrade_to": "core_attach_carbonize_retort_kiln",
+      "tags": [
+        "carbonize"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_carbonize_retort_kiln",
+      "name": "Retort Charcoal Furnace",
+      "slot": "carbonize",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "carbonize",
+        "sealed"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_leach_ash_bucket",
+      "name": "Ash Bucket & Sieve",
+      "slot": "leach",
+      "era": "C",
+      "upgrade_to": "core_attach_leach_vats_evap",
+      "tags": [
+        "leach"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_leach_vats_evap",
+      "name": "Leach Vats & Evap Pans",
+      "slot": "leach",
+      "era": "M",
+      "upgrade_to": "core_attach_leach_pearlash_kiln",
+      "tags": [
+        "leach",
+        "evap"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_leach_pearlash_kiln",
+      "name": "Pearlash Kiln",
+      "slot": "leach",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "leach",
+        "calcine"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crystallizer_room",
+      "name": "Crystallization Room",
+      "slot": "crystallize",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "crystallize"
+      ],
+      "power_w": 0
+    }
+  ]
+}

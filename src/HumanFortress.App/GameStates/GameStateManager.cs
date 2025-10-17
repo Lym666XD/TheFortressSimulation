@@ -210,7 +210,7 @@ public sealed class GameStateManager
             // Load buildable constructions (workshops, etc.) into ConstructionRegistry (App-layer pass per CONTENT_REGISTRY_OVERVIEW.md)
             try
             {
-                LoadBuildableConstructions(Path.Combine(dataPath, "placeable"));
+                LoadBuildableConstructions(Path.Combine(dataPath, "workshops"));
             }
             catch (Exception ex)
             {
@@ -227,24 +227,29 @@ public sealed class GameStateManager
 
     /// <summary>
     /// App-layer loader for buildable constructions (workshops etc.).
-    /// Reads data/core/placeable/workshops.json (and similarly-structured files) and publishes into ConstructionRegistry.
+    /// Reads data/core/workshops/core_workshop_*.json files and publishes into ConstructionRegistry.
     /// </summary>
-    private static void LoadBuildableConstructions(string placeableDir)
+    private static void LoadBuildableConstructions(string workshopsDir)
     {
-        if (!Directory.Exists(placeableDir))
+        if (!Directory.Exists(workshopsDir))
         {
-            Logger.Log($"[CONSTR.REG] placeable dir not found: {placeableDir}");
+            Logger.Log($"[CONSTR.REG] workshops dir not found: {workshopsDir}");
             return;
         }
 
         var files = new List<string>();
-        // Primary source: workshops.json
-        var workshops = Path.Combine(placeableDir, "workshops.json");
-        if (File.Exists(workshops)) files.Add(workshops);
-        // Optional: any file that looks like constructions_*.json with embedded placeable_profile for L2
-        foreach (var f in Directory.GetFiles(placeableDir, "constructions_*.json", SearchOption.TopDirectoryOnly))
+        // Load all core_workshop_*.json files
+        foreach (var f in Directory.GetFiles(workshopsDir, "core_workshop_*.json", SearchOption.TopDirectoryOnly))
         {
             files.Add(f);
+        }
+
+        // Fallback: also check for legacy workshops.json in parent placeable directory (for backward compatibility)
+        var legacyPath = Path.Combine(Path.GetDirectoryName(workshopsDir) ?? "", "placeable", "workshops.json");
+        if (File.Exists(legacyPath))
+        {
+            files.Add(legacyPath);
+            Logger.Log($"[CONSTR.REG] loading legacy workshops.json from placeable dir");
         }
 
         var defs = new List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
@@ -291,8 +296,29 @@ public sealed class GameStateManager
         using var fs = File.OpenRead(file);
         using var doc = System.Text.Json.JsonDocument.Parse(fs);
         var root = doc.RootElement;
-        if (!root.TryGetProperty("constructions", out var arr) || arr.ValueKind != System.Text.Json.JsonValueKind.Array)
+
+        // Support both "constructions" and "workshops" arrays
+        System.Text.Json.JsonElement arr;
+        bool isWorkshopFile = false;
+        if (root.TryGetProperty("workshops", out arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            isWorkshopFile = true;
+        }
+        else if (root.TryGetProperty("constructions", out arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            isWorkshopFile = false;
+        }
+        else
+        {
             yield break;
+        }
+
+        // Parse attachments array if present (for workshop files)
+        HumanFortress.Core.Content.Registry.WorkshopAttachment[]? attachments = null;
+        if (isWorkshopFile && root.TryGetProperty("attachments", out var attachArr) && attachArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            attachments = ParseAttachments(attachArr);
+        }
 
         foreach (var elem in arr.EnumerateArray())
         {
@@ -382,10 +408,80 @@ public sealed class GameStateManager
             pp.Effects = eff;
             def.PlaceableProfile = pp;
 
+            // Parse workshop-specific fields (optional)
+            if (elem.TryGetProperty("io", out var ioE) && ioE.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                def.Io = new HumanFortress.Core.Content.Registry.WorkshopIo
+                {
+                    InputSlots = ioE.TryGetProperty("input_slots", out var inE) ? inE.GetInt32() : 4,
+                    OutputSlots = ioE.TryGetProperty("output_slots", out var outE) ? outE.GetInt32() : 4,
+                    BufferSlots = ioE.TryGetProperty("buffer_slots", out var bufE) ? bufE.GetInt32() : 2
+                };
+            }
+
+            if (elem.TryGetProperty("attachment_slots", out var slotsE) && slotsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                def.AttachmentSlots = slotsE.EnumerateArray()
+                    .Select(s => s.GetString() ?? "")
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToArray();
+            }
+
+            if (elem.TryGetProperty("power_baseline_w", out var pwrE))
+            {
+                def.PowerBaselineW = pwrE.GetInt32();
+            }
+
+            if (elem.TryGetProperty("era_min", out var eMinE))
+            {
+                def.EraMin = eMinE.GetString();
+            }
+
+            if (elem.TryGetProperty("era_max", out var eMaxE))
+            {
+                def.EraMax = eMaxE.GetString();
+            }
+
+            // Attach the attachments array from file level (for workshop files)
+            if (attachments != null && attachments.Length > 0)
+            {
+                def.Attachments = attachments;
+            }
+
             // Validate now to surface file-specific errors
             def.Validate();
             yield return def;
         }
+    }
+
+    private static HumanFortress.Core.Content.Registry.WorkshopAttachment[] ParseAttachments(System.Text.Json.JsonElement attachArr)
+    {
+        var list = new List<HumanFortress.Core.Content.Registry.WorkshopAttachment>();
+        foreach (var elem in attachArr.EnumerateArray())
+        {
+            var att = new HumanFortress.Core.Content.Registry.WorkshopAttachment
+            {
+                Id = elem.TryGetProperty("id", out var idE) ? (idE.GetString() ?? "") : "",
+                Name = elem.TryGetProperty("name", out var nameE) ? (nameE.GetString() ?? "") : "",
+                Slot = elem.TryGetProperty("slot", out var slotE) ? (slotE.GetString() ?? "") : "",
+                Era = elem.TryGetProperty("era", out var eraE) ? eraE.GetString() : null,
+                EraMin = elem.TryGetProperty("era_min", out var eMinE) ? eMinE.GetString() : null,
+                EraMax = elem.TryGetProperty("era_max", out var eMaxE) ? eMaxE.GetString() : null,
+                UpgradeTo = elem.TryGetProperty("upgrade_to", out var upgE) ? upgE.GetString() : null,
+                PowerW = elem.TryGetProperty("power_w", out var pwrE) ? pwrE.GetInt32() : 0
+            };
+
+            if (elem.TryGetProperty("tags", out var tagsE) && tagsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                att.Tags = tagsE.EnumerateArray()
+                    .Select(t => t.GetString() ?? "")
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToArray();
+            }
+
+            list.Add(att);
+        }
+        return list.ToArray();
     }
 
     /// <summary>

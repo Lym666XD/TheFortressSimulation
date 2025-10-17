@@ -1,0 +1,161 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_compost",
+      "name": "Compost Pit",
+      "tags": [
+        "workshop",
+        "agriculture",
+        "fertilizer",
+        "compost"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 800,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "compost"
+        ],
+        "effects": {
+          "beauty": -3,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 50
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_compost_infra_pit_basic",
+      "name": "Earthen Pit (Basic)",
+      "slot": "pit_infrastructure",
+      "era": "C",
+      "upgrade_to": "core_attach_compost_infra_bay_partition",
+      "tags": [
+        "infrastructure",
+        "pit",
+        "compost"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_infra_bay_partition",
+      "name": "Partitioned Bay",
+      "slot": "pit_infrastructure",
+      "era": "M",
+      "upgrade_to": "core_attach_compost_infra_roofed_three_bin",
+      "tags": [
+        "infrastructure",
+        "bay",
+        "partition"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_infra_roofed_three_bin",
+      "name": "Roofed Three-Bin",
+      "slot": "pit_infrastructure",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "infrastructure",
+        "roofed",
+        "three_bin"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_turn_fork",
+      "name": "Hand Fork Turning",
+      "slot": "turning_system",
+      "era": "C",
+      "upgrade_to": "core_attach_compost_turn_frame",
+      "tags": [
+        "turning",
+        "manual"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_turn_frame",
+      "name": "Turning Frame",
+      "slot": "turning_system",
+      "era": "M",
+      "upgrade_to": "core_attach_compost_turn_tumbler",
+      "tags": [
+        "turning",
+        "frame"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_turn_tumbler",
+      "name": "Crank Tumbler",
+      "slot": "turning_system",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "turning",
+        "tumbler"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_nitrary_bed",
+      "name": "Niter Bed",
+      "slot": "nitrary_facility",
+      "era": "M",
+      "upgrade_to": "core_attach_compost_nitrary_bay",
+      "tags": [
+        "niter",
+        "nitrary",
+        "bed"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_compost_nitrary_bay",
+      "name": "Roofed Nitrary Bay",
+      "slot": "nitrary_facility",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "niter",
+        "nitrary",
+        "bay"
+      ],
+      "power_w": 0
+    }
+  ]
+}

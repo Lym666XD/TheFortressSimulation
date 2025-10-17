@@ -1,0 +1,255 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_logging",
+      "name": "Logging Camp",
+      "tags": [
+        "workshop",
+        "wood",
+        "logging",
+        "lumber"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1000,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "logging"
+        ],
+        "effects": {
+          "beauty": 0,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_logging_felling_axe",
+      "name": "Felling Axe & Adze",
+      "slot": "felling_tools",
+      "era": "C",
+      "upgrade_to": "core_attach_logging_felling_broad_axe",
+      "tags": [
+        "felling",
+        "axe",
+        "handtool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_felling_broad_axe",
+      "name": "Broad Axe & Hand Saw",
+      "slot": "felling_tools",
+      "era": "M",
+      "upgrade_to": "core_attach_logging_felling_crosscut_set",
+      "tags": [
+        "felling",
+        "broad_axe",
+        "hand_saw"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_felling_crosscut_set",
+      "name": "Crosscut Saw Set",
+      "slot": "felling_tools",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "felling",
+        "crosscut",
+        "saw"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_haul_hand_sled",
+      "name": "Hand Sled & Skids",
+      "slot": "haul_system",
+      "era": "C",
+      "upgrade_to": "core_attach_logging_haul_ox_skids",
+      "tags": [
+        "haul",
+        "sled",
+        "skid"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_haul_ox_skids",
+      "name": "Ox-Team Skids & Rollers",
+      "slot": "haul_system",
+      "era": "M",
+      "upgrade_to": "core_attach_logging_haul_capstan_rollers",
+      "tags": [
+        "haul",
+        "ox",
+        "rollers"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_haul_capstan_rollers",
+      "name": "Capstan & Timber Rollers",
+      "slot": "haul_system",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "haul",
+        "capstan",
+        "rollers"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_saw_hewing_bench",
+      "name": "Hewing Bench",
+      "slot": "sawing_station",
+      "era": "C",
+      "upgrade_to": "core_attach_logging_saw_pit_saw",
+      "tags": [
+        "saw",
+        "hewing",
+        "bench"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_saw_pit_saw",
+      "name": "Pit Saw",
+      "slot": "sawing_station",
+      "era": "M",
+      "upgrade_to": "core_attach_logging_saw_waterwheel_frame",
+      "tags": [
+        "saw",
+        "pit",
+        "two_man"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_saw_waterwheel_frame",
+      "name": "Waterwheel Frame Saw",
+      "slot": "sawing_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "saw",
+        "waterwheel",
+        "frame_saw"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_dry_air_stack",
+      "name": "Air-Stack Drying",
+      "slot": "drying_station",
+      "era": "C",
+      "upgrade_to": "core_attach_logging_dry_covered_shed",
+      "tags": [
+        "drying",
+        "air",
+        "stack"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_dry_covered_shed",
+      "name": "Covered Drying Shed",
+      "slot": "drying_station",
+      "era": "M",
+      "upgrade_to": "core_attach_logging_dry_vent_kiln",
+      "tags": [
+        "drying",
+        "shed",
+        "covered"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_dry_vent_kiln",
+      "name": "Vented Kiln Drying",
+      "slot": "drying_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "drying",
+        "kiln",
+        "vented"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_split_block",
+      "name": "Splitting Block & Wedges",
+      "slot": "splitting_station",
+      "era": "C",
+      "upgrade_to": "core_attach_logging_split_sawhorse",
+      "tags": [
+        "split",
+        "firewood",
+        "wedges"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_split_sawhorse",
+      "name": "Sawhorse & Cleaving Set",
+      "slot": "splitting_station",
+      "era": "M",
+      "upgrade_to": "core_attach_logging_split_frame",
+      "tags": [
+        "split",
+        "sawhorse",
+        "cleave"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_logging_split_frame",
+      "name": "Frame Splitter",
+      "slot": "splitting_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "split",
+        "frame",
+        "lever"
+      ],
+      "power_w": 0
+    }
+  ]
+}

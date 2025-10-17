@@ -1,0 +1,190 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_woodworking",
+      "name": "Woodworking Workshop",
+      "tags": [
+        "workshop",
+        "wood",
+        "carpentry"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1200,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "woodworking"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_wood_saw_hand_frame",
+      "name": "Hand Saw Frame",
+      "slot": "sawline",
+      "era": "C",
+      "upgrade_to": "core_attach_wood_saw_pit",
+      "tags": [
+        "saw",
+        "cut"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_saw_pit",
+      "name": "Pit Saw Bench",
+      "slot": "sawline",
+      "era": "M",
+      "upgrade_to": "core_attach_wood_saw_water",
+      "tags": [
+        "saw",
+        "cut",
+        "water_optional"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_saw_water",
+      "name": "Water-Powered Saw Shed",
+      "slot": "sawline",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "saw",
+        "cut",
+        "water"
+      ],
+      "power_w": 250
+    },
+    {
+      "id": "core_attach_wood_joinery_bench",
+      "name": "Joinery Bench",
+      "slot": "joinery",
+      "era": "C",
+      "upgrade_to": "core_attach_wood_joinery_fixture_drill",
+      "tags": [
+        "joinery",
+        "assembly"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_joinery_fixture_drill",
+      "name": "Clamps & Lever Drill",
+      "slot": "joinery",
+      "era": "M",
+      "upgrade_to": "core_attach_wood_joinery_planer_bench",
+      "tags": [
+        "joinery",
+        "assembly"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_joinery_planer_bench",
+      "name": "Planer/Drill Bench & Jigs",
+      "slot": "joinery",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "joinery",
+        "assembly"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_lathe_foot",
+      "name": "Foot-Powered Lathe",
+      "slot": "lathe",
+      "era": "M",
+      "upgrade_to": "core_attach_wood_lathe_improved",
+      "tags": [
+        "lathe",
+        "turn"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_lathe_improved",
+      "name": "Improved Lathe",
+      "slot": "lathe",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "lathe",
+        "turn"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_dry_shed",
+      "name": "Drying Shed",
+      "slot": "drying",
+      "era": "C",
+      "upgrade_to": "core_attach_wood_dry_vent_store",
+      "tags": [
+        "drying"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_dry_vent_store",
+      "name": "Ventilated Dry Store",
+      "slot": "drying",
+      "era": "M",
+      "upgrade_to": "core_attach_wood_dry_low_kiln",
+      "tags": [
+        "drying"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wood_dry_low_kiln",
+      "name": "Low-Temp Drying Kiln",
+      "slot": "drying",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "drying"
+      ],
+      "power_w": 0
+    }
+  ]
+}

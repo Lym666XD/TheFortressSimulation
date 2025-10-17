@@ -1,0 +1,249 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_metalworks",
+      "name": "Metalworks",
+      "tags": [
+        "metal",
+        "forge",
+        "form",
+        "assemble"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [
+        "forge_form",
+        "shear_punch",
+        "draw_chain",
+        "assemble_rivet",
+        "limb_heat",
+        "heat_source"
+      ],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1500,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "metalworks",
+          "hot"
+        ],
+        "effects": {
+          "beauty": -1,
+          "comfort": 0,
+          "light_lumen": 150,
+          "heat_w": 400
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_metal_forge_hand_anvil",
+      "name": "Hand Hammer & Anvil",
+      "slot": "forge_form",
+      "era": "C",
+      "upgrade_to": "core_attach_metal_forge_water_hammer",
+      "tags": [
+        "forge",
+        "form"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_forge_water_hammer",
+      "name": "Water Hammer",
+      "slot": "forge_form",
+      "era": "M",
+      "upgrade_to": "core_attach_metal_forge_screw_press",
+      "tags": [
+        "forge",
+        "form",
+        "waterpower"
+      ],
+      "power_w": 150
+    },
+    {
+      "id": "core_attach_metal_forge_screw_press",
+      "name": "Screw/Lever Press",
+      "slot": "forge_form",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "forge",
+        "form"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_shear_chisel_bench",
+      "name": "Chisel & Cut Bench",
+      "slot": "shear_punch",
+      "era": "C",
+      "upgrade_to": "core_attach_metal_shear_lever",
+      "tags": [
+        "shear",
+        "punch"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_shear_lever",
+      "name": "Lever Shear",
+      "slot": "shear_punch",
+      "era": "M",
+      "upgrade_to": "core_attach_metal_shear_press",
+      "tags": [
+        "shear",
+        "punch"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_shear_press",
+      "name": "Press Shear",
+      "slot": "shear_punch",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "shear",
+        "punch"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_draw_hand_plate",
+      "name": "Hand Drawplate",
+      "slot": "draw_chain",
+      "era": "C",
+      "upgrade_to": "core_attach_metal_draw_coiler",
+      "tags": [
+        "draw",
+        "chain"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_draw_coiler",
+      "name": "Coiling Draw Machine",
+      "slot": "draw_chain",
+      "era": "M",
+      "upgrade_to": "core_attach_metal_draw_precision",
+      "tags": [
+        "draw",
+        "chain",
+        "waterpower"
+      ],
+      "power_w": 150
+    },
+    {
+      "id": "core_attach_metal_draw_precision",
+      "name": "Precision Drawbench",
+      "slot": "draw_chain",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "draw",
+        "chain"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_rivet_cold",
+      "name": "Cold Riveting Bench",
+      "slot": "assemble_rivet",
+      "era": "C",
+      "upgrade_to": "core_attach_metal_rivet_hot",
+      "tags": [
+        "assemble",
+        "rivet"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_rivet_hot",
+      "name": "Hot Rivet Forge & Station",
+      "slot": "assemble_rivet",
+      "era": "M",
+      "upgrade_to": "core_attach_metal_rivet_thread",
+      "tags": [
+        "assemble",
+        "rivet"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_rivet_thread",
+      "name": "Threaded Fastener Tooling",
+      "slot": "assemble_rivet",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "assemble",
+        "rivet",
+        "thread"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_limb_anneal_temper",
+      "name": "Limb Anneal/Temper Furnace",
+      "slot": "limb_heat",
+      "era": "M",
+      "upgrade_to": "core_attach_metal_limb_iso_temper",
+      "tags": [
+        "limb_heat"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_limb_iso_temper",
+      "name": "Isothermal Tempering Bench",
+      "slot": "limb_heat",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "limb_heat"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_metal_heat_lava_forge",
+      "name": "Lava Forge (Terrain)",
+      "slot": "heat_source",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "heat",
+        "nofuel"
+      ],
+      "power_w": 0
+    }
+  ]
+}

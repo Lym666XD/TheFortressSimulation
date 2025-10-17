@@ -1,0 +1,2050 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "_comment": "Stone + Lime/Concrete recipes for Builder profession",
+  "recipes": [
+    {
+      "id": "core_recipe_stone_cut_blocks_c",
+      "name": "Stone Cut Blocks C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_handbench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_block_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_blocks_m",
+      "name": "Stone Cut Blocks M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_watersaw"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_block_stone",
+          "count": 8
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_blocks_r",
+      "name": "Stone Cut Blocks R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_framesaw_polisher"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_block_stone",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_c",
+      "name": "Stone Cut Slabs C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_handbench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_slab_stone",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_m",
+      "name": "Stone Cut Slabs M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_watersaw"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_slab_stone",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_cut_slabs_r",
+      "name": "Stone Cut Slabs R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_cut_framesaw_polisher"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_slab_stone",
+          "count": 14
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_c",
+      "name": "Stone Make Door C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 84000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_door_stone",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_m",
+      "name": "Stone Make Door M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_door_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_door_r",
+      "name": "Stone Make Door R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_door_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_c",
+      "name": "Stone Make Floodgate C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 84000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_stone",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_m",
+      "name": "Stone Make Floodgate M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_floodgate_r",
+      "name": "Stone Make Floodgate R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_c",
+      "name": "Stone Make Table C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_table_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_m",
+      "name": "Stone Make Table M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_table_stone",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_table_r",
+      "name": "Stone Make Table R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_table_stone",
+          "count": 7
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_c",
+      "name": "Stone Make Seat C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_seat_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_m",
+      "name": "Stone Make Seat M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_seat_stone",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_seat_r",
+      "name": "Stone Make Seat R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_seat_stone",
+          "count": 7
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_c",
+      "name": "Stone Make Cabinet C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cabinet_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_m",
+      "name": "Stone Make Cabinet M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 57000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cabinet_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_cabinet_r",
+      "name": "Stone Make Cabinet R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 51000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cabinet_stone",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_c",
+      "name": "Stone Make Chest C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_chest_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_m",
+      "name": "Stone Make Chest M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 57000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_chest_stone",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_chest_r",
+      "name": "Stone Make Chest R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 51000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_chest_stone",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_c",
+      "name": "Stone Make Statue C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 96000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack",
+          "core_attach_stone_engrave_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_statue_stone",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_m",
+      "name": "Stone Make Statue M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 84000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs",
+          "core_attach_stone_engrave_tracing_gauges"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_statue_stone",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_statue_r",
+      "name": "Stone Make Statue R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe",
+          "core_attach_stone_engrave_fine_polish"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_statue_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_c",
+      "name": "Stone Make Pedestal C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_chisel_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_pedestal_stone",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_m",
+      "name": "Stone Make Pedestal M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_hoist_jigs"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_pedestal_stone",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_pedestal_r",
+      "name": "Stone Make Pedestal R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_form_template_lathe"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_pedestal_stone",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_stone_make_slab_memorial_c",
+      "name": "Stone Make Slab Memorial C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_stone_engrave_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_slab_stone",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_waste_stone_chips",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_stone_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_c",
+      "name": "Quicklime From Limestone Or Shell C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_kiln_pit_clamp"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 9
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_rock_limestone",
+              "count": 10
+            },
+            {
+              "def_id": "core_item_shell_generic",
+              "count": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_m",
+      "name": "Quicklime From Limestone Or Shell M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_kiln_shaft_draft"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_rock_limestone",
+              "count": 10
+            },
+            {
+              "def_id": "core_item_shell_generic",
+              "count": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_quicklime_from_limestone_or_shell_r",
+      "name": "Quicklime From Limestone Or Shell R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_kiln_twin_chamber_continuous"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_rock_limestone",
+              "count": 10
+            },
+            {
+              "def_id": "core_item_shell_generic",
+              "count": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_slake_lime_c",
+      "name": "Slake Lime C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_slaker_pool_open"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_slake_lime_m",
+      "name": "Slake Lime M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_slaker_pool_covered"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_slake_lime_r",
+      "name": "Slake Lime R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 42000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_slaker_pool_series"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_quicklime",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_c",
+      "name": "Mortar Lime Sand C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_manual"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_mortar_lime",
+          "count": 18
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_m",
+      "name": "Mortar Lime Sand M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_rig_shed"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_mortar_lime",
+          "count": 20
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mortar_lime_sand_r",
+      "name": "Mortar Lime Sand R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 42000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_adjustable_drum"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_mortar_lime",
+          "count": 22
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 20
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_concrete_roman_c",
+      "name": "Concrete Roman C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_manual"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_concrete_roman_lime_pozzolan",
+          "count": 16
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_powder_pozzolan_volcanic_ash",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_concrete_roman_m",
+      "name": "Concrete Roman M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 63000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_rig_shed"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_concrete_roman_lime_pozzolan",
+          "count": 18
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_powder_pozzolan_volcanic_ash",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_concrete_roman_r",
+      "name": "Concrete Roman R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_formwork_adjustable_drum"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_concrete_roman_lime_pozzolan",
+          "count": 20
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_powder_pozzolan_volcanic_ash",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_c",
+      "name": "Aggregate From Furnace Slag C",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 42000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crush_sieve_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_waste_slag_furnace",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_m",
+      "name": "Aggregate From Furnace Slag M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 36000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crush_water_helve_coarse"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_waste_slag_furnace",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_aggregate_from_furnace_slag_r",
+      "name": "Aggregate From Furnace Slag R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 30000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crush_roller_and_drum"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 14
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_waste_slag_furnace",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_aggregate_from_chem_slag_m",
+      "name": "Aggregate From Chem Slag M",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_neutralizer_basin"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_aggregate_from_chem_slag_r",
+      "name": "Aggregate From Chem Slag R",
+      "category": "stoneworks",
+      "workshops": [
+        "core_workshop_stoneworks"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "masonry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_neutralizer_continuous_filter"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_aggregate_crushed",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_lime_slaked_paste",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_liquid_water_pure"
+        }
+      ]
+    }
+  ]
+}

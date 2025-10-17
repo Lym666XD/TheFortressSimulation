@@ -1,7 +1,8 @@
 {
-  "version": 1,
+  "_comment": "Workshop tunings for crafting and production",
   "max_queued_recipes_default": 10,
   "craft_ticks_per_volume": 1,
   "workers_per_workshop": 1,
-  "io_scan_radius": 2
+  "io_scan_radius": 2,
+  "check_attachments": false
 }

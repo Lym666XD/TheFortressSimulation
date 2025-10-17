@@ -1,0 +1,210 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_kitchen",
+      "name": "Kitchen",
+      "tags": [
+        "workshop",
+        "food",
+        "kitchen",
+        "cooking"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 6,
+        "output_slots": 6,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1200,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "kitchen",
+          "cooking"
+        ],
+        "effects": {
+          "beauty": 1,
+          "comfort": 1,
+          "light_lumen": 100,
+          "heat_w": 300
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_kitchen_heat_open_hearth",
+      "name": "Open Hearth",
+      "slot": "heat_station",
+      "era": "C",
+      "upgrade_to": "core_attach_kitchen_heat_cauldron_hearth",
+      "tags": [
+        "heat",
+        "hearth"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_heat_cauldron_hearth",
+      "name": "Cauldron Hearth",
+      "slot": "heat_station",
+      "era": "M",
+      "upgrade_to": "core_attach_kitchen_heat_brick_oven_hearth",
+      "tags": [
+        "heat",
+        "cauldron",
+        "hearth"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_heat_brick_oven_hearth",
+      "name": "Brick Oven & Hearth",
+      "slot": "heat_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "heat",
+        "brick_oven",
+        "hearth"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_prep_block",
+      "name": "Chopping Block",
+      "slot": "prep_station",
+      "era": "C",
+      "upgrade_to": "core_attach_kitchen_prep_board",
+      "tags": [
+        "prep",
+        "chopping"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_prep_board",
+      "name": "Butcher’s Block & Kneading Board",
+      "slot": "prep_station",
+      "era": "M",
+      "upgrade_to": "core_attach_kitchen_prep_tiled_table",
+      "tags": [
+        "prep",
+        "kneading"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_prep_tiled_table",
+      "name": "Tiled Prep Table",
+      "slot": "prep_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "prep",
+        "tiled"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_bake_clay_dome",
+      "name": "Clay Dome Oven",
+      "slot": "baking_station",
+      "era": "C",
+      "upgrade_to": "core_attach_kitchen_bake_stone_oven",
+      "tags": [
+        "baking",
+        "clay_oven"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_bake_stone_oven",
+      "name": "Stone Bread Oven",
+      "slot": "baking_station",
+      "era": "M",
+      "upgrade_to": "core_attach_kitchen_bake_brick_oven",
+      "tags": [
+        "baking",
+        "stone_oven"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_bake_brick_oven",
+      "name": "Vented Brick Bake Oven",
+      "slot": "baking_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "baking",
+        "brick_oven",
+        "vented"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_roast_spit",
+      "name": "Hand Spit",
+      "slot": "roast_station",
+      "era": "C",
+      "upgrade_to": "core_attach_kitchen_roast_spit_pan",
+      "tags": [
+        "roast",
+        "spit"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_roast_spit_pan",
+      "name": "Spit & Drip Pan",
+      "slot": "roast_station",
+      "era": "M",
+      "upgrade_to": "core_attach_kitchen_roast_clock_jack",
+      "tags": [
+        "roast",
+        "spit",
+        "pan"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_kitchen_roast_clock_jack",
+      "name": "Clock-Jack Spit",
+      "slot": "roast_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "roast",
+        "spit",
+        "jack"
+      ],
+      "power_w": 0
+    }
+  ]
+}

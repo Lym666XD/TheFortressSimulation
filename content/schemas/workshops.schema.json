@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/workshops.schema.json",
+  "title": "Workshops Registry Schema",
+  "description": "Schema for workshop station definitions and their attachment/enabler ecosystem.",
+  "type": "object",
+  "required": ["$schema", "version", "workshops"],
+  "properties": {
+    "$schema": { "type": "string", "description": "JSON Schema reference" },
+    "version": { "type": "string", "description": "Registry version (semver)" },
+    "_comment": { "type": "string", "description": "Optional file-level comment" },
+
+    "workshops": {
+      "type": "array",
+      "description": "Array of workshop station definitions",
+      "items": { "$ref": "#/definitions/Workshop" }
+    },
+
+    "attachments": {
+      "type": "array",
+      "description": "Attachment/enabler definitions usable by the above workshops",
+      "items": { "$ref": "#/definitions/Attachment" }
+    },
+    "recipes": {
+      "type": "array",
+      "description": "Optional co-located recipes for convenience (validated against recipes.schema)",
+      "items": { "$ref": "https://humanfortress.game/schemas/recipes.schema.json#/definitions/Recipe" }
+    }
+  },
+
+  "definitions": {
+    "Workshop": {
+      "type": "object",
+      "required": ["id", "name", "tags", "era_min", "era_max", "attachment_slots"],
+      "properties": {
+        "_comment": { "type": "string", "description": "Optional per-entry comment" },
+        "id": {
+          "type": "string",
+          "pattern": "^core_workshop_[a-z0-9_]+$",
+          "description": "Unique workshop id (must start with 'core_workshop_')"
+        },
+        "name": { "type": "string", "description": "Display name" },
+        "description": { "type": "string", "description": "Optional description" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Tags used for UI grouping and category filters"
+        },
+        "era_min": {
+          "type": "string",
+          "enum": ["C", "M", "R"],
+          "description": "Minimum era gating (C=CLASSIC, M=MEDIEVAL, R=RENAISSANCE)"
+        },
+        "era_max": {
+          "type": "string",
+          "enum": ["C", "M", "R"],
+          "description": "Maximum era gating (C=CLASSIC, M=MEDIEVAL, R=RENAISSANCE)"
+        },
+        "attachment_slots": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+          "uniqueItems": true,
+          "minItems": 1,
+          "description": "Allowed slots for attachments/enablers (e.g., furnace, bench, roaster, power_bellows)"
+        },
+        "io": {
+          "type": "object",
+          "properties": {
+            "input_slots": { "type": "integer", "minimum": 0, "description": "Max input slots (UI/logic hint)" },
+            "output_slots": { "type": "integer", "minimum": 0, "description": "Max output slots (UI/logic hint)" },
+            "buffer_slots": { "type": "integer", "minimum": 0, "description": "Internal buffer slots (optional)" }
+          },
+          "description": "I/O slot capacities (optional; tuning may override)"
+        },
+        "capacity_overrides": {
+          "type": "object",
+          "properties": {
+            "workers_max": { "type": "integer", "minimum": 0, "description": "Override max workers per workshop" },
+            "queue_max": { "type": "integer", "minimum": 0, "description": "Override max queued recipes" }
+          },
+          "description": "Optional per-station overrides for workers/queue capacities"
+        },
+        "power_baseline_w": { "type": "integer", "minimum": 0, "description": "Baseline idle/aux power draw for the station" },
+        "placeable_construction_id": {
+          "type": "string",
+          "pattern": "^core_construction_[a-z0-9_]+$",
+          "description": "Optional construction id used to build this station on map"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "era_min": { "const": "R" } }
+          },
+          "then": {
+            "properties": { "era_max": { "const": "R" } }
+          }
+        },
+        {
+          "if": {
+            "properties": { "era_min": { "const": "M" } }
+          },
+          "then": {
+            "properties": { "era_max": { "enum": ["M", "R"] } }
+          }
+        }
+      ]
+    },
+
+    "Attachment": {
+      "type": "object",
+      "required": ["id", "name", "slot"],
+      "properties": {
+        "_comment": { "type": "string", "description": "Optional per-entry comment" },
+        "id": {
+          "type": "string",
+          "pattern": "^core_attach_[a-z0-9_]+$",
+          "description": "Unique attachment id (must start with 'core_attach_')"
+        },
+        "name": { "type": "string", "description": "Display name" },
+        "slot": { "type": "string", "pattern": "^[a-z0-9_]+$", "description": "Slot name that this attachment occupies" },
+        "era": { "type": "string", "enum": ["C", "M", "R"], "description": "Single era availability (C/M/R)" },
+        "era_min": { "type": "string", "enum": ["C", "M", "R"], "description": "Minimum era availability (C/M/R)" },
+        "era_max": { "type": "string", "enum": ["C", "M", "R"], "description": "Maximum era availability (C/M/R)" },
+        "upgrade_to": { "type": ["string", "null"], "description": "Next attachment id in the upgrade chain (or null)" },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "Tags describing properties (e.g., powered, waterpower, forge)" },
+        "power_w": { "type": "integer", "minimum": 0, "description": "Optional base power draw for powered attachments" }
+      },
+      "allOf": [
+        {
+          "if": { "anyOf": [ { "required": ["era_min"] }, { "required": ["era_max"] } ] },
+          "then": { "not": { "required": ["era"] } }
+        }
+      ]
+    }
+  }
+}

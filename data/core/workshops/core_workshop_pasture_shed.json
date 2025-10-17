@@ -1,0 +1,254 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_pasture_shed",
+      "name": "Pasture Shed",
+      "tags": [
+        "workshop",
+        "husbandry",
+        "pasture"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 900,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "pasture",
+          "animal"
+        ],
+        "effects": {
+          "beauty": -2,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_pasture_fence_gate",
+      "name": "Fence Gate",
+      "slot": "access",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "gate",
+        "pen"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_watering_trough",
+      "name": "Watering Trough",
+      "slot": "water",
+      "era": "C",
+      "upgrade_to": "core_attach_pasture_auto_waterer",
+      "tags": [
+        "water"
+      ],
+      "power_w": 100
+    },
+    {
+      "id": "core_attach_pasture_bedding_rack",
+      "name": "Bedding Rack",
+      "slot": "bedding",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "straw",
+        "comfort"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_tie_post",
+      "name": "Tie Post",
+      "slot": "restraint",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "tether"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_milking_stand",
+      "name": "Milking Stand",
+      "slot": "milking",
+      "era": "C",
+      "upgrade_to": "core_attach_pasture_milking_rig_improved",
+      "tags": [
+        "milk"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_shearing_stand",
+      "name": "Shearing Stand",
+      "slot": "shearing",
+      "era": "C",
+      "upgrade_to": "core_attach_pasture_shearing_rig_improved",
+      "tags": [
+        "wool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_nest_box_bay",
+      "name": "Nest-Box Bay",
+      "slot": "poultry",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "eggs"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_hayloft_feeder",
+      "name": "Hayloft & Feeder Rack",
+      "slot": "feed",
+      "era": "M",
+      "upgrade_to": "core_attach_pasture_feed_mixer_table",
+      "tags": [
+        "feed",
+        "hay"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_vent_panels",
+      "name": "Vent Panels & Damps",
+      "slot": "vent",
+      "era": "M",
+      "upgrade_to": "core_attach_pasture_insulated_walls",
+      "tags": [
+        "hygiene",
+        "vent"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_manure_gutter",
+      "name": "Manure Gutter & Scrape Channel",
+      "slot": "sanitation",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "manure",
+        "cleaning"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_partition_pens",
+      "name": "Partition Pens",
+      "slot": "partition",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "breeding",
+        "pens"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_milking_rig_improved",
+      "name": "Improved Milking Rig",
+      "slot": "milking",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "milk"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_shearing_rig_improved",
+      "name": "Improved Shearing Rig",
+      "slot": "shearing",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "wool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_feed_mixer_table",
+      "name": "Feed Mixer Table",
+      "slot": "feed",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "feed_mix"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_auto_waterer",
+      "name": "Auto Waterer",
+      "slot": "water",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "water"
+      ],
+      "power_w": 250
+    },
+    {
+      "id": "core_attach_pasture_insulated_walls",
+      "name": "Insulated Walls",
+      "slot": "structure",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "winter",
+        "health"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_pasture_disinfect_wash",
+      "name": "Disinfecting Wash Trough",
+      "slot": "sanitize",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "sanitize"
+      ],
+      "power_w": 0
+    }
+  ]
+}
