@@ -33,6 +33,7 @@ public sealed class GameStateManager
     private HumanFortress.Simulation.Jobs.ITransportRequestQueue? _transportQueue;
     private HumanFortress.App.Jobs.TransportJobSystem? _transportJobs;
     private HumanFortress.Simulation.Orders.MiningSystem? _miningPlanner;
+    private HumanFortress.Simulation.Orders.BuildableConstructionSystem? _buildablePlanner;
     private HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner? _cmPlanner;
     private HumanFortress.App.Jobs.MiningJobSystem? _miningJobs;
     private HumanFortress.Simulation.Orders.ConstructionSystem? _constructionPlanner;
@@ -205,12 +206,185 @@ public sealed class GameStateManager
             }
 
             Logger.Log($"[GameStateManager] Loaded {_world.Creatures.DefinitionCount} creatures, {_world.Items.DefinitionCount} items, {_world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
+
+            // Load buildable constructions (workshops, etc.) into ConstructionRegistry (App-layer pass per CONTENT_REGISTRY_OVERVIEW.md)
+            try
+            {
+                LoadBuildableConstructions(Path.Combine(dataPath, "placeable"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[CONSTR.REG] ERROR: failed loading constructions: {ex.Message}");
+            }
         }
         else
         {
             Logger.Log($"[GameStateManager] WARNING: Data directory not found. Tried:");
             Logger.Log($"  - {path1}");
             Logger.Log($"  - {Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core")}");
+        }
+    }
+
+    /// <summary>
+    /// App-layer loader for buildable constructions (workshops etc.).
+    /// Reads data/core/placeable/workshops.json (and similarly-structured files) and publishes into ConstructionRegistry.
+    /// </summary>
+    private static void LoadBuildableConstructions(string placeableDir)
+    {
+        if (!Directory.Exists(placeableDir))
+        {
+            Logger.Log($"[CONSTR.REG] placeable dir not found: {placeableDir}");
+            return;
+        }
+
+        var files = new List<string>();
+        // Primary source: workshops.json
+        var workshops = Path.Combine(placeableDir, "workshops.json");
+        if (File.Exists(workshops)) files.Add(workshops);
+        // Optional: any file that looks like constructions_*.json with embedded placeable_profile for L2
+        foreach (var f in Directory.GetFiles(placeableDir, "constructions_*.json", SearchOption.TopDirectoryOnly))
+        {
+            files.Add(f);
+        }
+
+        var defs = new List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
+        int errors = 0;
+        foreach (var file in files)
+        {
+            try
+            {
+                foreach (var d in ParseConstructionsFile(file))
+                {
+                    // Only accept entries that have a placeable_profile (L2) for this iteration
+                    if (d.PlaceableProfile != null && d.PlaceableProfile.Footprint.W > 0 && d.PlaceableProfile.Footprint.D > 0)
+                    {
+                        defs.Add(d);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errors++;
+                Logger.Log($"[CONSTR.REG] error parsing {Path.GetFileName(file)}: {ex.Message}");
+            }
+        }
+
+        // Publish to registry
+        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        reg.Clear();
+        try
+        {
+            reg.LoadConstructions(defs);
+        }
+        catch (Exception ex)
+        {
+            errors++;
+            Logger.Log($"[CONSTR.REG] load error: {ex.Message}");
+        }
+
+        var cats = string.Join(',', reg.GetAllCategories());
+        Logger.Log($"[CONSTR.REG] loaded={reg.Count} categories=[{cats}] errors={errors}");
+    }
+
+    private static IEnumerable<HumanFortress.Core.Content.Registry.ConstructionDefinition> ParseConstructionsFile(string file)
+    {
+        using var fs = File.OpenRead(file);
+        using var doc = System.Text.Json.JsonDocument.Parse(fs);
+        var root = doc.RootElement;
+        if (!root.TryGetProperty("constructions", out var arr) || arr.ValueKind != System.Text.Json.JsonValueKind.Array)
+            yield break;
+
+        foreach (var elem in arr.EnumerateArray())
+        {
+            // We accept two shapes:
+            // A) L2: has "placeable_profile": {...}
+            // B) Legacy: top-level footprint/passability (ignored here unless placeable_profile present)
+            var hasProfile = elem.TryGetProperty("placeable_profile", out var profileElem) && profileElem.ValueKind == System.Text.Json.JsonValueKind.Object;
+            if (!hasProfile)
+            {
+                // Skip legacy L0 definitions in this pass
+                continue;
+            }
+
+            var def = new HumanFortress.Core.Content.Registry.ConstructionDefinition();
+            def.Id = elem.GetProperty("id").GetString() ?? string.Empty;
+            def.Name = elem.TryGetProperty("name", out var nameE) ? (nameE.GetString() ?? def.Id) : def.Id;
+            def.Category = elem.TryGetProperty("category", out var catE) ? (catE.GetString() ?? "") : "";
+            def.BuildTimeTicks = elem.TryGetProperty("build_time_ticks", out var btE) ? btE.GetInt32() : 1000;
+
+            // Materials: prefer material_costs; fallback to materials_required
+            var mats = new List<HumanFortress.Core.Content.Registry.MaterialCost>();
+            if (elem.TryGetProperty("material_costs", out var mcE) && mcE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var m in mcE.EnumerateArray())
+                {
+                    var mc = new HumanFortress.Core.Content.Registry.MaterialCost
+                    {
+                        Tag = m.TryGetProperty("tag", out var tagE) ? tagE.GetString() : null,
+                        DefId = m.TryGetProperty("def_id", out var didE) ? didE.GetString() : (m.TryGetProperty("defId", out var did2E) ? did2E.GetString() : null),
+                        Count = m.TryGetProperty("count", out var cntE) ? cntE.GetInt32() : 1
+                    };
+                    mats.Add(mc);
+                }
+            }
+            else if (elem.TryGetProperty("materials_required", out var mrE) && mrE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var m in mrE.EnumerateArray())
+                {
+                    var mc = new HumanFortress.Core.Content.Registry.MaterialCost
+                    {
+                        Tag = m.TryGetProperty("tag", out var tagE) ? tagE.GetString() : null,
+                        DefId = m.TryGetProperty("def_id", out var didE) ? didE.GetString() : (m.TryGetProperty("defId", out var did2E) ? did2E.GetString() : null),
+                        Count = m.TryGetProperty("count", out var cntE) ? cntE.GetInt32() : 1
+                    };
+                    mats.Add(mc);
+                }
+            }
+            // Use materials as defined in JSON (pure data-driven)
+            def.MaterialCosts = mats.ToArray();
+
+            // Placeable profile
+            var pp = new HumanFortress.Core.Content.Registry.PlaceableProfile();
+            var fpE = profileElem.GetProperty("footprint");
+            var fp = new HumanFortress.Core.Content.Registry.Footprint(
+                w: fpE.GetProperty("w").GetInt32(),
+                d: fpE.GetProperty("d").GetInt32(),
+                h: fpE.TryGetProperty("h", out var hE) ? hE.GetInt32() : 1);
+            pp.Footprint = fp;
+            // passability: string -> enum
+            if (profileElem.TryGetProperty("passability", out var passE))
+            {
+                var s = (passE.GetString() ?? "nonblocking").Trim().ToLowerInvariant();
+                pp.Passability = s switch
+                {
+                    "blocking" => HumanFortress.Core.Content.Registry.PassabilityMode.Blocking,
+                    "doorway" => HumanFortress.Core.Content.Registry.PassabilityMode.Doorway,
+                    _ => HumanFortress.Core.Content.Registry.PassabilityMode.Nonblocking
+                };
+            }
+            pp.RequiresFloor = profileElem.TryGetProperty("requires_floor", out var rfE) && rfE.GetBoolean();
+            pp.ClearanceH = profileElem.TryGetProperty("clearance_h", out var clE) ? clE.GetInt32() : 0;
+            pp.BlocksLight = profileElem.TryGetProperty("blocks_light", out var blE) && blE.GetBoolean();
+
+            if (profileElem.TryGetProperty("tags", out var tagsE) && tagsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                pp.Tags = tagsE.EnumerateArray().Select(t => t.GetString() ?? string.Empty).Where(t => !string.IsNullOrWhiteSpace(t)).ToArray();
+            }
+
+            var eff = new HumanFortress.Core.Content.Registry.EffectsBlock();
+            if (profileElem.TryGetProperty("effects", out var effE) && effE.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                eff.Beauty = effE.TryGetProperty("beauty", out var bE) ? bE.GetInt32() : 0;
+                eff.Comfort = effE.TryGetProperty("comfort", out var cE) ? cE.GetInt32() : 0;
+                eff.LightLumen = effE.TryGetProperty("light_lumen", out var lE) ? lE.GetInt32() : 0;
+                eff.HeatW = effE.TryGetProperty("heat_w", out var h2E) ? h2E.GetInt32() : 0;
+            }
+            pp.Effects = eff;
+            def.PlaceableProfile = pp;
+
+            // Validate now to surface file-specific errors
+            def.Validate();
+            yield return def;
         }
     }
 
@@ -255,6 +429,7 @@ public sealed class GameStateManager
         _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders, transportIntake: _transportQueue);
         _cmPlanner = new HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner(_world, _transportQueue);
         _constructionPlanner = new HumanFortress.Simulation.Orders.ConstructionSystem(_world, _world.Orders);
+        _buildablePlanner = new HumanFortress.Simulation.Orders.BuildableConstructionSystem(_world, _world.Orders);
 
         // Load scheduler tunings (fallback to defaults when missing)
         var baseDir = AppContext.BaseDirectory;
@@ -287,6 +462,8 @@ public sealed class GameStateManager
             _constructionJobs,
             _schedulerTunings
         );
+        // Buildable planner is independent (read-only, places sites). Run before orchestrator writes.
+        _tickScheduler.RegisterSystem(_buildablePlanner);
         _tickScheduler.RegisterSystem(_jobsOrchestrator);
         _tickScheduler.RegisterSystem(sanitizer);
 

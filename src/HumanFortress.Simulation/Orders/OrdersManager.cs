@@ -24,6 +24,10 @@ public sealed class OrdersManager
     private readonly ConcurrentQueue<ConstructionDesignation> _constructionQueue = new();
     private readonly ConcurrentQueue<ConstructionDesignation> _recentConstruction = new();
     private readonly ConcurrentBag<ConstructionDesignation> _activeConstruction = new();
+    // Buildable constructions (L2 placeables)
+    private readonly ConcurrentQueue<BuildableConstructionDesignation> _buildableQueue = new();
+    private readonly ConcurrentQueue<BuildableConstructionDesignation> _recentBuildable = new();
+    private readonly ConcurrentBag<BuildableConstructionDesignation> _activeBuildable = new();
 
     /// <summary>
     /// Enqueue a haul designation for processing.
@@ -140,6 +144,18 @@ public sealed class OrdersManager
     }
 
     /// <summary>
+    /// Enqueue an L2 buildable construction (e.g., workshop) at an anchor cell.
+    /// </summary>
+    public void EnqueueBuildableConstruction(string constructionId, Point anchor, int z, int priority, ulong createdTick)
+    {
+        var d = new BuildableConstructionDesignation(constructionId, anchor, z, priority, createdTick);
+        _buildableQueue.Enqueue(d);
+        _recentBuildable.Enqueue(d);
+        _activeBuildable.Add(d);
+        while (_recentBuildable.Count > RecentCapacity && _recentBuildable.TryDequeue(out _)) { }
+    }
+
+    /// <summary>
     /// Drain at most maxCount haul designations into the provided list.
     /// Returns number drained. Use in the Read phase.
     /// </summary>
@@ -190,8 +206,24 @@ public sealed class OrdersManager
         return drained;
     }
 
+    /// <summary>
+    /// Drain buildable construction designations (L2) into provided list.
+    /// </summary>
+    public int DrainBuildableConstructions(ICollection<BuildableConstructionDesignation> into, int maxCount)
+    {
+        int drained = 0;
+        while (drained < maxCount && _buildableQueue.TryDequeue(out var d))
+        {
+            into.Add(d);
+            drained++;
+        }
+        return drained;
+    }
+
     public List<ConstructionDesignation> GetRecentConstruction() => _recentConstruction.ToList();
     public List<ConstructionDesignation> GetActiveConstructionSnapshot() => _activeConstruction.ToList();
+    public List<BuildableConstructionDesignation> GetRecentBuildable() => _recentBuildable.ToList();
+    public List<BuildableConstructionDesignation> GetActiveBuildableSnapshot() => _activeBuildable.ToList();
 
     // Unified mining designation contract
     public readonly record struct MiningDesignation(int Id, Rectangle Rect, int ZMin, int ZMax, MiningAction Action, int Priority, ulong CreatedTick);

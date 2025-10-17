@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Placeables;
+using HumanFortress.Core.Content.Registry;
 
 namespace HumanFortress.Simulation.Rendering
 {
@@ -120,7 +122,7 @@ namespace HumanFortress.Simulation.Rendering
                 _zVersions[key] = chunk.LastModifiedTick;
             }
             
-            return new ZSliceSnapshot
+            var zslice = new ZSliceSnapshot
             {
                 ZIndex = z,
                 Version = chunk.LastModifiedTick,
@@ -128,6 +130,39 @@ namespace HumanFortress.Simulation.Rendering
                 FluidDepth = fluidDepth,
                 AnimPhase = animPhase
             };
+
+            // Build placeables overlay rectangles (absolute world coordinates)
+            try
+            {
+                var pd = chunk.GetPlaceableData();
+                if (pd != null)
+                {
+                    foreach (var p in pd.GetAllOwnedPlaceables())
+                    {
+                        if (p.Z != z) continue;
+                        string defId = p.ConstructionSite != null ? p.ConstructionSite.TargetId : p.DefinitionId;
+                        var def = ConstructionRegistry.Instance.GetConstruction(defId);
+                        if (def == null) continue;
+                        bool isWorkshop = string.Equals(def.Category, "workshop", System.StringComparison.OrdinalIgnoreCase)
+                                          || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
+                        if (!isWorkshop) continue;
+                        var fp = p.Footprint;
+                        zslice.PlaceablesOverlay.Add(new OverlayRect
+                        {
+                            X = p.Position.X,
+                            Y = p.Position.Y,
+                            W = fp.W,
+                            H = fp.D,
+                            Z = p.Z,
+                            Kind = p.ConstructionSite != null ? "workshop_site" : "workshop",
+                            DefId = def.Id
+                        });
+                    }
+                }
+            }
+            catch { }
+
+            return zslice;
         }
         
         private ushort ResolveTilePaletteIndex(TileBase tile, Chunk chunk, int x, int y)

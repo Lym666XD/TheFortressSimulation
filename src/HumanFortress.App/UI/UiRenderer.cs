@@ -131,7 +131,7 @@ namespace HumanFortress.App.UI;
         }
         else if (ui.OpenDrawer == DrawerId.Work)
         {
-            tabs = new[] { "Labor", "All Orders", "Settings" };
+            tabs = new[] { "Labor", "All Orders", "Workshops" };
         }
         else if (ui.OpenDrawer == DrawerId.PlacementManagement)
         {
@@ -182,7 +182,10 @@ namespace HumanFortress.App.UI;
             }
             else
             {
-                surf.Print(2, y0 + 2, "(Configure coming soon)", Color.Gray);
+                if (world != null)
+                    DrawWorkshopsTab(surf, world, y0 + 2);
+                else
+                    surf.Print(2, y0 + 2, "(No world)", Color.Gray);
             }
         }
         else if (ui.OpenDrawer == DrawerId.PlacementManagement && world != null)
@@ -301,7 +304,7 @@ namespace HumanFortress.App.UI;
     }
 
     // Draw quick menu (new compact popup-based UI)
-        public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
+    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
         var surf = mapSurface.Surface;
@@ -360,6 +363,12 @@ namespace HumanFortress.App.UI;
                 // L2: height=8, place at top of L2 menu
                 int l2Y = surf.Height - 9;
                 buildUI.DrawBuildWithSubmenu(mapSurface, centerX, l2Y, ui.BuildMenu);
+
+                // If browsing workshop items, draw the items pane on the right
+                if (ui.BuildMenu == BuildSubmenu.Workshop && ui.WorkshopBrowsingItems && ui.SelectedWorkshopCategory != null)
+                {
+                    DrawWorkshopItemsPane(mapSurface, centerX + 32, l2Y, ui.SelectedWorkshopCategory);
+                }
             }
         }
         // Stockpile menu
@@ -381,6 +390,372 @@ namespace HumanFortress.App.UI;
         }
 
         // Highlights are drawn by FortressState after map render to ensure visibility across UI states.
+    }
+
+    private static void DrawWorkshopsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY)
+    {
+        surf.Print(2, startY, "== Work: Workshops ==", Color.Yellow);
+        int y = startY + 2;
+
+        int count = 0;
+        foreach (var chunk in world.GetAllChunks())
+        {
+            var pd = chunk.GetPlaceableData();
+            if (pd == null) continue;
+            foreach (var p in pd.GetAllOwnedPlaceables())
+            {
+                var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+                var def = reg.GetConstruction(p.DefinitionId);
+                if (def == null) continue;
+                if (!string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase) &&
+                    (def.PlaceableProfile.Tags == null || Array.IndexOf(def.PlaceableProfile.Tags, "workshop") < 0))
+                    continue;
+
+                var fp = p.Footprint;
+                surf.Print(2, y++, $"- {def.Name} at ({p.Position.X},{p.Position.Y},{p.Z}) fp={fp.W}x{fp.D} pass={def.PlaceableProfile.Passability}", Color.White);
+                count++;
+                if (y > startY + 24) break;
+            }
+            if (y > startY + 24) break;
+        }
+
+        if (count == 0)
+        {
+            surf.Print(2, y, "No workshops placed.", Color.Gray);
+        }
+    }
+
+    public static void DrawWorkshopsOverlay(MapScreenSurface mapSurface, HumanFortress.Simulation.World.World world, int currentZ, SadRogue.Primitives.Rectangle viewport)
+    {
+        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        var border = new Color(255, 230, 0);         // completed
+        var fill = new Color(255, 230, 0, 90);
+        var siteBorder = new Color(255, 140, 0);     // construction site
+        var siteFill = new Color(255, 140, 0, 60);
+        var surf = mapSurface.Surface;
+        foreach (var chunk in world.GetAllChunks())
+        {
+            var pd = chunk.GetPlaceableData();
+            if (pd == null) continue;
+            foreach (var p in pd.GetAllOwnedPlaceables())
+            {
+                if (p.Z != currentZ) continue;
+                bool isSite = p.ConstructionSite != null;
+                string defId = isSite ? p.ConstructionSite!.TargetId : p.DefinitionId;
+                var def = reg.GetConstruction(defId);
+                if (def == null) continue;
+                bool isWorkshop = string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase)
+                                  || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
+                if (!isWorkshop) continue;
+                var fp = p.Footprint;
+                var borderColor = isSite ? siteBorder : border;
+                var fillColor = isSite ? siteFill : fill;
+                // Fill footprint
+                for (int dy = 0; dy < fp.D; dy++)
+                {
+                    for (int dx = 0; dx < fp.W; dx++)
+                    {
+                        int wx = p.Position.X + dx;
+                        int wy = p.Position.Y + dy;
+                        int sx = wx - viewport.X;
+                        int sy = wy - viewport.Y;
+                        if (sx >= 0 && sx < mapSurface.Width && sy >= 0 && sy < mapSurface.Height)
+                        {
+                            mapSurface.SetGlyph(sx, sy, '.', fillColor, Color.Transparent);
+                        }
+                    }
+                }
+                // Border
+                for (int dx = 0; dx < fp.W; dx++)
+                {
+                    int sx = p.Position.X + dx - viewport.X;
+                    int sy1 = p.Position.Y - viewport.Y;
+                    int sy2 = p.Position.Y + fp.D - 1 - viewport.Y;
+                    if (sx >= 0 && sx < mapSurface.Width)
+                    {
+                        if (sy1 >= 0 && sy1 < mapSurface.Height) mapSurface.SetGlyph(sx, sy1, '-', borderColor, Color.Transparent);
+                        if (sy2 >= 0 && sy2 < mapSurface.Height) mapSurface.SetGlyph(sx, sy2, '-', borderColor, Color.Transparent);
+                    }
+                }
+                for (int dy = 0; dy < fp.D; dy++)
+                {
+                    int sy = p.Position.Y + dy - viewport.Y;
+                    int sx1 = p.Position.X - viewport.X;
+                    int sx2 = p.Position.X + fp.W - 1 - viewport.X;
+                    if (sy >= 0 && sy < mapSurface.Height)
+                    {
+                        if (sx1 >= 0 && sx1 < mapSurface.Width) mapSurface.SetGlyph(sx1, sy, '|', borderColor, Color.Transparent);
+                        if (sx2 >= 0 && sx2 < mapSurface.Width) mapSurface.SetGlyph(sx2, sy, '|', borderColor, Color.Transparent);
+                    }
+                }
+
+                // Materials progress text (site only): e.g., "B 6/8 · P 2/4" at footprint top-left
+                if (isSite && p.ConstructionSite != null)
+                {
+                    var delivered = CountDeliveredOnFootprintOrRing(world, p);
+                    var req = p.ConstructionSite.MaterialsRequired;
+                    int bD = delivered.TryGetValue("block", out var bd) ? bd : 0;
+                    int pD = delivered.TryGetValue("plank", out var pdv) ? pdv : 0;
+                    int bR = req.TryGetValue("block", out var br) ? br : 0;
+                    int pR = req.TryGetValue("plank", out var pr) ? pr : 0;
+                    string text = $"B {bD}/{bR} · P {pD}/{pR}";
+                    int tx = p.Position.X - viewport.X;
+                    int ty = p.Position.Y - viewport.Y - 1; // one row above top edge if possible
+                    if (ty < 0) ty = p.Position.Y - viewport.Y; // fallback to inside
+                    if (tx >= 0 && ty >= 0 && tx + text.Length < surf.Width && ty < surf.Height)
+                    {
+                        surf.Print(tx, ty, text, Color.White);
+                    }
+                }
+            }
+        }
+    }
+
+    // Snapshot-driven overlay rendering (optional path)
+    public static void DrawWorkshopsOverlayFromSnapshot(MapScreenSurface mapSurface, HumanFortress.Simulation.Rendering.RenderSnapshot snapshot, int currentZ, SadRogue.Primitives.Rectangle viewport)
+    {
+        var border = new Color(255, 230, 0);         // completed
+        var fill = new Color(255, 230, 0, 90);
+        var siteBorder = new Color(255, 140, 0);     // construction site
+        var siteFill = new Color(255, 140, 0, 60);
+        var surf = mapSurface.Surface;
+        foreach (var ch in snapshot.Chunks)
+        {
+            foreach (var zslice in ch.ZSlices)
+            {
+                if (zslice.ZIndex != currentZ) continue;
+                foreach (var rect in zslice.PlaceablesOverlay)
+                {
+                    bool isSite = string.Equals(rect.Kind, "workshop_site", System.StringComparison.OrdinalIgnoreCase);
+                    var borderColor = isSite ? siteBorder : border;
+                    var fillColor = isSite ? siteFill : fill;
+
+                    // Fill footprint
+                    for (int dy = 0; dy < rect.H; dy++)
+                    {
+                        for (int dx = 0; dx < rect.W; dx++)
+                        {
+                            int wx = rect.X + dx;
+                            int wy = rect.Y + dy;
+                            int sx = wx - viewport.X;
+                            int sy = wy - viewport.Y;
+                            if (sx >= 0 && sx < mapSurface.Width && sy >= 0 && sy < mapSurface.Height)
+                            {
+                                mapSurface.SetGlyph(sx, sy, '.', fillColor, Color.Transparent);
+                            }
+                        }
+                    }
+                    // Border
+                    for (int dx = 0; dx < rect.W; dx++)
+                    {
+                        int sx = rect.X + dx - viewport.X;
+                        int sy1 = rect.Y - viewport.Y;
+                        int sy2 = rect.Y + rect.H - 1 - viewport.Y;
+                        if (sx >= 0 && sx < mapSurface.Width)
+                        {
+                            if (sy1 >= 0 && sy1 < mapSurface.Height) mapSurface.SetGlyph(sx, sy1, '-', borderColor, Color.Transparent);
+                            if (sy2 >= 0 && sy2 < mapSurface.Height) mapSurface.SetGlyph(sx, sy2, '-', borderColor, Color.Transparent);
+                        }
+                    }
+                    for (int dy = 0; dy < rect.H; dy++)
+                    {
+                        int sy = rect.Y + dy - viewport.Y;
+                        int sx1 = rect.X - viewport.X;
+                        int sx2 = rect.X + rect.W - 1 - viewport.X;
+                        if (sy >= 0 && sy < mapSurface.Height)
+                        {
+                            if (sx1 >= 0 && sx1 < mapSurface.Width) mapSurface.SetGlyph(sx1, sy, '|', borderColor, Color.Transparent);
+                            if (sx2 >= 0 && sx2 < mapSurface.Width) mapSurface.SetGlyph(sx2, sy, '|', borderColor, Color.Transparent);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static System.Collections.Generic.Dictionary<string, int> CountDeliveredOnFootprintOrRing(HumanFortress.Simulation.World.World world, HumanFortress.Simulation.Placeables.PlaceableInstance site)
+    {
+        var delivered = new System.Collections.Generic.Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+        var fp = site.Footprint;
+        var seen = new System.Collections.Generic.HashSet<(int,int)>();
+        // footprint
+        for (int dy = 0; dy < fp.D; dy++)
+        for (int dx = 0; dx < fp.W; dx++)
+        {
+            int wx = site.Position.X + dx;
+            int wy = site.Position.Y + dy;
+            if (seen.Add((wx, wy)))
+                AddDeliveredAt(world, site.Z, wx, wy, site, delivered);
+        }
+        // ring (4-neighbor)
+        var dirs = new (int dx,int dy)[] { (1,0), (-1,0), (0,1), (0,-1) };
+        for (int dy = 0; dy < fp.D; dy++)
+        for (int dx = 0; dx < fp.W; dx++)
+        {
+            int wx = site.Position.X + dx;
+            int wy = site.Position.Y + dy;
+            foreach (var (adx, ady) in dirs)
+            {
+                int nx = wx + adx;
+                int ny = wy + ady;
+                if (!world.IsValidPosition(nx, ny, site.Z)) continue;
+                if (seen.Add((nx, ny)))
+                    AddDeliveredAt(world, site.Z, nx, ny, site, delivered);
+            }
+        }
+        return delivered;
+    }
+
+    private static void AddDeliveredAt(HumanFortress.Simulation.World.World world, int z, int x, int y, HumanFortress.Simulation.Placeables.PlaceableInstance site, System.Collections.Generic.Dictionary<string, int> delivered)
+    {
+        foreach (var it in world.Items.GetAllInstances())
+        {
+            if (it.IsCarried) continue;
+            if (it.Position.X != x || it.Position.Y != y || it.Z != z) continue;
+            var def = world.Items.GetDefinition(it.DefinitionId);
+            if (def == null || def.Tags == null) continue;
+            foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
+            {
+                if (MatchesRequirement(def.Tags, req))
+                {
+                    delivered[req] = delivered.GetValueOrDefault(req, 0) + it.StackCount;
+                    break;
+                }
+            }
+        }
+    }
+
+    private static bool MatchesRequirement(System.Collections.Generic.IEnumerable<string> itemTags, string requirement)
+    {
+        var set = new System.Collections.Generic.HashSet<string>(itemTags, System.StringComparer.OrdinalIgnoreCase);
+        switch (requirement.ToLowerInvariant())
+        {
+            case "block":
+                return set.Contains("block") || set.Contains("stone_block") || set.Contains("brick") || (set.Contains("stone") && set.Contains("block"));
+            case "plank":
+                return set.Contains("plank") || set.Contains("wood_plank") || (set.Contains("wood") && set.Contains("plank"));
+            case "stone_block":
+                return set.Contains("stone") && set.Contains("block");
+            case "wood_plank":
+                return set.Contains("wood") && set.Contains("plank");
+            case "wood_log":
+                return set.Contains("wood") && set.Contains("log");
+            default:
+                return set.Contains(requirement);
+        }
+    }
+
+    public static void DrawWorkshopPanel(ScreenSurface surface, UiStore ui, HumanFortress.Simulation.World.World world, ulong tick)
+    {
+        if (!ui.WorkshopPanelOpen || ui.OpenWorkshopGuid == null) return;
+
+        // Find placeable by GUID
+        HumanFortress.Simulation.Placeables.PlaceableInstance? found = null;
+        foreach (var ch in world.GetAllChunks())
+        {
+            var pd = ch.GetPlaceableData();
+            if (pd == null) continue;
+            foreach (var p in pd.GetAllOwnedPlaceables())
+            {
+                if (p.Guid == ui.OpenWorkshopGuid.Value) { found = p; break; }
+            }
+            if (found != null) break;
+        }
+        if (found == null) { return; }
+
+        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        var def = reg.GetConstruction(found.DefinitionId);
+        string title = def?.Name ?? found.DefinitionId;
+        var fp = found.Footprint;
+
+        // Panel geometry (centered)
+        var surf = surface.Surface;
+        int w = 44, h = 12;
+        int x0 = (surf.Width - w) / 2;
+        int y0 = (surf.Height - h) / 2;
+        var bg = Color.Black.SetAlpha(220);
+        var fg = Color.White;
+        var hi = Color.Cyan;
+        // Fill and border
+        for (int y = y0; y < y0 + h; y++)
+        {
+            for (int x = x0; x < x0 + w; x++) surf.SetGlyph(x, y, ' ', fg, bg);
+        }
+        for (int x = x0; x < x0 + w; x++) { surf.SetGlyph(x, y0, '-'); surf.SetGlyph(x, y0 + h - 1, '-'); }
+        for (int y = y0; y < y0 + h; y++) { surf.SetGlyph(x0, y, '|'); surf.SetGlyph(x0 + w - 1, y, '|'); }
+        surf.SetGlyph(x0, y0, '+'); surf.SetGlyph(x0 + w - 1, y0, '+'); surf.SetGlyph(x0, y0 + h - 1, '+'); surf.SetGlyph(x0 + w - 1, y0 + h - 1, '+');
+
+        // Header and basics
+        surf.Print(x0 + 2, y0, $" {title} ", hi);
+        surf.Print(x0 + 2, y0 + 2, $"Id: {found.DefinitionId}", fg);
+        surf.Print(x0 + 2, y0 + 3, $"Pos: ({found.Position.X},{found.Position.Y},{found.Z})", fg);
+        surf.Print(x0 + 2, y0 + 4, $"Footprint: {fp.W}x{fp.D}  Pass: {def?.PlaceableProfile.Passability}", fg);
+        var tags = def?.PlaceableProfile.Tags ?? Array.Empty<string>();
+        surf.Print(x0 + 2, y0 + 5, $"Tags: [{string.Join(',', tags)}]", Color.Gray);
+
+        // Workers (placeholder, max from tuning)
+        var tuning = HumanFortress.Core.Content.Registry.PlaceableTuning.LoadFromContent();
+        int maxWorkers = tuning.WorkersPerWorkshopMax;
+        surf.Print(x0 + 2, y0 + 7, $"Workers: 0/{maxWorkers}  [+]/[-]", Color.White);
+        surf.Print(x0 + 2, y0 + 8, "(Workers per workshop from tuning)", Color.DarkGray);
+
+        // Recipe queue (placeholder)
+        surf.Print(x0 + 24, y0 + 2, "Queue (WIP)", Color.Yellow);
+        surf.Print(x0 + 24, y0 + 3, "[A] Add  [P] Pause  [C] Clear", Color.Gray);
+        surf.Print(x0 + 24, y0 + 5, "- (placeholder entry)", Color.White);
+
+        // IO slots (placeholder)
+        surf.Print(x0 + 2, y0 + 10, "Input Slots:", Color.Gray);
+        for (int i = 0; i < 4; i++) surf.Print(x0 + 15 + i*3, y0 + 10, "[ ]", Color.DarkGray);
+        surf.Print(x0 + 2, y0 + 11, "Output Slots:", Color.Gray);
+        for (int i = 0; i < 4; i++) surf.Print(x0 + 15 + i*3, y0 + 11, "[ ]", Color.DarkGray);
+
+        // Footer
+        surf.Print(x0 + 2, y0 + h - 3, "ESC/Right-click: close", Color.DarkGray);
+        surf.Print(x0 + w - 14, y0 + h - 2, $"#{found.Guid.ToString()[..8]}", Color.DarkGray);
+    }
+
+    // Simple workshop footprint preview: draws a gold rectangle at the anchor with given footprint
+    public static void DrawWorkshopPlacementPreview(ScreenSurface mapSurface, SadRogue.Primitives.Point anchor, HumanFortress.Core.Content.Registry.Footprint footprint, SadRogue.Primitives.Rectangle viewport, HumanFortress.Simulation.World.World? world)
+    {
+        var gold = new Color(255, 230, 0);
+        for (int dy = 0; dy < footprint.D; dy++)
+        {
+            for (int dx = 0; dx < footprint.W; dx++)
+            {
+                int x = anchor.X + dx;
+                int y = anchor.Y + dy;
+                int sx = x - viewport.X;
+                int sy = y - viewport.Y;
+                if (sx >= 0 && sy >= 0 && sx < mapSurface.Width && sy < mapSurface.Height)
+                {
+                    mapSurface.SetGlyph(sx, sy, '.', gold, Color.Transparent);
+                }
+            }
+        }
+        // Outline
+        for (int dx = 0; dx < footprint.W; dx++)
+        {
+            int sx = anchor.X + dx - viewport.X;
+            int sy1 = anchor.Y - viewport.Y;
+            int sy2 = anchor.Y + footprint.D - 1 - viewport.Y;
+            if (sx >= 0 && sx < mapSurface.Width)
+            {
+                if (sy1 >= 0 && sy1 < mapSurface.Height) mapSurface.SetGlyph(sx, sy1, '-', gold, Color.Transparent);
+                if (sy2 >= 0 && sy2 < mapSurface.Height) mapSurface.SetGlyph(sx, sy2, '-', gold, Color.Transparent);
+            }
+        }
+        for (int dy = 0; dy < footprint.D; dy++)
+        {
+            int sy = anchor.Y + dy - viewport.Y;
+            int sx1 = anchor.X - viewport.X;
+            int sx2 = anchor.X + footprint.W - 1 - viewport.X;
+            if (sy >= 0 && sy < mapSurface.Height)
+            {
+                if (sx1 >= 0 && sx1 < mapSurface.Width) mapSurface.SetGlyph(sx1, sy, '|', gold, Color.Transparent);
+                if (sx2 >= 0 && sx2 < mapSurface.Width) mapSurface.SetGlyph(sx2, sy, '|', gold, Color.Transparent);
+            }
+        }
     }
 
     public static void DrawMiningJobHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
@@ -548,6 +923,53 @@ namespace HumanFortress.App.UI;
                 }
             }
         }
+    }
+
+    private static void DrawWorkshopItemsPane(ScreenSurface surface, int x, int y, string category)
+    {
+        var bg = Color.Black.SetAlpha(200);
+        var fg = Color.White;
+        var highlight = Color.Yellow;
+        // Draw box background and border (local implementation)
+        for (int i = 0; i < 38; i++)
+            for (int j = 0; j < 12; j++)
+                surface.SetGlyph(x + i, y + j, ' ', fg, bg);
+        for (int i = 1; i < 38 - 1; i++)
+        {
+            surface.SetGlyph(x + i, y, '-');
+            surface.SetGlyph(x + i, y + 12 - 1, '-');
+        }
+        for (int j = 1; j < 12 - 1; j++)
+        {
+            surface.SetGlyph(x, y + j, '|');
+            surface.SetGlyph(x + 38 - 1, y + j, '|');
+        }
+        surface.SetGlyph(x, y, '+');
+        surface.SetGlyph(x + 38 - 1, y, '+');
+        surface.SetGlyph(x, y + 12 - 1, '+');
+        surface.SetGlyph(x + 38 - 1, y + 12 - 1, '+');
+        surface.Print(x + 1, y, $" {char.ToUpper(category[0]) + category.Substring(1)} ", highlight);
+
+        var list = GetWorkshopsByCategory(category);
+        var keys = new[] { 'Z','X','C','V','F','G','R','T' };
+        int max = System.Math.Min(keys.Length, list.Count);
+        for (int i = 0; i < max; i++)
+        {
+            var d = list[i];
+            var fp = d.PlaceableProfile.Footprint;
+            string size = $"{fp.W}x{fp.D}";
+            surface.Print(x + 2, y + 2 + i, $"[{keys[i]}] {d.Name} ({size})", fg);
+        }
+        if (max == 0)
+        {
+            surface.Print(x + 2, y + 2, "WIP", Color.Gray);
+        }
+        surface.Print(x + 2, y + 10, "[,] Back", Color.Gray);
+    }
+
+    private static System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition> GetWorkshopsByCategory(string category)
+    {
+        return WorkshopCategoryMapper.GetWorkshopsByCategory(category);
     }
 
     private static bool IsConstructionCandidate(HumanFortress.Simulation.World.World world, string shape, int x, int y, int z)

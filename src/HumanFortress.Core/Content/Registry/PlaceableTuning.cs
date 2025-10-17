@@ -145,6 +145,12 @@ public sealed class PlaceableTuning
     /// </summary>
     public bool CrossChunkValidation { get; set; } = true;
 
+    // === WORKSHOPS (UI/behavior helpers) ===
+    /// <summary>
+    /// Maximum workers per workshop (UI display and soft cap)
+    /// </summary>
+    public int WorkersPerWorkshopMax { get; set; } = 25;
+
     /// <summary>
     /// Get default tuning values.
     /// </summary>
@@ -234,6 +240,13 @@ public sealed class PlaceableTuning
             t.RequireWalkableTiles = collision["require_walkable_tiles"]?.Value<bool?>() ?? t.RequireWalkableTiles;
             t.AllowOverlapExternalRefs = collision["allow_overlap_external_refs"]?.Value<bool?>() ?? t.AllowOverlapExternalRefs;
             t.CrossChunkValidation = collision["cross_chunk_validation"]?.Value<bool?>() ?? t.CrossChunkValidation;
+        }
+
+        // Workshops
+        var workshops = obj["workshops"] as JObject;
+        if (workshops != null)
+        {
+            t.WorkersPerWorkshopMax = workshops["workers_per_workshop_max"]?.Value<int?>() ?? t.WorkersPerWorkshopMax;
         }
 
         return t;

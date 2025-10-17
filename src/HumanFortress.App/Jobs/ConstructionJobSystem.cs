@@ -23,6 +23,9 @@ public sealed class ConstructionJobSystem : ITick
 
     private readonly HumanFortress.Core.Content.Registry.ConstructionTuning _tuning;
 
+    // UI notification hook (set by UI layer). Invoked on L2 completion.
+    public static System.Action<int,int,int, SadRogue.Primitives.Rectangle, string, ulong>? UiNotifyWorkshopComplete;
+
     public ConstructionJobSystem(HumanFortress.Simulation.World.World world, ConstructionSystem planner, DiffLog? diffLog = null, int maxPerTick = 64)
     {
         _world = world;
@@ -97,20 +100,48 @@ public sealed class ConstructionJobSystem : ITick
                     // After consumption, move any residual items off the anchor cell to a safe nearby cell
                     TryMoveResidualItemsOffAnchor(p, tick);
 
-                    // Emit L0 SetTerrain
-                    var kind = MapTargetIdToKind(site.TargetId, p.Z);
-                    int chunkX = p.Position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
-                    int chunkY = p.Position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
-                    int lx = p.Position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
-                    int ly = p.Position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
-                    int localIndex = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
-                    int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, p.Z));
-                    var target = new DiffTarget(chunkId, localIndex);
-                    // Allow applicator to derive geology from current material (override=0)
-                    ulong args = ConstructionSystem.PackSetTerrainArgs(kind, 0);
-                    _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, SystemId, UpdateOrder.Priority.WorldTerrain, args));
+                    // Branch: L0 terrain vs L2 placeable
+                    if (site.TargetId.StartsWith("l0:", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Emit L0 SetTerrain
+                        var kind = MapTargetIdToKind(site.TargetId, p.Z);
+                        int chunkX = p.Position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+                        int chunkY = p.Position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+                        int lx = p.Position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+                        int ly = p.Position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+                        int localIndex = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
+                        int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, p.Z));
+                        var target = new DiffTarget(chunkId, localIndex);
+                        // Allow applicator to derive geology from current material (override=0)
+                        ulong args = ConstructionSystem.PackSetTerrainArgs(kind, 0);
+                        _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, SystemId, UpdateOrder.Priority.WorldTerrain, args));
 
-                    Logger.Log($"[BUILD.COMPLETE] site=({p.Position.X},{p.Position.Y},{p.Z}) kind={kind} consumed={FormatDict(site.MaterialsRequired)} set-terrain");
+                        Logger.Log($"[BUILD.COMPLETE] site=({p.Position.X},{p.Position.Y},{p.Z}) kind={kind} consumed={FormatDict(site.MaterialsRequired)} set-terrain");
+                    }
+                    else
+                    {
+                        // L2 placeable from ConstructionDefinition
+                        var def = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance.GetConstruction(site.TargetId);
+                        if (def != null)
+                        {
+                            // Important: remove the site FIRST, then place the final workshop.
+                            // If we place first and then call RemoveOwnedAt(anchor), we might remove the newly placed instance
+                            // because the owned-slot is keyed by anchor cell.
+                            try { PlaceableManager.RemoveOwnedAt(_world, p.Position, p.Z, tick); } catch { }
+
+                            var inst = HumanFortress.Simulation.Placeables.PlaceableInstance.CreateFromConstruction(def, p.Position, p.Z, tick);
+                            PlaceableManager.PlacePlaceable(_world, inst, tick);
+                            Logger.Log($"[BUILD.COMPLETE] workshop id={def.Id} pos=({p.Position.X},{p.Position.Y},{p.Z}) footprint={def.PlaceableProfile.Footprint.W}x{def.PlaceableProfile.Footprint.D}");
+
+                            // Notify UI (toast + flash highlight)
+                            var rect = new SadRogue.Primitives.Rectangle(p.Position.X, p.Position.Y, def.PlaceableProfile.Footprint.W, def.PlaceableProfile.Footprint.D);
+                            UiNotifyWorkshopComplete?.Invoke(p.Position.X, p.Position.Y, p.Z, rect, def.Id, tick);
+                        }
+                        else
+                        {
+                            Logger.Log($"[BUILD.COMPLETE] ERROR: unknown construction id='{site.TargetId}'");
+                        }
+                    }
 
                     // Post-completion safety: if any creature still overlaps the anchor (extreme race), relocate once more
                     if (IsOccupiedByCreature(p))
@@ -118,12 +149,7 @@ public sealed class ConstructionJobSystem : ITick
                         TryRelocateCreaturesOffSiteSafe(p);
                     }
 
-                    // Remove the site placeable
-                    try
-                    {
-                        PlaceableManager.RemoveOwnedAt(_world, p.Position, p.Z, tick);
-                    }
-                    catch { }
+                    // Site removed earlier when placing L2 placeable (or below for L0 branch)
 
                     processed++;
                 }
@@ -351,6 +377,12 @@ public sealed class ConstructionJobSystem : ITick
         var set = new HashSet<string>(itemTags, StringComparer.OrdinalIgnoreCase);
         switch (requirement.ToLowerInvariant())
         {
+            case "block":
+                // Simplified dev tag: any item tagged 'block' or legacy aliases
+                return set.Contains("block") || set.Contains("stone_block") || set.Contains("brick") || (set.Contains("stone") && set.Contains("block"));
+            case "plank":
+                // Simplified dev tag: any item tagged 'plank' or legacy aliases
+                return set.Contains("plank") || set.Contains("wood_plank") || (set.Contains("wood") && set.Contains("plank"));
             case "stone_block":
                 return set.Contains("stone") && set.Contains("block");
             case "wood_plank":

@@ -88,6 +88,9 @@ public enum PlacementMode
     // Build (Construction)
     ConstructionFirstCorner,
     ConstructionSecondCorner,
+    // Buildable (L2 placeables)
+    BuildableFirstAnchor,
+    BuildableConfirmAnchor,
     // Zones
     ZoneFirstCorner,
     ZoneSecondCorner,
@@ -115,6 +118,10 @@ public sealed class UiStore
     // Build/Construction selection state
     public HumanFortress.Simulation.Orders.ConstructionShape SelectedConstructionShape { get; set; } = HumanFortress.Simulation.Orders.ConstructionShape.Wall;
     public MiningAction SelectedMiningAction { get; set; } = MiningAction.Dig;
+    // Buildable selection
+    public string? SelectedBuildableConstructionId { get; set; } = null;
+    public string? SelectedWorkshopCategory { get; set; } = null; // mining/lumbering/farming/industry/crafts
+    public bool WorkshopBrowsingItems { get; set; } = false;
     // Construction material selection (UI dialog)
     public bool ConstructionMaterialDialogOpen { get; set; } = false;
     public List<string> ConstructionSelectedTags { get; } = new();
@@ -123,6 +130,36 @@ public sealed class UiStore
     {
         ConstructionSelectedTags.Clear();
         ConstructionPreferredMaterialId = null;
+    }
+    public void ResetBuildableSelection()
+    {
+        SelectedBuildableConstructionId = null;
+    }
+
+    public void ResetWorkshopMenu()
+    {
+        SelectedWorkshopCategory = null;
+        WorkshopBrowsingItems = false;
+    }
+
+    // === Workshop panel state ===
+    public bool WorkshopPanelOpen { get; private set; } = false;
+    public Guid? OpenWorkshopGuid { get; private set; } = null;
+    public SadRogue.Primitives.Point OpenWorkshopAnchor { get; private set; } = new SadRogue.Primitives.Point(0,0);
+    public int OpenWorkshopZ { get; private set; } = 0;
+
+    public void OpenWorkshopPanel(Guid guid, SadRogue.Primitives.Point anchor, int z)
+    {
+        OpenWorkshopGuid = guid;
+        OpenWorkshopAnchor = anchor;
+        OpenWorkshopZ = z;
+        WorkshopPanelOpen = true;
+    }
+
+    public void CloseWorkshopPanel()
+    {
+        WorkshopPanelOpen = false;
+        OpenWorkshopGuid = null;
     }
 
     // Stockpile/Zone placement state
@@ -326,6 +363,10 @@ public sealed class UiStore
         else if (DebugOpen)
         {
             DebugOpen = false;
+        }
+        else if (WorkshopPanelOpen)
+        {
+            CloseWorkshopPanel();
         }
     }
 

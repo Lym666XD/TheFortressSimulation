@@ -10,6 +10,10 @@ namespace HumanFortress.Core.Content.Registry;
 /// </summary>
 public sealed class ConstructionRegistry
 {
+    // Global instance for easy access across App/Simulation layers (mirrors other registries)
+    private static ConstructionRegistry? _instance;
+    public static ConstructionRegistry Instance => _instance ??= new ConstructionRegistry();
+
     private readonly Dictionary<string, ConstructionDefinition> _constructionsById = new();
     private readonly Dictionary<string, List<ConstructionDefinition>> _constructionsByCategory = new();
 

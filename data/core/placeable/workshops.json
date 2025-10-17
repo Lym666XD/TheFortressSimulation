@@ -36,14 +36,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 20
-        },
-        {
-          "tag": "wood_log",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -81,14 +75,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 30
-        },
-        {
-          "tag": "clay_brick",
-          "count": 20
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -127,14 +115,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 25
-        },
-        {
-          "tag": "wood_log",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -173,14 +155,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 20
-        },
-        {
-          "tag": "wood_log",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -218,14 +194,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 25
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -264,14 +234,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -308,14 +272,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -353,14 +311,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 30
-        },
-        {
-          "tag": "rope",
-          "count": 5
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -397,14 +349,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -442,18 +388,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 20
-        },
-        {
-          "tag": "wood_log",
-          "count": 15
-        },
-        {
-          "tag": "clay_brick",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -490,14 +426,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 15
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -535,14 +465,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 25
-        },
-        {
-          "tag": "wood_log",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -579,14 +503,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 25
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -624,14 +542,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 30
-        },
-        {
-          "tag": "clay_brick",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -669,14 +581,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 25
-        },
-        {
-          "tag": "clay_brick",
-          "count": 20
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -713,14 +619,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 20
-        },
-        {
-          "tag": "clay_brick",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -758,18 +658,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 25
-        },
-        {
-          "tag": "wood_log",
-          "count": 15
-        },
-        {
-          "tag": "glass_item",
-          "count": 5
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -806,14 +696,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 25
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -850,14 +734,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -895,14 +773,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 15
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -939,18 +811,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "stone_block",
-          "count": 15
-        },
-        {
-          "tag": "metal_ingot",
-          "count": 5
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -988,18 +850,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 20
-        },
-        {
-          "tag": "wood_log",
-          "count": 15
-        },
-        {
-          "tag": "metal_ingot",
-          "count": 10
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -1037,18 +889,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 25
-        },
-        {
-          "tag": "wood_log",
-          "count": 15
-        },
-        {
-          "tag": "glass_item",
-          "count": 5
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     },
@@ -1086,18 +928,8 @@
         }
       },
       "material_costs": [
-        {
-          "tag": "stone_block",
-          "count": 30
-        },
-        {
-          "tag": "wood_log",
-          "count": 20
-        },
-        {
-          "tag": "gem",
-          "count": 5
-        }
+        { "tag": "block", "count": 8 },
+        { "tag": "plank", "count": 4 }
       ],
       "skill_required": "construction"
     }

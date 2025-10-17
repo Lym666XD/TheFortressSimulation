@@ -251,6 +251,8 @@ public sealed class PlaceableInstance
 
         // Copy fixed effects (no quality modifier for constructions)
         instance.Effects = def.PlaceableProfile.Effects.Clone();
+        // Apply passability from definition (data-driven)
+        instance.Passability = def.PlaceableProfile.Passability;
 
         // Calculate HP from material costs (simplified: sum of all material counts * default HP)
         int totalMaterialCount = 0;

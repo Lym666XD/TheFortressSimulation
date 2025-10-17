@@ -54,6 +54,10 @@ public sealed class BuildUI
         {
             DrawStructuralL3(surface, l2X + l2Width + 2, l2Y);
         }
+        else if (activeSubmenu == BuildSubmenu.Workshop)
+        {
+            DrawWorkshopMenu(surface, l2X + l2Width + 2, l2Y);
+        }
     }
 
     public void DrawConstructionMaterialDialog(ScreenSurface surface, HumanFortress.App.UI.UiStore ui)
@@ -109,6 +113,27 @@ public sealed class BuildUI
         surface.Print(x + 2, y + 3, "[C] Ramp", fg);
         surface.Print(x + 2, y + 4, "[V] Stairs", fg);
         surface.Print(x + 2, y + 6, "[,] Cancel", Color.Gray);
+    }
+
+    private void DrawWorkshopMenu(ScreenSurface surface, int x, int y)
+    {
+        var bg = new Color(0, 0, 0, 200);
+        var fg = Color.White;
+        var highlight = Color.Yellow;
+        DrawBox(surface, x, y, 46, 12, fg, bg);
+        surface.Print(x + 1, y, " WORKSHOPS ", highlight);
+
+        // Draw L3: categories on the left, and L4: items on the right if a category is selected (state lives in UiStore via FortressState)
+        // Categories mapping per INPUT_SPEC.md 282-329
+        surface.Print(x + 2, y + 2, "[Z] Mining", fg);
+        surface.Print(x + 2, y + 3, "[X] Industry", fg);
+        surface.Print(x + 2, y + 4, "[C] Farming", fg);
+        surface.Print(x + 2, y + 5, "[V] Lumbering", fg);
+        surface.Print(x + 2, y + 6, "[F] Crafts", fg);
+        surface.Print(x + 2, y + 8, "[,] Back   ESC Cancel", Color.Gray);
+
+        // The items list is rendered in FortressState using UiRenderer preview and final selection; no static draw here to avoid duplicated state.
+        // We keep this simple to honor the project’s UI layering.
     }
 
     private void DrawMenuOption(ScreenSurface surface, int x, int y, string text, bool active, Color fg, Color activeBg)

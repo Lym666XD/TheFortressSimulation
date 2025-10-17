@@ -37,6 +37,7 @@ namespace HumanFortress.App.States
         private FortressMap? _fortressMap;
         private RenderSnapshotBuilder? _snapshotBuilder;
         private RenderSnapshot? _currentSnapshot;
+        private bool _overlayFromSnapshot = false; // optional path for placeables overlay
         private int _zoomLevel = 1; // 1 = normal, 2 = zoomed in, etc.
         private Point? _lastMousePos;
         private NavigationOverlay? _navOverlay;
@@ -357,6 +358,18 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine("[GenerateFortressMap] Creating RenderSnapshotBuilder");
                 _snapshotBuilder = new RenderSnapshotBuilder(_world);
 
+                // Hook UI notification for workshop completion (toast + flash)
+                HumanFortress.App.Jobs.ConstructionJobSystem.UiNotifyWorkshopComplete = (x, y, z, rect, id, simTick) =>
+                {
+                    try
+                    {
+                        // Flash highlight for ~60 UI ticks
+                        _ui.AddHighlight("workshop:complete", rect, z, z, _uiTick + 60);
+                        _ui.AddToast($"[BUILD] {id} completed at ({x},{y},{z})", _uiTick + 180);
+                    }
+                    catch { }
+                };
+
                 // Initialize navigation manager (shared from GameStateManager)
                 System.Console.WriteLine("[GenerateFortressMap] Using shared NavigationManager");
                 _navManager = GameStateManager.Instance.NavManager ?? new NavigationManager(_world);
@@ -367,6 +380,8 @@ namespace HumanFortress.App.States
                 System.Console.WriteLine("[GenerateFortressMap] Creating NavigationOverlay");
                 _navOverlay = new NavigationOverlay();
                 _navOverlay.SetNavigationManager(_navManager);
+                // Load optional overlay config
+                TryLoadOverlayConfig();
                 // Auto-dig self-test: after world is filled, enqueue a small mining order to exercise Planner->Jobs
                 if (HumanFortress.App.Program.AutoDig && _world != null)
                 {
@@ -488,6 +503,15 @@ namespace HumanFortress.App.States
                 // Mining job highlights: active targets and recent completions
                 UiRenderer.DrawMiningJobHighlights(_mapSurface, GameStateManager.Instance.MiningJobs, _cameraPos, _currentZ, _uiTick);
                 UiRenderer.DrawMiningCompletedHighlights(_mapSurface, GameStateManager.Instance.MiningJobs, _cameraPos, _currentZ, _uiTick);
+                // Workshops overlay (footprints) for current Z
+                if (_world != null && _mapSurface != null)
+                {
+                    var viewportW = new Rectangle(_cameraPos.X, _cameraPos.Y, _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                    if (_overlayFromSnapshot && _currentSnapshot != null)
+                        UiRenderer.DrawWorkshopsOverlayFromSnapshot(_mapSurface, _currentSnapshot, _currentZ, viewportW);
+                    else
+                        UiRenderer.DrawWorkshopsOverlay(_mapSurface, _world, _currentZ, viewportW);
+                }
 
                 // Draw orders & stockpile specific UI
                 if (_stockpileUI != null)
@@ -501,7 +525,7 @@ namespace HumanFortress.App.States
                         // Stockpile placement prompt
                         _stockpileUI.DrawPlacementMode(_uiSurface, _ui, mouseWorld);
 
-                        // Draw placement preview on map�����о��������������
+                        // Draw placement preview on map
                         if (_ui.PlaceFirstCorner.HasValue)
                         {
                             var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
@@ -528,6 +552,30 @@ namespace HumanFortress.App.States
                                     _ui.PlaceFirstCorner.Value, mouseWorld, viewport, true, _currentZ, _world);
                                 var dynRect = ComputeRectInclusive(_ui.PlaceFirstCorner.Value, mouseWorld);
                                 _ui.AddHighlight($"construction:{_ui.SelectedConstructionShape}", dynRect, _currentZ, _currentZ, _uiTick + 2);
+                            }
+                            else if (_ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && _ui.SelectedBuildableConstructionId != null)
+                            {
+                                var def = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance.GetConstruction(_ui.SelectedBuildableConstructionId);
+                                if (def != null)
+                                {
+                                    var fp = def.PlaceableProfile.Footprint;
+                                    HumanFortress.App.UI.UiRenderer.DrawWorkshopPlacementPreview(_mapSurface, _ui.PlaceFirstCorner.Value, fp, viewport, _world);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // No anchor yet: preview around mouse if selecting a workshop
+                            if (_ui.PlaceMode == PlacementMode.BuildableFirstAnchor && _ui.SelectedBuildableConstructionId != null)
+                            {
+                                var def = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance.GetConstruction(_ui.SelectedBuildableConstructionId);
+                                if (def != null)
+                                {
+                                    var viewport = new Rectangle(_cameraPos.X, _cameraPos.Y,
+                                        _mapSurface.Surface.Width, _mapSurface.Surface.Height);
+                                    var fp = def.PlaceableProfile.Footprint;
+                                    HumanFortress.App.UI.UiRenderer.DrawWorkshopPlacementPreview(_mapSurface, mouseWorld, fp, viewport, _world);
+                                }
                             }
                         }
                     }
@@ -582,6 +630,11 @@ namespace HumanFortress.App.States
                 if (_ui.ConstructionMaterialDialogOpen && _buildUI != null)
                 {
                     _buildUI.DrawConstructionMaterialDialog(_uiSurface, _ui);
+                }
+                // Workshop detail panel (modal)
+                if (_world != null)
+                {
+                    UiRenderer.DrawWorkshopPanel(_uiSurface, _ui, _world, _uiTick);
                 }
                 UiRenderer.DrawToasts(_uiSurface, _ui, _uiTick);
 
@@ -804,10 +857,62 @@ namespace HumanFortress.App.States
             }
         }
 
+        private void TryLoadOverlayConfig()
+        {
+            try
+            {
+                string baseDir = System.AppContext.BaseDirectory;
+                string path = System.IO.Path.Combine(baseDir, "configs", "game_config.txt");
+                if (!System.IO.File.Exists(path)) { _overlayFromSnapshot = false; return; }
+                var lines = System.IO.File.ReadAllLines(path);
+                foreach (var raw in lines)
+                {
+                    var line = raw.Trim();
+                    if (line.StartsWith("#") || line.Length == 0) continue;
+                    int eq = line.IndexOf('=');
+                    if (eq <= 0) continue;
+                    var key = line.Substring(0, eq).Trim();
+                    var val = line.Substring(eq + 1).Trim();
+                    if (key.Equals("overlay_from_snapshot", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        _overlayFromSnapshot = val.Equals("true", System.StringComparison.OrdinalIgnoreCase) || val == "1" || val.Equals("yes", System.StringComparison.OrdinalIgnoreCase);
+                    }
+                }
+            }
+            catch { _overlayFromSnapshot = false; }
+        }
+
         private void HideTilePanel()
         {
             _tilePanelOpen = false;
             _tileInfoPanel?.Clear();
+        }
+
+        private (HumanFortress.Simulation.Placeables.PlaceableInstance placeable, HumanFortress.Simulation.World.Chunk chunk)? FindWorkshopAt(Point worldPos, int z)
+        {
+            var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+            foreach (var chunk in _world!.GetAllChunks())
+            {
+                var pd = chunk.GetPlaceableData();
+                if (pd == null) continue;
+                foreach (var p in pd.GetAllOwnedPlaceables())
+                {
+                    if (p.Z != z) continue;
+                    var def = reg.GetConstruction(p.DefinitionId);
+                    if (def == null) continue;
+                    if (!string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase) &&
+                        (def.PlaceableProfile.Tags == null || Array.IndexOf(def.PlaceableProfile.Tags, "workshop") < 0))
+                        continue;
+                    var fp = p.Footprint;
+                    int x0 = p.Position.X;
+                    int y0 = p.Position.Y;
+                    if (worldPos.X >= x0 && worldPos.X < x0 + fp.W && worldPos.Y >= y0 && worldPos.Y < y0 + fp.D)
+                    {
+                        return (p, chunk);
+                    }
+                }
+            }
+            return null;
         }
 
         // Count valid mining cells in selection for UI-side precheck (avoid empty orders)
@@ -824,6 +929,91 @@ namespace HumanFortress.App.States
             int w = Math.Abs(a.X - b.X) + 1;
             int h = Math.Abs(a.Y - b.Y) + 1;
             return new Rectangle(x, y, w, h);
+        }
+
+        private string? GetWorkshopIdByIndex(int index)
+        {
+            var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+            var list = new System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
+            foreach (var d in reg.GetConstructionsByCategory("workshop")) list.Add(d);
+            if (list.Count == 0)
+            {
+                foreach (var d in reg.GetConstructionsByCategory("workshops")) list.Add(d);
+            }
+            if (index >= 0 && index < list.Count) return list[index].Id;
+            return null;
+        }
+
+        private void HandleWorkshopMenu(Keyboard keyboard, ref bool changed)
+        {
+            // Stage 1: choose category
+            if (!_ui.WorkshopBrowsingItems)
+            {
+                if (keyboard.IsKeyPressed(Keys.Z)) { SelectWorkshopCategory("mining"); changed = true; return; }
+                if (keyboard.IsKeyPressed(Keys.X)) { SelectWorkshopCategory("industry"); changed = true; return; }
+                if (keyboard.IsKeyPressed(Keys.C)) { SelectWorkshopCategory("farming"); changed = true; return; }
+                if (keyboard.IsKeyPressed(Keys.V)) { SelectWorkshopCategory("lumbering"); changed = true; return; }
+                if (keyboard.IsKeyPressed(Keys.F)) { SelectWorkshopCategory("crafts"); changed = true; return; }
+                if (keyboard.IsKeyPressed(Keys.OemComma)) { _ui.CloseBuildSubmenu(); changed = true; return; }
+            }
+            else
+            {
+                // Stage 2: choose workshop within selected category via ZXCVFGRT
+                var keys = new[] { Keys.Z, Keys.X, Keys.C, Keys.V, Keys.F, Keys.G, Keys.R, Keys.T };
+                int pick = -1;
+                for (int i = 0; i < keys.Length; i++)
+                {
+                    if (keyboard.IsKeyPressed(keys[i])) { pick = i; break; }
+                }
+                if (pick >= 0)
+                {
+                    var id = GetWorkshopIdByCategoryIndex(_ui.SelectedWorkshopCategory!, pick);
+                    if (id == null)
+                    {
+                        _ui.AddToast("[WORKSHOP] WIP", _uiTick + 100);
+                    }
+                    else
+                    {
+                        _ui.SelectedBuildableConstructionId = id;
+                        _ui.StartPlacement(PlacementMode.BuildableFirstAnchor, _currentZ);
+                        Logger.Log($"[BUILD.UI] Workshop select id={id}");
+                        _ui.AddToast("Workshop selected", _uiTick + 120);
+                    }
+                    changed = true; return;
+                }
+                if (keyboard.IsKeyPressed(Keys.OemComma))
+                {
+                    _ui.WorkshopBrowsingItems = false;
+                    _ui.SelectedWorkshopCategory = null;
+                    _ui.AddToast("Back", _uiTick + 60);
+                    changed = true; return;
+                }
+            }
+        }
+
+        private void SelectWorkshopCategory(string category)
+        {
+            _ui.SelectedWorkshopCategory = category;
+            var list = GetWorkshopsByCategory(category);
+            if (list.Count == 0)
+            {
+                _ui.AddToast("[WORKSHOP] WIP", _uiTick + 100);
+                return;
+            }
+            _ui.WorkshopBrowsingItems = true;
+            _ui.AddToast($"{char.ToUpper(category[0]) + category.Substring(1)}", _uiTick + 100);
+        }
+
+        private System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition> GetWorkshopsByCategory(string category)
+        {
+            return HumanFortress.App.UI.WorkshopCategoryMapper.GetWorkshopsByCategory(category);
+        }
+
+        private string? GetWorkshopIdByCategoryIndex(string category, int index)
+        {
+            var list = GetWorkshopsByCategory(category);
+            if (index < 0 || index >= list.Count) return null;
+            return list[index].Id;
         }
 
         private string GetTerrainDescription(string geologyId)
@@ -1210,6 +1400,16 @@ namespace HumanFortress.App.States
             bool changed = false;
             int maxPos = FortressSize * 32 - 1;
             int moveSpeed = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift) ? 5 : 1;
+
+            // If Workshop panel is open, handle simple shortcut keys (placeholders)
+            if (_ui.WorkshopPanelOpen)
+            {
+                if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add)) { _ui.AddToast("Assign worker: WIP", _uiTick + 100); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract)) { _ui.AddToast("Unassign worker: WIP", _uiTick + 100); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.A)) { _ui.AddToast("Add recipe: WIP", _uiTick + 120); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.P)) { _ui.AddToast("Pause queue: WIP", _uiTick + 120); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Clear queue: WIP", _uiTick + 120); changed = true; }
+            }
 
             // Global modal: construction material dialog handling (swallows other inputs)
             if (_ui.ConstructionMaterialDialogOpen)
@@ -2545,6 +2745,33 @@ namespace HumanFortress.App.States
                     }
                     return;
                 }
+                else if (_ui.PlaceMode == PlacementMode.BuildableFirstAnchor)
+                {
+                    var cl = ClampToWorld(worldPos);
+                    _ui.PlaceFirstCorner = cl;
+                    _ui.PlaceMode = PlacementMode.BuildableConfirmAnchor;
+                    _ui.AddToast("[WORKSHOP] Click to confirm", _uiTick + 100);
+                    DrawUI();
+                    return;
+                }
+                else if (_ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && _ui.PlaceFirstCorner.HasValue)
+                {
+                    var anchor = _ui.PlaceFirstCorner.Value;
+                    if (_ui.SelectedBuildableConstructionId != null)
+                    {
+                        var cmd = new HumanFortress.App.Commands.CreateBuildableConstructionOrderCommand(
+                            GameStateManager.Instance.TickScheduler.CurrentTick,
+                            _ui.SelectedBuildableConstructionId,
+                            anchor,
+                            _currentZ,
+                            priority: 50);
+                        GameStateManager.Instance.EnqueueCommand(cmd);
+                        Logger.Log($"[BUILD.UI] Enqueue workshop id={_ui.SelectedBuildableConstructionId} pos=({anchor.X},{anchor.Y}) z={_currentZ}");
+                        _ui.CancelPlacement();
+                        DrawUI();
+                    }
+                    return;
+                }
                 else if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
                 {
                     // Create zone using command (inclusive rectangle)
@@ -2618,6 +2845,19 @@ namespace HumanFortress.App.States
                 if (zoneId > 0)
                 {
                     _zonesUI?.OpenDetailPopup(zoneId);
+                    DrawUI();
+                    return;
+                }
+            }
+
+            // If clicking a workshop, open its panel
+            if (_world != null)
+            {
+                var w = FindWorkshopAt(worldPos, _currentZ);
+                if (w != null)
+                {
+                    _ui.OpenWorkshopPanel(w.Value.placeable.Guid, w.Value.placeable.Position, w.Value.placeable.Z);
+                    _ui.AddToast("Workshop details", _uiTick + 120);
                     DrawUI();
                     return;
                 }
@@ -3036,6 +3276,10 @@ namespace HumanFortress.App.States
                     _ui.AddToast("Stairs (multi-level) WIP", _uiTick + 150);
                     changed = true;
                 }
+            }
+            else if (_ui.BuildMenu == BuildSubmenu.Workshop)
+            {
+                HandleWorkshopMenu(keyboard, ref changed);
             }
             else
             {
