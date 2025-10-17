@@ -12,10 +12,11 @@ namespace HumanFortress.App.Jobs
     public sealed class UnifiedJobsOrchestrator : ITick
     {
         private readonly HumanFortress.Simulation.Orders.HaulingSystem _haulPlanner;
+        private readonly HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner? _cmPlanner;
         private readonly HumanFortress.Simulation.Orders.MiningSystem _miningPlanner;
         private readonly HumanFortress.Simulation.Orders.ConstructionSystem _constructionPlanner;
 
-        private readonly HaulJobSystem _haulJobs;
+        private readonly TransportJobSystem _haulJobs;
         private readonly MiningJobSystem _miningJobs;
         private readonly ConstructionJobSystem _constructionJobs;
 
@@ -43,14 +44,16 @@ namespace HumanFortress.App.Jobs
 
         public UnifiedJobsOrchestrator(
             HumanFortress.Simulation.Orders.HaulingSystem haulPlanner,
+            HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner? cmPlanner,
             HumanFortress.Simulation.Orders.MiningSystem miningPlanner,
             HumanFortress.Simulation.Orders.ConstructionSystem constructionPlanner,
-            HaulJobSystem haulJobs,
+            TransportJobSystem haulJobs,
             MiningJobSystem miningJobs,
             ConstructionJobSystem constructionJobs,
             SchedulerTunings tunings)
         {
             _haulPlanner = haulPlanner;
+            _cmPlanner = cmPlanner;
             _miningPlanner = miningPlanner;
             _constructionPlanner = constructionPlanner;
             _haulJobs = haulJobs;
@@ -71,6 +74,7 @@ namespace HumanFortress.App.Jobs
             var tMining = _sw.ElapsedMilliseconds;
             _haulPlanner.ReadTick(tick);
             var tHaul = _sw.ElapsedMilliseconds;
+            _cmPlanner?.ReadTick(tick);
             _constructionPlanner.ReadTick(tick);
             var tConstr = _sw.ElapsedMilliseconds;
             var planMs = tConstr - t0;
@@ -94,6 +98,7 @@ namespace HumanFortress.App.Jobs
             var start = Stopwatch.GetTimestamp();
             _miningPlanner.WriteTick(tick);
             _haulPlanner.WriteTick(tick);
+            _cmPlanner?.WriteTick(tick);
             _constructionPlanner.WriteTick(tick);
 
             // Run executors: Read then Write back-to-back to preserve behavior

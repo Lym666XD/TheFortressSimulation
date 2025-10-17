@@ -71,6 +71,7 @@ public static class Program
         HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback = Logger.Log;
         HumanFortress.Simulation.Orders.OrdersManager.LogCallback = Logger.Log;
         HumanFortress.Simulation.Orders.MiningSystem.LogCallback = Logger.Log;
+        HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner.LogCallback = Logger.Log;
 
         // Don't redirect console output - SadConsole needs it for rendering
         // System.Console.SetOut(logWriter);

@@ -230,6 +230,38 @@ public sealed class ItemManager
     }
 
     /// <summary>
+    /// Split a stack into a new instance with takeCount units.
+    /// Reduces the original stack by takeCount and spawns a new item at the same position/Z.
+    /// Returns the new item's Guid, or null if split cannot be performed.
+    /// </summary>
+    public Guid? SplitStack(Guid sourceId, int takeCount)
+    {
+        if (takeCount <= 0) return null;
+        lock (_instanceLock)
+        {
+            if (!_instances.TryGetValue(sourceId, out var inst)) return null;
+            if (inst.StackCount <= takeCount) return null; // nothing to split if equal/full
+
+            inst.StackCount -= takeCount;
+            var newGuid = Guid.NewGuid();
+            var clone = new ItemInstance(newGuid, inst.DefinitionId, inst.Position, inst.Z, takeCount, inst.SpawnedAtTick)
+            {
+                MaterialId = inst.MaterialId,
+                OwnerFactionId = inst.OwnerFactionId,
+                OwnerCreatureGuid = inst.OwnerCreatureGuid,
+                UsePolicy = inst.UsePolicy,
+                Forbidden = inst.Forbidden
+            };
+            _instances[newGuid] = clone;
+            IndexAdd(newGuid, clone.Position, clone.Z);
+            string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
+            LogCallback?.Invoke(msg);
+            System.Console.WriteLine(msg);
+            return newGuid;
+        }
+    }
+
+    /// <summary>
     /// Set dependencies (called after initialization)
     /// </summary>
     public void SetDependencies(HumanFortress.Simulation.World.World world, ContentRegistry contentRegistry)
@@ -617,6 +649,47 @@ public sealed class ItemManager
         lock (_instanceLock)
         {
             return _instances.Values.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Get snapshot of items at a given tile (on ground by default).
+    /// </summary>
+    public IEnumerable<ItemInstance> GetItemsAt(Point worldPos, int z, bool groundOnly = true)
+    {
+        lock (_instanceLock)
+        {
+            var key = KeyFor(worldPos, z);
+            if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+                return Enumerable.Empty<ItemInstance>();
+            var list = new List<ItemInstance>(ids.Count);
+            foreach (var gid in ids)
+            {
+                if (_instances.TryGetValue(gid, out var inst))
+                {
+                    if (!groundOnly || inst.IsOnGround)
+                        list.Add(inst);
+                }
+            }
+            return list;
+        }
+    }
+
+    /// <summary>
+    /// Remove an item instance by GUID, updating position index accordingly.
+    /// Returns true if removed.
+    /// </summary>
+    public bool RemoveInstance(Guid guid)
+    {
+        lock (_instanceLock)
+        {
+            if (!_instances.TryGetValue(guid, out var inst)) return false;
+            IndexRemove(guid, inst.Position, inst.Z);
+            _instances.Remove(guid);
+            string msg = $"[ItemManager] REMOVE: Removed item guid={guid} id={inst.DefinitionId} at ({inst.Position.X},{inst.Position.Y},{inst.Z})";
+            LogCallback?.Invoke(msg);
+            Console.WriteLine(msg);
+            return true;
         }
     }
 }

@@ -37,13 +37,13 @@ namespace HumanFortress.App.UI
                 surf.Print(xStart, y0 + 2, $"[Intake] Haul:{s.IntakeHaul} Mining:{s.IntakeMining} Constr:{s.IntakeConstruction}", Color.DarkCyan);
             }
 
-            int haulBacklog = gsm.HaulJobs?.GetBacklogCount() ?? 0;
+            int haulBacklog = gsm.TransportJobs?.GetBacklogCount() ?? 0;
             int miningBacklog = gsm.MiningJobs?.GetBacklogCount() ?? 0;
             int miningDeferred = gsm.MiningJobs?.GetDeferredCount() ?? 0;
             int miningReserved = gsm.MiningJobs?.GetReservedTileCount() ?? 0;
 
             // Pull per-job snapshots (v1.1)
-            var hstats = gsm.HaulJobs?.GetLastStatsSnapshot();
+            var hstats = gsm.TransportJobs?.GetLastStatsSnapshot();
             var mstats = gsm.MiningJobs?.GetLastStatsSnapshot();
 
             // Display concise queue/backpressure view

@@ -210,7 +210,7 @@ namespace HumanFortress.App.UI;
         // === HAUL ORDERS ===
         var haulOrders = world.Orders.GetRecentHauls();
         var haulActive = world.Orders.GetActiveHaulsSnapshot();
-        var haulJobs = gsm.HaulJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.HaulJobSystem.ActiveJobView>();
+        var haulJobs = gsm.TransportJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.TransportJobSystem.ActiveJobView>();
 
         surf.Print(2, y++, $"[HAUL] Recent Orders: {haulOrders.Count}  Active Designations: {haulActive.Count}  Active Jobs: {haulJobs.Count}", Color.Cyan);
 
@@ -380,11 +380,7 @@ namespace HumanFortress.App.UI;
             }
         }
 
-        // Prune expired highlights and draw recent order highlights on map (after menus)
-        ui.PruneHighlights(tick);
-        var cam = cameraOverride ?? new SadRogue.Primitives.Point(0, 0);
-        var z = zOverride ?? ui.PlaceZ;
-        DrawOrderHighlights(mapSurface, ui, camera: cam, currentZ: z, tick, world);
+        // Highlights are drawn by FortressState after map render to ensure visibility across UI states.
     }
 
     public static void DrawMiningJobHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
@@ -402,7 +398,7 @@ namespace HumanFortress.App.UI;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
             {
                 // Draw with transparent background to avoid obscuring underlying terrain
-                surf.SetGlyph(sx, sy, '·', fg, Color.Transparent);
+                surf.SetGlyph(sx, sy, '.', fg, Color.Transparent);
             }
         }
     }
@@ -421,12 +417,12 @@ namespace HumanFortress.App.UI;
             if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
             {
                 // Draw with transparent background to avoid obscuring underlying terrain
-                surf.SetGlyph(sx, sy, '·', fg, Color.Transparent);
+                surf.SetGlyph(sx, sy, '.', fg, Color.Transparent);
             }
         }
     }
 
-    private static void DrawOrderHighlights(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point camera, int currentZ, ulong tick, HumanFortress.Simulation.World.World? world)
+    public static void DrawOrderHighlights(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point camera, int currentZ, ulong tick, HumanFortress.Simulation.World.World? world)
     {
         var surf = mapSurface.Surface;
         var highlights = ui.GetHighlights();
@@ -436,38 +432,42 @@ namespace HumanFortress.App.UI;
         foreach (var h in highlights)
         {
             if (currentZ < h.ZMin || currentZ > h.ZMax) continue;
+            bool isMining = h.Kind.StartsWith("mining", System.StringComparison.OrdinalIgnoreCase);
             int x0 = h.Rect.X - camera.X;
             int y0 = h.Rect.Y - camera.Y;
             int x1 = x0 + h.Rect.Width - 1;
             int y1 = y0 + h.Rect.Height - 1;
-            // Draw rectangle border with transparent background, so we don't cover map glyphs
-            var fg = flash ? Color.Yellow : Color.Orange;
-            for (int x = x0; x <= x1; x++)
+            // Draw rectangle border unless this is a mining highlight; mining uses dot-only fill for eligibility
+            if (!isMining)
             {
-                if (x >= 0 && x < surf.Width)
+                var fg = flash ? Color.Yellow : Color.Orange;
+                for (int x = x0; x <= x1; x++)
                 {
-                    if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x, y0, '─', fg, Color.Transparent); }
-                    if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x, y1, '─', fg, Color.Transparent); }
+                    if (x >= 0 && x < surf.Width)
+                    {
+                        if (y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x, y0, '-', fg, Color.Transparent); }
+                        if (y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x, y1, '-', fg, Color.Transparent); }
+                    }
                 }
-            }
-            for (int y = y0; y <= y1; y++)
-            {
-                if (y >= 0 && y < surf.Height)
+                for (int y = y0; y <= y1; y++)
                 {
-                    if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, y, '│', fg, Color.Transparent); }
-                    if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, y, '│', fg, Color.Transparent); }
+                    if (y >= 0 && y < surf.Height)
+                    {
+                        if (x0 >= 0 && x0 < surf.Width) { surf.SetGlyph(x0, y, '|', fg, Color.Transparent); }
+                        if (x1 >= 0 && x1 < surf.Width) { surf.SetGlyph(x1, y, '|', fg, Color.Transparent); }
+                    }
                 }
+                if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '+', fg, Color.Transparent); }
+                if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '+', fg, Color.Transparent); }
+                if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '+', fg, Color.Transparent); }
+                if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '+', fg, Color.Transparent); }
             }
-            if (x0 >= 0 && x0 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x0, y0, '┌', fg, Color.Transparent); }
-            if (x1 >= 0 && x1 < surf.Width && y0 >= 0 && y0 < surf.Height) { surf.SetGlyph(x1, y0, '┐', fg, Color.Transparent); }
-            if (x0 >= 0 && x0 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x0, y1, '└', fg, Color.Transparent); }
-            if (x1 >= 0 && x1 < surf.Width && y1 >= 0 && y1 < surf.Height) { surf.SetGlyph(x1, y1, '┘', fg, Color.Transparent); }
 
             // 不再整体遮罩矩形，避免遮挡原 tile，可视仅保留边框 + 合法格浅填
 
             // If mining highlight and world provided, shade only actually affected cells
             // We support encoded kind pattern: "mining:<Action>" (e.g., mining:DigChannel)
-            if (world != null && h.Kind.StartsWith("mining", System.StringComparison.OrdinalIgnoreCase))
+            if (world != null && isMining)
             {
                 string action = "";
                 int idx = h.Kind.IndexOf(':');
@@ -525,7 +525,62 @@ namespace HumanFortress.App.UI;
                     }
                 }
             }
+
+            // Construction highlight: draw gold dots on legal cells within rect
+            if (world != null && h.Kind.StartsWith("construction", System.StringComparison.OrdinalIgnoreCase))
+            {
+                string shape = "";
+                int idx = h.Kind.IndexOf(':');
+                if (idx >= 0 && idx + 1 < h.Kind.Length) shape = h.Kind.Substring(idx + 1);
+                var dotFg = new Color(255, 230, 0);
+                for (int wx = h.Rect.X; wx < h.Rect.X + h.Rect.Width; wx++)
+                {
+                    for (int wy = h.Rect.Y; wy < h.Rect.Y + h.Rect.Height; wy++)
+                    {
+                        if (!IsConstructionCandidate(world, shape, wx, wy, currentZ)) continue;
+                        int sx = wx - camera.X;
+                        int sy = wy - camera.Y;
+                        if (sx>=0 && sx<surf.Width && sy>=0 && sy<surf.Height)
+                        {
+                            surf.SetGlyph(sx, sy, '.', dotFg, Color.Transparent);
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    private static bool IsConstructionCandidate(HumanFortress.Simulation.World.World world, string shape, int x, int y, int z)
+    {
+        var t = world.GetTile(x, y, z);
+        if (t == null) return false;
+        var kind = t.Value.Kind;
+        if (string.Equals(shape, nameof(HumanFortress.Simulation.Orders.ConstructionShape.Wall), System.StringComparison.OrdinalIgnoreCase))
+        {
+            return kind != HumanFortress.Simulation.Tiles.TerrainKind.SolidWall;
+        }
+        if (string.Equals(shape, nameof(HumanFortress.Simulation.Orders.ConstructionShape.Floor), System.StringComparison.OrdinalIgnoreCase))
+        {
+            if (kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor) return false;
+            var below = world.GetTile(x, y, z - 1);
+            if (below == null) return false;
+            return below.Value.ProvidesSupport;
+        }
+        if (string.Equals(shape, nameof(HumanFortress.Simulation.Orders.ConstructionShape.Ramp), System.StringComparison.OrdinalIgnoreCase))
+        {
+            var top = world.GetTile(x, y, z + 1);
+            if (top == null || top.Value.Kind != HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor) return false;
+            // any neighbor at z+1 standable
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    if (dx==0 && dy==0) continue;
+                    var tn = world.GetTile(x+dx, y+dy, z+1);
+                    if (tn != null && tn.Value.IsStandable) return true;
+                }
+            return false;
+        }
+        return false;
     }
 
     public static void DrawHelp(ScreenSurface mapSurface, UiStore ui)
@@ -904,8 +959,8 @@ namespace HumanFortress.App.UI;
                 surf.Print(filterX - 1, startY, "|", Color.Gray);
         }
 
-        // Get items
-        var allItems = world.Items.GetAllInstances().Where(i => !i.IsCarried);
+        // Get items (on ground only)
+        var allItems = world.Items.GetAllInstances().Where(i => i.IsOnGround);
         var filteredItems = ui.ItemKindFilter == "all"
             ? allItems.ToList()
             : allItems.Where(item => {

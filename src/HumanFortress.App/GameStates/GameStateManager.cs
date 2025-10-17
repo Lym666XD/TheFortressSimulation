@@ -30,8 +30,10 @@ public sealed class GameStateManager
     private World? _world;
     private SimulationContext? _simContext;
     private HumanFortress.Simulation.Orders.HaulingSystem? _haulingPlanner;
-    private HumanFortress.App.Jobs.HaulJobSystem? _haulJobs;
+    private HumanFortress.Simulation.Jobs.ITransportRequestQueue? _transportQueue;
+    private HumanFortress.App.Jobs.TransportJobSystem? _transportJobs;
     private HumanFortress.Simulation.Orders.MiningSystem? _miningPlanner;
+    private HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner? _cmPlanner;
     private HumanFortress.App.Jobs.MiningJobSystem? _miningJobs;
     private HumanFortress.Simulation.Orders.ConstructionSystem? _constructionPlanner;
     private HumanFortress.App.Jobs.ConstructionJobSystem? _constructionJobs;
@@ -67,7 +69,8 @@ public sealed class GameStateManager
     public TickScheduler TickScheduler => _tickScheduler;
 
     public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => _haulingPlanner;
-    public HumanFortress.App.Jobs.HaulJobSystem? HaulJobs => _haulJobs;
+    public HumanFortress.Simulation.Jobs.ITransportRequestQueue? TransportQueue => _transportQueue;
+    public HumanFortress.App.Jobs.TransportJobSystem? TransportJobs => _transportJobs;
     public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => _miningPlanner;
     public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => _miningJobs;
     public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => _constructionPlanner;
@@ -248,7 +251,9 @@ public sealed class GameStateManager
 
         // Instantiate planners (not registered directly)
         _miningPlanner = new HumanFortress.Simulation.Orders.MiningSystem(_world, _world.Orders);
-        _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders);
+        _transportQueue = new HumanFortress.Simulation.Jobs.TransportRequestQueue();
+        _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders, transportIntake: _transportQueue);
+        _cmPlanner = new HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner(_world, _transportQueue);
         _constructionPlanner = new HumanFortress.Simulation.Orders.ConstructionSystem(_world, _world.Orders);
 
         // Load scheduler tunings (fallback to defaults when missing)
@@ -260,25 +265,30 @@ public sealed class GameStateManager
             _world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager,
             intakeBudget: _schedulerTunings.Mining.PlanPerTick,
             carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks);
-        _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(
-            _world, _haulingPlanner, _diffLog, _navManager,
+        _transportJobs = new HumanFortress.App.Jobs.TransportJobSystem(
+            _world, _transportQueue!, _diffLog, _navManager,
             intakeBudget: _schedulerTunings.Hauling.PlanPerTick,
             carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks);
         _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(
             _world, _constructionPlanner, _diffLog,
             maxPerTick: _schedulerTunings.Construction.PlanPerTick);
 
+        // Register sanitizer (low-frequency safety net)
+        var sanitizer = new HumanFortress.App.Jobs.SanitizeSystem(_world, intervalTicks: 40, maxPerTick: 8);
+
         // Register unified jobs orchestrator (v1 single-threaded orchestration)
         _jobsOrchestrator = new HumanFortress.App.Jobs.UnifiedJobsOrchestrator(
             _haulingPlanner,
+            _cmPlanner,
             _miningPlanner,
             _constructionPlanner,
-            _haulJobs,
+            _transportJobs,
             _miningJobs,
             _constructionJobs,
             _schedulerTunings
         );
         _tickScheduler.RegisterSystem(_jobsOrchestrator);
+        _tickScheduler.RegisterSystem(sanitizer);
 
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;

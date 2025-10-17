@@ -20,15 +20,20 @@ public sealed class HaulingSystem : ITick
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
 
-    // Planned relocations from Read phase; exposed to job system.
+    // Planned relocations from Read phase (legacy path; retained for compatibility)
     private readonly List<PlannedMove> _planned = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedMove> _outbox = new();
 
-    public HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128)
+    // Optional intake to decouple producer→executor via TransportRequestQueue
+    private readonly HumanFortress.Simulation.Jobs.ITransportIntake? _transportIntake;
+
+    public HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128,
+        HumanFortress.Simulation.Jobs.ITransportIntake? transportIntake = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
         _maxPerTick = Math.Max(1, maxPerTick);
+        _transportIntake = transportIntake;
     }
 
     public int Priority => UpdateOrder.Priority.Items; // Ensure writes align with Items stage
@@ -102,10 +107,47 @@ public sealed class HaulingSystem : ITick
     public void WriteTick(ulong tick)
     {
         if (_planned.Count == 0) return;
-        // Hand off to job system via outbox (real execution happens elsewhere)
-        foreach (var move in _planned)
-            _outbox.Enqueue(move);
+
+        if (_transportIntake != null)
+        {
+            foreach (var move in _planned)
+            {
+                uint seed = SeedFrom(move.ItemGuid);
+                var inst = _world.Items.GetInstance(move.ItemGuid);
+                int qty = inst?.StackCount ?? 1;
+                var req = new HumanFortress.Simulation.Jobs.TransportRequest(
+                    move.ItemGuid,
+                    move.From,
+                    move.FromZ,
+                    move.To,
+                    move.ToZ,
+                    qty,
+                    HumanFortress.Simulation.Jobs.TransportReason.ToStockpile,
+                    Priority: 60,
+                    RequestorId: SystemId,
+                    CreatedTick: tick,
+                    Seed: seed);
+                _transportIntake.Enqueue(in req);
+            }
+        }
+        else
+        {
+            // Legacy path: enqueue into local outbox for HaulJobSystem
+            foreach (var move in _planned)
+                _outbox.Enqueue(move);
+        }
         _planned.Clear();
+    }
+
+    private static uint SeedFrom(Guid a)
+    {
+        unchecked
+        {
+            var ba = a.ToByteArray();
+            uint s = 2166136261;
+            foreach (var t in ba) s = (s ^ t) * 16777619;
+            return s;
+        }
     }
 
     private List<StockpileZone> GetAllStockpileZones()

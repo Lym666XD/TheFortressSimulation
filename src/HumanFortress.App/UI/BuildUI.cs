@@ -56,6 +56,47 @@ public sealed class BuildUI
         }
     }
 
+    public void DrawConstructionMaterialDialog(ScreenSurface surface, HumanFortress.App.UI.UiStore ui)
+    {
+        if (!ui.ConstructionMaterialDialogOpen) return;
+        var surf = surface.Surface;
+        int w = 36, h = 8;
+        int x0 = (surf.Width - w) / 2;
+        int y0 = (surf.Height - h) / 2;
+        var bg = new Color(0, 0, 0, 220);
+        var fg = Color.White;
+        // Fill background
+        for (int yy = y0; yy < y0 + h; yy++)
+            for (int xx = x0; xx < x0 + w; xx++)
+                surf.SetGlyph(xx, yy, ' ', fg, bg);
+        // Border
+        for (int xx = x0; xx < x0 + w; xx++) { surf.SetGlyph(xx, y0, '-'); surf.SetGlyph(xx, y0 + h - 1, '-'); }
+        for (int yy = y0; yy < y0 + h; yy++) { surf.SetGlyph(x0, yy, '|'); surf.SetGlyph(x0 + w - 1, yy, '|'); }
+        surf.SetGlyph(x0, y0, '+'); surf.SetGlyph(x0 + w - 1, y0, '+'); surf.SetGlyph(x0, y0 + h - 1, '+'); surf.SetGlyph(x0 + w - 1, y0 + h - 1, '+');
+
+        surf.Print(x0 + 2, y0, " MATERIALS ", Color.Yellow);
+        var shape = ui.SelectedConstructionShape;
+        switch (shape)
+        {
+            case HumanFortress.Simulation.Orders.ConstructionShape.Wall:
+                surf.Print(x0 + 2, y0 + 2, "[Z] Stone Block", fg);
+                surf.Print(x0 + 2, y0 + 3, "[X] Wood Log", fg);
+                break;
+            case HumanFortress.Simulation.Orders.ConstructionShape.Floor:
+                surf.Print(x0 + 2, y0 + 2, "[Z] Stone Block", fg);
+                surf.Print(x0 + 2, y0 + 3, "[X] Wood Plank", fg);
+                break;
+            case HumanFortress.Simulation.Orders.ConstructionShape.Ramp:
+                surf.Print(x0 + 2, y0 + 2, "Ramp requires both:", fg);
+                surf.Print(x0 + 2, y0 + 3, "[ENTER] Confirm Stone+Plank", fg);
+                break;
+            default:
+                surf.Print(x0 + 2, y0 + 2, "(No options)", Color.Gray);
+                break;
+        }
+        surf.Print(x0 + 2, y0 + h - 2, "ESC: Cancel", Color.Gray);
+    }
+
     private void DrawStructuralL3(ScreenSurface surface, int x, int y)
     {
         var bg = new Color(0, 0, 0, 200);

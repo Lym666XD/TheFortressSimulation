@@ -1,4 +1,5 @@
 using SadRogue.Primitives;
+using System.Collections.Generic;
 
 namespace HumanFortress.App.UI;
 
@@ -114,6 +115,15 @@ public sealed class UiStore
     // Build/Construction selection state
     public HumanFortress.Simulation.Orders.ConstructionShape SelectedConstructionShape { get; set; } = HumanFortress.Simulation.Orders.ConstructionShape.Wall;
     public MiningAction SelectedMiningAction { get; set; } = MiningAction.Dig;
+    // Construction material selection (UI dialog)
+    public bool ConstructionMaterialDialogOpen { get; set; } = false;
+    public List<string> ConstructionSelectedTags { get; } = new();
+    public string? ConstructionPreferredMaterialId { get; set; } = null;
+    public void ResetConstructionSelection()
+    {
+        ConstructionSelectedTags.Clear();
+        ConstructionPreferredMaterialId = null;
+    }
 
     // Stockpile/Zone placement state
     public Point? PlaceFirstCorner { get; set; } = null;

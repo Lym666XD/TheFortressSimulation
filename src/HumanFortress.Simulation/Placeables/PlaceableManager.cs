@@ -187,6 +187,32 @@ public sealed class PlaceableManager
     }
 
     /// <summary>
+    /// Remove any owned placeable at the anchor position (regardless of ghost flag).
+    /// Intended for removing construction sites upon completion.
+    /// </summary>
+    public static bool RemoveOwnedAt(WorldClass world, SadRogue.Primitives.Point position, int z, ulong tick)
+    {
+        int cx = position.X / Chunk.SIZE_XY;
+        int cy = position.Y / Chunk.SIZE_XY;
+        int lx = position.X % Chunk.SIZE_XY;
+        int ly = position.Y % Chunk.SIZE_XY;
+        var ck = new ChunkKey(cx, cy, z);
+        var chunk = world.GetChunk(ck);
+        if (chunk == null) return false;
+        var pd = chunk.GetPlaceableData();
+        if (pd == null) return false;
+        int idx = Chunk.LocalIndex(lx, ly);
+        if (!pd.TryGetOwnedAt(idx, out var p)) return false;
+
+        // Unsync and remove
+        pd.UnsyncFromFurnitureCell(chunk, p, tick);
+        pd.RemovePlaceable(idx);
+        chunk.BumpConnectivityVersion();
+        chunk.MarkTileDirty(idx, tick);
+        return true;
+    }
+
+    /// <summary>
     /// Get all chunks affected by placeable footprint.
     /// Used for cross-chunk collision detection and placement.
     /// </summary>

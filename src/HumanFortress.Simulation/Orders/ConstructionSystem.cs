@@ -49,20 +49,31 @@ public sealed class ConstructionSystem : ITick
         int count = 0;
         foreach (var d in desigs)
         {
+            int addedForThisRect = 0;
+            bool debugCells = (d.WorldRect.Width * d.WorldRect.Height) <= 12;
             for (int z = d.ZMin; z <= d.ZMax; z++)
             {
                 var shapeKind = ResolveTargetKind(d.Shape, z, d.ZMin, d.ZMax);
-                for (int y = d.WorldRect.Y; y < d.WorldRect.MaxExtentY; y++)
+                for (int y = d.WorldRect.Y; y <= d.WorldRect.MaxExtentY; y++)
                 {
-                    for (int x = d.WorldRect.X; x < d.WorldRect.MaxExtentX; x++)
+                    for (int x = d.WorldRect.X; x <= d.WorldRect.MaxExtentX; x++)
                     {
                         if (count >= _maxPerTick) break;
                         var tileOpt = _world.GetTile(x, y, z);
-                        if (tileOpt == null) continue;
+                        if (tileOpt == null)
+                        {
+                            if (debugCells)
+                                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=OutOfWorld");
+                            continue;
+                        }
 
                         // Basic legality checks (L0-only; L2 ghost always allowed here)
                         if (!IsBuildCandidate(tileOpt.Value, d.Shape, x, y, z))
+                        {
+                            if (debugCells)
+                                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=CandidateFail");
                             continue;
+                        }
 
                         // Resolve geology handle from filter (material preference) + target kind
                         ushort geo = ResolveGeologyHandle(content, d.Filter, shapeKind);
@@ -70,16 +81,30 @@ public sealed class ConstructionSystem : ITick
                         {
                             // Fallback: attempt from current tile material (if any)
                             geo = TryMatchFromCurrent(tileOpt.Value, content, shapeKind);
-                            if (geo == 0) continue; // cannot resolve material-kind
+                            if (geo == 0)
+                            {
+                                if (debugCells)
+                                    OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=GeoFail");
+                                continue; // cannot resolve material-kind
+                            }
                         }
 
-                        _planned.Add(new PlannedBuild(new Point(x, y), z, shapeKind, geo, d.Shape, d.Priority, SeedFrom(x, y, z)));
+                        _planned.Add(new PlannedBuild(new Point(x, y), z, shapeKind, geo, d.Shape, d.Filter.Tags ?? Array.Empty<string>(), d.Priority, SeedFrom(x, y, z)));
+                        addedForThisRect++;
                         count++;
+                        if (debugCells)
+                            OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) OK");
                     }
                     if (count >= _maxPerTick) break;
                 }
                 if (count >= _maxPerTick) break;
             }
+            // Log summary for this rectangle
+            try
+            {
+                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR] rect=({d.WorldRect.X},{d.WorldRect.Y},{d.WorldRect.Width}x{d.WorldRect.Height}) z={d.ZMin}..{d.ZMax} shape={d.Shape} planned={addedForThisRect}");
+            }
+            catch { }
             if (count >= _maxPerTick) break;
         }
     }
@@ -88,19 +113,88 @@ public sealed class ConstructionSystem : ITick
     {
         if (_planned.Count == 0) return;
 
-        // Place L2 ghost placeables for visualization and claim. Do not alter L0 here.
+        // Create construction sites instead of ghosts; do not enqueue PlannedBuild for immediate L0 changes.
         foreach (var p in _planned)
         {
             try
             {
-                var ghost = PlaceableFactory.CreateConstructionGhost(p.Cell, p.Z, tick, p.Shape.ToString());
-                PlaceableManager.PlacePlaceable(_world, ghost, tick);
-                _outbox.Enqueue(p);
+                var tuning = _tuning; // local
+                var req = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                // Map shape + filter tags to required item tags
+                // We rely on designation filter tags: e.g., ["stone_block"], ["wood_log"], ["wood_plank"], or combination for Ramp
+                // When tags are missing, default to stone_block for Wall/Floor and both for Ramp
+                // Preferred from RequiredTags if provided
+                var tags = p.RequiredTags ?? Array.Empty<string>();
+                if (tags.Length > 0)
+                {
+                    foreach (var tag in tags)
+                    {
+                        switch (tag.ToLowerInvariant())
+                        {
+                            case "stone_block": req["stone_block"] = req.GetValueOrDefault("stone_block") + 1; break;
+                            case "wood_plank": req["wood_plank"] = req.GetValueOrDefault("wood_plank") + 1; break;
+                            case "wood_log": req["wood_log"] = req.GetValueOrDefault("wood_log") + 1; break;
+                        }
+                    }
+                    // Scale counts by shape defaults
+                    if (p.Shape == ConstructionShape.Wall)
+                    {
+                        if (req.ContainsKey("stone_block")) req["stone_block"] = _tuning.WallBlockCount;
+                        if (req.ContainsKey("wood_log")) req["wood_log"] = _tuning.WallBlockCount; // reuse count
+                    }
+                    else if (p.Shape == ConstructionShape.Floor)
+                    {
+                        if (req.ContainsKey("stone_block")) req["stone_block"] = _tuning.FloorBlockCount;
+                        if (req.ContainsKey("wood_plank")) req["wood_plank"] = _tuning.FloorPlankCount;
+                    }
+                    else if (p.Shape == ConstructionShape.Ramp)
+                    {
+                        // Ramp requires both; if only one selected, complement the other
+                        req["stone_block"] = _tuning.RampBlockCount;
+                        req["wood_plank"] = _tuning.RampPlankCount;
+                    }
+                }
+                else
+                {
+                    // Defaults per shape
+                    switch (p.Shape)
+                    {
+                        case ConstructionShape.Wall:
+                            req["stone_block"] = tuning.WallBlockCount;
+                            break;
+                        case ConstructionShape.Floor:
+                            req["stone_block"] = tuning.FloorBlockCount;
+                            break;
+                        case ConstructionShape.Ramp:
+                            req["stone_block"] = tuning.RampBlockCount;
+                            req["wood_plank"] = tuning.RampPlankCount;
+                            break;
+                        case ConstructionShape.Stairs:
+                            req["stone_block"] = tuning.StairBlockCount;
+                            break;
+                    }
+                }
+
+                // Create site with 1x1 footprint
+                var site = PlaceableFactory.CreateConstructionSite(
+                    p.Cell,
+                    p.Z,
+                    tick,
+                    targetId: $"l0:{p.Shape}",
+                    fp: new HumanFortress.Core.Content.Registry.Footprint(1,1,1),
+                    materialsRequired: req,
+                    totalBuildTicks: p.Shape switch {
+                        ConstructionShape.Wall => tuning.BuildTicksWall,
+                        ConstructionShape.Floor => tuning.BuildTicksFloor,
+                        ConstructionShape.Ramp => tuning.BuildTicksRamp,
+                        ConstructionShape.Stairs => tuning.BuildTicksStairs,
+                        _ => tuning.BuildTicksFloor }
+                );
+                PlaceableManager.PlacePlaceable(_world, site, tick);
             }
             catch (Exception)
             {
-                // Best effort placement of ghost; still enqueue planned build
-                _outbox.Enqueue(p);
+                // swallow per-site errors to avoid breaking the loop
             }
         }
         _planned.Clear();
