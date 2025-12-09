@@ -107,17 +107,18 @@ Query indices for UI (grouped inventory virtualized).
 
 DoD: create stockpile; items appear; filters work; snapshot shows piles.
 
-Phase F — Job Scheduler & Hauling Loop (Weeks 11-12, core vertical slice)
+Phase F - Job Scheduler & Hauling Loop (Weeks 11-12, core vertical slice)
 
 Task board: produce/consume jobs; priorities; reservations (TTL).
 
-Hauling: pull → carry → drop; reachability checks; retry logic.
+Hauling: pull -> carry -> drop; reachability checks; retry logic.
 
 AI Read-phase propose, Write-phase commit via Diff-Log.
 
-DoD: place stockpile → dwarves haul nearby items deterministically.
+DoD: place stockpile -> dwarves haul nearby items deterministically.
 
-Adopts the “task board, fairness, starvation avoidance” goals from prior Sprint 2.1 but routes all writes through our barrier model. 
+Adopts the "task board, fairness, starvation avoidance" goals from prior Sprint 2.1 but routes all writes through our barrier model.
+Status 2025-10-17: Transport refactor landed; HaulingSystem always enqueues TransportRequests, and TransportJobSystem now enforces tunable intake/active caps (reserve slots when Mining backlog > 0, cap backlog intake). F3 Work drawer debug panel visualizes these limits to prove Mining keeps workers alongside hauling.
 
 milestones
 

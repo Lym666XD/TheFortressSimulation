@@ -31,7 +31,10 @@ public sealed class MiningJobSystem : ITick
     private readonly DiffLog? _diff;
     private readonly int _maxIntakePerTick;
     private readonly int _carryoverMaxTicks;
+    private readonly ProfessionAssignments? _professions;
+    private readonly WorkerSelectionStrategy _workerStrategy;
     private const int CreatureReserveTtlTicks = 200;
+    private const string JobTag = "mining";
 
     // Tile reservation: prevent multiple workers from mining the same tile
     private readonly System.Collections.Generic.HashSet<(int x, int y, int z)> _reservedTiles = new();
@@ -45,7 +48,7 @@ public sealed class MiningJobSystem : ITick
     // Replan/timeout tuning
     private const int MaxFailedReplans = 10; // After N failed replans, release reservation and requeue
 
-    public MiningJobSystem(HumanFortress.Simulation.World.World world, MiningSystem planner, DiffLog? diffLog = null, HumanFortress.Simulation.Items.ItemsDiffLog? itemsDiff = null, NavigationManager? sharedNav = null, int intakeBudget = 16, int carryoverMaxTicks = 8)
+    public MiningJobSystem(HumanFortress.Simulation.World.World world, MiningSystem planner, DiffLog? diffLog = null, HumanFortress.Simulation.Items.ItemsDiffLog? itemsDiff = null, NavigationManager? sharedNav = null, int intakeBudget = 16, int carryoverMaxTicks = 8, ProfessionAssignments? professions = null, WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest)
     {
         _world = world;
         _planner = planner;
@@ -57,6 +60,8 @@ public sealed class MiningJobSystem : ITick
         _itemsDiff = itemsDiff;
         _maxIntakePerTick = Math.Max(1, intakeBudget);
         _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
+        _professions = professions;
+        _workerStrategy = workerStrategy;
         // Note: RebuildAll is performed after world generation (FortressState) using the shared manager.
     }
 
@@ -241,7 +246,10 @@ public sealed class MiningJobSystem : ITick
                 Logger.Log($"[MINING][{tick}] No adjacency for target=({pd.Cell.X},{pd.Cell.Y},{pd.Z}) id={pd.DesignationId}; requeue");
                 continue;
             }
-            foreach (var worker in creatures)
+            var jobPoint = new HumanFortress.Navigation.Point3(pd.Cell.X, pd.Cell.Y, pd.Z);
+            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, jobPoint)
+                ?? creatures;
+            foreach (var worker in candidates)
             {
                 if (worker.HP <= 0) continue;
                 if (busy.Contains(worker.Guid)) continue;
@@ -441,6 +449,7 @@ public sealed class MiningJobSystem : ITick
                         ApplyMiningResult(job);
                         // Removed completion highlight to avoid covering tiles/items/creatures
                         Logger.Log($"[MINING][{tick}] Dig complete at target=({job.Target.X},{job.Target.Y},{job.Z}) action={job.Action} id={job.DesignationId} seg={job.Segment} by {job.WorkerId}");
+                        _professions?.RecordJobCompletion(job.WorkerId, JobTag);
                     }
                     else
                     {
@@ -934,6 +943,23 @@ public sealed class MiningJobSystem : ITick
         string Stage,
         int ProgressTicks,
         int RequiredTicks);
+    public readonly record struct ActiveMiningJobDebugView(
+        Guid WorkerId,
+        SadRogue.Primitives.Point Target,
+        int Z,
+        SadRogue.Primitives.Point Adjacent,
+        string Stage,
+        int ProgressTicks,
+        int RequiredTicks,
+        uint Seed);
+
+    public readonly record struct MiningDebugSnapshot(
+        JobStatsSnapshot Stats,
+        List<ActiveMiningJobDebugView> Active,
+        int BacklogCount,
+        int DeferredCount,
+        int ReservedTiles,
+        bool SeedsIncluded);
 
     public List<ActiveMiningJobView> GetActiveJobsSnapshot()
     {
@@ -950,6 +976,34 @@ public sealed class MiningJobSystem : ITick
                 j.RequiredTicks));
         }
         return list;
+    }
+
+    public MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
+    {
+        var stats = GetLastStatsSnapshot();
+        var active = new List<ActiveMiningJobDebugView>(Math.Min(maxActive, _active.Count));
+        for (int i = 0; i < _active.Count && active.Count < maxActive; i++)
+        {
+            var j = _active[i];
+            uint seed = includeSeeds ? SeedFrom(j.WorkerId, j.Target) : 0u;
+            active.Add(new ActiveMiningJobDebugView(
+                j.WorkerId,
+                j.Target,
+                j.Z,
+                j.Adjacent,
+                j.Stage.ToString(),
+                j.ProgressTicks,
+                j.RequiredTicks,
+                seed));
+        }
+
+        return new MiningDebugSnapshot(
+            stats,
+            active,
+            BacklogCount: _backlog.Count,
+            DeferredCount: _deferredStairwells.Count,
+            ReservedTiles: _reservedTiles.Count,
+            SeedsIncluded: includeSeeds);
     }
 
     public int GetBacklogCount() => _backlog.Count;

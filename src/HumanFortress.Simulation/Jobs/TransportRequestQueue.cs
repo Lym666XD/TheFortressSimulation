@@ -7,16 +7,49 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Jobs
 {
     /// <summary>
-    /// Classification of transport intents. Used for priority policies and diagnostics.
+    /// Classification of transport intents. Used for priority policies, destination validation, and diagnostics.
+    /// The executor uses this to determine which validation logic to apply at the destination.
     /// </summary>
     public enum TransportReason
     {
+        // === Stockpile Operations ===
+        /// <summary>Hauling loose items to a stockpile zone. Validates destination is a stockpile cell.</summary>
         ToStockpile,
+
+        // === Construction Operations ===
+        /// <summary>Delivering materials to a construction site (L0 walls/floors or L2 workshops). Validates destination is near a construction site.</summary>
         ToConstructionSite,
+        /// <summary>Delivering items for installation (furniture, machines). Validates destination is an install site.</summary>
         ToInstallSite,
+
+        // === Workshop/Crafting Operations ===
+        /// <summary>Delivering raw materials to a workshop input buffer for crafting. Validates destination is a workshop.</summary>
         ToWorkshopInput,
+        /// <summary>Moving finished goods from workshop output to stockpile or trade depot. Validates source is a workshop.</summary>
         ToWorkshopOutput,
+        /// <summary>Delivering materials for upgrading an existing structure/workshop. Validates destination has upgradeable placeable.</summary>
+        ToUpgradeSite,
+
+        // === Trade Operations ===
+        /// <summary>Moving goods to a trade depot for export/sale. Validates destination is a trade depot zone.</summary>
+        ToTradeDepot,
+        /// <summary>Moving purchased goods from trade depot to stockpile. Validates source is a trade depot.</summary>
+        FromTradeDepot,
+
+        // === Military/Equipment Operations ===
+        /// <summary>Delivering equipment to an armory or barracks for military use. Validates destination is military zone.</summary>
+        ToArmory,
+        /// <summary>Delivering ammunition to defensive positions or ammo stockpiles. Validates destination accepts ammo.</summary>
+        ToAmmoCache,
+
+        // === Maintenance Operations ===
+        /// <summary>Cleaning up debris, corpses, or garbage. Less strict destination validation.</summary>
         Cleanup,
+        /// <summary>Refueling torches, furnaces, or other fuel-consuming structures. Validates destination needs fuel.</summary>
+        ToRefuel,
+
+        // === Miscellaneous ===
+        /// <summary>Generic transport with minimal validation. Use sparingly.</summary>
         Misc
     }
 
@@ -51,6 +84,10 @@ namespace HumanFortress.Simulation.Jobs
     public interface ITransportRequestQueue : ITransportIntake
     {
         int Drain(int max, IList<TransportRequest> into);
+        /// <summary>Peek up to max pending requests in stable order without dequeuing.</summary>
+        IReadOnlyList<TransportRequest> Peek(int max);
+        /// <summary>Get current shard counts keyed by encoded chunk id.</summary>
+        IReadOnlyDictionary<int, int> GetShardCountsSnapshot();
         int Count { get; }
     }
 
@@ -157,6 +194,32 @@ namespace HumanFortress.Simulation.Jobs
                 }
                 _pending.RemoveRange(0, take);
                 return take;
+            }
+        }
+
+        public IReadOnlyList<TransportRequest> Peek(int max)
+        {
+            if (max <= 0) return Array.Empty<TransportRequest>();
+            lock (_lock)
+            {
+                if (_pending.Count == 0) return Array.Empty<TransportRequest>();
+                var snapshot = new List<TransportRequest>(_pending);
+                snapshot.Sort(_cmp);
+                if (snapshot.Count > max) snapshot.RemoveRange(max, snapshot.Count - max);
+                return snapshot;
+            }
+        }
+
+        public IReadOnlyDictionary<int, int> GetShardCountsSnapshot()
+        {
+            lock (_lock)
+            {
+                var dict = new Dictionary<int, int>(_shards.Count);
+                foreach (var kv in _shards)
+                {
+                    dict[kv.Key] = kv.Value.Count;
+                }
+                return dict;
             }
         }
 

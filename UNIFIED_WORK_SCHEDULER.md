@@ -229,3 +229,18 @@ public sealed class JobScheduler {
 Links
 - See JOB_SCHEDULER_SPEC.md for the normative, chunk‑parallel model that v2 will implement.
 - See UPDATE_ORDER.md for stage write windows and allowed layers.
+
+16) Next Actions (informative, execution checklist)
+
+Short‑term (v1.2)
+- Finish Transport refactor rollout: remove legacy Haul outbox path; make all planners use `TransportRequestQueue` only; gate executor writes to L5/L6 via DiffLog asserts.
+- Add baseline determinism tests: queue drain order, assignment order (worker GUID sort + seeded path), replay parity with jitter fuzz on the scheduler.
+- Harden reservations: extend `ReservationManager` with diff-backed Reserve/Release ops for items/creatures; add TTL metrics; reject duplicate holders deterministically.
+- Improve back-pressure: expose carryover age thresholds from `tuning.scheduler.json`; log when requests are dropped or boosted; surface counters to the Work drawer.
+
+Medium‑term (v2 prep)
+- Split executor/apply by chunk: consume `TransportRequestQueue` shards and run per-chunk Merge+Apply jobs; enforce non-overlapping writes; keep commit order = ascending ChunkId.
+- Stockpile authority: planner reads `StockpileManager`/chunk shards instead of reconstructing from zones; add “already in zone�? fast-reject with authoritative view.
+- Producer expansion: Construction materials planner -> site-aware drop targeting; Install/Workshop IO planners -> request intents with reasons; add Cleanup producer for debris.
+- Policy hooks: role/roster-aware worker filters and distance/health filters behind injected assignment policy (deterministic); per-reason priority bands in tunings.
+- Telemetry: structured per-job stats emission (intake/active/backlog/requeued/nopath) and opt-in debug UI panel; keep log-only default for release builds.

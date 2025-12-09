@@ -106,6 +106,11 @@ public sealed class PlaceableInstance
     /// </summary>
     public ConstructionSiteState? ConstructionSite { get; set; }
 
+    /// <summary>
+    /// Optional workshop state (set for completed workshop constructions).
+    /// </summary>
+    public WorkshopState? Workshop { get; set; }
+
     // === STATE MACHINES ===
     /// <summary>
     /// Door state (only if passability=doorway)
@@ -266,6 +271,13 @@ public sealed class PlaceableInstance
             : tuning.DefaultMaxHP;
         instance.HitPoints = instance.MaxHitPoints;
 
+        if (IsWorkshopDefinition(def))
+        {
+            instance.Workshop ??= new WorkshopState();
+            int maxWorkers = Math.Max(1, def.Io?.InputSlots ?? 1);
+            instance.Workshop.ConfigureWorkers(1, maxWorkers);
+        }
+
         return instance;
     }
 
@@ -324,6 +336,14 @@ public sealed class PlaceableInstance
         }
 
         return "Broken";
+    }
+
+    private static bool IsWorkshopDefinition(ConstructionDefinition def)
+    {
+        if (string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (def.PlaceableProfile?.Tags == null) return false;
+        return Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0;
     }
 }
 

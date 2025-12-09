@@ -284,6 +284,7 @@ public sealed class ItemManager
         }
 
         var files = Directory.GetFiles(itemsPath, "*.json");
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
         int loaded = 0;
         int failed = 0;
 

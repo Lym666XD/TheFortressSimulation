@@ -2,7 +2,9 @@
 using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.Simulation.Stockpile;
+using HumanFortress.Simulation.Placeables;
 using System.Linq;
+using HumanFortress.App.GameStates;
 
 namespace HumanFortress.App.UI;
 
@@ -91,7 +93,8 @@ namespace HumanFortress.App.UI;
     {
         if (ui.OpenDrawer == DrawerId.None) return;
         var surf = mapSurface.Surface;
-        int height = Math.Max(8, (int)(surf.Height * 0.7));
+        // Reduced height: leave 6 rows at top for map visibility, min 10 rows for drawer content
+        int height = Math.Max(10, surf.Height - 7);
         int y0 = surf.Height - 1 - height; // top of drawer area
         // if (tick % 50 == 0)
         //     Logger.Log($"[UiRenderer.Drawer] size={surf.Width}x{surf.Height} height={height} y0={y0} panel={ui.OpenDrawer} tab={ui.DrawerTab}");
@@ -131,7 +134,7 @@ namespace HumanFortress.App.UI;
         }
         else if (ui.OpenDrawer == DrawerId.Work)
         {
-            tabs = new[] { "Labor", "All Orders", "Workshops" };
+            tabs = new[] { "Labor", "All Orders", "Job Allocation", "Workshop Orders", "Workshops" };
         }
         else if (ui.OpenDrawer == DrawerId.PlacementManagement)
         {
@@ -172,20 +175,33 @@ namespace HumanFortress.App.UI;
         }
         else if (ui.OpenDrawer == DrawerId.Work)
         {
-            if (ui.DrawerTab == 0 && world != null)
+            if (world == null)
             {
-                DrawWorkOverviewTab(surf, y0 + 2);
-            }
-            else if (ui.DrawerTab == 1 && world != null)
-            {
-                DrawWorkOrdersTab(surf, world, y0 + 2);
+                surf.Print(2, y0 + 2, "(World not ready)", Color.Gray);
             }
             else
             {
-                if (world != null)
-                    DrawWorkshopsTab(surf, world, y0 + 2);
+                int contentHeight = height - 3;
+                if (ui.DrawerTab == 0)
+                {
+                    DrawWorkOverviewTab(surf, world, ui, y0 + 1, contentHeight, tick);
+                }
+                else if (ui.DrawerTab == 1)
+                {
+                    DrawWorkOrdersTab(surf, world, y0 + 1, contentHeight, tick);
+                }
+                else if (ui.DrawerTab == 2)
+                {
+                    DrawJobAllocationTab(surf, world, ui, y0 + 1, contentHeight);
+                }
+                else if (ui.DrawerTab == 3)
+                {
+                    DrawWorkshopOrdersTab(surf, world, y0 + 1, contentHeight, tick);
+                }
                 else
-                    surf.Print(2, y0 + 2, "(No world)", Color.Gray);
+                {
+                    DrawWorkshopsTab(surf, world, y0 + 1, contentHeight, tick);
+                }
             }
         }
         else if (ui.OpenDrawer == DrawerId.PlacementManagement && world != null)
@@ -204,106 +220,129 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY)
+
+    private static void DrawWorkOverviewTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight, ulong tick)
     {
-        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
-        surf.Print(2, startY, "== Work: All Orders (Detailed) ==", Color.Yellow);
-        int y = startY + 2;
+        var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
+        DecorateWorkPanel(surf, layout);
+        RenderLaborSummaryColumn(surf, layout.Left, world);
+        RenderDwarfRosterColumn(surf, layout.Center, world, ui);
+        RenderSchedulerColumn(surf, layout.Right, tick, "Scheduler Diagnostics");
 
-        // === HAUL ORDERS ===
-        var haulOrders = world.Orders.GetRecentHauls();
-        var haulActive = world.Orders.GetActiveHaulsSnapshot();
-        var haulJobs = gsm.TransportJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.TransportJobSystem.ActiveJobView>();
-
-        surf.Print(2, y++, $"[HAUL] Recent Orders: {haulOrders.Count}  Active Designations: {haulActive.Count}  Active Jobs: {haulJobs.Count}", Color.Cyan);
-
-        // Show haul jobs with details
-        if (haulJobs.Count > 0)
-        {
-            surf.Print(4, y++, "Active Haul Jobs:", Color.Green);
-            foreach (var job in haulJobs.Take(5))
-            {
-                var workerShort = job.CreatureId.ToString().Substring(0, 8);
-                var itemShort = job.ItemId.ToString().Substring(0, 8);
-                surf.Print(6, y++, $"W:{workerShort} I:{itemShort} Stage:{job.Stage} -> ({job.Dest.X},{job.Dest.Y},{job.Dest.Z})", Color.White);
-            }
-            if (haulJobs.Count > 5)
-                surf.Print(6, y++, $"... and {haulJobs.Count - 5} more haul jobs", Color.DarkGray);
-        }
-
-        // Show recent haul orders
-        if (haulOrders.Count > 0)
-        {
-            surf.Print(4, y++, "Recent Haul Designations:", Color.Green);
-            foreach (var d in haulOrders.Take(3))
-            {
-                surf.Print(6, y++, $"Rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z} pri:{d.Priority}", Color.White);
-            }
-            if (haulOrders.Count > 3)
-                surf.Print(6, y++, $"... and {haulOrders.Count - 3} more designations", Color.DarkGray);
-        }
-        y++;
-
-        // === MINING ORDERS ===
-        var miningOrders = world.Orders.GetRecentMining();
-        var miningActive = world.Orders.GetActiveMiningSnapshot();
-        var miningJobs = gsm.MiningJobs?.GetActiveJobsSnapshot() ?? new System.Collections.Generic.List<HumanFortress.App.Jobs.MiningJobSystem.ActiveMiningJobView>();
-
-        surf.Print(2, y++, $"[MINING] Recent Orders: {miningOrders.Count}  Active Designations: {miningActive.Count}  Active Jobs: {miningJobs.Count}", Color.Cyan);
-
-        // Show mining jobs with details
-        if (miningJobs.Count > 0)
-        {
-            surf.Print(4, y++, "Active Mining Jobs:", Color.Green);
-            foreach (var job in miningJobs.Take(5))
-            {
-                var workerShort = job.WorkerId.ToString().Substring(0, 8);
-                var progress = job.RequiredTicks > 0 ? (job.ProgressTicks * 100 / job.RequiredTicks) : 0;
-                surf.Print(6, y++, $"W:{workerShort} Target:({job.Target.X},{job.Target.Y},{job.Z}) Stage:{job.Stage} Progress:{progress}%", Color.White);
-            }
-            if (miningJobs.Count > 5)
-                surf.Print(6, y++, $"... and {miningJobs.Count - 5} more mining jobs", Color.DarkGray);
-        }
-
-        // Show recent mining orders (V2)
-        if (miningOrders.Count > 0)
-        {
-            surf.Print(4, y++, "Recent Mining Designations:", Color.Green);
-            foreach (var d in miningOrders.Take(3))
-            {
-                surf.Print(6, y++, $"Rect ({d.Rect.X},{d.Rect.Y}) {d.Rect.Width}x{d.Rect.Height} z={d.ZMin}..{d.ZMax} action={d.Action} pri:{d.Priority}", Color.White);
-            }
-            if (miningOrders.Count > 3)
-                surf.Print(6, y++, $"... and {miningOrders.Count - 3} more designations", Color.DarkGray);
-        }
-        y++;
-
-        // === JOB STATS ===
-        try
-        {
-            surf.Print(2, y++, "[STATS] Haul: Assigned:{0} Completed:{1} NoPath:{2} Requeued:{3}", Color.Yellow);
-            surf.Print(2, y - 1, $"[STATS] Haul: Assigned:{HumanFortress.App.Jobs.JobStats.Assigned} Completed:{HumanFortress.App.Jobs.JobStats.Completed} NoPath:{HumanFortress.App.Jobs.JobStats.NoPath} Requeued:{HumanFortress.App.Jobs.JobStats.Requeued}", Color.Yellow);
-        }
-        catch { /* if not available, skip */ }
-
-        if (haulOrders.Count == 0 && miningOrders.Count == 0 && haulJobs.Count == 0 && miningJobs.Count == 0)
-        {
-            surf.Print(2, startY + 4, "No work orders yet. Use Z menu to create orders.", Color.Gray);
-        }
+        // TODO (Work panel UX #4): hook keyboard navigation between columns when input refactor lands.
     }
 
-    private static void DrawWorkOverviewTab(ICellSurface surf, int startY)
+    private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
     {
-        surf.Print(2, startY, "== Work: Creature Job Assignment ==", Color.Yellow);
-        surf.Print(2, startY + 2, "Reserved for future creature work assignment system.", Color.Gray);
-        surf.Print(2, startY + 4, "This tab will allow you to:", Color.DarkGray);
-        surf.Print(4, startY + 5, "- Assign creatures to specific job types", Color.DarkGray);
-        surf.Print(4, startY + 6, "- Set work priorities per creature", Color.DarkGray);
-        surf.Print(4, startY + 7, "- Manage labor allocation", Color.DarkGray);
-        surf.Print(2, startY + 9, "Use Tab 1 to view all active orders.", Color.Cyan);
+        var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
+        DecorateWorkPanel(surf, layout);
+        RenderOrdersSummaryColumn(surf, layout.Left, world);
+        RenderJobsColumn(surf, layout.Center, world);
+        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats");
     }
 
-    // Draw quick menu (new compact popup-based UI)
+    private static void DrawJobAllocationTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight)
+    {
+        var gsm = GameStateManager.Instance;
+        var service = gsm.ProfessionAssignments;
+        if (service == null)
+        {
+            surf.Print(2, startY + 2, "Professions unavailable.", Color.Gray);
+            return;
+        }
+        var defs = service.Registry.Definitions;
+        if (defs.Count == 0)
+        {
+            surf.Print(2, startY + 2, "No professions defined in registry.", Color.Gray);
+            return;
+        }
+
+        var roster = gsm.GetProfessionRosterSnapshot();
+        int areaHeight = System.Math.Max(10, maxHeight);
+        var area = new SadRogue.Primitives.Rectangle(1, startY, surf.Width - 2, areaHeight);
+        FillArea(surf, area, new Color(15, 15, 15));
+        surf.Print(area.X + 1, area.Y, "Job Allocation (click value to cycle 1-9 / '-')", Color.Yellow);
+
+        if (roster.Count == 0)
+        {
+            surf.Print(area.X + 1, area.Y + 2, "No dwarves available.", Color.DarkGray);
+            return;
+        }
+
+        int nameWidth = System.Math.Max(12, area.Width / 6);
+        int tableWidth = System.Math.Max(8, area.Width - nameWidth - 3);
+        int colWidth = System.Math.Max(3, tableWidth / defs.Count);
+        int headerY = area.Y + 1;
+        int nameX = area.X + 1;
+        surf.Print(nameX, headerY, "Worker".PadRight(nameWidth - 1), Color.Gray);
+
+        for (int col = 0; col < defs.Count; col++)
+        {
+            int colX = nameX + nameWidth + col * colWidth;
+            string label = defs[col].Name.ToUpperInvariant();
+            if (label.Length > colWidth - 1)
+                label = label.Substring(0, System.Math.Max(1, colWidth - 1));
+            var color = col == ui.WorkAllocSelectedCol ? Color.LightCyan : Color.DarkGray;
+            surf.Print(colX, headerY, label, color);
+        }
+
+        int visibleRows = System.Math.Max(1, area.Height - 4);
+        ui.WorkAllocSelectedRow = System.Math.Clamp(ui.WorkAllocSelectedRow, 0, roster.Count - 1);
+        ui.WorkAllocSelectedCol = System.Math.Clamp(ui.WorkAllocSelectedCol, 0, defs.Count - 1);
+        int maxOffset = System.Math.Max(0, roster.Count - visibleRows);
+        ui.WorkAllocRowOffset = System.Math.Clamp(ui.WorkAllocRowOffset, 0, maxOffset);
+        if (ui.WorkAllocSelectedRow < ui.WorkAllocRowOffset)
+            ui.WorkAllocRowOffset = ui.WorkAllocSelectedRow;
+        if (ui.WorkAllocSelectedRow >= ui.WorkAllocRowOffset + visibleRows)
+            ui.WorkAllocRowOffset = ui.WorkAllocSelectedRow - visibleRows + 1;
+
+        for (int row = 0; row < visibleRows; row++)
+        {
+            int actual = ui.WorkAllocRowOffset + row;
+            if (actual >= roster.Count) break;
+            var entry = roster[actual];
+            var creature = world.Creatures.GetInstance(entry.WorkerId);
+            if (creature == null) continue;
+            var def = world.Creatures.GetDefinition(creature.DefinitionId);
+            string name = Truncate(def?.Name ?? creature.DefinitionId, nameWidth - 1);
+            int rowY = headerY + 1 + row;
+            surf.Print(nameX, rowY, name.PadRight(nameWidth - 1), Color.White);
+
+            for (int col = 0; col < defs.Count; col++)
+            {
+                int colX = nameX + nameWidth + col * colWidth;
+                string profId = defs[col].Id;
+                int weight = entry.Weights.TryGetValue(profId, out var val) ? val : 0;
+                string text = weight <= 0 ? "--" : weight.ToString();
+                bool selected = (actual == ui.WorkAllocSelectedRow && col == ui.WorkAllocSelectedCol);
+                var bg = selected ? new Color(60, 60, 0) : new Color(30, 30, 30);
+                for (int i = 0; i < colWidth - 1; i++)
+                    surf.SetGlyph(colX + i, rowY, ' ', Color.Black, bg);
+                surf.Print(colX, rowY, text, weight <= 0 ? Color.DarkGray : Color.White);
+            }
+        }
+
+        surf.Print(area.X + 1, area.Y + area.Height - 2, "Use arrows to move, click cell to cycle 1-9 / '-'", Color.DarkGray);
+    }
+
+    private static void DrawWorkshopOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
+    {
+        var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
+        DecorateWorkPanel(surf, layout);
+        RenderWorkshopListColumn(surf, layout.Left, world);
+        RenderWorkshopNotesColumn(surf, layout.Center, world);
+        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats");
+    }
+
+    private static void DrawWorkshopsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
+    {
+        var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
+        DecorateWorkPanel(surf, layout);
+        RenderStandingOrdersColumn(surf, layout.Left);
+        RenderWorkshopDirectory(surf, layout.Center, world);
+        RenderConstructionStatusColumn(surf, layout.Right, world);
+    }
+
     public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
@@ -392,37 +431,464 @@ namespace HumanFortress.App.UI;
         // Highlights are drawn by FortressState after map render to ensure visibility across UI states.
     }
 
-    private static void DrawWorkshopsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY)
+    private readonly struct WorkPanelLayout
     {
-        surf.Print(2, startY, "== Work: Workshops ==", Color.Yellow);
-        int y = startY + 2;
+        public WorkPanelLayout(Rectangle left, Rectangle center, Rectangle right)
+        {
+            Left = left;
+            Center = center;
+            Right = right;
+        }
 
-        int count = 0;
+        public Rectangle Left { get; }
+        public Rectangle Center { get; }
+        public Rectangle Right { get; }
+    }
+
+    private readonly record struct WorkCategoryCard(string Name, string Detail, int Active, int Backlog, Color Accent);
+    private readonly record struct ActiveJobRow(string Kind, string Worker, string Stage, string Target, Color Color);
+
+    private static WorkPanelLayout BuildWorkPanelLayout(ICellSurface surf, int startY, int maxHeight)
+    {
+        int panelHeight = System.Math.Max(12, maxHeight);
+        int leftWidth = System.Math.Max(18, surf.Width / 5);
+        int rightWidth = System.Math.Max(22, surf.Width / 4);
+        int centerWidth = surf.Width - leftWidth - rightWidth - 4;
+        if (centerWidth < 24)
+        {
+            int deficit = 24 - centerWidth;
+            centerWidth = 24;
+            rightWidth = System.Math.Max(18, rightWidth - deficit);
+        }
+
+        var left = new Rectangle(1, startY, leftWidth, panelHeight);
+        var center = new Rectangle(left.X + left.Width + 1, startY, centerWidth, panelHeight);
+        int rightX = center.X + center.Width + 1;
+        var right = new Rectangle(rightX, startY, System.Math.Max(18, surf.Width - rightX - 1), panelHeight);
+        return new WorkPanelLayout(left, center, right);
+    }
+
+    private static void DecorateWorkPanel(ICellSurface surf, WorkPanelLayout layout)
+    {
+        FillArea(surf, layout.Left, new Color(32, 32, 32));
+        FillArea(surf, layout.Center, new Color(18, 18, 18));
+        FillArea(surf, layout.Right, new Color(32, 32, 32));
+    }
+
+    private static void FillArea(ICellSurface surf, Rectangle rect, Color bg)
+    {
+        int maxY = System.Math.Min(rect.Y + rect.Height, surf.Height);
+        int maxX = System.Math.Min(rect.X + rect.Width, surf.Width);
+        for (int y = rect.Y; y < maxY; y++)
+        {
+            for (int x = rect.X; x < maxX; x++)
+            {
+                surf.SetGlyph(x, y, ' ', Color.Black, bg);
+            }
+        }
+    }
+
+    private static void RenderLaborSummaryColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
+        var haulStats = gsm.TransportJobs?.GetLastStatsSnapshot();
+        var miningStats = gsm.MiningJobs?.GetLastStatsSnapshot();
+        var craftStats = gsm.CraftJobs?.GetLastStatsSnapshot();
+        int haulBacklog = haulStats?.Backlog ?? (gsm.TransportJobs?.GetBacklogCount() ?? 0);
+        int miningBacklog = miningStats?.Backlog ?? (gsm.MiningJobs?.GetBacklogCount() ?? 0);
+        int craftBacklog = craftStats?.Backlog ?? 0;
+        int constructionSites = world.Orders.GetActiveConstructionSnapshot().Count;
+        int totalDwarves = world.Creatures.GetAllInstances().Count(c => c.HP > 0);
+        int busyWorkers = (haulStats?.Active ?? 0) + (miningStats?.Active ?? 0) + (craftStats?.Active ?? 0);
+        int idleDwarves = System.Math.Max(0, totalDwarves - busyWorkers);
+
+        var cards = new System.Collections.Generic.List<WorkCategoryCard>
+        {
+            new("Hauling", $"Backlog {haulBacklog}", haulStats?.Active ?? 0, haulBacklog, new Color(120, 180, 255)),
+            new("Mining", $"Backlog {miningBacklog}", miningStats?.Active ?? 0, miningBacklog, new Color(200, 220, 120)),
+            new("Construction", $"Sites {constructionSites}", gsm.ConstructionJobs?.LastIntakeCount ?? 0, constructionSites, new Color(255, 200, 120)),
+            new("Farming", "Crop planner coming soon", 0, 0, new Color(160, 210, 120)),
+            new("Crafting", $"Backlog {craftBacklog}", craftStats?.Active ?? 0, craftBacklog, new Color(200, 160, 255)),
+            new("Service", $"Idle dwarves {idleDwarves}", idleDwarves, 0, new Color(150, 200, 200))
+        };
+
+        int rowY = area.Y + 1;
+        surf.Print(area.X + 1, rowY++, "[Labor Overview]", Color.Yellow);
+        rowY++;
+        foreach (var card in cards)
+        {
+            if (rowY + 1 >= area.Y + area.Height) break;
+            Color bg = new Color(card.Accent.R / 8, card.Accent.G / 8, card.Accent.B / 8);
+            for (int y = 0; y < 2; y++)
+            {
+                for (int x = area.X + 1; x < area.X + area.Width - 1; x++)
+                {
+                    surf.SetGlyph(x, rowY + y, ' ', Color.Black, bg);
+                }
+            }
+            surf.Print(area.X + 2, rowY, card.Name, Color.White);
+            surf.Print(area.X + 2, rowY + 1, card.Detail, Color.Gray);
+            surf.Print(area.X + area.Width - 13, rowY, $"Act:{card.Active,3}", card.Accent);
+            surf.Print(area.X + area.Width - 13, rowY + 1, $"Back:{card.Backlog,3}", Color.LightGray);
+            rowY += 3;
+        }
+
+        surf.Print(area.X + 1, area.Y + area.Height - 2, $"Total dwarves: {totalDwarves}", Color.Cyan);
+    }
+
+    private static void RenderDwarfRosterColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, UiStore ui)
+    {
+        var gsm = GameStateManager.Instance;
+        var roster = gsm.GetProfessionRosterSnapshot();
+        var service = gsm.ProfessionAssignments;
+        var nameLookup = service?.Registry.Definitions.ToDictionary(d => d.Id, d => d.Name, StringComparer.OrdinalIgnoreCase)
+            ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        surf.Print(area.X + 1, area.Y, "Dwarves On Duty", Color.Yellow);
+        surf.Print(area.X + 1, area.Y + 1, "Name         Status", Color.Gray);
+
+        if (roster.Count == 0)
+        {
+            surf.Print(area.X + 1, area.Y + 3, "No dwarves available.", Color.DarkGray);
+            return;
+        }
+
+        int rowY = area.Y + 2;
+        int maxRows = area.Height - 3;
+        for (int i = 0; i < roster.Count && rowY < area.Y + area.Height - 2; i++)
+        {
+            var entry = roster[i];
+            var creature = world.Creatures.GetInstance(entry.WorkerId);
+            if (creature == null) continue;
+            var def = world.Creatures.GetDefinition(creature.DefinitionId);
+            string name = def?.Name ?? creature.DefinitionId;
+            string status = creature.HP > 0 ? "OK" : "Injured";
+            Color statusColor = creature.HP > 0 ? Color.Green : Color.Red;
+            if (i == ui.WorkPanelSelectedIndex)
+            {
+                for (int x = area.X + 1; x < area.X + area.Width - 1; x++)
+                    surf.SetGlyph(x, rowY, ' ', Color.Black, new Color(40, 40, 10));
+            }
+            surf.Print(area.X + 1, rowY, $"{Truncate(name, 18),-18}", Color.White);
+            surf.Print(area.X + area.Width - 8, rowY, status, statusColor);
+            rowY++;
+        }
+    }
+
+    private static void RenderSchedulerColumn(ICellSurface surf, Rectangle area, ulong tick, string caption)
+    {
+        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
+        var sched = gsm.JobsOrchestrator?.GetLastStats();
+        var haulStats = gsm.TransportJobs?.GetLastStatsSnapshot();
+        var miningStats = gsm.MiningJobs?.GetLastStatsSnapshot();
+        var craftStats = gsm.CraftJobs?.GetLastStatsSnapshot();
+
+        int line = area.Y;
+        surf.Print(area.X + 1, line++, caption, Color.Yellow);
+        if (sched.HasValue)
+        {
+            var s = sched.Value;
+            surf.Print(area.X + 1, line++, $"Plan: {s.PlanMsTotal} ms  Apply: {s.ApplyMsTotal} ms", Color.Cyan);
+            surf.Print(area.X + 1, line++, $"Intake H:{s.IntakeHaul} M:{s.IntakeMining} C:{s.IntakeConstruction} Cr:{s.IntakeCraft}", Color.Gray);
+            line++;
+        }
+
+        if (haulStats.HasValue)
+        {
+            var hs = haulStats.Value;
+            surf.Print(area.X + 1, line++, $"[Haul] Active:{hs.Active} Backlog:{hs.Backlog}", Color.White);
+            surf.Print(area.X + 1, line++, $"Carry:{hs.CarryoverOld} +Done:{hs.CompletedDelta} +Retry:{hs.RequeuedDelta}", Color.DarkGray);
+        }
+
+        if (miningStats.HasValue)
+        {
+            var ms = miningStats.Value;
+            surf.Print(area.X + 1, line++, $"[Mine] Active:{ms.Active} Backlog:{ms.Backlog} Deferred:{ms.Deferred}", Color.White);
+            surf.Print(area.X + 1, line++, $"Carry:{ms.CarryoverOld} Reserved:{ms.ReservedTiles}", Color.DarkGray);
+        }
+
+        if (craftStats.HasValue)
+        {
+            var cs = craftStats.Value;
+            surf.Print(area.X + 1, line++, $"[Craft] Active:{cs.Active} Backlog:{cs.Backlog}", Color.White);
+            surf.Print(area.X + 1, line++, $"Intake:{cs.Intake} +Done:{cs.CompletedDelta}", Color.DarkGray);
+        }
+
+        if (craftStats.HasValue)
+        {
+            var cs = craftStats.Value;
+            surf.Print(area.X + 1, line++, $"[Craft] Active:{cs.Active} Backlog:{cs.Backlog}", Color.White);
+            surf.Print(area.X + 1, line++, $"Intake:{cs.Intake} +Done:{cs.CompletedDelta}", Color.DarkGray);
+        }
+
+        var debug = gsm.GetJobsDebugData(tick);
+        if (debug.HasValue && debug.Value.Transport.HasValue)
+        {
+            var tdbg = debug.Value.Transport.Value;
+            line++;
+            surf.Print(area.X + 1, line++, "Queue peek:", Color.LightCyan);
+            foreach (var req in tdbg.PendingPeek.Take(2))
+            {
+                string reason = req.Reason.ToString();
+                if (string.IsNullOrWhiteSpace(reason)) reason = "Request";
+                surf.Print(area.X + 2, line++, $"{reason} -> ({req.To.X},{req.To.Y},{req.ToZ})", Color.Gray);
+            }
+
+            if (tdbg.ShardCounts.Count > 0)
+            {
+                var shardLine = string.Join(" ", tdbg.ShardCounts.Take(3).Select(kv => $"{kv.Key}:{kv.Value}"));
+                surf.Print(area.X + 1, line++, $"Shards: {shardLine}", Color.DarkGray);
+            }
+        }
+    }
+
+    private static void RenderWorkshopListColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var workshops = CollectWorkshops(world);
+        surf.Print(area.X + 1, area.Y, "Workshops", Color.Yellow);
+        if (workshops.Count == 0)
+        {
+            surf.Print(area.X + 1, area.Y + 2, "No workshops constructed yet.", Color.DarkGray);
+            surf.Print(area.X + 1, area.Y + 4, "Build a Stoneworks to cut", Color.Gray);
+            surf.Print(area.X + 1, area.Y + 5, "boulders into blocks.", Color.Gray);
+            return;
+        }
+
+        int line = area.Y + 2;
+        int maxLine = area.Y + area.Height - 2;
+        foreach (var ws in workshops.OrderBy(w => w.Instance.Z).ThenBy(w => w.Instance.Position.Y).ThenBy(w => w.Instance.Position.X))
+        {
+            if (line >= maxLine) break;
+            var state = ws.Instance.Workshop;
+            string status = ws.IsSite ? "Site" : $"Workers {state?.ActiveJobs ?? 0}/{state?.AllowedWorkers ?? 0}";
+            if (!ws.IsSite && state != null)
+            {
+                status += $"  Queue {state.Queue.Count}";
+            }
+            bool blocked = state != null && state.Queue.Any(e => e.Status == CraftQueueStatus.AwaitingMaterials);
+            Color fg = ws.IsSite ? Color.DarkGray : (blocked ? Color.Orange : Color.White);
+            surf.Print(area.X + 1, line++, $"{ws.Name}", fg);
+            if (line >= maxLine) break;
+            surf.Print(area.X + 3, line++, $"Pos ({ws.Instance.Position.X},{ws.Instance.Position.Y},{ws.Instance.Z}) [{status}]", Color.Gray);
+        }
+
+        if (workshops.Count > (maxLine - (area.Y + 2)) / 2)
+        {
+            surf.Print(area.X + 1, maxLine, $"... {workshops.Count - (maxLine - (area.Y + 2)) / 2} more", Color.DarkGray);
+        }
+    }
+
+    private static void RenderWorkshopNotesColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var workshops = CollectWorkshops(world);
+        surf.Print(area.X + 1, area.Y, "Active Queues", Color.Yellow);
+        int line = area.Y + 2;
+        if (workshops.Count == 0)
+        {
+            surf.Print(area.X + 1, line, "No workshops online.", Color.DarkGray);
+            return;
+        }
+
+        foreach (var ws in workshops.OrderBy(w => w.Instance.Z))
+        {
+            if (line >= area.Y + area.Height - 2) break;
+            var state = ws.Instance.Workshop;
+            surf.Print(area.X + 1, line++, ws.Name, state?.Queue.Any(e => e.Status == CraftQueueStatus.AwaitingMaterials) == true ? Color.Orange : Color.White);
+            if (state == null || state.Queue.Count == 0)
+            {
+                if (line >= area.Y + area.Height - 2) break;
+                surf.Print(area.X + 2, line++, "No queued recipes.", Color.DarkGray);
+                continue;
+            }
+            foreach (var entry in state.Queue)
+            {
+                if (line >= area.Y + area.Height - 2) break;
+                string prefix = entry.Status switch
+                {
+                    CraftQueueStatus.InProgress => ">",
+                    CraftQueueStatus.AwaitingMaterials => "!",
+                    CraftQueueStatus.Scheduled => "*",
+                    _ => "-"
+                };
+                string status = entry.Status switch
+                {
+                    CraftQueueStatus.InProgress => entry.ActiveWorkerId.HasValue ? $"Working ({entry.ActiveWorkerId.Value.ToString("N")[..6]})" : "Working",
+                    CraftQueueStatus.AwaitingMaterials => entry.BlockingReason ?? "Waiting for inputs",
+                    CraftQueueStatus.Scheduled => "Assigned",
+                    _ => "Ready"
+                };
+                surf.Print(area.X + 2, line++, $"{prefix} {entry.DisplayName} - {status}", entry.Status == CraftQueueStatus.AwaitingMaterials ? Color.Orange : Color.Gray);
+            }
+        }
+    }
+
+    private static void RenderOrdersSummaryColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var haulOrders = world.Orders.GetActiveHaulsSnapshot();
+        var miningOrders = world.Orders.GetActiveMiningSnapshot();
+        var constructionOrders = world.Orders.GetActiveConstructionSnapshot();
+
+        surf.Print(area.X + 1, area.Y, "Order Summary", Color.Yellow);
+        int line = area.Y + 2;
+        surf.Print(area.X + 1, line++, $"Haul designations: {haulOrders.Count}", Color.Cyan);
+        surf.Print(area.X + 1, line++, $"Mining designations: {miningOrders.Count}", Color.Cyan);
+        surf.Print(area.X + 1, line++, $"Construction sites: {constructionOrders.Count}", Color.Cyan);
+        line++;
+        surf.Print(area.X + 1, line++, "Hints:", Color.Yellow);
+        surf.Print(area.X + 2, line++, "- Use Z menu to add jobs", Color.Gray);
+        surf.Print(area.X + 2, line++, "- Shift-click cancels orders", Color.Gray);
+    }
+
+    private static void RenderJobsColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var rows = BuildActiveJobRows();
+        surf.Print(area.X + 1, area.Y, "Active Jobs", Color.Yellow);
+        surf.Print(area.X + 1, area.Y + 1, "Type  Worker   Stage          Target", Color.Gray);
+        int line = area.Y + 2;
+        int maxRows = area.Height - 6;
+        foreach (var row in rows.Take(maxRows))
+        {
+            surf.Print(area.X + 1, line++, $"{row.Kind,-5}{row.Worker,-9}{Truncate(row.Stage, 14),-14}{row.Target}", row.Color);
+        }
+
+        if (rows.Count == 0)
+        {
+            surf.Print(area.X + 1, line++, "No active jobs. Use Orders menu to queue work.", Color.DarkGray);
+        }
+
+        line += 1;
+        surf.Print(area.X + 1, line++, "Recent designations:", Color.Yellow);
+        var recentHaul = world.Orders.GetRecentHauls().Take(2).ToList();
+        foreach (var d in recentHaul)
+        {
+            surf.Print(area.X + 2, line++, $"[Haul] Rect ({d.WorldRect.X},{d.WorldRect.Y}) {d.WorldRect.Width}x{d.WorldRect.Height} z={d.Z}", Color.Cyan);
+        }
+        var recentMining = world.Orders.GetRecentMining().Take(2).ToList();
+        foreach (var d in recentMining)
+        {
+            surf.Print(area.X + 2, line++, $"[Mine] Rect ({d.Rect.X},{d.Rect.Y}) {d.Rect.Width}x{d.Rect.Height} z={d.ZMin}->{d.ZMax}", Color.LightGreen);
+        }
+        if (recentHaul.Count == 0 && recentMining.Count == 0)
+        {
+            surf.Print(area.X + 2, line++, "(No recent orders)", Color.DarkGray);
+        }
+    }
+
+    private static System.Collections.Generic.List<ActiveJobRow> BuildActiveJobRows()
+    {
+        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
+        var rows = new System.Collections.Generic.List<ActiveJobRow>();
+        var haulJobs = gsm.TransportJobs?.GetActiveJobsSnapshot();
+        if (haulJobs != null)
+        {
+            foreach (var job in haulJobs)
+            {
+                var worker = job.CreatureId.ToString("N").Substring(0, 6);
+                rows.Add(new ActiveJobRow("Haul", worker, job.Stage, $"{job.Dest.X},{job.Dest.Y},{job.Dest.Z}", Color.Cyan));
+            }
+        }
+        var miningJobs = gsm.MiningJobs?.GetActiveJobsSnapshot();
+        if (miningJobs != null)
+        {
+            foreach (var job in miningJobs)
+            {
+                var worker = job.WorkerId.ToString("N").Substring(0, 6);
+                rows.Add(new ActiveJobRow("Mine", worker, job.Stage, $"{job.Target.X},{job.Target.Y},{job.Z}", Color.LightGreen));
+            }
+        }
+        var craftJobs = gsm.CraftJobs?.GetActiveJobsSnapshot();
+        if (craftJobs != null)
+        {
+            foreach (var job in craftJobs)
+            {
+                var worker = job.WorkerId.ToString("N").Substring(0, 6);
+                rows.Add(new ActiveJobRow("Craft", worker, job.Stage, $"{job.RecipeId}", new Color(200, 160, 255)));
+            }
+        }
+        return rows;
+    }
+
+    private static void RenderStandingOrdersColumn(ICellSurface surf, Rectangle area)
+    {
+        surf.Print(area.X + 1, area.Y, "Standing Orders", Color.Yellow);
+        int line = area.Y + 2;
+        var toggles = new (string Label, string Value)[]
+        {
+            ("Auto-haul refuse", "Enabled (placeholder)"),
+            ("Auto-weave cloth", "Enabled (placeholder)"),
+            ("Kitchen cooking", "Allow seeds (TODO)"),
+            ("Stone use", "All stone (TODO)")
+        };
+        foreach (var toggle in toggles)
+        {
+            if (line >= area.Y + area.Height - 1) break;
+            surf.Print(area.X + 1, line++, toggle.Label, Color.White);
+            surf.Print(area.X + 3, line++, toggle.Value, Color.Gray);
+        }
+        surf.Print(area.X + 1, area.Y + area.Height - 2, "TODO: Wire to standing-order data", Color.DarkGray);
+    }
+
+    private static void RenderWorkshopDirectory(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var workshops = CollectWorkshops(world);
+        surf.Print(area.X + 1, area.Y, $"Workshops ({workshops.Count})", Color.Yellow);
+        int line = area.Y + 2;
+        foreach (var ws in workshops.Take(area.Height - 2))
+        {
+            string label = $"{ws.Name,-18} ({ws.Instance.Position.X,3},{ws.Instance.Position.Y,3},{ws.Instance.Z,2})";
+            Color color = ws.IsSite ? Color.Orange : Color.White;
+            surf.Print(area.X + 1, line++, label, color);
+        }
+        if (workshops.Count == 0)
+        {
+            surf.Print(area.X + 1, line, "No workshops placed yet.", Color.DarkGray);
+        }
+    }
+
+    private static void RenderConstructionStatusColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    {
+        var workshops = CollectWorkshops(world);
+        int built = workshops.Count(w => !w.IsSite);
+        int sites = workshops.Count(w => w.IsSite);
+        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
+
+        surf.Print(area.X + 1, area.Y, "Construction Status", Color.Yellow);
+        int line = area.Y + 2;
+        surf.Print(area.X + 1, line++, $"Built workshops: {built}", Color.LightGreen);
+        surf.Print(area.X + 1, line++, $"Sites in progress: {sites}", Color.Orange);
+        surf.Print(area.X + 1, line++, $"Queued designations: {world.Orders.GetActiveBuildableSnapshot().Count}", Color.Cyan);
+        surf.Print(area.X + 1, line++, $"Last tick processed: {gsm.ConstructionJobs?.LastProcessedSites ?? 0}", Color.Gray);
+        surf.Print(area.X + 1, line++, $"Intake limit: {gsm.SchedulerTunings?.Construction.PlanPerTick ?? 0}", Color.DarkGray);
+    }
+
+    private sealed record WorkshopDisplay(string Name, HumanFortress.Simulation.Placeables.PlaceableInstance Instance, HumanFortress.Core.Content.Registry.ConstructionDefinition? Definition, bool IsSite);
+
+    private static System.Collections.Generic.List<WorkshopDisplay> CollectWorkshops(HumanFortress.Simulation.World.World world)
+    {
+        var list = new System.Collections.Generic.List<WorkshopDisplay>();
+        var registry = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
         foreach (var chunk in world.GetAllChunks())
         {
             var pd = chunk.GetPlaceableData();
             if (pd == null) continue;
             foreach (var p in pd.GetAllOwnedPlaceables())
             {
-                var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
-                var def = reg.GetConstruction(p.DefinitionId);
+                string defId = p.ConstructionSite?.TargetId ?? p.DefinitionId;
+                var def = registry.GetConstruction(defId);
                 if (def == null) continue;
-                if (!string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase) &&
-                    (def.PlaceableProfile.Tags == null || Array.IndexOf(def.PlaceableProfile.Tags, "workshop") < 0))
-                    continue;
-
-                var fp = p.Footprint;
-                surf.Print(2, y++, $"- {def.Name} at ({p.Position.X},{p.Position.Y},{p.Z}) fp={fp.W}x{fp.D} pass={def.PlaceableProfile.Passability}", Color.White);
-                count++;
-                if (y > startY + 24) break;
+                bool isWorkshop = string.Equals(def.Category, "workshop", System.StringComparison.OrdinalIgnoreCase)
+                                  || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
+                if (!isWorkshop) continue;
+                list.Add(new WorkshopDisplay(def.Name, p, def, p.ConstructionSite != null));
             }
-            if (y > startY + 24) break;
         }
+        return list;
+    }
 
-        if (count == 0)
-        {
-            surf.Print(2, y, "No workshops placed.", Color.Gray);
-        }
+    private static string Truncate(string value, int max)
+    {
+        if (string.IsNullOrEmpty(value) || value.Length <= max) return value;
+        return value.Substring(0, System.Math.Max(0, max - 1)) + "...";
     }
 
     public static void DrawWorkshopsOverlay(MapScreenSurface mapSurface, HumanFortress.Simulation.World.World world, int currentZ, SadRogue.Primitives.Rectangle viewport)
@@ -667,23 +1133,31 @@ namespace HumanFortress.App.UI;
         var def = reg.GetConstruction(found.DefinitionId);
         string title = def?.Name ?? found.DefinitionId;
         var fp = found.Footprint;
+        var state = found.Workshop ?? new HumanFortress.Simulation.Placeables.WorkshopState();
 
         // Panel geometry (centered)
         var surf = surface.Surface;
-        int w = 44, h = 12;
+        int w = 56, h = 16;
         int x0 = (surf.Width - w) / 2;
         int y0 = (surf.Height - h) / 2;
         var bg = Color.Black.SetAlpha(220);
         var fg = Color.White;
         var hi = Color.Cyan;
-        // Fill and border
+        for (int y = y0; y < y0 + h; y++)
+        for (int x = x0; x < x0 + w; x++)
+            surf.SetGlyph(x, y, ' ', fg, bg);
+        for (int x = x0; x < x0 + w; x++)
+        {
+            surf.SetGlyph(x, y0, '-');
+            surf.SetGlyph(x, y0 + h - 1, '-');
+        }
         for (int y = y0; y < y0 + h; y++)
         {
-            for (int x = x0; x < x0 + w; x++) surf.SetGlyph(x, y, ' ', fg, bg);
+            surf.SetGlyph(x0, y, '|');
+            surf.SetGlyph(x0 + w - 1, y, '|');
         }
-        for (int x = x0; x < x0 + w; x++) { surf.SetGlyph(x, y0, '-'); surf.SetGlyph(x, y0 + h - 1, '-'); }
-        for (int y = y0; y < y0 + h; y++) { surf.SetGlyph(x0, y, '|'); surf.SetGlyph(x0 + w - 1, y, '|'); }
-        surf.SetGlyph(x0, y0, '+'); surf.SetGlyph(x0 + w - 1, y0, '+'); surf.SetGlyph(x0, y0 + h - 1, '+'); surf.SetGlyph(x0 + w - 1, y0 + h - 1, '+');
+        surf.SetGlyph(x0, y0, '+'); surf.SetGlyph(x0 + w - 1, y0, '+');
+        surf.SetGlyph(x0, y0 + h - 1, '+'); surf.SetGlyph(x0 + w - 1, y0 + h - 1, '+');
 
         // Header and basics
         surf.Print(x0 + 2, y0, $" {title} ", hi);
@@ -693,26 +1167,57 @@ namespace HumanFortress.App.UI;
         var tags = def?.PlaceableProfile.Tags ?? Array.Empty<string>();
         surf.Print(x0 + 2, y0 + 5, $"Tags: [{string.Join(',', tags)}]", Color.Gray);
 
-        // Workers (placeholder, max from tuning)
-        var tuning = HumanFortress.Core.Content.Registry.PlaceableTuning.LoadFromContent();
-        int maxWorkers = tuning.WorkersPerWorkshopMax;
-        surf.Print(x0 + 2, y0 + 7, $"Workers: 0/{maxWorkers}  [+]/[-]", Color.White);
-        surf.Print(x0 + 2, y0 + 8, "(Workers per workshop from tuning)", Color.DarkGray);
+        // Workers and automation
+        surf.Print(x0 + 2, y0 + 7, $"Workers {state.ActiveJobs}/{state.AllowedWorkers} (Max {state.MaxWorkers})  [+]/[-]", Color.White);
+        surf.Print(x0 + 2, y0 + 8, $"Supply: {(state.AutoRequestMaterials ? "Auto" : "Manual")} (S)   Stockpile: {(state.AutoStockpileOutputs ? "Auto" : "Manual")} (O)", Color.Gray);
+        int attachCount = def?.AttachmentSlots?.Length ?? 0;
+        surf.Print(x0 + 2, y0 + 9, $"Attachment slots: {attachCount}", Color.DarkGray);
 
-        // Recipe queue (placeholder)
-        surf.Print(x0 + 24, y0 + 2, "Queue (WIP)", Color.Yellow);
-        surf.Print(x0 + 24, y0 + 3, "[A] Add  [P] Pause  [C] Clear", Color.Gray);
-        surf.Print(x0 + 24, y0 + 5, "- (placeholder entry)", Color.White);
-
-        // IO slots (placeholder)
-        surf.Print(x0 + 2, y0 + 10, "Input Slots:", Color.Gray);
-        for (int i = 0; i < 4; i++) surf.Print(x0 + 15 + i*3, y0 + 10, "[ ]", Color.DarkGray);
-        surf.Print(x0 + 2, y0 + 11, "Output Slots:", Color.Gray);
-        for (int i = 0; i < 4; i++) surf.Print(x0 + 15 + i*3, y0 + 11, "[ ]", Color.DarkGray);
+        // Recipe queue
+        surf.Print(x0 + 2, y0 + 11, "Queue [A:Add, Delete=Remove, PgUp/PgDn=Move]", Color.Yellow);
+        int queueStart = y0 + 12;
+        int maxRows = h - 4;
+        int selected = Math.Clamp(ui.WorkshopQueueSelectedIndex, 0, Math.Max(0, state.Queue.Count - 1));
+        if (state.Queue.Count == 0)
+        {
+            surf.Print(x0 + 2, queueStart, "Queue empty. Press A to add the default recipe.", Color.DarkGray);
+        }
+        else
+        {
+            int row = 0;
+            foreach (var entry in state.Queue)
+            {
+                if (row >= maxRows) break;
+                int y = queueStart + row;
+                bool isSelected = row == selected;
+                if (isSelected)
+                {
+                    for (int cx = x0 + 1; cx < x0 + w - 1; cx++)
+                        surf.SetGlyph(cx, y, ' ', Color.White, new Color(30, 30, 10));
+                }
+                string status = entry.Status switch
+                {
+                    CraftQueueStatus.InProgress => entry.ActiveWorkerId.HasValue ? $"Working [{entry.ActiveWorkerId.Value.ToString("N")[..6]}]" : "Working",
+                    CraftQueueStatus.AwaitingMaterials => entry.BlockingReason ?? "Awaiting inputs",
+                    CraftQueueStatus.Scheduled => "Scheduled",
+                    _ => "Ready"
+                };
+                char prefix = entry.Status switch
+                {
+                    CraftQueueStatus.InProgress => '>',
+                    CraftQueueStatus.AwaitingMaterials => '!',
+                    CraftQueueStatus.Scheduled => '*',
+                    _ => '-'
+                };
+                var color = entry.Status == CraftQueueStatus.AwaitingMaterials ? Color.Orange : Color.White;
+                surf.Print(x0 + 2, y, $"{prefix} {entry.DisplayName} - {status}", color);
+                row++;
+            }
+        }
 
         // Footer
-        surf.Print(x0 + 2, y0 + h - 3, "ESC/Right-click: close", Color.DarkGray);
-        surf.Print(x0 + w - 14, y0 + h - 2, $"#{found.Guid.ToString()[..8]}", Color.DarkGray);
+        surf.Print(x0 + 2, y0 + h - 2, "ESC/Right-click: close", Color.DarkGray);
+        surf.Print(x0 + w - 18, y0 + h - 2, $"#{found.Guid.ToString()[..8]}", Color.DarkGray);
     }
 
     // Simple workshop footprint preview: draws a gold rectangle at the anchor with given footprint

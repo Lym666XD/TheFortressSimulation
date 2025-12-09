@@ -3,6 +3,9 @@ using System.Linq;
 using SadConsole;
 using SadConsole.Input;
 using SadRogue.Primitives;
+using HumanFortress.App.Commands;
+using HumanFortress.App.Commands;
+using HumanFortress.Simulation.Placeables;
 using HumanFortress.Core.World;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Rendering;
@@ -911,6 +914,29 @@ namespace HumanFortress.App.States
                         return (p, chunk);
                     }
                 }
+        }
+            return null;
+        }
+
+        private (HumanFortress.Simulation.Placeables.PlaceableInstance placeable, HumanFortress.Core.Content.Registry.ConstructionDefinition? def)? FindWorkshopByGuid(Guid guid)
+        {
+            var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+            foreach (var chunk in _world!.GetAllChunks())
+            {
+                var pd = chunk.GetPlaceableData();
+                if (pd == null) continue;
+                foreach (var p in pd.GetAllOwnedPlaceables())
+                {
+                    if (p.Guid != guid) continue;
+                    var def = reg.GetConstruction(p.DefinitionId);
+                    if (p.Workshop == null)
+                    {
+                        p.Workshop = new WorkshopState();
+                        int max = Math.Max(1, def?.Io?.InputSlots ?? 1);
+                        p.Workshop.ConfigureWorkers(1, max);
+                    }
+                    return (p, def);
+                }
             }
             return null;
         }
@@ -1014,6 +1040,104 @@ namespace HumanFortress.App.States
             var list = GetWorkshopsByCategory(category);
             if (index < 0 || index >= list.Count) return null;
             return list[index].Id;
+        }
+
+        private void HandleWorkshopPanelInput(Keyboard keyboard, ref bool changed)
+        {
+            if (_ui.OpenWorkshopGuid == null || _world == null) return;
+            var lookup = FindWorkshopByGuid(_ui.OpenWorkshopGuid.Value);
+            if (lookup == null) return;
+            var state = lookup.Value.placeable.Workshop;
+            if (state == null) return;
+
+            int queueCount = state.Queue.Count;
+
+            if (keyboard.IsKeyPressed(Keys.Up))
+            {
+                _ui.WorkshopQueueSelectedIndex = Math.Max(0, _ui.WorkshopQueueSelectedIndex - 1);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.Down))
+            {
+                _ui.WorkshopQueueSelectedIndex = Math.Min(Math.Max(0, queueCount - 1), _ui.WorkshopQueueSelectedIndex + 1);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.A))
+            {
+                var recipeId = GetDefaultRecipeForWorkshop(lookup.Value.def?.Id);
+                if (recipeId != null)
+                {
+                    var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.AddRecipe, recipeId);
+                    GameStateManager.Instance.EnqueueCommand(cmd);
+                    _ui.AddToast("Recipe queued", _uiTick + 100);
+                    changed = true;
+                }
+                return;
+            }
+            if ((keyboard.IsKeyPressed(Keys.Delete) || keyboard.IsKeyPressed(Keys.Back)) && queueCount > 0)
+            {
+                var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.RemoveEntry, entryId: entry.EntryId);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                _ui.WorkshopQueueSelectedIndex = Math.Max(0, _ui.WorkshopQueueSelectedIndex - 1);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.PageUp) && queueCount > 0)
+            {
+                var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: -1);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                _ui.WorkshopQueueSelectedIndex = Math.Max(0, _ui.WorkshopQueueSelectedIndex - 1);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.PageDown) && queueCount > 0)
+            {
+                var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: 1);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                _ui.WorkshopQueueSelectedIndex = Math.Min(queueCount - 1, _ui.WorkshopQueueSelectedIndex + 1);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add))
+            {
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: state.AllowedWorkers + 1);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract))
+            {
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: Math.Max(1, state.AllowedWorkers - 1));
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.S))
+            {
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoSupply);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                changed = true;
+                return;
+            }
+            if (keyboard.IsKeyPressed(Keys.O))
+            {
+                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoStockpile);
+                GameStateManager.Instance.EnqueueCommand(cmd);
+                changed = true;
+            }
+        }
+
+        private string? GetDefaultRecipeForWorkshop(string? workshopId)
+        {
+            if (string.IsNullOrWhiteSpace(workshopId)) return null;
+            var recipes = HumanFortress.Core.Content.Registry.RecipeRegistry.Instance.GetRecipesForWorkshop(workshopId);
+            if (recipes.Count == 0) return null;
+            return recipes[0].Id;
         }
 
         private string GetTerrainDescription(string geologyId)
@@ -1404,11 +1528,7 @@ namespace HumanFortress.App.States
             // If Workshop panel is open, handle simple shortcut keys (placeholders)
             if (_ui.WorkshopPanelOpen)
             {
-                if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add)) { _ui.AddToast("Assign worker: WIP", _uiTick + 100); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract)) { _ui.AddToast("Unassign worker: WIP", _uiTick + 100); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.A)) { _ui.AddToast("Add recipe: WIP", _uiTick + 120); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.P)) { _ui.AddToast("Pause queue: WIP", _uiTick + 120); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.AddToast("Clear queue: WIP", _uiTick + 120); changed = true; }
+                HandleWorkshopPanelInput(keyboard, ref changed);
             }
 
             // Global modal: construction material dialog handling (swallows other inputs)
@@ -1590,15 +1710,15 @@ namespace HumanFortress.App.States
                 changed = true;
             }
 
-            // UI: dock panels F1..F8
-            if (keyboard.IsKeyPressed(Keys.F1)) { _ui.OpenPanel(DrawerId.Creature); Logger.Log($"[KEY] F1 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F2)) { _ui.OpenPanel(DrawerId.Stock); Logger.Log($"[KEY] F2 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F3)) { _ui.OpenPanel(DrawerId.Work); Logger.Log($"[KEY] F3 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F4)) { _ui.OpenPanel(DrawerId.PlacementManagement); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F5)) { _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F6)) { _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F7)) { _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
-            else if (keyboard.IsKeyPressed(Keys.F8)) { _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F8 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            // UI: dock panels F1..F8 - close tile panel when opening any drawer
+            if (keyboard.IsKeyPressed(Keys.F1)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Creature); Logger.Log($"[KEY] F1 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F2)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Stock); Logger.Log($"[KEY] F2 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F3)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Work); Logger.Log($"[KEY] F3 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F4)) { HideTilePanel(); _ui.OpenPanel(DrawerId.PlacementManagement); Logger.Log($"[KEY] F4 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F5)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Military); Logger.Log($"[KEY] F5 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F6)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Country); Logger.Log($"[KEY] F6 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F7)) { HideTilePanel(); _ui.OpenPanel(DrawerId.World); Logger.Log($"[KEY] F7 -> Drawer={_ui.OpenDrawer}"); changed = true; }
+            else if (keyboard.IsKeyPressed(Keys.F8)) { HideTilePanel(); _ui.OpenPanel(DrawerId.Log); Logger.Log($"[KEY] F8 -> Drawer={_ui.OpenDrawer}"); changed = true; }
             else if (keyboard.IsKeyPressed(Keys.F9))
             {
                 // Cycle navigation overlay modes
@@ -1731,13 +1851,13 @@ namespace HumanFortress.App.States
                     }
                 }
             }
-            // UI: quick menus Z/X/C/V (only in global context)
+            // UI: quick menus Z/X/C/V (only in global context) - close tile panel when opening
             else if (_ui.Context == UiContext.Global)
             {
-                if (keyboard.IsKeyPressed(Keys.Z)) { _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.X)) { _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.C)) { _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
-                else if (keyboard.IsKeyPressed(Keys.V)) { _ui.OpenQuickMenu(QuickMenuKind.Stockpile); Logger.Log($"[KEY] V -> QMenu={_ui.QuickMenu}"); changed = true; }
+                if (keyboard.IsKeyPressed(Keys.Z)) { HideTilePanel(); _ui.OpenQuickMenu(QuickMenuKind.Orders); Logger.Log($"[KEY] Z -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.X)) { HideTilePanel(); _ui.OpenQuickMenu(QuickMenuKind.Zones); Logger.Log($"[KEY] X -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.C)) { HideTilePanel(); _ui.OpenQuickMenu(QuickMenuKind.Build); Logger.Log($"[KEY] C -> QMenu={_ui.QuickMenu}"); changed = true; }
+                else if (keyboard.IsKeyPressed(Keys.V)) { HideTilePanel(); _ui.OpenQuickMenu(QuickMenuKind.Stockpile); Logger.Log($"[KEY] V -> QMenu={_ui.QuickMenu}"); changed = true; }
             }
 
             // Overlay cycle F9
@@ -1949,7 +2069,8 @@ namespace HumanFortress.App.States
                 int yDock = _mapSurface.Surface.Height - 1;
                 if (cell.Y == yDock - 1) // moved up one row
                 {
-                    // F1-F8 buttons (correct order: F1=Creature, F2=Stock, F3=Work, F4=PlacementManagement, F5=Military, F6=Country, F7=World, F8=Log)
+                    // F1-F8 buttons - close tile panel when opening any drawer
+                    HideTilePanel();
                     if (cell.X >= 0 && cell.X < 5) { _ui.OpenPanel(DrawerId.Creature); }              // F1
                     else if (cell.X < 10) { _ui.OpenPanel(DrawerId.Stock); }                          // F2
                     else if (cell.X < 15) { _ui.OpenPanel(DrawerId.Work); }                           // F3 (FIXED)
@@ -1967,6 +2088,8 @@ namespace HumanFortress.App.States
                 int quickY = yDock;
                 if (cell.Y == quickY)
                 {
+                    // Close tile panel when opening quick menu
+                    HideTilePanel();
                     if (cell.X >= center - 8 && cell.X < center - 8 + 9) { _ui.OpenQuickMenu(QuickMenuKind.Orders); }
                     else if (cell.X >= center + 2 && cell.X < center + 2 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Zones); }
                     else if (cell.X >= center + 12 && cell.X < center + 12 + 8) { _ui.OpenQuickMenu(QuickMenuKind.Build); }
@@ -1977,7 +2100,10 @@ namespace HumanFortress.App.States
                 // If click inside the map and not on UI, open tile panel
                 if (cell.X >= 0 && cell.X < _mapSurface.Surface.Width && cell.Y >= 0 && cell.Y < _mapSurface.Surface.Height)
                 {
-                    OnMapLeftClickedLocal(cell);
+                    if (_ui.Context == UiContext.Global && !_ui.WorkshopPanelOpen)
+                    {
+                        OnMapLeftClickedLocal(cell);
+                    }
                     return true;
                 }
             }
@@ -2497,6 +2623,11 @@ namespace HumanFortress.App.States
         private void OnMapLeftClickedLocal(Point local)
         {
             if (_mapSurface == null) return;
+            if (_ui.SuppressNextTileClick)
+            {
+                _ui.SuppressNextTileClick = false;
+                return;
+            }
             // Use lastMousePos if available to avoid recomputing and risking off-by-one
             Point worldPos;
             if (_lastMousePos.HasValue)
@@ -2556,6 +2687,11 @@ namespace HumanFortress.App.States
                     DrawUI();
                     return;
                 }
+            }
+
+            if (TryHandleWorkshopClick(worldX, worldY, _currentZ))
+            {
+                return;
             }
 
             // Handle placement modes
@@ -2652,9 +2788,9 @@ namespace HumanFortress.App.States
                             _ => HumanFortress.Simulation.Orders.MiningAction.Dig
                         };
 
-                        // UI ���پܾ�����������/�滮����������Ч��Ԫ������ UI �߽������
+                        // UI ���پܾ�����������/�滮����������Ч��Ԫ������ UI �߽������?
 
-                        // ֱ����ӵ� Orders���̰߳�ȫ�������������е��Ȳ���
+                        // ֱ����ӵ�?Orders���̰߳�ȫ�������������е��Ȳ���
                         // Single-layer stairwell validation: show toast but still enqueue (planner will skip)
                         if (simAction == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && zMin == zMax)
                         {
@@ -3187,6 +3323,33 @@ namespace HumanFortress.App.States
             }
         }
 
+        private bool TryHandleWorkshopClick(int worldX, int worldY, int worldZ)
+        {
+            if (_world == null) return false;
+            int chunkX = worldX / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+            int chunkY = worldY / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+            int localX = worldX % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+            int localY = worldY % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+            var chunk = _world.GetChunk(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, worldZ));
+            if (chunk == null) return false;
+            var pd = chunk.GetPlaceableData();
+            if (pd == null) return false;
+            if (!pd.TryGetOwnedAt(HumanFortress.Simulation.World.Chunk.LocalIndex(localX, localY), out var placeable))
+                return false;
+
+            var registry = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+            string defId = placeable.ConstructionSite?.TargetId ?? placeable.DefinitionId;
+            var def = registry.GetConstruction(defId);
+            if (def == null) return false;
+            bool isWorkshop = string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase)
+                || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
+            if (!isWorkshop) return false;
+
+            _ui.OpenWorkshopPanel(placeable.Guid, new Point(placeable.Position.X, placeable.Position.Y), placeable.Z);
+            DrawUI();
+            return true;
+        }
+
         // Handle Zones menu input (L2 and L3)
         private void HandleZonesMenu(Keyboard keyboard, ref bool changed)
         {
@@ -3317,3 +3480,4 @@ namespace HumanFortress.App.States
         }
     }
 }
+

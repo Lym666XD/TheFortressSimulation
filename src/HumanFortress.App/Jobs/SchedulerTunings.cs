@@ -16,8 +16,31 @@ namespace HumanFortress.App.Jobs
         public bool PerJobStatsLogging { get; init; } = true;
         public string LogLevel { get; init; } = "info";
         public int BackpressureMaxCarryoverTicks { get; init; } = 8;
+        public bool DebugPanel { get; init; } = false;
+        public HaulingLimitSettings HaulingLimits { get; init; } = new HaulingLimitSettings();
+        public WorkerSelectionStrategy WorkerSelection { get; init; } = WorkerSelectionStrategy.Closest;
 
         public readonly record struct Budget(int PlanPerTick, int Ms);
+
+        public sealed class HaulingLimitSettings
+        {
+            public int MaxActive { get; init; } = 0;
+            public int ReserveForMining { get; init; } = 0;
+            public int ReserveBacklogThreshold { get; init; } = 1;
+            public int BacklogIntakeCap { get; init; } = 0;
+            public int BacklogIntakeThreshold { get; init; } = 1;
+        }
+
+        private static WorkerSelectionStrategy ParseStrategy(string? value, WorkerSelectionStrategy fallback)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return fallback;
+            return value.ToLowerInvariant() switch
+            {
+                "idle" or "idle_first" => WorkerSelectionStrategy.IdleFirst,
+                "skill" or "highest_skill" => WorkerSelectionStrategy.HighestSkill,
+                _ => WorkerSelectionStrategy.Closest
+            };
+        }
 
         public static SchedulerTunings LoadFromContent(string baseDir)
         {
@@ -60,12 +83,40 @@ namespace HumanFortress.App.Jobs
                 var logging = root.TryGetProperty("logging", out var lEl) ? lEl : default;
                 bool perJob = logging.ValueKind == JsonValueKind.Object && logging.TryGetProperty("per_job_stats", out var pjs) ? pjs.GetBoolean() : t.PerJobStatsLogging;
                 string level = logging.ValueKind == JsonValueKind.Object && logging.TryGetProperty("level", out var lvl) ? (lvl.GetString() ?? t.LogLevel) : t.LogLevel;
+                bool debugPanel = logging.ValueKind == JsonValueKind.Object && logging.TryGetProperty("debug_panel", out var dp) ? dp.GetBoolean() : t.DebugPanel;
+
+                var haulingLimits = t.HaulingLimits;
+                if (root.TryGetProperty("hauling_limits", out var hlEl) && hlEl.ValueKind == JsonValueKind.Object)
+                {
+                    int maxActive = hlEl.TryGetProperty("max_active", out var ma) ? ma.GetInt32() : haulingLimits.MaxActive;
+                    int reserve = hlEl.TryGetProperty("reserve_for_mining", out var rf) ? rf.GetInt32() : haulingLimits.ReserveForMining;
+                    int reserveThreshold = hlEl.TryGetProperty("reserve_backlog_threshold", out var rbt) ? rbt.GetInt32() : haulingLimits.ReserveBacklogThreshold;
+                    int backlogIntake = hlEl.TryGetProperty("backlog_intake_cap", out var bic) ? bic.GetInt32() : haulingLimits.BacklogIntakeCap;
+                    int backlogThreshold = hlEl.TryGetProperty("backlog_intake_threshold", out var bit) ? bit.GetInt32() : haulingLimits.BacklogIntakeThreshold;
+                    haulingLimits = new HaulingLimitSettings
+                    {
+                        MaxActive = Math.Max(0, maxActive),
+                        ReserveForMining = Math.Max(0, reserve),
+                        ReserveBacklogThreshold = Math.Max(0, reserveThreshold),
+                        BacklogIntakeCap = Math.Max(0, backlogIntake),
+                        BacklogIntakeThreshold = Math.Max(0, backlogThreshold)
+                    };
+                }
 
                 int carry = t.BackpressureMaxCarryoverTicks;
                 if (root.TryGetProperty("backpressure", out var bpEl) && bpEl.ValueKind == JsonValueKind.Object)
                 {
                     if (bpEl.TryGetProperty("max_carryover_ticks", out var mc))
                         carry = Math.Max(1, mc.GetInt32());
+                }
+
+                var workerSelection = t.WorkerSelection;
+                if (root.TryGetProperty("worker_selection", out var wsEl))
+                {
+                    if (wsEl.ValueKind == JsonValueKind.String)
+                        workerSelection = ParseStrategy(wsEl.GetString(), workerSelection);
+                    else if (wsEl.ValueKind == JsonValueKind.Object && wsEl.TryGetProperty("strategy", out var stratEl))
+                        workerSelection = ParseStrategy(stratEl.GetString(), workerSelection);
                 }
 
                 return new SchedulerTunings
@@ -77,7 +128,10 @@ namespace HumanFortress.App.Jobs
                     Construction = c,
                     PerJobStatsLogging = perJob,
                     LogLevel = level,
-                    BackpressureMaxCarryoverTicks = carry
+                    BackpressureMaxCarryoverTicks = carry,
+                    DebugPanel = debugPanel,
+                    HaulingLimits = haulingLimits,
+                    WorkerSelection = workerSelection
                 };
             }
             catch (Exception ex)

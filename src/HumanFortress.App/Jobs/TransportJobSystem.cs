@@ -31,17 +31,27 @@ public sealed class TransportJobSystem : ITick
     private readonly WorldNavigationView _navView;
     private readonly MovementExecutor _move;
     private readonly DiffLog? _diff;
+    private readonly object _authLock = new();
 
     private readonly List<TransportRequest> _inboxBuffer = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<TransportRequest> _backlog = new();
     private readonly System.Collections.Generic.HashSet<System.Guid> _backlogIds = new();
     private readonly System.Collections.Generic.Dictionary<System.Guid, ulong> _backlogEnqueueTick = new();
     private readonly List<ActiveJob> _active = new();
+    private readonly ProfessionAssignments? _professions;
+    private readonly WorkerSelectionStrategy _workerStrategy;
 
     public int LastIntakeCount { get; private set; } = 0;
-    private readonly int _maxIntakePerTick;
+    private readonly int _configuredIntakePerTick;
+    private readonly int _configuredMaxActive;
     private readonly int _carryoverMaxTicks;
+    private int? _hintIntakeCap;
+    private int? _hintMaxActive;
+    private int _hintReserveSlots;
     private const int CreatureReserveTtlTicks = 200;
+    private const string DropReasonInStockpile = "already in stockpile";
+    private const string DropReasonDestInvalid = "dest not in stockpile";
+    private const string JobTag = "hauling";
 
     private int _lastCompletedTotal;
     private int _lastRequeuedTotal;
@@ -58,7 +68,10 @@ public sealed class TransportJobSystem : ITick
         DiffLog? diffLog = null,
         NavigationManager? sharedNav = null,
         int intakeBudget = 16,
-        int carryoverMaxTicks = 8)
+        int carryoverMaxTicks = 8,
+        int maxActiveJobs = 0,
+        ProfessionAssignments? professions = null,
+        WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest)
     {
         _world = world;
         _requests = requestQueue;
@@ -67,8 +80,11 @@ public sealed class TransportJobSystem : ITick
         _navView = new WorldNavigationView(_nav, world);
         _move = new MovementExecutor(_paths);
         _diff = diffLog;
-        _maxIntakePerTick = Math.Max(1, intakeBudget);
+        _configuredIntakePerTick = Math.Max(1, intakeBudget);
+        _configuredMaxActive = Math.Max(0, maxActiveJobs);
         _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
+        _professions = professions;
+        _workerStrategy = workerStrategy;
     }
 
     public int Priority => UpdateOrder.Priority.Jobs;
@@ -79,10 +95,11 @@ public sealed class TransportJobSystem : ITick
     public void ReadTick(ulong tick)
     {
         _paths.BeginTick();
+        int intakeBudget = GetEffectiveIntakeBudget();
         _inboxBuffer.Clear();
 
         // Drain backlog first
-        while (_inboxBuffer.Count < _maxIntakePerTick && _backlog.TryDequeue(out var retry))
+        while (_inboxBuffer.Count < intakeBudget && _backlog.TryDequeue(out var retry))
         {
             _inboxBuffer.Add(retry);
             _backlogIds.Remove(retry.ItemGuid);
@@ -90,9 +107,9 @@ public sealed class TransportJobSystem : ITick
         }
 
         // Drain fresh requests from queue deterministically
-        if (_inboxBuffer.Count < _maxIntakePerTick)
+        if (_inboxBuffer.Count < intakeBudget)
         {
-            _requests.Drain(_maxIntakePerTick - _inboxBuffer.Count, _inboxBuffer);
+            _requests.Drain(intakeBudget - _inboxBuffer.Count, _inboxBuffer);
         }
         LastIntakeCount = _inboxBuffer.Count;
 
@@ -119,13 +136,28 @@ public sealed class TransportJobSystem : ITick
             .ToList();
 
         var creatures = _world.Creatures.GetAllInstances().OrderBy(c => c.Guid).ToList();
-        Logger.Log($"[TRANS-JOBS][{tick}] Intake={reqs.Count} Active={_active.Count} Backlog={_backlog.Count} Workers={creatures.Count}");
+        int allowedActive = GetAllowedActiveCount(creatures.Count);
+        Logger.Log($"[TRANS-JOBS][{tick}] Intake={reqs.Count} Active={_active.Count} Backlog={_backlog.Count} Workers={creatures.Count} MaxActive={(allowedActive == int.MaxValue ? -1 : allowedActive)}");
 
         var busy = new HashSet<Guid>(_active.Select(a => a.CreatureId));
+        bool throttleLogged = false;
         foreach (var rq in reqs)
         {
+            if (allowedActive != int.MaxValue && _active.Count >= allowedActive)
+            {
+                if (!throttleLogged && HasActiveThrottle())
+                {
+                    int cappedReserve = Math.Min(creatures.Count, Math.Max(0, _hintReserveSlots));
+                    Logger.Log($"[TRANS-JOBS][{tick}] Throttled assignments: active={_active.Count} limit={allowedActive} reserve={cappedReserve}");
+                    throttleLogged = true;
+                }
+                break;
+            }
             bool assigned = false;
-            foreach (var worker in creatures)
+            var jobPoint = new HumanFortress.Navigation.Point3(rq.From.X, rq.From.Y, rq.FromZ);
+            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, jobPoint)
+                ?? creatures;
+            foreach (var worker in candidates)
             {
                 if (worker.HP <= 0) continue;
                 if (busy.Contains(worker.Guid)) continue;
@@ -159,12 +191,13 @@ public sealed class TransportJobSystem : ITick
                     ItemId = rq.ItemGuid,
                     Dest = new HumanFortress.Navigation.Point3(rq.To.X, rq.To.Y, rq.ToZ),
                     Stage = JobStage.ToItem,
-                    Quantity = qty
+                    Quantity = qty,
+                    Reason = rq.Reason
                 });
                 busy.Add(worker.Guid);
                 assigned = true;
                 JobStats.Assigned++;
-                Logger.Log($"[TRANS-JOBS][{tick}] Assigned worker={worker.Guid} item={rq.ItemGuid} -> ToItem ({rq.From.X},{rq.From.Y},{rq.FromZ})");
+                Logger.Log($"[TRANS-JOBS][{tick}] Assigned worker={worker.Guid} item={rq.ItemGuid} reason={rq.Reason} -> ToItem ({rq.From.X},{rq.From.Y},{rq.FromZ})");
                 break;
             }
             if (!assigned)
@@ -198,7 +231,23 @@ public sealed class TransportJobSystem : ITick
         foreach (var job in _active)
         {
             var cr = _world.Creatures.GetInstance(job.CreatureId);
-            if (cr == null) { finished.Add(job); _world.Reservations.ReleaseCreature(job.CreatureId); continue; }
+            if (cr == null)
+            {
+                // BUG FIX: If creature is gone and item was picked up (ToDest stage), must unmark carried
+                // Use the item's current position since creature is gone
+                if (job.Stage == JobStage.ToDest)
+                {
+                    var itemInst = _world.Items.GetInstance(job.ItemId);
+                    if (itemInst != null)
+                    {
+                        EmitUnmarkCarried(job.ItemId, new HumanFortress.Navigation.Point3(itemInst.Position.X, itemInst.Position.Y, itemInst.Z));
+                    }
+                    _world.Reservations.ReleaseItem(job.ItemId);
+                }
+                finished.Add(job);
+                _world.Reservations.ReleaseCreature(job.CreatureId);
+                continue;
+            }
             uint eid = ToEntity(cr.Guid);
 
             // refresh creature reservation TTL while job is active
@@ -252,6 +301,16 @@ public sealed class TransportJobSystem : ITick
             {
                 if (job.Stage == JobStage.ToItem)
                 {
+                    // Revalidate source: skip if item already sits in any stockpile cell to avoid ping-pong
+                    if (IsInStockpile(job.ItemId))
+                    {
+                        Logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} because already in stockpile ({DropReasonInStockpile})");
+                        _world.Reservations.ReleaseItem(job.ItemId);
+                        _world.Reservations.ReleaseCreature(job.CreatureId);
+                        finished.Add(job);
+                        continue;
+                    }
+
                     // If requested quantity is less than the stack, split a new stack to carry
                     var inst = _world.Items.GetInstance(job.ItemId);
                     if (inst != null && job.Quantity > 0 && inst.StackCount > job.Quantity)
@@ -276,12 +335,30 @@ public sealed class TransportJobSystem : ITick
                     }
                     else
                     {
+                        // BUG FIX: Item was marked carried on pickup, must unmark when dropping due to no path
+                        Logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} no path to dest=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}), unmarking carried");
+                        EmitUnmarkCarried(job.ItemId, update.Position);
+                        _world.Reservations.ReleaseItem(job.ItemId);
+                        _world.Reservations.ReleaseCreature(job.CreatureId);
                         finished.Add(job);
                         JobStats.NoPath++;
                     }
                 }
                 else if (job.Stage == JobStage.ToDest)
                 {
+                    // Validate destination based on transport reason (stockpile, construction site, workshop, etc.)
+                    if (!ValidateDestinationForReason(job.Dest, job.Reason))
+                    {
+                        Logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} dest=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) reason={job.Reason} validation=failed");
+                        // BUG FIX: Must unmark carried when dropping a job, otherwise item stays permanently marked as carried
+                        // Use the creature's current position since that's where the carried item would be dropped
+                        EmitUnmarkCarried(job.ItemId, update.Position);
+                        _world.Reservations.ReleaseItem(job.ItemId);
+                        _world.Reservations.ReleaseCreature(job.CreatureId);
+                        finished.Add(job);
+                        continue;
+                    }
+
                     // Place item and clear carried state
                     EmitMoveItem(job.ItemId, job.Dest);
                     EmitUnmarkCarried(job.ItemId, job.Dest);
@@ -289,7 +366,8 @@ public sealed class TransportJobSystem : ITick
                     _world.Reservations.ReleaseCreature(job.CreatureId);
                     finished.Add(job);
                     JobStats.Completed++;
-                    Logger.Log($"[TRANS-JOBS][{tick}] Completed item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) by worker={job.CreatureId}");
+                    Logger.Log($"[TRANS-JOBS][{tick}] Completed item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) reason={job.Reason} by worker={job.CreatureId}");
+                    _professions?.RecordJobCompletion(job.CreatureId, JobTag);
                 }
             }
         }
@@ -303,6 +381,17 @@ public sealed class TransportJobSystem : ITick
     }
 
     public readonly record struct ActiveJobView(Guid CreatureId, Guid ItemId, HumanFortress.Navigation.Point3 FromOrCurrent, HumanFortress.Navigation.Point3 Dest, string Stage);
+    public readonly record struct ActiveJobDebugView(Guid CreatureId, Guid ItemId, HumanFortress.Navigation.Point3 FromOrCurrent, HumanFortress.Navigation.Point3 Dest, string Stage, uint Seed);
+    public readonly record struct TransportDebugSnapshot(
+        JobStatsSnapshot Stats,
+        List<ActiveJobDebugView> Active,
+        List<TransportRequest> PendingPeek,
+        Dictionary<int, int> ShardCounts,
+        int BacklogCount,
+        int IntakeBudget,
+        int AllowedActive,
+        int ReservedSlots,
+        bool SeedsIncluded);
 
     public List<ActiveJobView> GetActiveJobsSnapshot()
     {
@@ -315,6 +404,43 @@ public sealed class TransportJobSystem : ITick
         return list;
     }
 
+    public TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
+    {
+        var stats = GetLastStatsSnapshot();
+        var active = new List<ActiveJobDebugView>(Math.Min(maxActive, _active.Count));
+        for (int i = 0; i < _active.Count && active.Count < maxActive; i++)
+        {
+            var j = _active[i];
+            var from = j.Stage == JobStage.ToItem ? GetItemPos(j) : GetCreaturePos(j.CreatureId);
+            uint seed = includeSeeds ? SeedFrom(j.CreatureId, j.ItemId) : 0u;
+            active.Add(new ActiveJobDebugView(j.CreatureId, j.ItemId, from, j.Dest, j.Stage.ToString(), seed));
+        }
+
+        var pendingPeek = _requests.Peek(maxRequests).ToList();
+        var shards = _requests.GetShardCountsSnapshot().ToDictionary(kv => kv.Key, kv => kv.Value);
+        int workers = _world.Creatures.GetAllInstances().Count();
+        int allowedActive = GetAllowedActiveCount(workers);
+        int reserved = Math.Min(workers, Math.Max(0, _hintReserveSlots));
+
+        return new TransportDebugSnapshot(
+            stats,
+            active,
+            pendingPeek,
+            shards,
+            BacklogCount: _backlog.Count,
+            IntakeBudget: GetEffectiveIntakeBudget(),
+            AllowedActive: allowedActive == int.MaxValue ? -1 : allowedActive,
+            ReservedSlots: reserved,
+            SeedsIncluded: includeSeeds);
+    }
+
+    public void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+    {
+        _hintIntakeCap = intakeCap;
+        _hintMaxActive = maxActiveCap;
+        _hintReserveSlots = Math.Max(0, reserveSlots);
+    }
+
     private enum JobStage { ToItem, ToDest }
 
     private sealed class ActiveJob
@@ -325,6 +451,10 @@ public sealed class TransportJobSystem : ITick
         public JobStage Stage { get; set; }
         public int Quantity { get; set; }
         public int InvalidReplanCount { get; set; }
+        /// <summary>
+        /// The reason/intent for this transport job. Used to determine which destination validation to apply.
+        /// </summary>
+        public HumanFortress.Simulation.Jobs.TransportReason Reason { get; set; }
     }
 
     private static uint ToEntity(Guid g)
@@ -333,11 +463,234 @@ public sealed class TransportJobSystem : ITick
         return BitConverter.ToUInt32(bytes, 0);
     }
 
+    private int GetEffectiveIntakeBudget()
+    {
+        int budget = _configuredIntakePerTick;
+        if (_hintIntakeCap.HasValue)
+        {
+            int cap = Math.Max(1, _hintIntakeCap.Value);
+            budget = Math.Min(budget, cap);
+        }
+        return budget;
+    }
+
+    private int GetAllowedActiveCount(int totalWorkers)
+    {
+        int allowed = _configuredMaxActive > 0 ? _configuredMaxActive : int.MaxValue;
+        if (_hintMaxActive.HasValue)
+        {
+            int cap = Math.Max(0, _hintMaxActive.Value);
+            allowed = allowed == int.MaxValue ? cap : Math.Min(allowed, cap);
+        }
+
+        int reserve = Math.Min(totalWorkers, Math.Max(0, _hintReserveSlots));
+        if (allowed == int.MaxValue)
+        {
+            if (reserve == 0) return int.MaxValue;
+            int res = totalWorkers - reserve;
+            return res < 0 ? 0 : res;
+        }
+
+        allowed = Math.Min(allowed, totalWorkers);
+        allowed -= reserve;
+        if (allowed < 0) allowed = 0;
+        return allowed;
+    }
+
+    private bool HasActiveThrottle() => _configuredMaxActive > 0 || _hintReserveSlots > 0 || (_hintMaxActive.HasValue && _hintMaxActive.Value > 0);
+
     private HumanFortress.Navigation.Point3 GetCreaturePos(Guid creatureId)
     {
         var cr = _world.Creatures.GetInstance(creatureId);
         if (cr == null) return new HumanFortress.Navigation.Point3(0, 0, 0);
         return new HumanFortress.Navigation.Point3(cr.Position.X, cr.Position.Y, cr.Z);
+    }
+
+    private bool IsInStockpile(Guid itemId)
+    {
+        var it = _world.Items.GetInstance(itemId);
+        if (it == null) return false;
+        int cx = it.Position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int cy = it.Position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int lx = it.Position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int ly = it.Position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        var ck = new HumanFortress.Simulation.World.ChunkKey(cx, cy, it.Z);
+        var chunk = _world.GetChunk(ck);
+        var stock = chunk?.GetStockpileData();
+        if (stock == null) return false;
+        int cell = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
+        return stock.GetZoneAtCell(cell) > 0;
+    }
+
+    private bool IsStockpileDestinationValid(HumanFortress.Navigation.Point3 dest)
+    {
+        int cx = dest.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int cy = dest.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int lx = dest.X % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int ly = dest.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        var ck = new HumanFortress.Simulation.World.ChunkKey(cx, cy, dest.Z);
+        var chunk = _world.GetChunk(ck);
+        var stock = chunk?.GetStockpileData();
+        if (stock == null) return false;
+        int cell = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
+        return stock.GetZoneAtCell(cell) > 0;
+    }
+
+    /// <summary>
+    /// Check if destination is near a construction site (within footprint or adjacent ring).
+    /// Used for ToConstructionSite reason validation.
+    /// </summary>
+    private bool IsConstructionSiteDestinationValid(HumanFortress.Navigation.Point3 dest)
+    {
+        // Search for any construction site whose footprint or adjacent ring includes the dest cell
+        int cx = dest.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int cy = dest.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        var ck = new HumanFortress.Simulation.World.ChunkKey(cx, cy, dest.Z);
+        var chunk = _world.GetChunk(ck);
+        if (chunk == null) return false;
+
+        var pd = chunk.GetPlaceableData();
+        if (pd == null) return false;
+
+        // Check all placeables in this chunk for construction sites
+        foreach (var p in pd.GetAllOwnedPlaceables())
+        {
+            if (p.ConstructionSite == null) continue;
+            if (p.Z != dest.Z) continue;
+
+            // Check if dest is within footprint or adjacent ring (distance 1)
+            var fp = p.Footprint;
+            int relX = dest.X - p.Position.X;
+            int relY = dest.Y - p.Position.Y;
+
+            // Inside footprint
+            if (relX >= 0 && relX < fp.W && relY >= 0 && relY < fp.D)
+                return true;
+
+            // Adjacent ring (1 cell away from footprint)
+            if (relX >= -1 && relX <= fp.W && relY >= -1 && relY <= fp.D)
+            {
+                // Must be exactly 1 cell outside the footprint
+                bool touchesFootprint = (relX >= 0 && relX < fp.W) || (relY >= 0 && relY < fp.D);
+                if (touchesFootprint)
+                    return true;
+            }
+        }
+
+        // Also check neighboring chunks in case the site spans chunk boundaries
+        for (int dcx = -1; dcx <= 1; dcx++)
+        for (int dcy = -1; dcy <= 1; dcy++)
+        {
+            if (dcx == 0 && dcy == 0) continue;
+            var neighborKey = new HumanFortress.Simulation.World.ChunkKey(cx + dcx, cy + dcy, dest.Z);
+            var neighborChunk = _world.GetChunk(neighborKey);
+            if (neighborChunk == null) continue;
+            var npd = neighborChunk.GetPlaceableData();
+            if (npd == null) continue;
+
+            foreach (var p in npd.GetAllOwnedPlaceables())
+            {
+                if (p.ConstructionSite == null) continue;
+                if (p.Z != dest.Z) continue;
+
+                var fp = p.Footprint;
+                int relX = dest.X - p.Position.X;
+                int relY = dest.Y - p.Position.Y;
+
+                // Inside footprint or adjacent ring
+                if (relX >= -1 && relX <= fp.W && relY >= -1 && relY <= fp.D)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Check if destination is a valid workshop (for ToWorkshopInput).
+    /// </summary>
+    private bool IsWorkshopDestinationValid(HumanFortress.Navigation.Point3 dest)
+    {
+        int cx = dest.X / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int cy = dest.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        var ck = new HumanFortress.Simulation.World.ChunkKey(cx, cy, dest.Z);
+        var chunk = _world.GetChunk(ck);
+        if (chunk == null) return false;
+
+        var pd = chunk.GetPlaceableData();
+        if (pd == null) return false;
+
+        // Check if dest is on or near a workshop placeable
+        foreach (var p in pd.GetAllOwnedPlaceables())
+        {
+            if (p.Z != dest.Z) continue;
+            // Workshops have a ConstructionSite == null (completed) and tags indicating workshop
+            if (p.ConstructionSite != null) continue; // Still under construction
+
+            var fp = p.Footprint;
+            int relX = dest.X - p.Position.X;
+            int relY = dest.Y - p.Position.Y;
+
+            // Inside or adjacent to footprint
+            if (relX >= -1 && relX <= fp.W && relY >= -1 && relY <= fp.D)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Validate destination based on the transport reason.
+    /// Returns true if the destination is valid for the given reason, false otherwise.
+    /// </summary>
+    private bool ValidateDestinationForReason(HumanFortress.Navigation.Point3 dest, HumanFortress.Simulation.Jobs.TransportReason reason)
+    {
+        switch (reason)
+        {
+            case HumanFortress.Simulation.Jobs.TransportReason.ToStockpile:
+            case HumanFortress.Simulation.Jobs.TransportReason.ToWorkshopOutput:
+            case HumanFortress.Simulation.Jobs.TransportReason.FromTradeDepot:
+                // These all deliver to stockpiles
+                return IsStockpileDestinationValid(dest);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.ToConstructionSite:
+            case HumanFortress.Simulation.Jobs.TransportReason.ToInstallSite:
+            case HumanFortress.Simulation.Jobs.TransportReason.ToUpgradeSite:
+                // These deliver to construction/install sites
+                return IsConstructionSiteDestinationValid(dest);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.ToWorkshopInput:
+                // Deliver to workshop input buffer
+                return IsWorkshopDestinationValid(dest);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.ToTradeDepot:
+                // TODO: Implement trade depot zone validation when trade system is added
+                // For now, accept any walkable tile (placeholder)
+                var tile = _world.GetTile(dest.X, dest.Y, dest.Z);
+                return tile != null && (tile.Value.IsStandable || tile.Value.IsWalkable);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.ToArmory:
+            case HumanFortress.Simulation.Jobs.TransportReason.ToAmmoCache:
+                // TODO: Implement military zone validation when military system is added
+                // For now, accept stockpile or any walkable tile
+                return IsStockpileDestinationValid(dest) || (_world.GetTile(dest.X, dest.Y, dest.Z)?.IsStandable ?? false);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.ToRefuel:
+                // TODO: Implement fuel consumer validation
+                // For now, accept workshop destinations (furnaces, forges are workshops)
+                return IsWorkshopDestinationValid(dest);
+
+            case HumanFortress.Simulation.Jobs.TransportReason.Cleanup:
+            case HumanFortress.Simulation.Jobs.TransportReason.Misc:
+                // Less strict validation - just check tile is walkable
+                var cleanupTile = _world.GetTile(dest.X, dest.Y, dest.Z);
+                return cleanupTile != null && (cleanupTile.Value.IsStandable || cleanupTile.Value.IsWalkable);
+
+            default:
+                // Unknown reason - be permissive but log warning
+                Logger.Log($"[TRANS-JOBS] WARNING: Unknown transport reason {reason}, using permissive validation");
+                return true;
+        }
     }
 
     private HumanFortress.Navigation.Point3 GetItemPos(ActiveJob job)

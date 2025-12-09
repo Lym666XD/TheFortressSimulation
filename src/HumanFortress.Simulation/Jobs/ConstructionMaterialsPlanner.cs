@@ -165,13 +165,34 @@ namespace HumanFortress.Simulation.Jobs
         {
             Guid? best = null;
             int bestDist = int.MaxValue;
-            foreach (var it in _world.Items.GetAllInstances())
+            var allItems = _world.Items.GetAllInstances().ToList();
+
+            // Diagnostic: log total item count every 100 ticks
+            if (tick % 100 == 0)
             {
-                if (it.IsCarried) continue;
-                if (_world.Reservations.IsItemReserved(it.Guid, tick)) continue;
+                LogCallback?.Invoke($"[CM-DIAG][{tick}] TryFindNearestItemByTag: reqTag={reqTag}, totalItems={allItems.Count}");
+            }
+
+            int skippedCarried = 0, skippedReserved = 0, skippedNoDef = 0, skippedNoMatch = 0, candidates = 0;
+
+            foreach (var it in allItems)
+            {
+                // Use IsOnGround which checks all new properties: ContainedBy, CarriedBy, EquippedBy, InstalledAt
+                // Also check legacy IsCarried flag for backwards compatibility
+                bool isAvailable = it.IsOnGround && !it.IsCarried;
+
+                // Diagnostic: log first 3 unavailable items with state details
+                if (skippedCarried < 3 && !isAvailable && tick % 100 == 0)
+                {
+                    LogCallback?.Invoke($"[CM-DIAG][{tick}] Item {it.DefinitionId} at ({it.Position.X},{it.Position.Y},{it.Z}): IsOnGround={it.IsOnGround} IsCarried={it.IsCarried} CarriedBy={it.CarriedBy} EquippedBy={it.EquippedBy} ContainedBy={it.ContainedBy} InstalledAt={it.InstalledAt}");
+                }
+
+                if (!isAvailable) { skippedCarried++; continue; }
+                if (_world.Reservations.IsItemReserved(it.Guid, tick)) { skippedReserved++; continue; }
                 var def = _world.Items.GetDefinition(it.DefinitionId);
-                if (def == null || def.Tags == null) continue;
-                if (!MatchesRequirement(def.Tags, reqTag)) continue;
+                if (def == null || def.Tags == null) { skippedNoDef++; continue; }
+                if (!MatchesRequirement(def.Tags, reqTag)) { skippedNoMatch++; continue; }
+                candidates++;
                 int d = Math.Abs(it.Position.X - toX) + Math.Abs(it.Position.Y - toY) + Math.Abs(it.Z - toZ);
                 if (d < bestDist)
                 {
@@ -179,6 +200,13 @@ namespace HumanFortress.Simulation.Jobs
                     best = it.Guid;
                 }
             }
+
+            // Log diagnostic summary when no source found
+            if (best == null)
+            {
+                LogCallback?.Invoke($"[CM-DIAG][{tick}] NO SOURCE for {reqTag}: total={allItems.Count} carried={skippedCarried} reserved={skippedReserved} noDef={skippedNoDef} noMatch={skippedNoMatch} candidates={candidates}");
+            }
+
             return best;
         }
 

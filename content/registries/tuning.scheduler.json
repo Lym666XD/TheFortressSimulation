@@ -11,5 +11,13 @@
     "construction": { "plan_per_tick": 256, "ms": 3 }
   },
   "backpressure": { "max_carryover_ticks": 8 },
-  "logging": { "level": "info", "per_job_stats": true }
+  "logging": { "level": "info", "per_job_stats": true, "debug_panel": true },
+  "worker_selection": "closest",
+  "hauling_limits": {
+    "max_active": 0,
+    "reserve_for_mining": 2,
+    "reserve_backlog_threshold": 1,
+    "backlog_intake_cap": 8,
+    "backlog_intake_threshold": 1
+  }
 }

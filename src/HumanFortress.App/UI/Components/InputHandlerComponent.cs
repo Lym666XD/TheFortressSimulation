@@ -2,6 +2,7 @@
 using SadConsole.Components;
 using SadConsole.Input;
 using SadRogue.Primitives;
+using HumanFortress.App.GameStates;
 using HumanFortress.App.UI.Commands;
 using HumanFortress.App.UI;
 using System.Linq;
@@ -124,6 +125,10 @@ namespace HumanFortress.App.UI.Components
                 new ToggleQuickMenuCommand(QuickMenuKind.Stockpile).Execute(_uiStateManager);
                 handled = true;
             }
+            else if (HandleWorkPanelKeys(keyboard))
+            {
+                handled = true;
+            }
             // Escape: Cancel
             else if (keyboard.IsKeyPressed(Keys.Escape))
             {
@@ -178,6 +183,8 @@ namespace HumanFortress.App.UI.Components
 
         private bool HandleLeftClick(Point localPos)
         {
+            var store = _uiStateManager.Store;
+
             // Hit-test dock buttons (F1-F8)
             int? dockSlot = ButtonLayoutCalculator.HitTestDockButtons(localPos, _screenWidth, _screenHeight);
             if (dockSlot.HasValue && dockSlot.Value < DockButtonDrawers.Length)
@@ -185,6 +192,7 @@ namespace HumanFortress.App.UI.Components
                 var drawerId = DockButtonDrawers[dockSlot.Value];
                 new ToggleDrawerCommand(drawerId).Execute(_uiStateManager);
                 Logger.Log($"[InputHandler] Dock button {dockSlot.Value} -> {drawerId}");
+                store.SuppressNextTileClick = true;
                 return true;
             }
 
@@ -195,14 +203,42 @@ namespace HumanFortress.App.UI.Components
                 var menuKind = QuickButtonMenus[quickSlot.Value];
                 new ToggleQuickMenuCommand(menuKind).Execute(_uiStateManager);
                 Logger.Log($"[InputHandler] Quick button {quickSlot.Value} -> {menuKind}");
+                store.SuppressNextTileClick = true;
                 return true;
+            }
+
+            // Hit-test drawer tabs (when any drawer is open)
+            if (_uiStateManager.OpenDrawer != DrawerId.None)
+            {
+                // Calculate drawer geometry (matches UiRenderer.DrawDrawer)
+                int drawerHeight = Math.Max(10, _screenHeight - 7);
+                int drawerTopY = _screenHeight - 1 - drawerHeight;
+
+                // Get tab labels for current drawer
+                string[] tabs = _uiStateManager.OpenDrawer switch
+                {
+                    DrawerId.Creature => new[] { "All Creatures", "Animals", "Settings" },
+                    DrawerId.Stock => new[] { "Items", "Stockpiles", "Trade" },
+                    DrawerId.Work => new[] { "Labor", "All Orders", "Job Allocation", "Workshop Orders", "Workshops" },
+                    DrawerId.PlacementManagement => new[] { "Zones", "Stockpiles", "Settings" },
+                    _ => new[] { "Tab 1", "Tab 2", "Tab 3" }
+                };
+
+                int? tabIndex = ButtonLayoutCalculator.HitTestDrawerTabs(localPos, _screenWidth, _screenHeight, tabs, drawerTopY);
+                if (tabIndex.HasValue && tabIndex.Value < tabs.Length)
+                {
+                    _uiStateManager.Store.SetDrawerTab(tabIndex.Value);
+                    Logger.Log($"[InputHandler] Drawer tab clicked: {tabs[tabIndex.Value]} (index {tabIndex.Value})");
+                    store.SuppressNextTileClick = true;
+                    return true;
+                }
             }
 
             // Hit-test F2 Items tab filter pills (when F2 Stock drawer is open on Items tab)
             if (_uiStateManager.OpenDrawer == DrawerId.Stock && _uiStateManager.DrawerTab == 0)
             {
                 // Calculate drawer geometry (matches UiRenderer.DrawDrawer)
-                int drawerHeight = System.Math.Max(8, (int)(_screenHeight * 0.7));
+                int drawerHeight = Math.Max(10, _screenHeight - 7);
                 int drawerTopY = _screenHeight - 1 - drawerHeight;
                 int filterRowY = drawerTopY + 2; // Items tab content starts at y0+2 (line 167 in UiRenderer)
 
@@ -219,8 +255,15 @@ namespace HumanFortress.App.UI.Components
                     // Optional: Add toast feedback
                     var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
                     _uiStateManager.AddToast($"Filter: {newFilter}", tick + 50);
+                    store.SuppressNextTileClick = true;
                     return true;
                 }
+            }
+
+            if (HandleJobAllocationClick(localPos))
+            {
+                store.SuppressNextTileClick = true;
+                return true;
             }
 
             // TODO: Hit-test drawer tabs, quick menu items, etc.
@@ -235,19 +278,10 @@ namespace HumanFortress.App.UI.Components
             // Otherwise, let FortressState handle it (for tile panel, placement, etc.)
 
             // Check if any UI menu is open
-            bool hasOpenUI = _uiStateManager.OpenDrawer != DrawerId.None
-                          || _uiStateManager.QuickMenu != QuickMenuKind.None
-                          || _uiStateManager.PlaceMode != PlacementMode.None;
-
-            if (hasOpenUI)
-            {
-                new NavigateBackCommand().Execute(_uiStateManager);
-                Logger.Log($"[InputHandler] Right-click -> NavigateBack (UI open)");
-                return true; // Consumed by UI
-            }
-
-            // No UI open, let FortressState handle it (tile panel, etc.)
-            return false;
+            new NavigateBackCommand().Execute(_uiStateManager);
+            Logger.Log("[InputHandler] Right-click -> NavigateBack (force cancel)");
+            _uiStateManager.Store.SuppressNextTileClick = true;
+            return true;
         }
 
         /// <summary>
@@ -396,10 +430,169 @@ namespace HumanFortress.App.UI.Components
         public bool IsRender => false;
         public bool IsMouse => true;
         public bool IsKeyboard => true;
+
+        private bool HandleWorkPanelKeys(Keyboard keyboard)
+        {
+            if (_uiStateManager.OpenDrawer != DrawerId.Work)
+                return false;
+
+            if (_uiStateManager.DrawerTab == 2)
+                return HandleJobAllocationKeys(keyboard);
+
+            return false;
+        }
+
+        private bool HandleJobAllocationKeys(Keyboard keyboard)
+        {
+            var service = GameStateManager.Instance.ProfessionAssignments;
+            if (service == null) return false;
+            var defs = service.Registry.Definitions;
+            if (defs.Count == 0) return false;
+
+            var roster = GameStateManager.Instance.GetProfessionRosterSnapshot();
+            if (roster.Count == 0) return false;
+
+            var ui = _uiStateManager.Store;
+            ui.WorkAllocSelectedRow = Math.Clamp(ui.WorkAllocSelectedRow, 0, roster.Count - 1);
+            ui.WorkAllocSelectedCol = Math.Clamp(ui.WorkAllocSelectedCol, 0, defs.Count - 1);
+
+            bool handled = false;
+            if (keyboard.IsKeyPressed(Keys.Up))
+            {
+                ui.WorkAllocSelectedRow = Math.Max(0, ui.WorkAllocSelectedRow - 1);
+                handled = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.Down))
+            {
+                ui.WorkAllocSelectedRow = Math.Min(roster.Count - 1, ui.WorkAllocSelectedRow + 1);
+                handled = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.Left))
+            {
+                ui.WorkAllocSelectedCol = Math.Max(0, ui.WorkAllocSelectedCol - 1);
+                handled = true;
+            }
+            else if (keyboard.IsKeyPressed(Keys.Right))
+            {
+                ui.WorkAllocSelectedCol = Math.Min(defs.Count - 1, ui.WorkAllocSelectedCol + 1);
+                handled = true;
+            }
+
+            if (handled)
+            {
+                int drawerHeight = _screenHeight - 1;
+                int maxHeight = drawerHeight - 3;
+                int areaHeight = Math.Max(10, maxHeight);
+                int visibleRows = Math.Max(1, areaHeight - 4);
+                if (ui.WorkAllocSelectedRow < ui.WorkAllocRowOffset)
+                    ui.WorkAllocRowOffset = ui.WorkAllocSelectedRow;
+                else if (ui.WorkAllocSelectedRow >= ui.WorkAllocRowOffset + visibleRows)
+                    ui.WorkAllocRowOffset = Math.Max(0, ui.WorkAllocSelectedRow - visibleRows + 1);
+                return true;
+            }
+
+            int? weight = GetWeightFromKeyboard(keyboard);
+            if (!weight.HasValue) return false;
+
+            var entry = roster[ui.WorkAllocSelectedRow];
+            var definition = defs[ui.WorkAllocSelectedCol];
+            GameStateManager.Instance.SetProfessionWeight(entry.WorkerId, definition.Id, weight.Value);
+            var tick = GameStateManager.Instance.TickScheduler.CurrentTick;
+            var label = weight.Value == 0 ? "-" : weight.Value.ToString();
+            _uiStateManager.AddToast($"{entry.Name}: {definition.Name} -> {label}", tick + 60);
+            return true;
+        }
+
+        private static int? GetWeightFromKeyboard(Keyboard keyboard)
+        {
+            if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract))
+                return 0;
+            if (keyboard.IsKeyPressed(Keys.D1) || keyboard.IsKeyPressed(Keys.NumPad1)) return 1;
+            if (keyboard.IsKeyPressed(Keys.D2) || keyboard.IsKeyPressed(Keys.NumPad2)) return 2;
+            if (keyboard.IsKeyPressed(Keys.D3) || keyboard.IsKeyPressed(Keys.NumPad3)) return 3;
+            if (keyboard.IsKeyPressed(Keys.D4) || keyboard.IsKeyPressed(Keys.NumPad4)) return 4;
+            if (keyboard.IsKeyPressed(Keys.D5) || keyboard.IsKeyPressed(Keys.NumPad5)) return 5;
+            if (keyboard.IsKeyPressed(Keys.D6) || keyboard.IsKeyPressed(Keys.NumPad6)) return 6;
+            if (keyboard.IsKeyPressed(Keys.D7) || keyboard.IsKeyPressed(Keys.NumPad7)) return 7;
+            if (keyboard.IsKeyPressed(Keys.D8) || keyboard.IsKeyPressed(Keys.NumPad8)) return 8;
+            if (keyboard.IsKeyPressed(Keys.D9) || keyboard.IsKeyPressed(Keys.NumPad9)) return 9;
+            return null;
+        }
+
+        private bool HandleJobAllocationClick(Point localPos)
+        {
+            if (_uiStateManager.OpenDrawer != DrawerId.Work || _uiStateManager.DrawerTab != 2)
+                return false;
+
+            var service = GameStateManager.Instance.ProfessionAssignments;
+            var world = GameStateManager.Instance.World;
+            if (service == null || world == null) return false;
+
+            var defs = service.Registry.Definitions;
+            var roster = GameStateManager.Instance.GetProfessionRosterSnapshot();
+            if (defs.Count == 0 || roster.Count == 0) return false;
+
+            // Match drawer height calculation from UiRenderer.DrawDrawer
+            int drawerHeight = Math.Max(10, _screenHeight - 7);
+            int drawerTopY = _screenHeight - 1 - drawerHeight;
+            int startY = drawerTopY + 1;
+            int maxHeight = drawerHeight - 3;
+            int areaHeight = Math.Max(10, maxHeight);
+            var area = new SadRogue.Primitives.Rectangle(1, startY, _screenWidth - 2, areaHeight);
+            if (!area.Contains(localPos)) return false;
+
+            int nameWidth = Math.Max(12, area.Width / 6);
+            int tableWidth = Math.Max(8, area.Width - nameWidth - 3);
+            int colWidth = Math.Max(3, tableWidth / defs.Count);
+            // Note: area.Y is startY which is drawer y0 + 1.
+            // Header is at area.Y + 1 (after title line "Job Allocation...")
+            // Body rows start at area.Y + 2 (headerY + 1)
+            int headerY = area.Y + 1;
+            int bodyStartY = headerY + 1;
+            if (localPos.Y < bodyStartY) return false;
+
+            int visibleRows = Math.Max(1, area.Height - 4);
+            var ui = _uiStateManager.Store;
+
+            int rowIndex = localPos.Y - bodyStartY;
+            if (rowIndex < 0 || rowIndex >= visibleRows) return false;
+            int actualRow = ui.WorkAllocRowOffset + rowIndex;
+            if (actualRow < 0 || actualRow >= roster.Count) return false;
+
+            int nameX = area.X + 1;
+            int bodyX = nameX + nameWidth;
+            if (localPos.X < nameX) return false;
+
+            ui.WorkAllocSelectedRow = actualRow;
+
+            if (localPos.X < bodyX)
+            {
+                return true;
+            }
+
+            int colIndex = (localPos.X - bodyX) / colWidth;
+            colIndex = Math.Min(Math.Max(colIndex, 0), defs.Count - 1);
+            ui.WorkAllocSelectedCol = colIndex;
+
+            int offset = Math.Max(0, Math.Min(ui.WorkAllocRowOffset, roster.Count - visibleRows));
+            if (actualRow < offset) ui.WorkAllocRowOffset = actualRow;
+            else if (actualRow >= offset + visibleRows) ui.WorkAllocRowOffset = Math.Max(0, actualRow - visibleRows + 1);
+
+            var entry = roster[actualRow];
+            var definition = defs[colIndex];
+            int current = entry.Weights.TryGetValue(definition.Id, out var val) ? val : 5;
+            int next = current switch
+            {
+                <= 0 => 1,
+                >= 9 => 0,
+                _ => current + 1
+            };
+            GameStateManager.Instance.SetProfessionWeight(entry.WorkerId, definition.Id, next);
+            var tick = GameStateManager.Instance.TickScheduler.CurrentTick;
+            string label = next <= 0 ? "-" : next.ToString();
+            _uiStateManager.AddToast($"{definition.Name}: {label}", tick + 60);
+            _uiStateManager.Store.SuppressNextTileClick = true;
+            return true;
+        }
     }
 }
-
-
-
-
-

@@ -61,15 +61,35 @@ public sealed class ConstructionJobSystem : ITick
                 var delivered = CountDeliveredOnFootprintOrRing(p);
                 site.MaterialsDelivered = delivered;
 
-                // Log progress
+                // Log progress with detailed item info for debugging material blackhole
                 Logger.Log($"[BUILD.EXEC] site=({p.Position.X},{p.Position.Y},{p.Z}) delivered={FormatDict(delivered)} req={FormatDict(site.MaterialsRequired)} progress={site.BuildProgressTicks}/{site.TotalBuildTicks}");
+
+                // Diagnostic: log all items near the construction site for debugging
+                if (tick % 50 == 0)
+                {
+                    var itemsNear = GetItemsNearSite(p, 3);
+                    if (itemsNear.Count > 0)
+                    {
+                        Logger.Log($"[BUILD.DIAG] site=({p.Position.X},{p.Position.Y},{p.Z}) nearby_items:");
+                        foreach (var (it, dist, tags) in itemsNear)
+                        {
+                            Logger.Log($"  - item={it.DefinitionId} stack={it.StackCount} pos=({it.Position.X},{it.Position.Y},{it.Z}) dist={dist} carried={it.IsCarried} reserved={it.IsReserved} tags=[{tags}]");
+                        }
+                    }
+                }
 
                 bool ready = true;
                 foreach (var kv in site.MaterialsRequired)
                 {
                     var tag = kv.Key;
                     var need = kv.Value;
-                    if (delivered.GetValueOrDefault(tag, 0) < need) { ready = false; break; }
+                    int have = delivered.GetValueOrDefault(tag, 0);
+                    if (have < need)
+                    {
+                        Logger.Log($"[BUILD.EXEC] site=({p.Position.X},{p.Position.Y},{p.Z}) NOT READY: need {tag}={need}, have={have}, shortfall={need - have}");
+                        ready = false;
+                        break;
+                    }
                 }
 
                 if (!ready)
@@ -93,6 +113,35 @@ public sealed class ConstructionJobSystem : ITick
                         if (IsOccupiedByCreature(p))
                             continue;
                     }
+
+                    // For L0 Wall builds, check and relocate ANY creature on the entire footprint before setting terrain
+                    // This prevents workers from getting trapped inside walls
+                    if (site.TargetId.StartsWith("l0:", System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        var kind = MapTargetIdToKind(site.TargetId, p.Z);
+                        if (kind == HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                        {
+                            var creaturesOnFootprint = GetCreaturesOnFootprint(p);
+                            if (creaturesOnFootprint.Count > 0)
+                            {
+                                Logger.Log($"[BUILD.EXEC] WALL: {creaturesOnFootprint.Count} creature(s) on footprint at ({p.Position.X},{p.Position.Y},{p.Z}), relocating before wall placement");
+                                foreach (var cr in creaturesOnFootprint)
+                                {
+                                    var safe = FindSafeCellAround(p);
+                                    if (safe.HasValue)
+                                    {
+                                        EmitMoveCreature(cr.Guid, new HumanFortress.Navigation.Point3(safe.Value.X, safe.Value.Y, p.Z));
+                                        Logger.Log($"[BUILD.EXEC] WALL: Relocated creature {cr.Guid} from ({cr.Position.X},{cr.Position.Y},{cr.Z}) to ({safe.Value.X},{safe.Value.Y},{p.Z})");
+                                    }
+                                    else
+                                    {
+                                        Logger.Log($"[BUILD.EXEC] WALL: WARNING - No safe cell found for creature {cr.Guid} at ({cr.Position.X},{cr.Position.Y},{cr.Z})");
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     // Consume required materials from footprint
                     var toConsume = new Dictionary<string, int>(site.MaterialsRequired, StringComparer.OrdinalIgnoreCase);
                     ConsumeMaterialsOnFootprintOrRing(p, toConsume, tick);
@@ -201,6 +250,28 @@ public sealed class ConstructionJobSystem : ITick
         }
     }
 
+    /// <summary>
+    /// Get items near a construction site for diagnostic logging.
+    /// </summary>
+    private List<(HumanFortress.Simulation.Items.ItemInstance item, int dist, string tags)> GetItemsNearSite(PlaceableInstance site, int radius)
+    {
+        var result = new List<(HumanFortress.Simulation.Items.ItemInstance, int, string)>();
+        foreach (var it in _world.Items.GetAllInstances())
+        {
+            int dx = Math.Abs(it.Position.X - site.Position.X);
+            int dy = Math.Abs(it.Position.Y - site.Position.Y);
+            int dz = Math.Abs(it.Z - site.Z);
+            int dist = dx + dy + dz;
+            if (dist <= radius)
+            {
+                var def = _world.Items.GetDefinition(it.DefinitionId);
+                string tags = def?.Tags != null ? string.Join(",", def.Tags) : "none";
+                result.Add((it, dist, tags));
+            }
+        }
+        return result;
+    }
+
     private Dictionary<string, int> CountDeliveredOnFootprintOrRing(PlaceableInstance site)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -256,6 +327,27 @@ public sealed class ConstructionJobSystem : ITick
     {
         return _world.Creatures.GetAllInstances()
             .Any(cr => cr.Z == site.Z && cr.Position.X == site.Position.X && cr.Position.Y == site.Position.Y);
+    }
+
+    /// <summary>
+    /// Get all creatures standing on any cell of the site's footprint (for wall construction safety).
+    /// </summary>
+    private List<HumanFortress.Simulation.Creatures.CreatureInstance> GetCreaturesOnFootprint(PlaceableInstance site)
+    {
+        var result = new List<HumanFortress.Simulation.Creatures.CreatureInstance>();
+        var fp = site.Footprint;
+        foreach (var cr in _world.Creatures.GetAllInstances())
+        {
+            if (cr.Z != site.Z) continue;
+            // Check if creature is on any cell of the footprint
+            int relX = cr.Position.X - site.Position.X;
+            int relY = cr.Position.Y - site.Position.Y;
+            if (relX >= 0 && relX < fp.W && relY >= 0 && relY < fp.D)
+            {
+                result.Add(cr);
+            }
+        }
+        return result;
     }
 
     private bool TryRelocateCreaturesOffSiteSafe(PlaceableInstance site)
