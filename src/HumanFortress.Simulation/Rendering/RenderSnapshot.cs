@@ -79,6 +79,8 @@ namespace HumanFortress.Simulation.Rendering
         public byte[] AnimPhase { get; init; } = Array.Empty<byte>();
         public uint[] TintLight { get; init; } = Array.Empty<uint>();
         public BitArray32[] Designations { get; init; } = Array.Empty<BitArray32>();
+        // Placeables overlay rectangles (world coordinates), lightweight UI-friendly layer
+        public List<OverlayRect> PlaceablesOverlay { get; init; } = new();
     }
     
     public sealed class Billboard
@@ -100,6 +102,17 @@ namespace HumanFortress.Simulation.Rendering
         public CursorInfo? Cursor { get; init; }
         public List<SelectionRange> Selection { get; init; } = new();
         public DebugInfo Debug { get; init; } = new();
+    }
+
+    public sealed class OverlayRect
+    {
+        public int X { get; init; }
+        public int Y { get; init; }
+        public int W { get; init; }
+        public int H { get; init; }
+        public int Z { get; init; }
+        public string Kind { get; init; } = "workshop"; // e.g., "workshop" or "workshop_site"
+        public string DefId { get; init; } = string.Empty; // construction id
     }
     
     public sealed class CursorInfo

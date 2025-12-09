@@ -1,5 +1,6 @@
 using HumanFortress.App;
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
@@ -30,12 +31,24 @@ public sealed class GameStateManager
     private World? _world;
     private SimulationContext? _simContext;
     private HumanFortress.Simulation.Orders.HaulingSystem? _haulingPlanner;
-    private HumanFortress.App.Jobs.HaulJobSystem? _haulJobs;
+    private HumanFortress.Simulation.Jobs.ITransportRequestQueue? _transportQueue;
+    private HumanFortress.App.Jobs.TransportJobSystem? _transportJobs;
     private HumanFortress.Simulation.Orders.MiningSystem? _miningPlanner;
+    private HumanFortress.Simulation.Orders.BuildableConstructionSystem? _buildablePlanner;
+    private HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner? _cmPlanner;
     private HumanFortress.App.Jobs.MiningJobSystem? _miningJobs;
     private HumanFortress.Simulation.Orders.ConstructionSystem? _constructionPlanner;
     private HumanFortress.App.Jobs.ConstructionJobSystem? _constructionJobs;
+    private HumanFortress.App.Jobs.CraftPlanner? _craftPlanner;
+    private HumanFortress.App.Jobs.CraftJobSystem? _craftJobs;
+    private HumanFortress.App.Jobs.ProfessionAssignments? _professionAssignments;
     private NavigationManager? _navManager;
+    private HumanFortress.App.Jobs.UnifiedJobsOrchestrator? _jobsOrchestrator;
+    private HumanFortress.App.Jobs.SchedulerTunings? _schedulerTunings;
+    private HumanFortress.App.Jobs.WorkshopTunings? _workshopTunings;
+    private JobsDebugData? _jobsDebugCache;
+    private ulong _jobsDebugCacheTick = 0;
+    private const ulong JobsDebugRefreshTicks = 10;
 
     public GameStateManager(ulong masterSeed)
     {
@@ -65,12 +78,60 @@ public sealed class GameStateManager
     public TickScheduler TickScheduler => _tickScheduler;
 
     public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => _haulingPlanner;
-    public HumanFortress.App.Jobs.HaulJobSystem? HaulJobs => _haulJobs;
+    public HumanFortress.Simulation.Jobs.ITransportRequestQueue? TransportQueue => _transportQueue;
+    public HumanFortress.App.Jobs.TransportJobSystem? TransportJobs => _transportJobs;
     public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => _miningPlanner;
     public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => _miningJobs;
     public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => _constructionPlanner;
     public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => _constructionJobs;
+    public HumanFortress.App.Jobs.CraftPlanner? CraftPlanner => _craftPlanner;
+    public HumanFortress.App.Jobs.CraftJobSystem? CraftJobs => _craftJobs;
+    public HumanFortress.App.Jobs.ProfessionAssignments? ProfessionAssignments => _professionAssignments;
     public NavigationManager? NavManager => _navManager;
+    public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => _jobsOrchestrator;
+    public HumanFortress.App.Jobs.SchedulerTunings? SchedulerTunings => _schedulerTunings;
+    public HumanFortress.App.Jobs.WorkshopTunings? WorkshopTunings => _workshopTunings;
+
+    /// <summary>
+    /// Cached debug data for Jobs/Work drawer. Gated by SchedulerTunings.DebugPanel.
+    /// Refreshes every JobsDebugRefreshTicks unless force=true.
+    /// </summary>
+    public JobsDebugData? GetJobsDebugData(ulong tick, bool force = false)
+    {
+        if (_schedulerTunings == null || !_schedulerTunings.DebugPanel) return null;
+        if (!force && _jobsDebugCache.HasValue && (tick - _jobsDebugCacheTick) < JobsDebugRefreshTicks)
+            return _jobsDebugCache;
+
+        var transport = _transportJobs?.GetDebugSnapshot(
+            maxActive: 8,
+            maxRequests: 8,
+            includeSeeds: _schedulerTunings.DebugPanel);
+        var mining = _miningJobs?.GetDebugSnapshot(
+            maxActive: 8,
+            includeSeeds: _schedulerTunings.DebugPanel);
+
+        var craft = _craftJobs?.GetLastStatsSnapshot();
+
+        _jobsDebugCache = new JobsDebugData(
+            Tick: tick,
+            Transport: transport,
+            Mining: mining,
+            Craft: craft,
+            Tunings: _schedulerTunings);
+        _jobsDebugCacheTick = tick;
+        return _jobsDebugCache;
+    }
+
+    public IReadOnlyList<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry> GetProfessionRosterSnapshot()
+    {
+        if (_professionAssignments == null) return Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
+        return _professionAssignments.GetRosterSnapshot(_world);
+    }
+
+    public void SetProfessionWeight(Guid workerId, string professionId, int weight)
+    {
+        _professionAssignments?.SetWeight(workerId, professionId, weight);
+    }
 
     /// <summary>
     /// Enqueue a simulation command.
@@ -199,6 +260,25 @@ public sealed class GameStateManager
             }
 
             Logger.Log($"[GameStateManager] Loaded {_world.Creatures.DefinitionCount} creatures, {_world.Items.DefinitionCount} items, {_world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
+
+            // Load buildable constructions (workshops, etc.) into ConstructionRegistry (App-layer pass per CONTENT_REGISTRY_OVERVIEW.md)
+            try
+            {
+                LoadBuildableConstructions(Path.Combine(dataPath, "workshops"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[CONSTR.REG] ERROR: failed loading constructions: {ex.Message}");
+            }
+
+            try
+            {
+                LoadRecipeDefinitions(Path.Combine(dataPath, "recipes"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Log($"[RECIPES] ERROR: failed loading recipes: {ex.Message}");
+            }
         }
         else
         {
@@ -206,6 +286,428 @@ public sealed class GameStateManager
             Logger.Log($"  - {path1}");
             Logger.Log($"  - {Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core")}");
         }
+    }
+
+    /// <summary>
+    /// App-layer loader for buildable constructions (workshops etc.).
+    /// Reads data/core/workshops/core_workshop_*.json files and publishes into ConstructionRegistry.
+    /// </summary>
+    private static void LoadBuildableConstructions(string workshopsDir)
+    {
+        if (!Directory.Exists(workshopsDir))
+        {
+            Logger.Log($"[CONSTR.REG] workshops dir not found: {workshopsDir}");
+            return;
+        }
+
+        var files = new List<string>();
+        // Load all core_workshop_*.json files
+        foreach (var f in Directory.GetFiles(workshopsDir, "core_workshop_*.json", SearchOption.TopDirectoryOnly))
+        {
+            files.Add(f);
+        }
+
+        // Fallback: also check for legacy workshops.json in parent placeable directory (for backward compatibility)
+        var legacyPath = Path.Combine(Path.GetDirectoryName(workshopsDir) ?? "", "placeable", "workshops.json");
+        if (File.Exists(legacyPath))
+        {
+            files.Add(legacyPath);
+            Logger.Log($"[CONSTR.REG] loading legacy workshops.json from placeable dir");
+        }
+
+        var defs = new List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
+        int errors = 0;
+        foreach (var file in files)
+        {
+            try
+            {
+                foreach (var d in ParseConstructionsFile(file))
+                {
+                    // Only accept entries that have a placeable_profile (L2) for this iteration
+                    if (d.PlaceableProfile != null && d.PlaceableProfile.Footprint.W > 0 && d.PlaceableProfile.Footprint.D > 0)
+                    {
+                        defs.Add(d);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errors++;
+                Logger.Log($"[CONSTR.REG] error parsing {Path.GetFileName(file)}: {ex.Message}");
+            }
+        }
+
+        // Publish to registry
+        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        reg.Clear();
+        try
+        {
+            reg.LoadConstructions(defs);
+        }
+        catch (Exception ex)
+        {
+            errors++;
+            Logger.Log($"[CONSTR.REG] load error: {ex.Message}");
+        }
+
+        var cats = string.Join(',', reg.GetAllCategories());
+        Logger.Log($"[CONSTR.REG] loaded={reg.Count} categories=[{cats}] errors={errors}");
+    }
+
+    private static void LoadRecipeDefinitions(string recipesDir)
+    {
+        if (!Directory.Exists(recipesDir))
+        {
+            Logger.Log($"[RECIPES] directory not found: {recipesDir}");
+            RecipeRegistry.Instance.Clear();
+            return;
+        }
+
+        var files = Directory.GetFiles(recipesDir, "*.json", SearchOption.TopDirectoryOnly);
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+        var defs = new List<RecipeDefinition>();
+        int errors = 0;
+        foreach (var file in files)
+        {
+            try
+            {
+                var json = File.ReadAllText(file);
+                var options = new System.Text.Json.JsonDocumentOptions
+                {
+                    AllowTrailingCommas = true,
+                    CommentHandling = System.Text.Json.JsonCommentHandling.Skip
+                };
+                using var doc = System.Text.Json.JsonDocument.Parse(json, options);
+                if (!doc.RootElement.TryGetProperty("recipes", out var arr) || arr.ValueKind != System.Text.Json.JsonValueKind.Array)
+                    continue;
+                foreach (var elem in arr.EnumerateArray())
+                {
+                    var def = ParseRecipeDefinition(elem);
+                    if (def != null)
+                        defs.Add(def);
+                }
+            }
+            catch (Exception ex)
+            {
+                errors++;
+                Logger.Log($"[RECIPES] error parsing {Path.GetFileName(file)}: {ex.Message}");
+            }
+        }
+
+        RecipeRegistry.Instance.LoadRecipes(defs);
+        Logger.Log($"[RECIPES] loaded={RecipeRegistry.Instance.Count} errors={errors}");
+    }
+
+    private static RecipeDefinition? ParseRecipeDefinition(System.Text.Json.JsonElement elem)
+    {
+        string id = elem.TryGetProperty("id", out var idEl) ? (idEl.GetString() ?? string.Empty) : string.Empty;
+        if (string.IsNullOrWhiteSpace(id)) return null;
+        string name = elem.TryGetProperty("name", out var nameEl) ? (nameEl.GetString() ?? id) : id;
+
+        var workshops = new List<string>();
+        if (elem.TryGetProperty("workshops", out var wsArr) && wsArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var ws in wsArr.EnumerateArray())
+            {
+                var idStr = ws.GetString();
+                if (!string.IsNullOrWhiteSpace(idStr))
+                    workshops.Add(idStr);
+            }
+        }
+        else if (elem.TryGetProperty("workshop_id", out var singleWs) && singleWs.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            var idStr = singleWs.GetString();
+            if (!string.IsNullOrWhiteSpace(idStr))
+                workshops.Add(idStr);
+        }
+        else if (elem.TryGetProperty("workshop", out var legacyWs) && legacyWs.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            var idStr = legacyWs.GetString();
+            if (!string.IsNullOrWhiteSpace(idStr))
+                workshops.Add(idStr);
+        }
+
+        if (workshops.Count == 0) return null;
+
+        int duration = 600;
+        if (elem.TryGetProperty("work_time", out var workObj) && workObj.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            duration = workObj.TryGetProperty("duration_ticks", out var dt) ? dt.GetInt32() : duration;
+        }
+        else if (elem.TryGetProperty("duration_ticks", out var simpleDur) && simpleDur.ValueKind == System.Text.Json.JsonValueKind.Number)
+        {
+            duration = simpleDur.GetInt32();
+        }
+
+        string skill = "craft";
+        if (elem.TryGetProperty("skill", out var skillObj) && skillObj.ValueKind == System.Text.Json.JsonValueKind.Object)
+        {
+            if (skillObj.TryGetProperty("primary", out var prim) && prim.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                skill = prim.GetString() ?? skill;
+            }
+        }
+        else if (elem.TryGetProperty("primary_skill", out var ps) && ps.ValueKind == System.Text.Json.JsonValueKind.String)
+        {
+            skill = ps.GetString() ?? skill;
+        }
+
+        string? era = elem.TryGetProperty("era", out var eraEl) && eraEl.ValueKind == System.Text.Json.JsonValueKind.String
+            ? eraEl.GetString()
+            : null;
+
+        var inputs = new List<RecipeIngredient>();
+        if (elem.TryGetProperty("inputs", out var inputsArr) && inputsArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var input in inputsArr.EnumerateArray())
+            {
+                string defId = input.TryGetProperty("def_id", out var did) ? (did.GetString() ?? string.Empty) : string.Empty;
+                if (string.IsNullOrWhiteSpace(defId)) continue;
+                int count = input.TryGetProperty("count", out var cnt) ? cnt.GetInt32() : 1;
+                inputs.Add(new RecipeIngredient { DefId = defId, Count = Math.Max(1, count) });
+            }
+        }
+
+        var outputs = new List<RecipeOutput>();
+        if (elem.TryGetProperty("outputs", out var outputsArr) && outputsArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var output in outputsArr.EnumerateArray())
+            {
+                string defId = output.TryGetProperty("def_id", out var did) ? (did.GetString() ?? string.Empty) : string.Empty;
+                if (string.IsNullOrWhiteSpace(defId)) continue;
+                int count = output.TryGetProperty("count", out var cnt) ? cnt.GetInt32() : 1;
+                outputs.Add(new RecipeOutput { DefId = defId, Count = Math.Max(1, count) });
+            }
+        }
+
+        if (outputs.Count == 0) return null;
+
+        var enablers = new List<string>();
+        if (elem.TryGetProperty("requires_enablers", out var reqArr) && reqArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var req in reqArr.EnumerateArray())
+            {
+                var val = req.GetString();
+                if (!string.IsNullOrWhiteSpace(val))
+                    enablers.Add(val);
+            }
+        }
+        else if (elem.TryGetProperty("requirements", out var reqObj) && reqObj.ValueKind == System.Text.Json.JsonValueKind.Object
+                 && reqObj.TryGetProperty("enablers", out var reqObjArr) && reqObjArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var req in reqObjArr.EnumerateArray())
+            {
+                var val = req.GetString();
+                if (!string.IsNullOrWhiteSpace(val))
+                    enablers.Add(val);
+            }
+        }
+
+        return new RecipeDefinition
+        {
+            Id = id,
+            Name = name,
+            Workshops = workshops.ToArray(),
+            Inputs = inputs.ToArray(),
+            Outputs = outputs.ToArray(),
+            RequiredEnablers = enablers.ToArray(),
+            DurationTicks = Math.Max(1, duration),
+            PrimarySkill = string.IsNullOrWhiteSpace(skill) ? "craft" : skill,
+            Era = era
+        };
+    }
+
+    private static IEnumerable<HumanFortress.Core.Content.Registry.ConstructionDefinition> ParseConstructionsFile(string file)
+    {
+        using var fs = File.OpenRead(file);
+        using var doc = System.Text.Json.JsonDocument.Parse(fs);
+        var root = doc.RootElement;
+
+        // Support both "constructions" and "workshops" arrays
+        System.Text.Json.JsonElement arr;
+        bool isWorkshopFile = false;
+        if (root.TryGetProperty("workshops", out arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            isWorkshopFile = true;
+        }
+        else if (root.TryGetProperty("constructions", out arr) && arr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            isWorkshopFile = false;
+        }
+        else
+        {
+            yield break;
+        }
+
+        // Parse attachments array if present (for workshop files)
+        HumanFortress.Core.Content.Registry.WorkshopAttachment[]? attachments = null;
+        if (isWorkshopFile && root.TryGetProperty("attachments", out var attachArr) && attachArr.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            attachments = ParseAttachments(attachArr);
+        }
+
+        foreach (var elem in arr.EnumerateArray())
+        {
+            // We accept two shapes:
+            // A) L2: has "placeable_profile": {...}
+            // B) Legacy: top-level footprint/passability (ignored here unless placeable_profile present)
+            var hasProfile = elem.TryGetProperty("placeable_profile", out var profileElem) && profileElem.ValueKind == System.Text.Json.JsonValueKind.Object;
+            if (!hasProfile)
+            {
+                // Skip legacy L0 definitions in this pass
+                continue;
+            }
+
+            var def = new HumanFortress.Core.Content.Registry.ConstructionDefinition();
+            def.Id = elem.GetProperty("id").GetString() ?? string.Empty;
+            def.Name = elem.TryGetProperty("name", out var nameE) ? (nameE.GetString() ?? def.Id) : def.Id;
+            def.Category = elem.TryGetProperty("category", out var catE) ? (catE.GetString() ?? "") : "";
+            def.BuildTimeTicks = elem.TryGetProperty("build_time_ticks", out var btE) ? btE.GetInt32() : 1000;
+
+            // Materials: prefer material_costs; fallback to materials_required
+            var mats = new List<HumanFortress.Core.Content.Registry.MaterialCost>();
+            if (elem.TryGetProperty("material_costs", out var mcE) && mcE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var m in mcE.EnumerateArray())
+                {
+                    var mc = new HumanFortress.Core.Content.Registry.MaterialCost
+                    {
+                        Tag = m.TryGetProperty("tag", out var tagE) ? tagE.GetString() : null,
+                        DefId = m.TryGetProperty("def_id", out var didE) ? didE.GetString() : (m.TryGetProperty("defId", out var did2E) ? did2E.GetString() : null),
+                        Count = m.TryGetProperty("count", out var cntE) ? cntE.GetInt32() : 1
+                    };
+                    mats.Add(mc);
+                }
+            }
+            else if (elem.TryGetProperty("materials_required", out var mrE) && mrE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                foreach (var m in mrE.EnumerateArray())
+                {
+                    var mc = new HumanFortress.Core.Content.Registry.MaterialCost
+                    {
+                        Tag = m.TryGetProperty("tag", out var tagE) ? tagE.GetString() : null,
+                        DefId = m.TryGetProperty("def_id", out var didE) ? didE.GetString() : (m.TryGetProperty("defId", out var did2E) ? did2E.GetString() : null),
+                        Count = m.TryGetProperty("count", out var cntE) ? cntE.GetInt32() : 1
+                    };
+                    mats.Add(mc);
+                }
+            }
+            // Use materials as defined in JSON (pure data-driven)
+            def.MaterialCosts = mats.ToArray();
+
+            // Placeable profile
+            var pp = new HumanFortress.Core.Content.Registry.PlaceableProfile();
+            var fpE = profileElem.GetProperty("footprint");
+            var fp = new HumanFortress.Core.Content.Registry.Footprint(
+                w: fpE.GetProperty("w").GetInt32(),
+                d: fpE.GetProperty("d").GetInt32(),
+                h: fpE.TryGetProperty("h", out var hE) ? hE.GetInt32() : 1);
+            pp.Footprint = fp;
+            // passability: string -> enum
+            if (profileElem.TryGetProperty("passability", out var passE))
+            {
+                var s = (passE.GetString() ?? "nonblocking").Trim().ToLowerInvariant();
+                pp.Passability = s switch
+                {
+                    "blocking" => HumanFortress.Core.Content.Registry.PassabilityMode.Blocking,
+                    "doorway" => HumanFortress.Core.Content.Registry.PassabilityMode.Doorway,
+                    _ => HumanFortress.Core.Content.Registry.PassabilityMode.Nonblocking
+                };
+            }
+            pp.RequiresFloor = profileElem.TryGetProperty("requires_floor", out var rfE) && rfE.GetBoolean();
+            pp.ClearanceH = profileElem.TryGetProperty("clearance_h", out var clE) ? clE.GetInt32() : 0;
+            pp.BlocksLight = profileElem.TryGetProperty("blocks_light", out var blE) && blE.GetBoolean();
+
+            if (profileElem.TryGetProperty("tags", out var tagsE) && tagsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                pp.Tags = tagsE.EnumerateArray().Select(t => t.GetString() ?? string.Empty).Where(t => !string.IsNullOrWhiteSpace(t)).ToArray();
+            }
+
+            var eff = new HumanFortress.Core.Content.Registry.EffectsBlock();
+            if (profileElem.TryGetProperty("effects", out var effE) && effE.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                eff.Beauty = effE.TryGetProperty("beauty", out var bE) ? bE.GetInt32() : 0;
+                eff.Comfort = effE.TryGetProperty("comfort", out var cE) ? cE.GetInt32() : 0;
+                eff.LightLumen = effE.TryGetProperty("light_lumen", out var lE) ? lE.GetInt32() : 0;
+                eff.HeatW = effE.TryGetProperty("heat_w", out var h2E) ? h2E.GetInt32() : 0;
+            }
+            pp.Effects = eff;
+            def.PlaceableProfile = pp;
+
+            // Parse workshop-specific fields (optional)
+            if (elem.TryGetProperty("io", out var ioE) && ioE.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                def.Io = new HumanFortress.Core.Content.Registry.WorkshopIo
+                {
+                    InputSlots = ioE.TryGetProperty("input_slots", out var inE) ? inE.GetInt32() : 4,
+                    OutputSlots = ioE.TryGetProperty("output_slots", out var outE) ? outE.GetInt32() : 4,
+                    BufferSlots = ioE.TryGetProperty("buffer_slots", out var bufE) ? bufE.GetInt32() : 2
+                };
+            }
+
+            if (elem.TryGetProperty("attachment_slots", out var slotsE) && slotsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                def.AttachmentSlots = slotsE.EnumerateArray()
+                    .Select(s => s.GetString() ?? "")
+                    .Where(s => !string.IsNullOrWhiteSpace(s))
+                    .ToArray();
+            }
+
+            if (elem.TryGetProperty("power_baseline_w", out var pwrE))
+            {
+                def.PowerBaselineW = pwrE.GetInt32();
+            }
+
+            if (elem.TryGetProperty("era_min", out var eMinE))
+            {
+                def.EraMin = eMinE.GetString();
+            }
+
+            if (elem.TryGetProperty("era_max", out var eMaxE))
+            {
+                def.EraMax = eMaxE.GetString();
+            }
+
+            // Attach the attachments array from file level (for workshop files)
+            if (attachments != null && attachments.Length > 0)
+            {
+                def.Attachments = attachments;
+            }
+
+            // Validate now to surface file-specific errors
+            def.Validate();
+            yield return def;
+        }
+    }
+
+    private static HumanFortress.Core.Content.Registry.WorkshopAttachment[] ParseAttachments(System.Text.Json.JsonElement attachArr)
+    {
+        var list = new List<HumanFortress.Core.Content.Registry.WorkshopAttachment>();
+        foreach (var elem in attachArr.EnumerateArray())
+        {
+            var att = new HumanFortress.Core.Content.Registry.WorkshopAttachment
+            {
+                Id = elem.TryGetProperty("id", out var idE) ? (idE.GetString() ?? "") : "",
+                Name = elem.TryGetProperty("name", out var nameE) ? (nameE.GetString() ?? "") : "",
+                Slot = elem.TryGetProperty("slot", out var slotE) ? (slotE.GetString() ?? "") : "",
+                Era = elem.TryGetProperty("era", out var eraE) ? eraE.GetString() : null,
+                EraMin = elem.TryGetProperty("era_min", out var eMinE) ? eMinE.GetString() : null,
+                EraMax = elem.TryGetProperty("era_max", out var eMaxE) ? eMaxE.GetString() : null,
+                UpgradeTo = elem.TryGetProperty("upgrade_to", out var upgE) ? upgE.GetString() : null,
+                PowerW = elem.TryGetProperty("power_w", out var pwrE) ? pwrE.GetInt32() : 0
+            };
+
+            if (elem.TryGetProperty("tags", out var tagsE) && tagsE.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                att.Tags = tagsE.EnumerateArray()
+                    .Select(t => t.GetString() ?? "")
+                    .Where(t => !string.IsNullOrWhiteSpace(t))
+                    .ToArray();
+            }
+
+            list.Add(att);
+        }
+        return list.ToArray();
     }
 
     /// <summary>
@@ -243,34 +745,81 @@ public sealed class GameStateManager
         if (_world == null)
             throw new InvalidOperationException("World not initialized");
 
-        // Register systems with tick scheduler
-        // Mining planner produces planned digs from mining designations
+        // Instantiate planners (not registered directly)
         _miningPlanner = new HumanFortress.Simulation.Orders.MiningSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_miningPlanner);
-
-        // Mining job executor moves to adjacency and digs
-        _miningJobs = new HumanFortress.App.Jobs.MiningJobSystem(_world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager);
-        _tickScheduler.RegisterSystem(_miningJobs);
-
-        // Hauling planner produces planned moves from haul designations
-        _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_haulingPlanner);
-
-        // Haul job executor assigns creatures and moves items along paths
-        _haulJobs = new HumanFortress.App.Jobs.HaulJobSystem(_world, _haulingPlanner, _diffLog, _navManager);
-        _tickScheduler.RegisterSystem(_haulJobs);
-
-        // L0 Construction planner and job executor
+        _transportQueue = new HumanFortress.Simulation.Jobs.TransportRequestQueue();
+        _haulingPlanner = new HumanFortress.Simulation.Orders.HaulingSystem(_world, _world.Orders, transportIntake: _transportQueue);
+        _cmPlanner = new HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner(_world, _transportQueue);
+        // Wire up construction materials planner logging
+        HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner.LogCallback = msg => Logger.Log(msg);
         _constructionPlanner = new HumanFortress.Simulation.Orders.ConstructionSystem(_world, _world.Orders);
-        _tickScheduler.RegisterSystem(_constructionPlanner);
-        _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(_world, _constructionPlanner, _diffLog);
-        _tickScheduler.RegisterSystem(_constructionJobs);
+        _buildablePlanner = new HumanFortress.Simulation.Orders.BuildableConstructionSystem(_world, _world.Orders);
+
+        // Load scheduler tunings (fallback to defaults when missing)
+        var baseDir = AppContext.BaseDirectory;
+        _schedulerTunings = HumanFortress.App.Jobs.SchedulerTunings.LoadFromContent(baseDir);
+        _workshopTunings = HumanFortress.App.Jobs.WorkshopTunings.LoadFromContent(baseDir);
+        var professionRegistry = HumanFortress.App.Jobs.ProfessionRegistry.Load(baseDir);
+        _professionAssignments = new HumanFortress.App.Jobs.ProfessionAssignments(professionRegistry);
+        _jobsDebugCache = null;
+        _jobsDebugCacheTick = 0;
+
+        // Executors (honor per-tick intake budgets & backpressure window)
+        _miningJobs = new HumanFortress.App.Jobs.MiningJobSystem(
+            _world, _miningPlanner, _diffLog, _itemsDiffLog, _navManager,
+            intakeBudget: _schedulerTunings.Mining.PlanPerTick,
+            carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks,
+            professions: _professionAssignments,
+            workerStrategy: _schedulerTunings.WorkerSelection);
+        _transportJobs = new HumanFortress.App.Jobs.TransportJobSystem(
+            _world, _transportQueue!, _diffLog, _navManager,
+            intakeBudget: _schedulerTunings.Hauling.PlanPerTick,
+            carryoverMaxTicks: _schedulerTunings.BackpressureMaxCarryoverTicks,
+            maxActiveJobs: _schedulerTunings.HaulingLimits.MaxActive,
+            professions: _professionAssignments,
+            workerStrategy: _schedulerTunings.WorkerSelection);
+        _constructionJobs = new HumanFortress.App.Jobs.ConstructionJobSystem(
+            _world, _constructionPlanner, _diffLog,
+            maxPerTick: _schedulerTunings.Construction.PlanPerTick);
+        _craftPlanner = new HumanFortress.App.Jobs.CraftPlanner(
+            _world,
+            _transportQueue!,
+            _workshopTunings ?? new HumanFortress.App.Jobs.WorkshopTunings());
+        _craftJobs = new HumanFortress.App.Jobs.CraftJobSystem(
+            _world,
+            _craftPlanner,
+            _diffLog,
+            _navManager,
+            _professionAssignments,
+            _schedulerTunings.WorkerSelection);
+
+        // Register sanitizer (low-frequency safety net)
+        var sanitizer = new HumanFortress.App.Jobs.SanitizeSystem(_world, intervalTicks: 40, maxPerTick: 8);
+
+        // Register unified jobs orchestrator (v1 single-threaded orchestration)
+        _jobsOrchestrator = new HumanFortress.App.Jobs.UnifiedJobsOrchestrator(
+            _haulingPlanner,
+            _cmPlanner,
+            _miningPlanner,
+            _constructionPlanner,
+            _craftPlanner,
+            _transportJobs,
+            _miningJobs,
+            _constructionJobs,
+            _craftJobs,
+            _schedulerTunings
+        );
+        // Buildable planner is independent (read-only, places sites). Run before orchestrator writes.
+        _tickScheduler.RegisterSystem(_buildablePlanner);
+        _tickScheduler.RegisterSystem(_jobsOrchestrator);
+        _tickScheduler.RegisterSystem(sanitizer);
 
         // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
         _tickScheduler.PostTick += OnPostTickApplyDiffs;
 
         // Ensure we have initial workers to execute jobs (spawn dwarves on nearby standable tiles)
         TrySpawnInitialWorkers();
+        _professionAssignments?.Initialize(_world.Creatures.GetAllInstances());
 
         // Optional self-test: enqueue a mining order automatically for reproducible logs
         if (Program.AutoDig)
@@ -416,7 +965,8 @@ public sealed class GameStateManager
                             if (wx < 0 || wy < 0 || wx >= tiles || wy >= tiles) continue;
                             var t = _world.GetTile(wx, wy, z);
                             if (t == null) continue;
-                            if (!t.Value.IsStandable) continue; // require OpenWithFloor
+                            // Prefer standable floors; fallback to any walkable (ramp/slope/stairs) if floors are scarce
+                            if (!(t.Value.IsStandable || t.Value.IsWalkable)) continue;
 
                             var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
                             if (guid.HasValue)
@@ -439,7 +989,7 @@ public sealed class GameStateManager
                         for (int wx = 0; wx < tiles && spawned < desired; wx++)
                         {
                             var t = _world.GetTile(wx, wy, z);
-                            if (t == null || !t.Value.IsStandable) continue;
+                            if (t == null || !(t.Value.IsStandable || t.Value.IsWalkable)) continue;
                             var guid = _world.Creatures.SpawnCreature("core_race_dwarf", new SadRogue.Primitives.Point(wx, wy), z, "player", 0);
                             if (guid.HasValue) spawned++;
                         }
@@ -476,6 +1026,13 @@ public sealed class GameStateManager
         public IWorldReader World => _world;
         public IEventBus EventBus => _eventBus;
     }
+
+    public readonly record struct JobsDebugData(
+        ulong Tick,
+        HumanFortress.App.Jobs.TransportJobSystem.TransportDebugSnapshot? Transport,
+        HumanFortress.App.Jobs.MiningJobSystem.MiningDebugSnapshot? Mining,
+        HumanFortress.App.Jobs.CraftJobStatsSnapshot? Craft,
+        HumanFortress.App.Jobs.SchedulerTunings? Tunings);
 
     /// <summary>
     /// Shutdown and cleanup all systems before application exit.

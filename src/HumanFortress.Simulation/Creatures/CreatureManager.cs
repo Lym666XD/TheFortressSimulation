@@ -185,11 +185,11 @@ public sealed class CreatureManager
 
             Console.WriteLine($"[CreatureManager] Chunk found, getting tile...");
 
-            // Validate tile is walkable (OpenWithFloor)
+            // Validate tile is walkable (allow floors, ramps, slopes, stairs)
             var tile = chunk.GetTile(localX, localY);
             Console.WriteLine($"[CreatureManager] Tile kind: {tile.Kind}");
 
-            if (tile.Kind != TerrainKind.OpenWithFloor)
+            if (!tile.IsWalkable)
             {
                 Console.WriteLine($"[CreatureManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
                 return null;

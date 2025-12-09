@@ -1,0 +1,267 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_tailor",
+      "name": "Tailoring Workshop",
+      "tags": [
+        "workshop",
+        "clothing",
+        "textile",
+        "tailor"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 6,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1000,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "tailoring"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_tailor_cut_block",
+      "name": "Cutting Block & Needles",
+      "slot": "cut_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tailor_cut_board_shears",
+      "tags": [
+        "cut",
+        "needles"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_cut_board_shears",
+      "name": "Tailor’s Board & Broad Shears",
+      "slot": "cut_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_cut_table_patterns",
+      "tags": [
+        "cut",
+        "shears"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_cut_table_patterns",
+      "name": "Large Cutting Table & Patterns",
+      "slot": "cut_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "cut",
+        "patterns",
+        "measure"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_stitch_needles",
+      "name": "Hand Stitch Kit",
+      "slot": "stitch_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tailor_stitch_palm_thimble",
+      "tags": [
+        "stitch",
+        "sew"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_stitch_palm_thimble",
+      "name": "Palm & Thimble Set",
+      "slot": "stitch_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_stitch_fine_kit",
+      "tags": [
+        "stitch",
+        "thimble"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_stitch_fine_kit",
+      "name": "Fine Needles & Awls",
+      "slot": "stitch_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "stitch",
+        "fine"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_press_airing_rail",
+      "name": "Airing Rail & Pressing Board",
+      "slot": "press_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tailor_press_seam_mallet",
+      "tags": [
+        "press",
+        "airing"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_press_seam_mallet",
+      "name": "Seam Mallet & Clapper",
+      "slot": "press_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_press_box_iron",
+      "tags": [
+        "press",
+        "seam"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_press_box_iron",
+      "name": "Pressing Bench & Box Iron",
+      "slot": "press_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "press",
+        "iron"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_spin_spindle_distaff",
+      "name": "Spindle & Distaff",
+      "slot": "spinning_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tailor_spin_wheel",
+      "tags": [
+        "spinning",
+        "fiber"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_spin_wheel",
+      "name": "Spinning Wheel",
+      "slot": "spinning_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_spin_flyer",
+      "tags": [
+        "spinning",
+        "wheel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_spin_flyer",
+      "name": "Flyer Spinning Wheel",
+      "slot": "spinning_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "spinning",
+        "flyer"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_loom_warp_weighted",
+      "name": "Warp-Weighted Loom",
+      "slot": "loom_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tailor_loom_treadle",
+      "tags": [
+        "loom",
+        "weaving"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_loom_treadle",
+      "name": "Horizontal Treadle Loom",
+      "slot": "loom_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_loom_wide_frame",
+      "tags": [
+        "loom",
+        "treadle"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_loom_wide_frame",
+      "name": "Wide Frame Loom",
+      "slot": "loom_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "loom",
+        "frame"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_leather_awl_punch",
+      "name": "Leather Awl & Punch Bench",
+      "slot": "leather_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tailor_leather_rivet_press",
+      "tags": [
+        "leather",
+        "awl",
+        "punch"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tailor_leather_rivet_press",
+      "name": "Rivet & Strapping Press",
+      "slot": "leather_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "leather",
+        "rivet",
+        "press"
+      ],
+      "power_w": 0
+    }
+  ]
+}

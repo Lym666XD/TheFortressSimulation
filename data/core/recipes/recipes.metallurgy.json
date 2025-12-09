@@ -1,0 +1,2509 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_bloomery_wrought_from_hematite_c",
+      "name": "Bloomery Wrought From Hematite C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_bloomery",
+          "core_attach_power_bellows_hand",
+          "core_attach_power_hammer_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_hematite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_bloomery_wrought_from_magnetite_c",
+      "name": "Bloomery Wrought From Magnetite C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_bloomery",
+          "core_attach_power_bellows_hand",
+          "core_attach_power_hammer_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 11
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_magnetite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_bloomery_wrought_from_limonite_goethite_c",
+      "name": "Bloomery Wrought From Limonite Goethite C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_bloomery",
+          "core_attach_power_bellows_hand",
+          "core_attach_power_hammer_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_limonite_goethite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_shaft_pig_iron_from_hematite_m",
+      "name": "Shaft Pig Iron From Hematite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_shaft",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 23
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_hematite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_shaft_pig_iron_from_magnetite_m",
+      "name": "Shaft Pig Iron From Magnetite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_shaft",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 22
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_magnetite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_shaft_pig_iron_from_limonite_goethite_m",
+      "name": "Shaft Pig Iron From Limonite Goethite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_shaft",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 18
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_limonite_goethite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_blast_pig_iron_from_hematite_r",
+      "name": "Blast Pig Iron From Hematite R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 132000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_blast",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 25
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_hematite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_blast_pig_iron_from_magnetite_r",
+      "name": "Blast Pig Iron From Magnetite R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 132000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_blast",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 24
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_magnetite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_blast_pig_iron_from_limonite_goethite_r",
+      "name": "Blast Pig Iron From Limonite Goethite R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 132000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_blast",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 10,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_iron_limonite_goethite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_finery_to_wrought_m",
+      "name": "Finery To Wrought M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_hearth_finery",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 15
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_finery_to_wrought_r",
+      "name": "Finery To Wrought R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 84000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_hearth_finery_improved",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 16
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 4,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cementation_small_m",
+      "name": "Cementation Small M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 216000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_chest_cementation"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_steel",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_clay_sealing",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cementation_large_r",
+      "name": "Cementation Large R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 252000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_cementation_large"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_steel_fine",
+          "count": 9
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_clay_sealing",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_finery_direct_steel_r",
+      "name": "Finery Direct Steel R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_hearth_finery_improved",
+          "core_attach_power_bellows_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_steel_fine",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_pig",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_carbonate_crucible_c",
+      "name": "Cu Carbonate Crucible C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crucible_copper"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 11
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_copper_malachite_azurite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_sulfide_roast_bed_m",
+      "name": "Cu Sulfide Roast Bed M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_roaster_bed_cu"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_copper_calcine_roasted_chalcopyrite",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_copper_chalcopyrite",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_sulfide_roast_bed_bornite_m",
+      "name": "Cu Sulfide Roast Bed Bornite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_roaster_bed_cu"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_copper_calcine_roasted_bornite",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_copper_bornite",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_sulfide_roast_tall_r",
+      "name": "Cu Sulfide Roast Tall R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_roaster_bed_cu_tall"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_mix_copper_calcine_roasted_chalcopyrite",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_copper_chalcopyrite",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_blister_from_calcine_chalcopyrite_m",
+      "name": "Cu Blister From Calcine Chalcopyrite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_reverb"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_copper_blister",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_mix_copper_calcine_roasted_chalcopyrite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_blister_from_calcine_bornite_m",
+      "name": "Cu Blister From Calcine Bornite M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_reverb"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_copper_blister",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_mix_copper_calcine_roasted_bornite",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cu_fire_refine_m",
+      "name": "Cu Fire Refine M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_reverb"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper_blister",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_bronze_alloy_crucible_c",
+      "name": "Bronze Alloy Crucible C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crucible_copper"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_bronze",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_ore_tin_cassiterite",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_bronze_alloy_in_furnace_m",
+      "name": "Bronze Alloy In Furnace M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_reverb"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_bronze",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper_blister",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_ore_tin_cassiterite",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_bronze_alloy_in_furnace_r",
+      "name": "Bronze Alloy In Furnace R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_reverb_large"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_bronze",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper_blister",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_ore_tin_cassiterite",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_brass_cementation_c",
+      "name": "Brass Cementation C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_bench_cementation_brass"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_brass",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_ore_zinc_calamine",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_brass_cementation_m",
+      "name": "Brass Cementation M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 138000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_bench_cementation_brass"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_brass",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_ore_zinc_calamine",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_brass_cementation_r",
+      "name": "Brass Cementation R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 132000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_bench_cementation_brass"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_brass",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 20
+        },
+        {
+          "def_id": "core_item_ore_zinc_calamine",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_c",
+      "name": "Lead From Galena C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_m",
+      "name": "Lead From Galena M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_r",
+      "name": "Lead From Galena R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_silvered_c",
+      "name": "Lead From Galena Silvered C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena_silvered",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_silvered_m",
+      "name": "Lead From Galena Silvered M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena_silvered",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_lead_from_galena_silvered_r",
+      "name": "Lead From Galena Silvered R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_lead"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 6,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_lead_galena_silvered",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cupellation_silver_c",
+      "name": "Cupellation Silver C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 126000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_cupel_hearth"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_silver",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_oxide_litharge_pbo",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cupellation_silver_m",
+      "name": "Cupellation Silver M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 126000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_cupel_hearth"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_silver",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_oxide_litharge_pbo",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cupellation_silver_r",
+      "name": "Cupellation Silver R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 126000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_cupel_hearth"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_silver",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_oxide_litharge_pbo",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_litharge_reduce_m",
+      "name": "Litharge Reduce M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_cupel_reclaim"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_oxide_litharge_pbo",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_litharge_reduce_r",
+      "name": "Litharge Reduce R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_cupel_reclaim"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead",
+          "count": 9
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_oxide_litharge_pbo",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_liquation_seiger_r",
+      "name": "Liquation Seiger R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 144000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_liquation"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_lead_bullion_silvered",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_copper",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_ingot_lead",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cinnabar_roast_pan_c",
+      "name": "Cinnabar Roast Pan C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_roaster_cinnabar_pan"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_liquid_mercury",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_mercury_cinnabar",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cinnabar_roast_brick_m",
+      "name": "Cinnabar Roast Brick M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_roaster_cinnabar_brick"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_liquid_mercury",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_mercury_cinnabar",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_cinnabar_closed_distill_r",
+      "name": "Cinnabar Closed Distill R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 96000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_still_mercury_closed"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_liquid_mercury",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_mercury_cinnabar",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_gold_placer_c",
+      "name": "Gold Placer C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crucible_copper"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_gold",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_gold_placer",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_gold_quartz_c",
+      "name": "Gold Quartz C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_crucible_copper"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ingot_gold",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_waste_chem_slag",
+          "count": 5,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ore_gold_quartz",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_rock_limestone_flux",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_siege_ballista_head_c",
+      "name": "Siege Ballista Head C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_ballista_head",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_siege_ballista_head_m",
+      "name": "Siege Ballista Head M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_ballista_head",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_siege_ballista_head_r",
+      "name": "Siege Ballista Head R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 45000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_ballista_head",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_artillery_cannonball_m",
+      "name": "Artillery Cannonball M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_cannonball_solid",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_artillery_cannonball_r",
+      "name": "Artillery Cannonball R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_cannonball_solid",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_artillery_canister_m",
+      "name": "Artillery Canister M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_canister_shot",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_ingot_bronze",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_artillery_canister_r",
+      "name": "Artillery Canister R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ammo_canister_shot",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ingot_iron_wrought",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_ingot_bronze",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mech_large_component_c",
+      "name": "Mech Large Component C",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_mechanical_large",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_ingot_iron_wrought",
+              "count": 6
+            },
+            {
+              "def_id": "core_item_ingot_bronze",
+              "count": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mech_large_component_m",
+      "name": "Mech Large Component M",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 96000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_mechanical_large",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_ingot_iron_wrought",
+              "count": 6
+            },
+            {
+              "def_id": "core_item_ingot_bronze",
+              "count": 6
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_mech_large_component_r",
+      "name": "Mech Large Component R",
+      "category": "metallurgy",
+      "workshops": [
+        "core_workshop_metallurgy_smeltery"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "smelting",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_power_hammer_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_mechanical_large",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_ingot_iron_wrought",
+              "count": 6
+            },
+            {
+              "def_id": "core_item_ingot_bronze",
+              "count": 6
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

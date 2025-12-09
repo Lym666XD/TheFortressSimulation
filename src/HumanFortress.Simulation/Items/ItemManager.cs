@@ -230,6 +230,38 @@ public sealed class ItemManager
     }
 
     /// <summary>
+    /// Split a stack into a new instance with takeCount units.
+    /// Reduces the original stack by takeCount and spawns a new item at the same position/Z.
+    /// Returns the new item's Guid, or null if split cannot be performed.
+    /// </summary>
+    public Guid? SplitStack(Guid sourceId, int takeCount)
+    {
+        if (takeCount <= 0) return null;
+        lock (_instanceLock)
+        {
+            if (!_instances.TryGetValue(sourceId, out var inst)) return null;
+            if (inst.StackCount <= takeCount) return null; // nothing to split if equal/full
+
+            inst.StackCount -= takeCount;
+            var newGuid = Guid.NewGuid();
+            var clone = new ItemInstance(newGuid, inst.DefinitionId, inst.Position, inst.Z, takeCount, inst.SpawnedAtTick)
+            {
+                MaterialId = inst.MaterialId,
+                OwnerFactionId = inst.OwnerFactionId,
+                OwnerCreatureGuid = inst.OwnerCreatureGuid,
+                UsePolicy = inst.UsePolicy,
+                Forbidden = inst.Forbidden
+            };
+            _instances[newGuid] = clone;
+            IndexAdd(newGuid, clone.Position, clone.Z);
+            string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
+            LogCallback?.Invoke(msg);
+            System.Console.WriteLine(msg);
+            return newGuid;
+        }
+    }
+
+    /// <summary>
     /// Set dependencies (called after initialization)
     /// </summary>
     public void SetDependencies(HumanFortress.Simulation.World.World world, ContentRegistry contentRegistry)
@@ -252,6 +284,7 @@ public sealed class ItemManager
         }
 
         var files = Directory.GetFiles(itemsPath, "*.json");
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
         int loaded = 0;
         int failed = 0;
 
@@ -309,6 +342,23 @@ public sealed class ItemManager
                             if (def.Tags.Any(t => string.Equals(t, "furniture", StringComparison.OrdinalIgnoreCase)))
                                 def.Kind = "placeable";
                         }
+                        // Enrich generic resource names with material for better UX in drawers/debug
+                        if (!string.IsNullOrWhiteSpace(def.FixedMaterial) && IsGenericResourceName(def.Name))
+                        {
+                            var oldName = def.Name;
+                            var mat = MaterialSuffixFriendly(def.FixedMaterial!);
+                            if (!string.IsNullOrEmpty(mat))
+                            {
+                                def.Name = $"{mat} {def.Name}";
+                                // DEBUG: Log name enrichment for boulders
+                                if (def.Id.Contains("boulder"))
+                                {
+                                    var msg = $"[ItemManager] Boulder name enriched: id={def.Id} '{oldName}' -> '{def.Name}' (mat={def.FixedMaterial})";
+                                    Console.WriteLine(msg);
+                                    LogCallback?.Invoke(msg);
+                                }
+                            }
+                        }
                         ValidateDefinition(def);
                         _definitions[def.Id] = def;
                         IndexByKind(def);
@@ -341,6 +391,31 @@ public sealed class ItemManager
         LogCallback?.Invoke(kindsMsg);
     }
 
+    // === Helpers (display/UX) ===
+    private static bool IsGenericResourceName(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        var n = name.Trim().ToLowerInvariant();
+        return n == "boulder" || n == "block" || n == "plank" || n == "log";
+    }
+
+    private static string MaterialSuffixFriendly(string materialId)
+    {
+        // Example: "core_mat_stone_granite" -> "Granite"
+        try
+        {
+            var parts = materialId.Split('_');
+            if (parts.Length >= 1)
+            {
+                var last = parts[^1];
+                if (!string.IsNullOrEmpty(last))
+                    return char.ToUpperInvariant(last[0]) + last.Substring(1).Replace('_', ' ');
+            }
+        }
+        catch { }
+        return materialId;
+    }
+
     /// <summary>
     /// Validate item definition (basic checks)
     /// </summary>
@@ -353,7 +428,7 @@ public sealed class ItemManager
             throw new ArgumentException($"Item '{def.Id}' has no name");
 
         // Validate kind is valid
-        var validKinds = new[] { "resource", "weapon", "armor", "tool", "container", "consumable", "placeable" };
+        var validKinds = new[] { "resource", "weapon", "armor", "tool", "container", "consumable", "placeable", "ammo", "siege_weapon" };
         if (!validKinds.Contains(def.Kind.ToLower()))
             throw new ArgumentException($"Item '{def.Id}' has invalid kind: {def.Kind}");
 
@@ -442,11 +517,12 @@ public sealed class ItemManager
 
             Console.WriteLine($"[ItemManager] Chunk found, getting tile...");
 
-            // Validate tile is walkable (OpenWithFloor)
+            // Validate tile supports spawning items.
+            // Policy change: allow any walkable tile (floor/ramp/stairs) not just OpenWithFloor.
             var tile = chunk.GetTile(localX, localY);
             Console.WriteLine($"[ItemManager] Tile kind: {tile.Kind}");
 
-            if (tile.Kind != TerrainKind.OpenWithFloor)
+            if (!tile.IsWalkable)
             {
                 Console.WriteLine($"[ItemManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
                 return null;
@@ -574,6 +650,47 @@ public sealed class ItemManager
         lock (_instanceLock)
         {
             return _instances.Values.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Get snapshot of items at a given tile (on ground by default).
+    /// </summary>
+    public IEnumerable<ItemInstance> GetItemsAt(Point worldPos, int z, bool groundOnly = true)
+    {
+        lock (_instanceLock)
+        {
+            var key = KeyFor(worldPos, z);
+            if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+                return Enumerable.Empty<ItemInstance>();
+            var list = new List<ItemInstance>(ids.Count);
+            foreach (var gid in ids)
+            {
+                if (_instances.TryGetValue(gid, out var inst))
+                {
+                    if (!groundOnly || inst.IsOnGround)
+                        list.Add(inst);
+                }
+            }
+            return list;
+        }
+    }
+
+    /// <summary>
+    /// Remove an item instance by GUID, updating position index accordingly.
+    /// Returns true if removed.
+    /// </summary>
+    public bool RemoveInstance(Guid guid)
+    {
+        lock (_instanceLock)
+        {
+            if (!_instances.TryGetValue(guid, out var inst)) return false;
+            IndexRemove(guid, inst.Position, inst.Z);
+            _instances.Remove(guid);
+            string msg = $"[ItemManager] REMOVE: Removed item guid={guid} id={inst.DefinitionId} at ({inst.Position.X},{inst.Position.Y},{inst.Z})";
+            LogCallback?.Invoke(msg);
+            Console.WriteLine(msg);
+            return true;
         }
     }
 }

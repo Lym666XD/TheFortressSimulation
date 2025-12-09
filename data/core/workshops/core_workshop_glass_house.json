@@ -1,0 +1,284 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_glass_house",
+      "name": "Glasshouse & Lehr",
+      "tags": [
+        "glass",
+        "melting",
+        "forming",
+        "anneal",
+        "cullet"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [
+        "furnace",
+        "fining",
+        "anneal",
+        "wash",
+        "alkali",
+        "forming",
+        "spinner",
+        "press"
+      ],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1400,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "glass",
+          "hot"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 0,
+          "light_lumen": 200,
+          "heat_w": 500
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_furnace_crucible",
+      "name": "Crucible Glass Furnace",
+      "slot": "furnace",
+      "era": "C",
+      "upgrade_to": "core_attach_furnace_forest",
+      "tags": [
+        "melting"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_forest",
+      "name": "Forest Glass Furnace",
+      "slot": "furnace",
+      "era": "M",
+      "upgrade_to": "core_attach_furnace_cristallo_tank",
+      "tags": [
+        "melting",
+        "potash"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_cristallo_tank",
+      "name": "Cristallo Pot/Tank Furnace",
+      "slot": "furnace",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "melting",
+        "clear"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_fining_pot_standard",
+      "name": "Fining Pot",
+      "slot": "fining",
+      "era": "M",
+      "upgrade_to": "core_attach_fining_pot_large",
+      "tags": [
+        "fining"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_fining_pot_large",
+      "name": "Large Fining Pot",
+      "slot": "fining",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "fining"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_annealer_kiln",
+      "name": "Annealing Kiln",
+      "slot": "anneal",
+      "era": "C",
+      "upgrade_to": "core_attach_annealer_channel_long",
+      "tags": [
+        "anneal"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_annealer_channel_long",
+      "name": "Long Annealing Channel",
+      "slot": "anneal",
+      "era": "M",
+      "upgrade_to": "core_attach_annealer_lehr_long",
+      "tags": [
+        "anneal"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_annealer_lehr_long",
+      "name": "Long Lehr",
+      "slot": "anneal",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "anneal"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wash_sand_trough",
+      "name": "Sand Wash Trough",
+      "slot": "wash",
+      "era": "C",
+      "upgrade_to": "core_attach_wash_sieve_rack",
+      "tags": [
+        "prep"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wash_sieve_rack",
+      "name": "Wash & Sieve Rack",
+      "slot": "wash",
+      "era": "M",
+      "upgrade_to": "core_attach_wash_iron_removal",
+      "tags": [
+        "prep"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_wash_iron_removal",
+      "name": "Refined Wash & De-Ironing",
+      "slot": "wash",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "prep",
+        "clear"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_alkali_bench_ash",
+      "name": "Alkali Bench (Plant Ash)",
+      "slot": "alkali",
+      "era": "C",
+      "upgrade_to": "core_attach_alkali_bench_refine",
+      "tags": [
+        "alkali"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_alkali_bench_refine",
+      "name": "Refined Alkali Bench",
+      "slot": "alkali",
+      "era": "M",
+      "upgrade_to": "core_attach_alkali_bench_pure_soda",
+      "tags": [
+        "alkali"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_alkali_bench_pure_soda",
+      "name": "Pure Soda Bench",
+      "slot": "alkali",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "alkali",
+        "clear"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_form_blowpipe_stand",
+      "name": "Blowpipe Stand",
+      "slot": "forming",
+      "era": "C",
+      "upgrade_to": "core_attach_form_blowshop_shed",
+      "tags": [
+        "forming"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_form_blowshop_shed",
+      "name": "Blowshop Shed",
+      "slot": "forming",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "forming"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_spinner_crown",
+      "name": "Crown Spinner",
+      "slot": "spinner",
+      "era": "M",
+      "upgrade_to": "core_attach_spinner_crown_regulated",
+      "tags": [
+        "window"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_spinner_crown_regulated",
+      "name": "Regulated Crown Spinner",
+      "slot": "spinner",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "window"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_press_mould_table",
+      "name": "Mould Press Table",
+      "slot": "press",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "pressing"
+      ],
+      "power_w": 0
+    }
+  ]
+}

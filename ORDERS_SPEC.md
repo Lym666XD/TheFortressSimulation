@@ -60,6 +60,17 @@ Defines the data-driven model for player Orders (designations/tools), how the UI
   - Command tick: current UI tick; command id: GUID.
   - Command executes in ApplyCommands → enqueues designation into OrdersManager.
 
+3.3 Build/Construction (Structural L0)
+
+- From Build quick menu: `C → Structural (Z/X/C/V)`.
+- UI enqueues `orders.construction.rect` with payload:
+  - `worldRect(x,y,w,h)`, `z_min=z_max=currentZ`,
+  - `shape ∈ {Wall,Floor,Ramp,Stairs}`,
+  - `filter: { category_key:"l0.wall|floor|ramp|stairs", preferred_material_id?:string, tags?:string[] }`,
+  - `priority`.
+- Planner (`ConstructionSystem`) resolves final target kind per cell (stairs prism WIP) and picks geology handle from filter (last‑used > preferred id > fallback from current tile material).
+- Read phase places L2 ghosts (non‑blocking) for visualization; Write phase executor applies `SetTerrain` and removes matched ghosts.
+
 4) Simulation Ingress (ApplyCommands)
 
 - ICommand: `CreateHaulOrderCommand`
@@ -88,9 +99,14 @@ Defines the data-driven model for player Orders (designations/tools), how the UI
 - Toast on order creation; Orders quick menu displays all buttons (with WIP placeholders for non-implemented orders).
 - Work drawer (F3) tab 2 lists recent haul orders (rect,z); later: active job list.
 
+9) Material Filter Contract (Structural v1)
+
+- Form‑first: L0 constructions require `stone_block` form (v1), Material part optional.
+- `category_key` drives last‑used memory; if both `preferred_material_id` and memory are empty, planner tries to derive material from the current tile.
+- v1 does not consume items; the filter only selects a geology handle for terrain appearance. Future mode will emit haul demands (form+material tags) with the same filter structure.
+
 9) Extension Points (v2)
 
 - Additional orders: mining/lumber/gather with own tools (rect/brush/line).
 - Zone-aware filters in Orders registry (e.g., haul only resources).
 - Visual overlays for active orders and per-tile states.
-

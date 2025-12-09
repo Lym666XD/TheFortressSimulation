@@ -1,0 +1,1153 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_pottery_refine_clay_C",
+      "name": "Pottery Refine Clay C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 10800
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_clay_trough",
+          "core_attach_pottery_dry_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_sand_silt",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_raw",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_refine_clay_M",
+      "name": "Pottery Refine Clay M",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 9600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_clay_levigation_basin",
+          "core_attach_pottery_dry_shed"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_sand_silt",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_raw",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_refine_clay_R",
+      "name": "Pottery Refine Clay R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 8400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_clay_sieves_settling",
+          "core_attach_pottery_dry_heated_room"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 13
+        },
+        {
+          "def_id": "core_item_sand_silt",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_raw",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_make_slip_all",
+      "name": "Pottery Make Slip All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_clay_trough"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_clay_slip",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_ash_C",
+      "name": "Pottery Glaze Ash C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_ash_vat"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glaze_clear_ash",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ash_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_lead_M",
+      "name": "Pottery Glaze Lead M",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 8400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_lead_pot"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glaze_lead_opaque",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_lead_oxide",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_ash_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_tin_R",
+      "name": "Pottery Glaze Tin R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 9600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_tin_pan"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glaze_tin_white",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_glaze_lead_opaque",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_tin_oxide",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_bowl_all",
+      "name": "Pottery Shape Bowl All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_bowl",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_mug_all",
+      "name": "Pottery Shape Mug All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 4800
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_kick_wheel"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_mug",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_jug_all",
+      "name": "Pottery Shape Jug All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 6600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_kick_wheel"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_jug",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_large_pot_all",
+      "name": "Pottery Shape Large Pot All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 8400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_treadle_wheel_gauges"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_large_pot",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_plate_all",
+      "name": "Pottery Shape Plate All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 4800
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_plate",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_roof_tiles_C",
+      "name": "Pottery Shape Roof Tiles C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_tile_press_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_roof_tile",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_floor_tiles_M",
+      "name": "Pottery Shape Floor Tiles M",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_tile_press_lever"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_floor_tile",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_bricks_C",
+      "name": "Pottery Shape Bricks C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_tile_press_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_brick",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_shape_pipe_R",
+      "name": "Pottery Shape Pipe R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 9600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_tile_press_screw"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_pipe",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_apply_ash_all",
+      "name": "Pottery Glaze Apply Ash All",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_ash_vat"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_bowl_glazed",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_slip",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_glaze_clear_ash",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_greenware_bowl",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_apply_lead_M",
+      "name": "Pottery Glaze Apply Lead M",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 4200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_lead_pot"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_mug_glazed",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_glaze_lead_opaque",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_greenware_mug",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_glaze_apply_tin_R",
+      "name": "Pottery Glaze Apply Tin R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 4800
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_glaze_tin_pan"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_greenware_plate_glazed",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_glaze_tin_white",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_greenware_plate",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_earthenware_C",
+      "name": "Pottery Fire Earthenware C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 13200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ceramic_bowl",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_wood",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_greenware_bowl",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_earthenware_M_multi",
+      "name": "Pottery Fire Earthenware M Multi",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 14400
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_updraft"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ceramic_mug_glazed",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_ceramic_jug",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_greenware_mug_glazed",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_greenware_jug",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_building_C",
+      "name": "Pottery Fire Building C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 15600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_brick_clay",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_greenware_brick",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_tiles_M",
+      "name": "Pottery Fire Tiles M",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 15600
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_updraft"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_roof_tile_clay",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_floor_tile_clay",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_greenware_roof_tile",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_greenware_floor_tile",
+          "count": 6
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_stoneware_R",
+      "name": "Pottery Fire Stoneware R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 16800
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_downdraft_stoneware"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_stoneware_large_pot",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_stoneware_mug",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_charcoal",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_greenware_large_pot",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_greenware_mug",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_fire_salt_glaze_R",
+      "name": "Pottery Fire Salt Glaze R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 18000
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_kiln_downdraft_stoneware",
+          "core_attach_pottery_salt_port"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_stoneware_jug_salt_glazed",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_fuel_charcoal",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_salt",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_greenware_jug",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_statue_small_C",
+      "name": "Pottery Statue Small C",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_hand"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_figurine_terracotta",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_clay_refined",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_pottery_plate_set_R",
+      "name": "Pottery Plate Set R",
+      "category": "pottery",
+      "workshops": [
+        "core_workshop_pottery"
+      ],
+      "work_time": {
+        "duration_ticks": 13200
+      },
+      "skill": {
+        "primary": "pottery",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_pottery_form_treadle_wheel_gauges",
+          "core_attach_pottery_glaze_tin_pan"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ceramic_plate_tin_glazed_set",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_greenware_plate_glazed",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_fuel_wood",
+          "count": 2
+        }
+      ]
+    }
+  ]
+}

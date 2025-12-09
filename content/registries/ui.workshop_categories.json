@@ -1,0 +1,9 @@
+{
+  "_comment": "Maps UI categories to workshop tags for filtering lists and placement menus.",
+  "mining": ["mining", "smelting", "fuel", "lime", "concrete"],
+  "lumbering": ["logging"],
+  "farming": ["farming", "butchery", "pasture", "tanning", "kitchen", "compost"],
+  "industry": ["stoneworks", "woodworking", "metalworks", "glass", "pottery", "chemistry", "paper", "tailoring"],
+  "crafts": ["crafts", "precision", "firearms", "alchemy", "enchanting"]
+}
+

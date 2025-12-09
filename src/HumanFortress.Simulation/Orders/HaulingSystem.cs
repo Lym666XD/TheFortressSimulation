@@ -20,15 +20,18 @@ public sealed class HaulingSystem : ITick
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
 
-    // Planned relocations from Read phase; exposed to job system.
+    // Planned relocations from Read phase (legacy path; retained for compatibility)
     private readonly List<PlannedMove> _planned = new();
-    private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedMove> _outbox = new();
+    // Decoupled intake to Transport pipeline (single authority)
+    private readonly HumanFortress.Simulation.Jobs.ITransportIntake _transportIntake;
 
-    public HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128)
+    public HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128,
+        HumanFortress.Simulation.Jobs.ITransportIntake? transportIntake = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
         _maxPerTick = Math.Max(1, maxPerTick);
+        _transportIntake = transportIntake ?? throw new ArgumentNullException(nameof(transportIntake), "Transport intake is required after haul refactor");
     }
 
     public int Priority => UpdateOrder.Priority.Items; // Ensure writes align with Items stage
@@ -96,16 +99,50 @@ public sealed class HaulingSystem : ITick
         var stock = chunk.GetStockpileData();
         if (stock == null) return false;
         int cell = Chunk.LocalIndex(lx, ly);
-        return stock.GetZoneAtCell(cell) > 0;
+        bool inZone = stock.GetZoneAtCell(cell) > 0;
+        if (inZone)
+        {
+            Log($"[HAUL-PLAN] Skip item={item.Guid} already in stockpile zone at ({worldX},{worldY},{z})");
+        }
+        return inZone;
     }
 
     public void WriteTick(ulong tick)
     {
         if (_planned.Count == 0) return;
-        // Hand off to job system via outbox (real execution happens elsewhere)
+
         foreach (var move in _planned)
-            _outbox.Enqueue(move);
+        {
+            uint seed = SeedFrom(move.ItemGuid);
+            var inst = _world.Items.GetInstance(move.ItemGuid);
+            int qty = inst?.StackCount ?? 1;
+            var req = new HumanFortress.Simulation.Jobs.TransportRequest(
+                move.ItemGuid,
+                move.From,
+                move.FromZ,
+                move.To,
+                move.ToZ,
+                qty,
+                HumanFortress.Simulation.Jobs.TransportReason.ToStockpile,
+                Priority: 60,
+                RequestorId: SystemId,
+                CreatedTick: tick,
+                Seed: seed);
+            _transportIntake.Enqueue(in req);
+            Log($"[HAUL-PLAN][{tick}] Enqueue item={move.ItemGuid} from=({move.From.X},{move.From.Y},{move.FromZ}) to=({move.To.X},{move.To.Y},{move.ToZ}) qty={qty}");
+        }
         _planned.Clear();
+    }
+
+    private static uint SeedFrom(Guid a)
+    {
+        unchecked
+        {
+            var ba = a.ToByteArray();
+            uint s = 2166136261;
+            foreach (var t in ba) s = (s ^ t) * 16777619;
+            return s;
+        }
     }
 
     private List<StockpileZone> GetAllStockpileZones()
@@ -160,11 +197,18 @@ public sealed class HaulingSystem : ITick
                 var (lx, ly) = Chunk.IndexToLocal(idx);
                 destWorld = new Point(ck.ChunkX * Chunk.SIZE_XY + lx, ck.ChunkY * Chunk.SIZE_XY + ly);
                 destZ = ck.Z;
+                Log($"[HAUL-PLAN] Dest zone={bestZone.ZoneId} chunk=({ck.ChunkX},{ck.ChunkY},{ck.Z}) cell=({destWorld.X},{destWorld.Y},{destZ})");
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static void Log(string message)
+    {
+        if (OrdersManager.LogCallback != null) OrdersManager.LogCallback(message);
+        else System.Console.WriteLine(message);
     }
 
     public struct PlannedMove
@@ -176,17 +220,4 @@ public sealed class HaulingSystem : ITick
         public int ToZ;
     }
 
-    /// <summary>
-    /// Dequeue up to max planned moves for job creation.
-    /// </summary>
-    public int DequeuePlannedMoves(int max, IList<PlannedMove> into)
-    {
-        int n = 0;
-        while (n < max && _outbox.TryDequeue(out var m))
-        {
-            into.Add(m);
-            n++;
-        }
-        return n;
-    }
 }

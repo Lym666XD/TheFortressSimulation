@@ -110,4 +110,9 @@
     "allow_overlap_external_refs": false,
     "cross_chunk_validation": true
   }
+  ,
+  "workshops": {
+    "_comment": "Workshop-related UI/behavior tunings",
+    "workers_per_workshop_max": 25
+  }
 }

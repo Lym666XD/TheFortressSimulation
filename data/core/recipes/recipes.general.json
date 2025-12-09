@@ -1,0 +1,633 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_tan_make_lye_all",
+      "name": "Tan Make Lye All",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_lye_alkaline",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ash_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_C",
+      "name": "Tan Lime Dehair C",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 28800
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_pits_earthen",
+          "core_attach_tan_flesh_beam_wood"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_hair_waste",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_wastewater",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_raw_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_lye_alkaline",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_M",
+      "name": "Tan Lime Dehair M",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 25200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_pits_limewood",
+          "core_attach_tan_flesh_beam_iron"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_hair_waste",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_wastewater",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_raw_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_lye_alkaline",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_lime_dehair_R",
+      "name": "Tan Lime Dehair R",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 21600
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_tanhouse_roofed",
+          "core_attach_tan_frame_glassing"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_hair_waste",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_wastewater",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_raw_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_lye_alkaline",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_veg_C",
+      "name": "Tan Veg C",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 32400
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_pits_earthen",
+          "core_attach_tan_bark_mill_hand",
+          "core_attach_tan_drying_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_spent_tanbark",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_bark",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_veg_M",
+      "name": "Tan Veg M",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 28800
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_pits_limewood",
+          "core_attach_tan_bark_mill_horse",
+          "core_attach_tan_drying_loft"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 11
+        },
+        {
+          "def_id": "core_item_spent_tanbark",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_bark",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_veg_R",
+      "name": "Tan Veg R",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 25200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_tanhouse_roofed",
+          "core_attach_tan_bark_mill_water",
+          "core_attach_tan_drying_heated"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_spent_tanbark",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_bark",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_alum_M",
+      "name": "Tan Alum M",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 25200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_pits_limewood",
+          "core_attach_tan_currying_board",
+          "core_attach_tan_drying_loft"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_alum",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_alum",
+          "count": 5
+        },
+        {
+          "def_id": "core_item_salt",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_egg",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_tallow_lard",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_oil_R",
+      "name": "Tan Oil R",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 25200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_currying_press",
+          "core_attach_tan_drying_heated"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_oil",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_oil_fish",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_finish_M",
+      "name": "Tan Finish M",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 14400
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_currying_board"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_curried",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_tallow_lard",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_finish_R",
+      "name": "Tan Finish R",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 12600
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_currying_press"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_curried",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_tallow_lard",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_parchment_all",
+      "name": "Tan Parchment All",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 21600
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_tan_frame_glassing",
+          "core_attach_tan_drying_rack"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_parchment_sheet",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_prepared_hide",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_water_clean",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tan_cut_straps_all",
+      "name": "Tan Cut Straps All",
+      "category": "general",
+      "workshops": [
+        "core_workshop_tannery"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_leather_strap",
+          "count": 20
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_leather_veg",
+          "count": 5
+        }
+      ]
+    }
+  ]
+}

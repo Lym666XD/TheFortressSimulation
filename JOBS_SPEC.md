@@ -45,6 +45,12 @@ Write Phase -------------------------------------------------------------
     - Emit DiffOps: MoveCreature / MarkCarried / MoveItem / UnmarkCarried
   DiffLog
     - Merge+Sort by stable key; apply in deterministic order
+
+3.1 Structural Construction (Executor outline)
+
+- Planner (`ConstructionSystem`) emits `PlannedBuild{ cell, z, target_kind, geology_handle, shape }` and places ghosts (L2).
+- Executor (`ConstructionJobSystem`) consumes `PlannedBuild` and writes `DiffOp(SetTerrain)` with packed args `(kind + geology_handle)`; then removes the ghost at anchor.
+- Applicator normalizes geology kind, updates tiles, marks chunks dirty for navigation.
 ```
 
 4) APIs (current)
@@ -131,3 +137,8 @@ Write Phase -------------------------------------------------------------
 - Introduce Role/Roster manager mapping workers to roles and assigned workshops.
 - Executors filter candidate workers by role/workshop eligibility before assignment; deterministic ordering preserved.
 - Workshops may provide local bonuses (speed/quality) and shifts; performance gains by shrinking candidate sets; UPDATE_ORDER and Diff model remain unchanged.
+
+13) Debug Item Spawn & Items Drawer (ergonomics)
+
+- Debug spawn validates `IsWalkable` tiles (ramps/stairs allowed) instead of requiring `OpenWithFloor`.
+- Items drawer (F2) displays concrete names; generic resources append the material name, e.g., `Boulder (Granite)`, `Block (Basalt)`.

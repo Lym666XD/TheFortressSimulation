@@ -1,0 +1,332 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_agri_brew_works",
+      "name": "Agri-Brew Works",
+      "tags": [
+        "workshop",
+        "agriculture",
+        "brewing",
+        "food"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1100,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "farming",
+          "brewing"
+        ],
+        "effects": {
+          "beauty": 0,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 100
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_agri_mill_quern",
+      "name": "Quern & Hand Mill",
+      "slot": "milling",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_mill_power_stone",
+      "tags": [
+        "grind",
+        "mill"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_mill_power_stone",
+      "name": "Powered Millstone",
+      "slot": "milling",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_mill_fine_sifter_line",
+      "tags": [
+        "grind",
+        "mill",
+        "water_or_wind"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_mill_fine_sifter_line",
+      "name": "Fine Mill & Sifter Line",
+      "slot": "milling",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "grind",
+        "sift",
+        "power"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_press_lever_beam",
+      "name": "Tread Vat & Lever Beam Press",
+      "slot": "press",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_press_improved",
+      "tags": [
+        "press"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_press_improved",
+      "name": "Improved Screw/Lever Press",
+      "slot": "press",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_press_helical",
+      "tags": [
+        "press"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_press_helical",
+      "name": "Helical Continuous Press",
+      "slot": "press",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "press",
+        "power"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_malt_floor",
+      "name": "Malting Floor",
+      "slot": "malting",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_malt_kiln",
+      "tags": [
+        "malting"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_malt_kiln",
+      "name": "Malt Kiln",
+      "slot": "malting",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_malt_kiln_improved",
+      "tags": [
+        "malting",
+        "kiln"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_malt_kiln_improved",
+      "name": "Improved Malt Kiln",
+      "slot": "malting",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "malting",
+        "kiln"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_mash_kettle",
+      "name": "Mash Kettle",
+      "slot": "mash_boil",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_lauder_tun_boiler",
+      "tags": [
+        "mash",
+        "boil"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_lauder_tun_boiler",
+      "name": "Lauter Tun & Great Boiler",
+      "slot": "mash_boil",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_insulated_mash_boiler",
+      "tags": [
+        "mash",
+        "boil"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_insulated_mash_boiler",
+      "name": "Insulated Mash & Great Boiler",
+      "slot": "mash_boil",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "mash",
+        "boil"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_cool_stand",
+      "name": "Ambient Cooling Stand",
+      "slot": "cooling",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_coolship",
+      "tags": [
+        "cool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_coolship",
+      "name": "Coolship & Cooler",
+      "slot": "cooling",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_cellar_cooling",
+      "tags": [
+        "cool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_cellar_cooling",
+      "name": "Cold Cellar Cooling",
+      "slot": "cooling",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "cool"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_ferment_vat",
+      "name": "Fermentation Vat",
+      "slot": "ferment",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_cellar",
+      "tags": [
+        "ferment"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_cellar",
+      "name": "Cellar",
+      "slot": "ferment",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_cold_cellar",
+      "tags": [
+        "ferment",
+        "aging"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_cold_cellar",
+      "name": "Cold Cellar",
+      "slot": "ferment",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "ferment",
+        "aging"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_still_condenser",
+      "name": "Still & Condenser",
+      "slot": "distill",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "distill",
+        "alembic"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_acetify_vat",
+      "name": "Acetification Vat & Mother",
+      "slot": "acetify",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "acetify",
+        "vinegar"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_prep_drying_ground",
+      "name": "Drying Ground",
+      "slot": "preprocess",
+      "era": "C",
+      "upgrade_to": "core_attach_agri_prep_vent_granary",
+      "tags": [
+        "preprocess",
+        "storage"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_prep_vent_granary",
+      "name": "Ventilated Granary",
+      "slot": "preprocess",
+      "era": "M",
+      "upgrade_to": "core_attach_agri_prep_dry_granary_winnow",
+      "tags": [
+        "preprocess",
+        "storage"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_agri_prep_dry_granary_winnow",
+      "name": "Dry Granary & Winnow Stand",
+      "slot": "preprocess",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "preprocess",
+        "storage"
+      ],
+      "power_w": 0
+    }
+  ]
+}

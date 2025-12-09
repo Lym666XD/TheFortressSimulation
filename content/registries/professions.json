@@ -1,0 +1,19 @@
+{
+  "professions": [
+    { "id": "laborer", "name": "Laborer", "job_tags": ["hauling", "support", "general"], "default": true },
+    { "id": "miner", "name": "Miner", "job_tags": ["mining"] },
+    { "id": "stonewright", "name": "Stonewright", "job_tags": ["masonry", "construction", "stone"] },
+    { "id": "woodcutter", "name": "Woodcutter", "job_tags": ["woodcut"] },
+    { "id": "farmer", "name": "Farmer", "job_tags": ["farming", "agriculture"] },
+    { "id": "fisher", "name": "Fisher", "job_tags": ["fishing"] },
+    { "id": "hunter", "name": "Hunter", "job_tags": ["hunting"] },
+    { "id": "carpenter", "name": "Carpenter", "job_tags": ["carpentry", "craft", "woodworking"] },
+    { "id": "blacksmith", "name": "Blacksmith", "job_tags": ["smithing", "metals", "craft"] },
+    { "id": "craftsman", "name": "Craftsman", "job_tags": ["craft", "jewel", "artisan"] },
+    { "id": "artist", "name": "Artist", "job_tags": ["art", "decor"] },
+    { "id": "performer", "name": "Performer", "job_tags": ["social", "entertain"] },
+    { "id": "clerk", "name": "Clerk", "job_tags": ["administration", "logistics"] },
+    { "id": "scholar", "name": "Scholar", "job_tags": ["research", "study"] },
+    { "id": "clergy", "name": "Clergy", "job_tags": ["ritual", "spiritual"] }
+  ]
+}

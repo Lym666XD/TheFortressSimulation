@@ -1,0 +1,245 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_butchery",
+      "name": "Butchery & Meatworks",
+      "tags": [
+        "workshop",
+        "food",
+        "butchery",
+        "meat"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 6,
+        "output_slots": 6,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1100,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "butchery"
+        ],
+        "effects": {
+          "beauty": -3,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_butchery_hygiene_open_slab",
+      "name": "Open Slab",
+      "slot": "hygiene_floor",
+      "era": "C",
+      "upgrade_to": "core_attach_butchery_hygiene_covered_floor",
+      "tags": [
+        "hygiene",
+        "floor",
+        "butchery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_hygiene_covered_floor",
+      "name": "Covered Slaughter Floor",
+      "slot": "hygiene_floor",
+      "era": "M",
+      "upgrade_to": "core_attach_butchery_hygiene_tiled_drain",
+      "tags": [
+        "hygiene",
+        "floor",
+        "butchery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_hygiene_tiled_drain",
+      "name": "Tiled Floor with Drains",
+      "slot": "hygiene_floor",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "hygiene",
+        "floor",
+        "drain",
+        "butchery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_hoist_hook",
+      "name": "Hook & Pulley",
+      "slot": "hoist_system",
+      "era": "C",
+      "upgrade_to": "core_attach_butchery_hoist_frame",
+      "tags": [
+        "hoist",
+        "pulley"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_hoist_frame",
+      "name": "Gallows Hoist",
+      "slot": "hoist_system",
+      "era": "M",
+      "upgrade_to": "core_attach_butchery_hoist_rail",
+      "tags": [
+        "hoist",
+        "frame"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_hoist_rail",
+      "name": "Rail & Trolley",
+      "slot": "hoist_system",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "hoist",
+        "rail",
+        "trolley"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_curing_salt_barrel",
+      "name": "Salt Barrels",
+      "slot": "curing_station",
+      "era": "C",
+      "upgrade_to": "core_attach_butchery_curing_brine_room",
+      "tags": [
+        "curing",
+        "salt"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_curing_brine_room",
+      "name": "Brine Room",
+      "slot": "curing_station",
+      "era": "M",
+      "upgrade_to": "core_attach_butchery_curing_cold_cellar",
+      "tags": [
+        "curing",
+        "brine"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_curing_cold_cellar",
+      "name": "Cold Cellar",
+      "slot": "curing_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "curing",
+        "cold"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_smoking_pit",
+      "name": "Smoke Pit",
+      "slot": "smoking_station",
+      "era": "C",
+      "upgrade_to": "core_attach_butchery_smoking_house",
+      "tags": [
+        "smoking",
+        "pit"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_smoking_house",
+      "name": "Smokehouse",
+      "slot": "smoking_station",
+      "era": "M",
+      "upgrade_to": "core_attach_butchery_smoking_vented_house",
+      "tags": [
+        "smoking",
+        "house"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_smoking_vented_house",
+      "name": "Vented Smokehouse",
+      "slot": "smoking_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "smoking",
+        "vented"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_render_kettle",
+      "name": "Rendering Kettle",
+      "slot": "rendering_station",
+      "era": "C",
+      "upgrade_to": "core_attach_butchery_render_multi_kettle",
+      "tags": [
+        "rendering",
+        "kettle"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_render_multi_kettle",
+      "name": "Multi Kettle",
+      "slot": "rendering_station",
+      "era": "M",
+      "upgrade_to": "core_attach_butchery_render_steam_kettle",
+      "tags": [
+        "rendering",
+        "multi"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_butchery_render_steam_kettle",
+      "name": "Steam Rendering Kettle",
+      "slot": "rendering_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "rendering",
+        "steam"
+      ],
+      "power_w": 0
+    }
+  ]
+}

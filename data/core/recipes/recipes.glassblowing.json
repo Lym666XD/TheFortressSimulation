@@ -1,0 +1,812 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_glass_batch_crude_c",
+      "name": "Glass Batch Crude C",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_crucible",
+          "core_attach_wash_sand_trough",
+          "core_attach_alkali_bench_ash"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_crude",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_lime_calcium",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_batch_forest_m",
+      "name": "Glass Batch Forest M",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 84000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_forest",
+          "core_attach_wash_sieve_rack",
+          "core_attach_alkali_bench_refine",
+          "core_attach_fining_pot_standard"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_forest",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_alkali_potash",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_powder_lime_calcium",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_batch_clear_r",
+      "name": "Glass Batch Clear R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_cristallo_tank",
+          "core_attach_wash_iron_removal",
+          "core_attach_alkali_bench_pure_soda",
+          "core_attach_fining_pot_large"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_clear",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_sand_silica",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_powder_soda_ash_pure",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_powder_lime_calcium",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_c",
+      "name": "Glass Cullet Remelt C",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_crucible"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_crude",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_m",
+      "name": "Glass Cullet Remelt M",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_forest"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_forest",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt_r",
+      "name": "Glass Cullet Remelt R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 42000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_furnace_cristallo_tank"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_batch_clear",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_c",
+      "name": "Glass Vessels Plain C",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowpipe_stand",
+          "core_attach_annealer_kiln"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_common",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_m",
+      "name": "Glass Vessels Plain M",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 48000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowshop_shed",
+          "core_attach_annealer_channel_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_common",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_plain_r",
+      "name": "Glass Vessels Plain R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 42000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowshop_shed",
+          "core_attach_annealer_lehr_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_common",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_c",
+      "name": "Glass Vessels Colored C",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 57600
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowpipe_stand",
+          "core_attach_annealer_kiln"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_colored",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_m",
+      "name": "Glass Vessels Colored M",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 51000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowshop_shed",
+          "core_attach_annealer_channel_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_colored",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_vessels_colored_r",
+      "name": "Glass Vessels Colored R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 45000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_form_blowshop_shed",
+          "core_attach_annealer_lehr_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_vessel_colored",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_colorant_generic",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_window_crown_m",
+      "name": "Window Crown M",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 60000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_spinner_crown",
+          "core_attach_annealer_channel_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_pane_window",
+          "count": 8
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 2,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_window_crown_r",
+      "name": "Window Crown R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 54000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_spinner_crown_regulated",
+          "core_attach_annealer_lehr_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_pane_window",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_glass_cullet",
+          "count": 1,
+          "byproduct": true
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_brick_press_r",
+      "name": "Glass Brick Press R",
+      "category": "glassblowing",
+      "workshops": [
+        "core_workshop_glass_house"
+      ],
+      "work_time": {
+        "duration_ticks": 57000
+      },
+      "skill": {
+        "primary": "glassblowing",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_press_mould_table",
+          "core_attach_annealer_lehr_long"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_glass_brick",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "any_of": [
+            {
+              "def_id": "core_item_glass_batch_crude",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_forest",
+              "count": 1
+            },
+            {
+              "def_id": "core_item_glass_batch_clear",
+              "count": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

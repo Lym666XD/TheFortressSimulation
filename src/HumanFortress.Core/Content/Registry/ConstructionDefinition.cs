@@ -49,6 +49,41 @@ public sealed class ConstructionDefinition
     /// </summary>
     public PlaceableProfile PlaceableProfile { get; set; } = new();
 
+    // === WORKSHOP PROPERTIES (optional, only for workshop constructions) ===
+    /// <summary>
+    /// Workshop IO slots configuration (optional, only for workshops)
+    /// </summary>
+    public WorkshopIo? Io { get; set; }
+
+    /// <summary>
+    /// Available attachment slot types (optional, only for workshops)
+    /// </summary>
+#pragma warning disable CA1819
+    public string[]? AttachmentSlots { get; set; }
+#pragma warning restore CA1819
+
+    /// <summary>
+    /// Baseline power consumption in watts (optional, only for workshops)
+    /// </summary>
+    public int? PowerBaselineW { get; set; }
+
+    /// <summary>
+    /// Minimum era for this workshop (optional, C/M/R)
+    /// </summary>
+    public string? EraMin { get; set; }
+
+    /// <summary>
+    /// Maximum era for this workshop (optional, C/M/R)
+    /// </summary>
+    public string? EraMax { get; set; }
+
+    /// <summary>
+    /// Workshop attachments definitions (optional, only for workshops)
+    /// </summary>
+#pragma warning disable CA1819
+    public WorkshopAttachment[]? Attachments { get; set; }
+#pragma warning restore CA1819
+
     public void Validate()
     {
         if (string.IsNullOrEmpty(Id))
@@ -102,4 +137,78 @@ public sealed class MaterialCost
         var identifier = !string.IsNullOrEmpty(Tag) ? $"tag:{Tag}" : $"def:{DefId}";
         return $"{Count}× {identifier}";
     }
+}
+
+/// <summary>
+/// Workshop IO slots configuration
+/// </summary>
+public sealed class WorkshopIo
+{
+    /// <summary>
+    /// Number of input slots for this workshop
+    /// </summary>
+    public int InputSlots { get; set; }
+
+    /// <summary>
+    /// Number of output slots for this workshop
+    /// </summary>
+    public int OutputSlots { get; set; }
+
+    /// <summary>
+    /// Number of buffer slots for this workshop
+    /// </summary>
+    public int BufferSlots { get; set; }
+}
+
+/// <summary>
+/// Workshop attachment definition (e.g., kiln, water saw, etc.)
+/// </summary>
+public sealed class WorkshopAttachment
+{
+    /// <summary>
+    /// Unique attachment ID (e.g., "core_attach_stone_cut_watersaw")
+    /// </summary>
+    public string Id { get; set; } = "";
+
+    /// <summary>
+    /// Display name for this attachment
+    /// </summary>
+    public string Name { get; set; } = "";
+
+    /// <summary>
+    /// Slot type this attachment fits into (e.g., "cutting", "forming")
+    /// </summary>
+    public string Slot { get; set; } = "";
+
+    /// <summary>
+    /// Era when this attachment becomes available (C/M/R)
+    /// </summary>
+    public string? Era { get; set; }
+
+    /// <summary>
+    /// Minimum era for this attachment (optional)
+    /// </summary>
+    public string? EraMin { get; set; }
+
+    /// <summary>
+    /// Maximum era for this attachment (optional)
+    /// </summary>
+    public string? EraMax { get; set; }
+
+    /// <summary>
+    /// ID of the attachment this upgrades to (null if final tier)
+    /// </summary>
+    public string? UpgradeTo { get; set; }
+
+    /// <summary>
+    /// Tags for this attachment (e.g., "waterpower", "calcination")
+    /// </summary>
+#pragma warning disable CA1819
+    public string[]? Tags { get; set; }
+#pragma warning restore CA1819
+
+    /// <summary>
+    /// Power consumption in watts for this attachment
+    /// </summary>
+    public int PowerW { get; set; }
 }

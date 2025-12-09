@@ -1,0 +1,235 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_tannery",
+      "name": "Tannery",
+      "tags": [
+        "workshop",
+        "leather",
+        "tanning",
+        "hides"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1100,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "tanning"
+        ],
+        "effects": {
+          "beauty": -4,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_tan_pits_earthen",
+      "name": "Earthen Soak Pits",
+      "slot": "pit_system",
+      "era": "C",
+      "upgrade_to": "core_attach_tan_pits_limewood",
+      "tags": [
+        "pits",
+        "soak",
+        "tannery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_pits_limewood",
+      "name": "Wood-Lined Lime Pits",
+      "slot": "pit_system",
+      "era": "M",
+      "upgrade_to": "core_attach_tan_tanhouse_roofed",
+      "tags": [
+        "pits",
+        "lime",
+        "tannery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_tanhouse_roofed",
+      "name": "Roofed Tanhouse & Vats",
+      "slot": "pit_system",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "pits",
+        "vats",
+        "roofed"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_flesh_beam_wood",
+      "name": "Wooden Fleshing Beam",
+      "slot": "fleshing_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tan_flesh_beam_iron",
+      "tags": [
+        "fleshing",
+        "beam"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_flesh_beam_iron",
+      "name": "Iron-Edged Fleshing Beam",
+      "slot": "fleshing_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tan_frame_glassing",
+      "tags": [
+        "fleshing",
+        "beam",
+        "iron"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_frame_glassing",
+      "name": "Stretching Frame & Glassing Knife",
+      "slot": "fleshing_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "frame",
+        "glassing",
+        "scrape"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_bark_mill_hand",
+      "name": "Hand Bark Crusher",
+      "slot": "bark_mill",
+      "era": "C",
+      "upgrade_to": "core_attach_tan_bark_mill_horse",
+      "tags": [
+        "bark",
+        "crusher"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_bark_mill_horse",
+      "name": "Horse-Driven Bark Mill",
+      "slot": "bark_mill",
+      "era": "M",
+      "upgrade_to": "core_attach_tan_bark_mill_water",
+      "tags": [
+        "bark",
+        "mill",
+        "horse"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_bark_mill_water",
+      "name": "Waterwheel Bark Mill",
+      "slot": "bark_mill",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "bark",
+        "mill",
+        "waterwheel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_drying_rack",
+      "name": "Drying Racks",
+      "slot": "drying_station",
+      "era": "C",
+      "upgrade_to": "core_attach_tan_drying_loft",
+      "tags": [
+        "drying",
+        "racks"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_drying_loft",
+      "name": "Ventilated Drying Loft",
+      "slot": "drying_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tan_drying_heated",
+      "tags": [
+        "drying",
+        "loft"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_drying_heated",
+      "name": "Heated Drying Room",
+      "slot": "drying_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "drying",
+        "heated"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_currying_board",
+      "name": "Currying Board",
+      "slot": "finishing_station",
+      "era": "M",
+      "upgrade_to": "core_attach_tan_currying_press",
+      "tags": [
+        "currying",
+        "finish"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_tan_currying_press",
+      "name": "Greasing & Pressing Bench",
+      "slot": "finishing_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "currying",
+        "press"
+      ],
+      "power_w": 0
+    }
+  ]
+}

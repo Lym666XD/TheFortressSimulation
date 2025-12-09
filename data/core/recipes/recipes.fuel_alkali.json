@@ -1,0 +1,259 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_charcoal_batch_c",
+      "name": "Charcoal Batch C",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 108000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_carbonize_charcoal_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_fuel_charcoal",
+          "count": 12
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_charcoal_batch_m",
+      "name": "Charcoal Batch M",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 102000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_carbonize_mound_kiln"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_fuel_charcoal",
+          "count": 14
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_charcoal_batch_r",
+      "name": "Charcoal Batch R",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 90000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_carbonize_retort_kiln"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_fuel_charcoal",
+          "count": 15
+        },
+        {
+          "def_id": "core_item_powder_charcoal",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_from_ash_c",
+      "name": "Potash From Ash C",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 72000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_leach_ash_bucket"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_powder_alkali_potash",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_ash_plant",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_from_ash_m",
+      "name": "Potash From Ash M",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_leach_vats_evap"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_powder_alkali_potash",
+          "count": 6
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_ash_plant",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_potash_refined_r",
+      "name": "Potash Refined R",
+      "category": "fuel_alkali",
+      "workshops": [
+        "core_workshop_fuel_alkali_works"
+      ],
+      "work_time": {
+        "duration_ticks": 66000
+      },
+      "skill": {
+        "primary": "labor",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_leach_pearlash_kiln",
+          "core_attach_crystallizer_room"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_powder_alkali_potash_refined",
+          "count": 8
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_ash_plant",
+          "count": 10
+        },
+        {
+          "def_id": "core_item_liquid_water_pure",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

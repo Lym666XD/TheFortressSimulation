@@ -1,0 +1,387 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_chemistry_lab",
+      "name": "Chemistry Workshop",
+      "tags": [
+        "chemistry",
+        "distillation",
+        "acids",
+        "powder",
+        "soap",
+        "silvering"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [
+        "distillation",
+        "condenser",
+        "absorber",
+        "sulfuric_line",
+        "nitric_line",
+        "hydrochloric_line",
+        "sublimer",
+        "grinder",
+        "granulator",
+        "dryer",
+        "reactor",
+        "bench",
+        "fumehood"
+      ],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1500,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "chemistry",
+          "hazard"
+        ],
+        "effects": {
+          "beauty": 0,
+          "comfort": 0,
+          "light_lumen": 100,
+          "heat_w": 150
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_distill_glass_ceramic",
+      "name": "Glass/Ceramic Still",
+      "slot": "distillation",
+      "era": "C",
+      "upgrade_to": "core_attach_distill_dual_train",
+      "tags": [
+        "distillation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_distill_dual_train",
+      "name": "Dual-Train Still",
+      "slot": "distillation",
+      "era": "M",
+      "upgrade_to": "core_attach_distill_multi_pot",
+      "tags": [
+        "distillation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_distill_multi_pot",
+      "name": "Multi-Pot Still",
+      "slot": "distillation",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "distillation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_condenser_coil",
+      "name": "Coil Condenser",
+      "slot": "condenser",
+      "era": "C",
+      "upgrade_to": "core_attach_condenser_large",
+      "tags": [
+        "condenser"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_condenser_large",
+      "name": "Large Condenser",
+      "slot": "condenser",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "condenser"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_absorber_trough",
+      "name": "Settling Trough",
+      "slot": "absorber",
+      "era": "C",
+      "upgrade_to": "core_attach_absorber_wash_pit",
+      "tags": [
+        "scrubber"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_absorber_wash_pit",
+      "name": "Wash Pit",
+      "slot": "absorber",
+      "era": "M",
+      "upgrade_to": "core_attach_absorber_tower",
+      "tags": [
+        "scrubber"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_absorber_tower",
+      "name": "Absorption Tower",
+      "slot": "absorber",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "scrubber"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sulfuric_alum_dryer_rack",
+      "name": "Alum/Vitriol Drying Rack",
+      "slot": "sulfuric_line",
+      "era": "C",
+      "upgrade_to": "core_attach_sulfuric_alum_drydist_furnace",
+      "tags": [
+        "sulfuric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sulfuric_alum_drydist_furnace",
+      "name": "Alum/Vitriol Dry-Distillation Furnace",
+      "slot": "sulfuric_line",
+      "era": "M",
+      "upgrade_to": "core_attach_sulfuric_multistage_with_boiler",
+      "tags": [
+        "sulfuric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sulfuric_multistage_with_boiler",
+      "name": "Multistage Dry-Distillation + Concentrator",
+      "slot": "sulfuric_line",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "sulfuric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_nitric_still",
+      "name": "Strong Acid Still (Nitric)",
+      "slot": "nitric_line",
+      "era": "M",
+      "upgrade_to": "core_attach_nitric_train",
+      "tags": [
+        "nitric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_nitric_train",
+      "name": "Nitric Acid Train",
+      "slot": "nitric_line",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "nitric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_hcl_generator_pot",
+      "name": "HCl Generator Pot",
+      "slot": "hydrochloric_line",
+      "era": "M",
+      "upgrade_to": "core_attach_hcl_generator_furnace",
+      "tags": [
+        "hydrochloric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_hcl_generator_furnace",
+      "name": "HCl Generator Furnace",
+      "slot": "hydrochloric_line",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "hydrochloric"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sublimer_furnace",
+      "name": "Sublimation Furnace",
+      "slot": "sublimer",
+      "era": "C",
+      "upgrade_to": "core_attach_sublimer_continuous",
+      "tags": [
+        "sulfur"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sublimer_continuous",
+      "name": "Continuous Sublimer",
+      "slot": "sublimer",
+      "era": "M",
+      "upgrade_to": "core_attach_sublimer_multichamber",
+      "tags": [
+        "sulfur"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_sublimer_multichamber",
+      "name": "Multichamber Sublimer",
+      "slot": "sublimer",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "sulfur"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_grinder_handmill_sieve",
+      "name": "Hand Mill & Sieve",
+      "slot": "grinder",
+      "era": "M",
+      "upgrade_to": "core_attach_grinder_water_muller",
+      "tags": [
+        "powder"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_grinder_water_muller",
+      "name": "Water-Powered Muller",
+      "slot": "grinder",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "powder",
+        "powered"
+      ],
+      "power_w": 250
+    },
+    {
+      "id": "core_attach_granulator_basin",
+      "name": "Granulation Basin",
+      "slot": "granulator",
+      "era": "M",
+      "upgrade_to": "core_attach_granulator_drum",
+      "tags": [
+        "granulation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_granulator_drum",
+      "name": "Rotary Drum Granulator",
+      "slot": "granulator",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "granulation",
+        "powered"
+      ],
+      "power_w": 250
+    },
+    {
+      "id": "core_attach_dryer_rack",
+      "name": "Drying Rack",
+      "slot": "dryer",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "drying"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_reactor_kettle",
+      "name": "Saponification Kettle",
+      "slot": "reactor",
+      "era": "C",
+      "upgrade_to": "core_attach_reactor_kettle_agitated",
+      "tags": [
+        "reactor"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_reactor_kettle_agitated",
+      "name": "Agitated Saponification Kettle",
+      "slot": "reactor",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "reactor"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_bench_mixer_acid",
+      "name": "Acid Mixing Bench",
+      "slot": "bench",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "mixing"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_bench_tank_acidproof",
+      "name": "Acid-Proof Holding Tank",
+      "slot": "bench",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "storage"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_fumehood_enclosure",
+      "name": "Fume Hood Enclosure",
+      "slot": "fumehood",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "safety"
+      ],
+      "power_w": 0
+    }
+  ]
+}

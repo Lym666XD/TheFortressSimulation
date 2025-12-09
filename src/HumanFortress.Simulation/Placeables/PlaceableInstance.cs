@@ -100,6 +100,17 @@ public sealed class PlaceableInstance
     /// </summary>
     public bool IsGhost { get; set; } = false;
 
+    /// <summary>
+    /// Optional state when this instance represents a construction site.
+    /// Tracks target, required materials, delivered materials (derived or cached), and build progress.
+    /// </summary>
+    public ConstructionSiteState? ConstructionSite { get; set; }
+
+    /// <summary>
+    /// Optional workshop state (set for completed workshop constructions).
+    /// </summary>
+    public WorkshopState? Workshop { get; set; }
+
     // === STATE MACHINES ===
     /// <summary>
     /// Door state (only if passability=doorway)
@@ -245,6 +256,8 @@ public sealed class PlaceableInstance
 
         // Copy fixed effects (no quality modifier for constructions)
         instance.Effects = def.PlaceableProfile.Effects.Clone();
+        // Apply passability from definition (data-driven)
+        instance.Passability = def.PlaceableProfile.Passability;
 
         // Calculate HP from material costs (simplified: sum of all material counts * default HP)
         int totalMaterialCount = 0;
@@ -257,6 +270,13 @@ public sealed class PlaceableInstance
             ? totalMaterialCount * tuning.DefaultMaxHP
             : tuning.DefaultMaxHP;
         instance.HitPoints = instance.MaxHitPoints;
+
+        if (IsWorkshopDefinition(def))
+        {
+            instance.Workshop ??= new WorkshopState();
+            int maxWorkers = Math.Max(1, def.Io?.InputSlots ?? 1);
+            instance.Workshop.ConfigureWorkers(1, maxWorkers);
+        }
 
         return instance;
     }
@@ -317,6 +337,14 @@ public sealed class PlaceableInstance
 
         return "Broken";
     }
+
+    private static bool IsWorkshopDefinition(ConstructionDefinition def)
+    {
+        if (string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase))
+            return true;
+        if (def.PlaceableProfile?.Tags == null) return false;
+        return Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0;
+    }
 }
 
 /// <summary>
@@ -349,4 +377,31 @@ public sealed class DoorState
     /// Is door locked (blocks opening)
     /// </summary>
     public bool IsLocked { get; set; } = false;
+}
+
+/// <summary>
+/// Runtime state for a construction site placeable.
+/// </summary>
+public sealed class ConstructionSiteState
+{
+    /// <summary>
+    /// Target construction id (e.g., core_construction_workshop_* or l0.* synthetic ids).
+    /// </summary>
+    public string TargetId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Required materials by item tag (e.g., stone_block, wood_log, clay_brick).
+    /// </summary>
+    public Dictionary<string, int> MaterialsRequired { get; set; } = new();
+
+    /// <summary>
+    /// Delivered materials by item tag (cached/derived). Planner may recompute on Read.
+    /// </summary>
+    public Dictionary<string, int> MaterialsDelivered { get; set; } = new();
+
+    /// <summary>
+    /// Build progress (ticks) and total required.
+    /// </summary>
+    public int BuildProgressTicks { get; set; }
+    public int TotalBuildTicks { get; set; }
 }

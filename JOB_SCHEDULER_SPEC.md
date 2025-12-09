@@ -326,3 +326,9 @@ Commit across chunks by chunkId; inside chunk apply SUM→Clamp→BackPressure.
 Items
 
 Enqueue: Plan(ItemReservations); barrier → MergeApply(Items) (ONE-WINNER reservations); cross-chunk moves via PushItem messages next tick.
+20) Execution Backlog (informative)
+- Determinism harness: add jitter-fuzz replay to assert identical MergeApply outputs across OS/threads; include stable drain-order tests for transport queue shards.
+- Reservation diffs: promote ReservationManager to emit/consume Diff ops (Reserve/Release Item/Creature) and enforce Items-stage write masks.
+- Per-chunk MergeApply PoC: drain chunk shards from transport/mining/construction inboxes and run per-chunk MergeApply jobs; keep commit order ascending ChunkId.
+- Tunings wiring: expose priorities/budgets/affinity/backpressure in `tuning.scheduler.json`, plumb through orchestrator; log carryover age and boosts.
+- Telemetry hooks: structured per-job stats stream (intake/active/backlog/requeued/nopath/quarantine) with opt-in UI panel; keep log-only default.

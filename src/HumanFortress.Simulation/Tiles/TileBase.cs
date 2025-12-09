@@ -61,6 +61,7 @@ public readonly struct TileBase
     {
         TerrainKind.OpenWithFloor => true,
         TerrainKind.Ramp => true,
+        TerrainKind.Slope => true,
         TerrainKind.StairsUp => true,
         TerrainKind.StairsDown => true,
         TerrainKind.StairsUD => true,

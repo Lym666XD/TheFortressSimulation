@@ -1,0 +1,187 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_firearms",
+      "name": "Firearms Workshop",
+      "tags": [
+        "workshop",
+        "armaments",
+        "firearms",
+        "artillery"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 4,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1500,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "firearms",
+          "weapons"
+        ],
+        "effects": {
+          "beauty": 0,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 100
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_firearms_assembly_matchlock_bench",
+      "name": "Matchlock Assembly Bench",
+      "slot": "gun_assembly",
+      "era": "M",
+      "upgrade_to": "core_attach_firearms_assembly_precision_bench",
+      "tags": [
+        "assembly",
+        "firearm"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_firearms_assembly_precision_bench",
+      "name": "Precision Gunsmith Assembly Bench",
+      "slot": "gun_assembly",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "assembly",
+        "firearm"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_firearms_barrel_straight_muzzle",
+      "name": "Barrel Straightening & Muzzling Station",
+      "slot": "barrel_station",
+      "era": "M",
+      "upgrade_to": "core_attach_firearms_barrel_straight_bore_precision",
+      "tags": [
+        "barrel",
+        "straighten",
+        "muzzle"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_firearms_barrel_straight_bore_precision",
+      "name": "Straightening + Precision Boring Bench",
+      "slot": "barrel_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "barrel",
+        "boring",
+        "precision"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_lift_tripod",
+      "name": "Tripod Hoist",
+      "slot": "artillery_lift",
+      "era": "M",
+      "upgrade_to": "core_attach_artillery_lift_crane_block",
+      "tags": [
+        "lift",
+        "hoist",
+        "artillery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_lift_crane_block",
+      "name": "Overhead Crane & Tackle",
+      "slot": "artillery_lift",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "lift",
+        "crane",
+        "artillery"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_carriage_bench",
+      "name": "Gun Carriage Assembly Stand",
+      "slot": "carriage_assembly",
+      "era": "M",
+      "upgrade_to": "core_attach_artillery_carriage_rotating_stand",
+      "tags": [
+        "carriage",
+        "assembly"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_carriage_rotating_stand",
+      "name": "Disassemblable Carriage & Rotating Mount Stand",
+      "slot": "carriage_assembly",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "carriage",
+        "rotating",
+        "assembly"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_trunnion_fixture",
+      "name": "Trunnion Alignment Fixture",
+      "slot": "trunnion_fixture",
+      "era": "M",
+      "upgrade_to": "core_attach_artillery_axle_recoil_fixture",
+      "tags": [
+        "trunnion",
+        "alignment"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_artillery_axle_recoil_fixture",
+      "name": "Axle & Recoil Fitting Jig",
+      "slot": "trunnion_fixture",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "axle",
+        "recoil",
+        "fitting"
+      ],
+      "power_w": 0
+    }
+  ]
+}

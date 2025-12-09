@@ -1,0 +1,387 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_metallurgy_smeltery",
+      "name": "Smeltery",
+      "tags": [
+        "metallurgy",
+        "smelting",
+        "refining"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [
+        "furnace",
+        "hearth",
+        "bench",
+        "power_bellows",
+        "power_hammer",
+        "scrubber",
+        "cupel",
+        "liquation",
+        "roaster",
+        "still"
+      ],
+      "io": {
+        "input_slots": 6,
+        "output_slots": 4,
+        "buffer_slots": 3
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1500,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "smelting",
+          "hot"
+        ],
+        "effects": {
+          "beauty": -2,
+          "comfort": 0,
+          "light_lumen": 200,
+          "heat_w": 500
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_power_bellows_hand",
+      "name": "Hand/Foot Bellows",
+      "slot": "power_bellows",
+      "era": "C",
+      "upgrade_to": "core_attach_power_bellows_water",
+      "tags": [
+        "bellows",
+        "air"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_power_bellows_water",
+      "name": "Water-Powered Blast",
+      "slot": "power_bellows",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "bellows",
+        "air",
+        "powered"
+      ],
+      "power_w": 150
+    },
+    {
+      "id": "core_attach_power_hammer_hand",
+      "name": "Hand Forging Set",
+      "slot": "power_hammer",
+      "era": "C",
+      "upgrade_to": "core_attach_power_hammer_water",
+      "tags": [
+        "forge"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_power_hammer_water",
+      "name": "Water Trip Hammer",
+      "slot": "power_hammer",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "forge",
+        "powered"
+      ],
+      "power_w": 150
+    },
+    {
+      "id": "core_attach_gas_scrubber_pit",
+      "name": "Wash Pit Scrubber",
+      "slot": "scrubber",
+      "era": "M",
+      "upgrade_to": "core_attach_gas_scrubber_tower",
+      "tags": [
+        "scrubber",
+        "acid_capture"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_gas_scrubber_tower",
+      "name": "Leaching Tower Scrubber",
+      "slot": "scrubber",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "scrubber",
+        "acid_capture"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_bloomery",
+      "name": "Pit Bloomery",
+      "slot": "furnace",
+      "era": "C",
+      "upgrade_to": "core_attach_furnace_shaft",
+      "tags": [
+        "iron"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_shaft",
+      "name": "Shaft Furnace",
+      "slot": "furnace",
+      "era": "M",
+      "upgrade_to": "core_attach_furnace_blast",
+      "tags": [
+        "iron"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_blast",
+      "name": "Blast Furnace Stack",
+      "slot": "furnace",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "iron"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_hearth_finery",
+      "name": "Finery Hearth",
+      "slot": "hearth",
+      "era": "M",
+      "upgrade_to": "core_attach_hearth_finery_improved",
+      "tags": [
+        "steel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_hearth_finery_improved",
+      "name": "Improved Finery Hearth",
+      "slot": "hearth",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "steel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_chest_cementation",
+      "name": "Cementation Chest",
+      "slot": "bench",
+      "era": "M",
+      "upgrade_to": "core_attach_furnace_cementation_large",
+      "tags": [
+        "steel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_cementation_large",
+      "name": "Large Sealed Steel Furnace",
+      "slot": "bench",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "steel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_quench_tub",
+      "name": "Quench Tub",
+      "slot": "bench",
+      "era": "C",
+      "upgrade_to": "core_attach_temper_oven",
+      "tags": [
+        "heat_treat"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_temper_oven",
+      "name": "Temper Oven",
+      "slot": "bench",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "heat_treat"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crucible_copper",
+      "name": "Copper Crucible Furnace",
+      "slot": "furnace",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "copper"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_roaster_bed_cu",
+      "name": "Copper Roasting Bed",
+      "slot": "roaster",
+      "era": "M",
+      "upgrade_to": "core_attach_roaster_bed_cu_tall",
+      "tags": [
+        "copper"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_roaster_bed_cu_tall",
+      "name": "Tall-Draft Copper Roaster",
+      "slot": "roaster",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "copper"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_reverb",
+      "name": "Reverberatory Furnace",
+      "slot": "furnace",
+      "era": "M",
+      "upgrade_to": "core_attach_furnace_reverb_large",
+      "tags": [
+        "copper",
+        "refining"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_reverb_large",
+      "name": "Large Reverberatory",
+      "slot": "furnace",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "copper",
+        "refining"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_bench_cementation_brass",
+      "name": "Sealed Crucible Bench (Brass)",
+      "slot": "bench",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "brass"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_lead",
+      "name": "Lead Melting Furnace",
+      "slot": "furnace",
+      "era": "C",
+      "upgrade_to": null,
+      "tags": [
+        "lead"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_cupel_hearth",
+      "name": "Cupellation Hearth & Cupels",
+      "slot": "cupel",
+      "era": "C",
+      "upgrade_to": "core_attach_cupel_reclaim",
+      "tags": [
+        "cupellation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_cupel_reclaim",
+      "name": "Cupel Reclaim Bench",
+      "slot": "cupel",
+      "era": "M",
+      "upgrade_to": null,
+      "tags": [
+        "cupellation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_furnace_liquation",
+      "name": "Liquation/Seiger Furnace",
+      "slot": "liquation",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "liquation"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_roaster_cinnabar_pan",
+      "name": "Pan Roaster (Cinnabar)",
+      "slot": "roaster",
+      "era": "C",
+      "upgrade_to": "core_attach_roaster_cinnabar_brick",
+      "tags": [
+        "mercury"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_roaster_cinnabar_brick",
+      "name": "Brick Roaster (Cinnabar)",
+      "slot": "roaster",
+      "era": "M",
+      "upgrade_to": "core_attach_still_mercury_closed",
+      "tags": [
+        "mercury"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_still_mercury_closed",
+      "name": "Closed Mercury Still",
+      "slot": "still",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "mercury"
+      ],
+      "power_w": 0
+    }
+  ]
+}

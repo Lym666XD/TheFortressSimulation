@@ -40,6 +40,8 @@ public sealed class WorldNavigationView : IWorldNavigationView
 
     public bool IsWalkable(Point3 position, MoveMode mode)
     {
+        // Allow traversal through construction site anchors (avoid partitioning),
+        // but disallow standing on them in IsStandable.
         var caps = GetCapabilities(position);
         return mode switch
         {
@@ -78,6 +80,8 @@ public sealed class WorldNavigationView : IWorldNavigationView
 
     public bool IsStandable(Point3 position)
     {
+        // Treat construction site anchor as not standable (cannot end movement here)
+        if (IsConstructionSiteAnchor(position)) return false;
         // Prefer capabilities; fall back to tile kind
         var caps = GetCapabilities(position);
         if ((caps & NavCapability.Standable) != 0) return true;
@@ -110,5 +114,25 @@ public sealed class WorldNavigationView : IWorldNavigationView
         int localX = ((position.X % ChunkSize) + ChunkSize) % ChunkSize;
         int localY = ((position.Y % ChunkSize) + ChunkSize) % ChunkSize;
         return localY * ChunkSize + localX;
+    }
+
+    private bool IsConstructionSiteAnchor(Point3 position)
+    {
+        // Check owned placeables at this cell for a construction site
+        var ck = new HumanFortress.Simulation.World.ChunkKey(position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY,
+                                                             position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY,
+                                                             position.Z);
+        var chunk = _world.GetChunk(ck);
+        if (chunk == null) return false;
+        var pd = chunk.GetPlaceableData();
+        if (pd == null) return false;
+        int lx = ((position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY) + HumanFortress.Simulation.World.Chunk.SIZE_XY) % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int ly = ((position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY) + HumanFortress.Simulation.World.Chunk.SIZE_XY) % HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int idx = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
+        if (pd.TryGetOwnedAt(idx, out var owned))
+        {
+            return owned.ConstructionSite != null;
+        }
+        return false;
     }
 }

@@ -380,8 +380,11 @@ public sealed class OrdersUI
                     {
                         var size = (System.Math.Abs(mouseWorld.X - ui.PlaceFirstCorner.Value.X) + 1,
                                      System.Math.Abs(mouseWorld.Y - ui.PlaceFirstCorner.Value.Y) + 1);
+                        // Clamp negative sizes to 0 (safety), though upstream clamps points to world bounds
+                        int sx = size.Item1 < 0 ? 0 : size.Item1;
+                        int sy = size.Item2 < 0 ? 0 : size.Item2;
                         surface.Print(2, statusY,
-                            $"[BUILD] Click opposite corner - {size.Item1}x{size.Item2} tiles - ESC to cancel",
+                            $"[BUILD] Click opposite corner - {sx}x{sy} tiles - ESC to cancel",
                             Color.Yellow);
                     }
                     break;

@@ -1,0 +1,2924 @@
+{
+  "$schema": "../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_wood_boards_from_log_C",
+      "name": "Wood Boards From Log C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_hand_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_boards_from_log_M",
+      "name": "Wood Boards From Log M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3300
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 14
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_boards_from_log_R",
+      "name": "Wood Boards From Log R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3000
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 16
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_C",
+      "name": "Wood Beams From Log C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_hand_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_M",
+      "name": "Wood Beams From Log M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3300
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 3
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_beams_from_log_R",
+      "name": "Wood Beams From Log R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3000
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_log_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_C",
+      "name": "Wood Rods From Board C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1800
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_hand_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_M",
+      "name": "Wood Rods From Board M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1620
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_pit"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 14
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_rods_from_board_R",
+      "name": "Wood Rods From Board R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1440
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_water"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 16
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_small_C",
+      "name": "Wood Components Small C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1800
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 10
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_small_M",
+      "name": "Wood Components Small M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1620
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 12
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_small_R",
+      "name": "Wood Components Small R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1440
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 14
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_large_C",
+      "name": "Wood Components Large C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 2400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_large",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_large_M",
+      "name": "Wood Components Large M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 2160
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_large",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_wood_components_large_R",
+      "name": "Wood Components Large R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1920
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_component_wood_large",
+          "count": 3
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_barrel_C",
+      "name": "Container Barrel C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_barrel_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_barrel_M",
+      "name": "Container Barrel M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_barrel_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_barrel_R",
+      "name": "Container Barrel R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_barrel_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bin_C",
+      "name": "Container Bin C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bin_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bin_M",
+      "name": "Container Bin M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4860
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bin_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bin_R",
+      "name": "Container Bin R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4320
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bin_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bucket_C",
+      "name": "Container Bucket C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bucket_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bucket_M",
+      "name": "Container Bucket M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3240
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bucket_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_bucket_R",
+      "name": "Container Bucket R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 2880
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_container_bucket_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_C",
+      "name": "Vehicle Handcart C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 10800
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_hand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_M",
+      "name": "Vehicle Handcart M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 9720
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_hand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_handcart_R",
+      "name": "Vehicle Handcart R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 8640
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_hand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 5
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_C",
+      "name": "Vehicle Minecart C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 14400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_mine_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_M",
+      "name": "Vehicle Minecart M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 12960
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_mine_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_vehicle_minecart_R",
+      "name": "Vehicle Minecart R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 11520
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cart_mine_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 8
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_C",
+      "name": "Container Cage Wood C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cage_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_M",
+      "name": "Container Cage Wood M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4860
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cage_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_container_cage_wood_R",
+      "name": "Container Cage Wood R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4320
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cage_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_bed_C",
+      "name": "Furniture Bed C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 9000
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_bed_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_bed_M",
+      "name": "Furniture Bed M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 8100
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_bed_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_bed_R",
+      "name": "Furniture Bed R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_bed_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 6
+        },
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_door_C",
+      "name": "Furniture Door C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4500
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_door_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_door_M",
+      "name": "Furniture Door M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4080
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_door_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_door_R",
+      "name": "Furniture Door R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_door_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_table_C",
+      "name": "Furniture Table C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_table_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_table_M",
+      "name": "Furniture Table M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_table_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_table_R",
+      "name": "Furniture Table R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_table_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_chair_C",
+      "name": "Furniture Chair C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_chair_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_chair_M",
+      "name": "Furniture Chair M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4860
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_chair_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_chair_R",
+      "name": "Furniture Chair R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4320
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_chair_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_C",
+      "name": "Furniture Cabinet C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 9000
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_cabinet_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_M",
+      "name": "Furniture Cabinet M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 8100
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_cabinet_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_cabinet_R",
+      "name": "Furniture Cabinet R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_cabinet_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_C",
+      "name": "Furniture Coffer C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_coffer_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_M",
+      "name": "Furniture Coffer M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_coffer_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_coffer_R",
+      "name": "Furniture Coffer R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_coffer_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_C",
+      "name": "Furniture Weapon Rack C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_weapon_rack_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_M",
+      "name": "Furniture Weapon Rack M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_weapon_rack_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_weapon_rack_R",
+      "name": "Furniture Weapon Rack R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_weapon_rack_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_C",
+      "name": "Furniture Armor Stand C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_armor_stand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_M",
+      "name": "Furniture Armor Stand M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_armor_stand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_furniture_armor_stand_R",
+      "name": "Furniture Armor Stand R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_furniture_armor_stand_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 4
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_grate_wood_C",
+      "name": "Grate Wood C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_grate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_grate_wood_M",
+      "name": "Grate Wood M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3240
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_grate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_grate_wood_R",
+      "name": "Grate Wood R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 2880
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_grate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_C",
+      "name": "Hatch Cover Wood C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4500
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_hatch_cover_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_M",
+      "name": "Hatch Cover Wood M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4080
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_hatch_cover_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_hatch_cover_wood_R",
+      "name": "Hatch Cover Wood R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_hatch_cover_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_C",
+      "name": "Floodgate Wood C",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 7200
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_M",
+      "name": "Floodgate Wood M",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 6480
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 3,
+        "xp_per_craft": 15
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_fixture_drill"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "M",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_floodgate_wood_R",
+      "name": "Floodgate Wood R",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5760
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 4,
+        "xp_per_craft": 20
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_planer_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_floodgate_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "R",
+      "inputs": [
+        {
+          "def_id": "core_item_beam_wood",
+          "count": 1
+        },
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_archery_arrow_shafts_100",
+      "name": "Archery Arrow Shafts 100",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_hand_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_shaft_arrow_wood",
+          "count": 100
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 10
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_archery_bolt_shafts_100",
+      "name": "Archery Bolt Shafts 100",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_saw_hand_frame"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_shaft_bolt_wood",
+          "count": 100
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_rod_wood",
+          "count": 12
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tool_cane_pair",
+      "name": "Tool Cane Pair",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1800
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_cane_wood",
+          "count": 2
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tool_splints_4",
+      "name": "Tool Splints 4",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 1800
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_splint_wood",
+          "count": 4
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tool_ladder",
+      "name": "Tool Ladder",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 5400
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_ladder_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 3
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_tool_animal_trap",
+      "name": "Tool Animal Trap",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 3600
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_trap_animal_wood",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "core_recipe_shield_round_wood",
+      "name": "Shield Round Wood",
+      "category": "woodworking",
+      "workshops": [
+        "core_workshop_woodworking"
+      ],
+      "work_time": {
+        "duration_ticks": 4500
+      },
+      "skill": {
+        "primary": "carpentry",
+        "difficulty": 2,
+        "xp_per_craft": 10
+      },
+      "requirements": {
+        "enablers": [
+          "core_attach_wood_joinery_bench"
+        ],
+        "power_w": 0
+      },
+      "outputs": [
+        {
+          "def_id": "core_item_shield_wood_round",
+          "count": 1
+        }
+      ],
+      "unlock": {
+        "autolearn": true
+      },
+      "era": "C",
+      "inputs": [
+        {
+          "def_id": "core_item_board_wood",
+          "count": 2
+        },
+        {
+          "def_id": "core_item_component_wood_small",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

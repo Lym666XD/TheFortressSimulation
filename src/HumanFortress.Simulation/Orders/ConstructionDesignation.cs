@@ -59,6 +59,7 @@ public readonly record struct PlannedBuild(
     TerrainKind TargetKind,
     ushort GeologyHandle,
     ConstructionShape Shape,
+    string[] RequiredTags,
     int Priority,
     ulong Seed);
 
@@ -83,4 +84,3 @@ public sealed class MaterialFilterSpec
     /// </summary>
     public string CategoryKey { get; init; } = "l0.unknown";
 }
-

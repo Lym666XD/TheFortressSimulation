@@ -119,6 +119,43 @@ public static class SimulationDiffApplicator
         int worldY = ck.ChunkY * World.Chunk.SIZE_XY + ly;
         LogCallback?.Invoke($"[DIFF] ApplySetTerrain at ({worldX},{worldY},{ck.Z}): {tile.Kind} → {newKind}");
 
+        // Eject any creatures/items that are now inside a non-walkable tile (e.g., walls) to nearby safe cells
+        try
+        {
+            bool isWalkable = newKind == HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor || newKind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp || newKind == HumanFortress.Simulation.Tiles.TerrainKind.StairsUp || newKind == HumanFortress.Simulation.Tiles.TerrainKind.StairsDown || newKind == HumanFortress.Simulation.Tiles.TerrainKind.StairsUD;
+            if (!isWalkable)
+            {
+                int worldZ = ck.Z;
+
+                // Eject creatures
+                var stuck = world.Creatures.GetAllInstances().Where(c => c.Z == worldZ && c.Position.X == worldX && c.Position.Y == worldY).ToList();
+                foreach (var cr in stuck)
+                {
+                    var safe = FindNearestStandableNonSite(world, worldX, worldY, worldZ, 3);
+                    if (safe != null)
+                    {
+                        cr.Position = new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y);
+                        cr.Z = safe.Value.Z;
+                        LogCallback?.Invoke($"[EJECT] creature={cr.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                    }
+                }
+
+                // Eject items
+                var items = world.Items.GetItemsAt(new SadRogue.Primitives.Point(worldX, worldY), worldZ, groundOnly: true).ToList();
+                foreach (var it in items)
+                {
+                    var safe = FindNearestStandableNonSite(world, worldX, worldY, worldZ, 3);
+                    if (safe != null)
+                    {
+                        world.Items.UpdateItemPosition(it.Guid, it.Position, it.Z, new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y), safe.Value.Z);
+                        try { world.Items.MergeStacksAt(new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y), safe.Value.Z); } catch { }
+                        LogCallback?.Invoke($"[EJECT] item={it.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                    }
+                }
+            }
+        }
+        catch { }
+
         // Mark chunk dirty for navigation rebuild (ConnectivityVersion already incremented by SetTile)
         world.MarkChunkDirty(ck);
 
@@ -158,6 +195,42 @@ public static class SimulationDiffApplicator
         {
             world.MarkChunkDirty(new World.ChunkKey(ck.ChunkX, ck.ChunkY + 1, ck.Z));
         }
+    }
+
+    private struct P3 { public int X; public int Y; public int Z; public P3(int x,int y,int z){X=x;Y=y;Z=z;} }
+    private static P3? FindNearestStandableNonSite(World.World world, int sx, int sy, int sz, int maxRadius)
+    {
+        var visited = new System.Collections.Generic.HashSet<(int,int)>();
+        var q = new System.Collections.Generic.Queue<(int x,int y,int d)>();
+        void Enq(int x,int y,int d){ if (!world.IsValidPosition(x,y,sz)) return; if (visited.Add((x,y))) q.Enqueue((x,y,d)); }
+        foreach (var (dx,dy) in new (int,int)[]{ (1,0),(-1,0),(0,1),(0,-1) }) Enq(sx+dx, sy+dy, 1);
+        foreach (var (dx,dy) in new (int,int)[]{ (2,0),(-2,0),(0,2),(0,-2),(1,1),(1,-1),(-1,1),(-1,-1) }) Enq(sx+dx, sy+dy, 2);
+        while (q.Count > 0)
+        {
+            var (x,y,d) = q.Dequeue();
+            if (d > maxRadius) break;
+            var tile = world.GetTile(x,y,sz);
+            if (tile == null) continue;
+            if (!(tile.Value.IsStandable || tile.Value.IsWalkable)) continue;
+            int cx = x / World.Chunk.SIZE_XY;
+            int cy = y / World.Chunk.SIZE_XY;
+            int lx2 = x % World.Chunk.SIZE_XY;
+            int ly2 = y % World.Chunk.SIZE_XY;
+            var ck2 = new World.ChunkKey(cx, cy, sz);
+            var ch2 = world.GetChunk(ck2);
+            bool bad = false;
+            if (ch2 != null)
+            {
+                var pd = ch2.GetPlaceableData();
+                if (pd != null && pd.TryGetOwnedAt(World.Chunk.LocalIndex(lx2,ly2), out var owned))
+                {
+                    if (owned.ConstructionSite != null) bad = true;
+                }
+            }
+            if (bad) continue;
+            return new P3(x,y,sz);
+        }
+        return null;
     }
 
     private static void ApplyMoveCreature(World.World world, DiffOp op)

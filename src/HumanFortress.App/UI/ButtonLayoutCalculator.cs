@@ -142,5 +142,41 @@ namespace HumanFortress.App.UI
             }
             return null;
         }
+
+        /// <summary>
+        /// Calculate F2 Items tab filter pills (kind filter row).
+        /// Matches layout in UiRenderer.DrawItemsTab (line 896-905).
+        /// </summary>
+        public static ButtonInfo[] CalculateItemKindFilterPills(int screenWidth, int screenHeight, string[] kindLabels, int filterRowY)
+        {
+            // Layout: "Filter by kind: [" starts at X=2, first pill at X=18
+            int startX = 18;
+            var pills = new ButtonInfo[kindLabels.Length];
+            int currentX = startX;
+
+            for (int i = 0; i < kindLabels.Length; i++)
+            {
+                int width = kindLabels[i].Length;
+                var bounds = new Rectangle(currentX, filterRowY, width, 1);
+                pills[i] = new ButtonInfo(bounds, kindLabels[i], i);
+                currentX += width + 1; // +1 for "|" separator (actually rendered as " | " but we only need the label width + 1 space)
+            }
+
+            return pills;
+        }
+
+        /// <summary>
+        /// Hit-test for F2 item kind filter pills. Returns filter kind index or null.
+        /// </summary>
+        public static int? HitTestItemKindFilterPills(Point screenPos, int screenWidth, int screenHeight, string[] kindLabels, int filterRowY)
+        {
+            var pills = CalculateItemKindFilterPills(screenWidth, screenHeight, kindLabels, filterRowY);
+            for (int i = 0; i < pills.Length; i++)
+            {
+                if (pills[i].Contains(screenPos))
+                    return i;
+            }
+            return null;
+        }
     }
 }

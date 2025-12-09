@@ -1,4 +1,5 @@
 using SadRogue.Primitives;
+using System.Collections.Generic;
 
 namespace HumanFortress.App.UI;
 
@@ -87,6 +88,9 @@ public enum PlacementMode
     // Build (Construction)
     ConstructionFirstCorner,
     ConstructionSecondCorner,
+    // Buildable (L2 placeables)
+    BuildableFirstAnchor,
+    BuildableConfirmAnchor,
     // Zones
     ZoneFirstCorner,
     ZoneSecondCorner,
@@ -114,6 +118,60 @@ public sealed class UiStore
     // Build/Construction selection state
     public HumanFortress.Simulation.Orders.ConstructionShape SelectedConstructionShape { get; set; } = HumanFortress.Simulation.Orders.ConstructionShape.Wall;
     public MiningAction SelectedMiningAction { get; set; } = MiningAction.Dig;
+    // Buildable selection
+    public string? SelectedBuildableConstructionId { get; set; } = null;
+    public string? SelectedWorkshopCategory { get; set; } = null; // mining/lumbering/farming/industry/crafts
+    public bool WorkshopBrowsingItems { get; set; } = false;
+    // Construction material selection (UI dialog)
+    public bool ConstructionMaterialDialogOpen { get; set; } = false;
+    public List<string> ConstructionSelectedTags { get; } = new();
+    public string? ConstructionPreferredMaterialId { get; set; } = null;
+    public void ResetConstructionSelection()
+    {
+        ConstructionSelectedTags.Clear();
+        ConstructionPreferredMaterialId = null;
+    }
+    public void ResetBuildableSelection()
+    {
+        SelectedBuildableConstructionId = null;
+    }
+
+    public void ResetWorkshopMenu()
+    {
+        SelectedWorkshopCategory = null;
+        WorkshopBrowsingItems = false;
+    }
+
+    // === Workshop panel state ===
+    public bool WorkshopPanelOpen { get; private set; } = false;
+    public int WorkPanelSelectedIndex { get; set; } = 0;
+    public int WorkAllocSelectedRow { get; set; } = 0;
+    public int WorkAllocSelectedCol { get; set; } = 0;
+    public int WorkAllocRowOffset { get; set; } = 0;
+    public bool SuppressNextTileClick { get; set; } = false;
+    public Guid? OpenWorkshopGuid { get; private set; } = null;
+    public SadRogue.Primitives.Point OpenWorkshopAnchor { get; private set; } = new SadRogue.Primitives.Point(0,0);
+    public int OpenWorkshopZ { get; private set; } = 0;
+    public int WorkshopQueueSelectedIndex { get; set; } = 0;
+    public int WorkshopQueueScroll { get; set; } = 0;
+
+    public void OpenWorkshopPanel(Guid guid, SadRogue.Primitives.Point anchor, int z)
+    {
+        OpenWorkshopGuid = guid;
+        OpenWorkshopAnchor = anchor;
+        OpenWorkshopZ = z;
+        WorkshopPanelOpen = true;
+        WorkshopQueueSelectedIndex = 0;
+        WorkshopQueueScroll = 0;
+    }
+
+    public void CloseWorkshopPanel()
+    {
+        WorkshopPanelOpen = false;
+        OpenWorkshopGuid = null;
+        WorkshopQueueSelectedIndex = 0;
+        WorkshopQueueScroll = 0;
+    }
 
     // Stockpile/Zone placement state
     public Point? PlaceFirstCorner { get; set; } = null;
@@ -155,6 +213,13 @@ public sealed class UiStore
         }
         OpenDrawer = id;
         DrawerTab = 0;
+        if (id == DrawerId.Work)
+        {
+            WorkPanelSelectedIndex = 0;
+            WorkAllocSelectedRow = 0;
+            WorkAllocSelectedCol = 0;
+            WorkAllocRowOffset = 0;
+        }
         Context = UiContext.Drawer;
     }
 
@@ -162,12 +227,19 @@ public sealed class UiStore
     {
         if (QuickMenu == kind)
         {
+            // Toggling off - reset all submenu states
             QuickMenu = QuickMenuKind.None;
             ZoneMenu = ZoneSubmenu.None;
+            BuildMenu = BuildSubmenu.None;
+            ResetWorkshopMenu(); // Reset workshop state when closing Build menu
             if (OpenDrawer == DrawerId.None)
                 Context = UiContext.Global;
             return;
         }
+        // Switching to a different quick menu - reset previous submenu states
+        ZoneMenu = ZoneSubmenu.None;
+        BuildMenu = BuildSubmenu.None;
+        ResetWorkshopMenu(); // Reset workshop state when switching menus
         QuickMenu = kind;
         Context = UiContext.QuickMenu;
     }
@@ -195,11 +267,18 @@ public sealed class UiStore
     public void OpenBuildSubmenu(BuildSubmenu submenu)
     {
         BuildMenu = submenu;
+        // Reset workshop state when entering workshop submenu to prevent stale state
+        if (submenu == BuildSubmenu.Workshop)
+        {
+            ResetWorkshopMenu();
+        }
     }
 
     public void CloseBuildSubmenu()
     {
         BuildMenu = BuildSubmenu.None;
+        // Always reset workshop state when closing build submenu
+        ResetWorkshopMenu();
     }
 
     public void OpenStockpileSubmenu(StockpileSubmenu submenu)
@@ -242,13 +321,40 @@ public sealed class UiStore
     public void TabNext()
     {
         if (Context != UiContext.Drawer) return;
-        DrawerTab = (DrawerTab + 1) % 3; // three stub tabs by default
+        int count = GetDrawerTabCount();
+        if (count <= 0) return;
+        DrawerTab = (DrawerTab + 1) % count;
     }
 
     public void TabPrev()
     {
         if (Context != UiContext.Drawer) return;
-        DrawerTab = (DrawerTab + 2) % 3;
+        int count = GetDrawerTabCount();
+        if (count <= 0) return;
+        DrawerTab = (DrawerTab - 1 + count) % count;
+    }
+
+    /// <summary>
+    /// Set the drawer tab to a specific index (used by click handlers).
+    /// </summary>
+    public void SetDrawerTab(int index)
+    {
+        if (Context != UiContext.Drawer) return;
+        int count = GetDrawerTabCount();
+        if (count <= 0) return;
+        DrawerTab = Math.Clamp(index, 0, count - 1);
+    }
+
+    private int GetDrawerTabCount()
+    {
+        return OpenDrawer switch
+        {
+            DrawerId.Work => 5,
+            DrawerId.Creature => 3,
+            DrawerId.Stock => 3,
+            DrawerId.PlacementManagement => 3,
+            _ => 3
+        };
     }
 
     public void Back()
@@ -316,6 +422,10 @@ public sealed class UiStore
         else if (DebugOpen)
         {
             DebugOpen = false;
+        }
+        else if (WorkshopPanelOpen)
+        {
+            CloseWorkshopPanel();
         }
     }
 
@@ -394,7 +504,9 @@ public enum DebugItemCategory
     Logs,
     Planks,
     Tools,
-    Weapons
+    Weapons,
+    Ammo,
+    SiegeWeapons
 }
 
 public enum MiningAction

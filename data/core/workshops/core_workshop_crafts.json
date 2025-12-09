@@ -1,0 +1,246 @@
+{
+  "$schema": "../../../../content/schemas/workshops.schema.json",
+  "version": "1.0.0",
+  "workshops": [
+    {
+      "id": "core_construction_workshop_crafts",
+      "name": "Crafts Workshop",
+      "tags": [
+        "workshop",
+        "crafts",
+        "carving",
+        "lathe",
+        "casting",
+        "inlay",
+        "jewel"
+      ],
+      "era_min": "C",
+      "era_max": "R",
+      "attachment_slots": [],
+      "io": {
+        "input_slots": 4,
+        "output_slots": 6,
+        "buffer_slots": 2
+      },
+      "power_baseline_w": 0,
+      "category": "workshop",
+      "build_time_ticks": 1100,
+      "material_costs": [
+        {
+          "tag": "block",
+          "count": 8
+        },
+        {
+          "tag": "plank",
+          "count": 4
+        }
+      ],
+      "placeable_profile": {
+        "footprint": {
+          "w": 5,
+          "d": 5,
+          "h": 1
+        },
+        "passability": "nonblocking",
+        "requires_floor": true,
+        "clearance_h": 3,
+        "blocks_light": false,
+        "tags": [
+          "workshop",
+          "crafts"
+        ],
+        "effects": {
+          "beauty": 2,
+          "comfort": 0,
+          "light_lumen": 0,
+          "heat_w": 0
+        }
+      }
+    }
+  ],
+  "attachments": [
+    {
+      "id": "core_attach_crafts_carve_bench",
+      "name": "Carving Bench & Bow Drill",
+      "slot": "carve_station",
+      "era": "C",
+      "upgrade_to": "core_attach_crafts_carve_fine_bench",
+      "tags": [
+        "carve",
+        "drill"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_carve_fine_bench",
+      "name": "Fine Carving Bench & Vise",
+      "slot": "carve_station",
+      "era": "M",
+      "upgrade_to": "core_attach_crafts_carve_vise_micros",
+      "tags": [
+        "carve",
+        "vise"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_carve_vise_micros",
+      "name": "Precision Vise & Micro Chisels",
+      "slot": "carve_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "carve",
+        "precision"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lathe_bow",
+      "name": "Bow Lathe",
+      "slot": "lathe_station",
+      "era": "C",
+      "upgrade_to": "core_attach_crafts_lathe_pole",
+      "tags": [
+        "lathe",
+        "turning"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lathe_pole",
+      "name": "Spring-Pole Lathe",
+      "slot": "lathe_station",
+      "era": "M",
+      "upgrade_to": "core_attach_crafts_lathe_treadle",
+      "tags": [
+        "lathe",
+        "turning"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lathe_treadle",
+      "name": "Treadle Lathe & Gauges",
+      "slot": "lathe_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "lathe",
+        "turning",
+        "precision"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_polish_pad",
+      "name": "Polishing Pads & Abrasives",
+      "slot": "polish_station",
+      "era": "C",
+      "upgrade_to": "core_attach_crafts_polish_drum",
+      "tags": [
+        "polish",
+        "finish"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_polish_drum",
+      "name": "Sand Barrel & Buffing Drum",
+      "slot": "polish_station",
+      "era": "M",
+      "upgrade_to": "core_attach_crafts_polish_wheel",
+      "tags": [
+        "polish",
+        "finish"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_polish_wheel",
+      "name": "Polishing Wheel",
+      "slot": "polish_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "polish",
+        "finish"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_cast_pewter_moulds",
+      "name": "Pewter Moulds & Ladle",
+      "slot": "cast_station",
+      "era": "M",
+      "upgrade_to": "core_attach_crafts_cast_pewter_stove",
+      "tags": [
+        "casting",
+        "pewter"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_cast_pewter_stove",
+      "name": "Casting Stove & Sprue Cutter",
+      "slot": "cast_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "casting",
+        "pewter"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_inlay_bench",
+      "name": "Inlay & Engraving Bench",
+      "slot": "inlay_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "inlay",
+        "engrave"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lapidary_plate",
+      "name": "Lapidary Plate & Abrasive Slurry",
+      "slot": "jewel_station",
+      "era": "C",
+      "upgrade_to": "core_attach_crafts_lapidary_wheel",
+      "tags": [
+        "lapidary",
+        "gem_cut"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lapidary_wheel",
+      "name": "Lapidary Wheel",
+      "slot": "jewel_station",
+      "era": "M",
+      "upgrade_to": "core_attach_crafts_lapidary_waterdrip",
+      "tags": [
+        "lapidary",
+        "gem_cut",
+        "wheel"
+      ],
+      "power_w": 0
+    },
+    {
+      "id": "core_attach_crafts_lapidary_waterdrip",
+      "name": "Water-Drip Lapidary & Faceting Gauges",
+      "slot": "jewel_station",
+      "era": "R",
+      "upgrade_to": null,
+      "tags": [
+        "lapidary",
+        "gem_cut",
+        "faceting"
+      ],
+      "power_w": 0
+    }
+  ]
+}
