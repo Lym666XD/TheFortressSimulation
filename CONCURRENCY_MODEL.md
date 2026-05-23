@@ -22,6 +22,8 @@ Data-oriented: chunked SoA base, sparse overlays, derived caches, dirty-scoped r
 
 DATA_LAYOUT
 
+The CPU simulation core owns authoritative state. GPU, UI, renderer, audio, and background workers may consume snapshots, produce derived data, or precompute proposals, but they must not commit authoritative state outside the deterministic simulation pipeline.
+
 2) Terminology (Normative)
 
 Chunk: fixed spatial partition (e.g., 16×16×Zc) and scheduling unit. 
@@ -42,6 +44,10 @@ Dirty set: tiles requiring derived cache rebuilds; propagation is bounded.
 
 DATA_LAYOUT
 
+Intent: a high-level proposal emitted by a planner or entity system, such as MoveIntent, JobIntent, ItemIntent, or AttackIntent. Intents are not committed results.
+
+Interaction group: a set of chunks, regions, entities, or simulation objects that may interact during a stage and therefore must be scheduled or resolved together.
+
 3) High-Level Model (Normative)
 3.1 Per-Tick Skeleton
 
@@ -60,6 +66,18 @@ Across chunks: use Actor messages (cross-chunk moves/flows/stocking). Messages a
 Write windows are governed by Update Order; stages parallelize across chunks only; no overlapping write sets. 
 
 UPDATE_ORDER
+
+3.3 Non-Authoritative Parallelism
+
+Rendering, audio, UI layout, debug overlays, save compression, asset streaming, logging, analytics, and background cache warmup may run concurrently with the simulation if they consume immutable snapshots or validated event streams.
+
+These systems may not mutate live simulation state. User input is converted into commands and applied only through the normal staged simulation pipeline.
+
+3.4 Speculative Planning
+
+Entity and system logic may run in parallel to produce intents, scores, candidate paths, or reservations. These are speculative until accepted by a deterministic resolver.
+
+Workers may say “I want to do X.” They may not say “I did X.”
 
 4) Job Scheduler Spec (Normative)
 4.1 Job Descriptor
@@ -87,6 +105,14 @@ The scheduler rejects any job set with overlapping writes.
 Stable iteration: Chunk jobs enumerate in ascending chunkId unless load-balancing is needed; outcome must be independent from worker order.
 
 Budgets enforced per job; over-budget work spills to next tick (back-pressure).
+
+4.3 Interaction-Group Scheduling
+
+When a system can partition work into independent interaction groups, the scheduler may execute those groups in parallel.
+
+Groups must be conservative. If two groups may interact during a stage, they must be merged or resolved together. Splitting groups may be lazy; merging groups must be prompt when a new interaction edge is introduced.
+
+Examples of possible interaction groups include fluid basins, pathing regions, logistics networks, combat islands, and independent field regions. The exact grouping strategy is system-specific.
 
 5) Diff-Log (Intra-Chunk) (Normative)
 5.1 Diff Entry (immutable)
@@ -164,6 +190,12 @@ Replies: Accept, PartialAccept, Reject(reason); senders handle back-pressure nex
 
 Determinism stems from drain order + local deterministic rules.
 
+6.4 Chunk Ownership and Migration
+
+Entities are owned by a chunk according to an explicit ownership rule, usually their anchor position. A worker updating one chunk must not directly mutate another chunk.
+
+Cross-chunk movement, item transfer, fluid flow, and similar effects must use messages or a declared cross-chunk resolve stage. Large actors that overlap multiple chunks require proxies, reservations, or another explicit ownership protocol.
+
 7) Update Order Integration (Normative)
 
 Only the listed stages may write; each has its own RNG stream and stable iteration.
@@ -224,6 +256,20 @@ Maintain a per-chunk ConnectivityVersion to cheaply invalidate nav/LOS.
 
 DATA_LAYOUT
 
+8.1 ECS-Style Data Guidance
+
+The project may use ECS-style data organization for high-count movable or interactive entities, but full ECS conversion is not a requirement.
+
+Use ECS-style layout to improve batching, cache locality, and clear system read/write sets. Do not split data so aggressively that hot systems must constantly join many sparse components through random lookups.
+
+Terrain, fluids, fields, and dense tile state should remain chunked SoA arrays unless a specific alternative is justified. Rooms, workshops, stockpiles, jobs, and reservations may remain domain aggregates with indexes when that better preserves invariants.
+
+8.2 Hot and Cold Data
+
+Pack data according to system access patterns. Hot per-tick data should be stored contiguously for the systems that consume it. Cold data, rare state, debug metadata, and content descriptors should not be dragged through hot loops.
+
+Avoid excessive archetype churn or per-tick component composition changes. Prefer deferred command buffers or staged structural changes.
+
 9) Determinism & RNG (Normative)
 
 Fixed-step tick; no wall-clock in sim.
@@ -231,6 +277,10 @@ Fixed-step tick; no wall-clock in sim.
 Per stage/system/chunk RNG streams; seed = WorldSeed ^ Hash(StageId,SystemId,ChunkId); never call RNG in an order-varying loop. 
 
 UPDATE_ORDER
+
+9.1 Deterministic Ordering
+
+When multiple events, intents, diffs, or messages occur at the same tick and stage, they must be resolved using explicit stable keys. Worker completion order, task affinity, wall-clock timing, and GPU execution order must never decide authoritative outcomes.
 
 10) Stability & Degradation (Normative)
 
@@ -252,6 +302,8 @@ Merge table & message schemas are data-driven (JSON), validated at boot.
 
 Feature flags: enable/disable actorization per system; serialize flags into saves.
 
+GPU acceleration, interaction-group scheduling, speculative planning, and advanced ECS storage should be feature-flagged when experimental. Authoritative behavior must remain covered by replay determinism tests.
+
 12) Testing & CI Gates (Normative)
 
 Determinism harness: replay seeds across OS/CPU; assert world/snapshot hash equality. 
@@ -265,6 +317,8 @@ Budgets & perf: assert stage budgets/time; CI fails on regression.
 rules
 
 Content validation: merge table/message schemas must pass strict JSON schema checks at boot.
+
+Add stress tests for cross-chunk migration, same-tick intent conflicts, group merge/split events, and stale speculative reads.
 
 13) LLM-Friendly Contracts (Normative)
 
@@ -281,6 +335,10 @@ Ordering: Always sort by the deterministic keys before merge/apply.
 RNG: Request the stage/system/chunk stream; never inline a new RNG.
 
 Docs: When changing merge strategies or messages, update the JSON schemas + changelog.
+
+No authoritative GPU writes: GPU workers may generate derived fields, render data, or candidate proposals only through declared readback and resolve stages.
+
+No free-running entity writes: entity-level parallelism must emit intents or diffs, not mutate live state directly.
 
 14) Checklists (Drop-in)
 14.1 Scheduler Checklist
@@ -321,6 +379,18 @@ Docs: When changing merge strategies or messages, update the JSON schemas + chan
 
  CI includes determinism replays + jitter fuzz + performance gates.
 
+14.5 GPU/Background Worker Checklist
+
+ Consumes immutable snapshot or explicit input buffer.
+
+ Produces render data, debug data, derived fields, or candidate proposals.
+
+ Does not directly mutate authoritative simulation state.
+
+ Readback, if any, occurs through a deterministic resolve stage.
+
+ Has a CPU fallback when required for determinism, compatibility, or testing.
+
 15) Appendices
 A. Layer Merge Table (Starter)
 
@@ -347,6 +417,31 @@ Jobs: (stageId, chunkId); Diffs: (tileKey, priority↓, systemId↑, localSeq↑
 
 Messages: (tick, senderChunkId, localSeq)
 
+Intents: (tick, stageId, priority↓, actorOrEntityId↑, systemId↑, localSeq↑)
+
 C. Data Layout Reference
 
 Chunked SoA base (≤12B); overlays for L2/L4/L5; derived caches (Nav/Opac/Support); dirty propagation bounded.
+
+D. Concurrency Strategy Summary
+
+Preferred path:
+
+1. CPU owns authoritative fixed-tick simulation.
+2. Chunked SoA and ECS-style storage organize hot data.
+3. Read-heavy planning runs in parallel.
+4. Intra-chunk conflicts use Diff-Log merge.
+5. Inter-chunk effects use actor messages.
+6. Independent interaction groups may run in parallel.
+7. Entity-level parallelism is speculative and produces intents.
+8. GPU accelerates rendering, overlays, derived fields, or non-authoritative batches.
+9. Deterministic resolve/commit decides all authoritative outcomes.
+
+Avoid:
+
+- one free-running thread per entity;
+- lock-heavy authoritative simulation paths;
+- worker completion order affecting results;
+- full optimistic rollback simulation without strong justification;
+- over-fragmented component layouts that increase random joins;
+- GPU-only authoritative behavior without CPU fallback and replay tests.
