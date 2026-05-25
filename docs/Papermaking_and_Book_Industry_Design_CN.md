@@ -1,4 +1,8 @@
 # 造纸与书籍行业（古典 / 中世纪 / 文艺复兴）研究与游戏化设计（含《矮人要塞》对比）
+
+> **对应工坊**: [Paper](workshops/Paper.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
 Version: 1.0 · Status: Ready for implementation · Author: ChatGPT
 
 ---

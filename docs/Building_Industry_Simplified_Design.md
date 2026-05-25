@@ -1,5 +1,9 @@
 # 建筑业（陶瓷 / 砖瓦 / 石灰 / 屋面）简化设计 — 脱胎于 DF，按你五条要求重构
 
+> **对应工坊**: [Stoneworks](workshops/Stoneworks.md) · [Pottery](workshops/Pottery.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
+
 **版本：** 1.0 　**状态：** 可直接落库实现  
 **核心变更：** 原矿石/毛石**不能直接建墙**；必须在工坊加工为 **stone block** 或使用产业链建材（brick / mortar / roof tile / concrete mix 等）。**不实现耐久**数值，改用建造速度、搬运效率、美观/舒适与功能标签体现优势。
 

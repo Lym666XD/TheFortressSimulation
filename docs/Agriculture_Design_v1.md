@@ -1,4 +1,8 @@
 # Agriculture — Design Doc (C/M/R)
+
+> **对应工坊**: [Agri_Brew_Works](workshops/Agri_Brew_Works.md) · [Compost](workshops/Compost.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
 **Version:** 1.0 • **Status:** Ready for implementation • **Authoring:** ChatGPT (design consolidation)  
 **Scope:** Field crops, irrigation, milling, pressing, fermentation inputs, soil fertility loop.  
 **Goal:** 轻量、数据驱动，能直接对接你现有的**酿造/烹饪/肥皂/玻璃/纺织**等系统。

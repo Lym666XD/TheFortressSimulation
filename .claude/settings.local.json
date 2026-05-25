@@ -55,7 +55,8 @@
       "Bash(del /f \"src\\HumanFortress.App\\UI\\ToastNotification.cs\")",
       "Bash(git rm:*)",
       "Bash(git add:*)",
-      "Bash(Select-Object -Last 50)"
+      "Bash(Select-Object -Last 50)",
+      "Bash(xargs wc *)"
     ],
     "deny": [],
     "ask": []

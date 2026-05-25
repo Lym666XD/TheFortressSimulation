@@ -1,4 +1,8 @@
 # Animal Husbandry — Design Doc (C/M/R)
+
+> **对应工坊**: [Pasture_Shed](workshops/Pasture_Shed.md) · [Butchery](workshops/Butchery.md) · [Compost](workshops/Compost.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
 **Version:** 1.0 • **Status:** Ready for implementation • **Authoring:** ChatGPT (design consolidation)  
 **Scope:** 反刍/单胃家畜（牛/羊/山羊/猪/马/驴）与家禽（鸡/鸭/鹅）基础生产；饲草—越冬、挤奶—制酪、剪毛、屠宰—皮脂骨副产、蜂箱（可选）。  
 **Out-of-scope（本版不做）**：迁牧/放牧路线、圈地/税/政策、品种谱系账簿、哥伦布大交流物种引入。  

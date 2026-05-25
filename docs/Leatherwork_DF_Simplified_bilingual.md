@@ -1,5 +1,9 @@
 # Leatherwork — Simplified, DF-Aligned (Classical / Medieval / Renaissance)
 
+> **对应工坊**: [Tannery](workshops/Tannery.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
+
 **Version:** 1.0 · **Status:** Ready for implementation  
 **Design intent:** Keep Dwarf Fortress (DF) flow (`Butcher → Tannery → Leather`) intact, then add a few era-gated options that attach light **quality tags** (no heavy chemistry, no city-policy).  
 **Quality tags used:** `heavy` (sole/harness), `white` (gloves/bindings), `suede` (soft), `quality+1` (refined), `prestige` (trade luxury; Morocco/Cordovan).

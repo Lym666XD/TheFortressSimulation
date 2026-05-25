@@ -1,5 +1,9 @@
 # Brewing Industry — Design Doc (Classical / Medieval / Renaissance) · Bilingual (EN/ZH)
 
+> **对应工坊**: [Agri_Brew_Works](workshops/Agri_Brew_Works.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
+
 **Version:** 1.0 · **Status:** Ready for implementation  
 **Scope:** Malt beverages (ale/beer), mead, wine, cider/perry, vinegar, brandy (distillation).  
 **Assumptions:** No durability system; bonuses via speed, logistics, shelf life, morale. Hooks into your **Agriculture** (grains, grapes, apples, herbs, hops) and **Husbandry** (honey/bee, spent grain → feed).  

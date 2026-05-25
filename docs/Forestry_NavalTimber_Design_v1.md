@@ -1,4 +1,8 @@
 # Forestry & Naval Timber — Design Doc (C/M/R)  
+
+> **对应工坊**: [Logging](workshops/Logging.md) · [Fuel_Alkali_Works](workshops/Fuel_Alkali_Works.md)
+> 工坊文档是 markdown 实现层 + JSON 对齐；本 industry md 提供历史锚点与设计原理。
+
 **Version:** 1.0 • **Status:** Ready for implementation • **Authoring:** ChatGPT (design consolidation)  
 **Scope:** Forestry fuel chain (charcoal), structural timber grading, and naval timber standards.  
 **Out-of-scope (explicitly deferred):** land tenure/policies, coppice cycles, pastoral routes, taxation, Columbian crops.  

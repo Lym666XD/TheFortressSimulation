@@ -1,3 +1,29 @@
+> # 📦 归档（ARCHIVED）
+>
+> **状态**: 历史档；不再作为权威来源。
+> **拆分日期**: 2026-05-24
+> **替代**: 本文档内容已按工坊拆分到 `docs/workshops/*.md` —— 那是新的权威落点；本工坊层 markdown 与 `data/core/workshops/*.json` 一一对齐。
+>
+> **拆分映射**（章节 → 新落点）:
+> - §冶炼工坊 → [Smeltery](workshops/Smeltery.md)
+> - §化学工坊 → [Chemistry_Lab](workshops/Chemistry_Lab.md)
+> - §石灰&混凝土 → [Stoneworks](workshops/Stoneworks.md)
+> - §玻璃工坊 → [Glasshouse](workshops/Glasshouse.md)
+> - §燃料与碱工坊 → [Fuel_Alkali_Works](workshops/Fuel_Alkali_Works.md)
+> - §石材工坊 → [Stoneworks](workshops/Stoneworks.md)
+> - §金属工坊 → [Metalworks](workshops/Metalworks.md)（含新增 Mint 铸币线）
+> - §火器工坊 → [Firearms_Workshop](workshops/Firearms_Workshop.md)
+> - §木工工坊 → [Woodworking](workshops/Woodworking.md)
+> - §农业与酿造 → [Agri_Brew_Works](workshops/Agri_Brew_Works.md)
+> - §畜牧（放牧棚）→ [Pasture_Shed](workshops/Pasture_Shed.md) + [Butchery](workshops/Butchery.md)
+> - §工艺品+宝石 → [Crafts_Lapidary](workshops/Crafts_Lapidary.md)（含新增蜡烛 / 油灯）
+> - §精密工坊 → [Precision_Workshop](workshops/Precision_Workshop.md)
+>
+> 工坊索引: [docs/workshops/00_INDEX.md](workshops/00_INDEX.md)
+> 保留本文件作为历史来源；编辑请直接修改对应 workshop md，不再改本文件。
+
+---
+
 冶炼工坊（含简化钢线）设计规范 v2.0
 
 批次基准：每批 ×10 原料
