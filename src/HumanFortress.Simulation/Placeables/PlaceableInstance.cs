@@ -19,6 +19,8 @@ namespace HumanFortress.Simulation.Placeables;
 /// </summary>
 public sealed class PlaceableInstance
 {
+    private const ulong UninstalledItemGuidScope = 0x554E494E53544954UL;
+
     // === IDENTITY ===
     /// <summary>
     /// Unique GUID for this placeable instance
@@ -282,7 +284,7 @@ public sealed class PlaceableInstance
     }
 
     /// <summary>
-    /// Create item instance from uninstalled placeable (generates NEW GUID per SPEC §15.6)
+    /// Create item instance from uninstalled placeable (generates deterministic new GUID per SPEC §15.6)
     /// </summary>
     public static ItemInstance CreateItemFromPlaceable(
         PlaceableInstance placeable,
@@ -297,7 +299,7 @@ public sealed class PlaceableInstance
         tuning ??= PlaceableTuning.Default;
 
         var item = new ItemInstance(
-            guid: Guid.NewGuid(), // NEW GUID per SPEC
+            guid: DeterministicGuidGenerator.GenerateFromGuid(UninstalledItemGuidScope, placeable.Guid, currentTick),
             definitionId: def.Id,
             position: placeable.Position,
             z: placeable.Z,

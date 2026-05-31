@@ -3,11 +3,14 @@ using System;
 namespace HumanFortress.Core.Random;
 
 /// <summary>
-/// Deterministic GUID generation for placeable instances.
+/// Deterministic GUID generation for runtime instances.
 /// Uses DeterministicRng to ensure replay consistency per DETERMINISM_CI.md.
 /// </summary>
 public static class DeterministicGuidGenerator
 {
+    private const ulong FnvOffset = 14695981039346656037UL;
+    private const ulong FnvPrime = 1099511628211UL;
+
     /// <summary>
     /// Generate deterministic GUID from RNG state.
     /// GUID structure: 128-bit (16 bytes) = 4x uint32
@@ -43,46 +46,79 @@ public static class DeterministicGuidGenerator
     }
 
     /// <summary>
+    /// Generate deterministic GUID from a scoped monotonic sequence.
+    /// </summary>
+    public static Guid GenerateFromSequence(ulong scopeSeed, ulong sequence)
+    {
+        ulong seed = scopeSeed ^ HashUInt64(sequence);
+        var rng = new DeterministicRng(seed);
+        return Generate(rng);
+    }
+
+    /// <summary>
+    /// Generate deterministic GUID from a source GUID and salt.
+    /// </summary>
+    public static Guid GenerateFromGuid(ulong scopeSeed, Guid sourceGuid, ulong salt)
+    {
+        Span<byte> bytes = stackalloc byte[16];
+        if (!sourceGuid.TryWriteBytes(bytes))
+        {
+            throw new ArgumentException("Unable to write source GUID bytes.", nameof(sourceGuid));
+        }
+
+        ulong hash = FnvOffset;
+        for (int i = 0; i < bytes.Length; i++)
+        {
+            hash = HashByte(hash, bytes[i]);
+        }
+
+        hash ^= HashUInt64(salt);
+        ulong seed = scopeSeed ^ hash;
+        var rng = new DeterministicRng(seed);
+        return Generate(rng);
+    }
+
+    /// <summary>
     /// Hash position to 64-bit value for seed generation.
     /// Uses FNV-1a hash algorithm for good distribution.
     /// </summary>
     private static ulong HashPosition(int x, int y, int z)
     {
-        const ulong FNV_OFFSET = 14695981039346656037UL;
-        const ulong FNV_PRIME = 1099511628211UL;
+        ulong hash = FnvOffset;
+        hash = HashInt32(hash, x);
+        hash = HashInt32(hash, y);
+        hash = HashInt32(hash, z);
+        return hash;
+    }
 
-        ulong hash = FNV_OFFSET;
-
-        // Hash x coordinate (4 bytes)
-        hash ^= (ulong)(x & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((x >> 8) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((x >> 16) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((x >> 24) & 0xFF);
-        hash *= FNV_PRIME;
-
-        // Hash y coordinate (4 bytes)
-        hash ^= (ulong)(y & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((y >> 8) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((y >> 16) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((y >> 24) & 0xFF);
-        hash *= FNV_PRIME;
-
-        // Hash z coordinate (4 bytes)
-        hash ^= (ulong)(z & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((z >> 8) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((z >> 16) & 0xFF);
-        hash *= FNV_PRIME;
-        hash ^= (ulong)((z >> 24) & 0xFF);
-        hash *= FNV_PRIME;
+    private static ulong HashUInt64(ulong value)
+    {
+        ulong hash = FnvOffset;
+        for (int shift = 0; shift < 64; shift += 8)
+        {
+            hash = HashByte(hash, (byte)(value >> shift));
+        }
 
         return hash;
+    }
+
+    private static ulong HashInt32(ulong hash, int value)
+    {
+        for (int shift = 0; shift < 32; shift += 8)
+        {
+            hash = HashByte(hash, (byte)(value >> shift));
+        }
+
+        return hash;
+    }
+
+    private static ulong HashByte(ulong hash, byte value)
+    {
+        unchecked
+        {
+            hash ^= value;
+            hash *= FnvPrime;
+            return hash;
+        }
     }
 }

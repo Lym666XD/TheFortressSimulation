@@ -8,16 +8,23 @@ namespace HumanFortress.Core.Commands;
 /// </summary>
 public sealed class CommandQueue
 {
-    private readonly ConcurrentQueue<ICommand> _pendingCommands = new();
+    private readonly ConcurrentQueue<QueuedCommand> _pendingCommands = new();
     private readonly List<ICommand> _executedCommands = new();
     private readonly object _executeLock = new();
+    private long _nextSequence;
 
     /// <summary>
     /// Enqueue a command for execution. Thread-safe.
     /// </summary>
     public void Enqueue(ICommand command)
     {
-        _pendingCommands.Enqueue(command);
+        ArgumentNullException.ThrowIfNull(command);
+
+        lock (_executeLock)
+        {
+            var sequence = ++_nextSequence;
+            _pendingCommands.Enqueue(new QueuedCommand(command, sequence));
+        }
     }
 
     /// <summary>
@@ -27,30 +34,41 @@ public sealed class CommandQueue
     {
         lock (_executeLock)
         {
-            var commandsToExecute = new List<ICommand>();
+            ArgumentNullException.ThrowIfNull(context);
 
-            // Collect commands for this tick
-            while (_pendingCommands.TryPeek(out var command))
+            var commandsToExecute = new List<QueuedCommand>();
+            var futureCommands = new List<QueuedCommand>();
+
+            // Collect all visible commands. A future command must not block a later
+            // due command that was enqueued out of order by UI or replay restore.
+            while (_pendingCommands.TryDequeue(out var queued))
             {
-                if (command.Tick <= currentTick)
+                if (queued.Command.Tick <= currentTick)
                 {
-                    if (_pendingCommands.TryDequeue(out var dequeued))
-                    {
-                        commandsToExecute.Add(dequeued);
-                    }
+                    commandsToExecute.Add(queued);
                 }
                 else
                 {
-                    break; // Commands are ordered by tick
+                    futureCommands.Add(queued);
                 }
             }
 
-            // Sort by command ID for determinism
-            commandsToExecute.Sort((a, b) => a.CommandId.CompareTo(b.CommandId));
+            commandsToExecute.Sort(CompareQueuedCommands);
+            futureCommands.Sort((a, b) =>
+            {
+                var tickCompare = a.Command.Tick.CompareTo(b.Command.Tick);
+                return tickCompare != 0 ? tickCompare : a.Sequence.CompareTo(b.Sequence);
+            });
+
+            foreach (var command in futureCommands)
+            {
+                _pendingCommands.Enqueue(command);
+            }
 
             // Execute in deterministic order
-            foreach (var command in commandsToExecute)
+            foreach (var queued in commandsToExecute)
             {
+                var command = queued.Command;
                 try
                 {
                     command.Execute(context);
@@ -91,17 +109,31 @@ public sealed class CommandQueue
     /// </summary>
     public void RestoreCommands(IEnumerable<ICommand> commands)
     {
+        ArgumentNullException.ThrowIfNull(commands);
+
         lock (_executeLock)
         {
             _executedCommands.Clear();
-            _executedCommands.AddRange(commands);
+            while (_pendingCommands.TryDequeue(out _))
+            {
+            }
 
-            // Re-queue any future commands
+            _nextSequence = 0;
             foreach (var cmd in commands)
             {
-                _pendingCommands.Enqueue(cmd);
+                ArgumentNullException.ThrowIfNull(cmd);
+
+                _executedCommands.Add(cmd);
+                var sequence = ++_nextSequence;
+                _pendingCommands.Enqueue(new QueuedCommand(cmd, sequence));
             }
         }
+    }
+
+    private static int CompareQueuedCommands(QueuedCommand a, QueuedCommand b)
+    {
+        var tickCompare = a.Command.Tick.CompareTo(b.Command.Tick);
+        return tickCompare != 0 ? tickCompare : a.Sequence.CompareTo(b.Sequence);
     }
 
     private void HandleCommandError(ICommand command, Exception ex)
@@ -109,4 +141,6 @@ public sealed class CommandQueue
         // Per ERROR_HANDLING_POLICY.md: log and continue
         Console.WriteLine($"[ERROR] Command {command.CommandType} ({command.CommandId}) failed: {ex.Message}");
     }
+
+    private readonly record struct QueuedCommand(ICommand Command, long Sequence);
 }

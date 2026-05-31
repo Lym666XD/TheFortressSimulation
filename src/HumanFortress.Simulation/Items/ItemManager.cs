@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using HumanFortress.Core.Random;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
@@ -18,6 +19,8 @@ namespace HumanFortress.Simulation.Items;
 /// </summary>
 public sealed class ItemManager
 {
+    private const ulong ItemInstanceGuidScope = 0x4954454D53544143UL;
+
     // Registry (loaded at startup, read-only after)
     private readonly Dictionary<string, ItemDefinition> _definitions = new();
     private readonly Dictionary<string, List<string>> _kindIndex = new(); // kind -> [item_ids]
@@ -26,6 +29,7 @@ public sealed class ItemManager
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, ItemInstance> _instances = new();
     private readonly object _instanceLock = new();
+    private ulong _nextInstanceSequence;
     // Position index for fast per-tile queries
     private readonly Dictionary<(int X,int Y,int Z), List<Guid>> _posIndex = new();
 
@@ -243,7 +247,7 @@ public sealed class ItemManager
             if (inst.StackCount <= takeCount) return null; // nothing to split if equal/full
 
             inst.StackCount -= takeCount;
-            var newGuid = Guid.NewGuid();
+            var newGuid = DeterministicGuidGenerator.GenerateFromSequence(ItemInstanceGuidScope, ++_nextInstanceSequence);
             var clone = new ItemInstance(newGuid, inst.DefinitionId, inst.Position, inst.Z, takeCount, inst.SpawnedAtTick)
             {
                 MaterialId = inst.MaterialId,
@@ -534,6 +538,7 @@ public sealed class ItemManager
                 // Find existing items at same position with same itemId
                 var existingAtPos = _instances.Values
                     .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z && i.DefinitionId == itemId)
+                    .OrderBy(i => i.Guid)
                     .ToList();
 
                 if (existingAtPos.Count > 0)
@@ -550,11 +555,13 @@ public sealed class ItemManager
                 // Extra diagnostics: if no stack match but there are other items here, log what's present
                 var anyAtPos = _instances.Values
                     .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z)
+                    .OrderBy(i => i.Guid)
                     .ToList();
                 if (anyAtPos.Count > 0)
                 {
                     var byId = anyAtPos
                         .GroupBy(i => i.DefinitionId)
+                        .OrderBy(g => g.Key)
                         .Select(g => $"{g.Key}*{g.Sum(it => it.StackCount)}")
                         .ToList();
                     string diag = $"[ItemManager] STACK-CHECK: No stack match for id={itemId} at ({worldPos.X},{worldPos.Y},{z}); present={{{string.Join(", ", byId)}}}";
@@ -563,7 +570,7 @@ public sealed class ItemManager
                 }
 
                 // Create new instance
-                var guid = Guid.NewGuid();
+                var guid = DeterministicGuidGenerator.GenerateFromSequence(ItemInstanceGuidScope, ++_nextInstanceSequence);
                 var instance = new ItemInstance(guid, itemId, worldPos, z, quantity, currentTick);
                 instance.MaterialId = def.FixedMaterial;
                 _instances[guid] = instance;

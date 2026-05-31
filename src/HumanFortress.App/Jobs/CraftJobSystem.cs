@@ -88,7 +88,7 @@ public sealed class CraftJobSystem : ITick
             {
                 continue;
             }
-            if (state.Queue.Count == 0)
+            if (state == null || state.Queue.Count == 0)
                 continue;
             var entry = state.GetEntry(job.QueueEntryId);
             if (entry == null)
@@ -351,5 +351,4 @@ public sealed class CraftJobSystem : ITick
 public readonly record struct CraftJobStatsSnapshot(int Intake, int Active, int Backlog, int CompletedDelta);
 
 public readonly record struct ActiveCraftJobView(Guid WorkerId, Guid WorkshopGuid, string RecipeId, string Stage, int RemainingTicks);
-
 

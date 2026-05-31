@@ -110,7 +110,7 @@ namespace HumanFortress.App
                 queue.Enqueue(command2);
                 queue.Enqueue(command1);
 
-                // Commands should be sorted by ID for determinism
+                // Commands should keep deterministic queue order.
                 Console.WriteLine("✅ PASS");
             }
             catch (Exception ex)

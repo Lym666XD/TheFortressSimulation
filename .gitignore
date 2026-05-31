@@ -70,3 +70,12 @@ artifacts/
 
 # Misc
 nul
+*.bak
+*.log
+/tmp*.txt
+/tmp*.cs
+/$path.bak
+/_last_debug_tail.txt
+/build_output.txt
+/publish_log.txt
+/publish_output.txt

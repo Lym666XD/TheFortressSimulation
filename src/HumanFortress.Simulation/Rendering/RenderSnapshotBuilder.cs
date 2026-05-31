@@ -14,8 +14,6 @@ namespace HumanFortress.Simulation.Rendering
     {
         private readonly World.World _world;
         private readonly TileRegistry _tileRegistry;
-        private ulong _lastChunkVersion;
-        private readonly Dictionary<ChunkKey, ulong> _chunkVersions = new();
         private readonly Dictionary<(ChunkKey, int), ulong> _zVersions = new();
         
         public RenderSnapshotBuilder(World.World world)

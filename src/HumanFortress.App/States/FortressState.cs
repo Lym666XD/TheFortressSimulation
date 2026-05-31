@@ -4,7 +4,6 @@ using SadConsole;
 using SadConsole.Input;
 using SadRogue.Primitives;
 using HumanFortress.App.Commands;
-using HumanFortress.App.Commands;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Core.World;
 using HumanFortress.Simulation.World;
@@ -19,7 +18,6 @@ using HumanFortress.App.UI;
 using HumanFortress.App.UI.Selection;
 using HumanFortress.Navigation;
 using HumanFortress.Simulation.Stockpile;
-using ChunkKey = HumanFortress.Simulation.World.ChunkKey;
 
 namespace HumanFortress.App.States
 {
@@ -418,11 +416,15 @@ namespace HumanFortress.App.States
                         if (found)
                         {
                             var rect = new SadRogue.Primitives.Rectangle(fx, fy, 1, 1);
-                            Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={fz} zMax={fz} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-                            _world.Orders.EnqueueMiningAdvanced(rect, fz, fz,
-                                HumanFortress.Simulation.Orders.MiningAction.Dig,
-                                priority: 50,
-                                createdTick: HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick);
+                            var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+                            Logger.Log($"[DEBUG] Creating mining order command zMin={fz} zMax={fz} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                            GameStateManager.Instance.EnqueueCommand(new CreateAdvancedMiningOrderCommand(
+                                commandTick,
+                                rect,
+                                fz,
+                                fz,
+                                HumanFortress.App.UI.MiningAction.Dig,
+                                priority: 50));
                             Logger.Log($"[AUTO-DIG] Enqueued test Dig at ({fx},{fy},{fz}) after world fill");
                         }
                         else
@@ -431,11 +433,15 @@ namespace HumanFortress.App.States
                             int cz = Math.Max(0, Math.Min(_world.MaxZ - 1, _currentZ));
                             int cx2 = tiles / 2, cy2 = tiles / 2;
                             var rect2 = new SadRogue.Primitives.Rectangle(cx2, cy2, 1, 1);
-                            Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={cz} zMax={cz} rect=({rect2.X},{rect2.Y},{rect2.Width}x{rect2.Height})");
-                            _world.Orders.EnqueueMiningAdvanced(rect2, cz, cz,
-                                HumanFortress.Simulation.Orders.MiningAction.Dig,
-                                priority: 50,
-                                createdTick: HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick);
+                            var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+                            Logger.Log($"[DEBUG] Creating mining order command zMin={cz} zMax={cz} rect=({rect2.X},{rect2.Y},{rect2.Width}x{rect2.Height})");
+                            GameStateManager.Instance.EnqueueCommand(new CreateAdvancedMiningOrderCommand(
+                                commandTick,
+                                rect2,
+                                cz,
+                                cz,
+                                HumanFortress.App.UI.MiningAction.Dig,
+                                priority: 50));
                             Logger.Log($"[AUTO-DIG] Enqueued fallback Dig at ({rect2.X},{rect2.Y},{cz})");
                         }
                     }
@@ -1050,6 +1056,7 @@ namespace HumanFortress.App.States
             var state = lookup.Value.placeable.Workshop;
             if (state == null) return;
 
+            var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
             int queueCount = state.Queue.Count;
 
             if (keyboard.IsKeyPressed(Keys.Up))
@@ -1069,7 +1076,7 @@ namespace HumanFortress.App.States
                 var recipeId = GetDefaultRecipeForWorkshop(lookup.Value.def?.Id);
                 if (recipeId != null)
                 {
-                    var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.AddRecipe, recipeId);
+                    var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.AddRecipe, recipeId);
                     GameStateManager.Instance.EnqueueCommand(cmd);
                     _ui.AddToast("Recipe queued", _uiTick + 100);
                     changed = true;
@@ -1079,7 +1086,7 @@ namespace HumanFortress.App.States
             if ((keyboard.IsKeyPressed(Keys.Delete) || keyboard.IsKeyPressed(Keys.Back)) && queueCount > 0)
             {
                 var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.RemoveEntry, entryId: entry.EntryId);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.RemoveEntry, entryId: entry.EntryId);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 _ui.WorkshopQueueSelectedIndex = Math.Max(0, _ui.WorkshopQueueSelectedIndex - 1);
                 changed = true;
@@ -1088,7 +1095,7 @@ namespace HumanFortress.App.States
             if (keyboard.IsKeyPressed(Keys.PageUp) && queueCount > 0)
             {
                 var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: -1);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: -1);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 _ui.WorkshopQueueSelectedIndex = Math.Max(0, _ui.WorkshopQueueSelectedIndex - 1);
                 changed = true;
@@ -1097,7 +1104,7 @@ namespace HumanFortress.App.States
             if (keyboard.IsKeyPressed(Keys.PageDown) && queueCount > 0)
             {
                 var entry = state.Queue[Math.Clamp(_ui.WorkshopQueueSelectedIndex, 0, queueCount - 1)];
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: 1);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.MoveEntry, entryId: entry.EntryId, moveOffset: 1);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 _ui.WorkshopQueueSelectedIndex = Math.Min(queueCount - 1, _ui.WorkshopQueueSelectedIndex + 1);
                 changed = true;
@@ -1105,28 +1112,28 @@ namespace HumanFortress.App.States
             }
             if (keyboard.IsKeyPressed(Keys.OemPlus) || keyboard.IsKeyPressed(Keys.Add))
             {
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: state.AllowedWorkers + 1);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: state.AllowedWorkers + 1);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 changed = true;
                 return;
             }
             if (keyboard.IsKeyPressed(Keys.OemMinus) || keyboard.IsKeyPressed(Keys.Subtract))
             {
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: Math.Max(1, state.AllowedWorkers - 1));
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.SetWorkerSlots, intValue: Math.Max(1, state.AllowedWorkers - 1));
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 changed = true;
                 return;
             }
             if (keyboard.IsKeyPressed(Keys.S))
             {
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoSupply);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoSupply);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 changed = true;
                 return;
             }
             if (keyboard.IsKeyPressed(Keys.O))
             {
-                var cmd = new UpdateWorkshopQueueCommand(_uiTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoStockpile);
+                var cmd = new UpdateWorkshopQueueCommand(commandTick, _ui.OpenWorkshopGuid.Value, WorkshopQueueOperation.ToggleAutoStockpile);
                 GameStateManager.Instance.EnqueueCommand(cmd);
                 changed = true;
             }
@@ -2654,17 +2661,14 @@ namespace HumanFortress.App.States
                     Logger.Log($"[DEBUG] Attempting creature spawn: id={_ui.DebugSelectedCreature}, pos=({worldX},{worldY},{_currentZ})");
                     Logger.Log($"[DEBUG] Creature definitions count: {_world.Creatures.DefinitionCount}");
 
-                    var guid = _world.Creatures.SpawnCreature(_ui.DebugSelectedCreature, worldPos, _currentZ, "player", _uiTick);
-                    if (guid.HasValue)
-                    {
-                        Logger.Log($"[DEBUG] SUCCESS: Spawned creature '{_ui.DebugSelectedCreature}' guid={guid} at ({worldX},{worldY},{_currentZ})");
-                        _ui.AddToast($"Spawned {_ui.DebugSelectedCreature}", _uiTick + 100);
-                    }
-                    else
-                    {
-                        Logger.Log($"[DEBUG] FAILED: Could not spawn creature at ({worldX},{worldY},{_currentZ})");
-                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
-                    }
+                    var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+                    GameStateManager.Instance.EnqueueCommand(new SpawnCreatureCommand(
+                        commandTick,
+                        _ui.DebugSelectedCreature,
+                        worldPos,
+                        _currentZ,
+                        "player"));
+                    _ui.AddToast($"Spawn queued: {_ui.DebugSelectedCreature}", _uiTick + 100);
                     DrawUI();
                     return;
                 }
@@ -2673,17 +2677,14 @@ namespace HumanFortress.App.States
                     Logger.Log($"[DEBUG] Attempting item spawn: id={_ui.DebugSelectedItem}, pos=({worldX},{worldY},{_currentZ})");
                     Logger.Log($"[DEBUG] Item definitions count: {_world.Items.DefinitionCount}");
 
-                    var guid = _world.Items.SpawnItem(_ui.DebugSelectedItem, worldPos, _currentZ, 1, _uiTick);
-                    if (guid.HasValue)
-                    {
-                        Logger.Log($"[DEBUG] SUCCESS: Spawned item '{_ui.DebugSelectedItem}' guid={guid} at ({worldX},{worldY},{_currentZ})");
-                        _ui.AddToast($"Spawned {_ui.DebugSelectedItem}", _uiTick + 100);
-                    }
-                    else
-                    {
-                        Logger.Log($"[DEBUG] FAILED: Could not spawn item at ({worldX},{worldY},{_currentZ})");
-                        _ui.AddToast("Spawn failed - check log", _uiTick + 100);
-                    }
+                    var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+                    GameStateManager.Instance.EnqueueCommand(new SpawnItemCommand(
+                        commandTick,
+                        _ui.DebugSelectedItem,
+                        worldPos,
+                        _currentZ,
+                        quantity: 1));
+                    _ui.AddToast($"Spawn queued: {_ui.DebugSelectedItem}", _uiTick + 100);
                     DrawUI();
                     return;
                 }
@@ -2788,9 +2789,6 @@ namespace HumanFortress.App.States
                             _ => HumanFortress.Simulation.Orders.MiningAction.Dig
                         };
 
-                        // UI ���پܾ�����������/�滮����������Ч��Ԫ������ UI �߽������?
-
-                        // ֱ����ӵ�?Orders���̰߳�ȫ�������������е��Ȳ���
                         // Single-layer stairwell validation: show toast but still enqueue (planner will skip)
                         if (simAction == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && zMin == zMax)
                         {
@@ -2798,14 +2796,15 @@ namespace HumanFortress.App.States
                             Logger.Log($"[UI] Single-layer stairwell rejected at UI (z={zMin})");
                         }
 
-                        Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-                        if (_world != null)
-                        {
-                            _world.Orders.EnqueueMiningAdvanced(rect, zMin, zMax,
-                                simAction,
-                                priority: 50,
-                                createdTick: GameStateManager.Instance.TickScheduler.CurrentTick);
-                        }
+                        var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+                        Logger.Log($"[DEBUG] Creating mining order command zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                        GameStateManager.Instance.EnqueueCommand(new CreateAdvancedMiningOrderCommand(
+                            commandTick,
+                            rect,
+                            zMin,
+                            zMax,
+                            uiAction,
+                            priority: 50));
 
                         int totalCells = rect.Width * rect.Height;
                         _ui.AddToast($"Mining order created ({totalCells} tiles)", _uiTick + 120);
@@ -3031,102 +3030,28 @@ namespace HumanFortress.App.States
             DrawUI();
         }
 
-                private void CreateStockpile(string presetId)
+        private void CreateStockpile(string presetId)
         {
-            if (_stockpileManager == null || !_ui.PlaceFirstCorner.HasValue || !_ui.PlaceSecondCorner.HasValue)
+            if (_world == null || !_ui.PlaceFirstCorner.HasValue || !_ui.PlaceSecondCorner.HasValue)
                 return;
 
             var corner1 = _ui.PlaceFirstCorner.Value;
             var corner2 = _ui.PlaceSecondCorner.Value;
-
-            // Create zone
-            var zoneId = _stockpileManager.CreateZone($"Stockpile {_stockpileManager.GetAllZones().Count() + 1}",
-                new HumanFortress.Simulation.World.ChunkKey(corner1.X / 32, corner1.Y / 32, _currentZ), _uiTick);
-
-            // Calculate rectangle bounds
             int minX = Math.Min(corner1.X, corner2.X);
             int maxX = Math.Max(corner1.X, corner2.X);
             int minY = Math.Min(corner1.Y, corner2.Y);
             int maxY = Math.Max(corner1.Y, corner2.Y);
+            var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
 
-            // Group cells by chunk; skip invalid tiles or overlap
-            var cellsByChunk = new Dictionary<HumanFortress.Simulation.World.ChunkKey, List<int>>();
-            int skippedInvalid = 0;
-            int skippedOverlap = 0;
-            for (int x = minX; x <= maxX; x++)
-            {
-                for (int y = minY; y <= maxY; y++)
-                {
-                    int chunkX = x / 32;
-                    int chunkY = y / 32;
-                    int localX = x % 32;
-                    int localY = y % 32;
-                    var chunkKey = new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, _currentZ);
+            var commandTick = GameStateManager.Instance.TickScheduler.CurrentTick;
+            GameStateManager.Instance.EnqueueCommand(new CreateStockpileCommand(commandTick, rect, _currentZ, presetId));
 
-                    if (_world != null)
-                    {
-                        var chunk = _world.GetChunk(chunkKey);
-                        if (chunk != null)
-                        {
-                            var tile = chunk.GetTile(localX, localY);
-                            if (tile.Kind != HumanFortress.Simulation.Tiles.TerrainKind.OpenWithFloor)
-                            {
-                                skippedInvalid++;
-                                continue; // Only create stockpiles on OpenWithFloor
-                            }
+            int selectedCells = rect.Width * rect.Height;
+            _ui.AddToast($"Stockpile order queued ({selectedCells} tiles)", _uiTick + 150);
+            Logger.Log($"[STOCKPILE.UI] Enqueue preset={presetId} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={_currentZ}");
+        }
 
-                            var stockpileData = chunk.GetStockpileData();
-                            if (stockpileData != null)
-                            {
-                                int cellIndex = localY * 32 + localX;
-                                if (stockpileData.GetZoneAtCell(cellIndex) != 0)
-                                {
-                                    skippedOverlap++;
-                                    continue; // Skip cells already in a stockpile
-                                }
-                            }
-                        }
-                    }
-
-                    if (!cellsByChunk.ContainsKey(chunkKey))
-                        cellsByChunk[chunkKey] = new List<int>();
-
-                    cellsByChunk[chunkKey].Add(localY * 32 + localX);
-                }
-            }
-
-            // Apply to per-chunk data
-            foreach (var kvp in cellsByChunk)
-            {
-                if (_world != null)
-                {
-                    var chunk = _world.GetChunk(kvp.Key);
-                    if (chunk != null)
-                    {
-                        chunk.EnsureStockpileData();
-                        var stockpileData = chunk.GetStockpileData();
-                        if (stockpileData != null)
-                        {
-                            stockpileData.CreateOrUpdateShard(zoneId, kvp.Key);
-                            stockpileData.AddCellsToZone(zoneId, kvp.Value);
-                        }
-                    }
-                }
-            }
-
-            // Update zone membership for overlay rendering
-            _stockpileManager.GetZone(zoneId)?.UpdateMemberChunks(cellsByChunk.Keys);
-
-            var totalCells = cellsByChunk.Values.Sum(list => list.Count);
-            var skipMessage = "";
-            if (skippedInvalid > 0) skipMessage += $"{skippedInvalid} invalid, ";
-            if (skippedOverlap > 0) skipMessage += $"{skippedOverlap} overlap, ";
-            if (!string.IsNullOrEmpty(skipMessage))
-                _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles, {skipMessage.TrimEnd(',', ' ')} skipped)", _uiTick + 150);
-            else
-                _ui.AddToast($"Created stockpile #{zoneId} ({totalCells} tiles)", _uiTick + 150);
-            Logger.Log($"[STOCKPILE] Created zone {zoneId} with {totalCells} cells");
-        }// Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
+        // Draw tile info as a floating popup showing TileBase layers L0..L7 at the selected Z
         private void DrawTilePopup(ScreenSurface overlay)
         {
             if (_fortressMap == null || _world == null) return;
@@ -3480,4 +3405,3 @@ namespace HumanFortress.App.States
         }
     }
 }
-
