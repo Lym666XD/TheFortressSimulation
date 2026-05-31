@@ -1,4 +1,5 @@
 using HumanFortress.App;
+using HumanFortress.App.Commands;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Events;
@@ -177,7 +178,7 @@ public sealed class GameStateManager
                 if (_currentState.Type == GameStateType.FortressPlay)
                 {
                     Logger.Log("[GameStateManager] Stopping simulation");
-                    _tickScheduler.Stop();
+                    StopSimulation();
                 }
             }
 
@@ -716,12 +717,6 @@ public sealed class GameStateManager
     public void Update(double deltaTime)
     {
         _currentState?.Update(deltaTime);
-
-        // Process commands if simulation is running
-        if (_tickScheduler.IsRunning && _simContext != null)
-        {
-            _commandQueue.ExecuteCommands(_tickScheduler.CurrentTick, _simContext);
-        }
     }
 
     /// <summary>
@@ -744,6 +739,10 @@ public sealed class GameStateManager
     {
         if (_world == null)
             throw new InvalidOperationException("World not initialized");
+
+        _tickScheduler.PreTick -= OnPreTickExecuteCommands;
+        _tickScheduler.PostTick -= OnPostTickApplyDiffs;
+        _tickScheduler.ClearSystems();
 
         // Instantiate planners (not registered directly)
         _miningPlanner = new HumanFortress.Simulation.Orders.MiningSystem(_world, _world.Orders);
@@ -814,7 +813,8 @@ public sealed class GameStateManager
         _tickScheduler.RegisterSystem(_jobsOrchestrator);
         _tickScheduler.RegisterSystem(sanitizer);
 
-        // Apply diffs after write phase (minimal: currently only used for auditing; runtime updates happen inline)
+        // Execute commands and apply diffs on the simulation tick thread.
+        _tickScheduler.PreTick += OnPreTickExecuteCommands;
         _tickScheduler.PostTick += OnPostTickApplyDiffs;
 
         // Ensure we have initial workers to execute jobs (spawn dwarves on nearby standable tiles)
@@ -839,7 +839,7 @@ public sealed class GameStateManager
 
     /// <summary>
     /// Self-test helper: find a SolidWall near world center at a mid Z and enqueue a 1x1 Dig order.
-    /// Logs in the same format as UI direct enqueue for comparison.
+    /// Logs in the same format as UI command enqueue for comparison.
     /// </summary>
     private void SelfTestAutoDig()
     {
@@ -907,24 +907,22 @@ public sealed class GameStateManager
             }
         }
 
-        if (foundX == null)
+        if (foundX == null || foundY == null || foundZ == null)
         {
             Logger.Log("[AUTO-DIG] No SolidWall or Ramp found anywhere; skip.");
             return;
         }
 
         var rect = new SadRogue.Primitives.Rectangle(foundX.Value, foundY.Value, 1, 1);
-        int z0 = foundZ!.Value;
-        // Emit the same UI log format for consistency
-        Logger.Log($"[DEBUG] Creating mining order (direct enqueue) zMin={z0} zMax={z0} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-        _world.Orders.EnqueueMiningAdvanced(
+        int z0 = foundZ.Value;
+        Logger.Log($"[DEBUG] Creating mining order command zMin={z0} zMax={z0} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+        _commandQueue.Enqueue(new CreateAdvancedMiningOrderCommand(
+            _tickScheduler.CurrentTick,
             rect,
             z0,
             z0,
-            HumanFortress.Simulation.Orders.MiningAction.Dig,
-            priority: 50,
-            createdTick: _tickScheduler.CurrentTick
-        );
+            HumanFortress.App.UI.MiningAction.Dig,
+            priority: 50));
         Logger.Log($"[AUTO-DIG] Enqueued test Dig at ({rect.X},{rect.Y},{z0})");
     }
 
@@ -1013,6 +1011,7 @@ public sealed class GameStateManager
         private readonly DiffLog _diffLog;
         private readonly World _world;
         private readonly EventBus _eventBus;
+        private ulong _currentTick;
 
         public SimulationContext(DiffLog diffLog, World world, EventBus eventBus)
         {
@@ -1022,9 +1021,14 @@ public sealed class GameStateManager
         }
 
         public DiffLog DiffLog => _diffLog;
-        public ulong CurrentTick => 0; // Not currently propagated by scheduler
+        public ulong CurrentTick => _currentTick;
         public IWorldReader World => _world;
         public IEventBus EventBus => _eventBus;
+
+        public void SetCurrentTick(ulong tick)
+        {
+            _currentTick = tick;
+        }
     }
 
     public readonly record struct JobsDebugData(
@@ -1045,7 +1049,7 @@ public sealed class GameStateManager
         if (_tickScheduler.IsRunning)
         {
             Logger.Log("[GameStateManager] Stopping tick scheduler");
-            _tickScheduler.Stop();
+            StopSimulation();
         }
 
         // Exit current state
@@ -1083,5 +1087,25 @@ public sealed class GameStateManager
                 }
             }
         }
+    }
+
+    private void OnPreTickExecuteCommands(ulong tick)
+    {
+        if (_simContext == null)
+            return;
+
+        _simContext.SetCurrentTick(tick);
+        _commandQueue.ExecuteCommands(tick, _simContext);
+    }
+
+    private void StopSimulation()
+    {
+        if (_tickScheduler.IsRunning)
+        {
+            _tickScheduler.Stop();
+        }
+
+        _tickScheduler.PreTick -= OnPreTickExecuteCommands;
+        _tickScheduler.PostTick -= OnPostTickApplyDiffs;
     }
 }

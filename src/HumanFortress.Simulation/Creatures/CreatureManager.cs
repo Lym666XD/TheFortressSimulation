@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using HumanFortress.Core.Random;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
@@ -16,6 +17,8 @@ namespace HumanFortress.Simulation.Creatures;
 /// </summary>
 public sealed class CreatureManager
 {
+    private const ulong CreatureInstanceGuidScope = 0x4352454154555245UL;
+
     // Registry (loaded at startup, read-only after)
     private readonly Dictionary<string, CreatureDefinition> _definitions = new();
     private readonly Dictionary<string, List<string>> _tagIndex = new();
@@ -23,6 +26,7 @@ public sealed class CreatureManager
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, CreatureInstance> _instances = new();
     private readonly object _instanceLock = new();
+    private ulong _nextInstanceSequence;
 
     // Dependencies
     private HumanFortress.Simulation.World.World? _world;
@@ -195,13 +199,13 @@ public sealed class CreatureManager
                 return null;
             }
 
-            // Create instance
-            var guid = Guid.NewGuid();
             var maxHP = 100; // TODO: Calculate from creature stats
-            var instance = new CreatureInstance(guid, creatureId, factionId, worldPos, z, maxHP, currentTick);
+            Guid guid;
 
             lock (_instanceLock)
             {
+                guid = DeterministicGuidGenerator.GenerateFromSequence(CreatureInstanceGuidScope, ++_nextInstanceSequence);
+                var instance = new CreatureInstance(guid, creatureId, factionId, worldPos, z, maxHP, currentTick);
                 _instances[guid] = instance;
             }
 

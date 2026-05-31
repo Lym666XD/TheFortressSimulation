@@ -78,7 +78,7 @@ public sealed class UpdateWorkshopQueueCommand : ICommand
                 if (string.IsNullOrWhiteSpace(_recipeId)) return;
                 var recipe = RecipeRegistry.Instance.GetRecipe(_recipeId);
                 if (recipe == null) return;
-                state.AddEntry(recipe.Id, recipe.Name);
+                state.AddEntry(recipe.Id, recipe.Name, _workshopGuid, context.CurrentTick);
                 break;
 
             case WorkshopQueueOperation.RemoveEntry:

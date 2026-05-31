@@ -1,4 +1,4 @@
 @echo off
 echo Starting HumanFortress (Self-contained version)...
-cd publish
+cd /d "%~dp0publish\HumanFortress.App"
 HumanFortress.App.exe

@@ -3,6 +3,7 @@ using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App;
@@ -12,12 +13,15 @@ namespace HumanFortress.App;
 /// </summary>
 public static class TestRunner
 {
+    private static readonly string[] ExpectedCommandOrder = { "first", "second" };
+
     public static void RunTests()
     {
         Console.WriteLine("=== Phase A Implementation Tests ===\n");
 
         TestTickScheduler();
         TestDeterministicRng();
+        TestDeterministicRuntimeIds();
         TestDiffLog();
         TestWorldChunks();
         TestCommandQueue();
@@ -43,6 +47,27 @@ public static class TestRunner
         else
         {
             Console.WriteLine("✗ TickScheduler: Phase execution failed");
+        }
+
+        var selfStoppingScheduler = new TickScheduler();
+        var preTickSeen = new ManualResetEventSlim(false);
+        selfStoppingScheduler.PreTick += _ =>
+        {
+            preTickSeen.Set();
+            selfStoppingScheduler.Stop();
+        };
+
+        selfStoppingScheduler.Start();
+        var stoppedCleanly = preTickSeen.Wait(1000)
+            && SpinWait.SpinUntil(() => !selfStoppingScheduler.IsRunning, 1000);
+
+        if (stoppedCleanly)
+        {
+            Console.WriteLine("✓ TickScheduler: Stop from tick thread completed without deadlock");
+        }
+        else
+        {
+            Console.WriteLine("✗ TickScheduler: Stop from tick thread did not complete");
         }
     }
 
@@ -85,6 +110,46 @@ public static class TestRunner
         {
             Console.WriteLine("✗ RNG Streams: Different streams for same name");
         }
+    }
+
+    private static void TestDeterministicRuntimeIds()
+    {
+        Console.WriteLine("Testing deterministic runtime IDs...");
+
+        const ulong testScope = 0x5445535452554E49UL;
+        var sequenceA1 = DeterministicGuidGenerator.GenerateFromSequence(testScope, 1);
+        var sequenceA2 = DeterministicGuidGenerator.GenerateFromSequence(testScope, 1);
+        var sequenceB = DeterministicGuidGenerator.GenerateFromSequence(testScope, 2);
+
+        var sourceGuid = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var derivedA1 = DeterministicGuidGenerator.GenerateFromGuid(testScope, sourceGuid, 42);
+        var derivedA2 = DeterministicGuidGenerator.GenerateFromGuid(testScope, sourceGuid, 42);
+        var derivedB = DeterministicGuidGenerator.GenerateFromGuid(testScope, sourceGuid, 43);
+
+        var queueChecksum1 = BuildWorkshopQueueIdChecksum();
+        var queueChecksum2 = BuildWorkshopQueueIdChecksum();
+
+        if (sequenceA1 == sequenceA2
+            && sequenceA1 != sequenceB
+            && derivedA1 == derivedA2
+            && derivedA1 != derivedB
+            && queueChecksum1 == queueChecksum2)
+        {
+            Console.WriteLine("✓ Runtime IDs: Stable across repeated deterministic inputs");
+        }
+        else
+        {
+            Console.WriteLine("✗ Runtime IDs: Deterministic generation failed");
+        }
+    }
+
+    private static string BuildWorkshopQueueIdChecksum()
+    {
+        var workshopGuid = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var state = new WorkshopState();
+        state.AddEntry("core_recipe_a", "Recipe A", workshopGuid, 100);
+        state.AddEntry("core_recipe_b", "Recipe B", workshopGuid, 100);
+        return string.Join("|", state.Queue.Select(e => e.EntryId.ToString("N")));
     }
 
     private static void TestDiffLog()
@@ -186,6 +251,38 @@ public static class TestRunner
         {
             Console.WriteLine("✗ CommandQueue: Command not executed");
         }
+
+        var outOfOrderQueue = new CommandQueue();
+        var futureCommand = new TestCommand(10, "future");
+        var dueCommand = new TestCommand(0, "due");
+
+        outOfOrderQueue.Enqueue(futureCommand);
+        outOfOrderQueue.Enqueue(dueCommand);
+        outOfOrderQueue.ExecuteCommands(0, context);
+
+        if (!futureCommand.Executed && dueCommand.Executed)
+        {
+            Console.WriteLine("✓ CommandQueue: Future command does not block due command");
+        }
+        else
+        {
+            Console.WriteLine("✗ CommandQueue: Future command blocked due command");
+        }
+
+        var orderLog = new List<string>();
+        var deterministicQueue = new CommandQueue();
+        deterministicQueue.Enqueue(new TestCommand(0, "first", orderLog, Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff")));
+        deterministicQueue.Enqueue(new TestCommand(0, "second", orderLog, Guid.Empty));
+        deterministicQueue.ExecuteCommands(0, context);
+
+        if (orderLog.SequenceEqual(ExpectedCommandOrder))
+        {
+            Console.WriteLine("✓ CommandQueue: Same-tick commands execute in enqueue order");
+        }
+        else
+        {
+            Console.WriteLine($"✗ CommandQueue: Same-tick order was {string.Join(", ", orderLog)}");
+        }
     }
 
     // Test helpers
@@ -213,22 +310,25 @@ public static class TestRunner
         public Guid CommandId { get; }
         public string CommandType { get; }
         public bool Executed { get; private set; }
+        private readonly List<string>? _executionLog;
 
-        public TestCommand(ulong tick, string type)
+        public TestCommand(ulong tick, string type, List<string>? executionLog = null, Guid? commandId = null)
         {
             Tick = tick;
-            CommandId = Guid.NewGuid();
+            CommandId = commandId ?? Guid.NewGuid();
             CommandType = type;
+            _executionLog = executionLog;
         }
 
         public void Execute(ISimulationContext context)
         {
             Executed = true;
+            _executionLog?.Add(CommandType);
         }
 
         public byte[] Serialize()
         {
-            return new byte[0];
+            return Array.Empty<byte>();
         }
     }
 

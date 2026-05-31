@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Core.Random;
 
 namespace HumanFortress.Simulation.Placeables;
 
@@ -9,7 +10,10 @@ namespace HumanFortress.Simulation.Placeables;
 /// </summary>
 public sealed class WorkshopState
 {
+    private const ulong WorkshopQueueEntryGuidScope = 0x574F524B51454E54UL;
+
     private readonly List<CraftQueueEntry> _queue = new();
+    private ulong _nextEntrySequence;
 
     public WorkshopState()
     {
@@ -50,9 +54,11 @@ public sealed class WorkshopState
         ActiveJobs = 0;
     }
 
-    public CraftQueueEntry AddEntry(string recipeId, string recipeName)
+    public CraftQueueEntry AddEntry(string recipeId, string recipeName, Guid workshopGuid, ulong currentTick)
     {
-        var entry = new CraftQueueEntry(recipeId, recipeName);
+        var sequence = ++_nextEntrySequence;
+        var entryId = DeterministicGuidGenerator.GenerateFromGuid(WorkshopQueueEntryGuidScope ^ currentTick, workshopGuid, sequence);
+        var entry = new CraftQueueEntry(entryId, recipeId, recipeName);
         _queue.Add(entry);
         return entry;
     }
@@ -95,9 +101,9 @@ public enum CraftQueueStatus
 
 public sealed class CraftQueueEntry
 {
-    public CraftQueueEntry(string recipeId, string recipeName)
+    public CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
     {
-        EntryId = Guid.NewGuid();
+        EntryId = entryId;
         RecipeId = recipeId;
         DisplayName = recipeName;
     }

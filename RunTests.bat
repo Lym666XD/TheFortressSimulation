@@ -2,9 +2,8 @@
 echo Running HumanFortress Tests...
 echo.
 
-cd game
-HumanFortress.App.exe --test
-cd ..
+cd /d "%~dp0"
+dotnet run --project src\HumanFortress.App\HumanFortress.App.csproj -- --test
 
 echo.
 pause

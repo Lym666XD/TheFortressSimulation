@@ -285,7 +285,7 @@ namespace HumanFortress.App.UI.Components
         }
 
         /// <summary>
-        /// Handle Debug overlay mouse clicks (category pills & item rows) when Debug panel is open.
+        /// Handle Debug overlay mouse clicks (category pills &amp; item rows) when Debug panel is open.
         /// Returns true if the click is consumed by the UI.
         /// </summary>
         private bool TryHandleDebugClick(Point localPos)
