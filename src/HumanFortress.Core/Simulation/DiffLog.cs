@@ -25,10 +25,24 @@ public readonly struct DiffOp
     /// Stable sort key for deterministic merge order.
     /// </summary>
     public readonly ulong SortKey =>
-        ((ulong)Target.ChunkId << 32) |
-        ((ulong)Target.LocalIndex << 16) |
-        ((ulong)(uint)Priority << 8) |
-        ((ulong)(uint)SystemId.GetHashCode());
+        ((ulong)(uint)Target.ChunkId << 32) |
+        ((ulong)(ushort)Target.LocalIndex << 16) |
+        ((ulong)(byte)Priority << 8) |
+        StableSystemHash8(SystemId);
+
+    private static ulong StableSystemHash8(string value)
+    {
+        unchecked
+        {
+            uint hash = 2166136261;
+            foreach (var c in value)
+            {
+                hash ^= c;
+                hash *= 16777619;
+            }
+            return hash & 0xFFUL;
+        }
+    }
 }
 
 public enum DiffOpType : byte
@@ -91,13 +105,13 @@ public sealed class DiffLog
         lock (_lock)
         {
             // Sort by stable key for determinism
-            _operations.Sort((a, b) => a.SortKey.CompareTo(b.SortKey));
+            _operations.Sort(CompareOps);
 
             // Resolve conflicts
             var merged = new List<DiffOp>();
 
-            // For MoveCreature, merge by entity id (one op per entity per tick)
-            var moveByEntity = new Dictionary<int, int>(); // entityId -> index in merged
+            // For movement, merge by operation + entity id so multiple entities can share a destination.
+            var moveByEntity = new Dictionary<(DiffOpType Op, int EntityId), int>();
 
             // For other ops, track last op by (chunkId, localIndex, op) to apply priority rule
             var lastByTarget = new Dictionary<(int,int,DiffOpType), int>();
@@ -105,9 +119,10 @@ public sealed class DiffLog
             for (int i = 0; i < _operations.Count; i++)
             {
                 var op = _operations[i];
-                if (op.Op == DiffOpType.MoveCreature && op.Target.EntityId >= 0)
+                if (IsEntityMove(op))
                 {
-                    if (moveByEntity.TryGetValue(op.Target.EntityId, out int idx))
+                    var entityKey = (op.Op, op.Target.EntityId);
+                    if (moveByEntity.TryGetValue(entityKey, out int idx))
                     {
                         var incumbent = merged[idx];
                         if (IsBetter(op, incumbent))
@@ -118,7 +133,7 @@ public sealed class DiffLog
                     }
                     else
                     {
-                        moveByEntity[op.Target.EntityId] = merged.Count;
+                        moveByEntity[entityKey] = merged.Count;
                         merged.Add(op);
                     }
                     continue;
@@ -145,6 +160,11 @@ public sealed class DiffLog
         }
     }
 
+    private static bool IsEntityMove(DiffOp op)
+    {
+        return op.Op == DiffOpType.MoveCreature || op.Op == DiffOpType.MoveItem;
+    }
+
     private static bool IsBetter(in DiffOp candidate, in DiffOp incumbent)
     {
         // Lower Priority value means higher priority in this codebase
@@ -155,15 +175,33 @@ public sealed class DiffLog
         int cb = SystemPrecedence(incumbent.SystemId);
         if (ca != cb) return ca < cb;
 
-        // Fallback: later sortkey wins to keep behavior similar to previous last-writer-wins
-        return candidate.SortKey >= incumbent.SortKey;
+        // Fallback: later deterministic ordering wins to keep behavior similar to previous last-writer-wins.
+        return CompareOps(candidate, incumbent) >= 0;
+    }
+
+    private static int CompareOps(DiffOp a, DiffOp b)
+    {
+        int c = a.SortKey.CompareTo(b.SortKey);
+        if (c != 0) return c;
+
+        c = a.Op.CompareTo(b.Op);
+        if (c != 0) return c;
+
+        c = a.Target.EntityId.CompareTo(b.Target.EntityId);
+        if (c != 0) return c;
+
+        c = string.CompareOrdinal(a.SystemId, b.SystemId);
+        if (c != 0) return c;
+
+        return a.Args.CompareTo(b.Args);
     }
 
     private static int SystemPrecedence(string systemId)
     {
         // Smaller is stronger
         if (systemId.StartsWith("Jobs.Mining", StringComparison.Ordinal)) return 0;
-        if (systemId.StartsWith("Jobs.Haul", StringComparison.Ordinal)) return 1;
+        if (systemId.StartsWith("Jobs.Haul", StringComparison.Ordinal) ||
+            systemId.StartsWith("Jobs.Transport", StringComparison.Ordinal)) return 1;
         if (systemId.StartsWith("Jobs.Construction", StringComparison.Ordinal)) return 2;
         return 3;
     }

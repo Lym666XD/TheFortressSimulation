@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using System.Threading;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Items;
@@ -22,6 +22,24 @@ public sealed class ItemsDiffLog
         }
     }
 
+    public void AddRemoveItem(Guid itemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
+    {
+        lock (_lock)
+        {
+            var diff = new ItemsDiff(ItemsDiffOp.RemoveItem, chunk, localIndex, string.Empty, quantity, priority, systemId, _localSeq++, itemGuid);
+            _ops.Add(diff);
+        }
+    }
+
+    public void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
+    {
+        lock (_lock)
+        {
+            var diff = new ItemsDiff(ItemsDiffOp.SplitStack, chunk, localIndex, string.Empty, quantity, priority, systemId, _localSeq++, sourceItemGuid, newItemGuid);
+            _ops.Add(diff);
+        }
+    }
+
     public IReadOnlyList<ItemsDiff> MergeAndSort()
     {
         lock (_lock)
@@ -40,4 +58,3 @@ public sealed class ItemsDiffLog
         }
     }
 }
-

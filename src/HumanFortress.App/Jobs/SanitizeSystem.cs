@@ -2,6 +2,8 @@ using System;
 using System.Linq;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using WorldChunk = HumanFortress.Simulation.World.Chunk;
+using WorldChunkKey = HumanFortress.Simulation.World.ChunkKey;
 
 namespace HumanFortress.App.Jobs;
 
@@ -12,13 +14,15 @@ namespace HumanFortress.App.Jobs;
 public sealed class SanitizeSystem : ITick
 {
     private readonly HumanFortress.Simulation.World.World _world;
+    private readonly DiffLog? _diff;
     private int _counter;
     private readonly int _interval;
     private readonly int _maxPerTick;
 
-    public SanitizeSystem(HumanFortress.Simulation.World.World world, int intervalTicks = 40, int maxPerTick = 8)
+    public SanitizeSystem(HumanFortress.Simulation.World.World world, DiffLog? diffLog = null, int intervalTicks = 40, int maxPerTick = 8)
     {
         _world = world;
+        _diff = diffLog;
         _interval = Math.Max(5, intervalTicks);
         _maxPerTick = Math.Max(1, maxPerTick);
     }
@@ -47,10 +51,13 @@ public sealed class SanitizeSystem : ITick
             var safe = FindNearestStandableNonSite(cr.Position.X, cr.Position.Y, cr.Z, 3);
             if (safe != null)
             {
-                cr.Position = new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y);
-                cr.Z = safe.Value.Z;
-                moved++;
-                Logger.Log($"[SANITIZE] creature={cr.Guid} from=({cr.Position.X},{cr.Position.Y},{cr.Z}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                var old = cr.Position;
+                int oldZ = cr.Z;
+                if (EmitMoveCreature(cr.Guid, safe.Value))
+                {
+                    moved++;
+                    Logger.Log($"[SANITIZE] creature={cr.Guid} from=({old.X},{old.Y},{oldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                }
             }
         }
         // Items next
@@ -65,10 +72,12 @@ public sealed class SanitizeSystem : ITick
             if (safe != null)
             {
                 var old = it.Position;
-                _world.Items.UpdateItemPosition(it.Guid, old, it.Z, new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y), safe.Value.Z);
-                try { _world.Items.MergeStacksAt(new SadRogue.Primitives.Point(safe.Value.X, safe.Value.Y), safe.Value.Z); } catch {}
-                moved++;
-                Logger.Log($"[SANITIZE] item={it.Guid} from=({old.X},{old.Y},{it.Z}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                int oldZ = it.Z;
+                if (EmitMoveItem(it.Guid, safe.Value))
+                {
+                    moved++;
+                    Logger.Log($"[SANITIZE] item={it.Guid} from=({old.X},{old.Y},{oldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                }
             }
         }
     }
@@ -108,5 +117,54 @@ public sealed class SanitizeSystem : ITick
         }
         return null;
     }
-}
 
+    private bool EmitMoveCreature(Guid creatureId, P3 dest)
+    {
+        if (_diff == null || creatureId == Guid.Empty) return false;
+        if (!TryEncodeTarget(dest, out var chunkKey, out int localIndex)) return false;
+
+        uint eid = ToEntity(creatureId);
+        int chunkId = EncodeChunkId(chunkKey);
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eid));
+        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, SystemId, Priority));
+        return true;
+    }
+
+    private bool EmitMoveItem(Guid itemId, P3 dest)
+    {
+        if (_diff == null || itemId == Guid.Empty) return false;
+        if (!TryEncodeTarget(dest, out var chunkKey, out int localIndex)) return false;
+
+        uint eid = ToEntity(itemId);
+        int chunkId = EncodeChunkId(chunkKey);
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eid));
+        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, SystemId, Priority));
+        return true;
+    }
+
+    private static bool TryEncodeTarget(P3 dest, out WorldChunkKey chunkKey, out int localIndex)
+    {
+        chunkKey = default;
+        localIndex = 0;
+        if (dest.X < 0 || dest.Y < 0 || dest.Z < 0) return false;
+
+        int cx = dest.X / WorldChunk.SIZE_XY;
+        int cy = dest.Y / WorldChunk.SIZE_XY;
+        int lx = dest.X % WorldChunk.SIZE_XY;
+        int ly = dest.Y % WorldChunk.SIZE_XY;
+        chunkKey = new WorldChunkKey(cx, cy, dest.Z);
+        localIndex = WorldChunk.LocalIndex(lx, ly);
+        return true;
+    }
+
+    private static int EncodeChunkId(WorldChunkKey ck)
+    {
+        return ((ck.Z & 0x3FF) << 20) | ((ck.ChunkX & 0x3FF) << 10) | (ck.ChunkY & 0x3FF);
+    }
+
+    private static uint ToEntity(Guid g)
+    {
+        var bytes = g.ToByteArray();
+        return BitConverter.ToUInt32(bytes, 0);
+    }
+}

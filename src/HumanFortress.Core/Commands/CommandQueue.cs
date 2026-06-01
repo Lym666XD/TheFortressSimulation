@@ -105,6 +105,22 @@ public sealed class CommandQueue
     }
 
     /// <summary>
+    /// Clear all pending and executed commands for a new simulation session.
+    /// </summary>
+    public void Clear()
+    {
+        lock (_executeLock)
+        {
+            _executedCommands.Clear();
+            while (_pendingCommands.TryDequeue(out _))
+            {
+            }
+
+            _nextSequence = 0;
+        }
+    }
+
+    /// <summary>
     /// Restore commands from save/replay.
     /// </summary>
     public void RestoreCommands(IEnumerable<ICommand> commands)

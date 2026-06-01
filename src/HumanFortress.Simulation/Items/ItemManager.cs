@@ -246,23 +246,41 @@ public sealed class ItemManager
             if (!_instances.TryGetValue(sourceId, out var inst)) return null;
             if (inst.StackCount <= takeCount) return null; // nothing to split if equal/full
 
-            inst.StackCount -= takeCount;
             var newGuid = DeterministicGuidGenerator.GenerateFromSequence(ItemInstanceGuidScope, ++_nextInstanceSequence);
-            var clone = new ItemInstance(newGuid, inst.DefinitionId, inst.Position, inst.Z, takeCount, inst.SpawnedAtTick)
-            {
-                MaterialId = inst.MaterialId,
-                OwnerFactionId = inst.OwnerFactionId,
-                OwnerCreatureGuid = inst.OwnerCreatureGuid,
-                UsePolicy = inst.UsePolicy,
-                Forbidden = inst.Forbidden
-            };
-            _instances[newGuid] = clone;
-            IndexAdd(newGuid, clone.Position, clone.Z);
-            string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
-            LogCallback?.Invoke(msg);
-            System.Console.WriteLine(msg);
-            return newGuid;
+            return SplitStackLocked(sourceId, inst, takeCount, newGuid);
         }
+    }
+
+    public Guid? SplitStackWithGuid(Guid sourceId, int takeCount, Guid newGuid)
+    {
+        if (takeCount <= 0 || newGuid == Guid.Empty) return null;
+        lock (_instanceLock)
+        {
+            if (_instances.ContainsKey(newGuid)) return null;
+            if (!_instances.TryGetValue(sourceId, out var inst)) return null;
+            if (inst.StackCount <= takeCount) return null;
+
+            return SplitStackLocked(sourceId, inst, takeCount, newGuid);
+        }
+    }
+
+    private Guid? SplitStackLocked(Guid sourceId, ItemInstance inst, int takeCount, Guid newGuid)
+    {
+        inst.StackCount -= takeCount;
+        var clone = new ItemInstance(newGuid, inst.DefinitionId, inst.Position, inst.Z, takeCount, inst.SpawnedAtTick)
+        {
+            MaterialId = inst.MaterialId,
+            OwnerFactionId = inst.OwnerFactionId,
+            OwnerCreatureGuid = inst.OwnerCreatureGuid,
+            UsePolicy = inst.UsePolicy,
+            Forbidden = inst.Forbidden
+        };
+        _instances[newGuid] = clone;
+        IndexAdd(newGuid, clone.Position, clone.Z);
+        string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
+        LogCallback?.Invoke(msg);
+        System.Console.WriteLine(msg);
+        return newGuid;
     }
 
     /// <summary>

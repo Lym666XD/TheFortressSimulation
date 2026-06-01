@@ -247,14 +247,14 @@ public sealed class MiningJobSystem : ITick
                 continue;
             }
             var jobPoint = new HumanFortress.Navigation.Point3(pd.Cell.X, pd.Cell.Y, pd.Z);
-            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, jobPoint)
+            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, tick, jobPoint)
                 ?? creatures;
             foreach (var worker in candidates)
             {
                 if (worker.HP <= 0) continue;
                 if (busy.Contains(worker.Guid)) continue;
                 // Cross-system exclusivity: try reserve worker for this mining job
-                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick + CreatureReserveTtlTicks, jobId: $"mine:{pd.DesignationId}"))
+                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick, tick + CreatureReserveTtlTicks, jobId: $"mine:{pd.DesignationId}"))
                     continue;
                 var req = new PathRequest(new Point3(worker.Position.X, worker.Position.Y, worker.Z), new Point3(adj.Value.X, adj.Value.Y, pd.Z), MoveMode.Walk, PathFlags.AllowDiagonal, SeedFrom(worker.Guid, pd.Cell));
                 IWorldNavigationView view = _navView;
@@ -356,7 +356,7 @@ public sealed class MiningJobSystem : ITick
             }
             uint eid = ToEntity(worker.Guid);
             // refresh reservation TTL while active
-            _world.Reservations.TryReserveCreature(job.WorkerId, SystemId, tick + CreatureReserveTtlTicks, jobId: $"mine:{job.DesignationId}");
+            _world.Reservations.TryReserveCreature(job.WorkerId, SystemId, tick, tick + CreatureReserveTtlTicks, jobId: $"mine:{job.DesignationId}");
 
             if (job.Stage == MiningStage.ToAdj)
             {

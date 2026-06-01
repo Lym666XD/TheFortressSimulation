@@ -201,6 +201,23 @@ public sealed class TickScheduler
     }
 
     /// <summary>
+    /// Reset scheduler state before starting a fresh simulation session.
+    /// </summary>
+    public void ResetForNewSession()
+    {
+        lock (_stateLock)
+        {
+            if (_isRunning || _tickThread != null)
+                throw new InvalidOperationException("Cannot reset scheduler while running");
+
+            _systems.Clear();
+            _currentTick = 0;
+            _isPaused = false;
+            _speedMultiplier = 1.0f;
+        }
+    }
+
+    /// <summary>
     /// Start the fixed-step simulation loop.
     /// </summary>
     public void Start()

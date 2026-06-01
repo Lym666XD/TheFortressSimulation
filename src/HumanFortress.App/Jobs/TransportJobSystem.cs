@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
+using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
+using WorldChunk = HumanFortress.Simulation.World.Chunk;
+using WorldChunkKey = HumanFortress.Simulation.World.ChunkKey;
 
 namespace HumanFortress.App.Jobs;
 
@@ -31,6 +35,7 @@ public sealed class TransportJobSystem : ITick
     private readonly WorldNavigationView _navView;
     private readonly MovementExecutor _move;
     private readonly DiffLog? _diff;
+    private readonly ItemsDiffLog? _itemsDiff;
     private readonly object _authLock = new();
 
     private readonly List<TransportRequest> _inboxBuffer = new();
@@ -49,6 +54,7 @@ public sealed class TransportJobSystem : ITick
     private int? _hintMaxActive;
     private int _hintReserveSlots;
     private const int CreatureReserveTtlTicks = 200;
+    private const ulong SplitStackGuidScope = 0x4841554C53504C54UL; // HAULSPLT
     private const string DropReasonInStockpile = "already in stockpile";
     private const string DropReasonDestInvalid = "dest not in stockpile";
     private const string JobTag = "hauling";
@@ -67,6 +73,7 @@ public sealed class TransportJobSystem : ITick
         ITransportRequestQueue requestQueue,
         DiffLog? diffLog = null,
         NavigationManager? sharedNav = null,
+        ItemsDiffLog? itemsDiffLog = null,
         int intakeBudget = 16,
         int carryoverMaxTicks = 8,
         int maxActiveJobs = 0,
@@ -80,6 +87,7 @@ public sealed class TransportJobSystem : ITick
         _navView = new WorldNavigationView(_nav, world);
         _move = new MovementExecutor(_paths);
         _diff = diffLog;
+        _itemsDiff = itemsDiffLog;
         _configuredIntakePerTick = Math.Max(1, intakeBudget);
         _configuredMaxActive = Math.Max(0, maxActiveJobs);
         _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
@@ -155,17 +163,17 @@ public sealed class TransportJobSystem : ITick
             }
             bool assigned = false;
             var jobPoint = new HumanFortress.Navigation.Point3(rq.From.X, rq.From.Y, rq.FromZ);
-            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, jobPoint)
+            var candidates = _professions?.SelectCandidates(_world, JobTag, _workerStrategy, busy, _world.Reservations, tick, jobPoint)
                 ?? creatures;
             foreach (var worker in candidates)
             {
                 if (worker.HP <= 0) continue;
                 if (busy.Contains(worker.Guid)) continue;
-                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick + (ulong)CreatureReserveTtlTicks, jobId: $"haul:{rq.ItemGuid}"))
+                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick, tick + (ulong)CreatureReserveTtlTicks, jobId: $"haul:{rq.ItemGuid}"))
                     continue;
 
                 // Reserve the item to avoid assigning multiple workers to the same source stack
-                if (!_world.Reservations.TryReserveItem(rq.ItemGuid, worker.Guid, tick + (ulong)CreatureReserveTtlTicks))
+                if (!_world.Reservations.TryReserveItem(rq.ItemGuid, worker.Guid, tick, tick + (ulong)CreatureReserveTtlTicks))
                 {
                     _world.Reservations.ReleaseCreature(worker.Guid);
                     continue;
@@ -251,7 +259,7 @@ public sealed class TransportJobSystem : ITick
             uint eid = ToEntity(cr.Guid);
 
             // refresh creature reservation TTL while job is active
-            _world.Reservations.TryReserveCreature(job.CreatureId, SystemId, tick + (ulong)CreatureReserveTtlTicks, jobId: $"haul:{job.ItemId}");
+            _world.Reservations.TryReserveCreature(job.CreatureId, SystemId, tick, tick + (ulong)CreatureReserveTtlTicks, jobId: $"haul:{job.ItemId}");
 
             var update = _move.UpdateMovement(eid, _navView);
             if (update.NeedsReplan)
@@ -315,11 +323,14 @@ public sealed class TransportJobSystem : ITick
                     var inst = _world.Items.GetInstance(job.ItemId);
                     if (inst != null && job.Quantity > 0 && inst.StackCount > job.Quantity)
                     {
-                        var newId = _world.Items.SplitStack(job.ItemId, job.Quantity);
-                        if (newId.HasValue)
+                        var sourceItemId = job.ItemId;
+                        var newId = GenerateSplitStackItemGuid(sourceItemId, job.CreatureId, tick, job.Quantity);
+                        if (EmitSplitStack(sourceItemId, newId, inst.Position, inst.Z, job.Quantity))
                         {
-                            Logger.Log($"[TRANS-JOBS][{tick}] Split stack old={job.ItemId} new={newId} take={job.Quantity}");
-                            job.ItemId = newId.Value;
+                            _world.Reservations.ReleaseItem(sourceItemId);
+                            _world.Reservations.TryReserveItem(newId, job.CreatureId, tick, tick + (ulong)CreatureReserveTtlTicks);
+                            Logger.Log($"[TRANS-JOBS][{tick}] Split stack old={sourceItemId} new={newId} take={job.Quantity}");
+                            job.ItemId = newId;
                         }
                     }
                     // Mark carried on pickup
@@ -738,6 +749,36 @@ public sealed class TransportJobSystem : ITick
         int chunkId = EncodeChunkId(new HumanFortress.Simulation.World.ChunkKey(chunkX, chunkY, dest.Z));
         var target = new DiffTarget(chunkId, localIndex, unchecked((int)eid));
         _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, SystemId, Priority));
+    }
+
+    private bool EmitSplitStack(Guid sourceItemId, Guid newItemId, SadRogue.Primitives.Point sourcePosition, int sourceZ, int quantity)
+    {
+        if (_itemsDiff == null) return false;
+        if (!TryEncodeItemTarget(sourcePosition, sourceZ, out var chunkKey, out int localIndex)) return false;
+
+        _itemsDiff.AddSplitStack(sourceItemId, newItemId, chunkKey, localIndex, quantity, Priority, SystemId);
+        return true;
+    }
+
+    private static Guid GenerateSplitStackItemGuid(Guid sourceItemId, Guid creatureId, ulong tick, int quantity)
+    {
+        ulong salt = tick ^ ((ulong)(uint)quantity << 32) ^ ToEntity(creatureId);
+        return DeterministicGuidGenerator.GenerateFromGuid(SplitStackGuidScope, sourceItemId, salt);
+    }
+
+    private static bool TryEncodeItemTarget(SadRogue.Primitives.Point cell, int z, out WorldChunkKey chunkKey, out int localIndex)
+    {
+        chunkKey = default;
+        localIndex = 0;
+        if (cell.X < 0 || cell.Y < 0 || z < 0) return false;
+
+        int cx = cell.X / WorldChunk.SIZE_XY;
+        int cy = cell.Y / WorldChunk.SIZE_XY;
+        int lx = cell.X % WorldChunk.SIZE_XY;
+        int ly = cell.Y % WorldChunk.SIZE_XY;
+        chunkKey = new WorldChunkKey(cx, cy, z);
+        localIndex = WorldChunk.LocalIndex(lx, ly);
+        return true;
     }
 
     private void EmitMarkCarried(Guid itemId, Guid carrierId, HumanFortress.Navigation.Point3 at)

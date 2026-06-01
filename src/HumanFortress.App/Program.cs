@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using HumanFortress.App.GameStates;
+using HumanFortress.App.Runtime;
 using HumanFortress.App.States;
 using HumanFortress.Core.Content;
 using SadConsole;
@@ -319,10 +320,11 @@ public static class Program
             }
 
             // Get the GameStateManager instance and initialize world
-            GameStateManager.Instance?.InitializeWorld(fortressSize, 50);
+            var gameStateManager = GameStateManager.Instance;
+            gameStateManager.InitializeWorld(fortressSize, 50);
 
             // Create and display the fortress state
-            _fortressState = new FortressState();
+            _fortressState = new FortressState(new FortressRuntimeAccess(gameStateManager));
 
             // Only set focus and screen if GameHost is initialized
             if (GameHost.Instance != null)

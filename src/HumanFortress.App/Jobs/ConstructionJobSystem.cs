@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Placeables;
 using SadRogue.Primitives;
+using WorldChunk = HumanFortress.Simulation.World.Chunk;
+using WorldChunkKey = HumanFortress.Simulation.World.ChunkKey;
 
 namespace HumanFortress.App.Jobs;
 
@@ -17,6 +20,7 @@ public sealed class ConstructionJobSystem : ITick
 {
     private readonly HumanFortress.Simulation.World.World _world;
     private readonly DiffLog? _diff;
+    private readonly ItemsDiffLog _itemsDiff;
     private readonly int _maxPerTick;
     public int LastProcessedSites { get; private set; } = 0;
     public int LastIntakeCount { get; private set; } = 0; // legacy field used by orchestrator (repurposed)
@@ -26,10 +30,16 @@ public sealed class ConstructionJobSystem : ITick
     // UI notification hook (set by UI layer). Invoked on L2 completion.
     public static System.Action<int,int,int, SadRogue.Primitives.Rectangle, string, ulong>? UiNotifyWorkshopComplete;
 
-    public ConstructionJobSystem(HumanFortress.Simulation.World.World world, ConstructionSystem planner, DiffLog? diffLog = null, int maxPerTick = 64)
+    public ConstructionJobSystem(
+        HumanFortress.Simulation.World.World world,
+        ConstructionSystem planner,
+        DiffLog? diffLog,
+        ItemsDiffLog itemsDiffLog,
+        int maxPerTick = 64)
     {
         _world = world;
         _diff = diffLog;
+        _itemsDiff = itemsDiffLog;
         _maxPerTick = Math.Max(1, maxPerTick);
         _tuning = HumanFortress.Core.Content.Registry.ConstructionTuning.LoadFromContent();
     }
@@ -144,10 +154,13 @@ public sealed class ConstructionJobSystem : ITick
 
                     // Consume required materials from footprint
                     var toConsume = new Dictionary<string, int>(site.MaterialsRequired, StringComparer.OrdinalIgnoreCase);
-                    ConsumeMaterialsOnFootprintOrRing(p, toConsume, tick);
+                    if (!TryConsumeMaterialsOnFootprintOrRing(p, toConsume))
+                    {
+                        continue;
+                    }
 
                     // After consumption, move any residual items off the anchor cell to a safe nearby cell
-                    TryMoveResidualItemsOffAnchor(p, tick);
+                    TryMoveResidualItemsOffAnchor(p);
 
                     // Branch: L0 terrain vs L2 placeable
                     if (site.TargetId.StartsWith("l0:", System.StringComparison.OrdinalIgnoreCase))
@@ -221,33 +234,59 @@ public sealed class ConstructionJobSystem : ITick
         return CountDeliveredOnFootprintOrRing(site);
     }
 
-    private void ConsumeMaterialsOnFootprintOrRing(PlaceableInstance site, Dictionary<string, int> toConsume, ulong tick)
+    private bool TryConsumeMaterialsOnFootprintOrRing(PlaceableInstance site, Dictionary<string, int> toConsume)
     {
-        foreach (var cell in EnumerateFootprintAndRing(site))
+        var removals = new List<PlannedItemRemoval>();
+        var plannedByItem = new Dictionary<Guid, int>();
+        var cells = EnumerateFootprintAndRing(site).ToList();
+
+        foreach (var cell in cells)
         {
-            foreach (var it in _world.Items.GetAllInstances().ToList())
+            var itemsAtCell = _world.Items.GetAllInstances()
+                .Where(it => !it.IsCarried
+                    && it.Position.X == cell.X
+                    && it.Position.Y == cell.Y
+                    && it.Z == site.Z)
+                .OrderBy(it => it.Guid)
+                .ToList();
+
+            foreach (var it in itemsAtCell)
             {
-                if (it.IsCarried) continue;
-                if (it.Position.X != cell.X || it.Position.Y != cell.Y || it.Z != site.Z) continue;
                 var def = _world.Items.GetDefinition(it.DefinitionId);
                 if (def == null || def.Tags == null) continue;
+                plannedByItem.TryGetValue(it.Guid, out int alreadyPlanned);
+                int available = Math.Max(0, it.StackCount - alreadyPlanned);
+                if (available <= 0) continue;
 
                 foreach (var kv in toConsume.Keys.OrderBy(k => k).ToList())
                 {
                     if (toConsume[kv] <= 0) continue;
                     if (!MatchesRequirement(def.Tags, kv)) continue;
-                    int take = Math.Min(it.StackCount, toConsume[kv]);
+                    int take = Math.Min(available, toConsume[kv]);
                     if (take <= 0) continue;
-                    it.StackCount -= take;
+                    plannedByItem[it.Guid] = alreadyPlanned + take;
+                    removals.Add(new PlannedItemRemoval(it.Guid, it.Position, it.Z, take));
                     toConsume[kv] -= take;
-                    if (it.StackCount <= 0)
-                    {
-                        _world.Items.RemoveInstance(it.Guid);
-                    }
+                    available -= take;
+                    alreadyPlanned += take;
+                    if (available <= 0) break;
                     if (toConsume[kv] <= 0) break;
                 }
             }
         }
+
+        if (toConsume.Any(kv => kv.Value > 0))
+        {
+            Logger.Log($"[BUILD.EXEC] consume failed site=({site.Position.X},{site.Position.Y},{site.Z}) remaining={FormatDict(toConsume)}");
+            return false;
+        }
+
+        foreach (var removal in removals)
+        {
+            EmitRemoveItem(removal.ItemGuid, removal.Position, removal.Z, removal.Quantity);
+        }
+
+        return true;
     }
 
     /// <summary>
@@ -408,9 +447,11 @@ public sealed class ConstructionJobSystem : ITick
         return anyMoved;
     }
 
-    private void TryMoveResidualItemsOffAnchor(PlaceableInstance site, ulong tick)
+    private void TryMoveResidualItemsOffAnchor(PlaceableInstance site)
     {
-        var items = _world.Items.GetItemsAt(site.Position, site.Z, groundOnly: true).ToList();
+        var items = _world.Items.GetItemsAt(site.Position, site.Z, groundOnly: true)
+            .OrderBy(it => it.Guid)
+            .ToList();
         if (items.Count == 0) return;
 
         var safe = FindSafeCellAround(site);
@@ -418,14 +459,41 @@ public sealed class ConstructionJobSystem : ITick
 
         foreach (var it in items)
         {
-            var oldPos = it.Position;
-            _world.Items.UpdateItemPosition(it.Guid, oldPos, it.Z, safe.Value, it.Z);
-            try
-            {
-                _world.Items.MergeStacksAt(safe.Value, it.Z);
-            }
-            catch { }
+            EmitMoveItem(it.Guid, safe.Value, it.Z);
         }
+    }
+
+    private void EmitRemoveItem(Guid itemGuid, Point cell, int z, int quantity)
+    {
+        if (itemGuid == Guid.Empty || quantity <= 0) return;
+        if (!TryEncodeItemTarget(cell, z, out var chunkKey, out int localIndex)) return;
+        _itemsDiff.AddRemoveItem(itemGuid, chunkKey, localIndex, quantity, Priority, SystemId);
+    }
+
+    private static bool TryEncodeItemTarget(Point cell, int z, out WorldChunkKey chunkKey, out int localIndex)
+    {
+        chunkKey = default;
+        localIndex = 0;
+        if (cell.X < 0 || cell.Y < 0 || z < 0) return false;
+
+        int cx = cell.X / WorldChunk.SIZE_XY;
+        int cy = cell.Y / WorldChunk.SIZE_XY;
+        int lx = cell.X % WorldChunk.SIZE_XY;
+        int ly = cell.Y % WorldChunk.SIZE_XY;
+        chunkKey = new WorldChunkKey(cx, cy, z);
+        localIndex = WorldChunk.LocalIndex(lx, ly);
+        return true;
+    }
+
+    private void EmitMoveItem(Guid itemId, Point dest, int z)
+    {
+        if (_diff == null || itemId == Guid.Empty) return;
+        if (!TryEncodeItemTarget(dest, z, out var chunkKey, out int localIndex)) return;
+
+        uint eid = ToEntity(itemId);
+        int chunkId = EncodeChunkId(chunkKey);
+        var target = new DiffTarget(chunkId, localIndex, unchecked((int)eid));
+        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, SystemId, Priority));
     }
 
     private Point? FindSafeCellAround(PlaceableInstance site)
@@ -523,4 +591,6 @@ public sealed class ConstructionJobSystem : ITick
         var bytes = g.ToByteArray();
         return BitConverter.ToUInt32(bytes, 0);
     }
+
+    private readonly record struct PlannedItemRemoval(Guid ItemGuid, Point Position, int Z, int Quantity);
 }

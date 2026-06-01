@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using HumanFortress.App.GameStates;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 
@@ -161,6 +160,7 @@ public sealed class ProfessionAssignments
         WorkerSelectionStrategy strategy,
         HashSet<Guid> busy,
         ReservationManager reservations,
+        ulong currentTick,
         HumanFortress.Navigation.Point3? referencePoint)
     {
         var profDefs = _registry.GetProfessionsForJob(jobTag);
@@ -180,7 +180,7 @@ public sealed class ProfessionAssignments
         if (pool.Count == 0)
             return Array.Empty<CreatureInstance>();
 
-        bool IsIdle(CreatureInstance c) => !reservations.IsCreatureReserved(c.Guid, GameStateManager.Instance.TickScheduler.CurrentTick, out _, out _);
+        bool IsIdle(CreatureInstance c) => !reservations.IsCreatureReserved(c.Guid, currentTick, out _, out _);
 
         IOrderedEnumerable<(CreatureInstance Worker, int Weight)> ordered = pool
             .OrderByDescending(p => p.Weight);

@@ -1,3 +1,4 @@
+using System;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Items;
@@ -6,11 +7,12 @@ public enum ItemsDiffOp
 {
     AddItem = 1,
     RemoveItem = 2,
+    SplitStack = 3,
 }
 
 /// <summary>
 /// Immutable diff entry for Items layer operations (L5).
-/// Applied during Write phase after Simulation diffs, but before building snapshots.
+/// Applied around Simulation diffs: removals/splits before entity diffs, additions after terrain diffs.
 /// </summary>
 public readonly struct ItemsDiff
 {
@@ -22,6 +24,8 @@ public readonly struct ItemsDiff
     public readonly int Priority;
     public readonly string SystemId;
     public readonly int LocalSeq;
+    public readonly Guid ItemGuid;
+    public readonly Guid NewItemGuid;
 
     public ItemsDiff(
         ItemsDiffOp op,
@@ -31,7 +35,9 @@ public readonly struct ItemsDiff
         int quantity,
         int priority,
         string systemId,
-        int localSeq)
+        int localSeq,
+        Guid itemGuid = default,
+        Guid newItemGuid = default)
     {
         Op = op;
         Chunk = chunk;
@@ -41,6 +47,8 @@ public readonly struct ItemsDiff
         Priority = priority;
         SystemId = systemId;
         LocalSeq = localSeq;
+        ItemGuid = itemGuid;
+        NewItemGuid = newItemGuid;
     }
 
     public long GetSortKey()
@@ -56,4 +64,3 @@ public readonly struct ItemsDiff
         return key;
     }
 }
-

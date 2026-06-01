@@ -2,9 +2,10 @@
 using SadConsole.Components;
 using SadConsole.Input;
 using SadRogue.Primitives;
-using HumanFortress.App.GameStates;
+using HumanFortress.App.Jobs;
 using HumanFortress.App.UI.Commands;
 using HumanFortress.App.UI;
+using HumanFortress.Simulation.World;
 using System.Linq;
 
 namespace HumanFortress.App.UI.Components
@@ -19,6 +20,11 @@ namespace HumanFortress.App.UI.Components
         private readonly UIStateManager _uiStateManager;
         private readonly int _screenWidth;
         private readonly int _screenHeight;
+        private readonly Func<ulong> _uiTickProvider;
+        private readonly Func<World?> _worldProvider;
+        private readonly Func<ProfessionAssignments?> _professionAssignmentsProvider;
+        private readonly Func<IReadOnlyList<ProfessionAssignments.ProfessionRosterEntry>> _professionRosterProvider;
+        private readonly Action<Guid, string, int> _setProfessionWeight;
 
         // Drawer ID mapping for F1-F8 buttons
         private static readonly DrawerId[] DockButtonDrawers = new[]
@@ -42,11 +48,29 @@ namespace HumanFortress.App.UI.Components
             QuickMenuKind.Stockpile    // V (index 3)
         };
 
-        public InputHandlerComponent(UIStateManager uiStateManager, int screenWidth, int screenHeight)
+        public InputHandlerComponent(
+            UIStateManager uiStateManager,
+            int screenWidth,
+            int screenHeight,
+            Func<ulong>? uiTickProvider = null,
+            Func<World?>? worldProvider = null,
+            Func<ProfessionAssignments?>? professionAssignmentsProvider = null,
+            Func<IReadOnlyList<ProfessionAssignments.ProfessionRosterEntry>>? professionRosterProvider = null,
+            Action<Guid, string, int>? setProfessionWeight = null)
         {
             _uiStateManager = uiStateManager;
             _screenWidth = screenWidth;
             _screenHeight = screenHeight;
+            _uiTickProvider = uiTickProvider ?? (() => 0UL);
+            _worldProvider = worldProvider ?? (() => null);
+            _professionAssignmentsProvider = professionAssignmentsProvider ?? (() => null);
+            _professionRosterProvider = professionRosterProvider ?? (() => Array.Empty<ProfessionAssignments.ProfessionRosterEntry>());
+            _setProfessionWeight = setProfessionWeight ?? ((_, _, _) => { });
+        }
+
+        private void AddToast(string text, ulong durationTicks)
+        {
+            _uiStateManager.AddToast(text, _uiTickProvider() + durationTicks);
         }
 
         public void OnAdded(IScreenObject host)
@@ -253,8 +277,7 @@ namespace HumanFortress.App.UI.Components
                     Logger.Log($"[InputHandler] F2 filter changed to: {newFilter}");
 
                     // Optional: Add toast feedback
-                    var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                    _uiStateManager.AddToast($"Filter: {newFilter}", tick + 50);
+                    AddToast($"Filter: {newFilter}", 50);
                     store.SuppressNextTileClick = true;
                     return true;
                 }
@@ -291,7 +314,7 @@ namespace HumanFortress.App.UI.Components
         private bool TryHandleDebugClick(Point localPos)
         {
             var ui = _uiStateManager.Store;
-            var worldRef = HumanFortress.App.GameStates.GameStateManager.Instance.World;
+            var worldRef = _worldProvider();
             if (!ui.DebugOpen) return false;
 
             // Compute window rect to hit-test
@@ -305,8 +328,7 @@ namespace HumanFortress.App.UI.Components
                 if (tabHits[i].Contains(localPos))
                 {
                     _uiStateManager.Store.DebugMenuTab = i; // 0=Status,1=Creatures,2=Items
-                    var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                    _uiStateManager.AddToast($"Tab: {(i==0?"Status": i==1?"Creatures":"Items")}", tick + 50);
+                    AddToast($"Tab: {(i==0?"Status": i==1?"Creatures":"Items")}", 50);
                     return true;
                 }
             }
@@ -322,8 +344,7 @@ namespace HumanFortress.App.UI.Components
                     {
                         string id = i switch { 0 => "core_race_dwarf", 1 => "core_race_human", 2 => "core_race_goblin", 3 => "core_race_elf", _ => "core_race_orc" };
                         ui.DebugSelectedCreature = id;
-                        var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                        _uiStateManager.AddToast($"Creature: {cLabels[i]}", tick + 50);
+                        AddToast($"Creature: {cLabels[i]}", 50);
                         return true;
                     }
                 }
@@ -350,13 +371,11 @@ namespace HumanFortress.App.UI.Components
                     ui.DebugItemCat = newCat;
 
                     // Select first item in this category if available
-                    var world = HumanFortress.App.GameStates.GameStateManager.Instance.World;
-                    var ids = GetCategoryItemIds(world, newCat).ToList();
+                    var ids = GetCategoryItemIds(worldRef, newCat).ToList();
                     if (ids.Count > 0) ui.DebugSelectedItem = ids[0];
 
                     // Visual feedback via toast (flash-like hint)
-                    var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                    _uiStateManager.AddToast($"Category: {labels[i]}", tick + 50);
+                    AddToast($"Category: {labels[i]}", 50);
                     return true;
                 }
             }
@@ -370,8 +389,7 @@ namespace HumanFortress.App.UI.Components
                 if (pageButtons[0].Contains(localPos)) ui.DebugItemPage = System.Math.Max(0, ui.DebugItemPage - 1);
                 else ui.DebugItemPage = System.Math.Min(maxPage, ui.DebugItemPage + 1);
                 int offset = ui.DebugItemPage * pageSize; if (idsAll.Count > offset) ui.DebugSelectedItem = idsAll[offset];
-                var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                _uiStateManager.AddToast($"Page {ui.DebugItemPage + 1}/{maxPage + 1}", tick + 50);
+                AddToast($"Page {ui.DebugItemPage + 1}/{maxPage + 1}", 50);
                 return true;
             }
 
@@ -386,8 +404,7 @@ namespace HumanFortress.App.UI.Components
                 {
                     ui.DebugSelectedItem = list[i];
                     // Subtle toast
-                    var tick = HumanFortress.App.GameStates.GameStateManager.Instance.TickScheduler.CurrentTick;
-                    _uiStateManager.AddToast($"Selected: {list[i]}", tick + 40);
+                    AddToast($"Selected: {list[i]}", 40);
                     return true;
                 }
             }
@@ -444,12 +461,12 @@ namespace HumanFortress.App.UI.Components
 
         private bool HandleJobAllocationKeys(Keyboard keyboard)
         {
-            var service = GameStateManager.Instance.ProfessionAssignments;
+            var service = _professionAssignmentsProvider();
             if (service == null) return false;
             var defs = service.Registry.Definitions;
             if (defs.Count == 0) return false;
 
-            var roster = GameStateManager.Instance.GetProfessionRosterSnapshot();
+            var roster = _professionRosterProvider();
             if (roster.Count == 0) return false;
 
             var ui = _uiStateManager.Store;
@@ -496,10 +513,9 @@ namespace HumanFortress.App.UI.Components
 
             var entry = roster[ui.WorkAllocSelectedRow];
             var definition = defs[ui.WorkAllocSelectedCol];
-            GameStateManager.Instance.SetProfessionWeight(entry.WorkerId, definition.Id, weight.Value);
-            var tick = GameStateManager.Instance.TickScheduler.CurrentTick;
+            _setProfessionWeight(entry.WorkerId, definition.Id, weight.Value);
             var label = weight.Value == 0 ? "-" : weight.Value.ToString();
-            _uiStateManager.AddToast($"{entry.Name}: {definition.Name} -> {label}", tick + 60);
+            AddToast($"{entry.Name}: {definition.Name} -> {label}", 60);
             return true;
         }
 
@@ -524,12 +540,12 @@ namespace HumanFortress.App.UI.Components
             if (_uiStateManager.OpenDrawer != DrawerId.Work || _uiStateManager.DrawerTab != 2)
                 return false;
 
-            var service = GameStateManager.Instance.ProfessionAssignments;
-            var world = GameStateManager.Instance.World;
+            var service = _professionAssignmentsProvider();
+            var world = _worldProvider();
             if (service == null || world == null) return false;
 
             var defs = service.Registry.Definitions;
-            var roster = GameStateManager.Instance.GetProfessionRosterSnapshot();
+            var roster = _professionRosterProvider();
             if (defs.Count == 0 || roster.Count == 0) return false;
 
             // Match drawer height calculation from UiRenderer.DrawDrawer
@@ -587,10 +603,9 @@ namespace HumanFortress.App.UI.Components
                 >= 9 => 0,
                 _ => current + 1
             };
-            GameStateManager.Instance.SetProfessionWeight(entry.WorkerId, definition.Id, next);
-            var tick = GameStateManager.Instance.TickScheduler.CurrentTick;
+            _setProfessionWeight(entry.WorkerId, definition.Id, next);
             string label = next <= 0 ? "-" : next.ToString();
-            _uiStateManager.AddToast($"{definition.Name}: {label}", tick + 60);
+            AddToast($"{definition.Name}: {label}", 60);
             _uiStateManager.Store.SuppressNextTileClick = true;
             return true;
         }

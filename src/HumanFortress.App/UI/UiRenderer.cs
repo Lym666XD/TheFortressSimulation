@@ -1,10 +1,10 @@
 ﻿using SadConsole;
 using SadRogue.Primitives;
 using HumanFortress.App;
+using HumanFortress.App.Runtime;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Placeables;
 using System.Linq;
-using HumanFortress.App.GameStates;
 
 namespace HumanFortress.App.UI;
 
@@ -89,7 +89,7 @@ namespace HumanFortress.App.UI;
         }
 
     // Draw bottom drawer placeholder
-    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick, StockpileManager? stockpileManager = null, HumanFortress.Simulation.World.World? world = null)
+    public static void DrawDrawer(ScreenSurface mapSurface, UiStore ui, ulong tick, StockpileManager? stockpileManager = null, HumanFortress.Simulation.World.World? world = null, FortressRuntimeAccess? runtime = null)
     {
         if (ui.OpenDrawer == DrawerId.None) return;
         var surf = mapSurface.Surface;
@@ -184,23 +184,23 @@ namespace HumanFortress.App.UI;
                 int contentHeight = height - 3;
                 if (ui.DrawerTab == 0)
                 {
-                    DrawWorkOverviewTab(surf, world, ui, y0 + 1, contentHeight, tick);
+                    DrawWorkOverviewTab(surf, world, ui, y0 + 1, contentHeight, tick, runtime);
                 }
                 else if (ui.DrawerTab == 1)
                 {
-                    DrawWorkOrdersTab(surf, world, y0 + 1, contentHeight, tick);
+                    DrawWorkOrdersTab(surf, world, y0 + 1, contentHeight, tick, runtime);
                 }
                 else if (ui.DrawerTab == 2)
                 {
-                    DrawJobAllocationTab(surf, world, ui, y0 + 1, contentHeight);
+                    DrawJobAllocationTab(surf, world, ui, y0 + 1, contentHeight, runtime);
                 }
                 else if (ui.DrawerTab == 3)
                 {
-                    DrawWorkshopOrdersTab(surf, world, y0 + 1, contentHeight, tick);
+                    DrawWorkshopOrdersTab(surf, world, y0 + 1, contentHeight, tick, runtime);
                 }
                 else
                 {
-                    DrawWorkshopsTab(surf, world, y0 + 1, contentHeight, tick);
+                    DrawWorkshopsTab(surf, world, y0 + 1, contentHeight, tick, runtime);
                 }
             }
         }
@@ -221,30 +221,29 @@ namespace HumanFortress.App.UI;
     }
 
 
-    private static void DrawWorkOverviewTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight, ulong tick)
+    private static void DrawWorkOverviewTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight, ulong tick, FortressRuntimeAccess? runtime)
     {
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
-        RenderLaborSummaryColumn(surf, layout.Left, world);
-        RenderDwarfRosterColumn(surf, layout.Center, world, ui);
-        RenderSchedulerColumn(surf, layout.Right, tick, "Scheduler Diagnostics");
+        RenderLaborSummaryColumn(surf, layout.Left, world, runtime);
+        RenderDwarfRosterColumn(surf, layout.Center, world, ui, runtime);
+        RenderSchedulerColumn(surf, layout.Right, tick, "Scheduler Diagnostics", runtime);
 
         // TODO (Work panel UX #4): hook keyboard navigation between columns when input refactor lands.
     }
 
-    private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
+    private static void DrawWorkOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick, FortressRuntimeAccess? runtime)
     {
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
         RenderOrdersSummaryColumn(surf, layout.Left, world);
-        RenderJobsColumn(surf, layout.Center, world);
-        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats");
+        RenderJobsColumn(surf, layout.Center, world, runtime);
+        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats", runtime);
     }
 
-    private static void DrawJobAllocationTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight)
+    private static void DrawJobAllocationTab(ICellSurface surf, HumanFortress.Simulation.World.World world, UiStore ui, int startY, int maxHeight, FortressRuntimeAccess? runtime)
     {
-        var gsm = GameStateManager.Instance;
-        var service = gsm.ProfessionAssignments;
+        var service = runtime?.ProfessionAssignments;
         if (service == null)
         {
             surf.Print(2, startY + 2, "Professions unavailable.", Color.Gray);
@@ -257,7 +256,8 @@ namespace HumanFortress.App.UI;
             return;
         }
 
-        var roster = gsm.GetProfessionRosterSnapshot();
+        var roster = runtime?.GetProfessionRosterSnapshot()
+            ?? Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
         int areaHeight = System.Math.Max(10, maxHeight);
         var area = new SadRogue.Primitives.Rectangle(1, startY, surf.Width - 2, areaHeight);
         FillArea(surf, area, new Color(15, 15, 15));
@@ -325,22 +325,22 @@ namespace HumanFortress.App.UI;
         surf.Print(area.X + 1, area.Y + area.Height - 2, "Use arrows to move, click cell to cycle 1-9 / '-'", Color.DarkGray);
     }
 
-    private static void DrawWorkshopOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
+    private static void DrawWorkshopOrdersTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick, FortressRuntimeAccess? runtime)
     {
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
         RenderWorkshopListColumn(surf, layout.Left, world);
         RenderWorkshopNotesColumn(surf, layout.Center, world);
-        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats");
+        RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats", runtime);
     }
 
-    private static void DrawWorkshopsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick)
+    private static void DrawWorkshopsTab(ICellSurface surf, HumanFortress.Simulation.World.World world, int startY, int maxHeight, ulong tick, FortressRuntimeAccess? runtime)
     {
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
         RenderStandingOrdersColumn(surf, layout.Left);
         RenderWorkshopDirectory(surf, layout.Center, world);
-        RenderConstructionStatusColumn(surf, layout.Right, world);
+        RenderConstructionStatusColumn(surf, layout.Right, world, runtime);
     }
 
     public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
@@ -488,14 +488,13 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void RenderLaborSummaryColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderLaborSummaryColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, FortressRuntimeAccess? runtime)
     {
-        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
-        var haulStats = gsm.TransportJobs?.GetLastStatsSnapshot();
-        var miningStats = gsm.MiningJobs?.GetLastStatsSnapshot();
-        var craftStats = gsm.CraftJobs?.GetLastStatsSnapshot();
-        int haulBacklog = haulStats?.Backlog ?? (gsm.TransportJobs?.GetBacklogCount() ?? 0);
-        int miningBacklog = miningStats?.Backlog ?? (gsm.MiningJobs?.GetBacklogCount() ?? 0);
+        var haulStats = runtime?.TransportJobs?.GetLastStatsSnapshot();
+        var miningStats = runtime?.MiningJobs?.GetLastStatsSnapshot();
+        var craftStats = runtime?.CraftJobs?.GetLastStatsSnapshot();
+        int haulBacklog = haulStats?.Backlog ?? (runtime?.TransportJobs?.GetBacklogCount() ?? 0);
+        int miningBacklog = miningStats?.Backlog ?? (runtime?.MiningJobs?.GetBacklogCount() ?? 0);
         int craftBacklog = craftStats?.Backlog ?? 0;
         int constructionSites = world.Orders.GetActiveConstructionSnapshot().Count;
         int totalDwarves = world.Creatures.GetAllInstances().Count(c => c.HP > 0);
@@ -506,7 +505,7 @@ namespace HumanFortress.App.UI;
         {
             new("Hauling", $"Backlog {haulBacklog}", haulStats?.Active ?? 0, haulBacklog, new Color(120, 180, 255)),
             new("Mining", $"Backlog {miningBacklog}", miningStats?.Active ?? 0, miningBacklog, new Color(200, 220, 120)),
-            new("Construction", $"Sites {constructionSites}", gsm.ConstructionJobs?.LastIntakeCount ?? 0, constructionSites, new Color(255, 200, 120)),
+            new("Construction", $"Sites {constructionSites}", runtime?.ConstructionJobs?.LastIntakeCount ?? 0, constructionSites, new Color(255, 200, 120)),
             new("Farming", "Crop planner coming soon", 0, 0, new Color(160, 210, 120)),
             new("Crafting", $"Backlog {craftBacklog}", craftStats?.Active ?? 0, craftBacklog, new Color(200, 160, 255)),
             new("Service", $"Idle dwarves {idleDwarves}", idleDwarves, 0, new Color(150, 200, 200))
@@ -536,11 +535,11 @@ namespace HumanFortress.App.UI;
         surf.Print(area.X + 1, area.Y + area.Height - 2, $"Total dwarves: {totalDwarves}", Color.Cyan);
     }
 
-    private static void RenderDwarfRosterColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, UiStore ui)
+    private static void RenderDwarfRosterColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, UiStore ui, FortressRuntimeAccess? runtime)
     {
-        var gsm = GameStateManager.Instance;
-        var roster = gsm.GetProfessionRosterSnapshot();
-        var service = gsm.ProfessionAssignments;
+        var roster = runtime?.GetProfessionRosterSnapshot()
+            ?? Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
+        var service = runtime?.ProfessionAssignments;
         var nameLookup = service?.Registry.Definitions.ToDictionary(d => d.Id, d => d.Name, StringComparer.OrdinalIgnoreCase)
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -575,13 +574,12 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void RenderSchedulerColumn(ICellSurface surf, Rectangle area, ulong tick, string caption)
+    private static void RenderSchedulerColumn(ICellSurface surf, Rectangle area, ulong tick, string caption, FortressRuntimeAccess? runtime)
     {
-        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
-        var sched = gsm.JobsOrchestrator?.GetLastStats();
-        var haulStats = gsm.TransportJobs?.GetLastStatsSnapshot();
-        var miningStats = gsm.MiningJobs?.GetLastStatsSnapshot();
-        var craftStats = gsm.CraftJobs?.GetLastStatsSnapshot();
+        var sched = runtime?.JobsOrchestrator?.GetLastStats();
+        var haulStats = runtime?.TransportJobs?.GetLastStatsSnapshot();
+        var miningStats = runtime?.MiningJobs?.GetLastStatsSnapshot();
+        var craftStats = runtime?.CraftJobs?.GetLastStatsSnapshot();
 
         int line = area.Y;
         surf.Print(area.X + 1, line++, caption, Color.Yellow);
@@ -621,7 +619,7 @@ namespace HumanFortress.App.UI;
             surf.Print(area.X + 1, line++, $"Intake:{cs.Intake} +Done:{cs.CompletedDelta}", Color.DarkGray);
         }
 
-        var debug = gsm.GetJobsDebugData(tick);
+        var debug = runtime?.GetJobsDebugData(tick);
         if (debug.HasValue && debug.Value.Transport.HasValue)
         {
             var tdbg = debug.Value.Transport.Value;
@@ -739,9 +737,9 @@ namespace HumanFortress.App.UI;
         surf.Print(area.X + 2, line++, "- Shift-click cancels orders", Color.Gray);
     }
 
-    private static void RenderJobsColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderJobsColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, FortressRuntimeAccess? runtime)
     {
-        var rows = BuildActiveJobRows();
+        var rows = BuildActiveJobRows(runtime);
         surf.Print(area.X + 1, area.Y, "Active Jobs", Color.Yellow);
         surf.Print(area.X + 1, area.Y + 1, "Type  Worker   Stage          Target", Color.Gray);
         int line = area.Y + 2;
@@ -774,11 +772,10 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static System.Collections.Generic.List<ActiveJobRow> BuildActiveJobRows()
+    private static System.Collections.Generic.List<ActiveJobRow> BuildActiveJobRows(FortressRuntimeAccess? runtime)
     {
-        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
         var rows = new System.Collections.Generic.List<ActiveJobRow>();
-        var haulJobs = gsm.TransportJobs?.GetActiveJobsSnapshot();
+        var haulJobs = runtime?.TransportJobs?.GetActiveJobsSnapshot();
         if (haulJobs != null)
         {
             foreach (var job in haulJobs)
@@ -787,7 +784,7 @@ namespace HumanFortress.App.UI;
                 rows.Add(new ActiveJobRow("Haul", worker, job.Stage, $"{job.Dest.X},{job.Dest.Y},{job.Dest.Z}", Color.Cyan));
             }
         }
-        var miningJobs = gsm.MiningJobs?.GetActiveJobsSnapshot();
+        var miningJobs = runtime?.MiningJobs?.GetActiveJobsSnapshot();
         if (miningJobs != null)
         {
             foreach (var job in miningJobs)
@@ -796,7 +793,7 @@ namespace HumanFortress.App.UI;
                 rows.Add(new ActiveJobRow("Mine", worker, job.Stage, $"{job.Target.X},{job.Target.Y},{job.Z}", Color.LightGreen));
             }
         }
-        var craftJobs = gsm.CraftJobs?.GetActiveJobsSnapshot();
+        var craftJobs = runtime?.CraftJobs?.GetActiveJobsSnapshot();
         if (craftJobs != null)
         {
             foreach (var job in craftJobs)
@@ -845,20 +842,19 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void RenderConstructionStatusColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderConstructionStatusColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, FortressRuntimeAccess? runtime)
     {
         var workshops = CollectWorkshops(world);
         int built = workshops.Count(w => !w.IsSite);
         int sites = workshops.Count(w => w.IsSite);
-        var gsm = HumanFortress.App.GameStates.GameStateManager.Instance;
 
         surf.Print(area.X + 1, area.Y, "Construction Status", Color.Yellow);
         int line = area.Y + 2;
         surf.Print(area.X + 1, line++, $"Built workshops: {built}", Color.LightGreen);
         surf.Print(area.X + 1, line++, $"Sites in progress: {sites}", Color.Orange);
         surf.Print(area.X + 1, line++, $"Queued designations: {world.Orders.GetActiveBuildableSnapshot().Count}", Color.Cyan);
-        surf.Print(area.X + 1, line++, $"Last tick processed: {gsm.ConstructionJobs?.LastProcessedSites ?? 0}", Color.Gray);
-        surf.Print(area.X + 1, line++, $"Intake limit: {gsm.SchedulerTunings?.Construction.PlanPerTick ?? 0}", Color.DarkGray);
+        surf.Print(area.X + 1, line++, $"Last tick processed: {runtime?.ConstructionJobs?.LastProcessedSites ?? 0}", Color.Gray);
+        surf.Print(area.X + 1, line++, $"Intake limit: {runtime?.SchedulerTunings?.Construction.PlanPerTick ?? 0}", Color.DarkGray);
     }
 
     private sealed record WorkshopDisplay(string Name, HumanFortress.Simulation.Placeables.PlaceableInstance Instance, HumanFortress.Core.Content.Registry.ConstructionDefinition? Definition, bool IsSite);
@@ -1975,7 +1971,7 @@ namespace HumanFortress.App.UI;
     }
 
     // Top bar with time/speed hints
-    public static void DrawTopBar(ScreenSurface mapSurface, ulong tick, HumanFortress.Core.Time.TickScheduler? scheduler = null)
+    public static void DrawTopBar(ScreenSurface mapSurface, SimulationStatus? simulationStatus = null)
     {
         var surf = mapSurface.Surface;
         int y = 0;
@@ -1986,17 +1982,18 @@ namespace HumanFortress.App.UI;
         string statusText = "";
         Color statusColor = Color.Gray;
 
-        if (scheduler != null)
+        if (simulationStatus.HasValue)
         {
-            if (scheduler.IsPaused)
+            var status = simulationStatus.Value;
+            if (status.IsPaused)
             {
                 statusText = "[PAUSED]";
                 statusColor = Color.Yellow;
             }
             else
             {
-                statusText = $"[{scheduler.SpeedMultiplier:F2}x]";
-                statusColor = scheduler.SpeedMultiplier switch
+                statusText = $"[{status.SpeedMultiplier:F2}x]";
+                statusColor = status.SpeedMultiplier switch
                 {
                     < 1.0f => Color.Cyan,      // Slow = cyan
                     1.0f => Color.White,       // Normal = white
@@ -2012,8 +2009,8 @@ namespace HumanFortress.App.UI;
             surf.Print(1, y, "[Space] Pause  [-] Slower  [+] Faster", Color.Gray);
         }
 
-        // if (tick % 50 == 0)
-        //     Logger.Log($"[UiRenderer.TopBar] overlay={surf.Width}x{surf.Height} tick={tick}");
+        // if (simulationStatus?.CurrentTick % 50 == 0)
+        //     Logger.Log($"[UiRenderer.TopBar] overlay={surf.Width}x{surf.Height} tick={simulationStatus.Value.CurrentTick}");
     }
 
     private static void DrawButton(ICellSurface surf, ref int x, int y, string label, bool active)
@@ -2092,4 +2089,3 @@ namespace HumanFortress.App.UI;
         }
     }
 }
-

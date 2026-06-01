@@ -6,9 +6,12 @@ using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
+using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
+using WorldChunk = HumanFortress.Simulation.World.Chunk;
+using WorldChunkKey = HumanFortress.Simulation.World.ChunkKey;
 using Point3 = HumanFortress.Navigation.Point3;
 
 namespace HumanFortress.App.Jobs;
@@ -20,7 +23,7 @@ public sealed class CraftJobSystem : ITick
 {
     private readonly World _world;
     private readonly CraftPlanner _planner;
-    private readonly DiffLog? _diff;
+    private readonly ItemsDiffLog _itemsDiff;
     private readonly NavigationManager _nav;
     private readonly IPathService _paths;
     private readonly WorldNavigationView _navView;
@@ -43,14 +46,14 @@ public sealed class CraftJobSystem : ITick
     public CraftJobSystem(
         World world,
         CraftPlanner planner,
-        DiffLog? diffLog,
+        ItemsDiffLog itemsDiffLog,
         NavigationManager? sharedNav,
         ProfessionAssignments? professions,
         WorkerSelectionStrategy workerStrategy)
     {
         _world = world;
         _planner = planner;
-        _diff = diffLog;
+        _itemsDiff = itemsDiffLog;
         _nav = sharedNav ?? new NavigationManager(world);
         _paths = new PathService(NavigationTuning.LoadFromContent());
         _navView = new WorldNavigationView(_nav, world);
@@ -99,14 +102,14 @@ public sealed class CraftJobSystem : ITick
             if (recipe == null)
                 continue;
 
-            var candidates = _professions?.SelectCandidates(_world, recipe.JobTag, _workerStrategy, busy, _world.Reservations, new Point3(job.Anchor.X, job.Anchor.Y, job.Z))
+            var candidates = _professions?.SelectCandidates(_world, recipe.JobTag, _workerStrategy, busy, _world.Reservations, tick, new Point3(job.Anchor.X, job.Anchor.Y, job.Z))
                 ?? workers;
 
             Guid? assigned = null;
             foreach (var worker in candidates)
             {
                 if (busy.Contains(worker.Guid)) continue;
-                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick + (ulong)CreatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}"))
+                if (!_world.Reservations.TryReserveCreature(worker.Guid, SystemId, tick, tick + (ulong)CreatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}"))
                     continue;
 
                 var start = new Point3(worker.Position.X, worker.Position.Y, worker.Z);
@@ -166,7 +169,7 @@ public sealed class CraftJobSystem : ITick
             }
 
             uint eid = ToEntity(job.WorkerId);
-            _world.Reservations.TryReserveCreature(job.WorkerId, SystemId, tick + (ulong)CreatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}");
+            _world.Reservations.TryReserveCreature(job.WorkerId, SystemId, tick, tick + (ulong)CreatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}");
 
             if (job.Stage == CraftJobStage.ToWorkshop)
             {
@@ -221,22 +224,31 @@ public sealed class CraftJobSystem : ITick
         if (entry == null) return false;
         var recipe = RecipeRegistry.Instance.GetRecipe(job.RecipeId);
         if (recipe == null) return false;
+        var planned = new List<PlannedItemConsumption>();
+        var plannedByItem = new Dictionary<Guid, int>();
+
         foreach (var ingredient in recipe.Inputs)
         {
             int remaining = ingredient.Count;
-            foreach (var item in _world.Items.GetAllInstances().ToList())
+            var candidates = _world.Items.GetAllInstances()
+                .Where(item => item.DefinitionId == ingredient.DefId
+                    && item.Z == job.Z
+                    && IsOnWorkshop(placeable, item.Position.X, item.Position.Y))
+                .OrderBy(item => item.Guid)
+                .ToList();
+
+            foreach (var item in candidates)
             {
                 if (remaining <= 0) break;
-                if (item.DefinitionId != ingredient.DefId) continue;
-                if (item.Z != job.Z) continue;
-                if (!IsOnWorkshop(placeable, item.Position.X, item.Position.Y)) continue;
-                int take = Math.Min(item.StackCount, remaining);
+                plannedByItem.TryGetValue(item.Guid, out int alreadyPlanned);
+                int available = Math.Max(0, item.StackCount - alreadyPlanned);
+                int take = Math.Min(available, remaining);
                 if (take <= 0) continue;
-                item.StackCount -= take;
+                plannedByItem[item.Guid] = alreadyPlanned + take;
+                planned.Add(new PlannedItemConsumption(item.Guid, item.Position, item.Z, take));
                 remaining -= take;
-                if (item.StackCount <= 0)
-                    _world.Items.RemoveInstance(item.Guid);
             }
+
             if (remaining > 0)
             {
                 entry.Status = CraftQueueStatus.AwaitingMaterials;
@@ -246,6 +258,12 @@ public sealed class CraftJobSystem : ITick
                 return false;
             }
         }
+
+        foreach (var consumption in planned)
+        {
+            EmitRemoveItem(consumption.ItemGuid, consumption.Position, consumption.Z, consumption.Quantity);
+        }
+
         entry.BlockingReason = null;
         return true;
     }
@@ -256,8 +274,37 @@ public sealed class CraftJobSystem : ITick
         if (recipe == null) return;
         foreach (var output in recipe.Outputs)
         {
-            _world.Items.SpawnItem(output.DefId, job.Anchor, job.Z, output.Count, 0);
+            EmitAddItem(job.Anchor, job.Z, output.DefId, output.Count);
         }
+    }
+
+    private void EmitAddItem(SadRogue.Primitives.Point cell, int z, string itemId, int quantity)
+    {
+        if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0) return;
+        if (!TryEncodeItemTarget(cell, z, out var chunkKey, out int localIndex)) return;
+        _itemsDiff.Add(ItemsDiffOp.AddItem, chunkKey, localIndex, itemId, quantity, Priority, SystemId);
+    }
+
+    private void EmitRemoveItem(Guid itemGuid, SadRogue.Primitives.Point cell, int z, int quantity)
+    {
+        if (itemGuid == Guid.Empty || quantity <= 0) return;
+        if (!TryEncodeItemTarget(cell, z, out var chunkKey, out int localIndex)) return;
+        _itemsDiff.AddRemoveItem(itemGuid, chunkKey, localIndex, quantity, Priority, SystemId);
+    }
+
+    private static bool TryEncodeItemTarget(SadRogue.Primitives.Point cell, int z, out WorldChunkKey chunkKey, out int localIndex)
+    {
+        chunkKey = default;
+        localIndex = 0;
+        if (cell.X < 0 || cell.Y < 0 || z < 0) return false;
+
+        int cx = cell.X / WorldChunk.SIZE_XY;
+        int cy = cell.Y / WorldChunk.SIZE_XY;
+        int lx = cell.X % WorldChunk.SIZE_XY;
+        int ly = cell.Y % WorldChunk.SIZE_XY;
+        chunkKey = new WorldChunkKey(cx, cy, z);
+        localIndex = WorldChunk.LocalIndex(lx, ly);
+        return true;
     }
 
     private void CleanupJob(ActiveCraftJob job)
@@ -341,6 +388,8 @@ public sealed class CraftJobSystem : ITick
         public int Z { get; set; }
     }
 
+    private readonly record struct PlannedItemConsumption(Guid ItemGuid, SadRogue.Primitives.Point Position, int Z, int Quantity);
+
     private enum CraftJobStage
     {
         ToWorkshop,
@@ -351,4 +400,3 @@ public sealed class CraftJobSystem : ITick
 public readonly record struct CraftJobStatsSnapshot(int Intake, int Active, int Backlog, int CompletedDelta);
 
 public readonly record struct ActiveCraftJobView(Guid WorkerId, Guid WorkshopGuid, string RecipeId, string Stage, int RemainingTicks);
-

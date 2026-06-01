@@ -34,14 +34,14 @@ public sealed class ReservationManager
     /// <summary>
     /// Try reserve an item for a holder until expireTick.
     /// </summary>
-    public bool TryReserveItem(Guid itemId, Guid holderId, ulong expireTick)
+    public bool TryReserveItem(Guid itemId, Guid holderId, ulong currentTick, ulong expireTick)
     {
         return _itemRes.AddOrUpdate(itemId,
             addValueFactory: id => new ItemReservation { ItemId = id, HolderId = holderId, ExpireTick = expireTick },
             updateValueFactory: (id, existing) =>
             {
                 // If expired or same holder, refresh; otherwise fail by keeping existing
-                if (existing.ExpireTick <= expireTick || existing.HolderId == holderId)
+                if (existing.ExpireTick < currentTick || existing.HolderId == holderId)
                 {
                     existing.HolderId = holderId;
                     existing.ExpireTick = expireTick;
@@ -88,14 +88,14 @@ public sealed class ReservationManager
 
     // ===== Creature reservation API =====
 
-    public bool TryReserveCreature(Guid workerId, string systemId, ulong expireTick, string? jobId = null)
+    public bool TryReserveCreature(Guid workerId, string systemId, ulong currentTick, ulong expireTick, string? jobId = null)
     {
         var res = _creatureRes.AddOrUpdate(workerId,
             addValueFactory: id => new CreatureReservation { WorkerId = id, HolderSystem = systemId, JobId = jobId, ExpireTick = expireTick },
             updateValueFactory: (id, existing) =>
             {
                 // If expired or same holder, refresh; otherwise keep existing holder
-                if (existing.ExpireTick <= expireTick || existing.HolderSystem == systemId)
+                if (existing.ExpireTick < currentTick || existing.HolderSystem == systemId)
                 {
                     existing.HolderSystem = systemId;
                     existing.JobId = jobId ?? existing.JobId;
@@ -137,4 +137,3 @@ public sealed class ReservationManager
         return list;
     }
 }
-
