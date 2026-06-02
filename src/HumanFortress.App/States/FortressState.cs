@@ -480,24 +480,6 @@ namespace HumanFortress.App.States
             return HumanFortress.Simulation.Orders.MiningOrderRules.CountEligible(world, rect, zMin, zMax, action);
         }
 
-        // Single source-of-truth rectangle helper: returns an inclusive rectangle from two corners
-        private Rectangle ComputeRectInclusive(Point a, Point b)
-        {
-            int x = Math.Min(a.X, b.X);
-            int y = Math.Min(a.Y, b.Y);
-            int w = Math.Abs(a.X - b.X) + 1;
-            int h = Math.Abs(a.Y - b.Y) + 1;
-            return new Rectangle(x, y, w, h);
-        }
-
-        private Point ClampToWorld(Point p)
-        {
-            int max = FortressSize * 32 - 1;
-            int cx = p.X < 0 ? 0 : (p.X > max ? max : p.X);
-            int cy = p.Y < 0 ? 0 : (p.Y > max ? max : p.Y);
-            return new Point(cx, cy);
-        }
-
         private void RefreshSnapshot()
         {
             _currentSnapshot = FortressRenderSnapshotService.Build(
@@ -1002,220 +984,242 @@ namespace HumanFortress.App.States
                 return true;
             }
 
-            if (_ui.PlaceMode == PlacementMode.StockpileSecondCorner)
+            return _ui.PlaceMode switch
             {
-                if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
-                {
-                    _ui.PlaceSecondCorner = worldPos;
-                    _ui.PlaceMode = PlacementMode.StockpilePresetSelect;
-                    Logger.Log($"[STOCKPILE] Second corner at ({worldX},{worldY},{_currentZ})");
-                    DrawUI();
-                }
-                return true;
+                PlacementMode.StockpileSecondCorner => TryHandleStockpileSecondCornerClick(worldPos, worldX, worldY),
+                PlacementMode.HaulSecondCorner => TryHandleHaulSecondCornerClick(worldPos),
+                PlacementMode.MiningSecondCorner => TryHandleMiningSecondCornerClick(worldPos),
+                PlacementMode.ConstructionSecondCorner when _ui.PlaceFirstCorner.HasValue => TryHandleConstructionSecondCornerClick(worldPos),
+                PlacementMode.BuildableConfirmAnchor when _ui.PlaceFirstCorner.HasValue => TryHandleBuildableConfirmAnchorClick(),
+                PlacementMode.ZoneSecondCorner when _ui.PlaceFirstCorner.HasValue => TryHandleZoneSecondCornerClick(worldPos),
+                PlacementMode.ZoneDelete => TryHandleZoneDeleteClick(worldPos),
+                PlacementMode.StockpileCopy => TryHandleStockpileCopyClick(worldPos),
+                _ => false
+            };
+        }
+
+        private bool TryHandleStockpileSecondCornerClick(Point worldPos, int worldX, int worldY)
+        {
+            if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
+            {
+                _ui.PlaceSecondCorner = worldPos;
+                _ui.PlaceMode = PlacementMode.StockpilePresetSelect;
+                Logger.Log($"[STOCKPILE] Second corner at ({worldX},{worldY},{_currentZ})");
+                DrawUI();
             }
 
-            if (_ui.PlaceMode == PlacementMode.HaulSecondCorner)
+            return true;
+        }
+
+        private bool TryHandleHaulSecondCornerClick(Point worldPos)
+        {
+            if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
             {
-                if (_ui.PlaceFirstCorner.HasValue && worldPos != _ui.PlaceFirstCorner.Value)
-                {
-                    _ui.PlaceSecondCorner = worldPos;
+                _ui.PlaceSecondCorner = worldPos;
 
-                    // Compute inclusive rectangle using single helper
-                    var rect = ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
-                    _runtime.EnqueueCurrentTickCommand(tick =>
-                        new HumanFortress.App.Commands.CreateHaulOrderCommand(tick, rect, _currentZ, priority: 50));
-                    _ui.AddToast("Haul order created", _uiTick + 120);
-                    Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-                    _ui.CancelPlacement();
-                    DrawUI();
-                }
-                return true;
-            }
-
-            if (_ui.PlaceMode == PlacementMode.MiningSecondCorner)
-            {
-                var cl = ClampToWorld(worldPos);
-                if (_ui.PlaceFirstCorner.HasValue && cl != _ui.PlaceFirstCorner.Value)
-                {
-                    _ui.PlaceSecondCorner = cl;
-                    _ui.PlaceZMax = _currentZ; // Save second click's Z as zMax (fallback when no z-adjust)
-                    // Prefer selection tool result if active
-                    Selection3D sel = default;
-                    if (_selectionTool != null && _selectionTool.IsActive)
-                    {
-                        sel = _selectionTool.Complete();
-                    }
-                    // Compute inclusive rectangle using tool or helper
-                    bool useTool = sel.XY.Width > 1 || sel.XY.Height > 1;
-                    var rect = useTool
-                        ? sel.XY
-                        : ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
-
-                    // z-range: prefer tool's z when using tool; else fallback to UI fields
-                    int zMin = useTool ? Math.Min(sel.ZMin, sel.ZMax) : Math.Min(_ui.PlaceZMin, _ui.PlaceZMax);
-                    int zMax = useTool ? Math.Max(sel.ZMin, sel.ZMax) : Math.Max(_ui.PlaceZMin, _ui.PlaceZMax);
-                    var uiAction = _ui.SelectedMiningAction;
-                    var simAction = uiAction switch
-                    {
-                        HumanFortress.App.UI.MiningAction.Dig => HumanFortress.Simulation.Orders.MiningAction.Dig,
-                        HumanFortress.App.UI.MiningAction.DigStairwell => HumanFortress.Simulation.Orders.MiningAction.DigStairwell,
-                        HumanFortress.App.UI.MiningAction.DigRamp => HumanFortress.Simulation.Orders.MiningAction.DigRamp,
-                        HumanFortress.App.UI.MiningAction.DigChannel => HumanFortress.Simulation.Orders.MiningAction.DigChannel,
-                        HumanFortress.App.UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
-                        _ => HumanFortress.Simulation.Orders.MiningAction.Dig
-                    };
-
-                    // Single-layer stairwell validation: show toast but still enqueue (planner will skip)
-                    if (simAction == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && zMin == zMax)
-                    {
-                        _ui.AddToast($"Stairwell must dig between multiple levels", _uiTick + 180);
-                        Logger.Log($"[UI] Single-layer stairwell rejected at UI (z={zMin})");
-                    }
-
-                    Logger.Log($"[DEBUG] Creating mining order command zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-                    _runtime.EnqueueCurrentTickCommand(tick => new CreateAdvancedMiningOrderCommand(
-                        tick,
-                        rect,
-                        zMin,
-                        zMax,
-                        uiAction,
-                        priority: 50));
-
-                    int totalCells = rect.Width * rect.Height;
-                    _ui.AddToast($"Mining order created ({totalCells} tiles)", _uiTick + 120);
-                    Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
-                    Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
-                    // Highlight for shorter time; encode action in kind for renderer fill policy
-                    _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 30);
-                    _ui.CancelPlacement();
-                    DrawUI();
-                }
-                return true;
-            }
-
-            if (_ui.PlaceMode == PlacementMode.ConstructionSecondCorner && _ui.PlaceFirstCorner.HasValue)
-            {
-                var cl = ClampToWorld(worldPos);
-                if (cl != _ui.PlaceFirstCorner.Value)
-                {
-                    var rect = ComputeRectInclusive(_ui.PlaceFirstCorner.Value, cl);
-                    // Build on current Z only (multi-Z stairs WIP)
-                    int zMin = _currentZ;
-                    int zMax = _currentZ;
-
-                    // Material filter: default to stone (granite) for L0 construction
-                    var filter = new HumanFortress.Simulation.Orders.MaterialFilterSpec
-                    {
-                        PreferredMaterialId = _ui.ConstructionPreferredMaterialId ?? "core_mat_stone_granite",
-                        CategoryKey = _ui.SelectedConstructionShape switch
-                        {
-                            HumanFortress.Simulation.Orders.ConstructionShape.Wall => "l0.wall",
-                            HumanFortress.Simulation.Orders.ConstructionShape.Floor => "l0.floor",
-                            HumanFortress.Simulation.Orders.ConstructionShape.Ramp => "l0.ramp",
-                            HumanFortress.Simulation.Orders.ConstructionShape.Stairs => "l0.stairs",
-                            _ => "l0.unknown"
-                        },
-                        Tags = _ui.ConstructionSelectedTags.ToArray()
-                    };
-
-                    // Enqueue construction command
-                    _runtime.EnqueueCurrentTickCommand(tick =>
-                        new HumanFortress.App.Commands.CreateConstructionOrderCommand(
-                            tick,
-                            rect,
-                            zMin,
-                            zMax,
-                            _ui.SelectedConstructionShape,
-                            filter,
-                            priority: 50));
-
-                    // Detailed UI submission log for selection debugging
-                    Logger.Log($"[BUILD.UI] First=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y}) Second=({cl.X},{cl.Y}) Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) Z={zMin}..{zMax}");
-                    Logger.Log($"[BUILD.UI] Enqueue construction shape={_ui.SelectedConstructionShape} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} tags=[{string.Join('|', _ui.ConstructionSelectedTags)}]");
-                    _ui.AddToast($"[BUILD] Enqueued {_ui.SelectedConstructionShape} {rect.Width}x{rect.Height} at z={_currentZ}", _uiTick + 150);
-                    _ui.CancelPlacement();
-                    DrawUI();
-                }
-                return true;
-            }
-
-            if (_ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && _ui.PlaceFirstCorner.HasValue)
-            {
-                var anchor = _ui.PlaceFirstCorner.Value;
-                if (_ui.SelectedBuildableConstructionId != null)
-                {
-                    _runtime.EnqueueCurrentTickCommand(tick =>
-                        new HumanFortress.App.Commands.CreateBuildableConstructionOrderCommand(
-                            tick,
-                            _ui.SelectedBuildableConstructionId,
-                            anchor,
-                            _currentZ,
-                            priority: 50));
-                    Logger.Log($"[BUILD.UI] Enqueue workshop id={_ui.SelectedBuildableConstructionId} pos=({anchor.X},{anchor.Y}) z={_currentZ}");
-                    _ui.CancelPlacement();
-                    DrawUI();
-                }
-                return true;
-            }
-
-            if (_ui.PlaceMode == PlacementMode.ZoneSecondCorner && _ui.PlaceFirstCorner.HasValue)
-            {
-                // Create zone using command (inclusive rectangle)
-                int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, worldPos.X);
-                int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
-                int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, worldPos.X);
-                int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
-                var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
-
-                if (_ui.SelectedZoneDefId != null && _world != null)
-                {
-                    _runtime.EnqueueCurrentTickCommand(tick =>
-                        new HumanFortress.App.Commands.CreateZoneCommand(
-                            tick,
-                            _ui.SelectedZoneDefId,
-                            $"{_ui.SelectedZoneDefId}_zone",
-                            rect,
-                            _currentZ));
-                    _ui.AddToast($"Created zone at ({rect.X},{rect.Y})", _uiTick + 150);
-                }
-
+                // Compute inclusive rectangle using single helper
+                var rect = FortressPlacementGeometry.ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
+                _runtime.EnqueueCurrentTickCommand(tick =>
+                    new HumanFortress.App.Commands.CreateHaulOrderCommand(tick, rect, _currentZ, priority: 50));
+                _ui.AddToast("Haul order created", _uiTick + 120);
+                Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
                 _ui.CancelPlacement();
                 DrawUI();
-                return true;
             }
 
-            if (_ui.PlaceMode == PlacementMode.ZoneDelete)
+            return true;
+        }
+
+        private bool TryHandleMiningSecondCornerClick(Point worldPos)
+        {
+            var cl = FortressPlacementGeometry.ClampToWorld(worldPos, FortressSize);
+            if (_ui.PlaceFirstCorner.HasValue && cl != _ui.PlaceFirstCorner.Value)
             {
-                // Get zone at clicked position
-                int zoneId = _world?.Zones.GetZoneAtPosition(worldPos.X, worldPos.Y, _currentZ) ?? 0;
-                if (zoneId > 0)
+                _ui.PlaceSecondCorner = cl;
+                _ui.PlaceZMax = _currentZ; // Save second click's Z as zMax (fallback when no z-adjust)
+                // Prefer selection tool result if active
+                Selection3D sel = default;
+                if (_selectionTool != null && _selectionTool.IsActive)
                 {
-                    _runtime.EnqueueCurrentTickCommand(tick =>
-                        new HumanFortress.App.Commands.DeleteZoneCommand(tick, zoneId));
-                    _ui.AddToast($"Deleted zone #{zoneId}", _uiTick + 150);
+                    sel = _selectionTool.Complete();
                 }
-                else
+                // Compute inclusive rectangle using tool or helper
+                bool useTool = sel.XY.Width > 1 || sel.XY.Height > 1;
+                var rect = useTool
+                    ? sel.XY
+                    : FortressPlacementGeometry.ComputeRectInclusive(_ui.PlaceFirstCorner.Value, _ui.PlaceSecondCorner.Value);
+
+                // z-range: prefer tool's z when using tool; else fallback to UI fields
+                int zMin = useTool ? Math.Min(sel.ZMin, sel.ZMax) : Math.Min(_ui.PlaceZMin, _ui.PlaceZMax);
+                int zMax = useTool ? Math.Max(sel.ZMin, sel.ZMax) : Math.Max(_ui.PlaceZMin, _ui.PlaceZMax);
+                var uiAction = _ui.SelectedMiningAction;
+                var simAction = uiAction switch
                 {
-                    _ui.AddToast("No zone at this location", _uiTick + 100);
+                    HumanFortress.App.UI.MiningAction.Dig => HumanFortress.Simulation.Orders.MiningAction.Dig,
+                    HumanFortress.App.UI.MiningAction.DigStairwell => HumanFortress.Simulation.Orders.MiningAction.DigStairwell,
+                    HumanFortress.App.UI.MiningAction.DigRamp => HumanFortress.Simulation.Orders.MiningAction.DigRamp,
+                    HumanFortress.App.UI.MiningAction.DigChannel => HumanFortress.Simulation.Orders.MiningAction.DigChannel,
+                    HumanFortress.App.UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
+                    _ => HumanFortress.Simulation.Orders.MiningAction.Dig
+                };
+
+                // Single-layer stairwell validation: show toast but still enqueue (planner will skip)
+                if (simAction == HumanFortress.Simulation.Orders.MiningAction.DigStairwell && zMin == zMax)
+                {
+                    _ui.AddToast($"Stairwell must dig between multiple levels", _uiTick + 180);
+                    Logger.Log($"[UI] Single-layer stairwell rejected at UI (z={zMin})");
                 }
 
+                Logger.Log($"[DEBUG] Creating mining order command zMin={zMin} zMax={zMax} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                _runtime.EnqueueCurrentTickCommand(tick => new CreateAdvancedMiningOrderCommand(
+                    tick,
+                    rect,
+                    zMin,
+                    zMax,
+                    uiAction,
+                    priority: 50));
+
+                int totalCells = rect.Width * rect.Height;
+                _ui.AddToast($"Mining order created ({totalCells} tiles)", _uiTick + 120);
+                Logger.Log($"[UI] Select first=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y},{_currentZ}) second=({worldPos.X},{worldPos.Y},{_currentZ}) -> rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height})");
+                Logger.Log($"[MINING] UI enqueued action={simAction} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax}");
+                // Highlight for shorter time; encode action in kind for renderer fill policy
+                _ui.AddHighlight($"mining:{uiAction}", rect, zMin, zMax, _uiTick + 30);
+                _ui.CancelPlacement();
                 DrawUI();
-                return true;
             }
 
-            if (_ui.PlaceMode == PlacementMode.StockpileCopy)
+            return true;
+        }
+
+        private bool TryHandleConstructionSecondCornerClick(Point worldPos)
+        {
+            var cl = FortressPlacementGeometry.ClampToWorld(worldPos, FortressSize);
+            if (!_ui.PlaceFirstCorner.HasValue || cl == _ui.PlaceFirstCorner.Value)
+                return true;
+
+            var rect = FortressPlacementGeometry.ComputeRectInclusive(_ui.PlaceFirstCorner.Value, cl);
+            // Build on current Z only (multi-Z stairs WIP)
+            int zMin = _currentZ;
+            int zMax = _currentZ;
+
+            // Material filter: default to stone (granite) for L0 construction
+            var filter = new HumanFortress.Simulation.Orders.MaterialFilterSpec
             {
-                // Check if clicking on a stockpile
-                if (_stockpileUI != null && _world != null && _stockpileUI.HandleStockpileClick(worldPos, _currentZ, _world))
+                PreferredMaterialId = _ui.ConstructionPreferredMaterialId ?? "core_mat_stone_granite",
+                CategoryKey = _ui.SelectedConstructionShape switch
                 {
-                    _ui.AddToast("Stockpile settings copied", _uiTick + 150);
-                    _ui.CancelPlacement();
-                    DrawUI();
-                }
-                return true;
+                    HumanFortress.Simulation.Orders.ConstructionShape.Wall => "l0.wall",
+                    HumanFortress.Simulation.Orders.ConstructionShape.Floor => "l0.floor",
+                    HumanFortress.Simulation.Orders.ConstructionShape.Ramp => "l0.ramp",
+                    HumanFortress.Simulation.Orders.ConstructionShape.Stairs => "l0.stairs",
+                    _ => "l0.unknown"
+                },
+                Tags = _ui.ConstructionSelectedTags.ToArray()
+            };
+
+            // Enqueue construction command
+            _runtime.EnqueueCurrentTickCommand(tick =>
+                new HumanFortress.App.Commands.CreateConstructionOrderCommand(
+                    tick,
+                    rect,
+                    zMin,
+                    zMax,
+                    _ui.SelectedConstructionShape,
+                    filter,
+                    priority: 50));
+
+            // Detailed UI submission log for selection debugging
+            Logger.Log($"[BUILD.UI] First=({_ui.PlaceFirstCorner.Value.X},{_ui.PlaceFirstCorner.Value.Y}) Second=({cl.X},{cl.Y}) Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) Z={zMin}..{zMax}");
+            Logger.Log($"[BUILD.UI] Enqueue construction shape={_ui.SelectedConstructionShape} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} tags=[{string.Join('|', _ui.ConstructionSelectedTags)}]");
+            _ui.AddToast($"[BUILD] Enqueued {_ui.SelectedConstructionShape} {rect.Width}x{rect.Height} at z={_currentZ}", _uiTick + 150);
+            _ui.CancelPlacement();
+            DrawUI();
+            return true;
+        }
+
+        private bool TryHandleBuildableConfirmAnchorClick()
+        {
+            if (!_ui.PlaceFirstCorner.HasValue)
+                return false;
+
+            var anchor = _ui.PlaceFirstCorner.Value;
+            if (_ui.SelectedBuildableConstructionId != null)
+            {
+                _runtime.EnqueueCurrentTickCommand(tick =>
+                    new HumanFortress.App.Commands.CreateBuildableConstructionOrderCommand(
+                        tick,
+                        _ui.SelectedBuildableConstructionId,
+                        anchor,
+                        _currentZ,
+                        priority: 50));
+                Logger.Log($"[BUILD.UI] Enqueue workshop id={_ui.SelectedBuildableConstructionId} pos=({anchor.X},{anchor.Y}) z={_currentZ}");
+                _ui.CancelPlacement();
+                DrawUI();
             }
 
-            return false;
+            return true;
+        }
+
+        private bool TryHandleZoneSecondCornerClick(Point worldPos)
+        {
+            if (!_ui.PlaceFirstCorner.HasValue)
+                return false;
+
+            // Create zone using command (inclusive rectangle)
+            int minX = Math.Min(_ui.PlaceFirstCorner.Value.X, worldPos.X);
+            int minY = Math.Min(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
+            int maxX = Math.Max(_ui.PlaceFirstCorner.Value.X, worldPos.X);
+            int maxY = Math.Max(_ui.PlaceFirstCorner.Value.Y, worldPos.Y);
+            var rect = new SadRogue.Primitives.Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
+
+            if (_ui.SelectedZoneDefId != null && _world != null)
+            {
+                _runtime.EnqueueCurrentTickCommand(tick =>
+                    new HumanFortress.App.Commands.CreateZoneCommand(
+                        tick,
+                        _ui.SelectedZoneDefId,
+                        $"{_ui.SelectedZoneDefId}_zone",
+                        rect,
+                        _currentZ));
+                _ui.AddToast($"Created zone at ({rect.X},{rect.Y})", _uiTick + 150);
+            }
+
+            _ui.CancelPlacement();
+            DrawUI();
+            return true;
+        }
+
+        private bool TryHandleZoneDeleteClick(Point worldPos)
+        {
+            // Get zone at clicked position
+            int zoneId = _world?.Zones.GetZoneAtPosition(worldPos.X, worldPos.Y, _currentZ) ?? 0;
+            if (zoneId > 0)
+            {
+                _runtime.EnqueueCurrentTickCommand(tick =>
+                    new HumanFortress.App.Commands.DeleteZoneCommand(tick, zoneId));
+                _ui.AddToast($"Deleted zone #{zoneId}", _uiTick + 150);
+            }
+            else
+            {
+                _ui.AddToast("No zone at this location", _uiTick + 100);
+            }
+
+            DrawUI();
+            return true;
+        }
+
+        private bool TryHandleStockpileCopyClick(Point worldPos)
+        {
+            // Check if clicking on a stockpile
+            if (_stockpileUI != null && _world != null && _stockpileUI.HandleStockpileClick(worldPos, _currentZ, _world))
+            {
+                _ui.AddToast("Stockpile settings copied", _uiTick + 150);
+                _ui.CancelPlacement();
+                DrawUI();
+            }
+
+            return true;
         }
 
         private void CreateStockpile(string presetId)

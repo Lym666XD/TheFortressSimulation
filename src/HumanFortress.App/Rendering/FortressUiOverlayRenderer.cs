@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.App.Runtime;
 using HumanFortress.Core.Content.Registry;
 using SadConsole;
 using SadRogue.Primitives;
@@ -119,7 +120,7 @@ internal static class FortressUiOverlayRenderer
             context.CameraPosition.Y,
             mapSurface.Surface.Width,
             mapSurface.Surface.Height);
-        var mouseWorld = ClampToWorld(context.LastMousePosition ?? context.CursorPosition, context.FortressSize);
+        var mouseWorld = FortressPlacementGeometry.ClampToWorld(context.LastMousePosition ?? context.CursorPosition, context.FortressSize);
 
         context.OrdersUI?.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
         context.StockpileUI?.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
@@ -163,7 +164,7 @@ internal static class FortressUiOverlayRenderer
         else if (ui.PlaceMode == PlacementMode.ConstructionSecondCorner && context.OrdersUI != null)
         {
             context.OrdersUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true, context.CurrentZ, context.World);
-            var dynRect = ComputeRectInclusive(firstCorner, mouseWorld);
+            var dynRect = FortressPlacementGeometry.ComputeRectInclusive(firstCorner, mouseWorld);
             ui.AddHighlight($"construction:{ui.SelectedConstructionShape}", dynRect, context.CurrentZ, context.CurrentZ, context.UiTick + 2);
         }
         else if (ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && ui.SelectedBuildableConstructionId != null)
@@ -230,20 +231,4 @@ internal static class FortressUiOverlayRenderer
         UiRenderer.DrawToasts(uiSurface, ui, context.UiTick);
     }
 
-    private static Point ClampToWorld(Point p, int fortressSize)
-    {
-        int max = fortressSize * 32 - 1;
-        int cx = p.X < 0 ? 0 : (p.X > max ? max : p.X);
-        int cy = p.Y < 0 ? 0 : (p.Y > max ? max : p.Y);
-        return new Point(cx, cy);
-    }
-
-    private static Rectangle ComputeRectInclusive(Point a, Point b)
-    {
-        int x = Math.Min(a.X, b.X);
-        int y = Math.Min(a.Y, b.Y);
-        int w = Math.Abs(a.X - b.X) + 1;
-        int h = Math.Abs(a.Y - b.Y) + 1;
-        return new Rectangle(x, y, w, h);
-    }
 }
