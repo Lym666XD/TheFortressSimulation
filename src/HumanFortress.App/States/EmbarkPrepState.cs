@@ -3,21 +3,28 @@ using SadConsole;
 using SadConsole.Input;
 using SadRogue.Primitives;
 using HumanFortress.Core.World;
-using HumanFortress.App.GameStates;
+using HumanFortress.App.Runtime;
+using HumanFortress.WorldGen;
 
 namespace HumanFortress.App.States
 {
     public class EmbarkPrepState : ScreenObject
     {
-        public static Point SelectedTile { get; set; }
-        
+        private readonly IAppStateNavigator _navigator;
+        private readonly FortressSessionContext _session;
         private readonly SadConsole.Console _mainConsole;
         private int _fortressSize = 2;
         private readonly int[] _sizeOptions = { 2, 3, 4, 5, 6, 7, 8 }; // Per MILESTONE.md: N∈[2..8]
         private int _selectedOption = 0; // Default to 2x2
         
-        public EmbarkPrepState()
+        private Point SelectedTile => _session.SelectedTile;
+        private WorldGenResult CurrentWorld => _session.CurrentWorld;
+
+        public EmbarkPrepState(IAppStateNavigator navigator, FortressSessionContext session)
         {
+            _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
+
             // Create a root surface
             var rootSurface = new ScreenSurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
             rootSurface.UseMouse = false;
@@ -49,9 +56,13 @@ namespace HumanFortress.App.States
             
             _mainConsole.Print(0, 2, $"Selected Location: {SelectedTile.X},{SelectedTile.Y}", Color.Cyan);
             
-            if (WorldMapState.CurrentWorld.Tiles != null)
+            if (CurrentWorld.Tiles != null &&
+                SelectedTile.X >= 0 &&
+                SelectedTile.Y >= 0 &&
+                SelectedTile.X < CurrentWorld.Tiles.GetLength(0) &&
+                SelectedTile.Y < CurrentWorld.Tiles.GetLength(1))
             {
-                var tile = WorldMapState.CurrentWorld.Tiles[SelectedTile.X, SelectedTile.Y];
+                var tile = CurrentWorld.Tiles[SelectedTile.X, SelectedTile.Y];
                 BiomeType biome = (BiomeType)tile.BiomeId;
                 _mainConsole.Print(0, 3, $"Biome: {biome}", Color.Green);
             }
@@ -90,7 +101,7 @@ namespace HumanFortress.App.States
 
             if (keyboard.IsKeyPressed(Keys.Escape))
             {
-                GameStateManager.Instance.ChangeState(GameStateType.WorldMap);
+                _navigator.ShowWorldMap();
                 return true;
             }
             
@@ -139,11 +150,10 @@ namespace HumanFortress.App.States
             }
 
             System.Console.WriteLine($"[EmbarkPrepState] Starting embark at {SelectedTile} with size {_fortressSize}x{_fortressSize}");
-            FortressState.EmbarkLocation = SelectedTile;
-            FortressState.FortressSize = _fortressSize;
+            _session.ConfigureEmbark(SelectedTile, _fortressSize);
 
             System.Console.WriteLine("[EmbarkPrepState] Changing state to FortressPlay");
-            GameStateManager.Instance.ChangeState(GameStateType.FortressPlay);
+            _navigator.ShowFortressPlay();
         }
     }
 }

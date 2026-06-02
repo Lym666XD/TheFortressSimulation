@@ -15,9 +15,6 @@ namespace HumanFortress.App.GameStates;
 /// </summary>
 public sealed class GameStateManager
 {
-    private static GameStateManager? _instance;
-    public static GameStateManager Instance => _instance ?? throw new InvalidOperationException("GameStateManager not initialized");
-
     private readonly Dictionary<GameStateType, GameState> _states;
     private readonly TickScheduler _tickScheduler;
     private readonly CommandQueue _commandQueue;
@@ -25,6 +22,7 @@ public sealed class GameStateManager
     private readonly RngStreamManager _rngManager;
     private readonly DiffLog _diffLog;
     private readonly HumanFortress.Simulation.Items.ItemsDiffLog _itemsDiffLog;
+    private readonly bool _enqueueAutoDig;
 
     private GameState? _currentState;
     private World? _world;
@@ -34,9 +32,8 @@ public sealed class GameStateManager
     private ulong _jobsDebugCacheTick = 0;
     private const ulong JobsDebugRefreshTicks = 10;
 
-    public GameStateManager(ulong masterSeed)
+    public GameStateManager(ulong masterSeed, bool enqueueAutoDig = false)
     {
-        _instance = this;
         _states = new Dictionary<GameStateType, GameState>();
         _tickScheduler = new TickScheduler();
         _commandQueue = new CommandQueue();
@@ -44,6 +41,7 @@ public sealed class GameStateManager
         _rngManager = new RngStreamManager(masterSeed);
         _diffLog = new DiffLog();
         _itemsDiffLog = new HumanFortress.Simulation.Items.ItemsDiffLog();
+        _enqueueAutoDig = enqueueAutoDig;
     }
 
     /// <summary>
@@ -211,7 +209,7 @@ public sealed class GameStateManager
                 var runtime = RequireRuntimeHost();
                 _jobsDebugCache = null;
                 _jobsDebugCacheTick = 0;
-                runtime.Start(enqueueAutoDig: Program.AutoDig);
+                runtime.Start(enqueueAutoDig: _enqueueAutoDig);
             }
         }
         catch (Exception ex)

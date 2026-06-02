@@ -4,7 +4,7 @@ using SadConsole.Input;
 using SadRogue.Primitives;
 using HumanFortress.Core.World;
 using HumanFortress.WorldGen;
-using HumanFortress.App.GameStates;
+using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 
 namespace HumanFortress.App.States
@@ -14,6 +14,8 @@ namespace HumanFortress.App.States
         private readonly ScreenSurface _surface;
         private readonly MenuSurface _menuSurface;
         private readonly SadConsole.Console _progressConsole;
+        private readonly IAppStateNavigator _navigator;
+        private readonly FortressSessionContext _session;
         private WorldParams _params;
         private WorldGenerator _generator;
         private bool _isGenerating;
@@ -39,8 +41,11 @@ namespace HumanFortress.App.States
         private bool _isEditingName = false;
         private string _nameBuffer = "";
 
-        public WorldGenState()
+        public WorldGenState(IAppStateNavigator navigator, FortressSessionContext session)
         {
+            _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
+
             // Create main surface that fills the screen
             _surface = new ScreenSurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
             _surface.UseMouse = false;
@@ -106,7 +111,7 @@ namespace HumanFortress.App.States
             if (_isGenerating)
                 return;
 
-            GameStateManager.Instance.ChangeState(GameStateType.MainMenu);
+            _navigator.ShowMainMenu();
         }
 
         private UIElement? GetElementAtPosition(Point pos)
@@ -194,7 +199,7 @@ namespace HumanFortress.App.States
                     break;
 
                 case UIElement.ButtonBack:
-                    GameStateManager.Instance.ChangeState(GameStateType.MainMenu);
+                    _navigator.ShowMainMenu();
                     break;
             }
         }
@@ -428,7 +433,7 @@ namespace HumanFortress.App.States
             // Normal navigation
             if (keyboard.IsKeyPressed(Keys.Escape))
             {
-                GameStateManager.Instance.ChangeState(GameStateType.MainMenu);
+                _navigator.ShowMainMenu();
                 return true;
             }
 
@@ -534,8 +539,8 @@ namespace HumanFortress.App.States
 
             if (_result.Success)
             {
-                WorldMapState.CurrentWorld = _result;
-                GameStateManager.Instance.ChangeState(GameStateType.WorldMap);
+                _session.SetGeneratedWorld(_result);
+                _navigator.ShowWorldMap();
             }
             else
             {

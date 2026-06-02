@@ -5,14 +5,14 @@ using SadConsole.Input;
 using SadRogue.Primitives;
 using HumanFortress.Core.World;
 using HumanFortress.WorldGen;
-using HumanFortress.App.GameStates;
+using HumanFortress.App.Runtime;
 
 namespace HumanFortress.App.States
 {
     public class WorldMapState : ScreenObject
     {
-        public static WorldGenResult CurrentWorld { get; set; }
-        
+        private readonly IAppStateNavigator _navigator;
+        private readonly FortressSessionContext _session;
         private readonly ScreenSurface _mapSurface;
         private readonly SadConsole.Console _infoPanel;
         private readonly SadConsole.Console _controlsPanel;
@@ -21,8 +21,13 @@ namespace HumanFortress.App.States
         private const int MAP_WIDTH = 80;
         private const int MAP_HEIGHT = 40;
         
-        public WorldMapState()
+        private WorldGenResult CurrentWorld => _session.CurrentWorld;
+
+        public WorldMapState(IAppStateNavigator navigator, FortressSessionContext session)
         {
+            _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+            _session = session ?? throw new ArgumentNullException(nameof(session));
+
             // Create a root surface for the entire screen
             var rootSurface = new ScreenSurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
             rootSurface.UseMouse = false;
@@ -273,13 +278,13 @@ namespace HumanFortress.App.States
                 var tile = CurrentWorld.Tiles[_cursorPos.X, _cursorPos.Y];
                 if (tile.IsEmbarkable)
                 {
-                    EmbarkPrepState.SelectedTile = new Point(_cursorPos.X, _cursorPos.Y);
-                    GameStateManager.Instance.ChangeState(GameStateType.EmbarkPrep);
+                    _session.SelectEmbarkTile(new Point(_cursorPos.X, _cursorPos.Y));
+                    _navigator.ShowEmbarkPreparation();
                 }
             }
             else if (keyboard.IsKeyPressed(Keys.Escape))
             {
-                GameStateManager.Instance.ChangeState(GameStateType.MainMenu);
+                _navigator.ShowMainMenu();
             }
             
             return true;

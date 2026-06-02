@@ -3,7 +3,7 @@ using System.Linq;
 using SadConsole;
 using SadConsole.Input;
 using SadRogue.Primitives;
-using HumanFortress.App.GameStates;
+using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 
 namespace HumanFortress.App.States
@@ -12,6 +12,7 @@ namespace HumanFortress.App.States
     {
         private readonly ScreenSurface _surface;
         private readonly MenuSurface _menuSurface;
+        private readonly IAppStateNavigator _navigator;
         private readonly UiStore _uiStore = new UiStore();
         private ulong _tick = 0;
 
@@ -38,8 +39,10 @@ namespace HumanFortress.App.States
         private const int MENU_ITEM_HEIGHT = 2;
         private const int MENU_WIDTH = 30;
 
-        public MainMenuState()
+        public MainMenuState(IAppStateNavigator navigator)
         {
+            _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
+
             // Create root surface
             _surface = new ScreenSurface(GameHost.Instance.ScreenCellsX, GameHost.Instance.ScreenCellsY);
             _surface.UseMouse = false;
@@ -357,7 +360,7 @@ namespace HumanFortress.App.States
             switch (item)
             {
                 case MenuItem.NewWorld:
-                    GameStateManager.Instance.ChangeState(GameStateType.WorldGen);
+                    _navigator.ShowWorldGeneration();
                     break;
 
                 case MenuItem.LoadWorld:

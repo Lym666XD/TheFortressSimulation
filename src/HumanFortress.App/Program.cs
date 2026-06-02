@@ -16,7 +16,7 @@ namespace HumanFortress.App;
 public static class Program
 {
     private static GameStateManager? _gameStateManager;
-    internal static bool AutoDig { get; private set; } = false;
+    private static bool _autoDigRequested;
 
     public static void Main(string[] args)
     {
@@ -44,7 +44,7 @@ public static class Program
         // Optional self-test: auto enqueue a dig order after world init
         if (args.Any(a => string.Equals(a, "--auto-dig", StringComparison.OrdinalIgnoreCase)))
         {
-            AutoDig = true;
+            _autoDigRequested = true;
         }
 
         // Normalize working directory to executable base; helps native DLL discovery
@@ -171,20 +171,17 @@ public static class Program
     {
         // Initialize game state manager with deterministic seed
         ulong masterSeed = 12345; // TODO: Make configurable
-        _gameStateManager = new GameStateManager(masterSeed);
+        var session = new FortressSessionContext(_autoDigRequested);
+        _gameStateManager = new GameStateManager(masterSeed, enqueueAutoDig: _autoDigRequested);
+        var navigator = new AppStateNavigator(_gameStateManager);
 
-        // Register all states
-        _gameStateManager.RegisterState(new MainMenuStateWrapper());
-        _gameStateManager.RegisterState(new WorldGenStateWrapper());
-        _gameStateManager.RegisterState(new WorldMapStateWrapper());
-        _gameStateManager.RegisterState(new EmbarkPrepStateWrapper());
-        _gameStateManager.RegisterState(new FortressPlayState());
+        AppStateRegistration.RegisterAll(_gameStateManager, navigator, session);
 
         // In auto-dig mode, jump straight to FortressPlay to run simulation and enqueue test dig
-        if (AutoDig)
+        if (_autoDigRequested)
         {
             // Set a safe default fortress size for automated run
-            FortressState.FortressSize = (FortressState.FortressSize >= 2 && FortressState.FortressSize <= 8) ? FortressState.FortressSize : 2;
+            session.ConfigureEmbark(new Point(10, 10), 2);
             _gameStateManager.TransitionTo(GameStateType.FortressPlay);
         }
         else
@@ -218,19 +215,15 @@ public static class Program
             // Initialize game state manager
             ulong masterSeed = 12345;
             var gameStateManager = new GameStateManager(masterSeed);
+            var navigator = new AppStateNavigator(gameStateManager);
+            var session = new FortressSessionContext(autoDig: false);
 
-            // Register states
             System.Console.WriteLine("[TEST-CRASH] Registering states");
-            gameStateManager.RegisterState(new MainMenuStateWrapper());
-            gameStateManager.RegisterState(new WorldGenStateWrapper());
-            gameStateManager.RegisterState(new WorldMapStateWrapper());
-            gameStateManager.RegisterState(new EmbarkPrepStateWrapper());
-            gameStateManager.RegisterState(new FortressPlayState());
+            AppStateRegistration.RegisterAll(gameStateManager, navigator, session);
 
             // Simulate the navigation path that causes crash
             System.Console.WriteLine("[TEST-CRASH] Setting up embark location");
-            FortressState.EmbarkLocation = new Point(10, 10);
-            FortressState.FortressSize = 2;
+            session.ConfigureEmbark(new Point(10, 10), 2);
 
             // Generate a test world
             System.Console.WriteLine("[TEST-CRASH] Generating test world");
@@ -243,11 +236,12 @@ public static class Program
                 Name = "TestWorld",
                 Difficulty = HumanFortress.Core.World.DifficultyPreset.Normal
             };
-            WorldMapState.CurrentWorld = worldGen.Generate(worldParams);
+            session.SetGeneratedWorld(worldGen.Generate(worldParams));
+            session.ConfigureEmbark(new Point(10, 10), 2);
 
             // Initialize the world before transitioning
             System.Console.WriteLine("[TEST-CRASH] Initializing world");
-            gameStateManager.InitializeWorld(FortressState.FortressSize > 0 ? FortressState.FortressSize : 2, 50);
+            gameStateManager.InitializeWorld(session.FortressSize, 50);
 
             // Try to transition directly to FortressPlay
             System.Console.WriteLine("[TEST-CRASH] Attempting to transition to FortressPlay");
@@ -272,145 +266,4 @@ public static class Program
         }
     }
 
-    /// <summary>
-    /// Main menu state wrapper.
-    /// </summary>
-    private class MainMenuStateWrapper : GameState
-    {
-        private MainMenuState? _mainMenuState;
-
-        public override GameStateType Type => GameStateType.MainMenu;
-
-        public override void Enter()
-        {
-            Logger.Log("Entered Main Menu");
-            _mainMenuState = new MainMenuState();
-            _mainMenuState.IsFocused = true;
-            GameHost.Instance.Screen = _mainMenuState;
-            GameHost.Instance.Screen.IsFocused = true;
-        }
-
-        public override void Exit()
-        {
-            _mainMenuState = null;
-        }
-    }
-
-    /// <summary>
-    /// Fortress play state.
-    /// </summary>
-    private class FortressPlayState : GameState
-    {
-        private FortressState? _fortressState;
-
-        public override GameStateType Type => GameStateType.FortressPlay;
-
-        public override void Enter()
-        {
-            Logger.Log("Entered Fortress Play");
-
-            // Initialize world with selected size
-            int fortressSize = FortressState.FortressSize;
-
-            // Validate fortress size (must be between 2 and 8)
-            if (fortressSize < 2 || fortressSize > 8)
-            {
-                Logger.Log($"[FortressPlayState] Invalid fortress size {fortressSize}, defaulting to 2");
-                fortressSize = 2;
-            }
-
-            // Get the GameStateManager instance and initialize world
-            var gameStateManager = GameStateManager.Instance;
-            gameStateManager.InitializeWorld(fortressSize, 50);
-
-            // Create and display the fortress state
-            _fortressState = new FortressState(new FortressRuntimeAccess(gameStateManager));
-
-            // Only set focus and screen if GameHost is initialized
-            if (GameHost.Instance != null)
-            {
-                _fortressState.IsFocused = true;
-                GameHost.Instance.Screen = _fortressState;
-                GameHost.Instance.Screen.IsFocused = true;
-            }
-            else
-            {
-                Logger.Log("[FortressPlayState] GameHost not initialized, deferring screen setup");
-            }
-        }
-
-        public override void Exit()
-        {
-            _fortressState = null;
-        }
-    }
-
-    /// <summary>
-    /// Wrapper for WorldGenState to work with GameState system.
-    /// </summary>
-    private class WorldGenStateWrapper : GameState
-    {
-        private WorldGenState? _worldGenState;
-
-        public override GameStateType Type => GameStateType.WorldGen;
-
-        public override void Enter()
-        {
-            _worldGenState = new WorldGenState();
-            _worldGenState.IsFocused = true;
-            GameHost.Instance.Screen = _worldGenState;
-            GameHost.Instance.Screen.IsFocused = true;
-        }
-
-        public override void Exit()
-        {
-            _worldGenState = null;
-        }
-    }
-
-    /// <summary>
-    /// Wrapper for WorldMapState to work with GameState system.
-    /// </summary>
-    private class WorldMapStateWrapper : GameState
-    {
-        private WorldMapState? _worldMapState;
-
-        public override GameStateType Type => GameStateType.WorldMap;
-
-        public override void Enter()
-        {
-            _worldMapState = new WorldMapState();
-            _worldMapState.IsFocused = true;
-            GameHost.Instance.Screen = _worldMapState;
-            GameHost.Instance.Screen.IsFocused = true;
-        }
-
-        public override void Exit()
-        {
-            _worldMapState = null;
-        }
-    }
-
-    /// <summary>
-    /// Wrapper for EmbarkPrepState to work with GameState system.
-    /// </summary>
-    private class EmbarkPrepStateWrapper : GameState
-    {
-        private EmbarkPrepState? _embarkPrepState;
-
-        public override GameStateType Type => GameStateType.EmbarkPrep;
-
-        public override void Enter()
-        {
-            _embarkPrepState = new EmbarkPrepState();
-            _embarkPrepState.IsFocused = true;
-            GameHost.Instance.Screen = _embarkPrepState;
-            GameHost.Instance.Screen.IsFocused = true;
-        }
-
-        public override void Exit()
-        {
-            _embarkPrepState = null;
-        }
-    }
 }

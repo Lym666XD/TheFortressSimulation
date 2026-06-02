@@ -30,37 +30,6 @@ namespace HumanFortress.App.UI;
             DrawSquareButton(surf, ref x, y, "F8", ui.OpenDrawer == DrawerId.Log, buttonWidth);
         }
 
-        // Draw dock icons aligned to a specific anchor rectangle (eg. the map surface)
-        public static void DrawDockAligned(ScreenSurface overlay, UiStore ui, int anchorX, int anchorY, int anchorWidth, int anchorHeight, ulong tick)
-        {
-        var surf = overlay.Surface;
-        int y = anchorY + anchorHeight - 2; // move up one row for visibility
-        int x = anchorX;
-        if (tick % 50 == 0)
-            Logger.Log($"[UiRenderer.Dock] overlay={surf.Width}x{surf.Height} anchor=({anchorX},{anchorY},{anchorWidth},{anchorHeight}) row={y}");
-        DrawButton(surf, ref x, y, "[F1]", ui.OpenDrawer == DrawerId.Creature);
-        DrawButton(surf, ref x, y, "[F2]", ui.OpenDrawer == DrawerId.Stock);
-        DrawButton(surf, ref x, y, "[F3]", ui.OpenDrawer == DrawerId.Work);
-        DrawButton(surf, ref x, y, "[F4]", ui.OpenDrawer == DrawerId.PlacementManagement);
-        DrawButton(surf, ref x, y, "[F5]", ui.OpenDrawer == DrawerId.Military);
-        DrawButton(surf, ref x, y, "[F6]", ui.OpenDrawer == DrawerId.Country);
-        DrawButton(surf, ref x, y, "[F7]", ui.OpenDrawer == DrawerId.World);
-        DrawButton(surf, ref x, y, "[F8]", ui.OpenDrawer == DrawerId.Log);
-    }
-
-        // Draw quick icons aligned near bottom-center of anchor rectangle
-        public static void DrawQuickIconsAligned(ScreenSurface overlay, UiStore ui, int anchorX, int anchorY, int anchorWidth, int anchorHeight, ulong tick)
-        {
-            var surf = overlay.Surface;
-            int y = anchorY + anchorHeight - 1;
-            int center = anchorX + anchorWidth / 2;
-            DrawText(surf, center - 8, y, "[Z]Orders", ui.QuickMenu == QuickMenuKind.Orders);
-            DrawText(surf, center + 2, y, "[X]Zones", ui.QuickMenu == QuickMenuKind.Zones);
-            DrawText(surf, center + 12, y, "[C]Build", ui.QuickMenu == QuickMenuKind.Build);
-            if (tick % 50 == 0)
-                Logger.Log($"[UiRenderer.QuickIcons] anchor=({anchorX},{anchorY},{anchorWidth},{anchorHeight}) row={y} center={center}");
-        }
-
         // Draw quick icons centered at the bottom row (same as F1-F7)
         public static void DrawQuickIconsScreen(ScreenSurface overlay, UiStore ui, ulong tick)
         {
