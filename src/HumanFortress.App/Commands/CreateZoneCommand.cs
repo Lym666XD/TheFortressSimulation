@@ -2,14 +2,14 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
 
 /// <summary>
 /// Command to create a new zone with specified cells.
-/// Executed on the main thread; ZoneManager is thread-safe for operations.
+/// Executed through the simulation tick command stage.
 /// </summary>
 public sealed class CreateZoneCommand : ICommand
 {
@@ -33,9 +33,9 @@ public sealed class CreateZoneCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IZoneCommandTarget target)
         {
-            world.Zones.CreateZoneFromRect(_defId, _name, _worldRect, _z, context.CurrentTick);
+            target.CreateZone(_defId, _name, _worldRect, _z, context.CurrentTick);
         }
     }
 

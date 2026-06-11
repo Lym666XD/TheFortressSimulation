@@ -1,0 +1,34 @@
+using HumanFortress.Simulation.Orders;
+using SadRogue.Primitives;
+
+namespace HumanFortress.Jobs.Mining;
+
+internal sealed class MiningTileReservationTracker
+{
+    private readonly HashSet<(int X, int Y, int Z)> _reservedTiles = new();
+
+    public int Count => _reservedTiles.Count;
+
+    public bool Contains(Point cell, int z)
+    {
+        return _reservedTiles.Contains((cell.X, cell.Y, z));
+    }
+
+    public void Reserve(in MiningSystem.PlannedDig dig)
+    {
+        _reservedTiles.Add((dig.Cell.X, dig.Cell.Y, dig.Z));
+        if (dig.Action == MiningAction.DigChannel && dig.Z > 0)
+        {
+            _reservedTiles.Add((dig.Cell.X, dig.Cell.Y, dig.Z - 1));
+        }
+    }
+
+    public void Release(ActiveMiningJob job)
+    {
+        _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z));
+        if (job.Action == MiningAction.DigChannel && job.Z > 0)
+        {
+            _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
+        }
+    }
+}

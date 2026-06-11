@@ -1986,5 +1986,115 @@
       "hazard_level": 3,
       "hazard_type": "slippery"
     }
+  },
+  {
+    "id": "core_mat_ore_iron_magnetite",
+    "aliases": [
+      "magnetite",
+      "iron_ore_magnetite"
+    ],
+    "tags": [
+      "mineral",
+      "ore",
+      "iron",
+      "ferrous"
+    ],
+    "density_solid": 5200,
+    "hardness_edge": 55,
+    "toughness_frac": 45,
+    "rigidity": 70,
+    "electric_category": "conductor",
+    "mana_conductivity": 20,
+    "value_mul": 1.8,
+    "beauty_mul": 0.4,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.2
+    }
+  },
+  {
+    "id": "core_mat_ore_copper_chalcopyrite",
+    "aliases": [
+      "chalcopyrite",
+      "copper_ore_chalcopyrite"
+    ],
+    "tags": [
+      "mineral",
+      "ore",
+      "copper",
+      "sulfide"
+    ],
+    "density_solid": 4200,
+    "hardness_edge": 38,
+    "toughness_frac": 35,
+    "rigidity": 55,
+    "electric_category": "conductor",
+    "mana_conductivity": 18,
+    "value_mul": 2.2,
+    "beauty_mul": 0.7,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.0
+    }
+  },
+  {
+    "id": "core_mat_ore_coal_bituminous",
+    "aliases": [
+      "bituminous_coal",
+      "coal_bituminous"
+    ],
+    "tags": [
+      "mineral",
+      "ore",
+      "coal",
+      "fuel",
+      "carbon"
+    ],
+    "density_solid": 1350,
+    "hardness_edge": 20,
+    "toughness_frac": 20,
+    "rigidity": 25,
+    "electric_category": "insulator",
+    "mana_conductivity": 10,
+    "value_mul": 1.2,
+    "beauty_mul": 0.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.7
+    }
+  },
+  {
+    "id": "core_mat_ore_gold_native",
+    "aliases": [
+      "native_gold",
+      "gold_ore_native"
+    ],
+    "tags": [
+      "mineral",
+      "ore",
+      "gold",
+      "native",
+      "precious"
+    ],
+    "density_solid": 19300,
+    "hardness_edge": 25,
+    "toughness_frac": 50,
+    "rigidity": 45,
+    "electric_category": "conductor",
+    "mana_conductivity": 60,
+    "value_mul": 12.0,
+    "beauty_mul": 2.0,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 1.3
+    }
   }
 ]

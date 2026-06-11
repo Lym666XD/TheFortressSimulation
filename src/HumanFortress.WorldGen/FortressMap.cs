@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using HumanFortress.Core.Diagnostics;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 
 namespace HumanFortress.WorldGen
 {
-    using ContentRegistry = HumanFortress.Core.Content.ContentRegistry;
+    using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
     using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
     /// <summary>
     /// Represents the generated fortress map data.
@@ -53,7 +54,7 @@ namespace HumanFortress.WorldGen
         {
             try
             {
-                System.Console.WriteLine($"[FillWorld] Filling world with terrain data: {_size}x{_size} chunks, MaxZ={_maxZ}");
+                Emit($"[FillWorld] Filling world with terrain data: {_size}x{_size} chunks, MaxZ={_maxZ}");
 
                 if (targetWorld == null)
                     throw new ArgumentNullException(nameof(targetWorld));
@@ -75,7 +76,7 @@ namespace HumanFortress.WorldGen
                         var fortressChunk = _chunks[cx, cy];
                         if (fortressChunk == null)
                         {
-                            System.Console.WriteLine($"[FillWorld] WARNING: Null chunk at {cx},{cy}");
+                            Emit($"[FillWorld] WARNING: Null chunk at {cx},{cy}");
                             continue;
                         }
 
@@ -102,18 +103,17 @@ namespace HumanFortress.WorldGen
                     }
                 }
 
-                System.Console.WriteLine($"[FillWorld] Filled {chunksProcessed} chunks, {tilesProcessed} tiles");
+                Emit($"[FillWorld] Filled {chunksProcessed} chunks, {tilesProcessed} tiles");
 
                 // Post-process: inject ramps based on surface height differences (DF-style)
-                System.Console.WriteLine("[FillWorld] Post-processing ramps (DF-style, no slope tops)");
+                Emit("[FillWorld] Post-processing ramps (DF-style, no slope tops)");
                 InjectRampsAndSlopes(targetWorld);
 
-                System.Console.WriteLine("[FillWorld] World terrain filling complete");
+                Emit("[FillWorld] World terrain filling complete");
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"[FillWorld] ERROR: {ex.Message}");
-                System.Console.WriteLine($"[FillWorld] Stack trace: {ex.StackTrace}");
+                Emit($"[FillWorld] ERROR: {ex.Message}", ex);
                 throw;
             }
         }
@@ -128,8 +128,8 @@ namespace HumanFortress.WorldGen
         {
             try
             {
-                System.Console.WriteLine($"[ToSimulationWorld] Converting fortress map to world: {_size}x{_size} chunks, MaxZ={_maxZ}");
-                System.Console.WriteLine($"[ToSimulationWorld] WARNING: This method creates a new World with empty managers. Use FillWorld(World) instead.");
+                Emit($"[ToSimulationWorld] Converting fortress map to world: {_size}x{_size} chunks, MaxZ={_maxZ}");
+                Emit("[ToSimulationWorld] WARNING: This method creates a new World with empty managers. Use FillWorld(World) instead.");
 
                 var world = new World(_size, _maxZ);
                 FillWorld(world);
@@ -137,9 +137,26 @@ namespace HumanFortress.WorldGen
             }
             catch (Exception ex)
             {
-                System.Console.WriteLine($"[ToSimulationWorld] ERROR: {ex.Message}");
-                System.Console.WriteLine($"[ToSimulationWorld] Stack trace: {ex.StackTrace}");
+                Emit($"[ToSimulationWorld] ERROR: {ex.Message}", ex);
                 throw;
+            }
+        }
+
+        private static void Emit(string message)
+        {
+            DiagnosticHub.Sink.Information("WorldGen.FortressMap", message);
+            if (!DiagnosticHub.IsConfigured)
+            {
+                System.Console.WriteLine(message);
+            }
+        }
+
+        private static void Emit(string message, Exception exception)
+        {
+            DiagnosticHub.Sink.Error("WorldGen.FortressMap", message, exception);
+            if (!DiagnosticHub.IsConfigured)
+            {
+                System.Console.WriteLine(message);
             }
         }
 
@@ -382,4 +399,3 @@ namespace HumanFortress.WorldGen
 
     }
 }
-

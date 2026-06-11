@@ -139,7 +139,7 @@ namespace HumanFortress.Simulation.Rendering
                     {
                         if (p.Z != z) continue;
                         string defId = p.ConstructionSite != null ? p.ConstructionSite.TargetId : p.DefinitionId;
-                        var def = ConstructionRegistry.Instance.GetConstruction(defId);
+                        var def = ContentRegistry.Instance.Constructions.GetConstruction(defId);
                         if (def == null) continue;
                         bool isWorkshop = string.Equals(def.Category, "workshop", System.StringComparison.OrdinalIgnoreCase)
                                           || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);

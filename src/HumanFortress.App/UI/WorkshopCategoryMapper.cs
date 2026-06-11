@@ -83,7 +83,7 @@ namespace HumanFortress.App.UI
         public static System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition> GetWorkshopsByCategory(string category)
         {
             EnsureLoaded();
-            var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+            var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
             var all = new System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
             foreach (var d in reg.GetConstructionsByCategory("workshop")) all.Add(d);
             if (all.Count == 0) foreach (var d in reg.GetConstructionsByCategory("workshops")) all.Add(d);
@@ -105,4 +105,3 @@ namespace HumanFortress.App.UI
         }
     }
 }
-

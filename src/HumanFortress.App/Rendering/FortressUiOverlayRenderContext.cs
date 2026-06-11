@@ -1,7 +1,6 @@
 using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.Simulation.Rendering;
-using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -13,12 +12,7 @@ internal sealed record FortressUiOverlayRenderContext(
     UiStore Ui,
     FortressRuntimeAccess Runtime,
     World? World,
-    StockpileManager? StockpileManager,
-    StockpileUI? StockpileUI,
-    OrdersUI? OrdersUI,
-    ZonesUI? ZonesUI,
-    BuildUI? BuildUI,
-    StockpileQuickUI? StockpileQuickUI,
+    FortressUiServices? UiServices,
     RenderSnapshot? CurrentSnapshot,
     bool OverlayFromSnapshot,
     Point CameraPosition,

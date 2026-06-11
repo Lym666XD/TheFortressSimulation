@@ -4,6 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using RuntimeGeologyData = HumanFortress.Core.Content.GeologyData;
+using RuntimeZoneDefinitionData = HumanFortress.Core.Content.ZoneDefinitionData;
 
 namespace HumanFortress.Core.Content.Registry;
 
@@ -20,6 +24,20 @@ public class ContentRegistry
     public GeologyRegistry Geology { get; } = new();
     public BiomeTemplateRegistry BiomeTemplates { get; } = new();
     public AliasResolver AliasResolver { get; } = new();
+    public IConstructionCatalog Constructions => ConstructionRegistry.Instance;
+    public IRecipeCatalog Recipes => RecipeRegistry.Instance;
+    private ConstructionRegistry MutableConstructions => ConstructionRegistry.Instance;
+    private RecipeRegistry MutableRecipes => RecipeRegistry.Instance;
+
+    private readonly Dictionary<string, RuntimeGeologyData> _geologyEntries = new();
+    private readonly Dictionary<string, RuntimeZoneDefinitionData> _zones = new();
+    private readonly Dictionary<string, JObject> _tuning = new();
+    private readonly Dictionary<string, ushort> _geologyHandles = new();
+    private readonly Dictionary<ushort, string> _handleToGeologyId = new();
+    private readonly Dictionary<(string material, string kind), ushort> _geologyByMaterialAndKind = new();
+
+    public IReadOnlyDictionary<string, RuntimeGeologyData> GeologyEntries => _geologyEntries;
+    public IReadOnlyDictionary<string, RuntimeZoneDefinitionData> Zones => _zones;
 
     public ContentVersion Version { get; private set; }
     public string ContentPath { get; private set; } = "";
@@ -36,18 +54,25 @@ public class ContentRegistry
     /// </summary>
     public async Task LoadContentAsync(string contentPath)
     {
-        Console.WriteLine($"[ContentRegistry] Loading content from: {contentPath}");
+        ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loading content from: {contentPath}");
         ContentPath = contentPath;
+        ContentHash = string.Empty;
+        IsLoaded = false;
+        ValidationResult = new ContentValidationResult();
+        ClearRuntimeContent();
 
         try
         {
             // Load schemas for validation
             var schemas = await LoadSchemasAsync(Path.Combine(contentPath, "schemas"));
+            var registriesPath = Path.Combine(contentPath, "registries");
+
+            LoadTuningFiles(registriesPath);
 
             // Load and validate materials (prefer authoring format, fall back to registry format)
-            var materialsAuthoring = Path.Combine(contentPath, "registries", "materials.authoring.json");
-            var materialsRegistry = Path.Combine(contentPath, "registries", "materials.registry.json");
-            var materialsLegacy = Path.Combine(contentPath, "registries", "materials.json");
+            var materialsAuthoring = Path.Combine(registriesPath, "materials.authoring.json");
+            var materialsRegistry = Path.Combine(registriesPath, "materials.registry.json");
+            var materialsLegacy = Path.Combine(registriesPath, "materials.json");
 
             string materialsFile;
             bool isAuthoringFormat = true;
@@ -55,40 +80,45 @@ public class ContentRegistry
             if (File.Exists(materialsAuthoring))
             {
                 materialsFile = materialsAuthoring;
-                Console.WriteLine("[ContentRegistry] Loading materials from authoring format");
+                ContentRegistryDiagnostics.Emit("[ContentRegistry] Loading materials from authoring format");
             }
             else if (File.Exists(materialsRegistry))
             {
                 materialsFile = materialsRegistry;
                 isAuthoringFormat = false;
-                Console.WriteLine("[ContentRegistry] Loading materials from registry format");
+                ContentRegistryDiagnostics.Emit("[ContentRegistry] Loading materials from registry format");
             }
             else
             {
                 materialsFile = materialsLegacy;
-                Console.WriteLine("[ContentRegistry] Loading materials from legacy format");
+                ContentRegistryDiagnostics.Emit("[ContentRegistry] Loading materials from legacy format");
             }
 
             var materials = await LoadMaterialsAsync(materialsFile, schemas, isAuthoringFormat);
 
             // Load and validate terrain kinds
-            var terrainKindsFile = Path.Combine(contentPath, "registries", "terrain_kinds.json");
+            var terrainKindsFile = Path.Combine(registriesPath, "terrain_kinds.json");
             var terrainKinds = await LoadTerrainKindsAsync(terrainKindsFile, schemas);
 
-            // Load and validate geology prototypes
-            var geologyFile = Path.Combine(contentPath, "registries", "geology.json");
+            // Load and validate runtime geology prototypes
+            var geologyFile = Path.Combine(registriesPath, "geology.json");
             var geologyPrototypes = await LoadGeologyAsync(geologyFile, schemas);
+
+            LoadZones(Path.Combine(registriesPath, "zones.json"));
 
             // Load and validate biome templates
             var biomesPath = Path.Combine(contentPath, "templates", "biomes");
             var biomeTemplates = await LoadBiomeTemplatesAsync(biomesPath, schemas);
 
             // Load aliases
-            var aliasesFile = Path.Combine(contentPath, "registries", "aliases.json");
+            var aliasesFile = Path.Combine(registriesPath, "aliases.json");
             if (File.Exists(aliasesFile))
             {
                 await LoadAliasesAsync(aliasesFile, schemas);
             }
+
+            AssignGeologyHandles();
+            BuildGeologyMaterialKindIndex();
 
             // Cross-validate references
             CrossValidateContent();
@@ -97,32 +127,37 @@ public class ContentRegistry
             ComputeContentHash();
 
             IsLoaded = true;
-            Console.WriteLine($"[ContentRegistry] Content loaded successfully. Version: {Version}, Hash: {ContentHash}");
-            Console.WriteLine($"[ContentRegistry] Validation: {ValidationResult.Warnings.Count} warnings, {ValidationResult.Errors.Count} errors");
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Content loaded successfully. Version: {Version}, Hash: {ContentHash}");
+            var validationLevel = ValidationResult.Errors.Count > 0
+                ? HumanFortress.Core.Diagnostics.DiagnosticLevel.Error
+                : ValidationResult.Warnings.Count > 0
+                    ? HumanFortress.Core.Diagnostics.DiagnosticLevel.Warning
+                    : HumanFortress.Core.Diagnostics.DiagnosticLevel.Information;
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Validation: {ValidationResult.Warnings.Count} warnings, {ValidationResult.Errors.Count} errors", validationLevel);
 
             // Print validation errors
             if (ValidationResult.Errors.Count > 0)
             {
-                Console.WriteLine("[ContentRegistry] Errors:");
+                ContentRegistryDiagnostics.Emit("[ContentRegistry] Errors:", HumanFortress.Core.Diagnostics.DiagnosticLevel.Error);
                 foreach (var error in ValidationResult.Errors)
                 {
-                    Console.WriteLine($"  - {error}");
+                    ContentRegistryDiagnostics.Emit($"  - {error}", HumanFortress.Core.Diagnostics.DiagnosticLevel.Error);
                 }
             }
 
             // Print validation warnings
             if (ValidationResult.Warnings.Count > 0)
             {
-                Console.WriteLine("[ContentRegistry] Warnings:");
+                ContentRegistryDiagnostics.Emit("[ContentRegistry] Warnings:", HumanFortress.Core.Diagnostics.DiagnosticLevel.Warning);
                 foreach (var warning in ValidationResult.Warnings)
                 {
-                    Console.WriteLine($"  - {warning}");
+                    ContentRegistryDiagnostics.Emit($"  - {warning}", HumanFortress.Core.Diagnostics.DiagnosticLevel.Warning);
                 }
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ContentRegistry] Error loading content: {ex.Message}");
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Error loading content: {ex.Message}", ex);
             throw;
         }
     }
@@ -135,6 +170,87 @@ public class ContentRegistry
         LoadContentAsync(contentPath).GetAwaiter().GetResult();
     }
 
+    public CoreDataLoadResult LoadCoreData(string coreDataPath)
+    {
+        var result = CoreDataRegistryLoader.Load(coreDataPath, MutableConstructions, MutableRecipes);
+
+        foreach (var message in result.Constructions.Messages)
+        {
+            ContentRegistryDiagnostics.Emit($"[ConstructionRegistry] {message}");
+        }
+
+        ContentRegistryDiagnostics.Emit(
+            $"[ConstructionRegistry] loaded={result.Constructions.LoadedCount} categories=[{string.Join(',', result.Constructions.Categories)}] errors={result.Constructions.ErrorCount} duplicates_skipped={result.Constructions.DuplicatesSkipped}");
+
+        foreach (var message in result.Recipes.Messages)
+        {
+            ContentRegistryDiagnostics.Emit($"[RecipeRegistry] {message}");
+        }
+
+        ContentRegistryDiagnostics.Emit(
+            $"[RecipeRegistry] loaded={result.Recipes.LoadedCount} errors={result.Recipes.ErrorCount}");
+
+        return result;
+    }
+
+    public RuntimeZoneDefinitionData? GetZoneDefinition(string id)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        return _zones.TryGetValue(id, out var zone) ? zone : null;
+    }
+
+    public RuntimeGeologyData? GetGeologyEntry(string id)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        return _geologyEntries.TryGetValue(id, out var geology) ? geology : null;
+    }
+
+    public RuntimeGeologyData? GetGeologyByHandle(ushort handle)
+    {
+        return _handleToGeologyId.TryGetValue(handle, out var id) ? GetGeologyEntry(id) : null;
+    }
+
+    public ushort GetGeologyHandle(string id)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        return _geologyHandles.TryGetValue(id, out var handle) ? handle : (ushort)0;
+    }
+
+    public bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle)
+    {
+        if (string.IsNullOrWhiteSpace(materialId) || string.IsNullOrWhiteSpace(terrainKindName))
+        {
+            handle = 0;
+            return false;
+        }
+
+        return _geologyByMaterialAndKind.TryGetValue((materialId, terrainKindName), out handle);
+    }
+
+    public T? GetTuning<T>(string file, string path) where T : class
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(file);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        if (!_tuning.TryGetValue(file, out var root))
+        {
+            return default;
+        }
+
+        var token = root.SelectToken(path);
+        return token?.ToObject<T>();
+    }
+
+    private void ClearRuntimeContent()
+    {
+        _geologyEntries.Clear();
+        _zones.Clear();
+        _tuning.Clear();
+        _geologyHandles.Clear();
+        _handleToGeologyId.Clear();
+        _geologyByMaterialAndKind.Clear();
+    }
+
     /// <summary>
     /// Load schemas for validation
     /// </summary>
@@ -144,7 +260,7 @@ public class ContentRegistry
 
         if (!Directory.Exists(schemasPath))
         {
-            Console.WriteLine($"[ContentRegistry] Warning: Schemas directory not found: {schemasPath}");
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Warning: Schemas directory not found: {schemasPath}");
             return schemas;
         }
 
@@ -153,7 +269,7 @@ public class ContentRegistry
             var name = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(file));
             var json = await File.ReadAllTextAsync(file);
             schemas[name] = JsonDocument.Parse(json);
-            Console.WriteLine($"[ContentRegistry] Loaded schema: {name}");
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loaded schema: {name}");
         }
 
         return schemas;
@@ -174,7 +290,8 @@ public class ContentRegistry
         var doc = JsonDocument.Parse(json);
 
         // Get version
-        if (doc.RootElement.TryGetProperty("version", out var versionElem))
+        if (doc.RootElement.ValueKind == JsonValueKind.Object
+            && doc.RootElement.TryGetProperty("version", out var versionElem))
         {
             Version = ContentVersion.Parse(versionElem.GetString() ?? "1.0.0");
         }
@@ -212,7 +329,9 @@ public class ContentRegistry
         }
 
         // Old code for backwards compatibility - only use if MaterialParser fails
-        if (materials.Count == 0 && doc.RootElement.TryGetProperty("materials", out var oldMaterialsElem))
+        if (materials.Count == 0
+            && doc.RootElement.ValueKind == JsonValueKind.Object
+            && doc.RootElement.TryGetProperty("materials", out var oldMaterialsElem))
         {
             foreach (var elem in oldMaterialsElem.EnumerateArray())
             {
@@ -242,6 +361,34 @@ public class ContentRegistry
         // Use the new MaterialParser which supports both v3 (legacy) and v4 formats
         // Assume authoring format (human-readable values) - parser will auto-convert to FX
         return MaterialParser.ParseMaterial(elem, isAuthoringFormat: true);
+    }
+
+    private void LoadTuningFiles(string registriesPath)
+    {
+        if (!Directory.Exists(registriesPath))
+        {
+            ValidationResult.Errors.Add($"Registries directory not found: {registriesPath}");
+            return;
+        }
+
+        var files = Directory.GetFiles(registriesPath, "tuning.*.json", SearchOption.TopDirectoryOnly);
+        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in files)
+        {
+            try
+            {
+                var key = Path.GetFileNameWithoutExtension(file);
+                var root = JObject.Parse(File.ReadAllText(file));
+                _tuning[key] = root;
+            }
+            catch (Exception ex)
+            {
+                ValidationResult.Errors.Add($"Error loading tuning file {Path.GetFileName(file)}: {ex.Message}");
+            }
+        }
+
+        ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loaded {_tuning.Count} tuning files");
     }
 
     /// <summary>
@@ -498,7 +645,7 @@ public class ContentRegistry
 
         if (!Directory.Exists(path))
         {
-            ValidationResult.Warnings.Add($"Biome templates directory not found: {path}");
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Optional biome templates directory not found, skipping: {path}");
             return templates;
         }
 
@@ -627,24 +774,60 @@ public class ContentRegistry
     }
 
     /// <summary>
-    /// Load geology prototypes from JSON
+    /// Load runtime geology prototypes from JSON.
     /// </summary>
     private async Task<List<GeologyDefinition>> LoadGeologyAsync(string file, Dictionary<string, JsonDocument> schemas)
     {
-        // Try the new geology_prototypes.json first
-        var prototypeFile = file.Replace("geology.json", "geology_prototypes.json");
-        if (!File.Exists(prototypeFile))
+        if (File.Exists(file))
         {
-            // Fall back to geology.json if it exists
-            if (!File.Exists(file))
-            {
-                ValidationResult.Warnings.Add($"Geology file not found: {prototypeFile} or {file}");
-                return new List<GeologyDefinition>();
-            }
-            prototypeFile = file;
+            return await LoadRuntimeGeologyAsync(file);
         }
 
-        var json = await File.ReadAllTextAsync(prototypeFile);
+        var prototypeFile = file.Replace("geology.json", "geology_prototypes.json", StringComparison.Ordinal);
+        if (File.Exists(prototypeFile))
+        {
+            ValidationResult.Warnings.Add(
+                $"Runtime geology file not found: {file}; falling back to prototype-only file {prototypeFile}");
+            return await LoadPrototypeGeologyAsync(prototypeFile);
+        }
+
+        ValidationResult.Warnings.Add($"Geology file not found: {file} or {prototypeFile}");
+        return new List<GeologyDefinition>();
+    }
+
+    private async Task<List<GeologyDefinition>> LoadRuntimeGeologyAsync(string file)
+    {
+        var json = await File.ReadAllTextAsync(file);
+        var runtimeEntries = JsonConvert.DeserializeObject<List<RuntimeGeologyData>>(json, new JsonSerializerSettings())
+                             ?? new List<RuntimeGeologyData>();
+
+        var prototypes = new List<GeologyDefinition>(runtimeEntries.Count);
+        foreach (var entry in runtimeEntries)
+        {
+            if (string.IsNullOrWhiteSpace(entry.Id))
+            {
+                ValidationResult.Errors.Add($"Geology entry missing id in {Path.GetFileName(file)}");
+                continue;
+            }
+
+            if (_geologyEntries.ContainsKey(entry.Id))
+            {
+                ValidationResult.Errors.Add($"Duplicate geology id '{entry.Id}' in {Path.GetFileName(file)}");
+                continue;
+            }
+
+            _geologyEntries[entry.Id] = entry;
+            prototypes.Add(ConvertRuntimeGeologyToPrototype(entry));
+        }
+
+        Geology.LoadPrototypes(prototypes, Version);
+        ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loaded {_geologyEntries.Count} runtime geology entries");
+        return prototypes;
+    }
+
+    private async Task<List<GeologyDefinition>> LoadPrototypeGeologyAsync(string file)
+    {
+        var json = await File.ReadAllTextAsync(file);
         var doc = JsonDocument.Parse(json);
 
         var prototypes = new List<GeologyDefinition>();
@@ -664,12 +847,6 @@ public class ContentRegistry
                     ValidationResult.Errors.Add($"Error parsing geology prototype: {ex.Message}");
                 }
             }
-        }
-        // Handle old format for compatibility
-        else if (doc.RootElement.ValueKind == JsonValueKind.Array)
-        {
-            Console.WriteLine($"[ContentRegistry] Warning: Using legacy geology.json format");
-            // Skip legacy format for now
         }
 
         // Load into registry
@@ -703,6 +880,160 @@ public class ContentRegistry
         }
 
         return prototype;
+    }
+
+    private static GeologyDefinition ConvertRuntimeGeologyToPrototype(RuntimeGeologyData entry)
+    {
+        return new GeologyDefinition
+        {
+            Id = entry.Id,
+            Name = BuildGeologyName(entry.Id),
+            TerrainKind = ToStructuredTerrainKindName(entry.TerrainBits.Kind),
+            Material = entry.Material,
+            NavCostBase = ToOptionalByte(entry.Properties?.NavCostBase),
+            Opacity = ToOptionalByte(entry.Properties?.Opacity),
+            Tags = new HashSet<string>(entry.Tags)
+        };
+    }
+
+    private static string BuildGeologyName(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return string.Empty;
+        }
+
+        return id.Replace("core_terrain_", string.Empty, StringComparison.Ordinal)
+            .Replace('_', ' ');
+    }
+
+    private static byte? ToOptionalByte(int? value)
+    {
+        if (!value.HasValue)
+        {
+            return null;
+        }
+
+        return (byte)Math.Clamp(value.Value, byte.MinValue, byte.MaxValue);
+    }
+
+    private static string ToStructuredTerrainKindName(string runtimeKind)
+    {
+        return runtimeKind switch
+        {
+            "SolidWall" => "solid_wall",
+            "OpenWithFloor" => "open_floor",
+            "OpenNoFloor" => "open_space",
+            "Ramp" => "ramp",
+            "StairsUp" => "stairs_up",
+            "StairsDown" => "stairs_down",
+            "StairsUD" => "stairs_ud",
+            "Slope" => "slope",
+            _ => runtimeKind
+        };
+    }
+
+    private void LoadZones(string file)
+    {
+        if (!File.Exists(file))
+        {
+            ValidationResult.Warnings.Add($"Zones file not found: {file}");
+            return;
+        }
+
+        try
+        {
+            var root = JObject.Parse(File.ReadAllText(file));
+            var zonesArray = root["zones"] as JArray;
+            if (zonesArray == null)
+            {
+                ValidationResult.Warnings.Add($"Zones file has no zones array: {file}");
+                return;
+            }
+
+            foreach (var zoneToken in zonesArray)
+            {
+                var zone = zoneToken.ToObject<RuntimeZoneDefinitionData>();
+                if (zone == null)
+                {
+                    ValidationResult.Errors.Add($"Failed to parse zone definition in {Path.GetFileName(file)}");
+                    continue;
+                }
+
+                if (string.IsNullOrWhiteSpace(zone.Id))
+                {
+                    ValidationResult.Errors.Add($"Zone definition missing id in {Path.GetFileName(file)}");
+                    continue;
+                }
+
+                if (_zones.ContainsKey(zone.Id))
+                {
+                    ValidationResult.Errors.Add($"Duplicate zone id '{zone.Id}' in {Path.GetFileName(file)}");
+                    continue;
+                }
+
+                _zones[zone.Id] = zone;
+            }
+
+            ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loaded {_zones.Count} zone definitions");
+        }
+        catch (Exception ex)
+        {
+            ValidationResult.Errors.Add($"Error loading zones file {Path.GetFileName(file)}: {ex.Message}");
+        }
+    }
+
+    private void AssignGeologyHandles()
+    {
+        _geologyHandles.Clear();
+        _handleToGeologyId.Clear();
+
+        ushort handle = 0;
+        foreach (var id in _geologyEntries.Keys.OrderBy(k => k, StringComparer.Ordinal))
+        {
+            _geologyHandles[id] = handle;
+            _handleToGeologyId[handle] = id;
+            handle++;
+        }
+    }
+
+    private void BuildGeologyMaterialKindIndex()
+    {
+        _geologyByMaterialAndKind.Clear();
+        foreach (var (id, geology) in _geologyEntries)
+        {
+            if (!_geologyHandles.TryGetValue(id, out var handle))
+            {
+                continue;
+            }
+
+            AddGeologyMaterialKindIndex(geology.Material, geology.TerrainBits.Kind, handle);
+            AddGeologyMaterialKindIndex(geology.Material, ToStructuredTerrainKindName(geology.TerrainBits.Kind), handle);
+
+            var material = Materials.GetMaterial(geology.Material);
+            if (material == null)
+            {
+                continue;
+            }
+
+            AddGeologyMaterialKindIndex(material.Name, geology.TerrainBits.Kind, handle);
+            AddGeologyMaterialKindIndex(material.Name, ToStructuredTerrainKindName(geology.TerrainBits.Kind), handle);
+            foreach (var alias in material.Aliases)
+            {
+                AddGeologyMaterialKindIndex(alias, geology.TerrainBits.Kind, handle);
+                AddGeologyMaterialKindIndex(alias, ToStructuredTerrainKindName(geology.TerrainBits.Kind), handle);
+            }
+        }
+    }
+
+    private void AddGeologyMaterialKindIndex(string materialId, string terrainKindName, ushort handle)
+    {
+        if (string.IsNullOrWhiteSpace(materialId) || string.IsNullOrWhiteSpace(terrainKindName))
+        {
+            return;
+        }
+
+        _geologyByMaterialAndKind[(materialId, terrainKindName)] = handle;
     }
 
     /// <summary>

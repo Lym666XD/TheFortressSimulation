@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Simulation.Orders;
@@ -9,7 +10,7 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 public sealed class OrdersManager
 {
-    public static System.Action<string>? LogCallback;
+    public static System.Action<string>? LogCallback { get; set; }
     private readonly ConcurrentQueue<HaulDesignation> _haulQueue = new();
     private readonly ConcurrentQueue<HaulDesignation> _recentHauls = new();
     private const int RecentCapacity = 32;
@@ -81,11 +82,11 @@ public sealed class OrdersManager
             actualZMax = startZ;  // e.g., 25 (surface, starting point)
 
             var _msgConvert = $"[ORDERS] Stairwell Z-inversion: UI z={zMin}..{zMax} ({layerCount} layers) → actual dig z={actualZMin}..{actualZMax} (down from surface)";
-            if (LogCallback != null) LogCallback(_msgConvert); else System.Console.WriteLine(_msgConvert);
+            Log(_msgConvert);
         }
 
         var msg = $"[ORDERS] MiningAdvanced enqueued action={action} rect=({worldRect.X},{worldRect.Y},{worldRect.Width}x{worldRect.Height}) z={actualZMin}..{actualZMax} pri={priority}";
-        if (LogCallback != null) LogCallback(msg); else System.Console.WriteLine(msg);
+        Log(msg);
 
         // Unified path: either add designation or emit cancellation region
         if (action == MiningAction.RemoveDigging)
@@ -101,6 +102,11 @@ public sealed class OrdersManager
             _activeMining.Add(d);
             while (_recentMining.Count > RecentCapacity && _recentMining.TryDequeue(out _)) { }
         }
+    }
+
+    private static void Log(string message)
+    {
+        SimulationDiagnostics.Information(LogCallback, "Simulation.Orders", message);
     }
 
     /// <summary>

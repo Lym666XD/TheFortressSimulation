@@ -22,6 +22,11 @@ public sealed class ItemsDiffLog
         }
     }
 
+    public void Add(ItemsDiffOp op, WorldCellTarget target, string itemId, int quantity, int priority, string systemId)
+    {
+        Add(op, target.ChunkKey, target.LocalIndex, itemId, quantity, priority, systemId);
+    }
+
     public void AddRemoveItem(Guid itemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
     {
         lock (_lock)
@@ -31,6 +36,11 @@ public sealed class ItemsDiffLog
         }
     }
 
+    public void AddRemoveItem(Guid itemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
+    {
+        AddRemoveItem(itemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
+    }
+
     public void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
     {
         lock (_lock)
@@ -38,6 +48,11 @@ public sealed class ItemsDiffLog
             var diff = new ItemsDiff(ItemsDiffOp.SplitStack, chunk, localIndex, string.Empty, quantity, priority, systemId, _localSeq++, sourceItemGuid, newItemGuid);
             _ops.Add(diff);
         }
+    }
+
+    public void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
+    {
+        AddSplitStack(sourceItemGuid, newItemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
     }
 
     public IReadOnlyList<ItemsDiff> MergeAndSort()

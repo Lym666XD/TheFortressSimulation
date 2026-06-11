@@ -4,6 +4,7 @@ using System.Linq;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -55,8 +56,8 @@ public sealed class HaulingSystem : ITick
         foreach (var d in desigs)
         {
             // Enumerate items in world rectangle at Z that are not reserved/carried and not already in a stockpile cell
-            var items = _world.Items.GetAllInstances()
-                .Where(i => i.Z == d.Z && d.WorldRect.Contains(i.Position) && !i.IsCarried && !IsInStockpile(i))
+            var items = _world.Items.GetGroundItemsIn(d.WorldRect, d.Z)
+                .Where(i => !IsInStockpile(i))
                 .ToList();
 
             foreach (var item in items)
@@ -64,7 +65,6 @@ public sealed class HaulingSystem : ITick
                 if (plannedCount >= _maxPerTick) break;
                 // Skip if centrally reserved (TTL based)
                 if (_world.Reservations.IsItemReserved(item.Guid, tick)) continue;
-                if (item.IsReserved) continue;
 
                 // Choose nearest accepting zone cell (v1: first shard member cell)
                 if (!TryFindDestination(item, zones, out var destWorld, out var toZ))
@@ -207,8 +207,7 @@ public sealed class HaulingSystem : ITick
 
     private static void Log(string message)
     {
-        if (OrdersManager.LogCallback != null) OrdersManager.LogCallback(message);
-        else System.Console.WriteLine(message);
+        SimulationDiagnostics.Information(OrdersManager.LogCallback, "Jobs.Hauling", message);
     }
 
     public struct PlannedMove

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 
@@ -10,7 +10,7 @@ namespace HumanFortress.App.Commands;
 
 /// <summary>
 /// Command that creates a construction designation (L0 structural) over a world-space rectangle across z-range.
-/// Executed on main thread; OrdersManager is thread-safe for enqueue.
+/// Executed through the simulation tick command stage.
 /// </summary>
 public sealed class CreateConstructionOrderCommand : ICommand
 {
@@ -38,9 +38,9 @@ public sealed class CreateConstructionOrderCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IOrderCommandTarget target)
         {
-            world.Orders.EnqueueConstruction(_worldRect, _zMin, _zMax, _shape, _filter, _priority, context.CurrentTick);
+            target.EnqueueConstructionOrder(_worldRect, _zMin, _zMax, _shape, _filter, _priority, context.CurrentTick);
         }
     }
 
@@ -61,4 +61,3 @@ public sealed class CreateConstructionOrderCommand : ICommand
         return ms.ToArray();
     }
 }
-

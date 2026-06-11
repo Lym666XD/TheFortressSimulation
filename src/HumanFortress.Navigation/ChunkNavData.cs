@@ -1,5 +1,3 @@
-using HumanFortress.Simulation.Tiles;
-
 namespace HumanFortress.Navigation;
 
 /// <summary>
@@ -36,8 +34,8 @@ namespace HumanFortress.Navigation;
     public int ConnectivityVersion { get; set; }
 
     /// <summary>
-    /// Snapshot of the simulation chunk's connectivity version that this nav was built from.
-    /// Used to detect staleness vs Simulation.World.Chunk.ConnectivityVersion.
+    /// Snapshot of the source chunk's connectivity version that this nav was built from.
+    /// Used to detect staleness vs the authoritative navigation source.
     /// </summary>
     public ulong SourceConnectivityVersion { get; set; }
 
@@ -60,7 +58,7 @@ namespace HumanFortress.Navigation;
     /// Rebuild navigation data from tile information.
     /// Called during RebuildDerived phase.
     /// </summary>
-    public void RebuildFromTiles(TileBase[] tiles, NavigationTuning tuning)
+    public void RebuildFromTiles(NavigationTile[] tiles, NavigationTuning tuning)
     {
         if (tiles.Length != TilesPerChunk)
             throw new ArgumentException($"Expected {TilesPerChunk} tiles, got {tiles.Length}");
@@ -69,15 +67,10 @@ namespace HumanFortress.Navigation;
         {
             ref readonly var tile = ref tiles[idx];
 
-            // Use canonical TerrainKind extraction from TileBase
-            var terrainKind = tile.Kind;
-            bool isNatural = tile.IsNatural;
-
             byte capabilities = 0;
             ushort cost = tuning.BaseCost;
 
-            // Determine capabilities based on TerrainKind only (per contract)
-            // TerrainKind owns all legality decisions
+            // NavigationTile owns legality decisions; terrain-specific details stay behind adapters.
             if (tile.IsWalkable)
             {
                 capabilities |= (byte)NavCapability.Walk;
@@ -94,14 +87,14 @@ namespace HumanFortress.Navigation;
             }
 
             // Apply terrain-specific cost adjustments
-            switch (terrainKind)
+            switch (tile.Kind)
             {
-                case TerrainKind.Ramp:
+                case NavigationTileKind.Ramp:
                     cost += tuning.RampDelta;
                     break;
-                case TerrainKind.StairsUp:
-                case TerrainKind.StairsDown:
-                case TerrainKind.StairsUD:
+                case NavigationTileKind.StairsUp:
+                case NavigationTileKind.StairsDown:
+                case NavigationTileKind.StairsUD:
                     cost += tuning.StairDelta;
                     break;
             }
@@ -166,5 +159,3 @@ namespace HumanFortress.Navigation;
         return NavCost[localIdx];
     }
 }
-
-// TerrainKind enum is now defined in TileBase.cs

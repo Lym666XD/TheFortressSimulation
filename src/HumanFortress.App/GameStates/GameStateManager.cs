@@ -1,12 +1,17 @@
 using HumanFortress.App;
+using HumanFortress.App.Commands;
 using HumanFortress.App.Runtime;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Mining;
 using HumanFortress.Simulation.World;
 using HumanFortress.Navigation;
+using HumanFortress.Jobs.Transport;
+using HumanFortress.Runtime;
 
 namespace HumanFortress.App.GameStates;
 
@@ -23,11 +28,10 @@ public sealed class GameStateManager
     private readonly DiffLog _diffLog;
     private readonly HumanFortress.Simulation.Items.ItemsDiffLog _itemsDiffLog;
     private readonly bool _enqueueAutoDig;
+    private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost> _runtimeSessionFactory;
 
     private GameState? _currentState;
-    private World? _world;
-    private NavigationManager? _navManager;
-    private SimulationRuntimeHost? _runtimeHost;
+    private SimulationRuntimeSession<SimulationRuntimeHost>? _runtimeSession;
     private JobsDebugData? _jobsDebugCache;
     private ulong _jobsDebugCacheTick = 0;
     private const ulong JobsDebugRefreshTicks = 10;
@@ -42,6 +46,22 @@ public sealed class GameStateManager
         _diffLog = new DiffLog();
         _itemsDiffLog = new HumanFortress.Simulation.Items.ItemsDiffLog();
         _enqueueAutoDig = enqueueAutoDig;
+        var baseDir = AppContext.BaseDirectory;
+        _runtimeSessionFactory = new SimulationRuntimeSessionFactory<SimulationRuntimeHost>(
+            _tickScheduler,
+            _commandQueue,
+            _diffLog,
+            _itemsDiffLog,
+            world => SimulationWorldContentLoader.LoadCoreContent(world, baseDir),
+            (world, navigation) => new SimulationRuntimeHost(
+                world,
+                _tickScheduler,
+                _commandQueue,
+                _eventBus,
+                _diffLog,
+                _itemsDiffLog,
+                navigation,
+                baseDir));
     }
 
     /// <summary>
@@ -52,7 +72,7 @@ public sealed class GameStateManager
     /// <summary>
     /// Active world (when in fortress play).
     /// </summary>
-    public World? World => _world;
+    public World? World => _runtimeSession?.World;
 
     /// <summary>
     /// Current simulation clock and controls exposed without leaking the scheduler.
@@ -60,20 +80,20 @@ public sealed class GameStateManager
     public ulong CurrentTick => _tickScheduler.CurrentTick;
     public SimulationStatus SimulationStatus => new(_tickScheduler.CurrentTick, _tickScheduler.IsPaused, _tickScheduler.SpeedMultiplier);
 
-    public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => _runtimeHost?.Systems?.HaulingPlanner;
-    public HumanFortress.Simulation.Jobs.ITransportRequestQueue? TransportQueue => _runtimeHost?.Systems?.TransportQueue;
-    public HumanFortress.App.Jobs.TransportJobSystem? TransportJobs => _runtimeHost?.Systems?.TransportJobs;
-    public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => _runtimeHost?.Systems?.MiningPlanner;
-    public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => _runtimeHost?.Systems?.MiningJobs;
-    public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => _runtimeHost?.Systems?.ConstructionPlanner;
-    public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => _runtimeHost?.Systems?.ConstructionJobs;
-    public HumanFortress.App.Jobs.CraftPlanner? CraftPlanner => _runtimeHost?.Systems?.CraftPlanner;
-    public HumanFortress.App.Jobs.CraftJobSystem? CraftJobs => _runtimeHost?.Systems?.CraftJobs;
-    public HumanFortress.App.Jobs.ProfessionAssignments? ProfessionAssignments => _runtimeHost?.Systems?.ProfessionAssignments;
-    public NavigationManager? NavManager => _runtimeHost?.Navigation ?? _navManager;
-    public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => _runtimeHost?.Systems?.JobsOrchestrator;
-    public HumanFortress.App.Jobs.SchedulerTunings? SchedulerTunings => _runtimeHost?.Systems?.SchedulerTunings;
-    public HumanFortress.App.Jobs.WorkshopTunings? WorkshopTunings => _runtimeHost?.Systems?.WorkshopTunings;
+    public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => RuntimeHost?.Systems?.HaulingPlanner;
+    public HumanFortress.Simulation.Jobs.ITransportRequestQueue? TransportQueue => RuntimeHost?.Systems?.TransportQueue;
+    public HumanFortress.App.Jobs.TransportJobSystem? TransportJobs => RuntimeHost?.Systems?.TransportJobs;
+    public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => RuntimeHost?.Systems?.MiningPlanner;
+    public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => RuntimeHost?.Systems?.MiningJobs;
+    public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => RuntimeHost?.Systems?.ConstructionPlanner;
+    public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => RuntimeHost?.Systems?.ConstructionJobs;
+    public HumanFortress.Jobs.Craft.CraftPlanner? CraftPlanner => RuntimeHost?.Systems?.CraftPlanner;
+    public HumanFortress.App.Jobs.CraftJobSystem? CraftJobs => RuntimeHost?.Systems?.CraftJobs;
+    public HumanFortress.App.Jobs.ProfessionAssignments? ProfessionAssignments => RuntimeHost?.Systems?.ProfessionAssignments;
+    public NavigationManager? NavManager => _runtimeSession?.Navigation;
+    public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => RuntimeHost?.Systems?.JobsOrchestrator;
+    public HumanFortress.App.Jobs.SchedulerTunings? SchedulerTunings => RuntimeHost?.Systems?.SchedulerTunings;
+    public HumanFortress.App.Jobs.WorkshopTunings? WorkshopTunings => RuntimeHost?.Systems?.WorkshopTunings;
 
     /// <summary>
     /// Cached debug data for Jobs/Work drawer. Gated by SchedulerTunings.DebugPanel.
@@ -81,7 +101,7 @@ public sealed class GameStateManager
     /// </summary>
     public JobsDebugData? GetJobsDebugData(ulong tick, bool force = false)
     {
-        var systems = _runtimeHost?.Systems;
+        var systems = RuntimeHost?.Systems;
         var tunings = systems?.SchedulerTunings;
         if (systems == null || tunings == null || !tunings.DebugPanel) return null;
         if (!force && _jobsDebugCache.HasValue && (tick - _jobsDebugCacheTick) < JobsDebugRefreshTicks)
@@ -109,14 +129,14 @@ public sealed class GameStateManager
 
     public IReadOnlyList<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry> GetProfessionRosterSnapshot()
     {
-        var professions = _runtimeHost?.Systems?.ProfessionAssignments;
+        var professions = RuntimeHost?.Systems?.ProfessionAssignments;
         if (professions == null) return Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
-        return professions.GetRosterSnapshot(_world);
+        return professions.GetRosterSnapshot(World);
     }
 
     public void SetProfessionWeight(Guid workerId, string professionId, int weight)
     {
-        _runtimeHost?.Systems?.ProfessionAssignments.SetWeight(workerId, professionId, weight);
+        EnqueueCurrentTickCommand(tick => new SetProfessionWeightCommand(tick, workerId, professionId, weight));
     }
 
     /// <summary>
@@ -187,7 +207,7 @@ public sealed class GameStateManager
                 if (_currentState.Type == GameStateType.FortressPlay)
                 {
                     Logger.Log("[GameStateManager] Stopping simulation");
-                    _runtimeHost?.Stop();
+                    RuntimeHost?.Stop();
                 }
             }
 
@@ -230,28 +250,12 @@ public sealed class GameStateManager
     /// </summary>
     public void InitializeWorld(int sizeInChunks, int maxZ)
     {
-        _runtimeHost?.Stop();
+        RuntimeHost?.Stop();
 
-        _tickScheduler.ResetForNewSession();
-        _commandQueue.Clear();
-        _diffLog.Clear();
-        _itemsDiffLog.Clear();
         _jobsDebugCache = null;
         _jobsDebugCacheTick = 0;
 
-        _world = new World(sizeInChunks, maxZ);
-        // Initialize shared NavigationManager bound to this world
-        _navManager = new NavigationManager(_world);
-        SimulationWorldContentLoader.LoadCoreContent(_world, AppContext.BaseDirectory);
-        _runtimeHost = new SimulationRuntimeHost(
-            _world,
-            _tickScheduler,
-            _commandQueue,
-            _eventBus,
-            _diffLog,
-            _itemsDiffLog,
-            _navManager,
-            AppContext.BaseDirectory);
+        _runtimeSession = _runtimeSessionFactory.CreateNew(sizeInChunks, maxZ);
     }
 
     /// <summary>
@@ -280,9 +284,9 @@ public sealed class GameStateManager
 
     public readonly record struct JobsDebugData(
         ulong Tick,
-        HumanFortress.App.Jobs.TransportJobSystem.TransportDebugSnapshot? Transport,
-        HumanFortress.App.Jobs.MiningJobSystem.MiningDebugSnapshot? Mining,
-        HumanFortress.App.Jobs.CraftJobStatsSnapshot? Craft,
+        TransportDebugSnapshot? Transport,
+        MiningDebugSnapshot? Mining,
+        CraftJobStatsSnapshot? Craft,
         HumanFortress.App.Jobs.SchedulerTunings? Tunings);
 
     /// <summary>
@@ -293,10 +297,10 @@ public sealed class GameStateManager
         Logger.Log("[GameStateManager] Shutdown requested");
 
         // Stop simulation if running
-        if (_runtimeHost?.IsRunning == true)
+        if (RuntimeHost?.IsRunning == true)
         {
             Logger.Log("[GameStateManager] Stopping tick scheduler");
-            _runtimeHost.Stop();
+            RuntimeHost.Stop();
         }
 
         // Exit current state
@@ -311,22 +315,10 @@ public sealed class GameStateManager
 
     private SimulationRuntimeHost RequireRuntimeHost()
     {
-        if (_runtimeHost != null)
-            return _runtimeHost;
-        if (_world == null)
+        if (_runtimeSession == null)
             throw new InvalidOperationException("World not initialized");
-        if (_navManager == null)
-            _navManager = new NavigationManager(_world);
-
-        _runtimeHost = new SimulationRuntimeHost(
-            _world,
-            _tickScheduler,
-            _commandQueue,
-            _eventBus,
-            _diffLog,
-            _itemsDiffLog,
-            _navManager,
-            AppContext.BaseDirectory);
-        return _runtimeHost;
+        return _runtimeSession.Host;
     }
+
+    private SimulationRuntimeHost? RuntimeHost => _runtimeSession?.Host;
 }

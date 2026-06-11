@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.Simulation;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 using SadRogue.Primitives;
@@ -17,7 +18,7 @@ public enum MiningSegment { None, Top, Middle, Bottom }
 
 public sealed class MiningSystem : ITick
 {
-    public static System.Action<string>? LogCallback;
+    public static System.Action<string>? LogCallback { get; set; }
     private readonly World.World _world;
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
@@ -50,12 +51,12 @@ public sealed class MiningSystem : ITick
         if (drainedAdds > 0)
         {
             var _msgA = "[MINING][PLAN] Adds drained: " + drainedAdds;
-            if (LogCallback != null) LogCallback(_msgA); else System.Console.WriteLine(_msgA);
+            Log(_msgA);
             foreach (var a in adds)
             {
                 _active[a.Id] = new ActiveDesignation(a.Id, a.Rect, a.ZMin, a.ZMax, a.Action, a.Priority, a.CreatedTick);
                 var _msgD = $"[MINING][PLAN] Designation id={a.Id} action={a.Action} rect={a.Rect} z={a.ZMin}..{a.ZMax} layers={a.ZMax - a.ZMin + 1}";
-                if (LogCallback != null) LogCallback(_msgD); else System.Console.WriteLine(_msgD);
+                Log(_msgD);
             }
         }
 
@@ -65,7 +66,7 @@ public sealed class MiningSystem : ITick
         if (drainedCanc > 0)
         {
             var _msgC = "[MINING][PLAN] Cancels drained: " + drainedCanc;
-            if (LogCallback != null) LogCallback(_msgC); else System.Console.WriteLine(_msgC);
+            Log(_msgC);
             _cancels.AddRange(canc);
         }
 
@@ -110,7 +111,7 @@ public sealed class MiningSystem : ITick
             foreach (var kv in perId)
             {
                 var _msgP = "[MINING][PLAN] id=" + kv.Key + " planned+=" + kv.Value;
-                if (LogCallback != null) LogCallback(_msgP); else System.Console.WriteLine(_msgP);
+                Log(_msgP);
             }
         }
     }
@@ -122,13 +123,13 @@ public sealed class MiningSystem : ITick
             if ((tick % 60UL) == 0UL)
             {
                 var _msg = "[MINING][PLAN] WriteTick: no planned digs";
-                if (LogCallback != null) LogCallback(_msg); else System.Console.WriteLine(_msg);
+                Log(_msg);
             }
             return;
         }
         {
             var _msg2 = $"[MINING][PLAN] WriteTick: enqueuing planned digs: {_planned.Count}";
-            if (LogCallback != null) LogCallback(_msg2); else System.Console.WriteLine(_msg2);
+            Log(_msg2);
         }
         foreach (var p in _planned)
             _outbox.Enqueue(p);
@@ -199,7 +200,7 @@ public sealed class MiningSystem : ITick
                             if (scannedCells <= 10)
                             {
                                 var _msgScan = $"[MINING][PLAN] Stairwell id={ad.Id} scan cell ({ad.CurX},{ad.CurY},{ad.CurZ}) kind={tile.Kind} ZMin={ad.ZMin} ZMax={ad.ZMax}";
-                                if (LogCallback != null) LogCallback(_msgScan); else System.Console.WriteLine(_msgScan);
+                                Log(_msgScan);
                             }
                             // Stairwells can dig through SolidWall (rock) or on OpenWithFloor (existing floor)
                             // Skip only air (OpenNoFloor) - can't build stairs in mid-air
@@ -208,7 +209,7 @@ public sealed class MiningSystem : ITick
                                 if (scannedCells <= 5) // only log first few rejections
                                 {
                                     var _msg = $"[MINING][PLAN] Stairwell id={ad.Id} reject cell ({ad.CurX},{ad.CurY},{ad.CurZ}) kind={tile.Kind} (can't dig stairs in air)";
-                                    if (LogCallback != null) LogCallback(_msg); else System.Console.WriteLine(_msg);
+                                    Log(_msg);
                                 }
                                 rejectedByFilter++;
                                 break;
@@ -218,7 +219,7 @@ public sealed class MiningSystem : ITick
                             var seg = (ad.CurZ == ad.ZMax) ? MiningSegment.Top : (ad.CurZ == ad.ZMin ? MiningSegment.Bottom : MiningSegment.Middle);
                             pd = new PlannedDig(cell, ad.CurZ, geo, tk, ad.Priority, SeedFrom(ad.CurX, ad.CurY, ad.CurZ), MiningAction.DigStairwell, seg, ad.Id);
                             var _msgPD = $"[MINING][PLAN] Stairwell id={ad.Id} PRODUCE PlannedDig at ({ad.CurX},{ad.CurY},{ad.CurZ}) seg={seg}";
-                            if (LogCallback != null) LogCallback(_msgPD); else System.Console.WriteLine(_msgPD);
+                            Log(_msgPD);
                             AdvanceCursor(ref ad);
                             return true;
                         default:
@@ -241,7 +242,7 @@ public sealed class MiningSystem : ITick
         if (rejectedByFilter > 0)
         {
             var _msgDone = $"[MINING][PLAN] Stairwell id={ad.Id} done: scanned={scannedCells} rejected={rejectedByFilter} (all non-SolidWall)";
-            if (LogCallback != null) LogCallback(_msgDone); else System.Console.WriteLine(_msgDone);
+            Log(_msgDone);
         }
         ad.MarkDone();
         pd = default;
@@ -286,6 +287,11 @@ public sealed class MiningSystem : ITick
         {
             if (ad.CurZ > ad.ZMax) ad.MarkDone();
         }
+    }
+
+    private static void Log(string message)
+    {
+        SimulationDiagnostics.Information(LogCallback, "Jobs.Mining", message);
     }
 
     private bool HasStandableAdjacency(int x, int y, int z)

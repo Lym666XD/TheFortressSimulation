@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
-using ContentReg = HumanFortress.Core.Content.ContentRegistry;
 
 namespace HumanFortress.Core.Content.Registry;
 
@@ -162,7 +161,7 @@ public sealed class PlaceableTuning
     public static PlaceableTuning LoadFromContent()
     {
         var t = Default;
-        var obj = ContentReg.Instance.GetTuning<JObject>("tuning.placeable", "$");
+        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.placeable", "$");
         if (obj == null) return t;
 
         // Quality

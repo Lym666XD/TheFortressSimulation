@@ -9,7 +9,7 @@ namespace HumanFortress.Navigation;
 public sealed class NavigationManager
 {
     private readonly ConcurrentDictionary<ChunkKey, ChunkNavData> _navData;
-    private readonly HumanFortress.Simulation.World.World _world;
+    private readonly INavigationWorldSource _source;
     private readonly NavigationTuning _tuning;
 
     /// <summary>
@@ -17,12 +17,14 @@ public sealed class NavigationManager
     /// </summary>
     public static Action<string>? LogCallback { get; set; }
 
-    public NavigationManager(HumanFortress.Simulation.World.World world)
+    public NavigationManager(INavigationWorldSource source, NavigationTuning? tuning = null)
     {
-        _world = world;
+        _source = source ?? throw new ArgumentNullException(nameof(source));
         _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
-        _tuning = NavigationTuning.LoadFromContent();
+        _tuning = tuning ?? NavigationTuning.LoadFromContent();
     }
+
+    public INavigationWorldSource Source => _source;
 
     /// <summary>
     /// Get or create navigation data for a chunk.
@@ -41,56 +43,34 @@ public sealed class NavigationManager
     }
 
     /// <summary>
-    /// Get navigation data for a chunk if it exists (using Simulation ChunkKey).
-    /// </summary>
-    public ChunkNavData? GetNavData(HumanFortress.Simulation.World.ChunkKey simKey)
-    {
-        var navKey = new ChunkKey(simKey.ChunkX, simKey.ChunkY, simKey.Z);
-        return GetNavData(navKey);
-    }
-
-    /// <summary>
     /// Get navigation data at world coordinates.
     /// </summary>
     public ChunkNavData? GetNavDataAt(int worldX, int worldY, int z)
     {
-        var chunkX = worldX / HumanFortress.Simulation.World.Chunk.SIZE_XY;
-        var chunkY = worldY / HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        var chunkX = worldX / ChunkNavData.ChunkSize;
+        var chunkY = worldY / ChunkNavData.ChunkSize;
         var key = new ChunkKey(chunkX, chunkY, z);
-        // Ensure nav exists on demand and refresh if stale vs chunk connectivity
-        var existing = GetNavData(key);
-        var simKey = new HumanFortress.Simulation.World.ChunkKey(key.ChunkX, key.ChunkY, key.Z);
-        var chunk = _world.GetChunk(simKey);
-        if (existing == null)
-        {
-            if (chunk != null)
-            {
-                RebuildChunkNavData(chunk);
-                return GetNavData(key);
-            }
-            return null;
-        }
-
-        if (chunk != null)
-        {
-            // If simulation chunk connectivity advanced since last nav rebuild, refresh nav now
-            if (existing.SourceConnectivityVersion != chunk.ConnectivityVersion)
-            {
-                RebuildChunkNavData(chunk);
-                return GetNavData(key);
-            }
-        }
-        return existing;
+        return GetNavData(key);
     }
 
     /// <summary>
     /// Rebuild navigation data for a chunk (during RebuildDerived phase).
     /// </summary>
-    public void RebuildChunkNavData(HumanFortress.Simulation.World.Chunk chunk)
+    public void RebuildChunkNavData(ChunkKey key)
     {
-        var navKey = new ChunkKey(chunk.Key.ChunkX, chunk.Key.ChunkY, chunk.Key.Z);
-        var navData = GetOrCreateNavData(navKey);
-        var tiles = chunk.GetTilesCopy();
+        if (_source.TryGetChunk(key, out var chunk))
+        {
+            RebuildChunkNavData(chunk);
+        }
+    }
+
+    /// <summary>
+    /// Rebuild navigation data for a source chunk snapshot.
+    /// </summary>
+    public void RebuildChunkNavData(NavigationChunkSnapshot chunk)
+    {
+        var navData = GetOrCreateNavData(chunk.Key);
+        var tiles = chunk.Tiles;
         var oldVersion = navData.ConnectivityVersion;
         navData.RebuildFromTiles(tiles, _tuning);
         navData.SourceConnectivityVersion = chunk.ConnectivityVersion;
@@ -99,8 +79,8 @@ public sealed class NavigationManager
 
         // Precompute ramp connectivity flags for O(1) neighbor expansion
         // UpRampMask: for ramp base at (x,y,z), bits 0..7 allow ascend to standable tiles at z+1 around (x,y)
-        int baseWorldX = chunk.Key.ChunkX * HumanFortress.Simulation.World.Chunk.SIZE_XY;
-        int baseWorldY = chunk.Key.ChunkY * HumanFortress.Simulation.World.Chunk.SIZE_XY;
+        int baseWorldX = chunk.Key.ChunkX * ChunkNavData.ChunkSize;
+        int baseWorldY = chunk.Key.ChunkY * ChunkNavData.ChunkSize;
         int z = chunk.Key.Z;
 
         for (int ly = 0; ly < ChunkNavData.ChunkSize; ly++)
@@ -116,31 +96,30 @@ public sealed class NavigationManager
                 navData.NavMask[idx] = (byte)(navData.NavMask[idx] & 0b0011_1111);
 
                 // Up ramp mask (base -> any allowed tops around)
-                if (tile.Kind == HumanFortress.Simulation.Tiles.TerrainKind.Ramp)
+                if (tile.Kind == NavigationTileKind.Ramp)
                 {
                     // DF-style: top space above base must be OpenNoFloor
-                    var topSpace = _world.GetTile(baseWorldX + lx, baseWorldY + ly, z + 1);
-                    if (topSpace.HasValue && topSpace.Value.Kind == HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor)
+                    if (_source.TryGetTile(new Point3(baseWorldX + lx, baseWorldY + ly, z + 1), out var topSpace)
+                        && topSpace.Kind == NavigationTileKind.OpenNoFloor)
                     {
                         byte mask = 0;
                         for (byte dir = 0; dir < 8; dir++)
                         {
-                            var (dx, dy) = HumanFortress.Simulation.Tiles.TerrainBitOps.GetDirectionOffset(dir);
+                            var (dx, dy) = GetDirectionOffset(dir);
                             int topX = baseWorldX + lx + dx;
                             int topY = baseWorldY + ly + dy;
                             int topZ = z + 1;
 
-                            var topTile = _world.GetTile(topX, topY, topZ);
-                            if (!topTile.HasValue) continue;
+                            if (!_source.TryGetTile(new Point3(topX, topY, topZ), out var topTile)) continue;
 
                             // Must be standable (floor/slope) at z+1
-                            if (!(topTile.Value.IsStandable)) continue;
+                            if (!topTile.IsStandable) continue;
 
                             // High-side support rule (below top at z)
                             if (_tuning.RampRequiresHighsideSupport)
                             {
-                                var highSide = _world.GetTile(topX, topY, z);
-                                if (!highSide.HasValue || highSide.Value.Kind != HumanFortress.Simulation.Tiles.TerrainKind.SolidWall)
+                                if (!_source.TryGetTile(new Point3(topX, topY, z), out var highSide)
+                                    || highSide.Kind != NavigationTileKind.SolidWall)
                                 {
                                     continue;
                                 }
@@ -149,10 +128,10 @@ public sealed class NavigationManager
                             // Diagonal corner check for ramp ascend (relaxed: require at least one adjacent orth standable at z+1)
                             if (_tuning.DiagonalCornerCheck && (dx != 0 && dy != 0))
                             {
-                                var ortho1 = _world.GetTile(baseWorldX + lx + dx, baseWorldY + ly, topZ);
-                                var ortho2 = _world.GetTile(baseWorldX + lx, baseWorldY + ly + dy, topZ);
-                                bool o1 = ortho1.HasValue && ortho1.Value.IsStandable;
-                                bool o2 = ortho2.HasValue && ortho2.Value.IsStandable;
+                                bool o1 = _source.TryGetTile(new Point3(baseWorldX + lx + dx, baseWorldY + ly, topZ), out var ortho1)
+                                    && ortho1.IsStandable;
+                                bool o2 = _source.TryGetTile(new Point3(baseWorldX + lx, baseWorldY + ly + dy, topZ), out var ortho2)
+                                    && ortho2.IsStandable;
                                 if (!(o1 || o2))
                                 {
                                     continue;
@@ -180,9 +159,25 @@ public sealed class NavigationManager
     /// </summary>
     public void RebuildAll()
     {
-        foreach (var chunk in _world.GetAllChunks())
+        foreach (var chunk in _source.GetAllChunks())
         {
             RebuildChunkNavData(chunk);
         }
+    }
+
+    private static (int dx, int dy) GetDirectionOffset(byte dir)
+    {
+        return dir switch
+        {
+            0 => (0, -1),
+            1 => (1, -1),
+            2 => (1, 0),
+            3 => (1, 1),
+            4 => (0, 1),
+            5 => (-1, 1),
+            6 => (-1, 0),
+            7 => (-1, -1),
+            _ => (0, 0),
+        };
     }
 }

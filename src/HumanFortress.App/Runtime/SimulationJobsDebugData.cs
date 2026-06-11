@@ -1,10 +1,13 @@
 using HumanFortress.App.Jobs;
+using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Mining;
+using HumanFortress.Jobs.Transport;
 
 namespace HumanFortress.App.Runtime;
 
 public readonly record struct SimulationJobsDebugData(
     ulong Tick,
-    TransportJobSystem.TransportDebugSnapshot? Transport,
-    MiningJobSystem.MiningDebugSnapshot? Mining,
+    TransportDebugSnapshot? Transport,
+    MiningDebugSnapshot? Mining,
     CraftJobStatsSnapshot? Craft,
     SchedulerTunings? Tunings);

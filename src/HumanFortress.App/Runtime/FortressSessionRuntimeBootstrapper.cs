@@ -31,7 +31,7 @@ internal static class FortressSessionRuntimeBootstrapper
 
         BindWorkshopCompletionNotifications(ui, uiTickProvider);
 
-        System.Console.WriteLine("[GenerateFortressMap] Creating NavigationOverlay");
+        Logger.Log("[GenerateFortressMap] Creating NavigationOverlay");
         var navigationOverlay = new NavigationOverlay();
         if (navigationManager != null)
         {

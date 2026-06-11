@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 
 namespace HumanFortress.Core.World
 {
@@ -14,10 +15,21 @@ namespace HumanFortress.Core.World
         public bool HasAquifer { get; set; }
         public IReadOnlyList<int> LandmarkIds { get; set; }
         
-        public bool IsEmbarkable => 
-            Elevation > 0.3f && 
-            Elevation < 0.8f && 
-            RiverClass < 3;
+        public bool IsEmbarkable => !GetEmbarkabilityFailures().Any();
+
+        public IReadOnlyList<string> GetEmbarkabilityFailures()
+        {
+            var failures = new List<string>();
+
+            if (Elevation <= 0.3f)
+                failures.Add($"Elevation {Elevation:F2} <= 0.30");
+            if (Elevation >= 0.8f)
+                failures.Add($"Elevation {Elevation:F2} >= 0.80");
+            if (RiverClass >= 3)
+                failures.Add($"River class {RiverClass} >= 3");
+
+            return failures;
+        }
     }
     
     public enum BiomeType : ushort

@@ -118,7 +118,7 @@ internal static class FortressWorkshopPanelKeyboardInput
         if (string.IsNullOrWhiteSpace(workshopId))
             return null;
 
-        var recipes = RecipeRegistry.Instance.GetRecipesForWorkshop(workshopId);
+        var recipes = ContentRegistry.Instance.Recipes.GetRecipesForWorkshop(workshopId);
         if (recipes.Count == 0)
             return null;
 

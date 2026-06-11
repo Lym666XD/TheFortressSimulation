@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
@@ -32,17 +32,13 @@ public sealed class SpawnCreatureCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is not World world)
-            return;
-
-        var guid = world.Creatures.SpawnCreature(_creatureId, _worldPos, _z, _factionId, context.CurrentTick);
-        if (guid.HasValue)
+        if (context is ICreatureSpawnCommandTarget target && target.AddCreatureSpawn(_creatureId, _worldPos, _z, _factionId))
         {
-            Logger.Log($"[DEBUG] SUCCESS: Spawned creature '{_creatureId}' guid={guid.Value} at ({_worldPos.X},{_worldPos.Y},{_z})");
+            Logger.Log($"[DEBUG] QUEUED: Spawn creature '{_creatureId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
         }
         else
         {
-            Logger.Log($"[DEBUG] FAILED: Could not spawn creature '{_creatureId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
+            Logger.Log($"[DEBUG] FAILED: Could not queue creature spawn '{_creatureId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
         }
     }
 

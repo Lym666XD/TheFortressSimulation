@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.App.UI.Selection;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Runtime;
@@ -9,6 +10,7 @@ internal static class FortressMouseWheelInput
         int scrollWheelValueChange,
         Keyboard? keyboard,
         UiStore ui,
+        ISelectionTool? selectionTool,
         int zoomLevel,
         int currentZ)
     {
@@ -19,23 +21,29 @@ internal static class FortressMouseWheelInput
 
         bool ctrlHeld = keyboard != null &&
             (keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl));
+        bool shiftHeld = keyboard != null &&
+            (keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift));
 
         int delta = scrollWheelValueChange > 0 ? 1 : -1;
+
+        if (selectionTool != null && selectionTool.IsActive && shiftHeld)
+        {
+            selectionTool.AdjustZRange(delta);
+            Logger.Log($"[SELECT] z-range {(delta > 0 ? "+" : "-")}{Math.Abs(delta)}");
+            return new FortressMouseWheelResult(true, zoomLevel, currentZ);
+        }
+
         if (ctrlHeld)
         {
             int nextZoom = Math.Clamp(zoomLevel + delta, 1, 4);
-            Logger.Log($"[ZOOM] Ctrl+Wheel delta={delta} -> zoom={nextZoom}");
+            Logger.Log($"[ZOOM-UPDATE] delta={delta} -> zoom={nextZoom}");
             return new FortressMouseWheelResult(true, nextZoom, currentZ);
         }
 
         int nextZ = Math.Clamp(currentZ - delta, 0, 49);
-        if (ui.PlaceMode == PlacementMode.MiningSecondCorner)
-        {
-            ui.PlaceZMax = nextZ;
-            Logger.Log($"[ZLEVEL] Mining mode: updated PlaceZMax={nextZ}");
-        }
+        FortressMiningZRangeSync.ApplyCurrentZ(ui, selectionTool, nextZ);
 
-        Logger.Log($"[ZLEVEL] Wheel delta={delta} (reversed) -> Z={nextZ}");
+        Logger.Log($"[ZLEVEL-UPDATE] delta={delta} -> Z={nextZ}");
         return new FortressMouseWheelResult(true, zoomLevel, nextZ);
     }
 }

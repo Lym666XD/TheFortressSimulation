@@ -267,8 +267,8 @@ public sealed class OrdersUI
                         for (int wx = rect.X; wx < rect.MaxExtentX; wx++)
                         {
                             // Eligibility for Haul: any ground item present at (wx,wy,currentZ)
-                            bool hasItem = world.Items.GetAllInstances()
-                                .Any(i => i.Z == currentZ && i.Position.X == wx && i.Position.Y == wy && i.IsOnGround && !i.Forbidden);
+                            bool hasItem = world.Items.GetGroundItemsAt(new Point(wx, wy), currentZ)
+                                .Any(i => !i.Forbidden);
                             if (!hasItem) continue;
                             int sx = wx - viewport.X;
                             int sy = wy - viewport.Y;
@@ -284,7 +284,6 @@ public sealed class OrdersUI
             if (world != null && miningAction.HasValue)
             {
                 int eligible = 0;
-                int ineligible = 0;
                 int total = rect.Width * rect.Height;
                 var lightGray = new Color(80, 80, 80);
 

@@ -97,7 +97,7 @@ namespace HumanFortress.App.States
         public override bool ProcessKeyboard(Keyboard keyboard)
         {
             // Debug: Log that we're receiving input
-            System.Console.WriteLine($"EmbarkPrepState ProcessKeyboard called, HasKeyPressed: {keyboard.KeysPressed.Count > 0}");
+            Logger.Debug("UI.EmbarkPrep", $"EmbarkPrepState ProcessKeyboard called, HasKeyPressed: {keyboard.KeysPressed.Count > 0}");
 
             if (keyboard.IsKeyPressed(Keys.Escape))
             {
@@ -145,14 +145,14 @@ namespace HumanFortress.App.States
             // Validate fortress size to prevent crashes
             if (_fortressSize < 2 || _fortressSize > 8)
             {
-                System.Console.WriteLine($"[EmbarkPrepState] WARNING: Invalid fortress size {_fortressSize}, defaulting to 2");
+                Logger.Warning("UI.EmbarkPrep", $"[EmbarkPrepState] WARNING: Invalid fortress size {_fortressSize}, defaulting to 2");
                 _fortressSize = 2;
             }
 
-            System.Console.WriteLine($"[EmbarkPrepState] Starting embark at {SelectedTile} with size {_fortressSize}x{_fortressSize}");
+            Logger.Log($"[EmbarkPrepState] Starting embark at {SelectedTile} with size {_fortressSize}x{_fortressSize}");
             _session.ConfigureEmbark(SelectedTile, _fortressSize);
 
-            System.Console.WriteLine("[EmbarkPrepState] Changing state to FortressPlay");
+            Logger.Log("[EmbarkPrepState] Changing state to FortressPlay");
             _navigator.ShowFortressPlay();
         }
     }

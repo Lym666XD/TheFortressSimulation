@@ -21,16 +21,16 @@ internal static class FortressUiOverlayRenderer
         UiRenderer.DrawTopBar(uiSurface, context.Runtime.SimulationStatus);
         UiRenderer.DrawDockScreen(uiSurface, ui, context.UiTick);
         UiRenderer.DrawQuickIconsScreen(uiSurface, ui, context.UiTick);
-        UiRenderer.DrawDrawer(uiSurface, ui, context.UiTick, context.StockpileManager, world, context.Runtime);
+        UiRenderer.DrawDrawer(uiSurface, ui, context.UiTick, context.UiServices?.StockpileManager, world, context.Runtime);
         WorkDrawerOverlay.DrawWorkSchedulerOverlay(uiSurface, ui, context.UiTick, world);
         UiRenderer.DrawQuickMenu(
             uiSurface,
             ui,
             context.UiTick,
-            context.OrdersUI,
-            context.ZonesUI,
-            context.BuildUI,
-            context.StockpileQuickUI,
+            context.UiServices?.OrdersUI,
+            context.UiServices?.ZonesUI,
+            context.UiServices?.BuildUI,
+            context.UiServices?.StockpileQuickUI,
             cameraOverride: context.CameraPosition,
             zOverride: context.CurrentZ,
             world: world);
@@ -68,20 +68,20 @@ internal static class FortressUiOverlayRenderer
                 UiRenderer.DrawWorkshopsOverlay(mapSurface, world, context.CurrentZ, viewport);
         }
 
-        if (world != null && context.StockpileUI != null)
+        if (world != null && context.UiServices?.StockpileUI != null)
         {
-            context.StockpileUI.RenderOverlay(mapSurface, world, context.CurrentZ, viewport);
+            context.UiServices.StockpileUI.RenderOverlay(mapSurface, world, context.CurrentZ, viewport);
         }
 
-        if (world != null && context.ZonesUI != null)
+        if (world != null && context.UiServices?.ZonesUI != null)
         {
             bool showZoneOverlay = ui.QuickMenu == QuickMenuKind.Zones;
-            context.ZonesUI.RenderOverlay(mapSurface, world, context.CurrentZ, viewport, showZoneOverlay);
+            context.UiServices.ZonesUI.RenderOverlay(mapSurface, world, context.CurrentZ, viewport, showZoneOverlay);
 
             if (ui.PlaceMode == PlacementMode.ZoneSecondCorner && ui.PlaceFirstCorner.HasValue)
             {
                 var mouseWorld = context.LastMousePosition ?? context.CursorPosition;
-                context.ZonesUI.RenderPlacementPreview(mapSurface, ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
+                context.UiServices.ZonesUI.RenderPlacementPreview(mapSurface, ui.PlaceFirstCorner.Value, mouseWorld, viewport, true);
             }
         }
     }
@@ -90,8 +90,8 @@ internal static class FortressUiOverlayRenderer
     {
         var ui = context.Ui;
         var uiSurface = context.UiSurface;
-        var stockpileUI = context.StockpileUI;
-        var zonesUI = context.ZonesUI;
+        var stockpileUI = context.UiServices?.StockpileUI;
+        var zonesUI = context.UiServices?.ZonesUI;
 
         if (stockpileUI != null)
         {
@@ -122,8 +122,8 @@ internal static class FortressUiOverlayRenderer
             mapSurface.Surface.Height);
         var mouseWorld = FortressPlacementGeometry.ClampToWorld(context.LastMousePosition ?? context.CursorPosition, context.FortressSize);
 
-        context.OrdersUI?.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
-        context.StockpileUI?.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
+        context.UiServices?.OrdersUI.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
+        context.UiServices?.StockpileUI.DrawPlacementMode(context.UiSurface, ui, mouseWorld);
 
         if (ui.PlaceFirstCorner.HasValue)
         {
@@ -142,15 +142,15 @@ internal static class FortressUiOverlayRenderer
 
         if (ui.PlaceMode == PlacementMode.StockpileSecondCorner)
         {
-            context.StockpileUI?.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true);
+            context.UiServices?.StockpileUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true);
         }
-        else if (ui.PlaceMode == PlacementMode.HaulSecondCorner && context.OrdersUI != null)
+        else if (ui.PlaceMode == PlacementMode.HaulSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            context.OrdersUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true, context.CurrentZ, context.World);
+            context.UiServices.OrdersUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true, context.CurrentZ, context.World);
         }
-        else if (ui.PlaceMode == PlacementMode.MiningSecondCorner && context.OrdersUI != null)
+        else if (ui.PlaceMode == PlacementMode.MiningSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            context.OrdersUI.RenderPlacementPreview(
+            context.UiServices.OrdersUI.RenderPlacementPreview(
                 mapSurface,
                 firstCorner,
                 mouseWorld,
@@ -161,9 +161,9 @@ internal static class FortressUiOverlayRenderer
                 ui.SelectedMiningAction,
                 ui.ShowIneligibleHints);
         }
-        else if (ui.PlaceMode == PlacementMode.ConstructionSecondCorner && context.OrdersUI != null)
+        else if (ui.PlaceMode == PlacementMode.ConstructionSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            context.OrdersUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true, context.CurrentZ, context.World);
+            context.UiServices.OrdersUI.RenderPlacementPreview(mapSurface, firstCorner, mouseWorld, viewport, true, context.CurrentZ, context.World);
             var dynRect = FortressPlacementGeometry.ComputeRectInclusive(firstCorner, mouseWorld);
             ui.AddHighlight($"construction:{ui.SelectedConstructionShape}", dynRect, context.CurrentZ, context.CurrentZ, context.UiTick + 2);
         }
@@ -189,7 +189,7 @@ internal static class FortressUiOverlayRenderer
         HumanFortress.Simulation.World.World? world,
         string constructionId)
     {
-        var def = ConstructionRegistry.Instance.GetConstruction(constructionId);
+        var def = ContentRegistry.Instance.Constructions.GetConstruction(constructionId);
         if (def == null)
             return;
 
@@ -218,9 +218,9 @@ internal static class FortressUiOverlayRenderer
         UiRenderer.DrawDebugUnits(uiSurface, ui, context.CameraPosition.X, context.CameraPosition.Y, context.CurrentZ);
         UiRenderer.DrawPause(uiSurface, ui);
 
-        if (ui.ConstructionMaterialDialogOpen && context.BuildUI != null)
+        if (ui.ConstructionMaterialDialogOpen && context.UiServices?.BuildUI != null)
         {
-            context.BuildUI.DrawConstructionMaterialDialog(uiSurface, ui);
+            context.UiServices.BuildUI.DrawConstructionMaterialDialog(uiSurface, ui);
         }
 
         if (world != null)

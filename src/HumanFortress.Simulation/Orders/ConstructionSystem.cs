@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
-using HumanFortress.Core.Content;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Placeables;
 using SadRogue.Primitives;
+using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Simulation.Orders;
 

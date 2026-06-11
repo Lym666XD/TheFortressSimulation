@@ -2,8 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
-using HumanFortress.Simulation.Orders;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
@@ -33,9 +32,9 @@ public sealed class CreateBuildableConstructionOrderCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IOrderCommandTarget target)
         {
-            world.Orders.EnqueueBuildableConstruction(_constructionId, _anchor, _z, _priority, context.CurrentTick);
+            target.EnqueueBuildableConstructionOrder(_constructionId, _anchor, _z, _priority, context.CurrentTick);
         }
     }
 
@@ -51,4 +50,3 @@ public sealed class CreateBuildableConstructionOrderCommand : ICommand
         return ms.ToArray();
     }
 }
-

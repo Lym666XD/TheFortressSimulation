@@ -4,7 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Random;
+using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
@@ -196,7 +198,7 @@ public sealed class ItemManager
             foreach (var gid in ids)
             {
                 if (!_instances.TryGetValue(gid, out var inst)) continue;
-                if (inst.IsCarried) continue;
+                if (!inst.IsOnGround) continue;
                 if (!byDef.TryGetValue(inst.DefinitionId, out var list))
                 {
                     list = new List<Guid>();
@@ -226,8 +228,7 @@ public sealed class ItemManager
                 target.StackCount = sum;
                 _posIndex[key] = new List<Guid> { targetId };
                 string msg = $"[ItemManager] MERGE: Consolidated {list.Count} stacks of '{target.DefinitionId}' at ({worldPos.X},{worldPos.Y},{z}) -> qty={target.StackCount}";
-                LogCallback?.Invoke(msg);
-                Console.WriteLine(msg);
+                Emit(msg);
             }
             return removed;
         }
@@ -278,8 +279,7 @@ public sealed class ItemManager
         _instances[newGuid] = clone;
         IndexAdd(newGuid, clone.Position, clone.Z);
         string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
-        LogCallback?.Invoke(msg);
-        System.Console.WriteLine(msg);
+        Emit(msg);
         return newGuid;
     }
 
@@ -301,7 +301,7 @@ public sealed class ItemManager
         var itemsPath = Path.Combine(dataPath, "items");
         if (!Directory.Exists(itemsPath))
         {
-            Console.WriteLine($"[ItemManager] WARNING: Items directory not found: {itemsPath}");
+            Emit($"[ItemManager] WARNING: Items directory not found: {itemsPath}");
             return;
         }
 
@@ -341,8 +341,7 @@ public sealed class ItemManager
                             catch (Exception ex)
                             {
                                 var emsg = $"[ItemManager] ERROR: furniture entry invalid in {System.IO.Path.GetFileName(file)}: {ex.Message}";
-                                Console.WriteLine(emsg);
-                                LogCallback?.Invoke(emsg);
+                                Emit(emsg);
                                 failed++;
                             }
                         }
@@ -376,8 +375,7 @@ public sealed class ItemManager
                                 if (def.Id.Contains("boulder"))
                                 {
                                     var msg = $"[ItemManager] Boulder name enriched: id={def.Id} '{oldName}' -> '{def.Name}' (mat={def.FixedMaterial})";
-                                    Console.WriteLine(msg);
-                                    LogCallback?.Invoke(msg);
+                                    Emit(msg);
                                 }
                             }
                         }
@@ -390,8 +388,7 @@ public sealed class ItemManager
                     catch (Exception ex)
                     {
                         var msg = $"[ItemManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}";
-                        Console.WriteLine(msg);
-                        LogCallback?.Invoke(msg);
+                        Emit(msg);
                         failed++;
                     }
                 }
@@ -399,18 +396,15 @@ public sealed class ItemManager
             catch (Exception ex)
             {
                 var msg = $"[ItemManager] ERROR: Failed to load {System.IO.Path.GetFileName(file)}: {ex.Message}";
-                Console.WriteLine(msg);
-                LogCallback?.Invoke(msg);
+                Emit(msg);
                 failed++;
             }
         }
 
         var summary = $"[ItemManager] Loaded {loaded} item definitions from {files.Length} files ({failed} errors)";
-        Console.WriteLine(summary);
-        LogCallback?.Invoke(summary);
+        Emit(summary);
         var kindsMsg = $"[ItemManager] Indexed {_kindIndex.Count} kinds: {string.Join(", ", _kindIndex.Keys)}";
-        Console.WriteLine(kindsMsg);
-        LogCallback?.Invoke(kindsMsg);
+        Emit(kindsMsg);
     }
 
     // === Helpers (display/UX) ===
@@ -461,7 +455,7 @@ public sealed class ItemManager
             // For now just log a warning if material looks suspicious
             if (!def.FixedMaterial.StartsWith("core_mat_"))
             {
-                Console.WriteLine($"[ItemManager] WARNING: Item '{def.Id}' has unusual material: {def.FixedMaterial}");
+                Emit($"[ItemManager] WARNING: Item '{def.Id}' has unusual material: {def.FixedMaterial}");
             }
         }
     }
@@ -502,21 +496,21 @@ public sealed class ItemManager
     {
         try
         {
-            Console.WriteLine($"[ItemManager] SpawnItem called: id={itemId}, pos=({worldPos.X},{worldPos.Y},{z}), qty={quantity}");
-            Console.WriteLine($"[ItemManager] Definitions loaded: {_definitions.Count}");
+            Emit($"[ItemManager] SpawnItem called: id={itemId}, pos=({worldPos.X},{worldPos.Y},{z}), qty={quantity}");
+            Emit($"[ItemManager] Definitions loaded: {_definitions.Count}");
 
             // Validate definition exists
             if (!_definitions.TryGetValue(itemId, out var def))
             {
-                Console.WriteLine($"[ItemManager] ERROR: Unknown item '{itemId}'");
-                Console.WriteLine($"[ItemManager] Available items: {string.Join(", ", _definitions.Keys.Take(5))}");
+                Emit($"[ItemManager] ERROR: Unknown item '{itemId}'");
+                Emit($"[ItemManager] Available items: {string.Join(", ", _definitions.Keys.Take(5))}");
                 return null;
             }
 
             // Validate world is set
             if (_world == null)
             {
-                Console.WriteLine($"[ItemManager] ERROR: World not set");
+                Emit("[ItemManager] ERROR: World not set");
                 return null;
             }
 
@@ -526,27 +520,27 @@ public sealed class ItemManager
             int localX = worldPos.X % 32;
             int localY = worldPos.Y % 32;
 
-            Console.WriteLine($"[ItemManager] Chunk coords: ({chunkX},{chunkY},{z}), Local: ({localX},{localY})");
+            Emit($"[ItemManager] Chunk coords: ({chunkX},{chunkY},{z}), Local: ({localX},{localY})");
 
             var chunkKey = new ChunkKey(chunkX, chunkY, z);
             var chunk = _world.GetChunk(chunkKey);
 
             if (chunk == null)
             {
-                Console.WriteLine($"[ItemManager] ERROR: Chunk not found at ({chunkX},{chunkY},{z})");
+                Emit($"[ItemManager] ERROR: Chunk not found at ({chunkX},{chunkY},{z})");
                 return null;
             }
 
-            Console.WriteLine($"[ItemManager] Chunk found, getting tile...");
+            Emit("[ItemManager] Chunk found, getting tile...");
 
             // Validate tile supports spawning items.
             // Policy change: allow any walkable tile (floor/ramp/stairs) not just OpenWithFloor.
             var tile = chunk.GetTile(localX, localY);
-            Console.WriteLine($"[ItemManager] Tile kind: {tile.Kind}");
+            Emit($"[ItemManager] Tile kind: {tile.Kind}");
 
             if (!tile.IsWalkable)
             {
-                Console.WriteLine($"[ItemManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
+                Emit($"[ItemManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
                 return null;
             }
 
@@ -555,7 +549,7 @@ public sealed class ItemManager
             {
                 // Find existing items at same position with same itemId
                 var existingAtPos = _instances.Values
-                    .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z && i.DefinitionId == itemId)
+                    .Where(i => i.IsOnGround && i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z && i.DefinitionId == itemId)
                     .OrderBy(i => i.Guid)
                     .ToList();
 
@@ -565,14 +559,13 @@ public sealed class ItemManager
                     var existingItem = existingAtPos[0];
                     existingItem.StackCount += quantity;
                     string stackMsg = $"[ItemManager] SUCCESS: Stacked '{def.Name}' +{quantity} onto existing stack (guid={existingItem.Guid}, new qty={existingItem.StackCount}) at ({worldPos.X},{worldPos.Y},{z})";
-                    LogCallback?.Invoke(stackMsg);
-                    Console.WriteLine(stackMsg);
+                    Emit(stackMsg);
                     return existingItem.Guid;
                 }
 
                 // Extra diagnostics: if no stack match but there are other items here, log what's present
                 var anyAtPos = _instances.Values
-                    .Where(i => i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z)
+                    .Where(i => i.IsOnGround && i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z)
                     .OrderBy(i => i.Guid)
                     .ToList();
                 if (anyAtPos.Count > 0)
@@ -583,8 +576,7 @@ public sealed class ItemManager
                         .Select(g => $"{g.Key}*{g.Sum(it => it.StackCount)}")
                         .ToList();
                     string diag = $"[ItemManager] STACK-CHECK: No stack match for id={itemId} at ({worldPos.X},{worldPos.Y},{z}); present={{{string.Join(", ", byId)}}}";
-                    LogCallback?.Invoke(diag);
-                    Console.WriteLine(diag);
+                    Emit(diag);
                 }
 
                 // Create new instance
@@ -595,16 +587,15 @@ public sealed class ItemManager
                 IndexAdd(guid, worldPos, z);
 
                 string spawnMsg = $"[ItemManager] SUCCESS: Spawned '{def.Name}' (id={itemId}, guid={guid}, qty={quantity}) at ({worldPos.X},{worldPos.Y},{z})";
-                LogCallback?.Invoke(spawnMsg);
-                Console.WriteLine(spawnMsg);
+                Emit(spawnMsg);
                 return guid;
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ItemManager] EXCEPTION: Failed to spawn '{itemId}' at ({worldPos.X},{worldPos.Y},{z})");
-            Console.WriteLine($"[ItemManager] Exception: {ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"[ItemManager] StackTrace: {ex.StackTrace}");
+            Emit($"[ItemManager] EXCEPTION: Failed to spawn '{itemId}' at ({worldPos.X},{worldPos.Y},{z})");
+            Emit($"[ItemManager] Exception: {ex.GetType().Name}: {ex.Message}");
+            Emit($"[ItemManager] StackTrace: {ex.StackTrace}");
             return null;
         }
     }
@@ -668,6 +659,23 @@ public sealed class ItemManager
     }
 
     /// <summary>
+    /// Find an item by the compact entity id used in DiffTarget.
+    /// </summary>
+    public ItemInstance? GetInstanceByEntityId(uint entityId)
+    {
+        lock (_instanceLock)
+        {
+            foreach (var inst in _instances.Values)
+            {
+                if (ToEntityId(inst.Guid) == entityId)
+                    return inst;
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
     /// Get all instances (creates a snapshot for thread safety)
     /// </summary>
     public IEnumerable<ItemInstance> GetAllInstances()
@@ -675,6 +683,32 @@ public sealed class ItemManager
         lock (_instanceLock)
         {
             return _instances.Values.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Get all item instances that are physically on the ground.
+    /// </summary>
+    public IEnumerable<ItemInstance> GetGroundInstances()
+    {
+        lock (_instanceLock)
+        {
+            return _instances.Values
+                .Where(inst => inst.IsOnGround)
+                .ToList();
+        }
+    }
+
+    /// <summary>
+    /// Get all ground item instances on a Z layer.
+    /// </summary>
+    public IEnumerable<ItemInstance> GetGroundInstancesAtZ(int z)
+    {
+        lock (_instanceLock)
+        {
+            return _instances.Values
+                .Where(inst => inst.IsOnGround && inst.Z == z)
+                .ToList();
         }
     }
 
@@ -702,6 +736,41 @@ public sealed class ItemManager
     }
 
     /// <summary>
+    /// Get snapshot of ground items at a given tile.
+    /// </summary>
+    public IEnumerable<ItemInstance> GetGroundItemsAt(Point worldPos, int z)
+    {
+        return GetItemsAt(worldPos, z, groundOnly: true);
+    }
+
+    /// <summary>
+    /// Get snapshot of ground items inside a world rectangle on one Z layer.
+    /// </summary>
+    public IEnumerable<ItemInstance> GetGroundItemsIn(Rectangle worldRect, int z)
+    {
+        lock (_instanceLock)
+        {
+            var list = new List<ItemInstance>();
+            for (int y = worldRect.Y; y < worldRect.MaxExtentY; y++)
+            {
+                for (int x = worldRect.X; x < worldRect.MaxExtentX; x++)
+                {
+                    var key = KeyFor(new Point(x, y), z);
+                    if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+                        continue;
+
+                    foreach (var gid in ids)
+                    {
+                        if (_instances.TryGetValue(gid, out var inst) && inst.IsOnGround)
+                            list.Add(inst);
+                    }
+                }
+            }
+            return list;
+        }
+    }
+
+    /// <summary>
     /// Remove an item instance by GUID, updating position index accordingly.
     /// Returns true if removed.
     /// </summary>
@@ -713,9 +782,18 @@ public sealed class ItemManager
             IndexRemove(guid, inst.Position, inst.Z);
             _instances.Remove(guid);
             string msg = $"[ItemManager] REMOVE: Removed item guid={guid} id={inst.DefinitionId} at ({inst.Position.X},{inst.Position.Y},{inst.Z})";
-            LogCallback?.Invoke(msg);
-            Console.WriteLine(msg);
+            Emit(msg);
             return true;
         }
+    }
+
+    private static void Emit(string message)
+    {
+        SimulationDiagnostics.Information(LogCallback, "Simulation.Items", message);
+    }
+
+    private static uint ToEntityId(Guid guid)
+    {
+        return DiffTargetEncoding.EntityId(guid);
     }
 }

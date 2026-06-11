@@ -30,7 +30,7 @@ public sealed class ConstructionTuning
     public static ConstructionTuning LoadFromContent()
     {
         var t = Default;
-        var obj = HumanFortress.Core.Content.ContentRegistry.Instance.GetTuning<JObject>("tuning.construction", "$");
+        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.construction", "$");
         if (obj == null) return t;
 
         t.FloorPlankCount = obj["floor_plank_count"]?.Value<int?>() ?? t.FloorPlankCount;

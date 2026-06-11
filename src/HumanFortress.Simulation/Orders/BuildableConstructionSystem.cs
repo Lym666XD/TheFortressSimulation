@@ -17,13 +17,19 @@ public sealed class BuildableConstructionSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
+    private readonly IConstructionCatalog _constructions;
     private readonly int _maxPerTick;
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlaceableInstance> _outbox = new();
 
-    public BuildableConstructionSystem(World.World world, OrdersManager orders, int maxPerTick = 16)
+    public BuildableConstructionSystem(
+        World.World world,
+        OrdersManager orders,
+        IConstructionCatalog constructions,
+        int maxPerTick = 16)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
+        _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _maxPerTick = Math.Max(1, maxPerTick);
     }
 
@@ -40,7 +46,7 @@ public sealed class BuildableConstructionSystem : ITick
         {
             try
             {
-                var def = ConstructionRegistry.Instance.GetConstruction(d.ConstructionId);
+                var def = _constructions.GetConstruction(d.ConstructionId);
                 if (def == null)
                 {
                     OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=UnknownDef");

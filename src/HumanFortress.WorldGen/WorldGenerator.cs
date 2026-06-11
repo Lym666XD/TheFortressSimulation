@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HumanFortress.Core.Diagnostics;
 using HumanFortress.Core.World;
 using HumanFortress.WorldGen.Stages;
 
@@ -35,7 +36,15 @@ namespace HumanFortress.WorldGen
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error in stage {stage.Name}: {ex.Message}");
+                    DiagnosticHub.Sink.Error(
+                        "WorldGen.Generator",
+                        $"Error in stage {stage.Name}: {ex.Message}",
+                        ex);
+
+                    if (!DiagnosticHub.IsConfigured)
+                    {
+                        Console.WriteLine($"Error in stage {stage.Name}: {ex.Message}");
+                    }
                 }
             }
             

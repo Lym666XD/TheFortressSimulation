@@ -2,6 +2,7 @@
 using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.App.Runtime;
+using HumanFortress.Runtime;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Placeables;
 using System.Linq;
@@ -831,7 +832,7 @@ namespace HumanFortress.App.UI;
     private static System.Collections.Generic.List<WorkshopDisplay> CollectWorkshops(HumanFortress.Simulation.World.World world)
     {
         var list = new System.Collections.Generic.List<WorkshopDisplay>();
-        var registry = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        var registry = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
         foreach (var chunk in world.GetAllChunks())
         {
             var pd = chunk.GetPlaceableData();
@@ -858,7 +859,7 @@ namespace HumanFortress.App.UI;
 
     public static void DrawWorkshopsOverlay(MapScreenSurface mapSurface, HumanFortress.Simulation.World.World world, int currentZ, SadRogue.Primitives.Rectangle viewport)
     {
-        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
         var border = new Color(255, 230, 0);         // completed
         var fill = new Color(255, 230, 0, 90);
         var siteBorder = new Color(255, 140, 0);     // construction site
@@ -1039,10 +1040,8 @@ namespace HumanFortress.App.UI;
 
     private static void AddDeliveredAt(HumanFortress.Simulation.World.World world, int z, int x, int y, HumanFortress.Simulation.Placeables.PlaceableInstance site, System.Collections.Generic.Dictionary<string, int> delivered)
     {
-        foreach (var it in world.Items.GetAllInstances())
+        foreach (var it in world.Items.GetGroundItemsAt(new SadRogue.Primitives.Point(x, y), z))
         {
-            if (it.IsCarried) continue;
-            if (it.Position.X != x || it.Position.Y != y || it.Z != z) continue;
             var def = world.Items.GetDefinition(it.DefinitionId);
             if (def == null || def.Tags == null) continue;
             foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
@@ -1094,7 +1093,7 @@ namespace HumanFortress.App.UI;
         }
         if (found == null) { return; }
 
-        var reg = HumanFortress.Core.Content.Registry.ConstructionRegistry.Instance;
+        var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
         var def = reg.GetConstruction(found.DefinitionId);
         string title = def?.Name ?? found.DefinitionId;
         var fp = found.Footprint;
@@ -1852,7 +1851,7 @@ namespace HumanFortress.App.UI;
         }
 
         // Get items (on ground only)
-        var allItems = world.Items.GetAllInstances().Where(i => i.IsOnGround);
+        var allItems = world.Items.GetGroundInstances();
         var filteredItems = ui.ItemKindFilter == "all"
             ? allItems.ToList()
             : allItems.Where(item => {

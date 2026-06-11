@@ -1,8 +1,9 @@
 using System;
 using HumanFortress.Core.World;
-using HumanFortress.Core.Content;
 using Newtonsoft.Json.Linq;
 using SadRogue.Primitives;
+using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.WorldGen
 {

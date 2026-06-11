@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using HumanFortress.Core.Diagnostics;
 
 namespace HumanFortress.Core.Time;
 
@@ -434,7 +435,11 @@ public sealed class TickScheduler
     private void HandleSystemError(ITick system, string phase, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: catch, quarantine, log, continue
-        Console.WriteLine($"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}");
+        DiagnosticHub.Error(
+            "Core.TickScheduler",
+            $"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}",
+            ex,
+            CurrentTick);
         // TODO: Implement quarantine logic
     }
 }

@@ -35,7 +35,7 @@ public class TerrainKindRegistry
         // Validate bit layout
         bitLayout.Validate();
 
-        Console.WriteLine($"[TerrainKindRegistry] Loaded {_kindsById.Count} terrain kinds, version {version}");
+        ContentRegistryDiagnostics.Emit($"[TerrainKindRegistry] Loaded {_kindsById.Count} terrain kinds, version {version}");
     }
 
     /// <summary>
@@ -104,7 +104,7 @@ public class TerrainKindRegistry
             return id;
         }
 
-        Console.WriteLine($"[TerrainKindRegistry] Warning: Unknown terrain kind '{name}', using fallback {fallback}");
+        ContentRegistryDiagnostics.Emit($"[TerrainKindRegistry] Warning: Unknown terrain kind '{name}', using fallback {fallback}");
         return fallback;
     }
 

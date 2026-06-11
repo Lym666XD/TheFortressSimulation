@@ -39,9 +39,23 @@ public sealed class RecipeOutput
 }
 
 /// <summary>
+/// Read-only recipe catalog exposed to runtime/gameplay systems.
+/// </summary>
+public interface IRecipeCatalog
+{
+    int Count { get; }
+
+    RecipeDefinition? GetRecipe(string id);
+
+    IReadOnlyList<RecipeDefinition> GetRecipesForWorkshop(string workshopId);
+
+    IEnumerable<RecipeDefinition> GetAllRecipes();
+}
+
+/// <summary>
 /// Runtime registry storing recipe definitions keyed by id and workshop.
 /// </summary>
-public sealed class RecipeRegistry
+public sealed class RecipeRegistry : IRecipeCatalog
 {
     private static readonly RecipeRegistry _instance = new();
     public static RecipeRegistry Instance => _instance;

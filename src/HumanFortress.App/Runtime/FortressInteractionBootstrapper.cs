@@ -37,7 +37,6 @@ internal static class FortressInteractionBootstrapper
         layout.MapSurface.MouseMovedLocal += onMapMouseMoved;
         layout.MapSurface.LeftClickedLocal += onMapLeftClicked;
 
-        var coordinateMapper = new WorldCoordinateMapper();
         var selectionTool = new DragRectSelectionTool(worldSizeTiles);
         selectionTool.Started += s => { ui.PlaceZMin = s.ZMin; ui.PlaceZMax = s.ZMax; };
         selectionTool.Changed += s => { ui.PlaceZMin = s.ZMin; ui.PlaceZMax = s.ZMax; redraw(); };
@@ -63,6 +62,6 @@ internal static class FortressInteractionBootstrapper
         layout.UiSurface.MouseMovedLocal += onOverlayMouseMoved;
         Logger.Log($"[INIT] UiOverlay size={layout.UiSurface.Surface.Width}x{layout.UiSurface.Surface.Height}");
 
-        return new FortressInteractionSetup(coordinateMapper, selectionTool);
+        return new FortressInteractionSetup(selectionTool);
     }
 }

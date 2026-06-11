@@ -1,7 +1,10 @@
 using HumanFortress.App.Jobs;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Craft;
 using HumanFortress.Navigation;
+using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
@@ -12,7 +15,7 @@ namespace HumanFortress.App.Runtime;
 /// <summary>
 /// Builds and exposes the simulation systems that participate in the runtime tick loop.
 /// </summary>
-internal sealed class SimulationRuntimeSystems
+internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
 {
     private SimulationRuntimeSystems(
         HaulingSystem haulingPlanner,
@@ -79,13 +82,16 @@ internal sealed class SimulationRuntimeSystems
         ArgumentNullException.ThrowIfNull(itemsDiffLog);
         ArgumentNullException.ThrowIfNull(navigation);
 
+        var content = ContentRegistry.Instance;
+        var constructionCatalog = content.Constructions;
+
         var miningPlanner = new MiningSystem(world, world.Orders);
         var transportQueue = new TransportRequestQueue();
         var haulingPlanner = new HaulingSystem(world, world.Orders, transportIntake: transportQueue);
         var constructionMaterialsPlanner = new ConstructionMaterialsPlanner(world, transportQueue);
-        ConstructionMaterialsPlanner.LogCallback = msg => Logger.Log(msg);
+        ConstructionMaterialsPlanner.LogCallback = Logger.CreateCallback("Jobs.ConstructionMaterials");
         var constructionPlanner = new ConstructionSystem(world, world.Orders);
-        var buildablePlanner = new BuildableConstructionSystem(world, world.Orders);
+        var buildablePlanner = new BuildableConstructionSystem(world, world.Orders, constructionCatalog);
 
         var schedulerTunings = SchedulerTunings.LoadFromContent(baseDir);
         var workshopTunings = WorkshopTunings.LoadFromContent(baseDir);
@@ -120,12 +126,16 @@ internal sealed class SimulationRuntimeSystems
             constructionPlanner,
             diffLog,
             itemsDiffLog,
+            constructionCatalog,
             maxPerTick: schedulerTunings.Construction.PlanPerTick);
 
-        var craftPlanner = new CraftPlanner(world, transportQueue, workshopTunings);
+        var craftRecipes = new CraftRecipeCatalogAdapter();
+        var craftPlanner = new CraftPlanner(world, transportQueue, craftRecipes, constructionCatalog);
         var craftJobs = new CraftJobSystem(
             world,
             craftPlanner,
+            craftRecipes,
+            constructionCatalog,
             itemsDiffLog,
             navigation,
             professionAssignments,

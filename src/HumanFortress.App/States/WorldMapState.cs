@@ -166,6 +166,15 @@ namespace HumanFortress.App.States
                 else
                 {
                     _infoPanel.Print(0, 10, "[NOT EMBARKABLE]", Color.Red);
+                    var failures = tile.GetEmbarkabilityFailures();
+                    if (failures.Count > 0)
+                    {
+                        _infoPanel.Print(0, 11, "Reasons:", Color.Gray);
+                        for (int i = 0; i < failures.Count && i < 3; i++)
+                        {
+                            _infoPanel.Print(0, 12 + i, $"- {failures[i]}", Color.Gray);
+                        }
+                    }
                 }
             }
         }

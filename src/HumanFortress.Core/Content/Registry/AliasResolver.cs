@@ -30,8 +30,8 @@ public class AliasResolver
         _terrainAliases.AddRange(terrainAliases);
         _migrations.AddRange(migrations.OrderBy(m => m.FromVersion));
 
-        Console.WriteLine($"[AliasResolver] Loaded {_materialAliases.Count} material aliases, " +
-                         $"{_terrainAliases.Count} terrain aliases, {_migrations.Count} migrations");
+        ContentRegistryDiagnostics.Emit($"[AliasResolver] Loaded {_materialAliases.Count} material aliases, " +
+                                        $"{_terrainAliases.Count} terrain aliases, {_migrations.Count} migrations");
     }
 
     /// <summary>
@@ -49,7 +49,7 @@ public class AliasResolver
         var alias = _materialAliases.FirstOrDefault(a => a.From == name);
         if (alias != null)
         {
-            Console.WriteLine($"[AliasResolver] Resolved material alias: '{name}' -> '{alias.To}'");
+            ContentRegistryDiagnostics.Emit($"[AliasResolver] Resolved material alias: '{name}' -> '{alias.To}'");
             return alias.To;
         }
 
@@ -71,7 +71,7 @@ public class AliasResolver
         var alias = _terrainAliases.FirstOrDefault(a => a.From == name);
         if (alias != null)
         {
-            Console.WriteLine($"[AliasResolver] Resolved terrain alias: '{name}' -> '{alias.To}'");
+            ContentRegistryDiagnostics.Emit($"[AliasResolver] Resolved terrain alias: '{name}' -> '{alias.To}'");
             return alias.To;
         }
 
@@ -135,8 +135,8 @@ public class AliasResolver
                 if (rule.Source.Count == 1 && rule.Source[0] == name)
                 {
                     var newName = rule.Target.FirstOrDefault() ?? name;
-                    Console.WriteLine($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
-                                    $"Renamed '{name}' to '{newName}'");
+                    ContentRegistryDiagnostics.Emit($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
+                                                    $"Renamed '{name}' to '{newName}'");
                     return newName;
                 }
                 break;
@@ -145,8 +145,8 @@ public class AliasResolver
                 if (rule.Source.Contains(name))
                 {
                     var newName = rule.Target.FirstOrDefault() ?? name;
-                    Console.WriteLine($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
-                                    $"Replaced '{name}' with '{newName}'");
+                    ContentRegistryDiagnostics.Emit($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
+                                                    $"Replaced '{name}' with '{newName}'");
                     return newName;
                 }
                 break;
@@ -155,8 +155,8 @@ public class AliasResolver
                 if (rule.Source.Contains(name))
                 {
                     var fallback = rule.Target.FirstOrDefault() ?? "generic_stone";
-                    Console.WriteLine($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
-                                    $"Removed '{name}', using fallback '{fallback}'");
+                    ContentRegistryDiagnostics.Emit($"[AliasResolver] Migration {migration.FromVersion}->{migration.ToVersion}: " +
+                                                    $"Removed '{name}', using fallback '{fallback}'");
                     return fallback;
                 }
                 break;

@@ -1,0 +1,185 @@
+using HumanFortress.Navigation;
+using HumanFortress.Simulation.Orders;
+using SadRogue.Primitives;
+using WorldModel = HumanFortress.Simulation.World.World;
+
+namespace HumanFortress.Jobs.Mining;
+
+internal sealed class MiningJobExecutor
+{
+    public const string SystemId = "Jobs.MiningJobSystem";
+
+    private const int CreatureReserveTtlTicks = 200;
+    private const string JobTag = "mining";
+    private const int MaxFailedReplans = 10;
+
+    private readonly WorldModel _world;
+    private readonly IPathService _paths;
+    private readonly IMiningJobLogger _logger;
+    private readonly List<ActiveMiningJob> _active = new();
+    private readonly List<MiningSystem.PlannedDig> _inboxBuffer = new();
+    private readonly MiningBacklogBuffer _backlog = new();
+    private readonly MiningActiveJobRunner _activeJobRunner;
+    private readonly MiningIntakeCoordinator _intakeCoordinator;
+    private readonly MiningReadJobProcessor _readJobProcessor;
+    private readonly MiningStatsTracker _statsTracker;
+    private readonly List<(Point Cell, int Z, ulong ExpireTick)> _recentCompleted = new();
+    private readonly MiningTileReservationTracker _reservedTiles = new();
+    private readonly MiningDeferredStairwellBuffer _deferredStairwells = new();
+
+    public MiningJobExecutor(
+        WorldModel world,
+        MiningSystem planner,
+        IPathService paths,
+        IWorldNavigationView navView,
+        IMiningDiffEmitter diffEmitter,
+        IMiningDropResolver dropResolver,
+        IMiningWorkerCandidateSource? workerCandidates,
+        IMiningJobCompletionSink? completionSink,
+        IMiningJobLogger? logger,
+        int intakeBudget,
+        int carryoverMaxTicks)
+    {
+        _world = world ?? throw new ArgumentNullException(nameof(world));
+        _paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        _logger = logger ?? NullMiningJobLogger.Instance;
+
+        var move = new MovementExecutor(paths);
+        var adjacencyFinder = new MiningAdjacencyFinder(world);
+        var resultApplier = new MiningResultApplier(world, diffEmitter, dropResolver);
+        var finalizer = new MiningJobFinalizer(_reservedTiles, world.Reservations);
+        var stairwellGate = new MiningStairwellGate(world, _deferredStairwells, _logger);
+        _intakeCoordinator = new MiningIntakeCoordinator(planner, _backlog, _deferredStairwells, _logger, intakeBudget);
+        var assignmentHandler = new MiningAssignmentHandler(
+            world,
+            paths,
+            navView,
+            move,
+            dropResolver,
+            _reservedTiles,
+            workerCandidates,
+            _logger,
+            SystemId,
+            JobTag,
+            CreatureReserveTtlTicks);
+        _readJobProcessor = new MiningReadJobProcessor(
+            planner,
+            _backlog,
+            _reservedTiles,
+            adjacencyFinder,
+            stairwellGate,
+            assignmentHandler,
+            _logger);
+        _activeJobRunner = new MiningActiveJobRunner(
+            world,
+            planner,
+            paths,
+            navView,
+            move,
+            _backlog,
+            diffEmitter,
+            dropResolver,
+            resultApplier,
+            finalizer,
+            completionSink,
+            _logger,
+            SystemId,
+            CreatureReserveTtlTicks,
+            MaxFailedReplans);
+        _statsTracker = new MiningStatsTracker(Math.Max(1, carryoverMaxTicks));
+    }
+
+    public int LastIntakeCount => _statsTracker.LastIntakeCount;
+
+    public void ReadTick(ulong tick)
+    {
+        _paths.BeginTick();
+        int intakeCount = _intakeCoordinator.Fill(tick, _inboxBuffer);
+
+        if (intakeCount == 0)
+        {
+            _statsTracker.RecordIntake(0);
+            if ((tick % 60UL) == 0UL)
+            {
+                _logger.Log($"[MINING][{tick}] No planned digs dequeued.");
+            }
+
+            UpdateStats(tick);
+            return;
+        }
+
+        _statsTracker.RecordIntake(intakeCount);
+
+        var digs = MiningDigOrdering.Sort(_inboxBuffer);
+        var creatures = _world.Creatures.GetAllInstances().OrderBy(c => c.Guid).ToList();
+        if (digs.Count > 0)
+        {
+            var idGroups = digs.GroupBy(d => d.DesignationId).Select(g => $"{g.Key}:{g.Count()}").ToArray();
+            var idsStr = string.Join(",", idGroups);
+            _logger.Log($"[MINING][{tick}] Planned digs dequeued: {digs.Count}; available workers: {creatures.Count}; ids=[{idsStr}]");
+        }
+
+        var busy = new HashSet<Guid>(_active.Select(a => a.WorkerId));
+        foreach (var pd in digs)
+        {
+            _readJobProcessor.Process(pd, creatures, busy, _active, tick);
+        }
+
+        UpdateStats(tick);
+    }
+
+    public void WriteTick(ulong tick)
+    {
+        if (_active.Count == 0)
+        {
+            UpdateStats(tick);
+            return;
+        }
+
+        _activeJobRunner.RunWriteTick(_active, tick);
+        UpdateStats(tick);
+    }
+
+    public List<(Point Cell, int Z)> GetRecentCompletions(ulong now)
+    {
+        for (int i = _recentCompleted.Count - 1; i >= 0; i--)
+        {
+            if (_recentCompleted[i].ExpireTick <= now)
+            {
+                _recentCompleted.RemoveAt(i);
+            }
+        }
+
+        return _recentCompleted.Select(rc => (rc.Cell, rc.Z)).ToList();
+    }
+
+    public List<MiningActiveJobView> GetActiveJobsSnapshot()
+    {
+        return MiningDebugSnapshotBuilder.BuildActiveJobs(_active);
+    }
+
+    public MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
+    {
+        return MiningDebugSnapshotBuilder.BuildDebugSnapshot(
+            _active,
+            GetLastStatsSnapshot(),
+            _backlog.Count,
+            _deferredStairwells.Count,
+            _reservedTiles.Count,
+            maxActive,
+            includeSeeds);
+    }
+
+    public int GetBacklogCount() => _backlog.Count;
+
+    public int GetDeferredCount() => _deferredStairwells.Count;
+
+    public int GetReservedTileCount() => _reservedTiles.Count;
+
+    public MiningJobStatsSnapshot GetLastStatsSnapshot() => _statsTracker.GetSnapshot();
+
+    private void UpdateStats(ulong tick)
+    {
+        _statsTracker.Update(tick, _active.Count, _backlog, _deferredStairwells.Count, _reservedTiles.Count);
+    }
+}

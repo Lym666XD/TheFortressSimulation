@@ -1,5 +1,5 @@
-using HumanFortress.Core.Content;
 using Newtonsoft.Json.Linq;
+using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Navigation;
 

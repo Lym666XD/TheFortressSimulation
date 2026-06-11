@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Craft;
 
 namespace HumanFortress.App.Jobs
 {

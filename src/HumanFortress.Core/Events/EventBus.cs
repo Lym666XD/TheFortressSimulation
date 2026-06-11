@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using HumanFortress.Core.Diagnostics;
 
 namespace HumanFortress.Core.Events;
 
@@ -33,7 +34,10 @@ public sealed class EventBus : IEventBus
                 catch (Exception ex)
                 {
                     // Per ERROR_HANDLING_POLICY.md: catch and continue
-                    Console.WriteLine($"[ERROR] Event handler failed for {gameEvent.EventType}: {ex.Message}");
+                    DiagnosticHub.Error(
+                        "Core.EventBus",
+                        $"[ERROR] Event handler failed for {gameEvent.EventType}: {ex.Message}",
+                        ex);
                 }
             }
         }

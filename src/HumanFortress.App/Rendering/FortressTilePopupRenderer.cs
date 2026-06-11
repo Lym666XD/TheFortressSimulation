@@ -1,8 +1,8 @@
-using HumanFortress.Core.Content;
 using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadConsole;
 using SadRogue.Primitives;
+using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.App.Rendering;
@@ -72,8 +72,7 @@ internal static class FortressTilePopupRenderer
     private static void DrawItems(ICellSurface surf, World world, Point tileWorldPosition, int tileZ, int x, ref int line)
     {
         surf.Print(x, line++, "--- Items ---", Color.Yellow);
-        var items = world.Items.GetAllInstances()
-            .Where(i => i.IsOnGround && i.Position.X == tileWorldPosition.X && i.Position.Y == tileWorldPosition.Y && i.Z == tileZ)
+        var items = world.Items.GetGroundItemsAt(tileWorldPosition, tileZ)
             .ToList();
 
         if (items.Count > 0)

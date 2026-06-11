@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
@@ -11,6 +12,8 @@ namespace HumanFortress.Simulation.Stockpile;
 /// </summary>
 public sealed class StockpileDiffApplicator
 {
+    public static Action<string>? LogCallback { get; set; }
+
     private readonly StockpileManager _zoneManager;
 
     public StockpileDiffApplicator(StockpileManager zoneManager)
@@ -42,7 +45,11 @@ public sealed class StockpileDiffApplicator
             {
                 // Log error but continue processing
                 // Per CONCURRENCY_MODEL: failures should not crash the loop
-                Console.WriteLine($"[StockpileDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}");
+                SimulationDiagnostics.Error(
+                    LogCallback,
+                    "Simulation.StockpileDiff",
+                    $"[StockpileDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
+                    ex);
             }
         }
     }

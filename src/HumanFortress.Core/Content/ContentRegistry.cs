@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Schema;
+using HumanFortress.Core.Diagnostics;
 
 #pragma warning disable CA1002 // Do not expose generic lists
 #pragma warning disable CA2227 // Collection properties should be read only
@@ -19,6 +20,8 @@ namespace HumanFortress.Core.Content
     {
         private static ContentRegistry? _instance;
         public static ContentRegistry Instance => _instance ??= new ContentRegistry();
+        public static Action<string>? LogCallback { get; set; }
+        public static IDiagnosticSink Diagnostics { get; set; } = NullDiagnosticSink.Instance;
 
         private readonly Dictionary<string, MaterialData> _materials = new();
         private readonly Dictionary<string, GeologyData> _geology = new();
@@ -45,7 +48,16 @@ namespace HumanFortress.Core.Content
         /// </summary>
         public void LoadContent(string contentPath)
         {
+            _materials.Clear();
+            _geology.Clear();
+            _zones.Clear();
+            _tuning.Clear();
             _errors.Clear();
+            _materialHandles.Clear();
+            _geologyHandles.Clear();
+            _handleToMaterialId.Clear();
+            _handleToGeologyId.Clear();
+            _geologyByMaterialAndKind.Clear();
 
             var registriesPath = Path.Combine(contentPath, "registries");
             var schemasPath = Path.Combine(contentPath, "schemas");
@@ -61,7 +73,11 @@ namespace HumanFortress.Core.Content
             LoadTuningFiles(registriesPath);
 
             // Load materials
-            LoadMaterials(Path.Combine(registriesPath, "materials.json"), schemasPath);
+            LoadMaterials(ResolveFirstExisting(
+                registriesPath,
+                "materials.json",
+                "materials.authoring.json",
+                "materials.registry.json"), schemasPath);
 
             // Load geology/terrain
             LoadGeology(Path.Combine(registriesPath, "geology.json"), schemasPath);
@@ -78,10 +94,14 @@ namespace HumanFortress.Core.Content
             // Validate cross-references
             ValidateCrossReferences();
 
-            Console.WriteLine($"[ContentRegistry] Loaded: {_materials.Count} materials, {_geology.Count} geology entries, {_zones.Count} zone definitions");
+            Emit($"[ContentRegistry] Loaded: {_materials.Count} materials, {_geology.Count} geology entries, {_zones.Count} zone definitions");
             if (_errors.Count > 0)
             {
-                Console.WriteLine($"[ContentRegistry] {_errors.Count} errors during loading");
+                Emit($"[ContentRegistry] {_errors.Count} errors during loading");
+                foreach (var error in _errors)
+                {
+                    Emit($"[ContentRegistry] ERROR {error}");
+                }
             }
         }
 
@@ -164,7 +184,7 @@ namespace HumanFortress.Core.Content
         {
             if (!File.Exists(path))
             {
-                _errors.Add(new ContentError("Materials", "materials.json", null, "File not found"));
+                _errors.Add(new ContentError("Materials", Path.GetFileName(path), null, "File not found"));
                 return;
             }
 
@@ -198,6 +218,27 @@ namespace HumanFortress.Core.Content
             {
                 _errors.Add(new ContentError("Materials", "materials.json", null, ex.Message));
             }
+        }
+
+        private static string ResolveFirstExisting(string directory, params string[] fileNames)
+        {
+            foreach (var fileName in fileNames)
+            {
+                var path = Path.Combine(directory, fileName);
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            return Path.Combine(directory, fileNames.Length > 0 ? fileNames[0] : string.Empty);
+        }
+
+        private static void Emit(string message)
+        {
+            Console.WriteLine(message);
+            Diagnostics.Information("Content.Registry", message);
+            LogCallback?.Invoke(message);
         }
 
         private void LoadGeology(string path, string schemasPath)

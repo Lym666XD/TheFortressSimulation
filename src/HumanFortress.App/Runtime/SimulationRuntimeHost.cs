@@ -1,8 +1,11 @@
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
+using HumanFortress.Runtime;
+using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
@@ -18,11 +21,12 @@ internal sealed class SimulationRuntimeHost
     private readonly CommandQueue _commandQueue;
     private readonly DiffLog _diffLog;
     private readonly ItemsDiffLog _itemsDiffLog;
+    private readonly CreaturesDiffLog _creaturesDiffLog;
     private readonly NavigationManager _navigation;
     private readonly string _baseDir;
     private readonly SimulationRuntimeContext _context;
+    private readonly SimulationRuntimeHostCore _core;
 
-    private SimulationTickPipeline? _pipeline;
     private SimulationRuntimeSystems? _systems;
 
     public SimulationRuntimeHost(
@@ -40,77 +44,66 @@ internal sealed class SimulationRuntimeHost
         _commandQueue = commandQueue;
         _diffLog = diffLog;
         _itemsDiffLog = itemsDiffLog;
+        _creaturesDiffLog = new CreaturesDiffLog();
         _navigation = navigation;
         _baseDir = baseDir;
-        _context = new SimulationRuntimeContext(diffLog, world, eventBus);
+        _context = new SimulationRuntimeContext(
+            diffLog,
+            itemsDiffLog,
+            _creaturesDiffLog,
+            world,
+            eventBus,
+            Logger.Log,
+            ContentRegistry.Instance.Recipes,
+            ContentRegistry.Instance.Constructions);
+        _core = new SimulationRuntimeHostCore(
+            world,
+            tickScheduler,
+            commandQueue,
+            _context,
+            diffLog,
+            itemsDiffLog,
+            _creaturesDiffLog,
+            navigation);
     }
 
     public World World => _world;
     public NavigationManager Navigation => _navigation;
     public SimulationRuntimeSystems? Systems => _systems;
-    public bool IsRunning => _tickScheduler.IsRunning;
+    public bool IsRunning => _core.IsRunning;
 
     public void Start(bool enqueueAutoDig)
     {
-        if (_tickScheduler.IsRunning)
-        {
-            _tickScheduler.Stop();
-        }
-
-        DetachPipeline();
-        _tickScheduler.ClearSystems();
-
-        _systems = SimulationRuntimeSystems.Create(
-            _world,
-            _diffLog,
-            _itemsDiffLog,
-            _navigation,
-            _baseDir);
-        _systems.RegisterWith(_tickScheduler);
-
-        _pipeline = new SimulationTickPipeline(
-            _world,
-            _commandQueue,
-            _context,
-            _diffLog,
-            _itemsDiffLog,
-            _navigation);
-        _pipeline.AttachTo(_tickScheduler);
-
-        SimulationInitialWorkerSpawner.SpawnIfNeeded(_world);
-        _systems.ProfessionAssignments.Initialize(_world.Creatures.GetAllInstances());
-
-        if (enqueueAutoDig)
-        {
-            try
+        _systems = null;
+        _systems = _core.Start(
+            () => SimulationRuntimeSystems.Create(
+                _world,
+                _diffLog,
+                _itemsDiffLog,
+                _navigation,
+                _baseDir),
+            systems => _context.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
+            systems =>
             {
-                SimulationAutoDigSeeder.EnqueueIfPossible(_world, _commandQueue, _tickScheduler.CurrentTick);
-            }
-            catch (Exception ex)
-            {
-                Logger.Log($"[AUTO-DIG] ERROR: {ex.Message}");
-            }
-        }
+                SimulationInitialWorkerSpawner.SpawnIfNeeded(_world);
+                systems.ProfessionAssignments.Initialize(_world.Creatures.GetAllInstances());
 
-        _tickScheduler.Start();
+                if (!enqueueAutoDig)
+                    return;
+
+                try
+                {
+                    SimulationAutoDigSeeder.EnqueueIfPossible(_world, _commandQueue, _tickScheduler.CurrentTick);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Log($"[AUTO-DIG] ERROR: {ex.Message}");
+                }
+            });
     }
 
     public void Stop()
     {
-        if (_tickScheduler.IsRunning)
-        {
-            _tickScheduler.Stop();
-        }
-
-        DetachPipeline();
-    }
-
-    private void DetachPipeline()
-    {
-        if (_pipeline == null)
-            return;
-
-        _pipeline.DetachFrom(_tickScheduler);
-        _pipeline = null;
+        _core.Stop();
     }
 }

@@ -32,7 +32,7 @@ public class BiomeTemplateRegistry
         // Sort by priority (higher priority first)
         _sortedTemplates.AddRange(_allTemplates.OrderByDescending(t => t.Priority));
 
-        Console.WriteLine($"[BiomeTemplateRegistry] Loaded {_templatesById.Count} biome templates, version {version}");
+        ContentRegistryDiagnostics.Emit($"[BiomeTemplateRegistry] Loaded {_templatesById.Count} biome templates, version {version}");
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ public class BiomeTemplateRegistry
 
         if (matches.Count == 0)
         {
-            Console.WriteLine($"[BiomeTemplateRegistry] No template matches parameters");
+            ContentRegistryDiagnostics.Emit("[BiomeTemplateRegistry] No template matches parameters");
             return GetDefaultTemplate();
         }
 
@@ -92,7 +92,7 @@ public class BiomeTemplateRegistry
             return template;
         }
 
-        Console.WriteLine($"[BiomeTemplateRegistry] Warning: Template '{id}' not found, using default");
+        ContentRegistryDiagnostics.Emit($"[BiomeTemplateRegistry] Warning: Template '{id}' not found, using default");
         return GetDefaultTemplate() ?? throw new InvalidOperationException("No default template available");
     }
 

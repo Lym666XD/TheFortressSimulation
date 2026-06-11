@@ -85,6 +85,16 @@ public sealed class DragRectSelectionTool : ISelectionTool
         Changed?.Invoke(Current);
     }
 
+    public void SetZRangeEnd(int z)
+    {
+        if (_state != State.Dragging) return;
+
+        int clampedZ = Math.Max(0, Math.Min(_worldSizeTiles - 1, z));
+        _zMin = Math.Min(_zStart, clampedZ);
+        _zMax = Math.Max(_zStart, clampedZ);
+        Changed?.Invoke(Current);
+    }
+
     private Point Clamp(Point p)
     {
         int x = Math.Max(0, Math.Min(_worldSizeTiles - 1, p.X));

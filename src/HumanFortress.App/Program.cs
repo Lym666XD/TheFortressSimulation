@@ -4,6 +4,7 @@ using HumanFortress.App.GameStates;
 using HumanFortress.App.Runtime;
 using HumanFortress.App.States;
 using HumanFortress.Core.Content;
+using HumanFortress.Core.Diagnostics;
 using SadConsole;
 using SadConsole.Configuration;
 using SadRogue.Primitives;
@@ -23,14 +24,16 @@ public static class Program
         // Run tests if requested
         if (args.Length > 0 && args[0] == "--test")
         {
-            TestRunner.RunTests();
+            System.Console.WriteLine("The App --test entry point has moved to tests/HumanFortress.App.Tests.");
+            System.Console.WriteLine("Run ./RunTests.sh from the repository root.");
             return;
         }
 
         // Run phase validation tests
         if (args.Length > 0 && args[0] == "--validate")
         {
-            PhaseTests.RunAllPhaseTests();
+            System.Console.WriteLine("The App --validate entry point has moved to tests/HumanFortress.App.Tests.");
+            System.Console.WriteLine("Run ./RunTests.sh from the repository root.");
             return;
         }
 
@@ -51,6 +54,12 @@ public static class Program
         var baseDir = AppContext.BaseDirectory;
         Directory.SetCurrentDirectory(baseDir);
 
+        // Setup logging before startup diagnostics and content loading.
+        var logFile = "fortress_debug.log";
+        Logger.Initialize(logFile);
+        ContentRegistry.LogCallback = null;
+        ContentRegistry.Diagnostics = Logger.Sink;
+
         // Preload critical native libraries (SDL2/OpenAL) to avoid DllNotFound issues
         TryPreloadNative(Path.Combine(baseDir, "SDL2.dll"));
         TryPreloadNative(Path.Combine(baseDir, "soft_oal.dll"));
@@ -59,20 +68,26 @@ public static class Program
         var contentPath = Path.Combine(baseDir, "content");
         if (Directory.Exists(contentPath))
         {
-            ContentRegistry.Instance.LoadContent(contentPath);
+            var contentLoad = ContentLoadCoordinator.Load(contentPath);
+            if (!contentLoad.StructuredLoaded)
+            {
+                Logger.Warning(
+                    "Content.Registry",
+                    $"[ContentLoadCoordinator] Structured registry unavailable: {contentLoad.StructuredFailureMessage ?? "unknown error"}");
+            }
         }
 
-        // Setup logging to file AFTER loading content
-        var logFile = "fortress_debug.log";
-        Logger.Initialize(logFile);
-
         // Initialize logging callbacks for lower-level components (Simulation/Navigation layers)
-        HumanFortress.Navigation.NavigationManager.LogCallback = Logger.Log;
-        HumanFortress.Simulation.Items.ItemManager.LogCallback = Logger.Log;
-        HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback = Logger.Log;
-        HumanFortress.Simulation.Orders.OrdersManager.LogCallback = Logger.Log;
-        HumanFortress.Simulation.Orders.MiningSystem.LogCallback = Logger.Log;
-        HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner.LogCallback = Logger.Log;
+        HumanFortress.Navigation.NavigationManager.LogCallback = Logger.CreateCallback("Navigation.Manager");
+        HumanFortress.Simulation.Creatures.CreatureManager.LogCallback = Logger.CreateCallback("Simulation.Creatures");
+        HumanFortress.Simulation.Creatures.CreaturesDiffApplicator.LogCallback = Logger.CreateCallback("Simulation.CreaturesDiff");
+        HumanFortress.Simulation.Items.ItemManager.LogCallback = Logger.CreateCallback("Simulation.Items");
+        HumanFortress.Simulation.Items.ItemsDiffApplicator.LogCallback = Logger.CreateCallback("Simulation.ItemsDiff");
+        HumanFortress.Simulation.Diff.SimulationDiffApplicator.LogCallback = Logger.CreateCallback("Simulation.Diff");
+        HumanFortress.Simulation.Stockpile.StockpileDiffApplicator.LogCallback = Logger.CreateCallback("Simulation.StockpileDiff");
+        HumanFortress.Simulation.Orders.OrdersManager.LogCallback = Logger.CreateCallback("Simulation.Orders");
+        HumanFortress.Simulation.Orders.MiningSystem.LogCallback = Logger.CreateCallback("Jobs.Mining");
+        HumanFortress.Simulation.Jobs.ConstructionMaterialsPlanner.LogCallback = Logger.CreateCallback("Jobs.ConstructionMaterials");
 
         // Don't redirect console output - SadConsole needs it for rendering
         // System.Console.SetOut(logWriter);

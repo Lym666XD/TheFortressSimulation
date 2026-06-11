@@ -2,14 +2,14 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
 
 /// <summary>
 /// Command that creates a haul designation over a world-space rectangle at a given Z.
-/// Executed on the main thread; OrdersManager is thread-safe for enqueue.
+/// Executed through the simulation tick command stage.
 /// </summary>
 public sealed class CreateHaulOrderCommand : ICommand
 {
@@ -31,9 +31,9 @@ public sealed class CreateHaulOrderCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IOrderCommandTarget target)
         {
-            world.Orders.EnqueueHaul(_worldRect, _z, _priority, context.CurrentTick);
+            target.EnqueueHaulOrder(_worldRect, _z, _priority, context.CurrentTick);
         }
     }
 
@@ -50,4 +50,3 @@ public sealed class CreateHaulOrderCommand : ICommand
         return ms.ToArray();
     }
 }
-

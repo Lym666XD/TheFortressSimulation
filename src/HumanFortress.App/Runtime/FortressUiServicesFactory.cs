@@ -17,7 +17,7 @@ internal static class FortressUiServicesFactory
         ArgumentNullException.ThrowIfNull(ordersRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        System.Console.WriteLine("[GenerateFortressMap] Wiring StockpileManager & UI classes");
+        Logger.Log("[GenerateFortressMap] Wiring StockpileManager & UI classes");
 
         var stockpileManager = world.Stockpiles;
         var stockpileUI = new StockpileUI(stockpileManager);

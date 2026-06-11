@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.App.UI;
 using SadRogue.Primitives;
@@ -38,7 +38,7 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IOrderCommandTarget target)
         {
             var act = _action switch
             {
@@ -50,20 +50,7 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
                 _ => HumanFortress.Simulation.Orders.MiningAction.Dig
             };
             // Always enqueue; planner will skip if nothing eligible. This avoids false negatives at UI boundary.
-            world.Orders.EnqueueMiningAdvanced(_worldRect, _zMin, _zMax, act, _priority, context.CurrentTick);
-        }
-    }
-
-    private static bool HasAnyValidMiningCell(World world, Rectangle rect, int zMin, int zMax, HumanFortress.Simulation.Orders.MiningAction action)
-    {
-        try
-        {
-            int n = HumanFortress.Simulation.Orders.MiningOrderRules.CountEligible(world, rect, zMin, zMax, action);
-            return n > 0;
-        }
-        catch
-        {
-            return false;
+            target.EnqueueAdvancedMiningOrder(_worldRect, _zMin, _zMax, act, _priority, context.CurrentTick);
         }
     }
 

@@ -28,7 +28,7 @@ public class GeologyRegistry
             AddPrototype(prototype);
         }
 
-        Console.WriteLine($"[GeologyRegistry] Loaded {_prototypesById.Count} geology prototypes, version {version}");
+        ContentRegistryDiagnostics.Emit($"[GeologyRegistry] Loaded {_prototypesById.Count} geology prototypes, version {version}");
     }
 
     /// <summary>
@@ -92,7 +92,7 @@ public class GeologyRegistry
         {
             if (!prototype.IsValidCombination(terrainDef, materialDef))
             {
-                Console.WriteLine($"[GeologyRegistry] Warning: Invalid combination {terrainKind} + {material}");
+                ContentRegistryDiagnostics.Emit($"[GeologyRegistry] Warning: Invalid combination {terrainKind} + {material}");
             }
         }
 

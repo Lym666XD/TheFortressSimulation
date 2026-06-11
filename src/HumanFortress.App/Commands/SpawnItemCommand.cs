@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
@@ -32,17 +32,13 @@ public sealed class SpawnItemCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is not World world)
-            return;
-
-        var guid = world.Items.SpawnItem(_itemId, _worldPos, _z, _quantity, context.CurrentTick);
-        if (guid.HasValue)
+        if (context is IItemSpawnCommandTarget target && target.AddItemSpawn(_itemId, _worldPos, _z, _quantity))
         {
-            Logger.Log($"[DEBUG] SUCCESS: Spawned item '{_itemId}' guid={guid.Value} qty={_quantity} at ({_worldPos.X},{_worldPos.Y},{_z})");
+            Logger.Log($"[DEBUG] QUEUED: Spawn item '{_itemId}' qty={_quantity} at ({_worldPos.X},{_worldPos.Y},{_z})");
         }
         else
         {
-            Logger.Log($"[DEBUG] FAILED: Could not spawn item '{_itemId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
+            Logger.Log($"[DEBUG] FAILED: Could not queue item spawn '{_itemId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
         }
     }
 

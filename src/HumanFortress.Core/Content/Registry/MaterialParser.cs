@@ -346,6 +346,7 @@ public static class MaterialParser
     /// </summary>
     private static string InferCategoryFromTags(HashSet<string> tags)
     {
+        if (tags.Contains("ore")) return "ore";
         if (tags.Contains("stone")) return "stone";
         if (tags.Contains("metal")) return "metal";
         if (tags.Contains("wood")) return "wood";

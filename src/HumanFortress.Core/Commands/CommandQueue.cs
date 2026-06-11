@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using HumanFortress.Core.Diagnostics;
 
 namespace HumanFortress.Core.Commands;
 
@@ -155,7 +156,11 @@ public sealed class CommandQueue
     private void HandleCommandError(ICommand command, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: log and continue
-        Console.WriteLine($"[ERROR] Command {command.CommandType} ({command.CommandId}) failed: {ex.Message}");
+        DiagnosticHub.Error(
+            "Core.CommandQueue",
+            $"[ERROR] Command {command.CommandType} ({command.CommandId}) failed: {ex.Message}",
+            ex,
+            command.Tick);
     }
 
     private readonly record struct QueuedCommand(ICommand Command, long Sequence);

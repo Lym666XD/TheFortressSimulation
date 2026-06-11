@@ -1,5 +1,4 @@
 using HumanFortress.App.UI;
-using HumanFortress.Core.Content;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Tiles;
@@ -7,6 +6,7 @@ using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadConsole;
 using SadRogue.Primitives;
+using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.App.Rendering;
@@ -34,7 +34,7 @@ internal static class FortressMapRenderer
 
             if (fortressMap == null)
             {
-                System.Console.WriteLine("[RenderMap] WARNING: FortressMap is null");
+                Logger.Log("[RenderMap] WARNING: FortressMap is null");
                 return;
             }
 
@@ -57,8 +57,7 @@ internal static class FortressMapRenderer
         }
         catch (Exception ex)
         {
-            System.Console.WriteLine($"[RenderMap] ERROR: {ex.Message}");
-            System.Console.WriteLine($"[RenderMap] Stack trace: {ex.StackTrace}");
+            Logger.Error("UI.RenderMap", $"[RenderMap] ERROR: {ex.Message}", ex);
         }
     }
 
@@ -242,8 +241,7 @@ internal static class FortressMapRenderer
             }
         }
 
-        var items = world.Items.GetAllInstances()
-            .Where(i => i.Z == currentZ && i.IsOnGround)
+        var items = world.Items.GetGroundInstancesAtZ(currentZ)
             .ToList();
 
         foreach (var item in items)

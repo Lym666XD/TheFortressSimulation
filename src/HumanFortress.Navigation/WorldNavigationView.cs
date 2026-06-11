@@ -1,24 +1,21 @@
-using HumanFortress.Simulation.Tiles;
-using HumanFortress.Simulation.World;
-
 namespace HumanFortress.Navigation;
 
 /// <summary>
-/// Concrete IWorldNavigationView over Simulation.World + NavigationManager caches.
+/// Concrete IWorldNavigationView over a NavigationManager cache and a navigation world source.
 /// </summary>
 public sealed class WorldNavigationView : IWorldNavigationView
 {
     private readonly NavigationManager _nav;
-    private readonly World _world;
+    private readonly INavigationWorldSource _source;
 
-    public WorldNavigationView(NavigationManager nav, World world)
+    public WorldNavigationView(NavigationManager nav)
     {
         _nav = nav;
-        _world = world;
+        _source = nav.Source;
     }
 
     public bool IsValid(Point3 position)
-        => _world.IsValidPosition(position.X, position.Y, position.Z);
+        => _source.IsValid(position);
 
     public NavCapability GetCapabilities(Point3 position)
     {
@@ -54,16 +51,14 @@ public sealed class WorldNavigationView : IWorldNavigationView
 
     public bool HasStairsUp(Point3 position)
     {
-        var tile = _world.GetTile(position.X, position.Y, position.Z);
-        if (tile == null) return false;
-        return tile.Value.Kind == TerrainKind.StairsUp || tile.Value.Kind == TerrainKind.StairsUD;
+        if (!_source.TryGetTile(position, out var tile)) return false;
+        return tile.Kind == NavigationTileKind.StairsUp || tile.Kind == NavigationTileKind.StairsUD;
     }
 
     public bool HasStairsDown(Point3 position)
     {
-        var tile = _world.GetTile(position.X, position.Y, position.Z);
-        if (tile == null) return false;
-        return tile.Value.Kind == TerrainKind.StairsDown || tile.Value.Kind == TerrainKind.StairsUD;
+        if (!_source.TryGetTile(position, out var tile)) return false;
+        return tile.Kind == NavigationTileKind.StairsDown || tile.Kind == NavigationTileKind.StairsUD;
     }
 
     public int GetConnectivityVersion(ChunkKey chunk)
@@ -81,12 +76,11 @@ public sealed class WorldNavigationView : IWorldNavigationView
     public bool IsStandable(Point3 position)
     {
         // Treat construction site anchor as not standable (cannot end movement here)
-        if (IsConstructionSiteAnchor(position)) return false;
+        if (_source.IsConstructionSiteAnchor(position)) return false;
         // Prefer capabilities; fall back to tile kind
         var caps = GetCapabilities(position);
         if ((caps & NavCapability.Standable) != 0) return true;
-        var tile = _world.GetTile(position.X, position.Y, position.Z);
-        return tile.HasValue && tile.Value.Kind == TerrainKind.OpenWithFloor;
+        return _source.TryGetTile(position, out var tile) && tile.Kind == NavigationTileKind.OpenWithFloor;
     }
 
     public bool TryGetDownRampDirection(Point3 position, out byte rampDirection)
@@ -114,25 +108,5 @@ public sealed class WorldNavigationView : IWorldNavigationView
         int localX = ((position.X % ChunkSize) + ChunkSize) % ChunkSize;
         int localY = ((position.Y % ChunkSize) + ChunkSize) % ChunkSize;
         return localY * ChunkSize + localX;
-    }
-
-    private bool IsConstructionSiteAnchor(Point3 position)
-    {
-        // Check owned placeables at this cell for a construction site
-        var ck = new HumanFortress.Simulation.World.ChunkKey(position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY,
-                                                             position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY,
-                                                             position.Z);
-        var chunk = _world.GetChunk(ck);
-        if (chunk == null) return false;
-        var pd = chunk.GetPlaceableData();
-        if (pd == null) return false;
-        int lx = ((position.X % HumanFortress.Simulation.World.Chunk.SIZE_XY) + HumanFortress.Simulation.World.Chunk.SIZE_XY) % HumanFortress.Simulation.World.Chunk.SIZE_XY;
-        int ly = ((position.Y % HumanFortress.Simulation.World.Chunk.SIZE_XY) + HumanFortress.Simulation.World.Chunk.SIZE_XY) % HumanFortress.Simulation.World.Chunk.SIZE_XY;
-        int idx = HumanFortress.Simulation.World.Chunk.LocalIndex(lx, ly);
-        if (pd.TryGetOwnedAt(idx, out var owned))
-        {
-            return owned.ConstructionSite != null;
-        }
-        return false;
     }
 }

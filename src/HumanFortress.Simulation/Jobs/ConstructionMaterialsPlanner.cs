@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Time;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -57,7 +58,7 @@ namespace HumanFortress.Simulation.Jobs
                         int need = kv.Value - delivered.GetValueOrDefault(tag, 0);
                         if (need <= 0) continue;
 
-                        LogCallback?.Invoke($"[CM-PLAN][{tick}] shortfall site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag} need={need} delivered={delivered.GetValueOrDefault(tag,0)}");
+                        Log($"[CM-PLAN][{tick}] shortfall site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag} need={need} delivered={delivered.GetValueOrDefault(tag,0)}");
 
                         // Enqueue as few requests as possible with explicit Quantity (bounded by per-tick budget)
                         while (need > 0 && enqueued < _scanBudgetPerTick)
@@ -65,20 +66,20 @@ namespace HumanFortress.Simulation.Jobs
                             var itemGuid = TryFindNearestItemByTag(tag, p.Position.X, p.Position.Y, p.Z, tick);
                             if (itemGuid == null)
                             {
-                                LogCallback?.Invoke($"[CM-PLAN][{tick}] no-source site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag} need={need}");
+                                Log($"[CM-PLAN][{tick}] no-source site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag} need={need}");
                                 break;
                             }
                             var inst = _world.Items.GetInstance(itemGuid.Value);
                             if (inst == null)
                             {
-                                LogCallback?.Invoke($"[CM-PLAN][{tick}] no-inst guid={itemGuid} req={tag}");
+                                Log($"[CM-PLAN][{tick}] no-inst guid={itemGuid} req={tag}");
                                 break;
                             }
 
                             int take = System.Math.Min(need, inst.StackCount);
                             if (take <= 0)
                             {
-                                LogCallback?.Invoke($"[CM-PLAN][{tick}] zero-take guid={inst.Guid} stack={inst.StackCount} need={need} req={tag}");
+                                Log($"[CM-PLAN][{tick}] zero-take guid={inst.Guid} stack={inst.StackCount} need={need} req={tag}");
                                 break;
                             }
 
@@ -86,7 +87,7 @@ namespace HumanFortress.Simulation.Jobs
                             var drop = ChooseDropCellForSite(p);
                             if (drop == null)
                             {
-                                LogCallback?.Invoke($"[CM-PLAN][{tick}] no-drop site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag}");
+                                Log($"[CM-PLAN][{tick}] no-drop site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag}");
                                 break;
                             }
                             var req = new TransportRequest(
@@ -102,7 +103,7 @@ namespace HumanFortress.Simulation.Jobs
                                 CreatedTick: tick,
                                 Seed: seed);
                             _intake.Enqueue(in req);
-                            LogCallback?.Invoke($"[CM-PLAN][{tick}] enqueue req={tag} qty={take} from=({inst.Position.X},{inst.Position.Y},{inst.Z}) to=({drop.Value.X},{drop.Value.Y},{p.Z}) item={inst.DefinitionId}");
+                            Log($"[CM-PLAN][{tick}] enqueue req={tag} qty={take} from=({inst.Position.X},{inst.Position.Y},{inst.Z}) to=({drop.Value.X},{drop.Value.Y},{p.Z}) item={inst.DefinitionId}");
                             enqueued++;
                             need -= take;
                         }
@@ -114,7 +115,7 @@ namespace HumanFortress.Simulation.Jobs
             if (scannedSites > 0 || (tick % 300UL) == 0UL)
             {
                 var msg = $"[CM-PLAN][{tick}] scanned_sites={scannedSites} enqueued={enqueued}";
-                if (LogCallback != null) LogCallback(msg); else System.Console.WriteLine(msg);
+                Log(msg);
             }
         }
 
@@ -140,9 +141,8 @@ namespace HumanFortress.Simulation.Jobs
             var fp = site.Footprint;
             foreach (var cell in EnumerateFootprintAndRing(site))
             {
-                foreach (var it in _world.Items.GetAllInstances())
+                foreach (var it in _world.Items.GetGroundItemsAt(cell, site.Z))
                 {
-                    if (it.IsCarried) continue;
                     if (it.Position.X == cell.X && it.Position.Y == cell.Y && it.Z == site.Z)
                     {
                         var def = _world.Items.GetDefinition(it.DefinitionId);
@@ -165,29 +165,18 @@ namespace HumanFortress.Simulation.Jobs
         {
             Guid? best = null;
             int bestDist = int.MaxValue;
-            var allItems = _world.Items.GetAllInstances().ToList();
+            var groundItems = _world.Items.GetGroundInstances().ToList();
 
             // Diagnostic: log total item count every 100 ticks
             if (tick % 100 == 0)
             {
-                LogCallback?.Invoke($"[CM-DIAG][{tick}] TryFindNearestItemByTag: reqTag={reqTag}, totalItems={allItems.Count}");
+                Log($"[CM-DIAG][{tick}] TryFindNearestItemByTag: reqTag={reqTag}, groundItems={groundItems.Count}");
             }
 
-            int skippedCarried = 0, skippedReserved = 0, skippedNoDef = 0, skippedNoMatch = 0, candidates = 0;
+            int skippedReserved = 0, skippedNoDef = 0, skippedNoMatch = 0, candidates = 0;
 
-            foreach (var it in allItems)
+            foreach (var it in groundItems)
             {
-                // Use IsOnGround which checks all new properties: ContainedBy, CarriedBy, EquippedBy, InstalledAt
-                // Also check legacy IsCarried flag for backwards compatibility
-                bool isAvailable = it.IsOnGround && !it.IsCarried;
-
-                // Diagnostic: log first 3 unavailable items with state details
-                if (skippedCarried < 3 && !isAvailable && tick % 100 == 0)
-                {
-                    LogCallback?.Invoke($"[CM-DIAG][{tick}] Item {it.DefinitionId} at ({it.Position.X},{it.Position.Y},{it.Z}): IsOnGround={it.IsOnGround} IsCarried={it.IsCarried} CarriedBy={it.CarriedBy} EquippedBy={it.EquippedBy} ContainedBy={it.ContainedBy} InstalledAt={it.InstalledAt}");
-                }
-
-                if (!isAvailable) { skippedCarried++; continue; }
                 if (_world.Reservations.IsItemReserved(it.Guid, tick)) { skippedReserved++; continue; }
                 var def = _world.Items.GetDefinition(it.DefinitionId);
                 if (def == null || def.Tags == null) { skippedNoDef++; continue; }
@@ -204,7 +193,7 @@ namespace HumanFortress.Simulation.Jobs
             // Log diagnostic summary when no source found
             if (best == null)
             {
-                LogCallback?.Invoke($"[CM-DIAG][{tick}] NO SOURCE for {reqTag}: total={allItems.Count} carried={skippedCarried} reserved={skippedReserved} noDef={skippedNoDef} noMatch={skippedNoMatch} candidates={candidates}");
+                Log($"[CM-DIAG][{tick}] NO SOURCE for {reqTag}: ground={groundItems.Count} reserved={skippedReserved} noDef={skippedNoDef} noMatch={skippedNoMatch} candidates={candidates}");
             }
 
             return best;
@@ -319,6 +308,11 @@ namespace HumanFortress.Simulation.Jobs
                 return owned.ConstructionSite != null;
             }
             return false;
+        }
+
+        private static void Log(string message)
+        {
+            SimulationDiagnostics.Information(LogCallback, "Jobs.ConstructionMaterials", message);
         }
     }
 }

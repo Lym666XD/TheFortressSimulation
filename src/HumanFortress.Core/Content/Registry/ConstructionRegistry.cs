@@ -5,10 +5,26 @@ using System.Linq;
 namespace HumanFortress.Core.Content.Registry;
 
 /// <summary>
+/// Read-only construction definition catalog exposed to runtime/gameplay systems.
+/// </summary>
+public interface IConstructionCatalog
+{
+    int Count { get; }
+
+    ConstructionDefinition? GetConstruction(string id);
+
+    IEnumerable<ConstructionDefinition> GetConstructionsByCategory(string category);
+
+    IEnumerable<ConstructionDefinition> GetAllConstructions();
+
+    IEnumerable<string> GetAllCategories();
+}
+
+/// <summary>
 /// Registry for construction definitions (on-site built structures)
 /// Loads from data/core/placeable/*.json (walls.json, floors.json, workshops.json, etc.)
 /// </summary>
-public sealed class ConstructionRegistry
+public sealed class ConstructionRegistry : IConstructionCatalog
 {
     // Global instance for easy access across App/Simulation layers (mirrors other registries)
     private static ConstructionRegistry? _instance;

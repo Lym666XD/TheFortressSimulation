@@ -16,23 +16,23 @@ internal static class FortressRenderSnapshotService
     {
         try
         {
-            System.Console.WriteLine("[BuildSnapshot] Starting snapshot build");
+            Logger.Log("[BuildSnapshot] Starting snapshot build");
 
             if (snapshotBuilder == null)
             {
-                System.Console.WriteLine("[BuildSnapshot] WARNING: SnapshotBuilder is null");
+                Logger.Log("[BuildSnapshot] WARNING: SnapshotBuilder is null");
                 return null;
             }
 
             if (world == null)
             {
-                System.Console.WriteLine("[BuildSnapshot] WARNING: World is null");
+                Logger.Log("[BuildSnapshot] WARNING: World is null");
                 return null;
             }
 
             var chunkX = cameraPosition.X / 32;
             var chunkY = cameraPosition.Y / 32;
-            System.Console.WriteLine($"[BuildSnapshot] Camera chunk: {chunkX},{chunkY} at Z={currentZ}");
+            Logger.Log($"[BuildSnapshot] Camera chunk: {chunkX},{chunkY} at Z={currentZ}");
 
             var camera = new CameraInfo
             {
@@ -50,15 +50,14 @@ internal static class FortressRenderSnapshotService
                 TilesHeight = viewportHeight
             };
 
-            System.Console.WriteLine("[BuildSnapshot] Building snapshot");
+            Logger.Log("[BuildSnapshot] Building snapshot");
             var snapshot = snapshotBuilder.BuildSnapshot(camera, viewport, 0);
-            System.Console.WriteLine($"[BuildSnapshot] Snapshot built with {snapshot?.Chunks?.Count ?? 0} chunks");
+            Logger.Log($"[BuildSnapshot] Snapshot built with {snapshot?.Chunks?.Count ?? 0} chunks");
             return snapshot;
         }
         catch (Exception ex)
         {
-            System.Console.WriteLine($"[BuildSnapshot] ERROR: {ex.Message}");
-            System.Console.WriteLine($"[BuildSnapshot] Stack trace: {ex.StackTrace}");
+            Logger.Error("UI.BuildSnapshot", $"[BuildSnapshot] ERROR: {ex.Message}", ex);
             return null;
         }
     }

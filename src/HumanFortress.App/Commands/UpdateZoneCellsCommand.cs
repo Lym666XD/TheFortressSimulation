@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Commands;
@@ -32,15 +32,15 @@ public sealed class UpdateZoneCellsCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IZoneCommandTarget target)
         {
             if (_isAdding)
             {
-                world.Zones.AddCellsToZone(_zoneId, _worldRect, _z);
+                target.AddZoneCells(_zoneId, _worldRect, _z);
             }
             else
             {
-                world.Zones.RemoveCellsFromZone(_zoneId, _worldRect, _z);
+                target.RemoveZoneCells(_zoneId, _worldRect, _z);
             }
         }
     }

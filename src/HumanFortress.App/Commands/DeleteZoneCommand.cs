@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 
 namespace HumanFortress.App.Commands;
 
@@ -25,9 +25,9 @@ public sealed class DeleteZoneCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is World world)
+        if (context is IZoneCommandTarget target)
         {
-            world.Zones.DeleteZone(_zoneId);
+            target.DeleteZone(_zoneId);
         }
     }
 

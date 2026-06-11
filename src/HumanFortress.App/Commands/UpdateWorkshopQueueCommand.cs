@@ -1,9 +1,7 @@
 using System;
 using HumanFortress.Core.Commands;
-using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.Placeables;
-using HumanFortress.Simulation.World;
+using HumanFortress.Runtime;
 
 namespace HumanFortress.App.Commands;
 
@@ -58,75 +56,43 @@ public sealed class UpdateWorkshopQueueCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context.World is not World world) return;
-        var placeable = FindWorkshop(world, _workshopGuid, out var def);
-        if (placeable == null) return;
-
-        placeable.Workshop ??= new WorkshopState();
-        if (def != null && placeable.Workshop.MaxWorkers <= 1)
-        {
-            int maxWorkers = Math.Max(1, def.Io?.InputSlots ?? 1);
-            placeable.Workshop.ConfigureWorkers(placeable.Workshop.AllowedWorkers, maxWorkers);
-        }
-
-        var state = placeable.Workshop;
-        if (state == null) return;
+        if (context is not IWorkshopQueueCommandTarget target) return;
 
         switch (_operation)
         {
             case WorkshopQueueOperation.AddRecipe:
-                if (string.IsNullOrWhiteSpace(_recipeId)) return;
-                var recipe = RecipeRegistry.Instance.GetRecipe(_recipeId);
-                if (recipe == null) return;
-                state.AddEntry(recipe.Id, recipe.Name, _workshopGuid, context.CurrentTick);
+                if (!string.IsNullOrWhiteSpace(_recipeId))
+                    target.AddWorkshopRecipe(_workshopGuid, _recipeId, context.CurrentTick);
                 break;
 
             case WorkshopQueueOperation.RemoveEntry:
                 if (_entryId.HasValue)
-                    state.RemoveEntry(_entryId.Value);
+                    target.RemoveWorkshopQueueEntry(_workshopGuid, _entryId.Value);
                 break;
 
             case WorkshopQueueOperation.MoveEntry:
                 if (_entryId.HasValue && _moveOffset.HasValue)
-                    state.MoveEntry(_entryId.Value, _moveOffset.Value);
+                    target.MoveWorkshopQueueEntry(_workshopGuid, _entryId.Value, _moveOffset.Value);
                 break;
 
             case WorkshopQueueOperation.ClearQueue:
-                state.ClearQueue();
+                target.ClearWorkshopQueue(_workshopGuid);
                 break;
 
             case WorkshopQueueOperation.SetWorkerSlots:
                 if (_intValue.HasValue)
-                    state.SetAllowedWorkers(_intValue.Value);
+                    target.SetWorkshopWorkerSlots(_workshopGuid, _intValue.Value);
                 break;
 
             case WorkshopQueueOperation.ToggleAutoStockpile:
-                state.AutoStockpileOutputs = _boolValue ?? !state.AutoStockpileOutputs;
+                target.SetWorkshopAutoStockpile(_workshopGuid, _boolValue);
                 break;
 
             case WorkshopQueueOperation.ToggleAutoSupply:
-                state.AutoRequestMaterials = _boolValue ?? !state.AutoRequestMaterials;
+                target.SetWorkshopAutoSupply(_workshopGuid, _boolValue);
                 break;
         }
     }
 
     public byte[] Serialize() => Array.Empty<byte>();
-
-    private static PlaceableInstance? FindWorkshop(World world, Guid guid, out ConstructionDefinition? def)
-    {
-        var registry = ConstructionRegistry.Instance;
-        foreach (var chunk in world.GetAllChunks())
-        {
-            var pd = chunk.GetPlaceableData();
-            if (pd == null) continue;
-            foreach (var placeable in pd.GetAllOwnedPlaceables())
-            {
-                if (placeable.Guid != guid) continue;
-                def = registry.GetConstruction(placeable.DefinitionId);
-                return placeable;
-            }
-        }
-        def = null;
-        return null;
-    }
 }

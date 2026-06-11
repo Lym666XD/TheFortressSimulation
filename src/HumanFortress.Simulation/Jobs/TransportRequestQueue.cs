@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using HumanFortress.Core.Simulation;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Simulation.Jobs
@@ -266,10 +267,9 @@ namespace HumanFortress.Simulation.Jobs
 
         private static int EncodeChunkIdFromTo(int worldX, int worldY, int z)
         {
-            const int SIZE_XY = 32;
-            int cx = worldX / SIZE_XY;
-            int cy = worldY / SIZE_XY;
-            return ((z & 0x3FF) << 20) | ((cx & 0x3FF) << 10) | (cy & 0x3FF);
+            int chunkX = worldX / DiffTargetEncoding.ChunkSizeXY;
+            int chunkY = worldY / DiffTargetEncoding.ChunkSizeXY;
+            return DiffTargetEncoding.EncodeChunkId(chunkX, chunkY, z);
         }
     }
 }

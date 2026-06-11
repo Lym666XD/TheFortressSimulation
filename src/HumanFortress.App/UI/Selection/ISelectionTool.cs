@@ -12,10 +12,10 @@ public interface ISelectionTool
     Selection3D Complete();
     void Cancel();
     void AdjustZRange(int delta);
+    void SetZRangeEnd(int z);
 
     event Action<Selection3D>? Started;
     event Action<Selection3D>? Changed;
     event Action<Selection3D>? Completed;
     event Action? Canceled;
 }
-

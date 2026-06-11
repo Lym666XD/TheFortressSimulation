@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using HumanFortress.Core.Random;
+using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
@@ -30,6 +31,11 @@ public sealed class CreatureManager
 
     // Dependencies
     private HumanFortress.Simulation.World.World? _world;
+
+    /// <summary>
+    /// Optional logging callback set by the app diagnostics layer.
+    /// </summary>
+    public static Action<string>? LogCallback { get; set; }
 
     public int DefinitionCount => _definitions.Count;
     public int InstanceCount
@@ -60,7 +66,7 @@ public sealed class CreatureManager
         var creaturesPath = Path.Combine(dataPath, "creatures");
         if (!Directory.Exists(creaturesPath))
         {
-            Console.WriteLine($"[CreatureManager] WARNING: Creatures directory not found: {creaturesPath}");
+            Emit($"[CreatureManager] WARNING: Creatures directory not found: {creaturesPath}");
             return;
         }
 
@@ -93,19 +99,19 @@ public sealed class CreatureManager
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"[CreatureManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}");
+                        Emit($"[CreatureManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}");
                         failed++;
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[CreatureManager] ERROR: Failed to load {Path.GetFileName(file)}: {ex.Message}");
+                Emit($"[CreatureManager] ERROR: Failed to load {Path.GetFileName(file)}: {ex.Message}");
                 failed++;
             }
         }
 
-        Console.WriteLine($"[CreatureManager] Loaded {loaded} creature definitions from {files.Length} files ({failed} errors)");
+        Emit($"[CreatureManager] Loaded {loaded} creature definitions from {files.Length} files ({failed} errors)");
     }
 
     /// <summary>
@@ -152,21 +158,21 @@ public sealed class CreatureManager
     {
         try
         {
-            Console.WriteLine($"[CreatureManager] SpawnCreature called: id={creatureId}, pos=({worldPos.X},{worldPos.Y},{z})");
-            Console.WriteLine($"[CreatureManager] Definitions loaded: {_definitions.Count}");
+            Emit($"[CreatureManager] SpawnCreature called: id={creatureId}, pos=({worldPos.X},{worldPos.Y},{z})");
+            Emit($"[CreatureManager] Definitions loaded: {_definitions.Count}");
 
             // Validate definition exists
             if (!_definitions.TryGetValue(creatureId, out var def))
             {
-                Console.WriteLine($"[CreatureManager] ERROR: Unknown creature '{creatureId}'");
-                Console.WriteLine($"[CreatureManager] Available creatures: {string.Join(", ", _definitions.Keys.Take(5))}");
+                Emit($"[CreatureManager] ERROR: Unknown creature '{creatureId}'");
+                Emit($"[CreatureManager] Available creatures: {string.Join(", ", _definitions.Keys.Take(5))}");
                 return null;
             }
 
             // Validate world is set
             if (_world == null)
             {
-                Console.WriteLine($"[CreatureManager] ERROR: World not set");
+                Emit("[CreatureManager] ERROR: World not set");
                 return null;
             }
 
@@ -176,26 +182,26 @@ public sealed class CreatureManager
             int localX = worldPos.X % 32;
             int localY = worldPos.Y % 32;
 
-            Console.WriteLine($"[CreatureManager] Chunk coords: ({chunkX},{chunkY},{z}), Local: ({localX},{localY})");
+            Emit($"[CreatureManager] Chunk coords: ({chunkX},{chunkY},{z}), Local: ({localX},{localY})");
 
             var chunkKey = new ChunkKey(chunkX, chunkY, z);
             var chunk = _world.GetChunk(chunkKey);
 
             if (chunk == null)
             {
-                Console.WriteLine($"[CreatureManager] ERROR: Chunk not found at ({chunkX},{chunkY},{z})");
+                Emit($"[CreatureManager] ERROR: Chunk not found at ({chunkX},{chunkY},{z})");
                 return null;
             }
 
-            Console.WriteLine($"[CreatureManager] Chunk found, getting tile...");
+            Emit("[CreatureManager] Chunk found, getting tile...");
 
             // Validate tile is walkable (allow floors, ramps, slopes, stairs)
             var tile = chunk.GetTile(localX, localY);
-            Console.WriteLine($"[CreatureManager] Tile kind: {tile.Kind}");
+            Emit($"[CreatureManager] Tile kind: {tile.Kind}");
 
             if (!tile.IsWalkable)
             {
-                Console.WriteLine($"[CreatureManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
+                Emit($"[CreatureManager] ERROR: Tile at ({worldPos.X},{worldPos.Y},{z}) is not walkable (kind={tile.Kind})");
                 return null;
             }
 
@@ -210,17 +216,22 @@ public sealed class CreatureManager
             }
 
             // TODO: Write to Chunk L6 layer via Diff-Log (currently just tracking in manager)
-            Console.WriteLine($"[CreatureManager] SUCCESS: Spawned '{def.Name}' (id={creatureId}, guid={guid}) at ({worldPos.X},{worldPos.Y},{z})");
+            Emit($"[CreatureManager] SUCCESS: Spawned '{def.Name}' (id={creatureId}, guid={guid}) at ({worldPos.X},{worldPos.Y},{z})");
 
             return guid;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[CreatureManager] EXCEPTION: Failed to spawn '{creatureId}' at ({worldPos.X},{worldPos.Y},{z})");
-            Console.WriteLine($"[CreatureManager] Exception: {ex.GetType().Name}: {ex.Message}");
-            Console.WriteLine($"[CreatureManager] StackTrace: {ex.StackTrace}");
+            Emit($"[CreatureManager] EXCEPTION: Failed to spawn '{creatureId}' at ({worldPos.X},{worldPos.Y},{z})");
+            Emit($"[CreatureManager] Exception: {ex.GetType().Name}: {ex.Message}");
+            Emit($"[CreatureManager] StackTrace: {ex.StackTrace}");
             return null;
         }
+    }
+
+    private static void Emit(string message)
+    {
+        SimulationDiagnostics.Information(LogCallback, "Simulation.Creatures", message);
     }
 
     /// <summary>

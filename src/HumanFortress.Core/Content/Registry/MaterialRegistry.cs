@@ -53,7 +53,7 @@ public class MaterialRegistry
         // Compute content hash for save compatibility
         ComputeContentHash();
 
-        Console.WriteLine($"[MaterialRegistry] Loaded {_materialsById.Count} materials, version {version}");
+        ContentRegistryDiagnostics.Emit($"[MaterialRegistry] Loaded {_materialsById.Count} materials, version {version}");
     }
 
     /// <summary>
@@ -89,7 +89,7 @@ public class MaterialRegistry
         {
             if (_aliases.ContainsKey(alias))
             {
-                Console.WriteLine($"[MaterialRegistry] Warning: Alias '{alias}' already exists, skipping");
+                ContentRegistryDiagnostics.Emit($"[MaterialRegistry] Warning: Alias '{alias}' already exists, skipping");
                 continue;
             }
             _aliases[alias] = material.Id;
@@ -247,7 +247,7 @@ public class MaterialRegistry
             return id.Value;
         }
 
-        Console.WriteLine($"[MaterialRegistry] Warning: Unknown material '{name}', using fallback {fallback}");
+        ContentRegistryDiagnostics.Emit($"[MaterialRegistry] Warning: Unknown material '{name}', using fallback {fallback}");
         return fallback;
     }
 
@@ -291,11 +291,11 @@ public class MaterialRegistry
             if (_materialsByName.TryGetValue(newName, out var id))
             {
                 _aliases[oldName] = id;
-                Console.WriteLine($"[MaterialRegistry] Applied alias: '{oldName}' -> '{newName}' (ID: {id})");
+                ContentRegistryDiagnostics.Emit($"[MaterialRegistry] Applied alias: '{oldName}' -> '{newName}' (ID: {id})");
             }
             else
             {
-                Console.WriteLine($"[MaterialRegistry] Warning: Cannot apply alias '{oldName}' -> '{newName}', target not found");
+                ContentRegistryDiagnostics.Emit($"[MaterialRegistry] Warning: Cannot apply alias '{oldName}' -> '{newName}', target not found");
             }
         }
     }

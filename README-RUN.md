@@ -47,8 +47,10 @@
 
 Run tests:
 ```
-HumanFortress.App.exe --test
+./RunTests.sh
 ```
+
+On Windows, use `RunTests.bat`.
 
 ## Troubleshooting
 

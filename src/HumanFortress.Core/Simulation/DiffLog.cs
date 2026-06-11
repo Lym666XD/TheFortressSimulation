@@ -110,8 +110,8 @@ public sealed class DiffLog
             // Resolve conflicts
             var merged = new List<DiffOp>();
 
-            // For movement, merge by operation + entity id so multiple entities can share a destination.
-            var moveByEntity = new Dictionary<(DiffOpType Op, int EntityId), int>();
+            // For entity-scoped ops, merge by operation + entity id so multiple entities can share a tile.
+            var entityOps = new Dictionary<(DiffOpType Op, int EntityId), int>();
 
             // For other ops, track last op by (chunkId, localIndex, op) to apply priority rule
             var lastByTarget = new Dictionary<(int,int,DiffOpType), int>();
@@ -119,10 +119,10 @@ public sealed class DiffLog
             for (int i = 0; i < _operations.Count; i++)
             {
                 var op = _operations[i];
-                if (IsEntityMove(op))
+                if (IsEntityScoped(op))
                 {
                     var entityKey = (op.Op, op.Target.EntityId);
-                    if (moveByEntity.TryGetValue(entityKey, out int idx))
+                    if (entityOps.TryGetValue(entityKey, out int idx))
                     {
                         var incumbent = merged[idx];
                         if (IsBetter(op, incumbent))
@@ -133,7 +133,7 @@ public sealed class DiffLog
                     }
                     else
                     {
-                        moveByEntity[entityKey] = merged.Count;
+                        entityOps[entityKey] = merged.Count;
                         merged.Add(op);
                     }
                     continue;
@@ -160,9 +160,12 @@ public sealed class DiffLog
         }
     }
 
-    private static bool IsEntityMove(DiffOp op)
+    private static bool IsEntityScoped(DiffOp op)
     {
-        return op.Op == DiffOpType.MoveCreature || op.Op == DiffOpType.MoveItem;
+        return op.Op == DiffOpType.MoveCreature
+            || op.Op == DiffOpType.MoveItem
+            || op.Op == DiffOpType.MarkCarried
+            || op.Op == DiffOpType.UnmarkCarried;
     }
 
     private static bool IsBetter(in DiffOp candidate, in DiffOp incumbent)

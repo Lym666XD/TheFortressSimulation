@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -10,6 +11,8 @@ namespace HumanFortress.Simulation.Items;
 /// </summary>
 public static class ItemsDiffApplicator
 {
+    public static Action<string>? LogCallback { get; set; }
+
     public static void ApplyAll(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
     {
         ApplyPreSimulation(world, diffs);
@@ -34,7 +37,7 @@ public static class ItemsDiffApplicator
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
             }
         }
     }
@@ -51,7 +54,7 @@ public static class ItemsDiffApplicator
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
             }
         }
     }
@@ -68,7 +71,7 @@ public static class ItemsDiffApplicator
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
             }
         }
     }
@@ -102,5 +105,10 @@ public static class ItemsDiffApplicator
     {
         if (d.ItemGuid == Guid.Empty || d.NewItemGuid == Guid.Empty || d.Quantity <= 0) return;
         world.Items.SplitStackWithGuid(d.ItemGuid, d.Quantity, d.NewItemGuid);
+    }
+
+    private static void Emit(string message)
+    {
+        SimulationDiagnostics.Error(LogCallback, "Simulation.ItemsDiff", message);
     }
 }

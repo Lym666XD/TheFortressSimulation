@@ -301,7 +301,11 @@ public class NavigationOverlay
         surface.Surface.Print(legendX, legendY + 2, "F9: Mode  |  F10: Set/Path  |  Ctrl+F10: Clear", Color.DarkGray);
     }
 
-    private ChunkNavData? GetNavDataForChunk(Chunk chunk) => _navManager?.GetNavData(chunk.Key);
+    private ChunkNavData? GetNavDataForChunk(Chunk chunk)
+    {
+        var key = new HumanFortress.Navigation.ChunkKey(chunk.Key.ChunkX, chunk.Key.ChunkY, chunk.Key.Z);
+        return _navManager?.GetNavData(key);
+    }
     private void RefreshOverlay() { _overlayChars.Clear(); _overlayColors.Clear(); }
     public void CycleMode() { var modes = Enum.GetValues<OverlayMode>(); int i = Array.IndexOf(modes, _currentMode); CurrentMode = modes[(i + 1) % modes.Length]; }
 
