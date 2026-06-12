@@ -39,6 +39,7 @@ internal static class CoreRuntimeSmokeTests
         TestSimulationRuntimeSessionFactory();
         TestAsyncDiagnosticLogger();
         TestContentLoadCoordinator();
+        TestDefinitionCatalogReloadsClearIndexes();
         TestOrderCommandsUseRuntimeTarget();
         TestZoneCommandsUseRuntimeTarget();
         TestWorkshopQueueCommandUsesRuntimeTarget();
@@ -493,6 +494,11 @@ internal static class CoreRuntimeSmokeTests
             var bedroomZone = structured.GetZoneDefinition("bedroom");
             var dataPath = Path.Combine(AppContext.BaseDirectory, "data", "core");
             var coreDataResult = structured.LoadCoreData(dataPath);
+            var constructionCount = structured.Constructions.Count;
+            var recipeCount = structured.Recipes.Count;
+            var workshopCount = structured.Constructions.GetConstructionsByCategory("workshop").Count();
+            var stoneworksRecipeCount = structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count;
+            var secondCoreDataResult = structured.LoadCoreData(dataPath);
             var stoneworks = structured.Constructions.GetConstruction("core_construction_workshop_stoneworks");
             var stoneBlocksRecipe = structured.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
 
@@ -518,6 +524,12 @@ internal static class CoreRuntimeSmokeTests
                 && coreDataResult.Constructions.ErrorCount == 0
                 && coreDataResult.Recipes.LoadedCount > 0
                 && coreDataResult.Recipes.ErrorCount == 0
+                && secondCoreDataResult.Constructions.LoadedCount == constructionCount
+                && secondCoreDataResult.Recipes.LoadedCount == recipeCount
+                && structured.Constructions.Count == constructionCount
+                && structured.Recipes.Count == recipeCount
+                && structured.Constructions.GetConstructionsByCategory("workshop").Count() == workshopCount
+                && structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count == stoneworksRecipeCount
                 && stoneworks != null
                 && stoneBlocksRecipe != null,
                 "ContentLoadCoordinator did not load runtime content into the structured registry correctly.");
@@ -533,6 +545,43 @@ internal static class CoreRuntimeSmokeTests
         }
 
         Console.WriteLine("[PASS] Content load coordinator");
+    }
+
+    private static void TestDefinitionCatalogReloadsClearIndexes()
+    {
+        var dataPath = Path.Combine(AppContext.BaseDirectory, "data", "core");
+        RegressionAssert.True(Directory.Exists(dataPath), $"Data directory not found for definition reload smoke test: {dataPath}");
+
+        var world = new World(2, 10);
+
+        DefinitionCatalogTestSupport.LoadItems(world, dataPath);
+        int itemDefinitions = world.Items.DefinitionCount;
+        int resources = world.Items.GetByKind("resource").Count();
+        int logs = world.Items.GetByTag("log").Count();
+
+        DefinitionCatalogTestSupport.LoadItems(world, dataPath);
+        RegressionAssert.True(
+            itemDefinitions > 0
+            && resources > 0
+            && logs > 0
+            && world.Items.DefinitionCount == itemDefinitions
+            && world.Items.GetByKind("resource").Count() == resources
+            && world.Items.GetByTag("log").Count() == logs,
+            "Item definition reload duplicated or leaked definition indexes.");
+
+        DefinitionCatalogTestSupport.LoadCreatures(world, dataPath);
+        int creatureDefinitions = world.Creatures.DefinitionCount;
+        int humanoids = world.Creatures.GetByTag("humanoid").Count();
+
+        DefinitionCatalogTestSupport.LoadCreatures(world, dataPath);
+        RegressionAssert.True(
+            creatureDefinitions > 0
+            && humanoids > 0
+            && world.Creatures.DefinitionCount == creatureDefinitions
+            && world.Creatures.GetByTag("humanoid").Count() == humanoids,
+            "Creature definition reload duplicated or leaked definition indexes.");
+
+        Console.WriteLine("[PASS] Definition catalog reload indexes");
     }
 
     private static void TestProfessionWeightCommand()
@@ -827,8 +876,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        world.Items.SetDependencies(world, HumanFortress.Core.Content.Registry.ContentRegistry.Instance);
-        world.Items.LoadDefinitions(Path.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadItems(world);
         var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(2, 2);
@@ -855,7 +903,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        world.Creatures.LoadDefinitions(Path.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadCreatures(world);
         var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(3, 3);

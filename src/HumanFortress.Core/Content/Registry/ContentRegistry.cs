@@ -24,10 +24,8 @@ public class ContentRegistry
     public GeologyRegistry Geology { get; } = new();
     public BiomeTemplateRegistry BiomeTemplates { get; } = new();
     public AliasResolver AliasResolver { get; } = new();
-    public IConstructionCatalog Constructions => ConstructionRegistry.Instance;
-    public IRecipeCatalog Recipes => RecipeRegistry.Instance;
-    private ConstructionRegistry MutableConstructions => ConstructionRegistry.Instance;
-    private RecipeRegistry MutableRecipes => RecipeRegistry.Instance;
+    public IConstructionCatalog Constructions => _constructions;
+    public IRecipeCatalog Recipes => _recipes;
 
     private readonly Dictionary<string, RuntimeGeologyData> _geologyEntries = new();
     private readonly Dictionary<string, RuntimeZoneDefinitionData> _zones = new();
@@ -35,6 +33,8 @@ public class ContentRegistry
     private readonly Dictionary<string, ushort> _geologyHandles = new();
     private readonly Dictionary<ushort, string> _handleToGeologyId = new();
     private readonly Dictionary<(string material, string kind), ushort> _geologyByMaterialAndKind = new();
+    private ConstructionCatalogStore _constructions = ConstructionCatalogStore.Empty;
+    private RecipeCatalogStore _recipes = RecipeCatalogStore.Empty;
 
     public IReadOnlyDictionary<string, RuntimeGeologyData> GeologyEntries => _geologyEntries;
     public IReadOnlyDictionary<string, RuntimeZoneDefinitionData> Zones => _zones;
@@ -172,7 +172,9 @@ public class ContentRegistry
 
     public CoreDataLoadResult LoadCoreData(string coreDataPath)
     {
-        var result = CoreDataRegistryLoader.Load(coreDataPath, MutableConstructions, MutableRecipes);
+        var result = CoreDataRegistryLoader.Load(coreDataPath);
+        _constructions = result.Constructions.Catalog;
+        _recipes = result.Recipes.Catalog;
 
         foreach (var message in result.Constructions.Messages)
         {
@@ -249,6 +251,8 @@ public class ContentRegistry
         _geologyHandles.Clear();
         _handleToGeologyId.Clear();
         _geologyByMaterialAndKind.Clear();
+        _constructions = ConstructionCatalogStore.Empty;
+        _recipes = RecipeCatalogStore.Empty;
     }
 
     /// <summary>

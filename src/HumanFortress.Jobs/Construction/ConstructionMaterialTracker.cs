@@ -9,17 +9,20 @@ internal sealed class ConstructionMaterialTracker
 {
     private readonly WorldModel _world;
     private readonly ConstructionFootprintCells _cells;
+    private readonly IItemDefinitionCatalog _itemDefinitions;
     private readonly IConstructionDiffEmitter _diffEmitter;
     private readonly IConstructionJobLogger _logger;
 
     public ConstructionMaterialTracker(
         WorldModel world,
         ConstructionFootprintCells cells,
+        IItemDefinitionCatalog itemDefinitions,
         IConstructionDiffEmitter diffEmitter,
         IConstructionJobLogger? logger)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _cells = cells ?? throw new ArgumentNullException(nameof(cells));
+        _itemDefinitions = itemDefinitions ?? throw new ArgumentNullException(nameof(itemDefinitions));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
@@ -31,7 +34,7 @@ internal sealed class ConstructionMaterialTracker
         {
             foreach (var item in _world.Items.GetGroundItemsAt(cell, site.Z))
             {
-                var def = _world.Items.GetDefinition(item.DefinitionId);
+                var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {
                     continue;
@@ -65,7 +68,7 @@ internal sealed class ConstructionMaterialTracker
 
             foreach (var item in itemsAtCell)
             {
-                var def = _world.Items.GetDefinition(item.DefinitionId);
+                var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {
                     continue;
@@ -142,7 +145,7 @@ internal sealed class ConstructionMaterialTracker
                 continue;
             }
 
-            var def = _world.Items.GetDefinition(item.DefinitionId);
+            var def = _itemDefinitions.GetDefinition(item.DefinitionId);
             string tags = def?.Tags != null ? string.Join(",", def.Tags) : "none";
             result.Add((item, dist, tags));
         }

@@ -1,5 +1,4 @@
 using HumanFortress.App.Jobs;
-using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Simulation.Diff;
@@ -8,7 +7,6 @@ using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
-using IoPath = System.IO.Path;
 
 internal static class MiningItemsDiffRegressionTests
 {
@@ -198,8 +196,7 @@ internal static class MiningItemsDiffRegressionTests
     private static World CreateWorldWithItems()
     {
         var world = new World(2, 2);
-        world.Items.SetDependencies(world, ContentRegistry.Instance);
-        world.Items.LoadDefinitions(IoPath.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadItems(world);
         return world;
     }
 

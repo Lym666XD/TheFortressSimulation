@@ -2,7 +2,224 @@
 
 This document tracks the current multi-step refactor batches so progress is visible without relying on chat history.
 
-## Current Batch: Content Catalog Boundary Hardening
+## Current Batch: Construction and Recipe Catalog Snapshots
+
+Status: completed
+
+### Completed
+
+- Added immutable construction and recipe catalog snapshots:
+  - `ConstructionCatalogStore`
+  - `RecipeCatalogStore`
+- Changed `CoreDataRegistryLoader` so it parses construction/workshop and recipe JSON into fresh catalog snapshots instead of mutating `ConstructionRegistry.Instance` and `RecipeRegistry.Instance`.
+- Changed `ContentRegistry` to own current construction/recipe snapshots as instance fields exposed through `IConstructionCatalog` and `IRecipeCatalog`.
+- `ContentRegistry.LoadCoreData(...)` now swaps the current construction/recipe snapshots from the load result, matching the item/creature snapshot pattern.
+- `ContentRegistry.LoadContent(...)` / `LoadContentAsync(...)` now resets construction/recipe snapshots to empty as part of runtime content clearing.
+- Changed App craft composition so `CraftRecipeCatalogAdapter` receives an explicit `IRecipeCatalog` instead of reading `ContentRegistry.Instance.Recipes` internally.
+- Added regression coverage proving repeated `LoadCoreData(...)` calls keep construction/recipe counts and workshop/category queries stable instead of accumulating duplicate indexes.
+
+### Verification
+
+- Core build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project run: passed, including content-load idempotence, transport/construction/craft, mining/items/diff, core runtime smoke checks, and Phase A-D validation
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed and still reports `79 materials`
+- App analyzer build: passed with existing 41 analyzer warnings and `0 Error(s)`
+- `git diff --check`: passed
+
+### Important Notes
+
+- `ConstructionRegistry` and `RecipeRegistry` classes still exist as compatibility types, but `ContentRegistry` no longer uses their singleton instances for normal startup loading.
+- Construction/recipe definitions still live in Core for now. The next content boundary pass can move their DTOs/catalog stores into Contracts or Content once namespace churn is acceptable.
+- Some UI/App convenience code still reads `ContentRegistry.Instance.Constructions` / `Recipes` directly. That is acceptable because those properties now expose snapshots through read-only interfaces.
+- The remaining content unification work is folding item/creature catalog loading and construction/recipe core-data loading into one coherent `HumanFortress.Content` load result, then deleting legacy registry compatibility.
+
+## Previous Batch: Content-Owned Item and Creature Definition Loading
+
+Status: completed
+
+### Completed
+
+- Added `HumanFortress.Content` as a real project and included it in `HumanFortress.sln`.
+- Moved static item and creature JSON loading/parsing/validation into `HumanFortress.Content.Definitions`:
+  - `ItemDefinitionCatalogLoader`
+  - `CreatureDefinitionCatalogLoader`
+- The Content loaders now produce immutable catalog snapshots:
+  - `ItemDefinitionCatalogStore`
+  - `CreatureDefinitionCatalogStore`
+- Removed the old Simulation-owned definition loader files:
+  - `Simulation/Items/ItemDefinitionLoader.cs`
+  - `Simulation/Creatures/CreatureDefinitionLoader.cs`
+- Removed `ItemManager.LoadDefinitions(...)` and `CreatureManager.LoadDefinitions(...)`; managers now consume prebuilt snapshots through `SetDefinitionCatalog(...)`.
+- Kept Simulation independent from the Content project. The dependency direction is now `App/tests -> Content -> Contracts`, while Simulation only consumes contract/store types.
+- Changed App startup composition so `SimulationWorldContentLoader` loads item/creature catalogs through `HumanFortress.Content`, logs loader diagnostics, and injects the snapshots into the active world managers.
+- Added test-side `DefinitionCatalogTestSupport` so regression tests explicitly load catalog snapshots and inject them without relying on manager file IO.
+
+### Verification
+
+- Content build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Simulation build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project run: passed, including transport/construction/craft, mining/items/diff, core runtime smoke checks, and Phase A-D validation
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed and still reports `79 materials`
+- App analyzer build: passed with existing 41 analyzer warnings and `0 Error(s)`
+- `git diff --check`: passed
+
+### Important Notes
+
+- This batch deliberately avoided `Simulation -> Content`; file parsing now belongs to Content, runtime managers consume snapshots.
+- The item/creature DTO namespaces are still transitional, but assembly ownership is now Contracts and loader ownership is now Content.
+- Content loaders still preserve current compatibility behavior: root-array item files, `{ "items": [...] }` envelopes, furniture/placeable profile parsing, generic resource-name enrichment, and current validation messages.
+- The following batch applied the same snapshot pattern to construction and recipe data. The next content unification step is folding all catalog loading into one coherent Content load result.
+
+## Previous Batch: Static Definition Contracts Migration
+
+Status: completed
+
+### Completed
+
+- Moved shared static definition DTOs into `HumanFortress.Contracts`:
+  - `ItemDefinition`
+  - `CreatureDefinition`
+  - item feature blocks such as `StackBlock`, `EquipBlock`, `WeaponBlock`, `ContainerBlock`, and `UseBlock`
+  - shared placeable DTOs `PlaceableProfile`, `Footprint`, `PassabilityMode`, and `EffectsBlock`
+- Moved read-only item/creature definition catalog interfaces into `HumanFortress.Contracts`:
+  - `IItemDefinitionCatalog`
+  - `ICreatureDefinitionCatalog`
+- Moved immutable definition catalog snapshot stores into `HumanFortress.Contracts`:
+  - `ItemDefinitionCatalogStore`
+  - `CreatureDefinitionCatalogStore`
+- Added explicit project references:
+  - `HumanFortress.Core -> HumanFortress.Contracts`
+  - `HumanFortress.Simulation -> HumanFortress.Contracts`
+- Preserved the existing namespaces as a transitional compatibility step, matching the earlier Navigation contracts migration pattern. This avoids a broad namespace rewrite while still moving assembly ownership to Contracts.
+- Left `ItemDefinitionLoader` and `CreatureDefinitionLoader` in Simulation for that batch only; they were moved into `HumanFortress.Content` in the following batch.
+- Left the local internal `StockpileFilter.ItemDefinition` placeholder untouched because it is a separate stockpile filtering stub, not the runtime item definition contract.
+
+### Verification
+
+- Contracts build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Core build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Simulation build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test DLL run: passed
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed
+- App analyzer build: passed with existing 41 analyzer warnings and `0 Error(s)`
+
+### Important Notes
+
+- This is an assembly-boundary migration, not a namespace cleanup. The types now compile from Contracts but still use the old namespaces for compatibility.
+- The next content step after this batch moved item/creature definition loading out of Simulation and behind the Content assembly.
+- A later cleanup pass should rename these contracts into a true content/contracts namespace after runtime ownership is stable.
+
+## Previous Batch: Immutable Item and Creature Definition Catalog Stores
+
+Status: completed
+
+### Completed
+
+- Added internal immutable snapshot stores:
+  - `ItemDefinitionCatalogStore`
+  - `CreatureDefinitionCatalogStore`
+- Changed `ItemManager` to replace its static definition catalog snapshot on `LoadDefinitions` instead of owning mutable definition/kind/tag dictionaries directly.
+- Changed `CreatureManager` to replace its static definition catalog snapshot on `LoadDefinitions` instead of owning mutable definition/tag dictionaries directly.
+- Kept `ItemManager` and `CreatureManager` implementing the existing read-only catalog interfaces, so external callers do not need a broad migration in this pass.
+- Preserved duplicate-definition compatibility: loader `LoadedCount` still reflects loaded valid entries, while final `DefinitionCount` reflects the last-definition-wins catalog snapshot.
+- Stabilized the legacy Phase D concurrent pathfinder test by giving that test a wider pathing time budget. The old test accidentally treated normal 3ms tick-budget deferral as pathfinding failure under slower thread scheduling.
+
+### Verification
+
+- Simulation build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test DLL run: passed, including definition reload and Phase A-D validation
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed
+- App analyzer build: passed with existing 41 analyzer warnings and `0 Error(s)`
+
+### Important Notes
+
+- Static item/creature data is now a snapshot inside the managers, but the content system still does not own those snapshots.
+- `ItemDefinitionCatalogStore` and `CreatureDefinitionCatalogStore` are internal Simulation types because `ItemDefinition` and `CreatureDefinition` still live in Simulation.
+- The next content boundary step is making these snapshots produced by the structured content registry/load coordinator, then passing them into the runtime managers.
+
+## Previous Batch: Item and Creature Definition Loader Extraction
+
+Status: completed
+
+### Completed
+
+- Extracted static item JSON loading/parsing/validation/normalization from `ItemManager` into `ItemDefinitionLoader`.
+- Extracted static creature JSON loading/validation from `CreatureManager` into `CreatureDefinitionLoader`.
+- Kept the existing public manager API compatible, so runtime callers can still use `LoadDefinitions`, `GetDefinition`, kind/tag queries, and runtime item/creature instance APIs without a broad migration in the same pass.
+- Preserved current compatibility behavior for item content:
+  - root-array item files still load;
+  - `{ "items": [...] }` item envelopes still load;
+  - legacy furniture/placeable profile parsing still works;
+  - generic material names such as boulder/block/plank/log are still enriched from material ids;
+  - construction/material validation still receives structured content registry context.
+- Changed manager reload behavior to clear and rebuild definition/tag/kind indexes from the loaded definition set, instead of letting repeated loads accumulate duplicate index entries.
+- Added regression coverage proving repeated item and creature definition loads keep definition counts and kind/tag query counts stable.
+
+### Verification
+
+- Simulation build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test DLL run: passed, including `Definition catalog reload indexes`
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed
+- App analyzer build: passed with existing analyzer warnings and `0 Error(s)`
+
+### Important Notes
+
+- This is a loader extraction, not the final content-ownership move.
+- `ItemDefinition` and `CreatureDefinition` still live in `HumanFortress.Simulation`, so the loaders currently stay in Simulation too.
+- Startup still invokes item/creature definition loading through `world.Items.LoadDefinitions(...)` and `world.Creatures.LoadDefinitions(...)` for compatibility.
+- The next content step should introduce immutable item/creature definition catalog snapshots, then let managers consume those snapshots instead of owning the static definition dictionaries directly.
+
+## Previous Batch: Item and Creature Definition Catalog Seams
+
+Status: completed
+
+### Completed
+
+- Added Simulation-level read-only definition catalog interfaces:
+  - `IItemDefinitionCatalog`
+  - `ICreatureDefinitionCatalog`
+- Made `ItemManager` implement `IItemDefinitionCatalog`, preserving its existing runtime instance ownership.
+- Made `CreatureManager` implement `ICreatureDefinitionCatalog`, preserving its existing runtime instance ownership.
+- Migrated construction material matching in `HumanFortress.Jobs.Construction.ConstructionMaterialTracker` to use `IItemDefinitionCatalog` for item definition lookup.
+- Migrated `ConstructionMaterialsPlanner` to receive `IItemDefinitionCatalog` explicitly instead of reading definitions through the full item manager API.
+- Migrated App runtime composition to pass `world.Items` as the item definition catalog for construction material planning.
+- Migrated `ProfessionAssignments` roster naming to use an injected `ICreatureDefinitionCatalog`, with App runtime composition passing `world.Creatures`.
+- Confirmed the remaining direct item/creature definition reads are primarily UI/render/debug presentation code and can be handled separately.
+
+### Verification
+
+- Simulation build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- App build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test project build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- Test DLL run: passed
+- Solution build: passed with `0 Warning(s), 0 Error(s)` using `RunAnalyzers=false`
+- `--init-only`: passed
+- App analyzer build: passed with existing analyzer warnings and `0 Error(s)`
+- `git diff --check`: passed
+
+### Important Notes
+
+- Item and creature JSON loading still lives in `ItemManager.LoadDefinitions` and `CreatureManager.LoadDefinitions`. This batch only separates the read-only definition surface from the full runtime managers.
+- Moving item/creature definitions into a structured content-owned immutable catalog is a larger step because the definition types currently live in `HumanFortress.Simulation`.
+- Future work should split static definition loading/validation from runtime instance management, then move the definition types/catalogs toward the content boundary.
+- Avoid mixing App/test build commands in parallel. During this batch, parallel App/test builds reproduced the known macOS `apphost` signing/copy race; sequential rebuilds passed immediately.
+
+## Previous Batch: Content Catalog Boundary Hardening
 
 Status: completed
 
@@ -12,7 +229,7 @@ Status: completed
   - `IConstructionCatalog`
   - `IRecipeCatalog`
 - Changed `HumanFortress.Core.Content.Registry.ContentRegistry` to expose construction and recipe content through read-only catalog interfaces instead of concrete mutable registry types.
-- Kept `ConstructionRegistry` and `RecipeRegistry` as internal compatibility stores for now, but only `ContentRegistry.LoadCoreData` uses their mutation APIs during normal startup.
+- Kept `ConstructionRegistry` and `RecipeRegistry` as internal compatibility stores for that batch. A later batch replaced the normal `ContentRegistry.LoadCoreData` path with immutable construction/recipe snapshots.
 - Migrated runtime/gameplay read paths from direct singleton access to catalog access:
   - Runtime workshop queue commands
   - buildable construction planning
@@ -60,7 +277,7 @@ Status: completed
   - recipe root arrays and `{ "recipes": [...] }` documents are both supported
   - recipe aliases such as `workshops`, `workshop_id`, `workshop`, `work_time.duration_ticks`, `duration_ticks`, `skill.primary`, and `primary_skill` still parse
 - Exposed `ContentRegistry.Constructions` and `ContentRegistry.Recipes` as transitional sub-registry accessors over the existing singleton registries.
-- Simplified `SimulationWorldContentLoader`: App still locates the active `data/core` path and loads creature/item managers, but no longer contains construction or recipe JSON parsing logic.
+- Simplified `SimulationWorldContentLoader`: App still locates the active `data/core` path and, at that time, still loaded creature/item managers directly, but no longer contained construction or recipe JSON parsing logic.
 - Expanded content smoke coverage to prove `ContentRegistry.LoadCoreData` loads constructions and recipes without errors and populates known construction/recipe ids.
 
 ### Verification
@@ -77,7 +294,7 @@ Status: completed
 
 - This removes App-level file parsing for construction and recipe content, but it does not yet delete `ConstructionRegistry` or `RecipeRegistry`.
 - `ConstructionRegistry` and `RecipeRegistry` are now better treated as compatibility sub-registries under the structured registry boundary. The next content pass should either fold their storage into `ContentRegistry` or hide them behind read-only catalog interfaces.
-- Creature and item definition loading still lives in their managers. Moving validation/registration for those definitions behind the structured registry remains future work.
+- At that point, creature and item definition loading still lived in their managers. This was completed later by moving their loaders into `HumanFortress.Content.Definitions` and injecting catalog snapshots.
 - The legacy `HumanFortress.Core.Content.ContentRegistry` still exists for compatibility while material/geology migration is completed.
 
 ## Previous Batch: Runtime Content Registry Unification
@@ -125,7 +342,7 @@ Status: completed
 
 - The legacy `HumanFortress.Core.Content.ContentRegistry` still exists and is still loaded by `ContentLoadCoordinator` for compatibility. It is no longer the desired runtime read target for geology/tuning/zones.
 - The console summary from the legacy registry still appears during startup. Remove it when the legacy registry is deleted or replaced by a pure migration shim.
-- `ConstructionRegistry`, `RecipeRegistry`, item definitions, and creature definitions still have separate loading paths. The next content unification pass should move construction and recipe loading behind the same authoritative registry boundary.
+- At that point, `ConstructionRegistry`, `RecipeRegistry`, item definitions, and creature definitions still had separate loading paths. Later batches moved item/creature loading into `HumanFortress.Content.Definitions` and changed construction/recipe loading to produce immutable snapshots.
 - `geology_prototypes.json` remains present but should not override runtime `geology.json` until its ids and material references are aligned with the active `core_terrain_*` content model.
 
 ## Previous Batch: Content Registry Bootstrap Unification

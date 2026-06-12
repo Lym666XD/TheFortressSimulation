@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Time;
 using HumanFortress.Simulation.Diagnostics;
+using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -19,12 +20,18 @@ namespace HumanFortress.Simulation.Jobs
         public static Action<string>? LogCallback { get; set; }
         private readonly World.World _world;
         private readonly ITransportIntake _intake;
+        private readonly IItemDefinitionCatalog _itemDefinitions;
         private readonly int _scanBudgetPerTick;
 
-        public ConstructionMaterialsPlanner(World.World world, ITransportIntake intake, int scanBudgetPerTick = 64)
+        public ConstructionMaterialsPlanner(
+            World.World world,
+            ITransportIntake intake,
+            IItemDefinitionCatalog itemDefinitions,
+            int scanBudgetPerTick = 64)
         {
             _world = world ?? throw new ArgumentNullException(nameof(world));
             _intake = intake ?? throw new ArgumentNullException(nameof(intake));
+            _itemDefinitions = itemDefinitions ?? throw new ArgumentNullException(nameof(itemDefinitions));
             _scanBudgetPerTick = Math.Max(1, scanBudgetPerTick);
         }
 
@@ -145,7 +152,7 @@ namespace HumanFortress.Simulation.Jobs
                 {
                     if (it.Position.X == cell.X && it.Position.Y == cell.Y && it.Z == site.Z)
                     {
-                        var def = _world.Items.GetDefinition(it.DefinitionId);
+                        var def = _itemDefinitions.GetDefinition(it.DefinitionId);
                         if (def == null || def.Tags == null) continue;
                         foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
                         {
@@ -178,7 +185,7 @@ namespace HumanFortress.Simulation.Jobs
             foreach (var it in groundItems)
             {
                 if (_world.Reservations.IsItemReserved(it.Guid, tick)) { skippedReserved++; continue; }
-                var def = _world.Items.GetDefinition(it.DefinitionId);
+                var def = _itemDefinitions.GetDefinition(it.DefinitionId);
                 if (def == null || def.Tags == null) { skippedNoDef++; continue; }
                 if (!MatchesRequirement(def.Tags, reqTag)) { skippedNoMatch++; continue; }
                 candidates++;

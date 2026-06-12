@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.App.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Runtime", "src\HumanFortress.Runtime\HumanFortress.Runtime.csproj", "{F422C851-7BAD-45D7-A32B-AA3EA8A674C9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HumanFortress.Content", "src\HumanFortress.Content\HumanFortress.Content.csproj", "{7EE58F89-0083-4B2B-9479-FF8472035538}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +155,18 @@ Global
 		{F422C851-7BAD-45D7-A32B-AA3EA8A674C9}.Release|x64.Build.0 = Release|Any CPU
 		{F422C851-7BAD-45D7-A32B-AA3EA8A674C9}.Release|x86.ActiveCfg = Release|Any CPU
 		{F422C851-7BAD-45D7-A32B-AA3EA8A674C9}.Release|x86.Build.0 = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|x64.Build.0 = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Debug|x86.Build.0 = Debug|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|x64.ActiveCfg = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|x64.Build.0 = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|x86.ActiveCfg = Release|Any CPU
+		{7EE58F89-0083-4B2B-9479-FF8472035538}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -167,6 +181,7 @@ Global
 		{12CCBAEE-2692-4560-A598-5690562EACB5} = {35F9C120-BB94-3F10-F0F3-8A48563F291A}
 		{DE048A29-0A36-4A01-97B4-E37465DE16DD} = {1DC9847E-C337-477C-8825-34E07ACC6674}
 		{F422C851-7BAD-45D7-A32B-AA3EA8A674C9} = {35F9C120-BB94-3F10-F0F3-8A48563F291A}
+		{7EE58F89-0083-4B2B-9479-FF8472035538} = {35F9C120-BB94-3F10-F0F3-8A48563F291A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {85B72B1E-7FFE-4A41-A143-6BFC99E62EFC}

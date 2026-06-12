@@ -1,3 +1,4 @@
+using HumanFortress.Content.Definitions;
 using HumanFortress.Simulation.World;
 using DataContentRegistry = HumanFortress.Core.Content.ContentRegistry;
 using RuntimeContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
@@ -26,10 +27,9 @@ internal static class SimulationWorldContentLoader
         }
 
         Logger.Log($"[GameStateManager] Loading creature and item definitions from {dataPath}");
-        world.Creatures.LoadDefinitions(dataPath);
-
+        LoadCreatureDefinitions(world, dataPath);
         world.Items.SetDependencies(world, RuntimeContentRegistry.Instance);
-        world.Items.LoadDefinitions(dataPath);
+        LoadItemDefinitions(world, dataPath);
 
         foreach (var zoneData in RuntimeContentRegistry.Instance.Zones.Values)
         {
@@ -39,6 +39,32 @@ internal static class SimulationWorldContentLoader
         Logger.Log($"[GameStateManager] Loaded {world.Creatures.DefinitionCount} creatures, {world.Items.DefinitionCount} items, {world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
 
         LoadCoreDataRegistries(dataPath);
+    }
+
+    private static void LoadCreatureDefinitions(World world, string dataPath)
+    {
+        var result = CreatureDefinitionCatalogLoader.Load(dataPath);
+        foreach (var message in result.Messages)
+        {
+            Logger.Log(message);
+        }
+
+        world.Creatures.SetDefinitionCatalog(result.Catalog);
+        Logger.Log($"[CreatureManager] Loaded {result.LoadedCount} creature definitions from {result.FileCount} files ({result.ErrorCount} errors)");
+    }
+
+    private static void LoadItemDefinitions(World world, string dataPath)
+    {
+        var result = ItemDefinitionCatalogLoader.Load(dataPath);
+        foreach (var message in result.Messages)
+        {
+            Logger.Log(message);
+        }
+
+        world.Items.SetDefinitionCatalog(result.Catalog);
+        var availableKinds = result.Catalog.GetAvailableKinds().ToArray();
+        Logger.Log($"[ItemManager] Loaded {result.LoadedCount} item definitions from {result.FileCount} files ({result.ErrorCount} errors)");
+        Logger.Log($"[ItemManager] Indexed {availableKinds.Length} kinds: {string.Join(", ", availableKinds)}");
     }
 
     private static void EnsureContentRegistriesLoaded(string baseDir)

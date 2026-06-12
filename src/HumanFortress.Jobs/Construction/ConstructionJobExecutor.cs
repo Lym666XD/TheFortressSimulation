@@ -27,7 +27,7 @@ internal sealed class ConstructionJobExecutor
         constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         var log = logger ?? NullConstructionJobLogger.Instance;
         var footprintCells = new ConstructionFootprintCells(world);
-        var materials = new ConstructionMaterialTracker(world, footprintCells, diffEmitter, log);
+        var materials = new ConstructionMaterialTracker(world, footprintCells, world.Items, diffEmitter, log);
         var siteSafety = new ConstructionSiteSafety(world, diffEmitter, log);
         var completion = new ConstructionCompletionApplier(world, diffEmitter, constructions, workshopCompletionSink, log);
         var tuning = ConstructionTuning.LoadFromContent();

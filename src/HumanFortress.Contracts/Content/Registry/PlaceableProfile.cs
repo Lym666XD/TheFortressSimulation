@@ -67,8 +67,8 @@ public sealed class PlaceableProfile
 }
 
 /// <summary>
-/// Footprint dimensions in tiles (W×D×H)
-/// No rotation support in MVP - all placeables have fixed orientation
+/// Footprint dimensions in tiles (W x D x H).
+/// No rotation support in MVP - all placeables have fixed orientation.
 /// </summary>
 public struct Footprint
 {
@@ -119,8 +119,8 @@ public enum PassabilityMode
 }
 
 /// <summary>
-/// Environmental effects block (beauty, comfort, light, heat)
-/// Base values from definition, modified by quality for installable items
+/// Environmental effects block (beauty, comfort, light, heat).
+/// Base values from definition, modified by quality for installable items.
 /// </summary>
 public sealed class EffectsBlock
 {

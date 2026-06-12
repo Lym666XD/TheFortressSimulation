@@ -14,36 +14,31 @@ internal static class CoreDataRegistryLoader
         CommentHandling = JsonCommentHandling.Skip
     };
 
-    public static CoreDataLoadResult Load(
-        string coreDataPath,
-        ConstructionRegistry constructionRegistry,
-        RecipeRegistry recipeRegistry)
+    public static CoreDataLoadResult Load(string coreDataPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(coreDataPath);
-        ArgumentNullException.ThrowIfNull(constructionRegistry);
-        ArgumentNullException.ThrowIfNull(recipeRegistry);
 
         var constructions = LoadBuildableConstructions(
-            Path.Combine(coreDataPath, "workshops"),
-            constructionRegistry);
-        var recipes = LoadRecipeDefinitions(
-            Path.Combine(coreDataPath, "recipes"),
-            recipeRegistry);
+            Path.Combine(coreDataPath, "workshops"));
+        var recipes = LoadRecipeDefinitions(Path.Combine(coreDataPath, "recipes"));
 
         return new CoreDataLoadResult(constructions, recipes);
     }
 
-    private static ConstructionContentLoadResult LoadBuildableConstructions(
-        string workshopsDir,
-        ConstructionRegistry registry)
+    private static ConstructionContentLoadResult LoadBuildableConstructions(string workshopsDir)
     {
         var messages = new List<string>();
         var files = new List<string>();
         if (!Directory.Exists(workshopsDir))
         {
-            registry.Clear();
             messages.Add($"workshops dir not found: {workshopsDir}");
-            return new ConstructionContentLoadResult(0, 0, 0, Array.Empty<string>(), messages);
+            return new ConstructionContentLoadResult(
+                ConstructionCatalogStore.Empty,
+                0,
+                0,
+                0,
+                Array.Empty<string>(),
+                messages);
         }
 
         foreach (var file in Directory.GetFiles(workshopsDir, "core_workshop_*.json", SearchOption.TopDirectoryOnly))
@@ -92,10 +87,10 @@ internal static class CoreDataRegistryLoader
             }
         }
 
-        registry.Clear();
+        var catalog = ConstructionCatalogStore.Empty;
         try
         {
-            registry.LoadConstructions(definitionsById.Values);
+            catalog = ConstructionCatalogStore.FromDefinitions(definitionsById.Values);
         }
         catch (Exception ex)
         {
@@ -104,23 +99,21 @@ internal static class CoreDataRegistryLoader
         }
 
         return new ConstructionContentLoadResult(
-            registry.Count,
+            catalog,
+            catalog.Count,
             errors,
             duplicatesSkipped,
-            registry.GetAllCategories().ToArray(),
+            catalog.GetAllCategories().ToArray(),
             messages);
     }
 
-    private static RecipeContentLoadResult LoadRecipeDefinitions(
-        string recipesDir,
-        RecipeRegistry registry)
+    private static RecipeContentLoadResult LoadRecipeDefinitions(string recipesDir)
     {
         var messages = new List<string>();
         if (!Directory.Exists(recipesDir))
         {
-            registry.Clear();
             messages.Add($"directory not found: {recipesDir}");
-            return new RecipeContentLoadResult(0, 0, messages);
+            return new RecipeContentLoadResult(RecipeCatalogStore.Empty, 0, 0, messages);
         }
 
         var files = Directory.GetFiles(recipesDir, "*.json", SearchOption.TopDirectoryOnly);
@@ -160,8 +153,8 @@ internal static class CoreDataRegistryLoader
             }
         }
 
-        registry.LoadRecipes(definitions);
-        return new RecipeContentLoadResult(registry.Count, errors, messages);
+        var catalog = RecipeCatalogStore.FromDefinitions(definitions);
+        return new RecipeContentLoadResult(catalog, catalog.Count, errors, messages);
     }
 
     private static RecipeDefinition? ParseRecipeDefinition(JsonElement element)
@@ -595,12 +588,14 @@ public sealed class CoreDataLoadResult
 public sealed class ConstructionContentLoadResult
 {
     public ConstructionContentLoadResult(
+        ConstructionCatalogStore catalog,
         int loadedCount,
         int errorCount,
         int duplicatesSkipped,
         IReadOnlyList<string> categories,
         IReadOnlyList<string> messages)
     {
+        Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         LoadedCount = loadedCount;
         ErrorCount = errorCount;
         DuplicatesSkipped = duplicatesSkipped;
@@ -608,6 +603,7 @@ public sealed class ConstructionContentLoadResult
         Messages = messages ?? throw new ArgumentNullException(nameof(messages));
     }
 
+    public ConstructionCatalogStore Catalog { get; }
     public int LoadedCount { get; }
     public int ErrorCount { get; }
     public int DuplicatesSkipped { get; }
@@ -618,15 +614,18 @@ public sealed class ConstructionContentLoadResult
 public sealed class RecipeContentLoadResult
 {
     public RecipeContentLoadResult(
+        RecipeCatalogStore catalog,
         int loadedCount,
         int errorCount,
         IReadOnlyList<string> messages)
     {
+        Catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
         LoadedCount = loadedCount;
         ErrorCount = errorCount;
         Messages = messages ?? throw new ArgumentNullException(nameof(messages));
     }
 
+    public RecipeCatalogStore Catalog { get; }
     public int LoadedCount { get; }
     public int ErrorCount { get; }
     public IReadOnlyList<string> Messages { get; }

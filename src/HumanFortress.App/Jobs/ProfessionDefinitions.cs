@@ -85,12 +85,16 @@ public enum WorkerSelectionStrategy
 public sealed class ProfessionAssignments
 {
     private readonly ProfessionRegistry _registry;
+    private readonly ICreatureDefinitionCatalog? _creatureDefinitions;
     private readonly Dictionary<Guid, Dictionary<string, int>> _weights = new();
     private readonly Dictionary<Guid, Dictionary<string, int>> _skillLevels = new();
 
-    public ProfessionAssignments(ProfessionRegistry registry)
+    public ProfessionAssignments(
+        ProfessionRegistry registry,
+        ICreatureDefinitionCatalog? creatureDefinitions = null)
     {
         _registry = registry;
+        _creatureDefinitions = creatureDefinitions;
     }
 
     public ProfessionRegistry Registry => _registry;
@@ -143,9 +147,10 @@ public sealed class ProfessionAssignments
     {
         var list = new List<ProfessionRosterEntry>();
         if (world == null) return list;
+        var definitions = _creatureDefinitions ?? world.Creatures;
         foreach (var creature in world.Creatures.GetAllInstances())
         {
-            var def = world.Creatures.GetDefinition(creature.DefinitionId);
+            var def = definitions.GetDefinition(creature.DefinitionId);
             string name = def?.Name ?? creature.DefinitionId;
             var weights = new Dictionary<string, int>(EnsureProfile(creature.Guid), StringComparer.OrdinalIgnoreCase);
             list.Add(new ProfessionRosterEntry(creature.Guid, name, weights));

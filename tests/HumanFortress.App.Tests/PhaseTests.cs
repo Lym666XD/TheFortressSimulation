@@ -642,7 +642,10 @@ namespace HumanFortress.App
             Console.Write("[TEST] Path caching... ");
             try
             {
-                var pathService = new HumanFortress.Navigation.PathService();
+                var pathService = new HumanFortress.Navigation.PathService(new HumanFortress.Navigation.NavigationTuning
+                {
+                    MaxMsPerTickPathing = 100
+                });
                 var world = new TestNavigationWorld();
 
                 var request = new HumanFortress.Navigation.PathRequest(

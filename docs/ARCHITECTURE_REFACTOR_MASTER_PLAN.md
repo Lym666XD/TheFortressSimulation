@@ -24,9 +24,9 @@ The problem is that these ideas are not enforced by boundaries. Runtime composit
 
 The current codebase is best described as a working prototype with several professional architecture pieces present but bypassed. The refactor should first stop new architectural drift, then extract a headless deterministic runtime, then move gameplay systems out of App.
 
-## Current Refactor Progress - 2026-06-11
+## Current Refactor Progress - 2026-06-12
 
-Estimated architecture-foundation progress: **95%**.
+Estimated architecture-foundation progress: **98%**.
 
 This percentage tracks the refactor from prototype structure toward a maintainable deterministic simulation architecture. It is not a gameplay feature-completion estimate.
 
@@ -144,6 +144,19 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Added read-only `IConstructionCatalog` and `IRecipeCatalog` interfaces, exposed them from the structured `ContentRegistry`, and migrated runtime/gameplay construction/recipe reads away from direct `ConstructionRegistry.Instance` / `RecipeRegistry.Instance` access.
 - Injected `IConstructionCatalog` into Jobs-owned construction and craft execution paths, so Jobs code no longer pulls construction definitions through a construction singleton.
 - Replaced recipe-registry mutation in regression tests with in-memory test catalogs; direct construction/recipe singleton access is now contained inside the structured `ContentRegistry`.
+- Added read-only `IItemDefinitionCatalog` and `ICreatureDefinitionCatalog` seams over the current Simulation managers, then migrated construction material matching/planning and profession roster naming to consume definition catalogs instead of full manager APIs.
+- Extracted static item and creature JSON loading/validation out of `ItemManager` and `CreatureManager` into focused loader classes, while keeping the manager public APIs compatible during the transition.
+- Fixed repeated item/creature definition loading so tag/kind indexes are cleared and rebuilt instead of accumulating duplicate entries, with regression coverage for stable reload counts.
+- Added immutable item and creature definition catalog snapshot stores inside Simulation. `ItemManager` and `CreatureManager` now swap definition catalog snapshots on reload instead of owning mutable static definition/index dictionaries directly.
+- Stabilized the legacy Phase D concurrent pathfinder test by separating production tick-budget behavior from the test's concurrent pathfinding assertion.
+- Moved static item/creature definition DTOs, shared placeable DTOs, read-only item/creature definition catalog interfaces, and immutable item/creature catalog snapshot stores into `HumanFortress.Contracts` while preserving their existing namespaces as a transitional compatibility step.
+- Added `HumanFortress.Content` as a real content assembly and wired it into the active solution.
+- Moved item/creature definition JSON loading, parsing, validation, normalization, and catalog snapshot creation into `HumanFortress.Content.Definitions`.
+- Removed Simulation-owned item/creature definition file loading from `ItemManager` and `CreatureManager`; runtime managers now accept prebuilt catalog snapshots through `SetDefinitionCatalog(...)`.
+- Changed App startup and regression tests to load item/creature catalog snapshots through `HumanFortress.Content` and inject them into the active world, keeping `Simulation` independent from `Content`.
+- Added immutable construction and recipe catalog snapshots, and changed `ContentRegistry.LoadCoreData(...)` to swap instance-owned snapshots instead of mutating `ConstructionRegistry.Instance` / `RecipeRegistry.Instance`.
+- Changed craft recipe composition to inject `IRecipeCatalog` explicitly into the App craft adapter, removing one more runtime read from global content state.
+- Added regression coverage proving repeated core-data loads keep construction/recipe counts and workshop/category queries stable.
 - Verified the current code with `dotnet build` and headless tests on .NET 8.
 
 ### Current Known Runtime/Architecture Issues
@@ -160,8 +173,10 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Command execution now has an explicit pre-read runtime stage. Profession weight changes are command-driven, debug item spawning emits `ItemsDiffLog` additions, debug creature spawning emits a minimal spawn-only `CreaturesDiffLog` operation, and App command implementations route through Runtime target interfaces instead of directly casting to `Simulation.World` or depending on App runtime internals. Remaining command-boundary work is reducing the broad transitional target interface surface and eventually replacing direct manager mutations with authoritative typed diffs where each subsystem has an applicator path.
 - `StockpileDiff` exists but is not currently wired into the tick pipeline and still has applicator TODOs, so stockpile command migration should wait until stockpile diffs have an authoritative runtime stage.
 - `ContentRegistry` is being collapsed toward `HumanFortress.Core.Content.Registry.ContentRegistry`. The structured registry now owns runtime geology loading, deterministic geology handles, tuning files, zone definitions, and construction/recipe core-data loading, and worldgen/mining/construction/rendering read paths have moved to it. The legacy `HumanFortress.Core.Content.ContentRegistry` still exists as a compatibility load target inside `ContentLoadCoordinator` until remaining content ownership is migrated.
-- `ConstructionRegistry` and `RecipeRegistry` still exist as singleton-backed compatibility stores, but direct access is now contained inside the structured `ContentRegistry`. Normal startup loads them through the structured registry boundary, and runtime reads use `IConstructionCatalog` / `IRecipeCatalog` where practical. Their concrete mutation APIs should eventually become internal to `ContentRegistry` or be replaced by immutable catalog snapshots.
-- Creature and item definitions still load through `CreatureManager` and `ItemManager`; this keeps App/runtime startup workable, but validation and registration should move behind the structured content boundary before deleting the legacy registry/coordinator path.
+- `ConstructionRegistry` and `RecipeRegistry` still exist as compatibility classes, but normal startup no longer loads or reads through their singleton instances. `ContentRegistry` now owns immutable construction/recipe catalog snapshots and exposes them through `IConstructionCatalog` / `IRecipeCatalog`.
+- Creature and item definition loading/validation now lives in `HumanFortress.Content.Definitions`. `ItemManager` and `CreatureManager` no longer parse files; they consume immutable catalog snapshots supplied by App/runtime composition.
+- Static item/creature definition DTOs, shared placeable DTOs, definition catalog interfaces, and immutable catalog snapshot stores now compile from `HumanFortress.Contracts`, but their old namespaces are preserved as a transitional compatibility step.
+- The next content ownership step is folding item/creature catalog loading and construction/recipe core-data loading into one coherent `HumanFortress.Content` load result, then deleting or folding the remaining concrete registry compatibility and the legacy registry/coordinator path.
 - Startup content diagnostics are improved and current legacy content loads without registry errors. The structured registry now loads successfully and reports remaining validation warnings explicitly.
 - Logging now has a first-pass structured async diagnostics pipeline with category/level events, a main timeline log, category log files, and a ring-buffer sink for future UI debug panels. The secondary content registry, WorldGen progress/error paths, stockpile diff errors, and key Simulation orders/jobs fallbacks now route through diagnostic helpers. Remaining work is mostly command-line/test output, no-logger fallback helpers, and exposing diagnostics in UI.
 - The world map embarkability UI now shows first-pass rule failures for the current tile. It still needs richer terrain/biome/geology diagnostics if embark rules become more complex.
@@ -172,7 +187,7 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 
 1. Continue carving Runtime out of App by moving host/runtime responsibilities only after content loading, job adapter composition, and UI-facing lifetime dependencies have cleaner seams.
 2. Audit remaining command implementations that still directly mutate world managers and migrate them to typed diffs where the target subsystem has an applicator path.
-3. Continue ContentRegistry unification by replacing remaining concrete construction/recipe registry mutation access with immutable catalog snapshots or test fixtures, then moving item definition validation and creature definition validation behind the structured registry boundary before deleting the legacy registry and coordinator compatibility path.
+3. Continue ContentRegistry unification by folding item/creature catalog loading and construction/recipe core-data loading into the same content-load result shape before deleting the legacy registry/coordinator compatibility path.
 4. Continue diagnostics migration by replacing remaining direct `Console.WriteLine` paths and exposing the in-memory diagnostics ring buffer through a UI/debug surface.
 5. Move remaining App-owned job adapters/tunings only when their dependencies have clear Runtime/Content homes.
 6. Split the monolithic test project into focused project-level test assemblies when the module boundaries are stable enough.

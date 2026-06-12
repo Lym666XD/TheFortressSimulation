@@ -12,7 +12,6 @@ using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
-using IoPath = System.IO.Path;
 using WorldChunkKey = HumanFortress.Simulation.World.ChunkKey;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -287,8 +286,7 @@ internal static class TransportConstructionCraftRegressionTests
     private static void TestConstructionTerrainCompletionRemovesSite()
     {
         var world = new WorldModel(2, 2);
-        world.Items.SetDependencies(world, ContentRegistry.Instance);
-        world.Items.LoadDefinitions(IoPath.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadItems(world);
 
         var target = new Point(2, 2);
         var safe = new Point(3, 2);
@@ -388,8 +386,7 @@ internal static class TransportConstructionCraftRegressionTests
     private static void TestCraftConsumesInputFromWorkshopRing()
     {
         var world = new WorldModel(2, 2);
-        world.Items.SetDependencies(world, ContentRegistry.Instance);
-        world.Items.LoadDefinitions(IoPath.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadItems(world);
 
         var workshopPos = new Point(2, 2);
         var ringPos = new Point(3, 2);
@@ -431,9 +428,8 @@ internal static class TransportConstructionCraftRegressionTests
     private static WorldModel CreateWorldWithContent()
     {
         var world = new WorldModel(2, 2);
-        world.Creatures.LoadDefinitions(IoPath.Combine(AppContext.BaseDirectory, "data", "core"));
-        world.Items.SetDependencies(world, ContentRegistry.Instance);
-        world.Items.LoadDefinitions(IoPath.Combine(AppContext.BaseDirectory, "data", "core"));
+        DefinitionCatalogTestSupport.LoadCreatures(world);
+        DefinitionCatalogTestSupport.LoadItems(world);
         return world;
     }
 

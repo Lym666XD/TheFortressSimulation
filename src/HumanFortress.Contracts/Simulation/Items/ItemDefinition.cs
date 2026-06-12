@@ -1,13 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using HumanFortress.Core.Content.Registry;
 
 namespace HumanFortress.Simulation.Items;
 
 /// <summary>
-/// Static definition of an item type loaded from data/core/items/*.json
-/// Based on ITEMS_SPEC.md v4-int
+/// Static definition of an item type loaded from data/core/items/*.json.
+/// Based on ITEMS_SPEC.md v4-int.
 /// </summary>
 public sealed class ItemDefinition
 {
@@ -20,39 +19,39 @@ public sealed class ItemDefinition
 
     // === MATERIAL REFERENCE ===
     /// <summary>
-    /// Fixed material string ID (e.g. "core_mat_metal_iron")
-    /// Use this for raw resources like ingots, blocks, planks
-    /// Mutually exclusive with multi-material crafting (future)
+    /// Fixed material string ID (e.g. "core_mat_metal_iron").
+    /// Use this for raw resources like ingots, blocks, planks.
+    /// Mutually exclusive with multi-material crafting (future).
     /// </summary>
     [JsonPropertyName("fixed_material")]
     public string? FixedMaterial { get; set; }
 
-    // === GEOMETRY & MASS (all integer values per SPEC v4-int §4) ===
+    // === GEOMETRY & MASS (all integer values per SPEC v4-int section 4) ===
     /// <summary>
-    /// Base volume in milliliters (mL), required
+    /// Base volume in milliliters (mL), required.
     /// </summary>
     [JsonPropertyName("base_volume_ml")]
     public int BaseVolumeML { get; set; }
 
     /// <summary>
-    /// Base mass in grams (g), optional
-    /// If null, mass is calculated from material density × volume
-    /// Use this for items with air gaps or composite materials
+    /// Base mass in grams (g), optional.
+    /// If null, mass is calculated from material density x volume.
+    /// Use this for items with air gaps or composite materials.
     /// </summary>
     [JsonPropertyName("base_mass_g")]
     public int? BaseMassG { get; set; }
 
     /// <summary>
-    /// Fixed mass in grams (g), optional
-    /// Overrides material-based calculation (e.g. for feathers, balloons)
+    /// Fixed mass in grams (g), optional.
+    /// Overrides material-based calculation (e.g. for feathers, balloons).
     /// </summary>
     [JsonPropertyName("fixed_mass_g")]
     public int? FixedMassG { get; set; }
 
-    // === STACKING (per SPEC §10) ===
+    // === STACKING (per SPEC section 10) ===
     public StackBlock? Stack { get; set; }
 
-    // === FEATURE BLOCKS (MVP: null占位, 后续实现) ===
+    // === FEATURE BLOCKS (MVP placeholders, future implementation) ===
     public EquipBlock? Equip { get; set; }
     public WeaponBlock? Weapon { get; set; }
     public AmmoBlock? Ammo { get; set; }
@@ -64,9 +63,9 @@ public sealed class ItemDefinition
     [JsonPropertyName("quality_tier")]
     public int? QualityTier { get; set; }  // -3..+3, default null = normal quality
     [JsonPropertyName("value_mul_fx")]
-    public int ValueMulFx { get; set; } = 10000;  // FX multiplier, 10000 = 1.0×
+    public int ValueMulFx { get; set; } = 10000;  // FX multiplier, 10000 = 1.0x
 
-    // === DURABILITY (MVP未实现) ===
+    // === DURABILITY (MVP not implemented) ===
     [JsonPropertyName("durability_max")]
     public int? DurabilityMax { get; set; }
 
@@ -77,7 +76,7 @@ public sealed class ItemDefinition
     public int MaxPerStack { get; set; } = 1;
 }
 
-// === STACK BLOCK (per SPEC §10) ===
+// === STACK BLOCK (per SPEC section 10) ===
 public class StackBlock
 {
     public StackMode Mode { get; set; } = StackMode.Count;
@@ -101,14 +100,14 @@ public enum StackMode
     Charges
 }
 
-// === FEATURE BLOCKS (MVP占位类型) ===
+// === FEATURE BLOCKS (MVP placeholder types) ===
 
 public class EquipBlock
 {
     public string Slot { get; set; } = "";  // "head", "torso", "hands", etc.
     public int EncumbranceFx { get; set; }  // FX integer
     public ArmorStats? Armor { get; set; }
-    // ShapeMod will go here later
+    // ShapeMod will go here later.
 }
 
 public class ArmorStats
@@ -122,7 +121,7 @@ public class WeaponBlock
     public string WeaponType { get; set; } = "";  // "melee", "ranged"
     public DamageBlock Damage { get; set; } = new();
     public int ReachTiles { get; set; } = 1;
-    // ShapeMod and bonuses will go here later
+    // ShapeMod and bonuses will go here later.
 }
 
 public class DamageBlock
@@ -148,6 +147,3 @@ public class UseBlock
     public string UseVerb { get; set; } = "use";  // "eat", "drink", "apply"
     public int Charges { get; set; } = 1;
 }
-
-// Note: PlaceableProfile is now defined in HumanFortress.Core.Content.Registry namespace
-// See PlaceableProfile.cs for full implementation with footprint, passability, effects, etc.

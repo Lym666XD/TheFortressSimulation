@@ -3,8 +3,8 @@ using System.Collections.Generic;
 namespace HumanFortress.Simulation.Creatures;
 
 /// <summary>
-/// Static definition of a creature type loaded from data/core/creatures/*.json
-/// Based on CREATURE_SPEC.md
+/// Static definition of a creature type loaded from data/core/creatures/*.json.
+/// Based on CREATURE_SPEC.md.
 /// </summary>
 public sealed class CreatureDefinition
 {

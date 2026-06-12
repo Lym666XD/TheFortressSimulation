@@ -9,9 +9,16 @@ namespace HumanFortress.App.Jobs;
 
 internal sealed class CraftRecipeCatalogAdapter : ICraftRecipeCatalog
 {
+    private readonly IRecipeCatalog _recipes;
+
+    public CraftRecipeCatalogAdapter(IRecipeCatalog recipes)
+    {
+        _recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
+    }
+
     public RecipeDefinition? GetRecipe(string recipeId)
     {
-        return ContentRegistry.Instance.Recipes.GetRecipe(recipeId);
+        return _recipes.GetRecipe(recipeId);
     }
 }
 

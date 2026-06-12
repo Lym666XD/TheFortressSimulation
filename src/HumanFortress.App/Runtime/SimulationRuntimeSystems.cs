@@ -84,11 +84,12 @@ internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
 
         var content = ContentRegistry.Instance;
         var constructionCatalog = content.Constructions;
+        var recipeCatalog = content.Recipes;
 
         var miningPlanner = new MiningSystem(world, world.Orders);
         var transportQueue = new TransportRequestQueue();
         var haulingPlanner = new HaulingSystem(world, world.Orders, transportIntake: transportQueue);
-        var constructionMaterialsPlanner = new ConstructionMaterialsPlanner(world, transportQueue);
+        var constructionMaterialsPlanner = new ConstructionMaterialsPlanner(world, transportQueue, world.Items);
         ConstructionMaterialsPlanner.LogCallback = Logger.CreateCallback("Jobs.ConstructionMaterials");
         var constructionPlanner = new ConstructionSystem(world, world.Orders);
         var buildablePlanner = new BuildableConstructionSystem(world, world.Orders, constructionCatalog);
@@ -96,7 +97,7 @@ internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
         var schedulerTunings = SchedulerTunings.LoadFromContent(baseDir);
         var workshopTunings = WorkshopTunings.LoadFromContent(baseDir);
         var professionRegistry = ProfessionRegistry.Load(baseDir);
-        var professionAssignments = new ProfessionAssignments(professionRegistry);
+        var professionAssignments = new ProfessionAssignments(professionRegistry, world.Creatures);
 
         var miningJobs = new MiningJobSystem(
             world,
@@ -129,7 +130,7 @@ internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
             constructionCatalog,
             maxPerTick: schedulerTunings.Construction.PlanPerTick);
 
-        var craftRecipes = new CraftRecipeCatalogAdapter();
+        var craftRecipes = new CraftRecipeCatalogAdapter(recipeCatalog);
         var craftPlanner = new CraftPlanner(world, transportQueue, craftRecipes, constructionCatalog);
         var craftJobs = new CraftJobSystem(
             world,

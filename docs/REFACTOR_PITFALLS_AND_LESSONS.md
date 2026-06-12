@@ -33,7 +33,7 @@ Important compatibility behavior preserved by the Core loader:
 
 ### ConstructionRegistry and RecipeRegistry are transitional
 
-`ConstructionRegistry` and `RecipeRegistry` still exist as singleton stores. They are now loaded through `ContentRegistry.LoadCoreData`, so callers should treat them as compatibility sub-registries rather than independent content roots.
+`ConstructionRegistry` and `RecipeRegistry` still exist as compatibility classes, but normal startup no longer loads through their singleton instances. `ContentRegistry.LoadCoreData` now parses core data into fresh immutable snapshots and swaps its instance-owned catalogs.
 
 Runtime/gameplay reads should use the read-only catalog surface:
 
@@ -49,14 +49,22 @@ IConstructionCatalog
 IRecipeCatalog
 ```
 
-Do not add new `ConstructionRegistry.Instance.Get...` or `RecipeRegistry.Instance.Get...` reads in runtime systems. Direct singleton access is currently contained inside `ContentRegistry`; keep it that way so the concrete stores can be replaced by immutable content snapshots later.
+Do not add new `ConstructionRegistry.Instance.Get...` or `RecipeRegistry.Instance.Get...` reads in runtime systems. The normal read path is now:
+
+```text
+ContentRegistry.Instance.Constructions
+ContentRegistry.Instance.Recipes
+```
+
+Those properties expose immutable snapshots through read-only interfaces. Keep it that way so the compatibility registry classes can be deleted later.
 
 Preferred direction:
 
 ```text
 ContentRegistry
   owns load/validation/indexing
-  exposes read-only construction/recipe catalogs
+  swaps immutable construction/recipe catalog snapshots
+  exposes read-only construction/recipe catalog interfaces
 
 Runtime/App
   request definitions through catalog interfaces
@@ -64,6 +72,91 @@ Runtime/App
 ```
 
 Do not move Jobs-owned code back to `RecipeRegistry.Instance`. Craft already uses `ICraftRecipeCatalog`; future construction/craft/runtime seams should follow that pattern.
+
+Repeated `LoadCoreData(...)` calls must replace construction/recipe snapshots, not append to mutable indexes. The current smoke tests verify construction count, recipe count, construction category queries, and workshop recipe queries stay stable after reload.
+
+### Do not depend on full managers for static definitions
+
+`ItemManager` and `CreatureManager` still expose definition lookup alongside runtime instances, but they no longer parse content files. Static definition storage is supplied as immutable catalog snapshots from the Content boundary.
+
+When a system only needs definition metadata, use the read-only catalog seams:
+
+```csharp
+IItemDefinitionCatalog
+ICreatureDefinitionCatalog
+```
+
+Examples already migrated:
+
+- construction material matching in `ConstructionMaterialTracker`;
+- material source planning in `ConstructionMaterialsPlanner`;
+- profession roster display-name lookup in `ProfessionAssignments`.
+
+Do not add new gameplay systems that call `world.Items.GetDefinition(...)` or `world.Creatures.GetDefinition(...)` just because a `World` is nearby. Prefer explicit catalog injection. App UI/render/debug code may still read from managers for presentation until those surfaces get their own view-model/catalog cleanup.
+
+### Rebuild definition indexes through fresh snapshots
+
+Repeated content loads must be idempotent. `HumanFortress.Content.Definitions` loaders parse files into fresh immutable catalog snapshots, and managers replace their current snapshot through `SetDefinitionCatalog(...)`.
+
+Do not append to existing indexes during reload. This creates hidden duplication bugs where:
+
+```text
+DefinitionCount remains stable
+GetByKind(...) / GetByTag(...) grows after every reload
+```
+
+That kind of bug is easy to miss because normal startup loads once, while tests, hot reload, content validation tools, and future mod reload flows may load repeatedly.
+
+Current direction:
+
+```text
+loader
+  parses and validates JSON into a fresh result
+
+catalog snapshot
+  builds definition/id/tag/kind indexes from the fresh result
+
+manager
+  swaps to the fresh catalog snapshot
+  does not parse files or incrementally append stale static definitions
+```
+
+Do not reintroduce file IO or JSON validation into `ItemManager` or `CreatureManager`. App/runtime composition should load content snapshots and inject them.
+
+### Move contracts by assembly before rewriting namespaces
+
+Navigation contracts already use a transitional compatibility pattern: types compile from `HumanFortress.Contracts` while keeping their old namespace until a broader namespace cleanup is safe.
+
+Static item/creature definitions now follow the same pattern. These types compile from `HumanFortress.Contracts`:
+
+```text
+ItemDefinition
+CreatureDefinition
+IItemDefinitionCatalog
+ICreatureDefinitionCatalog
+ItemDefinitionCatalogStore
+CreatureDefinitionCatalogStore
+PlaceableProfile
+Footprint
+PassabilityMode
+EffectsBlock
+```
+
+Do not move them back into Simulation/Core just because their namespace still looks old. The namespace is intentionally transitional to avoid a repo-wide rewrite in the same pass.
+
+Preferred direction:
+
+```text
+first pass
+  move assembly ownership to Contracts
+  preserve namespaces
+  keep builds/tests stable
+
+later cleanup
+  rename namespaces once content/runtime ownership is stable
+```
+
+Avoid making `HumanFortress.Contracts` depend on `HumanFortress.Core` or `HumanFortress.Simulation`. If a shared DTO needs a Core type, the shared type should move down into Contracts with it.
 
 ## Build and SDK Pitfalls
 
@@ -183,6 +276,22 @@ Final migrated batches:
 - command queue ordering/clear behavior;
 - runtime command stage execution before system `ReadTick`.
 - Phase A-D validation coverage for platform, world generation, fortress bootstrap, and navigation.
+
+### Do not let timing budgets make deterministic tests flaky
+
+The legacy Phase D concurrent pathfinder test originally used the production `NavigationTuning.Default` budget:
+
+```text
+MaxMsPerTickPathing = 3
+```
+
+`PathService.Solve` is allowed to return `Path.Invalid` and queue work for a later tick when that per-tick budget is exceeded. Under slower thread scheduling, the concurrent test could report:
+
+```text
+Only 8/10 paths were found
+```
+
+That was not proof of an unreachable path; it was normal budget deferral being treated as a failure. Tests that assert pathfinding correctness should use a test-specific tuning budget large enough to avoid scheduler noise. Separate tests should cover production budget/queue behavior explicitly.
 
 ## Runtime and Diagnostics Pitfalls
 
@@ -383,7 +492,9 @@ Current first-pass behavior:
 - construction duplicates are explicitly skipped and counted;
 - recipe loading reports `errors=0`.
 
-Remaining architecture risk: there are still two `ContentRegistry` models in the codebase, but the structured registry is now the intended owner for runtime geology handles, tuning files, and zones. The next content pass should move construction definitions, recipes, item definition validation, and creature definition validation behind that same boundary, then remove the legacy registry compatibility load.
+Remaining architecture risk: there are still two `ContentRegistry` models in the codebase, but the structured registry is now the intended owner for runtime geology handles, tuning files, zones, construction catalogs, and recipe catalogs. The next content pass should fold item/creature catalog loading and construction/recipe core-data loading into one coherent Content load result, then remove the legacy registry compatibility load.
+
+Item and creature definition loading has now moved into `HumanFortress.Content.Definitions`, and Simulation managers consume snapshots instead of reading files. Construction/recipe loading now also produces immutable snapshots owned by `ContentRegistry`. The remaining registry-unification risk is the split load orchestration and the old compatibility registry/coordinator path.
 
 ### Diagnostics should be async, categorized, and non-authoritative
 

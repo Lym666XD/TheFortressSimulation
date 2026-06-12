@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text.Json;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
@@ -16,13 +14,12 @@ namespace HumanFortress.Simulation.Creatures;
 /// Thread-safe for concurrent reads; writes use locks.
 /// Follows data-driven principles per CREATURE_SPEC.md and UPDATE_ORDER.md
 /// </summary>
-public sealed class CreatureManager
+public sealed class CreatureManager : ICreatureDefinitionCatalog
 {
     private const ulong CreatureInstanceGuidScope = 0x4352454154555245UL;
 
-    // Registry (loaded at startup, read-only after)
-    private readonly Dictionary<string, CreatureDefinition> _definitions = new();
-    private readonly Dictionary<string, List<string>> _tagIndex = new();
+    // Static definition catalog (loaded at startup, swapped as an immutable snapshot on reload)
+    private CreatureDefinitionCatalogStore _definitionCatalog = CreatureDefinitionCatalogStore.Empty;
 
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, CreatureInstance> _instances = new();
@@ -37,7 +34,7 @@ public sealed class CreatureManager
     /// </summary>
     public static Action<string>? LogCallback { get; set; }
 
-    public int DefinitionCount => _definitions.Count;
+    public int DefinitionCount => _definitionCatalog.DefinitionCount;
     public int InstanceCount
     {
         get
@@ -54,99 +51,17 @@ public sealed class CreatureManager
     /// </summary>
     public void SetWorld(HumanFortress.Simulation.World.World world)
     {
+        ArgumentNullException.ThrowIfNull(world);
+
         _world = world;
     }
 
     /// <summary>
-    /// Load creature definitions from data files.
-    /// Each file is wrapped in try-catch; errors are logged but don't stop loading.
+    /// Replace the static creature definition catalog with an already-loaded immutable snapshot.
     /// </summary>
-    public void LoadDefinitions(string dataPath)
+    public void SetDefinitionCatalog(CreatureDefinitionCatalogStore catalog)
     {
-        var creaturesPath = Path.Combine(dataPath, "creatures");
-        if (!Directory.Exists(creaturesPath))
-        {
-            Emit($"[CreatureManager] WARNING: Creatures directory not found: {creaturesPath}");
-            return;
-        }
-
-        var files = Directory.GetFiles(creaturesPath, "*.json");
-        int loaded = 0;
-        int failed = 0;
-
-        foreach (var file in files)
-        {
-            try
-            {
-                var json = File.ReadAllText(file);
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    ReadCommentHandling = JsonCommentHandling.Skip
-                };
-
-                var defs = JsonSerializer.Deserialize<List<CreatureDefinition>>(json, options);
-                if (defs == null) continue;
-
-                foreach (var def in defs)
-                {
-                    try
-                    {
-                        ValidateDefinition(def);
-                        _definitions[def.Id] = def;
-                        IndexByTags(def);
-                        loaded++;
-                    }
-                    catch (Exception ex)
-                    {
-                        Emit($"[CreatureManager] ERROR: Invalid definition '{def.Id}' in {Path.GetFileName(file)}: {ex.Message}");
-                        failed++;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Emit($"[CreatureManager] ERROR: Failed to load {Path.GetFileName(file)}: {ex.Message}");
-                failed++;
-            }
-        }
-
-        Emit($"[CreatureManager] Loaded {loaded} creature definitions from {files.Length} files ({failed} errors)");
-    }
-
-    /// <summary>
-    /// Validate creature definition (basic checks)
-    /// </summary>
-    private void ValidateDefinition(CreatureDefinition def)
-    {
-        if (string.IsNullOrWhiteSpace(def.Id))
-            throw new ArgumentException("Creature ID cannot be empty");
-
-        if (string.IsNullOrWhiteSpace(def.Name))
-            throw new ArgumentException($"Creature '{def.Id}' has no name");
-
-        // Validate stats are in reasonable range
-        if (def.BaseSpeed <= 0)
-            throw new ArgumentException($"Creature '{def.Id}' has invalid speed: {def.BaseSpeed}");
-
-        if (def.BaseStrength < 1 || def.BaseStrength > 100)
-            throw new ArgumentException($"Creature '{def.Id}' has invalid strength: {def.BaseStrength}");
-
-        // TODO: Validate body_plan_id against ContentRegistry when CREATURE_SPEC is fully implemented
-    }
-
-    /// <summary>
-    /// Build tag index for fast queries
-    /// </summary>
-    private void IndexByTags(CreatureDefinition def)
-    {
-        foreach (var tag in def.Tags)
-        {
-            if (!_tagIndex.ContainsKey(tag))
-                _tagIndex[tag] = new List<string>();
-
-            _tagIndex[tag].Add(def.Id);
-        }
+        _definitionCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
     }
 
     /// <summary>
@@ -159,13 +74,14 @@ public sealed class CreatureManager
         try
         {
             Emit($"[CreatureManager] SpawnCreature called: id={creatureId}, pos=({worldPos.X},{worldPos.Y},{z})");
-            Emit($"[CreatureManager] Definitions loaded: {_definitions.Count}");
+            Emit($"[CreatureManager] Definitions loaded: {_definitionCatalog.DefinitionCount}");
 
             // Validate definition exists
-            if (!_definitions.TryGetValue(creatureId, out var def))
+            var def = _definitionCatalog.GetDefinition(creatureId);
+            if (def == null)
             {
                 Emit($"[CreatureManager] ERROR: Unknown creature '{creatureId}'");
-                Emit($"[CreatureManager] Available creatures: {string.Join(", ", _definitions.Keys.Take(5))}");
+                Emit($"[CreatureManager] Available creatures: {string.Join(", ", _definitionCatalog.GetAllDefinitions().Select(definition => definition.Id).Take(5))}");
                 return null;
             }
 
@@ -239,7 +155,7 @@ public sealed class CreatureManager
     /// </summary>
     public IEnumerable<CreatureDefinition> GetAllDefinitions()
     {
-        return _definitions.Values;
+        return _definitionCatalog.GetAllDefinitions();
     }
 
     /// <summary>
@@ -247,10 +163,7 @@ public sealed class CreatureManager
     /// </summary>
     public IEnumerable<CreatureDefinition> GetByTag(string tag)
     {
-        if (!_tagIndex.TryGetValue(tag, out var ids))
-            return Enumerable.Empty<CreatureDefinition>();
-
-        return ids.Select(id => _definitions[id]);
+        return _definitionCatalog.GetByTag(tag);
     }
 
     /// <summary>
@@ -258,7 +171,7 @@ public sealed class CreatureManager
     /// </summary>
     public CreatureDefinition? GetDefinition(string id)
     {
-        return _definitions.GetValueOrDefault(id);
+        return _definitionCatalog.GetDefinition(id);
     }
 
     /// <summary>

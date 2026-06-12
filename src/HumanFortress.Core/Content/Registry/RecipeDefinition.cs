@@ -53,6 +53,93 @@ public interface IRecipeCatalog
 }
 
 /// <summary>
+/// Immutable read-only recipe definition catalog snapshot.
+/// </summary>
+public sealed class RecipeCatalogStore : IRecipeCatalog
+{
+    public static RecipeCatalogStore Empty { get; } = new(
+        new Dictionary<string, RecipeDefinition>(StringComparer.OrdinalIgnoreCase),
+        new Dictionary<string, RecipeDefinition[]>(StringComparer.OrdinalIgnoreCase));
+
+    private readonly IReadOnlyDictionary<string, RecipeDefinition> _recipes;
+    private readonly IReadOnlyDictionary<string, RecipeDefinition[]> _byWorkshop;
+
+    private RecipeCatalogStore(
+        IReadOnlyDictionary<string, RecipeDefinition> recipes,
+        IReadOnlyDictionary<string, RecipeDefinition[]> byWorkshop)
+    {
+        _recipes = recipes;
+        _byWorkshop = byWorkshop;
+    }
+
+    public int Count => _recipes.Count;
+
+    public static RecipeCatalogStore FromDefinitions(IEnumerable<RecipeDefinition> definitions)
+    {
+        ArgumentNullException.ThrowIfNull(definitions);
+
+        var recipes = new Dictionary<string, RecipeDefinition>(StringComparer.OrdinalIgnoreCase);
+        var byWorkshop = new Dictionary<string, List<RecipeDefinition>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var definition in definitions)
+        {
+            if (string.IsNullOrWhiteSpace(definition.Id))
+            {
+                continue;
+            }
+
+            recipes[definition.Id] = definition;
+            foreach (var workshopId in definition.Workshops)
+            {
+                if (!byWorkshop.TryGetValue(workshopId, out var workshopRecipes))
+                {
+                    workshopRecipes = new List<RecipeDefinition>();
+                    byWorkshop[workshopId] = workshopRecipes;
+                }
+
+                workshopRecipes.Add(definition);
+            }
+        }
+
+        var frozenByWorkshop = new Dictionary<string, RecipeDefinition[]>(byWorkshop.Count, StringComparer.OrdinalIgnoreCase);
+        foreach (var (workshopId, recipesForWorkshop) in byWorkshop)
+        {
+            recipesForWorkshop.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+            frozenByWorkshop[workshopId] = recipesForWorkshop.ToArray();
+        }
+
+        return new RecipeCatalogStore(recipes, frozenByWorkshop);
+    }
+
+    public RecipeDefinition? GetRecipe(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            return null;
+        }
+
+        return _recipes.GetValueOrDefault(id);
+    }
+
+    public IReadOnlyList<RecipeDefinition> GetRecipesForWorkshop(string workshopId)
+    {
+        if (string.IsNullOrWhiteSpace(workshopId))
+        {
+            return Array.Empty<RecipeDefinition>();
+        }
+
+        return _byWorkshop.TryGetValue(workshopId, out var recipes)
+            ? recipes
+            : Array.Empty<RecipeDefinition>();
+    }
+
+    public IEnumerable<RecipeDefinition> GetAllRecipes()
+    {
+        return _recipes.Values;
+    }
+}
+
+/// <summary>
 /// Runtime registry storing recipe definitions keyed by id and workshop.
 /// </summary>
 public sealed class RecipeRegistry : IRecipeCatalog
