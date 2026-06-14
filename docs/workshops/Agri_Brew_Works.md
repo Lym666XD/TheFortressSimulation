@@ -1,12 +1,12 @@
 # Agri-Brew Works 农业与酿造工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_agri_brew_works.json`（23 attachments）
-**对应 industry md**: [Agriculture_Design_v1.md](../Agriculture_Design_v1.md) + [Brewing_Industry_Design_Bilingual.md](../Brewing_Industry_Design_Bilingual.md)
+**对应 industry md**: [Agriculture_Design_v1.md](../industries/Agriculture_Design_v1.md) + [Brewing_Industry_Design_Bilingual.md](../industries/Brewing_Industry_Design_Bilingual.md)
 **era**: C → R
 **主要 tags**: workshop, agriculture, brewing, food
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §农业与酿造工坊 v1.0`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §农业与酿造工坊 v1.0`
 > - Agriculture + Brewing 两份 industry md
 > - `core_workshop_agri_brew_works.json`
 
@@ -148,7 +148,7 @@
 
 ## 6) 与 industry md 的对应
 
-- 农业完整链 + 时代台阶: [Agriculture_Design_v1.md](../Agriculture_Design_v1.md)
-- 酿造完整链 + 历史锚点: [Brewing_Industry_Design_Bilingual.md](../Brewing_Industry_Design_Bilingual.md)
+- 农业完整链 + 时代台阶: [Agriculture_Design_v1.md](../industries/Agriculture_Design_v1.md)
+- 酿造完整链 + 历史锚点: [Brewing_Industry_Design_Bilingual.md](../industries/Brewing_Industry_Design_Bilingual.md)
 
 （完）

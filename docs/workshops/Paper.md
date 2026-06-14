@@ -1,7 +1,7 @@
 # Papermaking Workshop 造纸与书籍工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_paper.json`（16 attachments）
-**对应 industry md**: [Papermaking_and_Book_Industry_Design_CN.md](../Papermaking_and_Book_Industry_Design_CN.md)
+**对应 industry md**: [Papermaking_and_Book_Industry_Design_CN.md](../industries/Papermaking_and_Book_Industry_Design_CN.md)
 **era**: C → R
 **主要 tags**: workshop, paper, writing, bookmaking
 
@@ -125,6 +125,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细历史 + 平衡 (Fabriano / Stationers' Company / Gutenberg / 装订工艺): [Papermaking_and_Book_Industry_Design_CN.md](../Papermaking_and_Book_Industry_Design_CN.md)
+详细历史 + 平衡 (Fabriano / Stationers' Company / Gutenberg / 装订工艺): [Papermaking_and_Book_Industry_Design_CN.md](../industries/Papermaking_and_Book_Industry_Design_CN.md)
 
 （完）

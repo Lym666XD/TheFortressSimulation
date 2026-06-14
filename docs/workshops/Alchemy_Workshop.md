@@ -1,7 +1,7 @@
 # Alchemy Workshop 炼金工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_alchemy.json` *(当前只有 1 个 attachment，需扩充)*
-**对应 industry md**: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md)（炼金部分）
+**对应 industry md**: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md)（炼金部分）
 **era**: 主要 R；少量 M 前期
 **主要 tags**: workshop, alchemy, occult, elixir, transmutation, ritual
 
@@ -117,7 +117,7 @@ Alchemy 与 Chemistry_Lab 是**两个不同的工坊**：
 
 ## 6) 与 industry md / 软背景的对应
 
-- **化学/工业部分**: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md) — 注意"炼金"章节在 R 期；Chemistry_Lab 工坊承载工业化学。
+- **化学/工业部分**: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md) — 注意"炼金"章节在 R 期；Chemistry_Lab 工坊承载工业化学。
 - **魔法学派**: 待写 `worldbuilding/MAGIC_SYSTEM_SPEC.md` 中"炼金学派"将与本工坊直连
 - **神话生物**: 待写 `worldbuilding/BESTIARY_SPEC.md` 的 homunculus / golem / 召唤事件由本工坊触发
 

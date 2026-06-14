@@ -18,6 +18,8 @@ internal sealed class ConstructionJobExecutor
         WorldModel world,
         IConstructionDiffEmitter diffEmitter,
         IConstructionCatalog constructions,
+        ConstructionTuning tuning,
+        PlaceableTuning placeableTuning,
         IConstructionWorkshopCompletionSink? workshopCompletionSink,
         IConstructionJobLogger? logger,
         int maxPerTick = 64)
@@ -25,12 +27,13 @@ internal sealed class ConstructionJobExecutor
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
         constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
+        tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
+        placeableTuning = placeableTuning ?? throw new ArgumentNullException(nameof(placeableTuning));
         var log = logger ?? NullConstructionJobLogger.Instance;
         var footprintCells = new ConstructionFootprintCells(world);
         var materials = new ConstructionMaterialTracker(world, footprintCells, world.Items, diffEmitter, log);
         var siteSafety = new ConstructionSiteSafety(world, diffEmitter, log);
-        var completion = new ConstructionCompletionApplier(world, diffEmitter, constructions, workshopCompletionSink, log);
-        var tuning = ConstructionTuning.LoadFromContent();
+        var completion = new ConstructionCompletionApplier(world, diffEmitter, constructions, placeableTuning, workshopCompletionSink, log);
         _progress = new ConstructionSiteProgress(world, materials, tuning, log);
         _completionCoordinator = new ConstructionCompletionCoordinator(materials, siteSafety, completion, log);
         _maxPerTick = Math.Max(1, maxPerTick);

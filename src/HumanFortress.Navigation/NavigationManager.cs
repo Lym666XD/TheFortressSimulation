@@ -21,7 +21,7 @@ public sealed class NavigationManager
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
-        _tuning = tuning ?? NavigationTuning.LoadFromContent();
+        _tuning = tuning ?? NavigationTuning.Default;
     }
 
     public INavigationWorldSource Source => _source;

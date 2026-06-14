@@ -19,6 +19,7 @@ public sealed class SimulationRuntimeSessionFactory<THost>
     private readonly DiffLog _diffLog;
     private readonly ItemsDiffLog _itemsDiffLog;
     private readonly Action<World> _loadContent;
+    private readonly Func<NavigationTuning?>? _getNavigationTuning;
     private readonly Func<World, NavigationManager, THost> _createHost;
 
     public SimulationRuntimeSessionFactory(
@@ -27,7 +28,8 @@ public sealed class SimulationRuntimeSessionFactory<THost>
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         Action<World> loadContent,
-        Func<World, NavigationManager, THost> createHost)
+        Func<World, NavigationManager, THost> createHost,
+        Func<NavigationTuning?>? getNavigationTuning = null)
     {
         _tickScheduler = tickScheduler ?? throw new ArgumentNullException(nameof(tickScheduler));
         _commandQueue = commandQueue ?? throw new ArgumentNullException(nameof(commandQueue));
@@ -35,6 +37,7 @@ public sealed class SimulationRuntimeSessionFactory<THost>
         _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
         _loadContent = loadContent ?? throw new ArgumentNullException(nameof(loadContent));
         _createHost = createHost ?? throw new ArgumentNullException(nameof(createHost));
+        _getNavigationTuning = getNavigationTuning;
     }
 
     public SimulationRuntimeSession<THost> CreateNew(int sizeInChunks, int maxZ)
@@ -50,8 +53,11 @@ public sealed class SimulationRuntimeSessionFactory<THost>
         _itemsDiffLog.Clear();
 
         var world = new World(sizeInChunks, maxZ);
-        var navigation = SimulationNavigationFactory.Create(world, rebuildAll: false);
         _loadContent(world);
+        var navigation = SimulationNavigationFactory.Create(
+            world,
+            rebuildAll: false,
+            _getNavigationTuning?.Invoke());
 
         var host = _createHost(world, navigation)
             ?? throw new InvalidOperationException("Runtime host factory returned null.");

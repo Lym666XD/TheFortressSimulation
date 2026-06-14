@@ -1,7 +1,7 @@
 # Compost Pit 堆肥工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_compost.json`（8 attachments）
-**对应 industry md**: [Agriculture_Design_v1.md](../Agriculture_Design_v1.md)（堆肥部分）
+**对应 industry md**: [Agriculture_Design_v1.md](../industries/Agriculture_Design_v1.md)（堆肥部分）
 **era**: C → R
 **主要 tags**: workshop, agriculture, fertilizer, compost
 
@@ -67,7 +67,7 @@ R 期可同时承担**早期硝床 nitre bed** 作业，给 Chemistry 提供 sal
 
 ## 6) 与 industry md 的对应
 
-- 农业堆肥 + 肥力公式: [Agriculture_Design_v1.md](../Agriculture_Design_v1.md)
-- 硝床 + 接化学 saltpeter: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md) §M-D
+- 农业堆肥 + 肥力公式: [Agriculture_Design_v1.md](../industries/Agriculture_Design_v1.md)
+- 硝床 + 接化学 saltpeter: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md) §M-D
 
 （完）

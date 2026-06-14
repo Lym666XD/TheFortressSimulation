@@ -1,4 +1,5 @@
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
@@ -21,6 +22,7 @@ public sealed class SimulationRuntimeHostCore
     private readonly ItemsDiffLog _itemsDiffLog;
     private readonly CreaturesDiffLog _creaturesDiffLog;
     private readonly NavigationManager? _navigation;
+    private readonly IRuntimeGeologyCatalog? _geology;
 
     private SimulationTickPipeline? _pipeline;
 
@@ -32,7 +34,8 @@ public sealed class SimulationRuntimeHostCore
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         CreaturesDiffLog creaturesDiffLog,
-        NavigationManager? navigation)
+        NavigationManager? navigation,
+        IRuntimeGeologyCatalog? geology = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _tickScheduler = tickScheduler ?? throw new ArgumentNullException(nameof(tickScheduler));
@@ -42,6 +45,7 @@ public sealed class SimulationRuntimeHostCore
         _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
         _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
         _navigation = navigation;
+        _geology = geology;
     }
 
     public bool IsRunning => _tickScheduler.IsRunning;
@@ -71,7 +75,8 @@ public sealed class SimulationRuntimeHostCore
             _diffLog,
             _itemsDiffLog,
             _creaturesDiffLog,
-            _navigation);
+            _navigation,
+            _geology);
         _pipeline.AttachTo(_tickScheduler);
 
         afterPipelineAttached?.Invoke(systems);

@@ -32,6 +32,23 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         }
     }
 
+    public ushort ResolveAirGeologyHandle()
+    {
+        try
+        {
+            var reg = ContentRegistry.Instance;
+            if (reg.TryGetGeologyHandleByMaterialAndKind("air", SimTerrainKind.OpenNoFloor.ToString(), out var handle))
+            {
+                return handle;
+            }
+        }
+        catch
+        {
+        }
+
+        return 0;
+    }
+
     public List<(string itemId, int qty)> ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind)
     {
         var result = new List<(string, int)>();

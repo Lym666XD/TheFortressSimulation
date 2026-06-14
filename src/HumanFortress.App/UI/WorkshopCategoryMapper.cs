@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using HumanFortress.Content.Loading;
+using HumanFortress.Core.Content.Registry;
 
 namespace HumanFortress.App.UI
 {
@@ -26,10 +28,10 @@ namespace HumanFortress.App.UI
                 try
                 {
                     string baseDir = AppContext.BaseDirectory;
-                    string path = Path.Combine(baseDir, "content", "registries", "ui.workshop_categories.json");
-                    if (File.Exists(path))
+                    var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "ui.workshop_categories.json");
+                    if (registryFile.ResolvedPath != null)
                     {
-                        var json = File.ReadAllText(path);
+                        var json = File.ReadAllText(registryFile.ResolvedPath);
                         var doc = JsonDocument.Parse(json);
                         var root = doc.RootElement;
                         var dict = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase);
@@ -80,19 +82,21 @@ namespace HumanFortress.App.UI
             return Array.Empty<string>();
         }
 
-        public static System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition> GetWorkshopsByCategory(string category)
+        public static List<ConstructionDefinition> GetWorkshopsByCategory(IConstructionCatalog? constructions, string category)
         {
             EnsureLoaded();
-            var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
-            var all = new System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
-            foreach (var d in reg.GetConstructionsByCategory("workshop")) all.Add(d);
-            if (all.Count == 0) foreach (var d in reg.GetConstructionsByCategory("workshops")) all.Add(d);
+            var all = new List<ConstructionDefinition>();
+            if (constructions == null)
+                return all;
+
+            foreach (var d in constructions.GetConstructionsByCategory("workshop")) all.Add(d);
+            if (all.Count == 0) foreach (var d in constructions.GetConstructionsByCategory("workshops")) all.Add(d);
 
             var tags = new HashSet<string>(GetTagsForCategory(category), StringComparer.OrdinalIgnoreCase);
-            bool HasTag(HumanFortress.Core.Content.Registry.ConstructionDefinition d, string tag)
+            bool HasTag(ConstructionDefinition d, string tag)
                 => d.PlaceableProfile.Tags != null && Array.IndexOf(d.PlaceableProfile.Tags, tag) >= 0;
 
-            var list = new System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition>();
+            var list = new List<ConstructionDefinition>();
             foreach (var d in all)
             {
                 if (d.PlaceableProfile.Tags == null) continue;

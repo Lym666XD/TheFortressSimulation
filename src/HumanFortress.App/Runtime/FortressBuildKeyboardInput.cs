@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.Orders;
 using SadConsole.Input;
 
@@ -18,7 +19,7 @@ internal static class FortressBuildKeyboardInput
         Keys.T
     };
 
-    public static bool Handle(Keyboard keyboard, UiStore ui, int currentZ, ulong uiTick)
+    public static bool Handle(Keyboard keyboard, UiStore ui, int currentZ, ulong uiTick, IConstructionCatalog? constructions)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
         ArgumentNullException.ThrowIfNull(ui);
@@ -27,7 +28,7 @@ internal static class FortressBuildKeyboardInput
         {
             BuildSubmenu.None => HandleSubmenuSelection(keyboard, ui),
             BuildSubmenu.Structural => HandleStructural(keyboard, ui, uiTick),
-            BuildSubmenu.Workshop => HandleWorkshopMenu(keyboard, ui, currentZ, uiTick),
+            BuildSubmenu.Workshop => HandleWorkshopMenu(keyboard, ui, currentZ, uiTick, constructions),
             _ => HandlePlaceholderSubmenu(keyboard, ui, uiTick)
         };
     }
@@ -72,10 +73,10 @@ internal static class FortressBuildKeyboardInput
         return true;
     }
 
-    private static bool HandleWorkshopMenu(Keyboard keyboard, UiStore ui, int currentZ, ulong uiTick)
+    private static bool HandleWorkshopMenu(Keyboard keyboard, UiStore ui, int currentZ, ulong uiTick, IConstructionCatalog? constructions)
     {
         if (!ui.WorkshopBrowsingItems)
-            return HandleWorkshopCategorySelection(keyboard, ui, uiTick);
+            return HandleWorkshopCategorySelection(keyboard, ui, uiTick, constructions);
 
         int pick = -1;
         for (int i = 0; i < WorkshopChoiceKeys.Length; i++)
@@ -89,7 +90,7 @@ internal static class FortressBuildKeyboardInput
 
         if (pick >= 0)
         {
-            var id = GetWorkshopIdByCategoryIndex(ui.SelectedWorkshopCategory, pick);
+            var id = GetWorkshopIdByCategoryIndex(constructions, ui.SelectedWorkshopCategory, pick);
             if (id == null)
             {
                 ui.AddToast("[WORKSHOP] WIP", uiTick + 100);
@@ -116,21 +117,21 @@ internal static class FortressBuildKeyboardInput
         return false;
     }
 
-    private static bool HandleWorkshopCategorySelection(Keyboard keyboard, UiStore ui, ulong uiTick)
+    private static bool HandleWorkshopCategorySelection(Keyboard keyboard, UiStore ui, ulong uiTick, IConstructionCatalog? constructions)
     {
-        if (keyboard.IsKeyPressed(Keys.Z)) return SelectWorkshopCategory(ui, uiTick, "mining");
-        if (keyboard.IsKeyPressed(Keys.X)) return SelectWorkshopCategory(ui, uiTick, "industry");
-        if (keyboard.IsKeyPressed(Keys.C)) return SelectWorkshopCategory(ui, uiTick, "farming");
-        if (keyboard.IsKeyPressed(Keys.V)) return SelectWorkshopCategory(ui, uiTick, "lumbering");
-        if (keyboard.IsKeyPressed(Keys.F)) return SelectWorkshopCategory(ui, uiTick, "crafts");
+        if (keyboard.IsKeyPressed(Keys.Z)) return SelectWorkshopCategory(ui, uiTick, constructions, "mining");
+        if (keyboard.IsKeyPressed(Keys.X)) return SelectWorkshopCategory(ui, uiTick, constructions, "industry");
+        if (keyboard.IsKeyPressed(Keys.C)) return SelectWorkshopCategory(ui, uiTick, constructions, "farming");
+        if (keyboard.IsKeyPressed(Keys.V)) return SelectWorkshopCategory(ui, uiTick, constructions, "lumbering");
+        if (keyboard.IsKeyPressed(Keys.F)) return SelectWorkshopCategory(ui, uiTick, constructions, "crafts");
         if (keyboard.IsKeyPressed(Keys.OemComma)) { ui.CloseBuildSubmenu(); return true; }
         return false;
     }
 
-    private static bool SelectWorkshopCategory(UiStore ui, ulong uiTick, string category)
+    private static bool SelectWorkshopCategory(UiStore ui, ulong uiTick, IConstructionCatalog? constructions, string category)
     {
         ui.SelectedWorkshopCategory = category;
-        var list = WorkshopCategoryMapper.GetWorkshopsByCategory(category);
+        var list = WorkshopCategoryMapper.GetWorkshopsByCategory(constructions, category);
         if (list.Count == 0)
         {
             ui.AddToast("[WORKSHOP] WIP", uiTick + 100);
@@ -142,12 +143,12 @@ internal static class FortressBuildKeyboardInput
         return true;
     }
 
-    private static string? GetWorkshopIdByCategoryIndex(string? category, int index)
+    private static string? GetWorkshopIdByCategoryIndex(IConstructionCatalog? constructions, string? category, int index)
     {
         if (string.IsNullOrWhiteSpace(category))
             return null;
 
-        var list = WorkshopCategoryMapper.GetWorkshopsByCategory(category);
+        var list = WorkshopCategoryMapper.GetWorkshopsByCategory(constructions, category);
         if (index < 0 || index >= list.Count)
             return null;
 

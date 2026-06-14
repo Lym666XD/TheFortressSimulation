@@ -66,6 +66,7 @@ internal static class FortressKeyboardInputRouter
                 keyboard,
                 context.LoadedSession.NavigationOverlay,
                 context.LoadedSession.NavigationManager,
+                context.Runtime.NavigationTuning,
                 context.LoadedSession.World,
                 context.Viewport.CursorPosition,
                 currentZ,
@@ -80,6 +81,7 @@ internal static class FortressKeyboardInputRouter
             context.LoadedSession.UiServices?.StockpileUI,
             currentZ,
             context.UiTick,
+            context.Runtime.Constructions,
             context.TileInspectionOpen,
             context.HideTilePanel,
             context.CreateStockpile));

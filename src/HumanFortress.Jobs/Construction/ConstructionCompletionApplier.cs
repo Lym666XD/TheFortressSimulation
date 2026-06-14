@@ -12,17 +12,20 @@ internal sealed class ConstructionCompletionApplier
     private readonly IConstructionWorkshopCompletionSink? _workshopCompletionSink;
     private readonly IConstructionJobLogger _logger;
     private readonly IConstructionCatalog _constructions;
+    private readonly PlaceableTuning _placeableTuning;
 
     public ConstructionCompletionApplier(
         WorldModel world,
         IConstructionDiffEmitter diffEmitter,
         IConstructionCatalog constructions,
+        PlaceableTuning placeableTuning,
         IConstructionWorkshopCompletionSink? workshopCompletionSink,
         IConstructionJobLogger? logger)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
+        _placeableTuning = placeableTuning ?? throw new ArgumentNullException(nameof(placeableTuning));
         _workshopCompletionSink = workshopCompletionSink;
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
@@ -65,7 +68,7 @@ internal sealed class ConstructionCompletionApplier
 
         RemoveConstructionSite(site, tick);
 
-        var instance = PlaceableInstance.CreateFromConstruction(def, site.Position, site.Z, tick);
+        var instance = PlaceableInstance.CreateFromConstruction(def, site.Position, site.Z, tick, _placeableTuning);
         PlaceableManager.PlacePlaceable(_world, instance, tick);
         _logger.Log($"[BUILD.COMPLETE] workshop id={def.Id} pos=({site.Position.X},{site.Position.Y},{site.Z}) footprint={def.PlaceableProfile.Footprint.W}x{def.PlaceableProfile.Footprint.D}");
 

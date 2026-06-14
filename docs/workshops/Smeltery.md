@@ -1,12 +1,12 @@
 # Smeltery 冶炼工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_metallurgy.json`
-**对应 industry md**: [Smelting_and_Metallurgy_Design.md](../Smelting_and_Metallurgy_Design.md)
+**对应 industry md**: [Smelting_and_Metallurgy_Design.md](../industries/Smelting_and_Metallurgy_Design.md)
 **era**: C → R
 **主要 tags**: metallurgy, smelting, refining
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §冶炼工坊 v2.0`（配方主体、批次基准）
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §冶炼工坊 v2.0`（配方主体、批次基准）
 > - `Smelting_and_Metallurgy_Design.md`（历史锚点、设计原理）
 > - `core_workshop_metallurgy.json`（attachment 真理来源）
 
@@ -177,7 +177,7 @@ ore → ingot → alloy 的完整链条。
 
 ## 6) 与 industry md 的对应
 
-设计原理 + 历史锚点（Walloon process / Catalan forge / Bessemer 边界）：见 [Smelting_and_Metallurgy_Design.md](../Smelting_and_Metallurgy_Design.md)。
+设计原理 + 历史锚点（Walloon process / Catalan forge / Bessemer 边界）：见 [Smelting_and_Metallurgy_Design.md](../industries/Smelting_and_Metallurgy_Design.md)。
 
 本工坊文档是**实现层 + JSON 对齐**；industry md 是**叙事 + 设计原理**。
 

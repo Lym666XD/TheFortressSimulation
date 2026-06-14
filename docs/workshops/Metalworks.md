@@ -6,7 +6,7 @@
 **主要 tags**: metal, forge, form, assemble
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §金属工坊`（武器/护甲/工具/构件主体）
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §金属工坊`（武器/护甲/工具/构件主体）
 > - `core_workshop_metalworks.json`（6 个 attachment slot, 15 个 attachment）
 > - **新增 §3.6 Mint 铸币线**（按用户要求并入此工坊）
 

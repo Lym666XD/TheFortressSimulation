@@ -1,7 +1,7 @@
 # Butchery & Meatworks 屠宰与肉品工坊（含 tallow 熬脂）
 
 **对应 JSON**: `data/core/workshops/core_workshop_butchery.json`（15 attachments）
-**对应 industry md**: [Husbandry_Design_v1.md](../Husbandry_Design_v1.md)（屠宰部分） + [Oil_Soap_Candle_Industry_Design.md](../Oil_Soap_Candle_Industry_Design.md)（tallow 部分）
+**对应 industry md**: [Husbandry_Design_v1.md](../industries/Husbandry_Design_v1.md)（屠宰部分） + [Oil_Soap_Candle_Industry_Design.md](../industries/Oil_Soap_Candle_Industry_Design.md)（tallow 部分）
 **era**: C → R
 **主要 tags**: workshop, food, butchery, meat
 
@@ -122,8 +122,8 @@
 
 ## 6) 与 industry md / 其他工坊的对应
 
-- 屠宰演进: [Husbandry_Design_v1.md](../Husbandry_Design_v1.md)
-- tallow → 蜡烛全链: [Oil_Soap_Candle_Industry_Design.md](../Oil_Soap_Candle_Industry_Design.md)
+- 屠宰演进: [Husbandry_Design_v1.md](../industries/Husbandry_Design_v1.md)
+- tallow → 蜡烛全链: [Oil_Soap_Candle_Industry_Design.md](../industries/Oil_Soap_Candle_Industry_Design.md)
 - 皂化反应在 Chemistry_Lab；蜡烛浸蘸在 Crafts_Lapidary
 - 鱼内脏可在 Fishery 或 Butchery 处理（二选一）
 

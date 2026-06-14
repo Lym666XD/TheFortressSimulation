@@ -11,10 +11,21 @@ using RuntimeZoneDefinitionData = HumanFortress.Core.Content.ZoneDefinitionData;
 
 namespace HumanFortress.Core.Content.Registry;
 
+public interface IRuntimeGeologyCatalog
+{
+    RuntimeGeologyData? GetGeologyEntry(string id);
+
+    RuntimeGeologyData? GetGeologyByHandle(ushort handle);
+
+    ushort GetGeologyHandle(string id);
+
+    bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle);
+}
+
 /// <summary>
 /// Main content registry that manages all loaded content
 /// </summary>
-public class ContentRegistry
+public class ContentRegistry : IRuntimeGeologyCatalog
 {
     private static ContentRegistry? _instance;
     public static ContentRegistry Instance => _instance ??= new ContentRegistry();
@@ -173,8 +184,7 @@ public class ContentRegistry
     public CoreDataLoadResult LoadCoreData(string coreDataPath)
     {
         var result = CoreDataRegistryLoader.Load(coreDataPath);
-        _constructions = result.Constructions.Catalog;
-        _recipes = result.Recipes.Catalog;
+        ApplyCoreData(result);
 
         foreach (var message in result.Constructions.Messages)
         {
@@ -193,6 +203,14 @@ public class ContentRegistry
             $"[RecipeRegistry] loaded={result.Recipes.LoadedCount} errors={result.Recipes.ErrorCount}");
 
         return result;
+    }
+
+    public void ApplyCoreData(CoreDataLoadResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        _constructions = result.Constructions.Catalog;
+        _recipes = result.Recipes.Catalog;
     }
 
     public RuntimeZoneDefinitionData? GetZoneDefinition(string id)
@@ -241,6 +259,20 @@ public class ContentRegistry
 
         var token = root.SelectToken(path);
         return token?.ToObject<T>();
+    }
+
+    public string? GetTuningJson(string file, string path)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(file);
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+
+        if (!_tuning.TryGetValue(file, out var root))
+        {
+            return null;
+        }
+
+        var token = root.SelectToken(path);
+        return token?.ToString(Formatting.None);
     }
 
     private void ClearRuntimeContent()

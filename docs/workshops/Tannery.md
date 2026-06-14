@@ -1,7 +1,7 @@
 # Tannery 制革工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_tannery.json`（14 attachments）
-**对应 industry md**: [Leatherwork_DF_Simplified_bilingual.md](../Leatherwork_DF_Simplified_bilingual.md)
+**对应 industry md**: [Leatherwork_DF_Simplified_bilingual.md](../industries/Leatherwork_DF_Simplified_bilingual.md)
 **era**: C → R
 **主要 tags**: workshop, leather, tanning, hides
 
@@ -103,6 +103,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细演进 + 平衡 + 历史 (Cordovan/Morocco/Aleppo): [Leatherwork_DF_Simplified_bilingual.md](../Leatherwork_DF_Simplified_bilingual.md)
+详细演进 + 平衡 + 历史 (Cordovan/Morocco/Aleppo): [Leatherwork_DF_Simplified_bilingual.md](../industries/Leatherwork_DF_Simplified_bilingual.md)
 
 （完）

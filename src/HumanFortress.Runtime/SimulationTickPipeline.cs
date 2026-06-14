@@ -1,4 +1,5 @@
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
@@ -20,6 +21,7 @@ public sealed class SimulationTickPipeline
     private readonly ItemsDiffLog _itemsDiffLog;
     private readonly CreaturesDiffLog _creaturesDiffLog;
     private readonly NavigationManager? _navigation;
+    private readonly IRuntimeGeologyCatalog? _geology;
 
     public SimulationTickPipeline(
         World world,
@@ -28,7 +30,8 @@ public sealed class SimulationTickPipeline
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         CreaturesDiffLog creaturesDiffLog,
-        NavigationManager? navigation)
+        NavigationManager? navigation,
+        IRuntimeGeologyCatalog? geology = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _commandStage = new SimulationCommandStage(commandQueue, context);
@@ -36,6 +39,7 @@ public sealed class SimulationTickPipeline
         _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
         _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
         _navigation = navigation;
+        _geology = geology;
     }
 
     public void AttachTo(TickScheduler scheduler)
@@ -66,7 +70,7 @@ public sealed class SimulationTickPipeline
         ItemsDiffApplicator.ApplyPreSimulation(_world, items);
 
         var merged = _diffLog.MergeAndSort();
-        SimulationDiffApplicator.ApplyAll(_world, merged);
+        SimulationDiffApplicator.ApplyAll(_world, merged, _geology);
         _diffLog.Clear();
 
         var creatureDiffs = _creaturesDiffLog.MergeAndSort();

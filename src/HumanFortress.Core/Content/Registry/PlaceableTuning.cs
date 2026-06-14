@@ -156,13 +156,22 @@ public sealed class PlaceableTuning
     public static PlaceableTuning Default => new();
 
     /// <summary>
-    /// Load tuning from content registries (tuning.placeable.json). Falls back to defaults.
+    /// Load tuning from serialized tuning.placeable.json content. Falls back to defaults.
     /// </summary>
-    public static PlaceableTuning LoadFromContent()
+    public static PlaceableTuning LoadFromJson(string? json)
     {
         var t = Default;
-        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.placeable", "$");
-        if (obj == null) return t;
+        if (string.IsNullOrWhiteSpace(json)) return t;
+
+        JObject obj;
+        try
+        {
+            obj = JObject.Parse(json);
+        }
+        catch
+        {
+            return t;
+        }
 
         // Quality
         var quality = obj["quality"] as JObject;

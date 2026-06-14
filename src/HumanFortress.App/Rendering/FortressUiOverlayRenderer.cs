@@ -33,7 +33,8 @@ internal static class FortressUiOverlayRenderer
             context.UiServices?.StockpileQuickUI,
             cameraOverride: context.CameraPosition,
             zOverride: context.CurrentZ,
-            world: world);
+            world: world,
+            constructions: context.Runtime.Constructions);
 
         RenderMapOverlays(context);
         RenderToolUi(context);
@@ -65,7 +66,7 @@ internal static class FortressUiOverlayRenderer
             if (context.OverlayFromSnapshot && context.CurrentSnapshot != null)
                 UiRenderer.DrawWorkshopsOverlayFromSnapshot(mapSurface, context.CurrentSnapshot, context.CurrentZ, viewport);
             else
-                UiRenderer.DrawWorkshopsOverlay(mapSurface, world, context.CurrentZ, viewport);
+                UiRenderer.DrawWorkshopsOverlay(mapSurface, world, context.CurrentZ, viewport, context.Runtime.Constructions);
         }
 
         if (world != null && context.UiServices?.StockpileUI != null)
@@ -169,7 +170,7 @@ internal static class FortressUiOverlayRenderer
         }
         else if (ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && ui.SelectedBuildableConstructionId != null)
         {
-            RenderWorkshopPlacementPreview(mapSurface, firstCorner, viewport, context.World, ui.SelectedBuildableConstructionId);
+            RenderWorkshopPlacementPreview(mapSurface, firstCorner, viewport, context.World, ui.SelectedBuildableConstructionId, context.Runtime.Constructions);
         }
     }
 
@@ -179,7 +180,7 @@ internal static class FortressUiOverlayRenderer
         if (ui.PlaceMode != PlacementMode.BuildableFirstAnchor || ui.SelectedBuildableConstructionId == null)
             return;
 
-        RenderWorkshopPlacementPreview(context.MapSurface, mouseWorld, viewport, context.World, ui.SelectedBuildableConstructionId);
+        RenderWorkshopPlacementPreview(context.MapSurface, mouseWorld, viewport, context.World, ui.SelectedBuildableConstructionId, context.Runtime.Constructions);
     }
 
     private static void RenderWorkshopPlacementPreview(
@@ -187,9 +188,10 @@ internal static class FortressUiOverlayRenderer
         Point anchor,
         Rectangle viewport,
         HumanFortress.Simulation.World.World? world,
-        string constructionId)
+        string constructionId,
+        IConstructionCatalog? constructions)
     {
-        var def = ContentRegistry.Instance.Constructions.GetConstruction(constructionId);
+        var def = constructions?.GetConstruction(constructionId);
         if (def == null)
             return;
 
@@ -225,7 +227,7 @@ internal static class FortressUiOverlayRenderer
 
         if (world != null)
         {
-            UiRenderer.DrawWorkshopPanel(uiSurface, ui, world, context.UiTick);
+            UiRenderer.DrawWorkshopPanel(uiSurface, ui, world, context.UiTick, context.Runtime.Constructions);
         }
 
         UiRenderer.DrawToasts(uiSurface, ui, context.UiTick);

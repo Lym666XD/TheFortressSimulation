@@ -1,5 +1,4 @@
-using Newtonsoft.Json.Linq;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using System.Text.Json;
 
 namespace HumanFortress.Navigation;
 
@@ -120,66 +119,133 @@ public sealed class NavigationTuning
     public static NavigationTuning Default => new();
 
     /// <summary>
-    /// Load tuning from content registries (tuning.navigation.json). Falls back to defaults.
+    /// Load tuning from serialized tuning.navigation.json content. Falls back to defaults.
     /// </summary>
-    public static NavigationTuning LoadFromContent()
+    public static NavigationTuning LoadFromJson(string? json)
     {
         var t = Default;
-        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.navigation", "$");
-        if (obj == null) return t;
+        if (string.IsNullOrWhiteSpace(json))
+            return t;
 
-        t.AllowDiagonals = obj["allow_diagonals"]?.Value<bool?>() ?? t.AllowDiagonals;
-        t.RampVerticalAlignmentMode = obj["ramp_vertical_alignment_mode"]?.Value<string?>() ?? t.RampVerticalAlignmentMode;
-        t.RampRequiresHighsideSupport = obj["ramp_requires_highside_support"]?.Value<bool?>() ?? t.RampRequiresHighsideSupport;
-
-        var cost = obj["cost"] as JObject;
-        if (cost != null)
+        try
         {
-            t.BaseCost = (ushort)(cost["base"]?.Value<int?>() ?? t.BaseCost);
-            t.OrthogonalCost = (ushort)(cost["orthogonal"]?.Value<int?>() ?? t.OrthogonalCost);
-            t.DiagonalCost = (ushort)(cost["diagonal"]?.Value<int?>() ?? t.DiagonalCost);
-            t.RampDelta = (ushort)(cost["ramp_delta"]?.Value<int?>() ?? t.RampDelta);
-            t.StairDelta = (ushort)(cost["stair_delta"]?.Value<int?>() ?? t.StairDelta);
+            using var document = JsonDocument.Parse(json);
+            var obj = document.RootElement;
+            if (obj.ValueKind != JsonValueKind.Object)
+                return t;
+
+            t.AllowDiagonals = ReadBool(obj, "allow_diagonals") ?? t.AllowDiagonals;
+            t.RampVerticalAlignmentMode = ReadString(obj, "ramp_vertical_alignment_mode") ?? t.RampVerticalAlignmentMode;
+            t.RampRequiresHighsideSupport = ReadBool(obj, "ramp_requires_highside_support") ?? t.RampRequiresHighsideSupport;
+
+            if (TryGetObject(obj, "cost", out var cost))
+            {
+                t.BaseCost = ReadUInt16(cost, "base") ?? t.BaseCost;
+                t.OrthogonalCost = ReadUInt16(cost, "orthogonal") ?? t.OrthogonalCost;
+                t.DiagonalCost = ReadUInt16(cost, "diagonal") ?? t.DiagonalCost;
+                t.RampDelta = ReadUInt16(cost, "ramp_delta") ?? t.RampDelta;
+                t.StairDelta = ReadUInt16(cost, "stair_delta") ?? t.StairDelta;
+            }
+
+            if (TryGetObject(obj, "diagonal_rules", out var diag))
+            {
+                t.DiagonalCornerCheck = ReadBool(diag, "corner_check") ?? t.DiagonalCornerCheck;
+            }
+
+            if (TryGetObject(obj, "fluids", out var fluids))
+            {
+                t.FluidShallowThreshold = ReadByte(fluids, "shallow_threshold") ?? t.FluidShallowThreshold;
+                t.FluidDeepThreshold = ReadByte(fluids, "deep_threshold") ?? t.FluidDeepThreshold;
+                t.FluidWadeCost = ReadUInt16(fluids, "wade_cost") ?? t.FluidWadeCost;
+                t.FluidSwimCost = ReadUInt16(fluids, "swim_cost") ?? t.FluidSwimCost;
+            }
+
+            if (TryGetObject(obj, "traffic", out var traffic))
+            {
+                t.TrafficLow = ReadInt16(traffic, "low") ?? t.TrafficLow;
+                t.TrafficNormal = ReadInt16(traffic, "normal") ?? t.TrafficNormal;
+                t.TrafficHigh = ReadInt16(traffic, "high") ?? t.TrafficHigh;
+                t.TrafficRestricted = ReadInt16(traffic, "restricted") ?? t.TrafficRestricted;
+            }
+
+            if (TryGetObject(obj, "doors", out var doors))
+            {
+                t.DoorClosedBlocks = ReadBool(doors, "closed_blocks") ?? t.DoorClosedBlocks;
+                t.DoorOpenCost = ReadUInt16(doors, "open_cost") ?? t.DoorOpenCost;
+            }
+
+            if (TryGetObject(obj, "budgets", out var budgets))
+            {
+                t.MaxNodesPerSearch = ReadInt32(budgets, "max_nodes_per_search") ?? t.MaxNodesPerSearch;
+                t.MaxMsPerTickPathing = ReadInt32(budgets, "max_ms_per_tick_pathing") ?? t.MaxMsPerTickPathing;
+            }
         }
-
-        var diag = obj["diagonal_rules"] as JObject;
-        if (diag != null)
+        catch (JsonException)
         {
-            t.DiagonalCornerCheck = diag["corner_check"]?.Value<bool?>() ?? t.DiagonalCornerCheck;
-        }
-
-        var fluids = obj["fluids"] as JObject;
-        if (fluids != null)
-        {
-            t.FluidShallowThreshold = (byte)(fluids["shallow_threshold"]?.Value<int?>() ?? t.FluidShallowThreshold);
-            t.FluidDeepThreshold = (byte)(fluids["deep_threshold"]?.Value<int?>() ?? t.FluidDeepThreshold);
-            t.FluidWadeCost = (ushort)(fluids["wade_cost"]?.Value<int?>() ?? t.FluidWadeCost);
-            t.FluidSwimCost = (ushort)(fluids["swim_cost"]?.Value<int?>() ?? t.FluidSwimCost);
-        }
-
-        var traffic = obj["traffic"] as JObject;
-        if (traffic != null)
-        {
-            t.TrafficLow = (short)(traffic["low"]?.Value<int?>() ?? t.TrafficLow);
-            t.TrafficNormal = (short)(traffic["normal"]?.Value<int?>() ?? t.TrafficNormal);
-            t.TrafficHigh = (short)(traffic["high"]?.Value<int?>() ?? t.TrafficHigh);
-            t.TrafficRestricted = (short)(traffic["restricted"]?.Value<int?>() ?? t.TrafficRestricted);
-        }
-
-        var doors = obj["doors"] as JObject;
-        if (doors != null)
-        {
-            t.DoorClosedBlocks = doors["closed_blocks"]?.Value<bool?>() ?? t.DoorClosedBlocks;
-            t.DoorOpenCost = (ushort)(doors["open_cost"]?.Value<int?>() ?? t.DoorOpenCost);
-        }
-
-        var budgets = obj["budgets"] as JObject;
-        if (budgets != null)
-        {
-            t.MaxNodesPerSearch = budgets["max_nodes_per_search"]?.Value<int?>() ?? t.MaxNodesPerSearch;
-            t.MaxMsPerTickPathing = budgets["max_ms_per_tick_pathing"]?.Value<int?>() ?? t.MaxMsPerTickPathing;
+            return Default;
         }
 
         return t;
+    }
+
+    private static bool TryGetObject(JsonElement parent, string propertyName, out JsonElement value)
+    {
+        return parent.TryGetProperty(propertyName, out value) && value.ValueKind == JsonValueKind.Object;
+    }
+
+    private static bool? ReadBool(JsonElement parent, string propertyName)
+    {
+        if (!parent.TryGetProperty(propertyName, out var value))
+            return null;
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            _ => null,
+        };
+    }
+
+    private static string? ReadString(JsonElement parent, string propertyName)
+    {
+        if (!parent.TryGetProperty(propertyName, out var value) || value.ValueKind != JsonValueKind.String)
+            return null;
+
+        return value.GetString();
+    }
+
+    private static int? ReadInt32(JsonElement parent, string propertyName)
+    {
+        if (!parent.TryGetProperty(propertyName, out var value) || !value.TryGetInt32(out var number))
+            return null;
+
+        return number;
+    }
+
+    private static ushort? ReadUInt16(JsonElement parent, string propertyName)
+    {
+        var value = ReadInt32(parent, propertyName);
+        if (!value.HasValue || value.Value < ushort.MinValue || value.Value > ushort.MaxValue)
+            return null;
+
+        return (ushort)value.Value;
+    }
+
+    private static short? ReadInt16(JsonElement parent, string propertyName)
+    {
+        var value = ReadInt32(parent, propertyName);
+        if (!value.HasValue || value.Value < short.MinValue || value.Value > short.MaxValue)
+            return null;
+
+        return (short)value.Value;
+    }
+
+    private static byte? ReadByte(JsonElement parent, string propertyName)
+    {
+        var value = ReadInt32(parent, propertyName);
+        if (!value.HasValue || value.Value < byte.MinValue || value.Value > byte.MaxValue)
+            return null;
+
+        return (byte)value.Value;
     }
 }

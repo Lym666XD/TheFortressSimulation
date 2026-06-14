@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Core.Content.Registry;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Runtime;
@@ -10,6 +11,7 @@ internal readonly record struct FortressContextKeyboardInputContext(
     StockpileUI? StockpileUi,
     int CurrentZ,
     ulong UiTick,
+    IConstructionCatalog? Constructions,
     bool TilePanelOpen,
     Action HideTilePanel,
     Action<string> CreateStockpile);
@@ -41,7 +43,7 @@ internal static class FortressContextKeyboardInput
         }
         else if (ui.Context == UiContext.QuickMenu && ui.QuickMenu == QuickMenuKind.Build)
         {
-            changed |= FortressBuildKeyboardInput.Handle(keyboard, ui, context.CurrentZ, context.UiTick);
+            changed |= FortressBuildKeyboardInput.Handle(keyboard, ui, context.CurrentZ, context.UiTick, context.Constructions);
         }
         else if (ui.Context == UiContext.QuickMenu && ui.QuickMenu == QuickMenuKind.Stockpile)
         {

@@ -1,6 +1,7 @@
 using HumanFortress.Content.Definitions;
+using HumanFortress.Content.Loading;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.World;
-using DataContentRegistry = HumanFortress.Core.Content.ContentRegistry;
 using RuntimeContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.App.Runtime;
@@ -15,21 +16,28 @@ internal static class SimulationWorldContentLoader
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        EnsureContentRegistriesLoaded(baseDir);
+        var loadedContent = FortressContentLoader.Load(baseDir);
+        FortressContentIssueLogger.LogIssues(loadedContent);
 
-        var dataPath = TryFindCoreDataPath(baseDir, out var publishedPath, out var developmentPath);
-        if (dataPath == null)
+        if (loadedContent.CoreCatalogs == null)
         {
             Logger.Log("[GameStateManager] WARNING: Data directory not found. Tried:");
-            Logger.Log($"  - {publishedPath}");
-            Logger.Log($"  - {developmentPath}");
+            Logger.Log($"  - {loadedContent.CoreDataPath.PublishedPath}");
+            Logger.Log($"  - {loadedContent.CoreDataPath.DevelopmentPath}");
             return;
         }
 
-        Logger.Log($"[GameStateManager] Loading creature and item definitions from {dataPath}");
-        LoadCreatureDefinitions(world, dataPath);
+        Logger.Log($"[GameStateManager] Loading core content catalogs from {loadedContent.CoreDataPath.ResolvedPath}");
+        var content = loadedContent.CoreCatalogs;
+
+        LogCreatureDefinitions(content.Creatures);
+        world.Creatures.SetDefinitionCatalog(content.Creatures.Catalog);
+
         world.Items.SetDependencies(world, RuntimeContentRegistry.Instance);
-        LoadItemDefinitions(world, dataPath);
+        LogItemDefinitions(content.Items);
+        world.Items.SetDefinitionCatalog(content.Items.Catalog);
+
+        RuntimeContentRegistry.Instance.ApplyCoreData(content.CoreData);
 
         foreach (var zoneData in RuntimeContentRegistry.Instance.Zones.Values)
         {
@@ -38,91 +46,35 @@ internal static class SimulationWorldContentLoader
 
         Logger.Log($"[GameStateManager] Loaded {world.Creatures.DefinitionCount} creatures, {world.Items.DefinitionCount} items, {world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
 
-        LoadCoreDataRegistries(dataPath);
+        LogCoreDataRegistries(content.CoreData);
     }
 
-    private static void LoadCreatureDefinitions(World world, string dataPath)
+    private static void LogCreatureDefinitions(CreatureDefinitionCatalogLoadResult result)
     {
-        var result = CreatureDefinitionCatalogLoader.Load(dataPath);
         foreach (var message in result.Messages)
         {
             Logger.Log(message);
         }
 
-        world.Creatures.SetDefinitionCatalog(result.Catalog);
         Logger.Log($"[CreatureManager] Loaded {result.LoadedCount} creature definitions from {result.FileCount} files ({result.ErrorCount} errors)");
     }
 
-    private static void LoadItemDefinitions(World world, string dataPath)
+    private static void LogItemDefinitions(ItemDefinitionCatalogLoadResult result)
     {
-        var result = ItemDefinitionCatalogLoader.Load(dataPath);
         foreach (var message in result.Messages)
         {
             Logger.Log(message);
         }
 
-        world.Items.SetDefinitionCatalog(result.Catalog);
         var availableKinds = result.Catalog.GetAvailableKinds().ToArray();
         Logger.Log($"[ItemManager] Loaded {result.LoadedCount} item definitions from {result.FileCount} files ({result.ErrorCount} errors)");
         Logger.Log($"[ItemManager] Indexed {availableKinds.Length} kinds: {string.Join(", ", availableKinds)}");
     }
 
-    private static void EnsureContentRegistriesLoaded(string baseDir)
-    {
-        if (DataContentRegistry.Instance.Materials.Count > 0 && RuntimeContentRegistry.Instance.IsLoaded)
-        {
-            return;
-        }
-
-        var contentPath = TryFindContentPath(baseDir, out var publishedPath, out var developmentPath);
-        if (contentPath == null)
-        {
-            Logger.Warning(
-                "Content.Registry",
-                $"[ContentLoadCoordinator] Content directory not found. Tried: {publishedPath}; {developmentPath}");
-            return;
-        }
-
-        var result = HumanFortress.Core.Content.ContentLoadCoordinator.Load(contentPath);
-        if (!result.StructuredLoaded)
-        {
-            Logger.Warning(
-                "Content.Registry",
-                $"[ContentLoadCoordinator] Structured registry unavailable: {result.StructuredFailureMessage ?? "unknown error"}");
-        }
-    }
-
-    private static string? TryFindContentPath(string baseDir, out string publishedPath, out string developmentPath)
-    {
-        publishedPath = Path.Combine(baseDir, "content");
-        if (Directory.Exists(publishedPath))
-        {
-            developmentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "content"));
-            return publishedPath;
-        }
-
-        developmentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "content"));
-        return Directory.Exists(developmentPath) ? developmentPath : null;
-    }
-
-    private static string? TryFindCoreDataPath(string baseDir, out string publishedPath, out string developmentPath)
-    {
-        publishedPath = Path.Combine(baseDir, "data", "core");
-        if (Directory.Exists(publishedPath))
-        {
-            developmentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core"));
-            return publishedPath;
-        }
-
-        developmentPath = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "data", "core"));
-        return Directory.Exists(developmentPath) ? developmentPath : null;
-    }
-
-    private static void LoadCoreDataRegistries(string dataPath)
+    private static void LogCoreDataRegistries(CoreDataLoadResult result)
     {
         try
         {
-            var result = RuntimeContentRegistry.Instance.LoadCoreData(dataPath);
             foreach (var message in result.Constructions.Messages)
             {
                 Logger.Log($"[CONSTR.REG] {message}");

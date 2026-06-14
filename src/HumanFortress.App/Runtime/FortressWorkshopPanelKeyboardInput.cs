@@ -45,7 +45,7 @@ internal static class FortressWorkshopPanelKeyboardInput
 
         if (keyboard.IsKeyPressed(Keys.A))
         {
-            var recipeId = GetDefaultRecipeForWorkshop(context.WorkshopDefinitionId);
+            var recipeId = GetDefaultRecipeForWorkshop(runtime.Recipes, context.WorkshopDefinitionId);
             if (recipeId == null)
                 return false;
 
@@ -113,16 +113,16 @@ internal static class FortressWorkshopPanelKeyboardInput
         return false;
     }
 
-    private static string? GetDefaultRecipeForWorkshop(string? workshopId)
+    private static string? GetDefaultRecipeForWorkshop(IRecipeCatalog? recipes, string? workshopId)
     {
-        if (string.IsNullOrWhiteSpace(workshopId))
+        if (recipes == null || string.IsNullOrWhiteSpace(workshopId))
             return null;
 
-        var recipes = ContentRegistry.Instance.Recipes.GetRecipesForWorkshop(workshopId);
-        if (recipes.Count == 0)
+        var workshopRecipes = recipes.GetRecipesForWorkshop(workshopId);
+        if (workshopRecipes.Count == 0)
             return null;
 
-        return recipes[0].Id;
+        return workshopRecipes[0].Id;
     }
 }
 

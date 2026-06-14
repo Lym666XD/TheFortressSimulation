@@ -32,7 +32,8 @@ internal static class FortressFrameRenderer
             context.Viewport.CurrentZ,
             context.Viewport.ZoomLevel,
             context.Ui.Context,
-            context.LoadedSession.NavigationOverlay);
+            context.LoadedSession.NavigationOverlay,
+            context.Runtime.Geology);
 
         FortressUiOverlayRenderer.Render(new FortressUiOverlayRenderContext(
             context.UiSurface,
@@ -51,6 +52,10 @@ internal static class FortressFrameRenderer
             context.FortressSize,
             context.UiTick));
 
-        context.TileInspection.RenderPopup(context.UiSurface, context.LoadedSession.FortressMap, context.LoadedSession.World);
+        context.TileInspection.RenderPopup(
+            context.UiSurface,
+            context.LoadedSession.FortressMap,
+            context.LoadedSession.World,
+            context.Runtime.Geology);
     }
 }

@@ -19,6 +19,7 @@ internal sealed class FortressNavigationDebugController
         Keyboard keyboard,
         NavigationOverlay? navigationOverlay,
         NavigationManager? navigationManager,
+        NavigationTuning? navigationTuning,
         World? world,
         Point cursorPosition,
         int currentZ,
@@ -46,7 +47,7 @@ internal sealed class FortressNavigationDebugController
             return true;
         }
 
-        HandlePathTool(navigationOverlay, navigationManager, world, cursorPosition, currentZ, ui, uiTick);
+        HandlePathTool(navigationOverlay, navigationManager, navigationTuning, world, cursorPosition, currentZ, ui, uiTick);
         return true;
     }
 
@@ -68,6 +69,7 @@ internal sealed class FortressNavigationDebugController
     private void HandlePathTool(
         NavigationOverlay? navigationOverlay,
         NavigationManager? navigationManager,
+        NavigationTuning? navigationTuning,
         World? world,
         Point cursorPosition,
         int currentZ,
@@ -87,7 +89,7 @@ internal sealed class FortressNavigationDebugController
             return;
         }
 
-        var tuning = NavigationTuning.LoadFromContent();
+        var tuning = navigationTuning ?? NavigationTuning.Default;
         var astar = new DeterministicAStar(tuning);
         var flags = tuning.AllowDiagonals ? PathFlags.AllowDiagonal : PathFlags.None;
         var req = new PathRequest(

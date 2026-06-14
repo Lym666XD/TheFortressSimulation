@@ -1,12 +1,12 @@
 # Fuel & Alkali Works 燃料与碱工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_fuel_alkali_works.json`（7 attachments / 3 slots）
-**对应 industry md**: [Forestry_NavalTimber_Design_v1.md](../Forestry_NavalTimber_Design_v1.md)（charcoal 部分） + [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md)（碱部分）
+**对应 industry md**: [Forestry_NavalTimber_Design_v1.md](../industries/Forestry_NavalTimber_Design_v1.md)（charcoal 部分） + [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md)（碱部分）
 **era**: C → R
 **主要 tags**: fuel, alkali, charcoal, potash
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §燃料与碱工坊 v2.0`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §燃料与碱工坊 v2.0`
 > - Forestry md（charcoal 链）
 > - Chemistry md（碱液 → potash / soda 链）
 > - `core_workshop_fuel_alkali_works.json`
@@ -99,8 +99,8 @@
 
 ## 6) 与 industry md 的对应
 
-- charcoal 工艺时代台阶: [Forestry_NavalTimber_Design_v1.md](../Forestry_NavalTimber_Design_v1.md) §炭线
-- potash / pearlash / 碱液: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md) §1A / §M-A
+- charcoal 工艺时代台阶: [Forestry_NavalTimber_Design_v1.md](../industries/Forestry_NavalTimber_Design_v1.md) §炭线
+- potash / pearlash / 碱液: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md) §1A / §M-A
 - 苏打（沿海）: 同上 + Glasshouse md
 
 （完）

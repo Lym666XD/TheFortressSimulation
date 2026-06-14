@@ -1,7 +1,7 @@
 # Salt Works 盐场工坊 ⭐新
 
 **对应 JSON**: `data/core/workshops/core_workshop_salt_works.json` *(待补)*
-**对应 industry md**: [Salt_Industry_Design.md](../Salt_Industry_Design.md)
+**对应 industry md**: [Salt_Industry_Design.md](../industries/Salt_Industry_Design.md)
 **era**: C → R
 **主要 tags**: workshop, salt, evaporation, mining_lite
 
@@ -99,6 +99,6 @@ R 期招牌：**Graduation Tower (Gradierwerk)** — 浓缩卤水大幅减少煮
 
 ## 6) 与 industry md 的对应
 
-详细 C/M/R 演进 / Hallstatt / Wieliczka / Lüneburg / Salzkammergut 历史锚点 / 平衡值，见：[Salt_Industry_Design.md](../Salt_Industry_Design.md)。
+详细 C/M/R 演进 / Hallstatt / Wieliczka / Lüneburg / Salzkammergut 历史锚点 / 平衡值，见：[Salt_Industry_Design.md](../industries/Salt_Industry_Design.md)。
 
 （完）

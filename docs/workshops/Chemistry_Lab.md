@@ -1,12 +1,12 @@
 # Chemistry Lab 化学工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_chemistry_lab.json`（28 attachments / 13 slots）
-**对应 industry md**: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md)（化学部分）
+**对应 industry md**: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md)（化学部分）
 **era**: C → R
 **主要 tags**: chemistry, distillation, acids, powder, soap, silvering
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §化学工坊 v2.1`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §化学工坊 v2.1`
 > - `Chemistry_and_Alchemy_Industry_Design.md`（化学部分；炼金部分见 Alchemy_Workshop.md）
 > - `core_workshop_chemistry_lab.json`
 
@@ -189,7 +189,7 @@
 
 ## 6) 与 industry md 的对应
 
-- 化学部分: [Chemistry_and_Alchemy_Industry_Design.md](../Chemistry_and_Alchemy_Industry_Design.md)（§1-3 + R 期化学部分）
+- 化学部分: [Chemistry_and_Alchemy_Industry_Design.md](../industries/Chemistry_and_Alchemy_Industry_Design.md)（§1-3 + R 期化学部分）
 - 炼金 / 仪式 / 哲人石 / 长生药: [Alchemy_Workshop.md](Alchemy_Workshop.md)（独立工坊）
 
 （完）

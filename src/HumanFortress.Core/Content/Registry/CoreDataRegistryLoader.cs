@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace HumanFortress.Core.Content.Registry;
 
-internal static class CoreDataRegistryLoader
+public static class CoreDataRegistryLoader
 {
     private static readonly JsonDocumentOptions JsonOptions = new()
     {

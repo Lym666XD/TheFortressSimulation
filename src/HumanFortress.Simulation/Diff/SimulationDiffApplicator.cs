@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.World;
@@ -18,7 +19,7 @@ public static class SimulationDiffApplicator
     /// </summary>
     public static Action<string>? LogCallback { get; set; }
 
-    public static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops)
+    public static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
     {
         if (ops.Count == 0) return;
 
@@ -29,7 +30,7 @@ public static class SimulationDiffApplicator
                 switch (op.Op)
                 {
                     case DiffOpType.SetTerrain:
-                        ApplySetTerrain(world, op);
+                        ApplySetTerrain(world, op, geology);
                         break;
                     case DiffOpType.MoveCreature:
                         ApplyMoveCreature(world, op);
@@ -55,7 +56,7 @@ public static class SimulationDiffApplicator
         }
     }
 
-    private static void ApplySetTerrain(World.World world, DiffOp op)
+    private static void ApplySetTerrain(World.World world, DiffOp op, IRuntimeGeologyCatalog? geologyCatalog)
     {
         var (ck, lx, ly) = DecodeTarget(op.Target);
         var chunk = world.GetChunk(ck);
@@ -91,9 +92,8 @@ public static class SimulationDiffApplicator
             else
             {
                 // Derive new geology from current material across all kinds
-                var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance;
-                var geo = reg.GetGeologyByHandle(tile.GeoMatId);
-                if (geo != null && reg.TryGetGeologyHandleByMaterialAndKind(geo.Material, newKind.ToString(), out var handle))
+                var geo = geologyCatalog?.GetGeologyByHandle(tile.GeoMatId);
+                if (geo != null && geologyCatalog!.TryGetGeologyHandleByMaterialAndKind(geo.Material, newKind.ToString(), out var handle))
                     newGeoHandle = handle;
             }
         }

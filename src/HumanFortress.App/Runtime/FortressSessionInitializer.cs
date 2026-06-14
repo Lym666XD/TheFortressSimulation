@@ -92,10 +92,12 @@ internal sealed class FortressSessionInitializer
             Logger.Log("[GenerateFortressMap] World filled with terrain data");
 
             Logger.Log("[GenerateFortressMap] Creating RenderSnapshotBuilder");
-            var snapshotBuilder = new RenderSnapshotBuilder(world);
+            var constructions = _runtime.Constructions ?? HumanFortress.Core.Content.Registry.ConstructionCatalogStore.Empty;
+            var snapshotBuilder = new RenderSnapshotBuilder(world, constructions);
 
             Logger.Log("[GenerateFortressMap] Using shared NavigationManager");
-            var navigationManager = _runtime.NavManager ?? SimulationNavigationFactory.Create(world, rebuildAll: false);
+            var navigationManager = _runtime.NavManager
+                ?? SimulationNavigationFactory.Create(world, rebuildAll: false, _runtime.NavigationTuning);
             navigationManager.RebuildAll();
 
             return new FortressSessionInitializationResult(

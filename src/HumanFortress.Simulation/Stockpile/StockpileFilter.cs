@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using HumanFortress.Core.Content;
 
 namespace HumanFortress.Simulation.Stockpile;
 
@@ -35,14 +34,14 @@ public sealed class StockpileFilter
     /// <summary>
     /// Check if this filter accepts the given item.
     /// </summary>
-    public bool Accepts(ItemStackRef stack, ContentRegistry registry)
+    public bool Accepts(ItemStackRef stack)
     {
         if (stack.Handle == 0)
             return false;
 
         // TODO: Get item definition from registry
         // For now, simplified logic
-        var itemDef = GetItemDefinition(stack, registry);
+        var itemDef = GetItemDefinition(stack);
         if (itemDef == null)
             return false;
 
@@ -74,7 +73,7 @@ public sealed class StockpileFilter
         };
     }
 
-    private ItemDefinition? GetItemDefinition(ItemStackRef stack, ContentRegistry registry)
+    private ItemDefinition? GetItemDefinition(ItemStackRef stack)
     {
         // TODO: Implement actual item lookup from registry
         // This requires integration with the item system

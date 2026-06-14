@@ -1,12 +1,12 @@
 # Glasshouse & Lehr 玻璃工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_glass_house.json`（19 attachments / 8 slots）
-**对应 industry md**: [Glassmaking_Industry_Design.md](../Glassmaking_Industry_Design.md)
+**对应 industry md**: [Glassmaking_Industry_Design.md](../industries/Glassmaking_Industry_Design.md)
 **era**: C → R
 **主要 tags**: glass, melting, forming, anneal, cullet
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §玻璃工坊 v2.0`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §玻璃工坊 v2.0`
 > - `Glassmaking_Industry_Design.md`
 > - `core_workshop_glass_house.json`
 
@@ -128,6 +128,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细历史 + 平衡：[Glassmaking_Industry_Design.md](../Glassmaking_Industry_Design.md)。
+详细历史 + 平衡：[Glassmaking_Industry_Design.md](../industries/Glassmaking_Industry_Design.md)。
 
 （完）

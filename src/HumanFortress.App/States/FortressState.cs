@@ -234,7 +234,7 @@ namespace HumanFortress.App.States
                 _navigationDebug,
                 _tileInspection.IsOpen,
                 HideTilePanel,
-                guid => FortressWorkshopPanelContextResolver.Resolve(_loadedSession.World, guid),
+                guid => FortressWorkshopPanelContextResolver.Resolve(_loadedSession.World, guid, _runtime.Constructions),
                 presetId => FortressPlacementRouter.CreateStockpile(CreatePlacementRouterContext(), presetId));
         }
 
@@ -391,6 +391,7 @@ namespace HumanFortress.App.States
                 _loadedSession.Capture(),
                 _viewport.CurrentZ,
                 _uiTick,
+                _runtime.Constructions,
                 _tileInspection.Open,
                 DrawUI);
         }

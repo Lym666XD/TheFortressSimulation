@@ -1,12 +1,12 @@
 # 工坊文档索引（Workshops Index）
 
-**目的**: 工坊层文档（per-workshop reference）。与 `data/core/workshops/*.json` 一一对应；同时是 `docs/industries/*.md`（产业级叙事）与 PROCESS_CHAIN 历史档的**实现层落点**。
+**目的**: 工坊层文档（per-workshop reference）。当前 20 个工坊 Markdown 对应 `data/core/workshops/*.json`，另有 4 个设计占位尚未落地为 JSON；同时承接 `docs/industries/*.md`（产业级叙事）与 process-chain 来源材料。
 
 **版本约定**: 工坊文档随对应 JSON 更新；JSON 是真理来源，markdown 是人类阅读层。
 
 ---
 
-## 工坊清单（24 个 = 20 现有 + 4 新）
+## 工坊清单（24 个 Markdown = 20 个当前 JSON + 4 个设计占位）
 
 ### A. 原料采集（4）
 | 工坊 | 时代 | 对应 JSON | 主要产出 |
@@ -100,7 +100,7 @@ Pottery ──containers/tiles──> 全场景
 
 ## 历史档案
 
-- `docs/CHATGPT_PROCESS_CHAIN.md`：本批 markdown 拆分的源材料；已**归档**（移到 docs/archive/ 或保留只读）
+- [Process Chain Source](../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md)：本批 markdown 拆分的源材料；作为领域来源参考保留，不是运行时实现文档。
 - `docs/<Industry>_Industry_Design.md` × 18：产业级叙事，**保留**；每份顶部加"对应工坊"链接
 
 （完）

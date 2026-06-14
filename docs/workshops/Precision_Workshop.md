@@ -5,7 +5,7 @@
 **era**: C → R（核心在 R）
 **主要 tags**: workshop, precision, mechanism, clockwork, instrument, automaton
 
-> 来源: 合并自 `CHATGPT_PROCESS_CHAIN.md §精密工坊` + 与 Metalworks / Crafts_Lapidary 的边界澄清。
+> 来源: 合并自 `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §精密工坊` + 与 Metalworks / Crafts_Lapidary 的边界澄清。
 
 ---
 
@@ -155,7 +155,7 @@ Precision 是**机构件 / 计时 / 导航 / 科学仪器 / 展示自动机**的
 
 ## 7) 与 industry md / Process Chain 的对应
 
-- 源材料: `docs/CHATGPT_PROCESS_CHAIN.md §精密工坊（Precision Workshop）`（已整合到本文档）
+- 源材料: `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §精密工坊（Precision Workshop）`（已整合到本文档）
 - 未来未单独写 industry md；如需"精密 / 计时 / 导航 史"主题叙事，可后续补 `docs/Precision_Industry_Design.md`
 
 （完）

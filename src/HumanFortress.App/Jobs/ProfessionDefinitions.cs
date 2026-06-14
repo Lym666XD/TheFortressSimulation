@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using HumanFortress.Content.Loading;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 
@@ -25,8 +26,8 @@ public sealed class ProfessionRegistry
     {
         try
         {
-            var path = Path.Combine(baseDir, "content", "registries", "professions.json");
-            if (!File.Exists(path))
+            var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "professions.json");
+            if (registryFile.ResolvedPath == null)
             {
                 Logger.Log("[PROFESSIONS] Registry missing; falling back to Laborer-only default.");
                 return new ProfessionRegistry(new[]
@@ -35,7 +36,7 @@ public sealed class ProfessionRegistry
                 });
             }
 
-            using var doc = JsonDocument.Parse(File.ReadAllText(path));
+            using var doc = JsonDocument.Parse(File.ReadAllText(registryFile.ResolvedPath));
             var list = new List<Definition>();
             if (doc.RootElement.TryGetProperty("professions", out var arr) && arr.ValueKind == JsonValueKind.Array)
             {

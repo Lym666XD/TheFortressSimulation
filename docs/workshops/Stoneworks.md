@@ -1,12 +1,12 @@
 # Stoneworks & Builder's Yard 石材与营造工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_stoneworks.json`
-**对应 industry md**: [Building_Industry_Simplified_Design.md](../Building_Industry_Simplified_Design.md)
+**对应 industry md**: [Building_Industry_Simplified_Design.md](../industries/Building_Industry_Simplified_Design.md)
 **era**: C → R
 **主要 tags**: stone, cutting, shaping, engraving, lime, mortar, concrete, aggregate, recycling
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §石材工坊 v1.0` + `§石灰&混凝土工坊`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §石材工坊 v1.0` + `§石灰&混凝土工坊`
 > - `Building_Industry_Simplified_Design.md`（建筑业的石灰链 / 砂浆 / 混凝土全部并入此工坊）
 > - `core_workshop_stoneworks.json`（8 个 slot + 23 个 attachment）
 
@@ -167,7 +167,7 @@ Stoneworks 是**石材精加工 + 石灰窑 + 砂浆/混凝土场 + 骨料回收
 
 ## 6) 与 industry md 的对应
 
-- 设计原理 + 时代台阶: [Building_Industry_Simplified_Design.md](../Building_Industry_Simplified_Design.md)
+- 设计原理 + 时代台阶: [Building_Industry_Simplified_Design.md](../industries/Building_Industry_Simplified_Design.md)
 - 历史锚点（罗马混凝土 / Hypocaust / 文艺复兴雕刻技艺）: 由 industry md 提供
 
 ---

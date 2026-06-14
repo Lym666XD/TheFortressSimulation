@@ -6,7 +6,7 @@
 **主要 tags**: workshop, armaments, firearms, artillery
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §火器工坊 — 精简装配版`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §火器工坊 — 精简装配版`
 > - `core_workshop_firearms.json`（10 attachments）
 
 ---

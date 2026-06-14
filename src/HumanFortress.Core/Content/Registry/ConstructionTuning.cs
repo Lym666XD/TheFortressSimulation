@@ -27,10 +27,21 @@ public sealed class ConstructionTuning
 
     public static ConstructionTuning Default => new();
 
-    public static ConstructionTuning LoadFromContent()
+    public static ConstructionTuning LoadFromJson(string? json)
     {
         var t = Default;
-        var obj = ContentRegistry.Instance.GetTuning<JObject>("tuning.construction", "$");
+        if (string.IsNullOrWhiteSpace(json)) return t;
+
+        JObject obj;
+        try
+        {
+            obj = JObject.Parse(json);
+        }
+        catch
+        {
+            return t;
+        }
+
         if (obj == null) return t;
 
         t.FloorPlankCount = obj["floor_plank_count"]?.Value<int?>() ?? t.FloorPlankCount;

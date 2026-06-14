@@ -1,12 +1,12 @@
 # Woodworking 木工工坊（含 cooperage 桶匠 + bowyer 弓匠）
 
 **对应 JSON**: `data/core/workshops/core_workshop_woodworking.json`（11 attachments）
-**对应 industry md**: [Woodworking_Industry_Design.md](../Woodworking_Industry_Design.md)
+**对应 industry md**: [Woodworking_Industry_Design.md](../industries/Woodworking_Industry_Design.md)
 **era**: C → R
 **主要 tags**: workshop, wood, carpentry
 
 > 合并来源:
-> - `CHATGPT_PROCESS_CHAIN.md §木工工坊 v1.1（简化件版）`
+> - `../industries/CHATGPT_PROCESS_CHAIN_SOURCE.md §木工工坊 v1.1（简化件版）`
 > - `Woodworking_Industry_Design.md`（合并木工 + 桶匠 + 弓匠/弩匠）
 > - `core_workshop_woodworking.json`
 
@@ -185,7 +185,7 @@
 
 ## 6) 与 industry md / 其他工坊的对应
 
-- 设计原理 + 历史锚点（罗马 mortise-tenon / 大教堂 truss / 英长弓 / 莱茵桶匠 / R intarsia）: [Woodworking_Industry_Design.md](../Woodworking_Industry_Design.md)
+- 设计原理 + 历史锚点（罗马 mortise-tenon / 大教堂 truss / 英长弓 / 莱茵桶匠 / R intarsia）: [Woodworking_Industry_Design.md](../industries/Woodworking_Industry_Design.md)
 - 弓 / 弩 / 火器装配最终归 Metalworks / Firearms
 
 （完）

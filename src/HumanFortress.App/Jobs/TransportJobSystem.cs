@@ -28,10 +28,12 @@ public sealed class TransportJobSystem : ITick
         int maxActiveJobs = 0,
         ProfessionAssignments? professions = null,
         WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest,
-        IPathService? pathService = null)
+        IPathService? pathService = null,
+        NavigationTuning? navigationTuning = null)
     {
-        _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true);
-        var paths = pathService ?? new PathService(NavigationTuning.LoadFromContent());
+        var tuning = navigationTuning ?? NavigationTuning.Default;
+        _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
+        var paths = pathService ?? new PathService(tuning);
         var navView = new WorldNavigationView(_nav);
         var logger = AppTransportJobLogger.Instance;
         ITransportWorkerCandidateSource? workerCandidates = professions == null

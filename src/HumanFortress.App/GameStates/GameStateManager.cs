@@ -1,7 +1,9 @@
 using HumanFortress.App;
 using HumanFortress.App.Commands;
 using HumanFortress.App.Runtime;
+using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
@@ -28,10 +30,10 @@ public sealed class GameStateManager
     private readonly DiffLog _diffLog;
     private readonly HumanFortress.Simulation.Items.ItemsDiffLog _itemsDiffLog;
     private readonly bool _enqueueAutoDig;
-    private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost> _runtimeSessionFactory;
+    private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory;
 
     private GameState? _currentState;
-    private SimulationRuntimeSession<SimulationRuntimeHost>? _runtimeSession;
+    private SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>? _runtimeSession;
     private JobsDebugData? _jobsDebugCache;
     private ulong _jobsDebugCacheTick = 0;
     private const ulong JobsDebugRefreshTicks = 10;
@@ -47,13 +49,13 @@ public sealed class GameStateManager
         _itemsDiffLog = new HumanFortress.Simulation.Items.ItemsDiffLog();
         _enqueueAutoDig = enqueueAutoDig;
         var baseDir = AppContext.BaseDirectory;
-        _runtimeSessionFactory = new SimulationRuntimeSessionFactory<SimulationRuntimeHost>(
+        _runtimeSessionFactory = new SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>(
             _tickScheduler,
             _commandQueue,
             _diffLog,
             _itemsDiffLog,
             world => SimulationWorldContentLoader.LoadCoreContent(world, baseDir),
-            (world, navigation) => new SimulationRuntimeHost(
+            (world, navigation) => FortressRuntimeHostFactory.Create(
                 world,
                 _tickScheduler,
                 _commandQueue,
@@ -61,7 +63,8 @@ public sealed class GameStateManager
                 _diffLog,
                 _itemsDiffLog,
                 navigation,
-                baseDir));
+                baseDir),
+            () => NavigationTuning.LoadFromJson(FortressRuntimeContentSnapshotLoader.CaptureLoaded().NavigationTuningJson));
     }
 
     /// <summary>
@@ -94,6 +97,10 @@ public sealed class GameStateManager
     public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => RuntimeHost?.Systems?.JobsOrchestrator;
     public HumanFortress.App.Jobs.SchedulerTunings? SchedulerTunings => RuntimeHost?.Systems?.SchedulerTunings;
     public HumanFortress.App.Jobs.WorkshopTunings? WorkshopTunings => RuntimeHost?.Systems?.WorkshopTunings;
+    public NavigationTuning? NavigationTuning => RuntimeHost?.NavigationTuning;
+    public IRecipeCatalog? Recipes => RuntimeHost?.Recipes;
+    public IConstructionCatalog? Constructions => RuntimeHost?.Constructions;
+    public IRuntimeGeologyCatalog? Geology => RuntimeHost?.Geology;
 
     /// <summary>
     /// Cached debug data for Jobs/Work drawer. Gated by SchedulerTunings.DebugPanel.
@@ -229,7 +236,7 @@ public sealed class GameStateManager
                 var runtime = RequireRuntimeHost();
                 _jobsDebugCache = null;
                 _jobsDebugCacheTick = 0;
-                runtime.Start(enqueueAutoDig: _enqueueAutoDig);
+                FortressRuntimeStartup.Start(runtime, _enqueueAutoDig, _commandQueue, _tickScheduler);
             }
         }
         catch (Exception ex)
@@ -313,12 +320,12 @@ public sealed class GameStateManager
         Logger.Log("[GameStateManager] Shutdown complete");
     }
 
-    private SimulationRuntimeHost RequireRuntimeHost()
+    private SimulationRuntimeHost<SimulationRuntimeSystems> RequireRuntimeHost()
     {
         if (_runtimeSession == null)
             throw new InvalidOperationException("World not initialized");
         return _runtimeSession.Host;
     }
 
-    private SimulationRuntimeHost? RuntimeHost => _runtimeSession?.Host;
+    private SimulationRuntimeHost<SimulationRuntimeSystems>? RuntimeHost => _runtimeSession?.Host;
 }

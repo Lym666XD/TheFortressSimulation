@@ -12,7 +12,7 @@ internal static class DefinitionCatalogTestSupport
         ArgumentNullException.ThrowIfNull(world);
 
         world.Items.SetDependencies(world, ContentRegistry.Instance);
-        var result = ItemDefinitionCatalogLoader.Load(dataPath ?? CoreDataPath);
+        var result = CoreContentCatalogLoader.Load(dataPath ?? CoreDataPath).Items;
         world.Items.SetDefinitionCatalog(result.Catalog);
         return result;
     }
@@ -21,7 +21,7 @@ internal static class DefinitionCatalogTestSupport
     {
         ArgumentNullException.ThrowIfNull(world);
 
-        var result = CreatureDefinitionCatalogLoader.Load(dataPath ?? CoreDataPath);
+        var result = CoreContentCatalogLoader.Load(dataPath ?? CoreDataPath).Creatures;
         world.Creatures.SetDefinitionCatalog(result.Catalog);
         return result;
     }

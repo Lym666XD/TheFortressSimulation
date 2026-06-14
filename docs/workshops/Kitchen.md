@@ -1,7 +1,7 @@
 # Kitchen 厨房工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_kitchen.json`（12 attachments）
-**对应 industry md**: [Cooking_System_Design.md](../Cooking_System_Design.md)
+**对应 industry md**: [Cooking_System_Design.md](../industries/Cooking_System_Design.md)
 **era**: C → R
 **主要 tags**: workshop, food, kitchen, cooking
 
@@ -124,6 +124,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细 + 平衡 + 时代特点（C 鱼酱橄榄油 / M 公共炉腌熏 / R 香料糖宴）: [Cooking_System_Design.md](../Cooking_System_Design.md)
+详细 + 平衡 + 时代特点（C 鱼酱橄榄油 / M 公共炉腌熏 / R 香料糖宴）: [Cooking_System_Design.md](../industries/Cooking_System_Design.md)
 
 （完）

@@ -24,10 +24,12 @@ public sealed class CraftJobSystem : ITick
         ItemsDiffLog itemsDiffLog,
         NavigationManager? sharedNav,
         ProfessionAssignments? professions,
-        WorkerSelectionStrategy workerStrategy)
+        WorkerSelectionStrategy workerStrategy,
+        NavigationTuning? navigationTuning = null)
     {
-        var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true);
-        var paths = new PathService(NavigationTuning.LoadFromContent());
+        var tuning = navigationTuning ?? NavigationTuning.Default;
+        var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
+        var paths = new PathService(tuning);
         var navView = new WorldNavigationView(navigation);
         IWorldNavigationView navViewInterface = navView;
         var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId);

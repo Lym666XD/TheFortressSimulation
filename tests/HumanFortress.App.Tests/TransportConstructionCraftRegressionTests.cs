@@ -314,10 +314,16 @@ internal static class TransportConstructionCraftRegressionTests
         var itemsDiffLog = new ItemsDiffLog();
         var construction = new ConstructionJobSystem(
             world,
-            new ConstructionSystem(world, new OrdersManager()),
+            new ConstructionSystem(
+                world,
+                new OrdersManager(),
+                EmptyConstructionTerrainMaterialResolver.Instance,
+                ConstructionTuning.Default),
             diffLog,
             itemsDiffLog,
             ContentRegistry.Instance.Constructions,
+            ConstructionTuning.Default,
+            PlaceableTuning.Default,
             maxPerTick: 1);
 
         construction.WriteTick(0);

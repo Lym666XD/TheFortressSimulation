@@ -14,11 +14,13 @@ namespace HumanFortress.Simulation.Rendering
     {
         private readonly World.World _world;
         private readonly TileRegistry _tileRegistry;
+        private readonly IConstructionCatalog _constructions;
         private readonly Dictionary<(ChunkKey, int), ulong> _zVersions = new();
         
-        public RenderSnapshotBuilder(World.World world)
+        public RenderSnapshotBuilder(World.World world, IConstructionCatalog constructions)
         {
-            _world = world;
+            _world = world ?? throw new ArgumentNullException(nameof(world));
+            _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
             _tileRegistry = new TileRegistry();
         }
         
@@ -139,7 +141,7 @@ namespace HumanFortress.Simulation.Rendering
                     {
                         if (p.Z != z) continue;
                         string defId = p.ConstructionSite != null ? p.ConstructionSite.TargetId : p.DefinitionId;
-                        var def = ContentRegistry.Instance.Constructions.GetConstruction(defId);
+                        var def = _constructions.GetConstruction(defId);
                         if (def == null) continue;
                         bool isWorkshop = string.Equals(def.Category, "workshop", System.StringComparison.OrdinalIgnoreCase)
                                           || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);

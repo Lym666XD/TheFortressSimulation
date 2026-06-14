@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HumanFortress.Contracts\HumanFortress.Contracts.csproj" />
+    <ProjectReference Include="..\HumanFortress.Core\HumanFortress.Core.csproj" />
   </ItemGroup>
 
 </Project>

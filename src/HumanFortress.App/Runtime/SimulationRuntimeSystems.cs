@@ -1,23 +1,18 @@
 using HumanFortress.App.Jobs;
-using HumanFortress.Core.Content.Registry;
-using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Craft;
-using HumanFortress.Navigation;
 using HumanFortress.Runtime;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
-using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App.Runtime;
 
 /// <summary>
-/// Builds and exposes the simulation systems that participate in the runtime tick loop.
+/// Exposes the simulation systems that participate in the runtime tick loop.
 /// </summary>
 internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
 {
-    private SimulationRuntimeSystems(
+    internal SimulationRuntimeSystems(
         HaulingSystem haulingPlanner,
         ITransportRequestQueue transportQueue,
         TransportJobSystem transportJobs,
@@ -69,111 +64,6 @@ internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
     public WorkshopTunings WorkshopTunings { get; }
     public UnifiedJobsOrchestrator JobsOrchestrator { get; }
     public SanitizeSystem Sanitizer { get; }
-
-    public static SimulationRuntimeSystems Create(
-        World world,
-        DiffLog diffLog,
-        ItemsDiffLog itemsDiffLog,
-        NavigationManager navigation,
-        string baseDir)
-    {
-        ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(diffLog);
-        ArgumentNullException.ThrowIfNull(itemsDiffLog);
-        ArgumentNullException.ThrowIfNull(navigation);
-
-        var content = ContentRegistry.Instance;
-        var constructionCatalog = content.Constructions;
-        var recipeCatalog = content.Recipes;
-
-        var miningPlanner = new MiningSystem(world, world.Orders);
-        var transportQueue = new TransportRequestQueue();
-        var haulingPlanner = new HaulingSystem(world, world.Orders, transportIntake: transportQueue);
-        var constructionMaterialsPlanner = new ConstructionMaterialsPlanner(world, transportQueue, world.Items);
-        ConstructionMaterialsPlanner.LogCallback = Logger.CreateCallback("Jobs.ConstructionMaterials");
-        var constructionPlanner = new ConstructionSystem(world, world.Orders);
-        var buildablePlanner = new BuildableConstructionSystem(world, world.Orders, constructionCatalog);
-
-        var schedulerTunings = SchedulerTunings.LoadFromContent(baseDir);
-        var workshopTunings = WorkshopTunings.LoadFromContent(baseDir);
-        var professionRegistry = ProfessionRegistry.Load(baseDir);
-        var professionAssignments = new ProfessionAssignments(professionRegistry, world.Creatures);
-
-        var miningJobs = new MiningJobSystem(
-            world,
-            miningPlanner,
-            diffLog,
-            itemsDiffLog,
-            navigation,
-            intakeBudget: schedulerTunings.Mining.PlanPerTick,
-            carryoverMaxTicks: schedulerTunings.BackpressureMaxCarryoverTicks,
-            professions: professionAssignments,
-            workerStrategy: schedulerTunings.WorkerSelection);
-
-        var transportJobs = new TransportJobSystem(
-            world,
-            transportQueue,
-            diffLog,
-            navigation,
-            itemsDiffLog: itemsDiffLog,
-            intakeBudget: schedulerTunings.Hauling.PlanPerTick,
-            carryoverMaxTicks: schedulerTunings.BackpressureMaxCarryoverTicks,
-            maxActiveJobs: schedulerTunings.HaulingLimits.MaxActive,
-            professions: professionAssignments,
-            workerStrategy: schedulerTunings.WorkerSelection);
-
-        var constructionJobs = new ConstructionJobSystem(
-            world,
-            constructionPlanner,
-            diffLog,
-            itemsDiffLog,
-            constructionCatalog,
-            maxPerTick: schedulerTunings.Construction.PlanPerTick);
-
-        var craftRecipes = new CraftRecipeCatalogAdapter(recipeCatalog);
-        var craftPlanner = new CraftPlanner(world, transportQueue, craftRecipes, constructionCatalog);
-        var craftJobs = new CraftJobSystem(
-            world,
-            craftPlanner,
-            craftRecipes,
-            constructionCatalog,
-            itemsDiffLog,
-            navigation,
-            professionAssignments,
-            schedulerTunings.WorkerSelection);
-
-        var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8);
-
-        var jobsOrchestrator = new UnifiedJobsOrchestrator(
-            haulingPlanner,
-            constructionMaterialsPlanner,
-            miningPlanner,
-            constructionPlanner,
-            craftPlanner,
-            transportJobs,
-            miningJobs,
-            constructionJobs,
-            craftJobs,
-            schedulerTunings);
-
-        return new SimulationRuntimeSystems(
-            haulingPlanner,
-            transportQueue,
-            transportJobs,
-            miningPlanner,
-            buildablePlanner,
-            constructionMaterialsPlanner,
-            miningJobs,
-            constructionPlanner,
-            constructionJobs,
-            craftPlanner,
-            craftJobs,
-            professionAssignments,
-            schedulerTunings,
-            workshopTunings,
-            jobsOrchestrator,
-            sanitizer);
-    }
 
     public void RegisterWith(TickScheduler scheduler)
     {

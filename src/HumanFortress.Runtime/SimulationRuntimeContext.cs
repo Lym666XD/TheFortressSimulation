@@ -41,9 +41,9 @@ public sealed class SimulationRuntimeContext :
         CreaturesDiffLog creaturesDiffLog,
         World world,
         IEventBus eventBus,
-        Action<string>? log = null,
-        IRecipeCatalog? recipes = null,
-        IConstructionCatalog? constructions = null)
+        IRecipeCatalog recipes,
+        IConstructionCatalog constructions,
+        Action<string>? log = null)
     {
         _diffLog = diffLog ?? throw new ArgumentNullException(nameof(diffLog));
         _world = world ?? throw new ArgumentNullException(nameof(world));
@@ -54,8 +54,8 @@ public sealed class SimulationRuntimeContext :
         _zoneCommands = new ZoneCommandTarget(world);
         _workshopQueueCommands = new WorkshopQueueCommandTarget(
             world,
-            recipes ?? ContentRegistry.Instance.Recipes,
-            constructions ?? ContentRegistry.Instance.Constructions);
+            recipes,
+            constructions);
         _stockpileCommands = new StockpileCommandTarget(world, log);
     }
 

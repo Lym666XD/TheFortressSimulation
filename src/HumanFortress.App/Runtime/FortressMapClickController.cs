@@ -11,6 +11,7 @@ internal readonly record struct FortressMapClickControllerContext(
     FortressLoadedSessionSnapshot LoadedSession,
     int CurrentZ,
     ulong UiTick,
+    IConstructionCatalog? Constructions,
     Action<Point, int> OpenTilePanel,
     Action Redraw);
 
@@ -37,7 +38,7 @@ internal static class FortressMapClickController
         if (!placeableData.TryGetOwnedAt(Chunk.LocalIndex(localX, localY), out var placeable))
             return false;
 
-        if (!IsWorkshop(placeable.ConstructionSite?.TargetId ?? placeable.DefinitionId))
+        if (!IsWorkshop(context.Constructions, placeable.ConstructionSite?.TargetId ?? placeable.DefinitionId))
             return false;
 
         context.Ui.OpenWorkshopPanel(placeable.Guid, new Point(placeable.Position.X, placeable.Position.Y), placeable.Z);
@@ -70,7 +71,7 @@ internal static class FortressMapClickController
 
         if (context.LoadedSession.World != null)
         {
-            var workshop = FindWorkshopAt(context.LoadedSession.World, worldPos, context.CurrentZ);
+            var workshop = FindWorkshopAt(context.LoadedSession.World, worldPos, context.CurrentZ, context.Constructions);
             if (workshop != null)
             {
                 ui.OpenWorkshopPanel(workshop.Value.placeable.Guid, workshop.Value.placeable.Position, workshop.Value.placeable.Z);
@@ -90,7 +91,8 @@ internal static class FortressMapClickController
     private static (HumanFortress.Simulation.Placeables.PlaceableInstance placeable, Chunk chunk)? FindWorkshopAt(
         World world,
         Point worldPos,
-        int z)
+        int z,
+        IConstructionCatalog? constructions)
     {
         foreach (var chunk in world.GetAllChunks())
         {
@@ -103,7 +105,7 @@ internal static class FortressMapClickController
                 if (placeable.Z != z)
                     continue;
 
-                if (!IsWorkshop(placeable.DefinitionId))
+                if (!IsWorkshop(constructions, placeable.DefinitionId))
                     continue;
 
                 var footprint = placeable.Footprint;
@@ -117,9 +119,9 @@ internal static class FortressMapClickController
         return null;
     }
 
-    private static bool IsWorkshop(string constructionId)
+    private static bool IsWorkshop(IConstructionCatalog? constructions, string constructionId)
     {
-        var definition = ContentRegistry.Instance.Constructions.GetConstruction(constructionId);
+        var definition = constructions?.GetConstruction(constructionId);
         if (definition == null)
             return false;
 

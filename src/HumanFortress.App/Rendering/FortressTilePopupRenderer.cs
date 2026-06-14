@@ -1,15 +1,21 @@
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadConsole;
 using SadRogue.Primitives;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.App.Rendering;
 
 internal static class FortressTilePopupRenderer
 {
-    public static void Render(ScreenSurface overlay, FortressMap? fortressMap, World? world, Point tileWorldPosition, int tileZ)
+    public static void Render(
+        ScreenSurface overlay,
+        FortressMap? fortressMap,
+        World? world,
+        Point tileWorldPosition,
+        int tileZ,
+        IRuntimeGeologyCatalog? geologyCatalog)
     {
         ArgumentNullException.ThrowIfNull(overlay);
 
@@ -40,7 +46,7 @@ internal static class FortressTilePopupRenderer
         if (simChunk != null)
         {
             var tile = simChunk.GetTile(localX, localY);
-            var geology = ContentRegistry.Instance.GetGeologyByHandle(tile.GeoMatId);
+            var geology = geologyCatalog?.GetGeologyByHandle(tile.GeoMatId);
             string geoId = geology?.Id ?? $"#${tile.GeoMatId}";
 
             int line = 3;

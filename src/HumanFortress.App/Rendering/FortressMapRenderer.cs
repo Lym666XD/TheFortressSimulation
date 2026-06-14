@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Tiles;
@@ -6,7 +7,6 @@ using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadConsole;
 using SadRogue.Primitives;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.App.Rendering;
@@ -23,7 +23,8 @@ internal static class FortressMapRenderer
         int currentZ,
         int zoomLevel,
         UiContext uiContext,
-        NavigationOverlay? navigationOverlay)
+        NavigationOverlay? navigationOverlay,
+        IRuntimeGeologyCatalog? geology)
     {
         try
         {
@@ -42,7 +43,7 @@ internal static class FortressMapRenderer
             int viewW = mapSurface.Surface.Width;
             int viewH = mapSurface.Surface.Height;
 
-            RenderTerrain(mapSurface, world, maxWorldSize, cameraPosition, cursorPosition, currentZ, zoomLevel, uiContext, viewW, viewH);
+            RenderTerrain(mapSurface, world, maxWorldSize, cameraPosition, cursorPosition, currentZ, zoomLevel, uiContext, viewW, viewH, geology);
 
             if (world != null)
             {
@@ -71,7 +72,8 @@ internal static class FortressMapRenderer
         int zoomLevel,
         UiContext uiContext,
         int viewW,
-        int viewH)
+        int viewH,
+        IRuntimeGeologyCatalog? geology)
     {
         for (int sx = 0; sx < viewW; sx++)
         {
@@ -93,13 +95,13 @@ internal static class FortressMapRenderer
                     continue;
                 }
 
-                var (glyph, color) = GetWorldTileDisplay(world, worldX, worldY, currentZ);
+                var (glyph, color) = GetWorldTileDisplay(world, worldX, worldY, currentZ, geology);
                 DrawTerrainCell(mapSurface, sx, sy, worldX, worldY, cursorPosition, uiContext, zoomLevel, viewW, viewH, glyph, color);
             }
         }
     }
 
-    private static (int glyph, Color color) GetWorldTileDisplay(World world, int worldX, int worldY, int currentZ)
+    private static (int glyph, Color color) GetWorldTileDisplay(World world, int worldX, int worldY, int currentZ, IRuntimeGeologyCatalog? geology)
     {
         int currentChunkX = worldX / 32;
         int currentChunkY = worldY / 32;
@@ -112,7 +114,7 @@ internal static class FortressMapRenderer
             return ('#', Color.DarkGray);
 
         var tile = simChunk.GetTile(localX, localY);
-        return GetTileDisplay(tile);
+        return GetTileDisplay(tile, geology);
     }
 
     private static void DrawTerrainCell(
@@ -159,9 +161,9 @@ internal static class FortressMapRenderer
         mapSurface.SetGlyph(screenX, screenY, glyph, color, Color.Transparent);
     }
 
-    private static (int glyph, Color color) GetTileDisplay(TileBase tile)
+    private static (int glyph, Color color) GetTileDisplay(TileBase tile, IRuntimeGeologyCatalog? geologyCatalog)
     {
-        var geology = ContentRegistry.Instance.GetGeologyByHandle(tile.GeoMatId);
+        var geology = geologyCatalog?.GetGeologyByHandle(tile.GeoMatId);
         var fg = geology != null
             ? new Color(geology.Display.Foreground.R, geology.Display.Foreground.G, geology.Display.Foreground.B)
             : Color.Gray;

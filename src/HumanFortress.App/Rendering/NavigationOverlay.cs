@@ -30,11 +30,11 @@ public class NavigationOverlay
     private NavigationManager? _navManager;
     private readonly HumanFortress.Navigation.NavigationTuning _tuning;
 
-    public NavigationOverlay()
+    public NavigationOverlay(HumanFortress.Navigation.NavigationTuning? tuning = null)
     {
         _overlayChars = new Dictionary<Point, char>();
         _overlayColors = new Dictionary<Point, Color>();
-        _tuning = HumanFortress.Navigation.NavigationTuning.LoadFromContent();
+        _tuning = tuning ?? HumanFortress.Navigation.NavigationTuning.Default;
     }
 
     public void SetNavigationManager(NavigationManager navManager) => _navManager = navManager;

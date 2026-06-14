@@ -2,6 +2,7 @@
 using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.App.Runtime;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Placeables;
@@ -299,8 +300,8 @@ namespace HumanFortress.App.UI;
     {
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
-        RenderWorkshopListColumn(surf, layout.Left, world);
-        RenderWorkshopNotesColumn(surf, layout.Center, world);
+        RenderWorkshopListColumn(surf, layout.Left, world, runtime?.Constructions);
+        RenderWorkshopNotesColumn(surf, layout.Center, world, runtime?.Constructions);
         RenderSchedulerColumn(surf, layout.Right, tick, "Workshop Stats", runtime);
     }
 
@@ -309,11 +310,11 @@ namespace HumanFortress.App.UI;
         var layout = BuildWorkPanelLayout(surf, startY, maxHeight);
         DecorateWorkPanel(surf, layout);
         RenderStandingOrdersColumn(surf, layout.Left);
-        RenderWorkshopDirectory(surf, layout.Center, world);
+        RenderWorkshopDirectory(surf, layout.Center, world, runtime?.Constructions);
         RenderConstructionStatusColumn(surf, layout.Right, world, runtime);
     }
 
-    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null)
+    public static void DrawQuickMenu(ScreenSurface mapSurface, UiStore ui, ulong tick, OrdersUI? ordersUI = null, ZonesUI? zonesUI = null, BuildUI? buildUI = null, StockpileQuickUI? stockpileUI = null, SadRogue.Primitives.Point? cameraOverride = null, int? zOverride = null, HumanFortress.Simulation.World.World? world = null, IConstructionCatalog? constructions = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
         var surf = mapSurface.Surface;
@@ -376,7 +377,7 @@ namespace HumanFortress.App.UI;
                 // If browsing workshop items, draw the items pane on the right
                 if (ui.BuildMenu == BuildSubmenu.Workshop && ui.WorkshopBrowsingItems && ui.SelectedWorkshopCategory != null)
                 {
-                    DrawWorkshopItemsPane(mapSurface, centerX + 32, l2Y, ui.SelectedWorkshopCategory);
+                    DrawWorkshopItemsPane(mapSurface, centerX + 32, l2Y, ui.SelectedWorkshopCategory, constructions);
                 }
             }
         }
@@ -610,9 +611,9 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void RenderWorkshopListColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderWorkshopListColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, IConstructionCatalog? constructions)
     {
-        var workshops = CollectWorkshops(world);
+        var workshops = CollectWorkshops(world, constructions);
         surf.Print(area.X + 1, area.Y, "Workshops", Color.Yellow);
         if (workshops.Count == 0)
         {
@@ -646,9 +647,9 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void RenderWorkshopNotesColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderWorkshopNotesColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, IConstructionCatalog? constructions)
     {
-        var workshops = CollectWorkshops(world);
+        var workshops = CollectWorkshops(world, constructions);
         surf.Print(area.X + 1, area.Y, "Active Queues", Color.Yellow);
         int line = area.Y + 2;
         if (workshops.Count == 0)
@@ -795,9 +796,9 @@ namespace HumanFortress.App.UI;
         surf.Print(area.X + 1, area.Y + area.Height - 2, "TODO: Wire to standing-order data", Color.DarkGray);
     }
 
-    private static void RenderWorkshopDirectory(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world)
+    private static void RenderWorkshopDirectory(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, IConstructionCatalog? constructions)
     {
-        var workshops = CollectWorkshops(world);
+        var workshops = CollectWorkshops(world, constructions);
         surf.Print(area.X + 1, area.Y, $"Workshops ({workshops.Count})", Color.Yellow);
         int line = area.Y + 2;
         foreach (var ws in workshops.Take(area.Height - 2))
@@ -814,7 +815,7 @@ namespace HumanFortress.App.UI;
 
     private static void RenderConstructionStatusColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, FortressRuntimeAccess? runtime)
     {
-        var workshops = CollectWorkshops(world);
+        var workshops = CollectWorkshops(world, runtime?.Constructions);
         int built = workshops.Count(w => !w.IsSite);
         int sites = workshops.Count(w => w.IsSite);
 
@@ -827,12 +828,14 @@ namespace HumanFortress.App.UI;
         surf.Print(area.X + 1, line++, $"Intake limit: {runtime?.SchedulerTunings?.Construction.PlanPerTick ?? 0}", Color.DarkGray);
     }
 
-    private sealed record WorkshopDisplay(string Name, HumanFortress.Simulation.Placeables.PlaceableInstance Instance, HumanFortress.Core.Content.Registry.ConstructionDefinition? Definition, bool IsSite);
+    private sealed record WorkshopDisplay(string Name, HumanFortress.Simulation.Placeables.PlaceableInstance Instance, ConstructionDefinition? Definition, bool IsSite);
 
-    private static System.Collections.Generic.List<WorkshopDisplay> CollectWorkshops(HumanFortress.Simulation.World.World world)
+    private static System.Collections.Generic.List<WorkshopDisplay> CollectWorkshops(HumanFortress.Simulation.World.World world, IConstructionCatalog? constructions)
     {
         var list = new System.Collections.Generic.List<WorkshopDisplay>();
-        var registry = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
+        if (constructions == null)
+            return list;
+
         foreach (var chunk in world.GetAllChunks())
         {
             var pd = chunk.GetPlaceableData();
@@ -840,7 +843,7 @@ namespace HumanFortress.App.UI;
             foreach (var p in pd.GetAllOwnedPlaceables())
             {
                 string defId = p.ConstructionSite?.TargetId ?? p.DefinitionId;
-                var def = registry.GetConstruction(defId);
+                var def = constructions.GetConstruction(defId);
                 if (def == null) continue;
                 bool isWorkshop = string.Equals(def.Category, "workshop", System.StringComparison.OrdinalIgnoreCase)
                                   || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
@@ -857,9 +860,16 @@ namespace HumanFortress.App.UI;
         return value.Substring(0, System.Math.Max(0, max - 1)) + "...";
     }
 
-    public static void DrawWorkshopsOverlay(MapScreenSurface mapSurface, HumanFortress.Simulation.World.World world, int currentZ, SadRogue.Primitives.Rectangle viewport)
+    public static void DrawWorkshopsOverlay(
+        MapScreenSurface mapSurface,
+        HumanFortress.Simulation.World.World world,
+        int currentZ,
+        SadRogue.Primitives.Rectangle viewport,
+        IConstructionCatalog? constructions)
     {
-        var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
+        if (constructions == null)
+            return;
+
         var border = new Color(255, 230, 0);         // completed
         var fill = new Color(255, 230, 0, 90);
         var siteBorder = new Color(255, 140, 0);     // construction site
@@ -874,7 +884,7 @@ namespace HumanFortress.App.UI;
                 if (p.Z != currentZ) continue;
                 bool isSite = p.ConstructionSite != null;
                 string defId = isSite ? p.ConstructionSite!.TargetId : p.DefinitionId;
-                var def = reg.GetConstruction(defId);
+                var def = constructions.GetConstruction(defId);
                 if (def == null) continue;
                 bool isWorkshop = string.Equals(def.Category, "workshop", StringComparison.OrdinalIgnoreCase)
                                   || (def.PlaceableProfile.Tags != null && Array.IndexOf(def.PlaceableProfile.Tags, "workshop") >= 0);
@@ -1075,7 +1085,12 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    public static void DrawWorkshopPanel(ScreenSurface surface, UiStore ui, HumanFortress.Simulation.World.World world, ulong tick)
+    public static void DrawWorkshopPanel(
+        ScreenSurface surface,
+        UiStore ui,
+        HumanFortress.Simulation.World.World world,
+        ulong tick,
+        IConstructionCatalog? constructions)
     {
         if (!ui.WorkshopPanelOpen || ui.OpenWorkshopGuid == null) return;
 
@@ -1093,8 +1108,7 @@ namespace HumanFortress.App.UI;
         }
         if (found == null) { return; }
 
-        var reg = HumanFortress.Core.Content.Registry.ContentRegistry.Instance.Constructions;
-        var def = reg.GetConstruction(found.DefinitionId);
+        var def = constructions?.GetConstruction(found.DefinitionId);
         string title = def?.Name ?? found.DefinitionId;
         var fp = found.Footprint;
         var state = found.Workshop ?? new HumanFortress.Simulation.Placeables.WorkshopState();
@@ -1394,7 +1408,7 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    private static void DrawWorkshopItemsPane(ScreenSurface surface, int x, int y, string category)
+    private static void DrawWorkshopItemsPane(ScreenSurface surface, int x, int y, string category, IConstructionCatalog? constructions)
     {
         var bg = Color.Black.SetAlpha(200);
         var fg = Color.White;
@@ -1419,7 +1433,7 @@ namespace HumanFortress.App.UI;
         surface.SetGlyph(x + 38 - 1, y + 12 - 1, '+');
         surface.Print(x + 1, y, $" {char.ToUpper(category[0]) + category.Substring(1)} ", highlight);
 
-        var list = GetWorkshopsByCategory(category);
+        var list = GetWorkshopsByCategory(constructions, category);
         var keys = new[] { 'Z','X','C','V','F','G','R','T' };
         int max = System.Math.Min(keys.Length, list.Count);
         for (int i = 0; i < max; i++)
@@ -1436,9 +1450,9 @@ namespace HumanFortress.App.UI;
         surface.Print(x + 2, y + 10, "[,] Back", Color.Gray);
     }
 
-    private static System.Collections.Generic.List<HumanFortress.Core.Content.Registry.ConstructionDefinition> GetWorkshopsByCategory(string category)
+    private static System.Collections.Generic.List<ConstructionDefinition> GetWorkshopsByCategory(IConstructionCatalog? constructions, string category)
     {
-        return WorkshopCategoryMapper.GetWorkshopsByCategory(category);
+        return WorkshopCategoryMapper.GetWorkshopsByCategory(constructions, category);
     }
 
     private static bool IsConstructionCandidate(HumanFortress.Simulation.World.World world, string shape, int x, int y, int z)

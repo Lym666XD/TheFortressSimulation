@@ -1,5 +1,6 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadRogue.Primitives;
@@ -24,12 +25,12 @@ internal sealed class FortressTileInspectionController
         IsOpen = false;
     }
 
-    public void RenderPopup(UiOverlaySurface? uiSurface, FortressMap? fortressMap, World? world)
+    public void RenderPopup(UiOverlaySurface? uiSurface, FortressMap? fortressMap, World? world, IRuntimeGeologyCatalog? geology)
     {
         if (!IsOpen || uiSurface == null)
             return;
 
-        FortressTilePopupRenderer.Render(uiSurface, fortressMap, world, WorldPosition, Z);
+        FortressTilePopupRenderer.Render(uiSurface, fortressMap, world, WorldPosition, Z, geology);
     }
 
 }

@@ -21,6 +21,8 @@ public sealed class ConstructionJobSystem : ITick
         DiffLog? diffLog,
         ItemsDiffLog itemsDiffLog,
         IConstructionCatalog constructions,
+        ConstructionTuning tuning,
+        PlaceableTuning placeableTuning,
         int maxPerTick = 64)
     {
         var diffEmitter = new ConstructionDiffEmitter(diffLog, itemsDiffLog, SystemId, Priority);
@@ -28,6 +30,8 @@ public sealed class ConstructionJobSystem : ITick
             world,
             diffEmitter,
             constructions,
+            tuning,
+            placeableTuning,
             new AppConstructionWorkshopCompletionSink(),
             AppConstructionJobLogger.Instance,
             maxPerTick);

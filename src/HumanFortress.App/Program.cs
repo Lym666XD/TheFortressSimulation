@@ -1,13 +1,14 @@
 using System;
 using System.IO;
+using HumanFortress.Content.Loading;
 using HumanFortress.App.GameStates;
 using HumanFortress.App.Runtime;
 using HumanFortress.App.States;
-using HumanFortress.Core.Content;
 using HumanFortress.Core.Diagnostics;
 using SadConsole;
 using SadConsole.Configuration;
 using SadRogue.Primitives;
+using LegacyContentRegistry = HumanFortress.Core.Content.ContentRegistry;
 
 namespace HumanFortress.App;
 
@@ -57,25 +58,16 @@ public static class Program
         // Setup logging before startup diagnostics and content loading.
         var logFile = "fortress_debug.log";
         Logger.Initialize(logFile);
-        ContentRegistry.LogCallback = null;
-        ContentRegistry.Diagnostics = Logger.Sink;
+        LegacyContentRegistry.LogCallback = null;
+        LegacyContentRegistry.Diagnostics = Logger.Sink;
 
         // Preload critical native libraries (SDL2/OpenAL) to avoid DllNotFound issues
         TryPreloadNative(Path.Combine(baseDir, "SDL2.dll"));
         TryPreloadNative(Path.Combine(baseDir, "soft_oal.dll"));
 
-        // Load content registry from publish folder
-        var contentPath = Path.Combine(baseDir, "content");
-        if (Directory.Exists(contentPath))
-        {
-            var contentLoad = ContentLoadCoordinator.Load(contentPath);
-            if (!contentLoad.StructuredLoaded)
-            {
-                Logger.Warning(
-                    "Content.Registry",
-                    $"[ContentLoadCoordinator] Structured registry unavailable: {contentLoad.StructuredFailureMessage ?? "unknown error"}");
-            }
-        }
+        // Load content registries from either published output or source checkout.
+        var contentLoad = FortressContentLoader.Load(baseDir, includeCoreCatalogs: false);
+        FortressContentIssueLogger.LogIssues(contentLoad);
 
         // Initialize logging callbacks for lower-level components (Simulation/Navigation layers)
         HumanFortress.Navigation.NavigationManager.LogCallback = Logger.CreateCallback("Navigation.Manager");
@@ -96,13 +88,15 @@ public static class Program
         Logger.Log($"[STARTUP] HumanFortress starting at {DateTime.Now}");
         Logger.Log($"[STARTUP] Log file: {System.IO.Path.GetFullPath(logFile)}");
 
-        if (Directory.Exists(contentPath))
+        if (contentLoad.ContentPath.ResolvedPath != null)
         {
-            Logger.Log($"[STARTUP] Content loaded successfully from {contentPath}");
+            Logger.Log($"[STARTUP] Content loaded successfully from {contentLoad.ContentPath.ResolvedPath}");
         }
         else
         {
-            Logger.Log($"[STARTUP] WARNING: Content directory not found at {contentPath}");
+            Logger.Log($"[STARTUP] WARNING: Content directory not found. Tried:");
+            Logger.Log($"  - {contentLoad.ContentPath.PublishedPath}");
+            Logger.Log($"  - {contentLoad.ContentPath.DevelopmentPath}");
         }
 
         // Add unhandled exception handler for debugging

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using HumanFortress.Content.Loading;
 
 namespace HumanFortress.App.Input;
 
@@ -20,9 +21,10 @@ public sealed class OrdersRegistryService
 
     public void Load(string baseDir)
     {
-        var path = Path.Combine(baseDir, "content", "registries", "orders.registry.json");
-        if (!File.Exists(path)) return;
-        var json = File.ReadAllText(path);
+        var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "orders.registry.json");
+        if (registryFile.ResolvedPath == null) return;
+
+        var json = File.ReadAllText(registryFile.ResolvedPath);
         using var doc = JsonDocument.Parse(json);
         if (!doc.RootElement.TryGetProperty("orders", out var orders)) return;
         foreach (var prop in orders.EnumerateObject())
@@ -38,4 +40,3 @@ public sealed class OrdersRegistryService
         return _orderNames.TryGetValue(orderId, out var name) ? name : orderId;
     }
 }
-

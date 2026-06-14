@@ -364,7 +364,7 @@ namespace HumanFortress.App
             try
             {
                 var world = new World(2, 50);
-                var builder = new RenderSnapshotBuilder(world);
+                var builder = new RenderSnapshotBuilder(world, HumanFortress.Core.Content.Registry.ConstructionCatalogStore.Empty);
                 
                 var camera = new CameraInfo
                 {

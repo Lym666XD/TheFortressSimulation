@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HumanFortress.Core.Content;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
@@ -14,15 +13,13 @@ namespace HumanFortress.Simulation.Stockpile;
 public sealed class StockpileHaulingBroker
 {
     private readonly World.World _world;
-    private readonly ContentRegistry _registry;
     private readonly StockpileTuning _tuning;
     private int _nextJobId = 1;
     private int _localSeq = 0;
 
-    public StockpileHaulingBroker(World.World world, ContentRegistry registry, StockpileTuning tuning)
+    public StockpileHaulingBroker(World.World world, StockpileTuning tuning)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
         _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
     }
 
@@ -189,7 +186,7 @@ public sealed class StockpileHaulingBroker
             // Filter candidates
             var candidates = items
                 .Where(i => !usedItems.Contains(i.Handle) &&
-                           request.Filter.Accepts(i.Stack, _registry) &&
+                           request.Filter.Accepts(i.Stack) &&
                            IsDwellTimeExpired(i.Stack, currentTick) &&
                            !IsSticky(i.Stack, request.ZoneId))
                 .ToList();

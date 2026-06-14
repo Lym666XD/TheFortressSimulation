@@ -1,6 +1,8 @@
 using HumanFortress.App.Commands;
 using HumanFortress.App.Jobs;
 using HumanFortress.App;
+using HumanFortress.Content.Definitions;
+using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Events;
@@ -37,8 +39,11 @@ internal static class CoreRuntimeSmokeTests
         TestSimulationCommandStage();
         TestSimulationRuntimeHostCore();
         TestSimulationRuntimeSessionFactory();
+        TestNavigationTuningJson();
+        TestPlaceableTuningJson();
         TestAsyncDiagnosticLogger();
-        TestContentLoadCoordinator();
+        TestContentBootstrap();
+        TestContentLoadDiagnostics();
         TestDefinitionCatalogReloadsClearIndexes();
         TestOrderCommandsUseRuntimeTarget();
         TestZoneCommandsUseRuntimeTarget();
@@ -50,6 +55,27 @@ internal static class CoreRuntimeSmokeTests
         TestEmbarkabilityDiagnostics();
 
         Console.WriteLine("=== Core Runtime Smoke Tests Completed ===\n");
+    }
+
+    private static SimulationRuntimeContext CreateRuntimeContext(
+        DiffLog diffLog,
+        ItemsDiffLog itemsDiffLog,
+        CreaturesDiffLog creaturesDiffLog,
+        World world,
+        IEventBus? eventBus = null,
+        IRecipeCatalog? recipes = null,
+        IConstructionCatalog? constructions = null,
+        Action<string>? log = null)
+    {
+        return new SimulationRuntimeContext(
+            diffLog,
+            itemsDiffLog,
+            creaturesDiffLog,
+            world,
+            eventBus ?? new EventBus(),
+            recipes ?? RecipeCatalogStore.Empty,
+            constructions ?? ConstructionCatalogStore.Empty,
+            log);
     }
 
     private static void TestTickScheduler()
@@ -282,7 +308,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         var eventBus = new EventBus();
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, eventBus);
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, eventBus);
         var probe = new CommandStageProbe();
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var readSystem = new CommandStageReadSystem(probe);
@@ -424,6 +450,172 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Simulation runtime session factory");
     }
 
+    private static void TestNavigationTuningJson()
+    {
+        const string json = """
+        {
+          "allow_diagonals": true,
+          "ramp_vertical_alignment_mode": "df",
+          "ramp_requires_highside_support": false,
+          "cost": {
+            "base": 11,
+            "orthogonal": 12,
+            "diagonal": 17,
+            "ramp_delta": 5,
+            "stair_delta": 7
+          },
+          "diagonal_rules": {
+            "corner_check": false
+          },
+          "fluids": {
+            "shallow_threshold": 2,
+            "deep_threshold": 5,
+            "wade_cost": 8,
+            "swim_cost": 21
+          },
+          "traffic": {
+            "low": -3,
+            "normal": 1,
+            "high": 4,
+            "restricted": 9
+          },
+          "doors": {
+            "closed_blocks": false,
+            "open_cost": 6
+          },
+          "budgets": {
+            "max_nodes_per_search": 1200,
+            "max_ms_per_tick_pathing": 4
+          }
+        }
+        """;
+
+        var tuning = HumanFortress.Navigation.NavigationTuning.LoadFromJson(json);
+        var invalidNumericTuning = HumanFortress.Navigation.NavigationTuning.LoadFromJson("""
+        {
+          "cost": {
+            "base": 70000
+          },
+          "fluids": {
+            "shallow_threshold": 300
+          }
+        }
+        """);
+
+        RegressionAssert.True(
+            tuning.AllowDiagonals
+            && tuning.BaseCost == 11
+            && tuning.OrthogonalCost == 12
+            && tuning.DiagonalCost == 17
+            && tuning.RampDelta == 5
+            && tuning.StairDelta == 7
+            && tuning.RampVerticalAlignmentMode == "df"
+            && !tuning.RampRequiresHighsideSupport
+            && !tuning.DiagonalCornerCheck
+            && tuning.FluidShallowThreshold == 2
+            && tuning.FluidDeepThreshold == 5
+            && tuning.FluidWadeCost == 8
+            && tuning.FluidSwimCost == 21
+            && tuning.TrafficLow == -3
+            && tuning.TrafficNormal == 1
+            && tuning.TrafficHigh == 4
+            && tuning.TrafficRestricted == 9
+            && !tuning.DoorClosedBlocks
+            && tuning.DoorOpenCost == 6
+            && tuning.MaxNodesPerSearch == 1200
+            && tuning.MaxMsPerTickPathing == 4
+            && invalidNumericTuning.BaseCost == HumanFortress.Navigation.NavigationTuning.Default.BaseCost
+            && invalidNumericTuning.FluidShallowThreshold == HumanFortress.Navigation.NavigationTuning.Default.FluidShallowThreshold,
+            "NavigationTuning JSON parser did not apply supported fields or preserve defaults for invalid numeric ranges.");
+
+        Console.WriteLine("[PASS] Navigation tuning JSON");
+    }
+
+    private static void TestPlaceableTuningJson()
+    {
+        const string json = """
+        {
+          "quality": {
+            "beauty_per_tier": 2,
+            "comfort_per_tier": 3,
+            "min_tier": -2,
+            "max_tier": 4
+          },
+          "durability": {
+            "default_max_hp": 75,
+            "hp_per_volume_ml": 0.002,
+            "material_hp_multiplier": {
+              "stone": 2.5,
+              "default": 1.1
+            },
+            "condition_thresholds": {
+              "good": 0.8,
+              "poor": 0.1
+            }
+          },
+          "installation": {
+            "install_time_base_ticks": 120,
+            "deconstruct_time_base_ticks": 90,
+            "material_recovery_rate": 0.5,
+            "preserve_item_on_uninstall": false
+          },
+          "construction": {
+            "quality_tier_always_zero": false,
+            "skill_xp_per_build_tick": 2
+          },
+          "doors": {
+            "default_locked": true,
+            "default_open": true,
+            "open_cost_ticks": 7,
+            "close_cost_ticks": 8,
+            "closed_blocks_movement": false
+          },
+          "collision": {
+            "check_full_footprint": false,
+            "require_walkable_tiles": false,
+            "allow_overlap_external_refs": true,
+            "cross_chunk_validation": false
+          },
+          "workshops": {
+            "workers_per_workshop_max": 12
+          }
+        }
+        """;
+
+        var tuning = PlaceableTuning.LoadFromJson(json);
+
+        RegressionAssert.True(
+            tuning.BeautyPerTier == 2
+            && tuning.ComfortPerTier == 3
+            && tuning.MinTier == -2
+            && tuning.MaxTier == 4
+            && tuning.DefaultMaxHP == 75
+            && Math.Abs(tuning.HPPerVolumeML - 0.002f) < 0.0001f
+            && Math.Abs(tuning.MaterialHPMultiplier["stone"] - 2.5f) < 0.0001f
+            && Math.Abs(tuning.MaterialHPMultiplier["default"] - 1.1f) < 0.0001f
+            && Math.Abs(tuning.ConditionThresholds["good"] - 0.8f) < 0.0001f
+            && Math.Abs(tuning.ConditionThresholds["poor"] - 0.1f) < 0.0001f
+            && tuning.InstallTimeBaseTicks == 120
+            && tuning.DeconstructTimeBaseTicks == 90
+            && Math.Abs(tuning.MaterialRecoveryRate - 0.5f) < 0.0001f
+            && !tuning.PreserveItemOnUninstall
+            && !tuning.ConstructionQualityAlwaysZero
+            && tuning.SkillXPPerBuildTick == 2
+            && tuning.DoorDefaultLocked
+            && tuning.DoorDefaultOpen
+            && tuning.DoorOpenCostTicks == 7
+            && tuning.DoorCloseCostTicks == 8
+            && !tuning.DoorClosedBlocksMovement
+            && !tuning.CheckFullFootprint
+            && !tuning.RequireWalkableTiles
+            && tuning.AllowOverlapExternalRefs
+            && !tuning.CrossChunkValidation
+            && tuning.WorkersPerWorkshopMax == 12,
+            "PlaceableTuning JSON parser did not apply supported fields.");
+
+        Console.WriteLine("[PASS] Placeable tuning JSON");
+    }
+
     private static void TestAsyncDiagnosticLogger()
     {
         var logRoot = Path.Combine(Path.GetTempPath(), "HumanFortressDiagnosticsTests", Guid.NewGuid().ToString("N"));
@@ -467,10 +659,12 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Async diagnostic logger");
     }
 
-    private static void TestContentLoadCoordinator()
+    private static void TestContentBootstrap()
     {
-        var contentPath = Path.Combine(AppContext.BaseDirectory, "content");
-        RegressionAssert.True(Directory.Exists(contentPath), $"Content directory not found for smoke test: {contentPath}");
+        var contentPath = FortressContentLoader.ResolveContentPath(AppContext.BaseDirectory);
+        RegressionAssert.True(
+            contentPath.ResolvedPath != null,
+            $"Content directory not found for smoke test. Tried: {contentPath.PublishedPath}; {contentPath.DevelopmentPath}");
 
         var logRoot = Path.Combine(Path.GetTempPath(), "HumanFortressContentLoadTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(logRoot);
@@ -481,7 +675,14 @@ internal static class CoreRuntimeSmokeTests
             Logger.Initialize(mainLog);
             HumanFortress.Core.Content.ContentRegistry.Diagnostics = Logger.Sink;
 
-            var result = HumanFortress.Core.Content.ContentLoadCoordinator.Load(contentPath);
+            var bootstrap = FortressContentLoader.Load(AppContext.BaseDirectory, forceReloadRegistries: true);
+            RegressionAssert.True(
+                bootstrap.IsValid(treatWarningsAsErrors: true),
+                $"Content bootstrapper reported blocking issues:{Environment.NewLine}{bootstrap.FormatBlockingIssues(treatWarningsAsErrors: true)}");
+
+            var result = bootstrap.Registries
+                ?? throw new InvalidOperationException("Content bootstrapper did not load content registries.");
+
             var structured = ContentRegistry.Instance;
             var graniteWallHandle = structured.GetGeologyHandle("core_terrain_wall_rock_granite");
             var graniteWall = structured.GetGeologyByHandle(graniteWallHandle);
@@ -492,13 +693,18 @@ internal static class CoreRuntimeSmokeTests
             var airGeology = structured.GetGeologyByHandle(airHandle);
             var navigationTuning = structured.GetTuning<Newtonsoft.Json.Linq.JObject>("tuning.navigation", "$");
             var bedroomZone = structured.GetZoneDefinition("bedroom");
-            var dataPath = Path.Combine(AppContext.BaseDirectory, "data", "core");
-            var coreDataResult = structured.LoadCoreData(dataPath);
+            var loadedContent = bootstrap.CoreCatalogs
+                ?? throw new InvalidOperationException("Content bootstrapper did not load core content catalogs.");
+
+            structured.ApplyCoreData(loadedContent.CoreData);
+            var coreDataResult = loadedContent.CoreData;
             var constructionCount = structured.Constructions.Count;
             var recipeCount = structured.Recipes.Count;
             var workshopCount = structured.Constructions.GetConstructionsByCategory("workshop").Count();
             var stoneworksRecipeCount = structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count;
-            var secondCoreDataResult = structured.LoadCoreData(dataPath);
+            var secondLoadedContent = CoreContentCatalogLoader.Load(bootstrap.CoreDataPath.ResolvedPath!);
+            structured.ApplyCoreData(secondLoadedContent.CoreData);
+            var secondCoreDataResult = secondLoadedContent.CoreData;
             var stoneworks = structured.Constructions.GetConstruction("core_construction_workshop_stoneworks");
             var stoneBlocksRecipe = structured.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
 
@@ -524,6 +730,10 @@ internal static class CoreRuntimeSmokeTests
                 && coreDataResult.Constructions.ErrorCount == 0
                 && coreDataResult.Recipes.LoadedCount > 0
                 && coreDataResult.Recipes.ErrorCount == 0
+                && loadedContent.Items.LoadedCount > 0
+                && loadedContent.Items.ErrorCount == 0
+                && loadedContent.Creatures.LoadedCount > 0
+                && loadedContent.Creatures.ErrorCount == 0
                 && secondCoreDataResult.Constructions.LoadedCount == constructionCount
                 && secondCoreDataResult.Recipes.LoadedCount == recipeCount
                 && structured.Constructions.Count == constructionCount
@@ -532,7 +742,7 @@ internal static class CoreRuntimeSmokeTests
                 && structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count == stoneworksRecipeCount
                 && stoneworks != null
                 && stoneBlocksRecipe != null,
-                "ContentLoadCoordinator did not load runtime content into the structured registry correctly.");
+                "Content bootstrapper did not load runtime content into the structured registry correctly.");
         }
         finally
         {
@@ -544,7 +754,23 @@ internal static class CoreRuntimeSmokeTests
             }
         }
 
-        Console.WriteLine("[PASS] Content load coordinator");
+        Console.WriteLine("[PASS] Content bootstrap");
+    }
+
+    private static void TestContentLoadDiagnostics()
+    {
+        var missingBaseDir = Path.Combine(Path.GetTempPath(), "HumanFortressMissingContent", Guid.NewGuid().ToString("N"));
+        var result = FortressContentLoader.Load(missingBaseDir);
+
+        RegressionAssert.True(
+            !result.IsValid()
+            && result.HasErrors
+            && result.GetBlockingIssues().Any(issue => issue.Code == "Content.PathMissing")
+            && result.GetBlockingIssues().Any(issue => issue.Code == "Content.CoreDataPathMissing")
+            && !string.IsNullOrWhiteSpace(result.FormatBlockingIssues()),
+            "Content bootstrap diagnostics did not report missing content/core data paths.");
+
+        Console.WriteLine("[PASS] Content load diagnostics");
     }
 
     private static void TestDefinitionCatalogReloadsClearIndexes()
@@ -592,7 +818,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var registry = ProfessionRegistry.Load(AppContext.BaseDirectory);
         var assignments = new ProfessionAssignments(registry);
         var professionId = registry.Definitions[0].Id;
@@ -621,7 +847,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
 
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
@@ -674,7 +900,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
 
         var initialRect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
@@ -747,12 +973,11 @@ internal static class CoreRuntimeSmokeTests
                 Outputs = new[] { new RecipeOutput { DefId = "test_output_b", Count = 1 } }
             }
         });
-        var context = new SimulationRuntimeContext(
+        var context = CreateRuntimeContext(
             diffLog,
             itemsDiffLog,
             creaturesDiffLog,
             world,
-            new EventBus(),
             recipes: recipeCatalog,
             constructions: ContentRegistry.Instance.Constructions);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
@@ -825,7 +1050,7 @@ internal static class CoreRuntimeSmokeTests
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
 
@@ -877,7 +1102,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadItems(world);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(2, 2);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
@@ -904,7 +1129,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadCreatures(world);
-        var context = new SimulationRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, new EventBus());
+        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
         var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(3, 3);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);

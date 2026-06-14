@@ -1,7 +1,7 @@
 # Mine Site 矿场综合工坊 ⭐新
 
 **对应 JSON**: `data/core/workshops/core_workshop_mine_site.json` *(待补)*
-**对应 industry md**: [Mining_Industry_Design.md](../Mining_Industry_Design.md)
+**对应 industry md**: [Mining_Industry_Design.md](../industries/Mining_Industry_Design.md)
 **era**: C → R
 **主要 tags**: workshop, mining, extraction, safety
 
@@ -106,7 +106,7 @@ Mine Site 是矿口/竖井的**地表综合设施**。"挖"的具体动作由引
 
 ## 6) 与 industry md 的对应
 
-详细的历史背景 / C/M/R 工艺演进 / 平衡值，见：[Mining_Industry_Design.md](../Mining_Industry_Design.md)。
+详细的历史背景 / C/M/R 工艺演进 / 平衡值，见：[Mining_Industry_Design.md](../industries/Mining_Industry_Design.md)。
 
 本工坊文档 = 实现层；industry md = 叙事 + 设计原理层。
 

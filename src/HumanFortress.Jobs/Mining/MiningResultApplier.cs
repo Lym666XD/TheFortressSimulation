@@ -1,5 +1,4 @@
 using HumanFortress.Simulation.Orders;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 using SimTerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -64,7 +63,7 @@ internal sealed class MiningResultApplier
 
     private void ApplyChannel(ActiveMiningJob job)
     {
-        ushort airGeo = ResolveAirGeology();
+        ushort airGeo = _dropResolver.ResolveAirGeologyHandle();
         _diffEmitter.SetTerrain(job.Target, job.Z, SimTerrainKind.OpenNoFloor, airGeo);
         if (job.Z <= 0)
         {
@@ -114,20 +113,4 @@ internal sealed class MiningResultApplier
         }
     }
 
-    private static ushort ResolveAirGeology()
-    {
-        try
-        {
-            var reg = ContentRegistry.Instance;
-            if (reg.TryGetGeologyHandleByMaterialAndKind("air", SimTerrainKind.OpenNoFloor.ToString(), out var handle))
-            {
-                return handle;
-            }
-        }
-        catch
-        {
-        }
-
-        return 0;
-    }
 }

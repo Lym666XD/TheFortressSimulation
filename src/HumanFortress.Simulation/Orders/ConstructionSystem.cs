@@ -6,7 +6,6 @@ using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Placeables;
 using SadRogue.Primitives;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Simulation.Orders;
 
@@ -20,18 +19,25 @@ public sealed class ConstructionSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
+    private readonly IConstructionTerrainMaterialResolver _terrainMaterials;
     private readonly int _maxPerTick;
 
     private readonly List<PlannedBuild> _planned = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedBuild> _outbox = new();
     private readonly HumanFortress.Core.Content.Registry.ConstructionTuning _tuning;
 
-    public ConstructionSystem(World.World world, OrdersManager orders, int maxPerTick = 256)
+    public ConstructionSystem(
+        World.World world,
+        OrdersManager orders,
+        IConstructionTerrainMaterialResolver terrainMaterials,
+        HumanFortress.Core.Content.Registry.ConstructionTuning tuning,
+        int maxPerTick = 256)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
+        _terrainMaterials = terrainMaterials ?? throw new ArgumentNullException(nameof(terrainMaterials));
+        _tuning = tuning ?? throw new ArgumentNullException(nameof(tuning));
         _maxPerTick = Math.Max(1, maxPerTick);
-        _tuning = HumanFortress.Core.Content.Registry.ConstructionTuning.LoadFromContent();
     }
 
     public int Priority => UpdateOrder.Priority.Furniture; // ghost placement touches L2
@@ -43,8 +49,6 @@ public sealed class ConstructionSystem : ITick
         var desigs = new List<ConstructionDesignation>();
         _orders.DrainConstructionDesignations(desigs, maxCount: 4);
         if (desigs.Count == 0) return;
-
-        var content = ContentRegistry.Instance;
 
         int count = 0;
         foreach (var d in desigs)
@@ -76,11 +80,11 @@ public sealed class ConstructionSystem : ITick
                         }
 
                         // Resolve geology handle from filter (material preference) + target kind
-                        ushort geo = ResolveGeologyHandle(content, d.Filter, shapeKind);
+                        ushort geo = _terrainMaterials.ResolveGeologyHandle(d.Filter, shapeKind);
                         if (geo == 0)
                         {
                             // Fallback: attempt from current tile material (if any)
-                            geo = TryMatchFromCurrent(tileOpt.Value, content, shapeKind);
+                            geo = _terrainMaterials.TryMatchFromCurrent(tileOpt.Value, shapeKind);
                             if (geo == 0)
                             {
                                 if (debugCells)
@@ -231,38 +235,6 @@ public sealed class ConstructionSystem : ITick
                 : (z == zMin ? HumanFortress.Simulation.Tiles.TerrainKind.StairsUp : (z == zMax ? HumanFortress.Simulation.Tiles.TerrainKind.StairsDown : HumanFortress.Simulation.Tiles.TerrainKind.StairsUD)),
             _ => HumanFortress.Simulation.Tiles.TerrainKind.OpenNoFloor
         };
-    }
-
-    private static ushort ResolveGeologyHandle(ContentRegistry content, MaterialFilterSpec filter, HumanFortress.Simulation.Tiles.TerrainKind kind)
-    {
-        // 1) Last used by category
-        var last = HumanFortress.Core.Content.Registry.MaterialSelectionService.GetLastUsed(filter.CategoryKey);
-        if (!string.IsNullOrWhiteSpace(last))
-        {
-            if (content.TryGetGeologyHandleByMaterialAndKind(last!, kind.ToString(), out var h))
-                return h;
-        }
-
-        // 2) Explicit preference on filter
-        if (!string.IsNullOrWhiteSpace(filter.PreferredMaterialId))
-        {
-            if (content.TryGetGeologyHandleByMaterialAndKind(filter.PreferredMaterialId!, kind.ToString(), out var handle))
-                return handle;
-        }
-        // Future extension: pick by tags via MaterialSelectionService (requires item availability). For now return 0.
-        return 0;
-    }
-
-    private static ushort TryMatchFromCurrent(HumanFortress.Simulation.Tiles.TileBase tile, ContentRegistry content, HumanFortress.Simulation.Tiles.TerrainKind kind)
-    {
-        try
-        {
-            var geo = content.GetGeologyByHandle(tile.GeoMatId);
-            if (geo != null && content.TryGetGeologyHandleByMaterialAndKind(geo.Material, kind.ToString(), out var handle))
-                return handle;
-        }
-        catch { }
-        return 0;
     }
 
     private bool IsBuildCandidate(HumanFortress.Simulation.Tiles.TileBase tile, ConstructionShape shape, int x, int y, int z)

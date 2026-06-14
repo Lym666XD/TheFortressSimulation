@@ -1,7 +1,7 @@
 # Pottery 陶瓷工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_pottery.json`（19 attachments）
-**对应 industry md**: [Ceramics_Pottery_Industry_Design.md](../Ceramics_Pottery_Industry_Design.md)
+**对应 industry md**: [Ceramics_Pottery_Industry_Design.md](../industries/Ceramics_Pottery_Industry_Design.md)
 **era**: C → R
 **主要 tags**: workshop, ceramic, pottery, building_materials
 
@@ -126,6 +126,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细历史脉络 + 平衡数值，见 [Ceramics_Pottery_Industry_Design.md](../Ceramics_Pottery_Industry_Design.md)。
+详细历史脉络 + 平衡数值，见 [Ceramics_Pottery_Industry_Design.md](../industries/Ceramics_Pottery_Industry_Design.md)。
 
 （完）

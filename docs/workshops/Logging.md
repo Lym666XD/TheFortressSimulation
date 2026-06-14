@@ -1,7 +1,7 @@
 # Logging Camp 伐木营
 
 **对应 JSON**: `data/core/workshops/core_workshop_logging.json`（15 attachments）
-**对应 industry md**: [Forestry_NavalTimber_Design_v1.md](../Forestry_NavalTimber_Design_v1.md)
+**对应 industry md**: [Forestry_NavalTimber_Design_v1.md](../industries/Forestry_NavalTimber_Design_v1.md)
 **era**: C → R
 **主要 tags**: workshop, wood, logging, lumber
 
@@ -94,6 +94,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细演进 + 平衡 + 海军木材分级机制: [Forestry_NavalTimber_Design_v1.md](../Forestry_NavalTimber_Design_v1.md)
+详细演进 + 平衡 + 海军木材分级机制: [Forestry_NavalTimber_Design_v1.md](../industries/Forestry_NavalTimber_Design_v1.md)
 
 （完）

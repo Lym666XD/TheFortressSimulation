@@ -25,10 +25,12 @@ public sealed class MiningJobSystem : ITick
         int intakeBudget = 16,
         int carryoverMaxTicks = 8,
         ProfessionAssignments? professions = null,
-        WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest)
+        WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest,
+        NavigationTuning? navigationTuning = null)
     {
-        _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true);
-        var paths = new PathService(NavigationTuning.LoadFromContent());
+        var tuning = navigationTuning ?? NavigationTuning.Default;
+        _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
+        var paths = new PathService(tuning);
         var navView = new WorldNavigationView(_nav);
         var logger = AppMiningJobLogger.Instance;
         var dropResolver = new MiningDropResolver();

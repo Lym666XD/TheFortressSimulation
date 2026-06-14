@@ -1,7 +1,7 @@
 # Tailor 纺织与裁缝工坊
 
 **对应 JSON**: `data/core/workshops/core_workshop_tailor.json`（17 attachments）
-**对应 industry md**: [Textile_Industry_Research_and_Design_CN.md](../Textile_Industry_Research_and_Design_CN.md)
+**对应 industry md**: [Textile_Industry_Research_and_Design_CN.md](../industries/Textile_Industry_Research_and_Design_CN.md)
 **era**: C → R
 **主要 tags**: workshop, clothing, textile, tailor
 
@@ -130,6 +130,6 @@
 
 ## 6) 与 industry md 的对应
 
-详细演进 + 平衡 + 染料体系: [Textile_Industry_Research_and_Design_CN.md](../Textile_Industry_Research_and_Design_CN.md)
+详细演进 + 平衡 + 染料体系: [Textile_Industry_Research_and_Design_CN.md](../industries/Textile_Industry_Research_and_Design_CN.md)
 
 （完）
