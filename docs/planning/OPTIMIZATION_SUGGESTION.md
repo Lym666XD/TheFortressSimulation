@@ -1,14 +1,25 @@
-# Optimization Suggestions
+# Architecture-Safe Optimization Backlog
 
-Updated: 2026-06-13
-Status: current performance backlog, merged from English and Chinese sources
+Updated: 2026-06-14  
+Status: current performance and architecture-safe optimization backlog, merged from English and Chinese sources
 
 This document is the active optimization backlog. It merges the older performance
 review, Chinese UI refactor performance notes, architecture audits, current
 navigation/job/UI specs, and stability notes.
 
-It is not an implementation plan by itself. Treat source code and profiling data
-as authoritative when they disagree with an estimate below.
+It is not an implementation plan by itself. Treat source code, build results,
+profiling data, and replay tests as authoritative when they disagree with an
+estimate below.
+
+The purpose of this document is not only to make the game faster. It is to make
+the game faster without weakening the long-term architecture:
+
+```text
+Architecture boundaries first.
+Determinism is non-negotiable.
+Measure before optimizing.
+Optimize hot paths only after ownership and test boundaries are clear.
+```
 
 ## Merged Sources
 
@@ -45,21 +56,199 @@ Current facts checked against code:
 - `NavigationManager.GetNavDataAt(...)` is read-only; navigation rebuilds belong to explicit runtime/session rebuild points.
 - `RenderSnapshotBuilder` exists, but active UI/rendering code still has live `World` and `FortressRuntimeAccess` reads in several panels.
 - `RenderSnapshotBuilder` still computes autotile/connect masks directly from visible chunks; full delta/versioned presenter behavior is target, not complete current code.
+- `HumanFortress.Runtime` contains the core tick pipeline, but concrete session/system composition still has App-owned pieces.
+- `HumanFortress.Jobs` contains real job executors, but `HumanFortress.App.Jobs` still owns tick-facing wrappers, tunings, and orchestration shells.
+- `HumanFortress.Content` exists, but content definition loading and runtime catalog ownership are still in a transitional state.
+- Legacy and structured content registries still coexist through `ContentLoadCoordinator`.
+
+## What Counts As Optimization
+
+Optimization means:
+
+- lower CPU cost;
+- lower allocation pressure;
+- fewer live-world scans;
+- clearer data ownership;
+- deterministic replay parity;
+- better debug/profiling visibility;
+- less coupling that blocks safe parallelism;
+- moving hot queries from broad scans to stable indexes;
+- replacing repeated UI/world polling with snapshots or query DTOs.
+
+Optimization does not mean:
+
+- micro-optimizing before measuring;
+- adding unsafe/SIMD/GPU work first;
+- bypassing command/diff/commit boundaries;
+- moving gameplay logic into App for convenience;
+- adding more live-world reads to UI panels;
+- parallelizing writes without read/write masks;
+- changing content/save IDs for short-term speed;
+- persisting derived caches that should be rebuilt from authoritative state.
 
 ## Optimization Rules
 
 Hard constraints:
 
 - Preserve determinism before speed. Stable ordering, seeded RNG, and replay parity are non-negotiable.
-- Do not use wall clock, thread completion order, dictionary iteration order, or non-deterministic floating point in simulation decisions.
+- Do not use wall clock, thread completion order, dictionary iteration order, unstable hash ordering, or non-deterministic floating point in simulation decisions.
 - Keep pathfinding budget behavior fail-soft. Correctness tests should use test-specific generous budgets; production-budget deferral needs separate tests.
 - Do not reintroduce navigation query-time rebuilds. Path queries read cache; commits mark dirty chunks; runtime rebuilds explicitly.
 - Do not parallelize write phases until systems declare read/write masks and a scheduler can prove non-overlap.
 - Do not persist derived caches. Rebuild nav/path/render/spatial caches from authoritative state.
+- Do not add new gameplay rules to `HumanFortress.App`.
+- Do not make UI components depend on live `World` when a snapshot/query DTO can serve the use case.
+- Do not create new per-system movement authorities when a runtime-wide movement service is the target.
 
 Engineering rule:
 
 Measure first, then optimize. If a change cannot be checked by counters, stress tests, or replay equality, it should stay in research.
+
+## Codex / Claude Guardrails
+
+When an AI coding agent works from this document:
+
+Do not:
+
+- edit broad areas without a scoped task;
+- make formatting-only changes while touching optimization code;
+- add gameplay logic to `HumanFortress.App`;
+- add new UI reads of live `World`;
+- create a new `PathService` or `MovementExecutor` per new system;
+- introduce `new Random()` or wall-clock seeded randomness;
+- use `GetHashCode()` or dictionary iteration order for authoritative ordering;
+- optimize by changing public content IDs, save IDs, or tile bit layout;
+- parallelize `WriteTick` or MergeApply based on intuition;
+- persist navigation/path/render caches;
+- bypass `CommandQueue`, DiffLogs, or deterministic commit stages for convenience.
+
+Do:
+
+- inspect real source code before acting;
+- preserve behavior unless the task explicitly says otherwise;
+- add tests or counters with each optimization when practical;
+- separate architecture boundary fixes from hot-path micro-optimizations;
+- prefer small, buildable, reviewable changes;
+- report uncertainty when source and documentation disagree.
+
+## P-1: Architecture Preconditions Before Optimization
+
+These are not performance optimizations by themselves. They are boundary fixes that should happen before broad optimization work, because otherwise performance changes may reinforce the wrong ownership model.
+
+### A. Verify Content Project Dependencies And Build Correctness
+
+Current issue:
+
+- `HumanFortress.Content` exists as a project, but content definition loading is still transitional.
+- Content source should not become dependent on Simulation runtime types as a long-term pattern.
+- Legacy and structured content registries still coexist.
+
+Build:
+
+- Run a clean `dotnet build HumanFortress.sln` before optimizing content hot paths.
+- Verify `HumanFortress.Content` project references match its source dependencies.
+- Move raw definition DTOs and loaders into Content-owned types where practical.
+- Keep runtime catalogs and live instances in World/Simulation.
+- Add a strict content-load mode for CI or release builds.
+
+Acceptance:
+
+- `HumanFortress.Content` builds from a clean checkout.
+- Content definition loading does not require App or SadConsole.
+- Structured registry load failure can fail CI in strict mode.
+- Runtime receives a coherent content/registry snapshot rather than silently mixing partially-loaded registries.
+
+### B. Move Concrete Runtime Composition Out Of App
+
+Current issue:
+
+- `HumanFortress.Runtime` contains the core tick pipeline, but concrete session/system composition still has App-owned pieces.
+
+Build:
+
+- Move concrete simulation session host/composition classes out of `HumanFortress.App.Runtime` when they are not SadConsole/UI-specific.
+- Keep App responsible for platform startup, state transitions, SadConsole host setup, input, and presentation.
+- Runtime should own session lifecycle, system wiring, command queue, scheduler, navigation, jobs, and debug snapshot services.
+
+Acceptance:
+
+- A headless runtime can start a simulation without referencing `HumanFortress.App`.
+- Runtime can be tested without SadConsole/MonoGame.
+- App no longer owns the concrete simulation composition root.
+
+### C. Move App/Jobs Tick Wrappers Out Of App
+
+Current issue:
+
+- Real job executors now live in `HumanFortress.Jobs`, but `HumanFortress.App.Jobs` still owns tick-facing shells, tunings, and orchestration code.
+
+Build:
+
+- Move job tick-system wrappers and tunings into `HumanFortress.Jobs` or `HumanFortress.Runtime`, depending on whether each class is gameplay logic or pure composition.
+- Keep only job UI/debug panels and input bindings in App.
+
+Acceptance:
+
+- Job systems can be registered and tested without referencing App.
+- App no longer exposes concrete job systems to UI except through debug/query DTOs.
+
+### D. Convert Runtime Access To Snapshot / Command / Debug Facade
+
+Current issue:
+
+- `FortressRuntimeAccess` still exposes live `World`, `NavigationManager`, and concrete job systems.
+
+Build:
+
+- Introduce focused runtime query/debug DTOs.
+- Keep command submission through a command sink.
+- Keep rendering through `RenderSnapshot` / presenter data.
+- Gradually remove broad live-world access from UI components.
+
+Acceptance:
+
+- High-traffic UI panels can render common rows without scanning live world managers.
+- UI reads stable snapshots or query DTOs, not concrete mutable managers.
+- Debug panels have deterministic, stable sort keys.
+
+### E. Standardize Test Infrastructure
+
+Current issue:
+
+- Existing smoke/regression tests are useful, but the project still needs standard test discovery and CI reporting.
+
+Build:
+
+- Move toward xUnit, NUnit, or MSTest module-specific test projects.
+- Keep existing executable smoke tests only as a temporary bridge.
+- Add a deterministic replay harness.
+
+Acceptance:
+
+- `dotnet test` works on a clean machine.
+- Core/runtime/navigation/jobs/content tests do not require SadConsole.
+- Replay hash tests can run headlessly.
+
+### F. Define Diff Priority And Mutation Boundaries
+
+Current issue:
+
+- Diff systems must share one priority convention.
+- Public world mutation APIs still rely heavily on convention.
+- System precedence remains hardcoded in places.
+
+Build:
+
+- Define whether lower or higher priority wins globally.
+- Add tests for same-tick conflict ordering.
+- Introduce a stable system order table or registry.
+- Plan `WorldReadView` / `WorldWriteContext` boundaries for future work.
+
+Acceptance:
+
+- Same-tick conflicts are resolved by documented stable keys.
+- New systems do not need to invent their own priority semantics.
+- World mutation outside command/diff/commit paths is easier to detect in review/tests.
 
 ## P0: Safe, Current, High-Leverage
 
@@ -86,6 +275,7 @@ Acceptance:
 - A stress run reports per-system timings and counts without external profiler setup.
 - Replay hashes remain equal with counters enabled.
 - Budget tests do not fail because production pathing budget legitimately deferred work.
+- Counters can be consumed by debug UI without introducing new authoritative world writes.
 
 ### 2. Item Stack Merge Uses Position Index
 
@@ -109,6 +299,7 @@ Acceptance:
 
 - Spawning/adding 1,000 stackable items on a populated map stays within a documented budget.
 - Existing item merge/split/move regression tests still pass.
+- Replay hashes remain unchanged for equivalent inputs.
 
 ### 3. PathCache O(1) Or Amortized LRU
 
@@ -128,6 +319,7 @@ Acceptance:
 - Cache eviction cost is not proportional to cache size in normal operation.
 - Dirty chunk invalidation removes all affected paths.
 - Cache hit/miss and eviction counts are visible in diagnostics.
+- Cache ordering does not depend on dictionary iteration order.
 
 ### 4. UI/Runtime Live-Read Reduction
 
@@ -147,6 +339,7 @@ Acceptance:
 - Large stock/item list scroll stays within UI budget.
 - Panels no longer need broad live-world scans for common display rows.
 - UI queries use stable sort keys.
+- No new broad `World` access is added to UI render code.
 
 ## P1: Medium Scope, Good Return
 
@@ -206,6 +399,7 @@ Acceptance:
 - One place reports path budget/cache/movement stats.
 - Multi-agent movement conflicts have one deterministic resolver.
 - Jobs preserve current behavior while moving behind the shared service.
+- No new job system creates an independent movement authority.
 
 ### 8. Compiled Tag Queries For Hot Paths
 
@@ -303,16 +497,25 @@ Do:
 - Parallel write phase without read/write masks.
 - Persisting any derived cache.
 - Making UI performance worse by adding more live-world reads while snapshot/query facades are the stated target.
+- Adding new gameplay logic to App.
+- Adding new per-job movement executors.
+- Treating legacy+structured content registry coexistence as permanent.
+- Optimizing before the Content/Runtime/Jobs/UI boundary work is understood.
 
 ## Validation Matrix
 
 | Area | Test |
 | --- | --- |
+| Runtime | Headless simulation starts without `HumanFortress.App` reference once runtime migration is complete. |
+| Jobs | Job systems can run in tests without SadConsole/MonoGame once wrappers move out of App. |
+| Content | `HumanFortress.Content` builds cleanly; structured content load can fail CI in strict mode. |
 | Items | Spawn/merge 1,000 stackable items on a populated map under budget; existing split/move tests pass. |
 | Path cache | Fill cache beyond capacity; eviction count and time stay bounded; dirty chunk invalidates traversed paths. |
 | Transport | Dense construction/stockpile stress run shows bounded request churn and continuous progress. |
-| UI | 10k item rows grouped/virtualized; scroll update stays under documented budget. |
+| UI | 10k item rows grouped/virtualized; scroll update stays under documented budget; no broad live-world scan for common rows. |
 | Snapshot | Delta snapshot equals full rebuild; autotile cache invalidates on topology edits. |
+| Diff | Same-tick conflicts resolve through documented stable priority and system order rules. |
+| Movement | One movement resolver owns active movement state and reports movement/path stats. |
 | Determinism | Replay hashes unchanged before/after optimization with the same seed/input stream. |
 | Budgets | Production budget deferral is tested separately from path correctness. |
 
@@ -320,7 +523,12 @@ Do:
 
 | Priority | Work |
 | --- | --- |
+| P-1 | Content dependency/build verification, runtime composition out of App, App/Jobs wrappers out of App, RuntimeAccess snapshot facade, standard tests, diff priority semantics. |
 | P0 | Perf counters/stress harness, item spawn position-index merge, PathCache LRU/reverse-index fix, UI live-read reduction. |
 | P1 | Transport request stability, snapshot delta/autotile cache, runtime-wide movement service, compiled hot tag queries. |
 | P2 | Navigation search layers, scheduler stage graph, hot/cold data layout, worldgen scaling checks. |
 | Research | ECS migration, GPU pathfinding, unsafe SIMD navigation. |
+
+## One-Line Principle
+
+Optimization work is only successful if the optimized code is faster, deterministic, testable, and closer to the intended architecture boundaries than before.
