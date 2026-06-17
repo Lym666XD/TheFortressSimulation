@@ -56,10 +56,10 @@ Current facts checked against code:
 - `NavigationManager.GetNavDataAt(...)` is read-only; navigation rebuilds belong to explicit runtime/session rebuild points.
 - `RenderSnapshotBuilder` exists, but active UI/rendering code still has live `World` and `FortressRuntimeAccess` reads in several panels.
 - `RenderSnapshotBuilder` still computes autotile/connect masks directly from visible chunks; full delta/versioned presenter behavior is target, not complete current code.
-- `HumanFortress.Runtime` contains the core tick pipeline, but concrete session/system composition still has App-owned pieces.
-- `HumanFortress.Jobs` contains real job executors, but `HumanFortress.App.Jobs` still owns tick-facing wrappers, tunings, and orchestration shells.
-- `HumanFortress.Content` exists, but content definition loading and runtime catalog ownership are still in a transitional state.
-- Legacy and structured content registries still coexist through `ContentLoadCoordinator`.
+- `HumanFortress.Runtime` contains the core tick pipeline and the tick-facing job wrappers, but concrete session/system composition still has App-owned pieces.
+- `HumanFortress.Jobs` contains real job executors, tunings, orchestration, diff emitters, adapters, job loggers, and profession assignment state; profession registry file loading now lives in `HumanFortress.Content`.
+- `HumanFortress.Content` owns content definition loading, runtime registry bootstrap, the structured registry implementation, runtime content snapshot capture, and the first strict content failure policy; final compatibility naming is still transitional.
+- The old legacy content registry and `ContentLoadCoordinator` path have been retired; normal bootstrap loads the structured registry only.
 
 ## What Counts As Optimization
 
@@ -135,21 +135,21 @@ Do:
 
 These are not performance optimizations by themselves. They are boundary fixes that should happen before broad optimization work, because otherwise performance changes may reinforce the wrong ownership model.
 
-### A. Verify Content Project Dependencies And Build Correctness
+### A. Tighten Content Project Diagnostics And Build Correctness
 
 Current issue:
 
-- `HumanFortress.Content` exists as a project, but content definition loading is still transitional.
+- `HumanFortress.Content` now owns the active content loading path, structured registry implementation, and first strict-mode diagnostics API.
 - Content source should not become dependent on Simulation runtime types as a long-term pattern.
-- Legacy and structured content registries still coexist.
+- Historical namespaces are still preserved for source compatibility.
 
 Build:
 
 - Run a clean `dotnet build HumanFortress.sln` before optimizing content hot paths.
 - Verify `HumanFortress.Content` project references match its source dependencies.
-- Move raw definition DTOs and loaders into Content-owned types where practical.
+- Keep raw definition DTOs in Contracts when they cross module boundaries, and keep concrete loading/registry implementation in Content.
 - Keep runtime catalogs and live instances in World/Simulation.
-- Add a strict content-load mode for CI or release builds.
+- Use `--init-only --strict-content --content-warnings-as-errors` as the current CI/release smoke path.
 
 Acceptance:
 
@@ -180,11 +180,11 @@ Acceptance:
 
 Current issue:
 
-- Real job executors now live in `HumanFortress.Jobs`, but `HumanFortress.App.Jobs` still owns tick-facing shells, tunings, and orchestration code.
+- Real job executors, tunings, orchestration, diff emitters, adapters, callback loggers, and profession assignment state now live in `HumanFortress.Jobs`; tick-facing job wrappers now live in `HumanFortress.Runtime`; profession registry file loading now lives in `HumanFortress.Content`. App runtime bootstrap still binds the construction UI completion callback.
 
 Build:
 
-- Move job tick-system wrappers and tunings into `HumanFortress.Jobs` or `HumanFortress.Runtime`, depending on whether each class is gameplay logic or pure composition.
+- Move remaining concrete session/system composition out of App, or isolate it behind Runtime/Content contracts. Treat compatibility namespace cleanup and temporary internal assembly bridges as separate build-hygiene tasks, not performance work.
 - Keep only job UI/debug panels and input bindings in App.
 
 Acceptance:
@@ -499,7 +499,7 @@ Do:
 - Making UI performance worse by adding more live-world reads while snapshot/query facades are the stated target.
 - Adding new gameplay logic to App.
 - Adding new per-job movement executors.
-- Treating legacy+structured content registry coexistence as permanent.
+- Reintroducing legacy+structured content registry coexistence.
 - Optimizing before the Content/Runtime/Jobs/UI boundary work is understood.
 
 ## Validation Matrix

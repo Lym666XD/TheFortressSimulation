@@ -1,5 +1,4 @@
 using HumanFortress.Content.Definitions;
-using LegacyContentRegistry = HumanFortress.Core.Content.ContentRegistry;
 using StructuredContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
@@ -88,6 +87,15 @@ public sealed class FortressContentLoadResult
     {
         return string.Join(Environment.NewLine, GetBlockingIssues(treatWarningsAsErrors));
     }
+
+    public void ThrowIfInvalid(bool treatWarningsAsErrors = false)
+    {
+        var blockingIssues = GetBlockingIssues(treatWarningsAsErrors);
+        if (blockingIssues.Count > 0)
+        {
+            throw new FortressContentLoadException(blockingIssues);
+        }
+    }
 }
 
 /// <summary>
@@ -139,6 +147,24 @@ public static class FortressContentLoader
             issues);
     }
 
+    public static FortressContentLoadResult LoadStrict(
+        string baseDir,
+        bool includeRegistries = true,
+        bool includeCoreCatalogs = true,
+        bool forceReloadRegistries = false,
+        bool treatWarningsAsErrors = false)
+    {
+        var result = Load(
+            baseDir,
+            includeRegistries,
+            includeCoreCatalogs,
+            forceReloadRegistries,
+            continueOnStructuredRegistryError: true);
+
+        result.ThrowIfInvalid(treatWarningsAsErrors);
+        return result;
+    }
+
     public static ContentPathResolution ResolveContentPath(string baseDir)
     {
         return ResolveChildDirectory(baseDir, "content");
@@ -186,8 +212,7 @@ public static class FortressContentLoader
 
     private static bool AreRegistriesLoaded()
     {
-        return LegacyContentRegistry.Instance.Materials.Count > 0
-            && StructuredContentRegistry.Instance.IsLoaded;
+        return StructuredContentRegistry.Instance.IsLoaded;
     }
 
     private static void AddRegistryIssues(
@@ -221,20 +246,6 @@ public static class FortressContentLoader
                 "Content.RegistriesNotLoaded",
                 $"Content registries were not loaded from {contentPath.ResolvedPath}."));
             return;
-        }
-
-        if (!registries.LegacyLoaded)
-        {
-            issues.Add(Error(
-                "Content.LegacyRegistryEmpty",
-                $"Legacy content registry loaded no materials/geology/zones from {contentPath.ResolvedPath}."));
-        }
-
-        if (registries.LegacyErrorCount > 0)
-        {
-            issues.Add(Error(
-                "Content.LegacyRegistryErrors",
-                $"Legacy content registry reported {registries.LegacyErrorCount} error(s)."));
         }
 
         if (!registries.StructuredLoaded)

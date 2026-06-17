@@ -11,6 +11,8 @@ using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.World;
+using HumanFortress.Jobs.Mining;
+using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diff;
@@ -39,7 +41,11 @@ internal static class CoreRuntimeSmokeTests
         TestSimulationCommandStage();
         TestSimulationRuntimeHostCore();
         TestSimulationRuntimeSessionFactory();
+        TestRuntimeStartupHelpers();
+        TestUnifiedJobsOrchestrator();
+        TestMiningDropResolverJson();
         TestNavigationTuningJson();
+        TestConstructionTuningJson();
         TestPlaceableTuningJson();
         TestAsyncDiagnosticLogger();
         TestContentBootstrap();
@@ -384,6 +390,41 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Simulation runtime host core");
     }
 
+    private static void TestRuntimeStartupHelpers()
+    {
+        var emptyWorld = new World(2, 3);
+        RegressionAssert.True(
+            !StartupDigTargetFinder.TryFindAnyDigTarget(emptyWorld, out _),
+            "Startup dig target finder found a target in an empty world.");
+
+        var digWorld = new World(2, 3);
+        int cx = digWorld.SizeInTiles / 2;
+        int cy = digWorld.SizeInTiles / 2;
+        digWorld.SetTile(cx, cy, 1, new TileBase(0, (ushort)TerrainKind.SolidWall, 0, 0, 0, 0, 1), 0);
+
+        RegressionAssert.True(
+            StartupDigTargetFinder.TryFindNearestDigTarget(digWorld, out var target)
+            && target.X == cx
+            && target.Y == cy
+            && target.Z == 1,
+            "Startup dig target finder did not return the expected nearest dig target.");
+
+        var workerWorld = new World(2, 3);
+        DefinitionCatalogTestSupport.LoadCreatures(workerWorld);
+        workerWorld.SetTile(cx, cy, 1, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        int spawned = SimulationInitialWorkerSpawner.SpawnIfNeeded(workerWorld, desired: 1);
+        int spawnedAgain = SimulationInitialWorkerSpawner.SpawnIfNeeded(workerWorld, desired: 5);
+
+        RegressionAssert.True(
+            spawned == 1
+            && spawnedAgain == 0
+            && workerWorld.Creatures.InstanceCount == 1,
+            "Simulation initial worker spawner did not seed exactly once.");
+
+        Console.WriteLine("[PASS] Runtime startup helpers");
+    }
+
     private static void TestSimulationRuntimeSessionFactory()
     {
         var scheduler = new TickScheduler();
@@ -616,6 +657,47 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Placeable tuning JSON");
     }
 
+    private static void TestConstructionTuningJson()
+    {
+        const string json = """
+        {
+          "floor_plank_count": 2,
+          "floor_block_count": 3,
+          "wall_block_count": 4,
+          "ramp_block_count": 5,
+          "ramp_plank_count": 6,
+          "stair_block_count": 7,
+          "floor_requires_support": false,
+          "floor_allow_neighbor_support": true,
+          "build_rate_ticks": 11,
+          "build_ticks_wall": 120,
+          "build_ticks_floor": 130,
+          "build_ticks_ramp": 140,
+          "build_ticks_stairs": 150
+        }
+        """;
+
+        var tuning = ConstructionTuning.LoadFromJson(json);
+
+        RegressionAssert.True(
+            tuning.FloorPlankCount == 2
+            && tuning.FloorBlockCount == 3
+            && tuning.WallBlockCount == 4
+            && tuning.RampBlockCount == 5
+            && tuning.RampPlankCount == 6
+            && tuning.StairBlockCount == 7
+            && !tuning.FloorRequiresSupport
+            && tuning.FloorAllowNeighborSupport
+            && tuning.BuildRateTicks == 11
+            && tuning.BuildTicksWall == 120
+            && tuning.BuildTicksFloor == 130
+            && tuning.BuildTicksRamp == 140
+            && tuning.BuildTicksStairs == 150,
+            "ConstructionTuning JSON parser did not apply supported fields.");
+
+        Console.WriteLine("[PASS] Construction tuning JSON");
+    }
+
     private static void TestAsyncDiagnosticLogger()
     {
         var logRoot = Path.Combine(Path.GetTempPath(), "HumanFortressDiagnosticsTests", Guid.NewGuid().ToString("N"));
@@ -628,8 +710,10 @@ internal static class CoreRuntimeSmokeTests
             Logger.Info("Runtime.Test", "[STARTUP] diagnostic smoke");
             Logger.Log("[RECIPES] recipe diagnostics");
             Logger.Info("Simulation.Items", "[ItemManager] item diagnostics");
+            Logger.Warning("Content.Registry", "[Content.TestWarning] content issue smoke");
             Logger.Error("Core.CommandQueue", "[ERROR] command failed", new InvalidOperationException("diagnostic smoke"));
             Logger.Close();
+            var snapshot = Logger.GetSnapshot();
 
             var logsDir = Path.Combine(logRoot, "logs");
             var mainText = File.ReadAllText(mainLog);
@@ -643,9 +727,18 @@ internal static class CoreRuntimeSmokeTests
                 && mainText.Contains("seq=1", StringComparison.Ordinal)
                 && runtimeText.Contains("diagnostic smoke", StringComparison.Ordinal)
                 && contentText.Contains("recipe diagnostics", StringComparison.Ordinal)
+                && contentText.Contains("content issue smoke", StringComparison.Ordinal)
                 && simulationText.Contains("item diagnostics", StringComparison.Ordinal)
-                && coreText.Contains("command failed", StringComparison.Ordinal),
-                "Async diagnostic logger did not flush or route category logs correctly.");
+                && coreText.Contains("command failed", StringComparison.Ordinal)
+                && snapshot.TotalCount >= 5
+                && snapshot.ErrorOrHigherCount == 1
+                && snapshot.WarningOrHigherCount == 2
+                && snapshot.CategoryCounts.ContainsKey("Content.Registry")
+                && snapshot.ContentIssues.Any(issue =>
+                    issue.Code == "Content.TestWarning"
+                    && issue.Message == "content issue smoke"
+                    && issue.Level == DiagnosticLevel.Warning),
+                "Async diagnostic logger did not flush, route category logs, or build diagnostic snapshots correctly.");
         }
         finally
         {
@@ -673,7 +766,6 @@ internal static class CoreRuntimeSmokeTests
         try
         {
             Logger.Initialize(mainLog);
-            HumanFortress.Core.Content.ContentRegistry.Diagnostics = Logger.Sink;
 
             var bootstrap = FortressContentLoader.Load(AppContext.BaseDirectory, forceReloadRegistries: true);
             RegressionAssert.True(
@@ -692,29 +784,25 @@ internal static class CoreRuntimeSmokeTests
                 out var airHandle);
             var airGeology = structured.GetGeologyByHandle(airHandle);
             var navigationTuning = structured.GetTuning<Newtonsoft.Json.Linq.JObject>("tuning.navigation", "$");
+            var lumberingZone = structured.GetZoneDefinition("lumbering");
             var bedroomZone = structured.GetZoneDefinition("bedroom");
             var loadedContent = bootstrap.CoreCatalogs
                 ?? throw new InvalidOperationException("Content bootstrapper did not load core content catalogs.");
 
-            structured.ApplyCoreData(loadedContent.CoreData);
+            var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(loadedContent.CoreData);
             var coreDataResult = loadedContent.CoreData;
-            var constructionCount = structured.Constructions.Count;
-            var recipeCount = structured.Recipes.Count;
-            var workshopCount = structured.Constructions.GetConstructionsByCategory("workshop").Count();
-            var stoneworksRecipeCount = structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count;
+            var constructionCount = runtimeContent.Constructions.Count;
+            var recipeCount = runtimeContent.Recipes.Count;
+            var workshopCount = runtimeContent.Constructions.GetConstructionsByCategory("workshop").Count();
+            var stoneworksRecipeCount = runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count;
             var secondLoadedContent = CoreContentCatalogLoader.Load(bootstrap.CoreDataPath.ResolvedPath!);
-            structured.ApplyCoreData(secondLoadedContent.CoreData);
+            runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(secondLoadedContent.CoreData);
             var secondCoreDataResult = secondLoadedContent.CoreData;
-            var stoneworks = structured.Constructions.GetConstruction("core_construction_workshop_stoneworks");
-            var stoneBlocksRecipe = structured.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
+            var stoneworks = runtimeContent.Constructions.GetConstruction("core_construction_workshop_stoneworks");
+            var stoneBlocksRecipe = runtimeContent.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
 
             RegressionAssert.True(
-                result.LegacyLoaded
-                && result.StructuredLoaded
-                && result.LegacyMaterialCount >= 70
-                && result.LegacyGeologyCount >= 10
-                && result.LegacyZoneCount >= 1
-                && result.LegacyErrorCount == 0
+                result.StructuredLoaded
                 && structured.IsLoaded
                 && structured.Materials.ResolveStringId("core_mat_stone_granite").HasValue
                 && structured.TerrainKinds.GetKind("solid_wall") != null
@@ -725,7 +813,12 @@ internal static class CoreRuntimeSmokeTests
                 && hasAirGeology
                 && airGeology?.Id == "core_terrain_air"
                 && navigationTuning != null
+                && lumberingZone?.DisplayName == "Lumbering Zone"
+                && lumberingZone.UiHints.Glyph == '\u2663'
+                && lumberingZone.UiHints.Keybind == "Z"
+                && lumberingZone.DefaultPolicies.AllowsActions.Contains("fell_tree")
                 && bedroomZone != null
+                && bedroomZone.DisplayName == "Bedroom"
                 && coreDataResult.Constructions.LoadedCount > 0
                 && coreDataResult.Constructions.ErrorCount == 0
                 && coreDataResult.Recipes.LoadedCount > 0
@@ -736,10 +829,10 @@ internal static class CoreRuntimeSmokeTests
                 && loadedContent.Creatures.ErrorCount == 0
                 && secondCoreDataResult.Constructions.LoadedCount == constructionCount
                 && secondCoreDataResult.Recipes.LoadedCount == recipeCount
-                && structured.Constructions.Count == constructionCount
-                && structured.Recipes.Count == recipeCount
-                && structured.Constructions.GetConstructionsByCategory("workshop").Count() == workshopCount
-                && structured.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count == stoneworksRecipeCount
+                && runtimeContent.Constructions.Count == constructionCount
+                && runtimeContent.Recipes.Count == recipeCount
+                && runtimeContent.Constructions.GetConstructionsByCategory("workshop").Count() == workshopCount
+                && runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count == stoneworksRecipeCount
                 && stoneworks != null
                 && stoneBlocksRecipe != null,
                 "Content bootstrapper did not load runtime content into the structured registry correctly.");
@@ -747,7 +840,6 @@ internal static class CoreRuntimeSmokeTests
         finally
         {
             Logger.Close();
-            HumanFortress.Core.Content.ContentRegistry.Diagnostics = NullDiagnosticSink.Instance;
             if (Directory.Exists(logRoot))
             {
                 Directory.Delete(logRoot, recursive: true);
@@ -769,6 +861,53 @@ internal static class CoreRuntimeSmokeTests
             && result.GetBlockingIssues().Any(issue => issue.Code == "Content.CoreDataPathMissing")
             && !string.IsNullOrWhiteSpace(result.FormatBlockingIssues()),
             "Content bootstrap diagnostics did not report missing content/core data paths.");
+
+        FortressContentLoadException? strictException = null;
+        try
+        {
+            FortressContentLoader.LoadStrict(missingBaseDir);
+        }
+        catch (FortressContentLoadException ex)
+        {
+            strictException = ex;
+        }
+
+        RegressionAssert.True(
+            strictException != null
+            && strictException.BlockingIssues.Any(issue => issue.Code == "Content.PathMissing")
+            && strictException.BlockingIssues.Any(issue => issue.Code == "Content.CoreDataPathMissing"),
+            "Strict content load did not throw the expected structured blocking issues.");
+
+        var warningOnly = new FortressContentLoadResult(
+            new ContentPathResolution("published-content", "development-content", "published-content"),
+            new ContentPathResolution("published-core", "development-core", "published-core"),
+            registries: null,
+            coreCatalogs: null,
+            registriesAlreadyLoaded: false,
+            issues: new[]
+            {
+                new FortressContentIssue(
+                    FortressContentIssueSeverity.Warning,
+                    "Content.TestWarning",
+                    "warning policy smoke")
+            });
+
+        FortressContentLoadException? warningStrictException = null;
+        try
+        {
+            warningOnly.ThrowIfInvalid(treatWarningsAsErrors: true);
+        }
+        catch (FortressContentLoadException ex)
+        {
+            warningStrictException = ex;
+        }
+
+        RegressionAssert.True(
+            warningOnly.IsValid()
+            && !warningOnly.IsValid(treatWarningsAsErrors: true)
+            && warningStrictException?.BlockingIssues.Count == 1
+            && warningStrictException.BlockingIssues[0].Code == "Content.TestWarning",
+            "Content warning policy did not promote warnings to strict blocking issues.");
 
         Console.WriteLine("[PASS] Content load diagnostics");
     }
@@ -1162,6 +1301,125 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Embarkability diagnostics");
     }
 
+    private static void TestUnifiedJobsOrchestrator()
+    {
+        var trace = new List<string>();
+        var haulPlanner = new OrchestratorPlannerProbe("haul-plan", trace);
+        var constructionMaterialsPlanner = new OrchestratorPlannerProbe("construction-materials", trace);
+        var miningPlanner = new OrchestratorPlannerProbe("mining-plan", trace);
+        var constructionPlanner = new OrchestratorPlannerProbe("construction-plan", trace);
+        var craftPlanner = new OrchestratorPlannerProbe("craft-plan", trace);
+
+        var haulJobs = new OrchestratorTransportProbe(trace);
+        var miningJobs = new OrchestratorMiningProbe(trace, backlogCount: 3);
+        var constructionJobs = new OrchestratorConstructionProbe(trace);
+        var craftJobs = new OrchestratorCraftProbe(trace);
+        var tunings = new SchedulerTunings
+        {
+            HaulingLimits = new SchedulerTunings.HaulingLimitSettings
+            {
+                ReserveForMining = 2,
+                ReserveBacklogThreshold = 1,
+                BacklogIntakeCap = 7,
+                BacklogIntakeThreshold = 2
+            }
+        };
+
+        var orchestrator = new UnifiedJobsOrchestrator(
+            haulPlanner,
+            constructionMaterialsPlanner,
+            miningPlanner,
+            constructionPlanner,
+            craftPlanner,
+            haulJobs,
+            miningJobs,
+            constructionJobs,
+            craftJobs,
+            tunings);
+
+        orchestrator.ReadTick(42);
+        orchestrator.WriteTick(42);
+
+        var expected = new[]
+        {
+            "mining-plan.read",
+            "haul-plan.read",
+            "construction-materials.read",
+            "construction-plan.read",
+            "craft-plan.read",
+            "mining-plan.write",
+            "haul-plan.write",
+            "construction-materials.write",
+            "construction-plan.write",
+            "craft-plan.write",
+            "haul-jobs.hints",
+            "haul-jobs.read",
+            "haul-jobs.write",
+            "mining-jobs.read",
+            "mining-jobs.write",
+            "construction-jobs.read",
+            "construction-jobs.write",
+            "craft-jobs.read",
+            "craft-jobs.write"
+        };
+
+        var stats = orchestrator.GetLastStats();
+        RegressionAssert.True(
+            trace.SequenceEqual(expected)
+            && haulJobs.IntakeCap == 7
+            && haulJobs.ReserveSlots == 2
+            && stats.IntakeHaul == haulJobs.LastIntakeCount
+            && stats.IntakeMining == miningJobs.LastIntakeCount
+            && stats.IntakeConstruction == constructionJobs.LastIntakeCount
+            && stats.IntakeCraft == craftJobs.LastIntakeCount,
+            "UnifiedJobsOrchestrator order, scheduling hints, or intake stats changed.");
+
+        Console.WriteLine("[PASS] Unified jobs orchestrator");
+    }
+
+    private static void TestMiningDropResolverJson()
+    {
+        const string tuningJson = """
+        {
+          "geology_ticks": {
+            "default": { "wall": 17, "ramp": 5 }
+          },
+          "geology_drops": {
+            "core_geology_granite": {
+              "wall": [
+                { "item_id": "core_item_boulder_granite", "min": 2, "max": 2 }
+              ],
+              "ramp": [
+                { "item_id": "core_item_boulder_granite", "min": 1, "max": 1 }
+              ]
+            }
+          }
+        }
+        """;
+
+        var geology = new TestRuntimeGeologyCatalog();
+        var resolver = new MiningDropResolver(geology, tuningJson);
+
+        var wallDrops = resolver.ChooseDropsFor(geology.GraniteWallHandle, TerrainKind.SolidWall);
+        var rampDrops = resolver.ChooseDropsFor(geology.GraniteWallHandle, TerrainKind.Ramp);
+        var aliasDrops = resolver.ChooseDropsFor(geology.AliasGraniteWallHandle, TerrainKind.SolidWall);
+
+        RegressionAssert.True(
+            resolver.CalculateRequiredTicks(geology.GraniteWallHandle, TerrainKind.SolidWall) == 17
+            && resolver.CalculateRequiredTicks(geology.GraniteWallHandle, TerrainKind.Ramp) == 5
+            && resolver.ResolveAirGeologyHandle() == geology.AirHandle
+            && wallDrops.Count == 1
+            && wallDrops[0].itemId == "core_item_boulder_granite"
+            && wallDrops[0].qty == 2
+            && rampDrops.Count == 1
+            && rampDrops[0].qty == 1
+            && aliasDrops.Count == 1
+            && aliasDrops[0].itemId == "core_item_boulder_granite",
+            "MiningDropResolver JSON parsing or geology alias lookup changed.");
+
+        Console.WriteLine("[PASS] Mining drop resolver JSON");
+    }
+
     private sealed class TestTickSystem : ITick
     {
         public int ReadCount { get; private set; }
@@ -1261,6 +1519,189 @@ internal static class CoreRuntimeSmokeTests
 
         public void WriteTick(ulong tick)
         {
+        }
+    }
+
+    private sealed class OrchestratorPlannerProbe : ITick
+    {
+        private readonly string _name;
+        private readonly List<string> _trace;
+
+        public OrchestratorPlannerProbe(string name, List<string> trace)
+        {
+            _name = name;
+            _trace = trace;
+        }
+
+        public int Priority => 1;
+        public string SystemId => _name;
+
+        public void ReadTick(ulong tick)
+        {
+            _trace.Add($"{_name}.read");
+        }
+
+        public void WriteTick(ulong tick)
+        {
+            _trace.Add($"{_name}.write");
+        }
+    }
+
+    private sealed class OrchestratorTransportProbe : IUnifiedTransportJobExecutor
+    {
+        private readonly List<string> _trace;
+
+        public OrchestratorTransportProbe(List<string> trace)
+        {
+            _trace = trace;
+        }
+
+        public int Priority => 1;
+        public string SystemId => "haul-jobs";
+        public int LastIntakeCount { get; private set; } = 2;
+        public int? IntakeCap { get; private set; }
+        public int ReserveSlots { get; private set; }
+
+        public void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+        {
+            IntakeCap = intakeCap;
+            ReserveSlots = reserveSlots;
+            _trace.Add("haul-jobs.hints");
+        }
+
+        public TransportJobStatsSnapshot GetLastStatsSnapshot()
+        {
+            return new TransportJobStatsSnapshot(LastIntakeCount, Active: 1, Backlog: 0, CompletedDelta: 0, RequeuedDelta: 0, NoPathDelta: 0, CarryoverOld: 0);
+        }
+
+        public void ReadTick(ulong tick) => _trace.Add("haul-jobs.read");
+
+        public void WriteTick(ulong tick) => _trace.Add("haul-jobs.write");
+    }
+
+    private sealed class OrchestratorMiningProbe : IUnifiedMiningJobExecutor
+    {
+        private readonly List<string> _trace;
+        private readonly int _backlogCount;
+
+        public OrchestratorMiningProbe(List<string> trace, int backlogCount)
+        {
+            _trace = trace;
+            _backlogCount = backlogCount;
+        }
+
+        public int Priority => 1;
+        public string SystemId => "mining-jobs";
+        public int LastIntakeCount { get; private set; } = 3;
+
+        public int GetBacklogCount() => _backlogCount;
+
+        public MiningJobStatsSnapshot GetLastStatsSnapshot()
+        {
+            return new MiningJobStatsSnapshot(LastIntakeCount, Active: 1, Backlog: _backlogCount, Deferred: 0, ReservedTiles: 0, CarryoverOld: 0);
+        }
+
+        public void ReadTick(ulong tick) => _trace.Add("mining-jobs.read");
+
+        public void WriteTick(ulong tick) => _trace.Add("mining-jobs.write");
+    }
+
+    private sealed class OrchestratorConstructionProbe : IUnifiedConstructionJobExecutor
+    {
+        private readonly List<string> _trace;
+
+        public OrchestratorConstructionProbe(List<string> trace)
+        {
+            _trace = trace;
+        }
+
+        public int Priority => 1;
+        public string SystemId => "construction-jobs";
+        public int LastIntakeCount { get; private set; } = 4;
+
+        public void ReadTick(ulong tick) => _trace.Add("construction-jobs.read");
+
+        public void WriteTick(ulong tick) => _trace.Add("construction-jobs.write");
+    }
+
+    private sealed class OrchestratorCraftProbe : IUnifiedCraftJobExecutor
+    {
+        private readonly List<string> _trace;
+
+        public OrchestratorCraftProbe(List<string> trace)
+        {
+            _trace = trace;
+        }
+
+        public int Priority => 1;
+        public string SystemId => "craft-jobs";
+        public int LastIntakeCount { get; private set; } = 5;
+
+        public void ReadTick(ulong tick) => _trace.Add("craft-jobs.read");
+
+        public void WriteTick(ulong tick) => _trace.Add("craft-jobs.write");
+    }
+
+    private sealed class TestRuntimeGeologyCatalog : IRuntimeGeologyCatalog
+    {
+        private readonly Dictionary<ushort, HumanFortress.Core.Content.GeologyData> _byHandle;
+        private readonly Dictionary<string, ushort> _handles;
+
+        public TestRuntimeGeologyCatalog()
+        {
+            var granite = new HumanFortress.Core.Content.GeologyData
+            {
+                Id = "core_geology_granite",
+                Material = "granite"
+            };
+            var aliasGranite = new HumanFortress.Core.Content.GeologyData
+            {
+                Id = "core_terrain_wall_rock_granite",
+                Material = "granite"
+            };
+            var air = new HumanFortress.Core.Content.GeologyData
+            {
+                Id = "core_geology_air",
+                Material = "air"
+            };
+
+            _byHandle = new Dictionary<ushort, HumanFortress.Core.Content.GeologyData>
+            {
+                [GraniteWallHandle] = granite,
+                [AliasGraniteWallHandle] = aliasGranite,
+                [AirHandle] = air
+            };
+            _handles = new Dictionary<string, ushort>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["core_geology_granite"] = GraniteWallHandle,
+                ["core_terrain_wall_rock_granite"] = AliasGraniteWallHandle,
+                ["core_geology_air"] = AirHandle,
+                ["air|OpenNoFloor"] = AirHandle
+            };
+        }
+
+        public ushort GraniteWallHandle => 11;
+        public ushort AliasGraniteWallHandle => 12;
+        public ushort AirHandle => 1;
+
+        public HumanFortress.Core.Content.GeologyData? GetGeologyEntry(string id)
+        {
+            return _handles.TryGetValue(id, out var handle) ? GetGeologyByHandle(handle) : null;
+        }
+
+        public HumanFortress.Core.Content.GeologyData? GetGeologyByHandle(ushort handle)
+        {
+            return _byHandle.GetValueOrDefault(handle);
+        }
+
+        public ushort GetGeologyHandle(string id)
+        {
+            return _handles.GetValueOrDefault(id);
+        }
+
+        public bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle)
+        {
+            return _handles.TryGetValue($"{materialId}|{terrainKindName}", out handle);
         }
     }
 

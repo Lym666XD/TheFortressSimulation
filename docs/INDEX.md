@@ -98,6 +98,7 @@ Machine-readable current sources:
 - [Refactor Pitfalls And Lessons](planning/REFACTOR_PITFALLS_AND_LESSONS.md)
 - [Milestone Plan](planning/MILESTONE.md)
 - [Project Rules](planning/RULES.md)
+- [Agent Prompt](planning/AGENT_PROMPT.md)
 - [Optimization Suggestions](planning/OPTIMIZATION_SUGGESTION.md)
 
 ## Reference

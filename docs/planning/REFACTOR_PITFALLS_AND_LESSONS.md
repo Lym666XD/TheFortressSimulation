@@ -13,7 +13,7 @@ This document records practical pitfalls found during the current architecture r
 ```text
 ItemDefinitionCatalogLoader.Load(...)
 CreatureDefinitionCatalogLoader.Load(...)
-ContentRegistry.Instance.LoadCoreData(...)
+CoreDataRegistryLoader.Load(...)
 RuntimeContentRegistryLoader.Load(...)
 ```
 
@@ -70,16 +70,16 @@ data/core/recipes/*.json
 
 `SimulationWorldContentLoader` should not locate the runtime content directory itself. It now calls `FortressContentLoader`, and schema compatibility plus registry population belong behind the Content/structured registry boundary.
 
-Important compatibility behavior preserved by the Core loader:
+Important compatibility behavior preserved by the Content-owned core-data loader:
 
 - new workshop files and legacy `placeable/workshops.json` are both loaded;
 - duplicate construction ids are skipped and counted instead of failing startup;
 - recipe files may be root arrays or `{ "recipes": [...] }` documents;
 - legacy recipe aliases such as `workshop_id`, `workshop`, `duration_ticks`, and `primary_skill` still parse.
 
-### ConstructionRegistry and RecipeRegistry are transitional
+### Construction and recipe catalogs should be snapshots, not singletons
 
-`ConstructionRegistry` and `RecipeRegistry` still exist as compatibility classes, but normal startup no longer loads through their singleton instances. `ContentRegistry.LoadCoreData` now parses core data into fresh immutable snapshots and swaps its instance-owned catalogs.
+`ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. `CoreDataRegistryLoader.Load(...)` parses core data into fresh immutable snapshots, and `ContentRegistry.ApplyCoreData(...)` swaps those snapshots into the runtime registry instance.
 
 Runtime/gameplay reads should use the read-only catalog surface:
 
@@ -102,7 +102,7 @@ ContentRegistry.Instance.Constructions
 ContentRegistry.Instance.Recipes
 ```
 
-Those properties expose immutable snapshots through read-only interfaces. Keep it that way so the compatibility registry classes can be deleted later.
+Those properties expose immutable snapshots through read-only interfaces. Keep it that way; do not recreate the old singleton classes for convenience.
 
 Preferred direction:
 
@@ -150,7 +150,11 @@ Runtime tuning objects should enter through the Content-owned runtime snapshot:
 
 ```text
 FortressRuntimeContentSnapshot
+  -> constructions / recipes
+  -> runtime geology catalog
+  -> zone definitions
   -> ConstructionTuning.LoadFromJson(...)
+  -> mining tuning JSON for MiningDropResolver
   -> NavigationTuning.LoadFromJson(...)
   -> PlaceableTuning.LoadFromJson(...)
   -> SchedulerTunings.LoadFromJson(...)
@@ -159,7 +163,47 @@ FortressRuntimeContentSnapshot
 
 Do not add new `LoadFromContent(...)` or `LoadFromRegistry(...)` convenience paths for runtime tuning. Those helpers tend to recreate hidden global-content reads and make hot reload/content reload behavior inconsistent.
 
-Repeated `LoadCoreData(...)` calls must replace construction/recipe snapshots, not append to mutable indexes. The current smoke tests verify construction count, recipe count, construction category queries, and workshop recipe queries stay stable after reload.
+Structured core-data application should also stay behind the Content-owned snapshot loader:
+
+```text
+FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)
+  -> ContentRegistry.ApplyCoreData(...)
+  -> CaptureLoaded()
+  -> returns constructions / recipes / geology / zones / tuning JSON
+```
+
+`SimulationWorldContentLoader` may inject snapshots into the active `World`, but it should not call `ContentRegistry.Instance.ApplyCoreData(...)` or read `ContentRegistry.Instance.Zones` directly. Use the returned `FortressRuntimeContentSnapshot.ZoneDefinitions` when registering zone definitions with the simulation world.
+
+App adapter seams should also consume the active runtime snapshot instead of the singleton registry:
+
+```text
+MiningDropResolver
+  -> IRuntimeGeologyCatalog
+  -> tuning.mining JSON
+
+ConstructionTerrainMaterialResolver
+  -> IRuntimeGeologyCatalog
+```
+
+Do not reintroduce direct `ContentRegistry.Instance` reads in these adapters just because they live in App. They are composition edges and must reflect the same active-session snapshot as Runtime/JOBS-owned systems.
+
+WorldGen follows the same rule. Fortress generation should receive explicit content:
+
+```text
+FortressGenerationContent
+  -> IRuntimeGeologyCatalog
+  -> tuning.mapgen JSON
+  -> tuning.ore JSON
+  -> tuning.cavern JSON
+
+FortressGenerator / FortressMap / FortressChunk
+  -> consume FortressGenerationContent or its geology catalog
+  -> never read ContentRegistry.Instance directly
+```
+
+`GameStateManager` caches the active `FortressRuntimeContentSnapshot` returned by session content loading. Reuse that snapshot for navigation tuning, runtime dependency composition, and fortress generation. Do not recapture the global registry from `FortressSessionInitializer` or from WorldGen just because the registry is already loaded.
+
+Repeated core-data loads must replace construction/recipe snapshots, not append to mutable indexes. The current smoke tests verify construction count, recipe count, construction category queries, and workshop recipe queries stay stable after reload.
 
 ### Do not depend on full managers for static definitions
 
@@ -282,6 +326,36 @@ On macOS this caused file-lock/copy/signing races:
 - `apphost: is already signed`
 
 Use sequential build/test commands.
+
+When running a built DLL with `dotnet exec`, do not add the `dotnet run`-style argument separator:
+
+```bash
+# Correct
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
+
+# Wrong: passes a literal "--" to the app and may skip init-only parsing
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll -- --init-only --strict-content --content-warnings-as-errors
+```
+
+### Audit apparent hangs before assuming build is still running
+
+When the Codex turn appears to be waiting for many minutes, first determine whether a backend command is actually still running. We have seen apparent long waits where no build/game process existed; only VS Code's Roslyn language server was alive. That means the delay was a session/front-end wait or an interrupted turn, not a `.NET` compile.
+
+Use a bracketed `pgrep` pattern so the search command does not match itself:
+
+```bash
+pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"
+```
+
+Interpretation:
+
+- only `Microsoft.CodeAnalysis.LanguageServer` / Roslyn: normal editor background process, not a stuck game/build;
+- `dotnet build`, `MSBuild`, or `VBCSCompiler` lasting longer than expected: investigate build output, then stop/retry sequentially if needed;
+- `dotnet exec ... HumanFortress.App.dll` without `--init-only`: likely a normal game loop, not a test/init command.
+
+In the managed sandbox, broad `ps` may fail with `operation not permitted`; prefer `pgrep -fl` for this check.
+
+Operational rule: if a build/run command has no output for about 30 seconds, check the process list and report the state instead of waiting indefinitely.
 
 ### Avoid `dotnet run` for the test script
 
@@ -413,7 +487,7 @@ UI work allocation input
   -> ProfessionAssignments.SetWeight
 ```
 
-`IProfessionAssignmentCommandTarget` is now a Runtime-owned seam. Runtime keeps `HumanFortress.Core.Commands.ISimulationContext` free of job-system details, while App still owns `ProfessionAssignments` and supplies a weight-write callback during host composition.
+`IProfessionAssignmentCommandTarget` is now a Runtime-owned seam. Runtime keeps `HumanFortress.Core.Commands.ISimulationContext` free of job-system details, while App composition supplies a weight-write callback from the Jobs-owned `ProfessionAssignments` instance during host composition.
 
 Debug item spawning also goes through this path now:
 
@@ -482,7 +556,7 @@ The richer workshop and stockpile target behavior now lives in Runtime-owned hel
 
 `SimulationRuntimeContext` itself is Runtime-owned now. It remains a broad transitional adapter that implements several command target interfaces; the next cleanup is reducing that interface surface or grouping targets by command family once the command model is clearer.
 
-Profession assignment remains a special case: Runtime only stores an injected weight-write callback, while App still owns `ProfessionAssignments`.
+Profession assignment remains a special case: Runtime only stores an injected weight-write callback, while App composition still wires the Jobs-owned `ProfessionAssignments` instance into the active session systems.
 
 Do not use `StockpileDiff` as a migration target yet. Its applicator is not attached to the active tick pipeline and still contains TODO paths for job creation and item placement/removal.
 
@@ -606,16 +680,18 @@ Current first-pass behavior:
 
 - content loading is logged to both console and the async diagnostic pipeline;
 - App creates a full timeline log at `fortress_debug.log` plus category logs under `logs/`;
-- old registry material loading reports 79 materials instead of 0;
-- `RuntimeContentRegistryLoader` now loads both legacy and structured registries behind `FortressContentLoader`;
+- the old registry material-loading bug was removed with the old registry source; the structured registry currently reports 83 materials in startup logs;
+- `RuntimeContentRegistryLoader` now loads only the structured runtime registry behind `FortressContentLoader`;
 - structured registry loading now supports top-level array material files and resets validation state before reload;
 - geology cross-reference errors are clear and currently clean;
 - construction duplicates are explicitly skipped and counted;
 - recipe loading reports `errors=0`.
 
-Remaining architecture risk: there are still two `ContentRegistry` models in the codebase, but the structured registry is now the intended owner for runtime geology handles, tuning files, zones, construction catalogs, and recipe catalogs. The next content pass should remove the legacy registry compatibility load once its remaining consumers are gone.
+Remaining architecture risk: there is now one normal runtime registry source model, the structured registry, and production direct reads are concentrated in Content bootstrap/snapshot capture/application. The old legacy registry source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content` while preserving its old namespace. The remaining risk is policy and compatibility: strict content-load failure rules, richer diagnostics/debug surfaces, and final namespace cleanup should be handled without adding new singleton reads.
 
-Item and creature definition loading has now moved into `HumanFortress.Content.Definitions`, and Simulation managers consume snapshots instead of reading files. Construction/recipe loading now also produces immutable snapshots owned by `ContentRegistry`. The remaining registry-unification risk is the old compatibility registry path, not App-local loading orchestration.
+Runtime geology and zone JSON DTOs have moved to `HumanFortress.Contracts` while keeping their old namespace. The zone loader now uses explicit `System.Text.Json` property mappings, which prevents `zones.json` snake_case fields such as `display_name`, `ui_hints`, and `default_policies` from silently deserializing to defaults.
+
+Item and creature definition loading has now moved into `HumanFortress.Content.Definitions`, and Simulation managers consume snapshots instead of reading files. Construction/recipe loading now also produces immutable snapshots owned by the structured registry and exposed through `FortressRuntimeContentSnapshot`. Construction/recipe definitions and catalog interfaces/stores compile from Contracts. The remaining registry-unification risk is strict-mode diagnostics and compatibility naming, not Core-owned registry implementation or App-local loading orchestration.
 
 ### Diagnostics should be async, categorized, and non-authoritative
 
@@ -712,19 +788,19 @@ Transport active/debug snapshot DTOs now live in Jobs (`TransportActiveJobView`,
 
 `TransportIntakeFilter` now owns request readiness/de-dup filtering in Jobs. Keep it focused on domain state checks (`item exists`, `item on ground`, `not reserved`) and do not add UI logging or executor side effects to it.
 
-`TransportAssignmentHandler` now lives in Jobs. App-specific profession weighting is behind `ITransportWorkerCandidateSource`, and App logging is behind `ITransportJobLogger`. Keep those seams narrow; do not pass `ProfessionAssignments`, `WorkerSelectionStrategy`, or `Logger` back into Jobs-owned handlers.
+`TransportAssignmentHandler` now lives in Jobs. Profession weighting is behind `ITransportWorkerCandidateSource`, and logging is behind `ITransportJobLogger`. Keep those seams narrow; do not pass App globals or UI-facing services back into Jobs-owned handlers.
 
 `TransportReplanHandler` now lives in Jobs. It only depends on `ITransportMovementDiffEmitter.MoveCreature` instead of the full App `TransportDiffEmitter`. Preserve that narrow dependency: replan should not learn how to split stacks, mark carry state, or move items.
 
 `TransportPickupHandler` and `TransportDeliveryHandler` now live in Jobs. They depend on `ITransportItemDiffEmitter` for item/carry/split diffs and `ITransportJobCompletionSink` for profession progress. Keep destination validation in Simulation and keep App-specific profession objects behind the completion sink.
 
-`TransportActiveJobRunner` now lives in Jobs. It should remain a coordinator over movement update, replan, pickup, delivery, and missing-worker cleanup. It depends on separate movement and item/carry diff interfaces; do not collapse those back into the App `TransportDiffEmitter` concrete type.
+`TransportActiveJobRunner` now lives in Jobs. It should remain a coordinator over movement update, replan, pickup, delivery, and missing-worker cleanup. It depends on separate movement and item/carry diff interfaces; do not collapse those back into a monolithic concrete emitter.
 
-`TransportJobExecutor` now owns the transport tick core in Jobs: request drain/backlog, assignment throttle, active write tick, scheduling hints, and debug snapshots. App `TransportJobSystem` should stay a composition shell that wires navigation, diff emission, logging, and profession adapters.
+`TransportJobExecutor` now owns the transport tick core in Jobs: request drain/backlog, assignment throttle, active write tick, scheduling hints, and debug snapshots. The Runtime-owned `TransportJobSystem` should stay a composition shell over narrow Jobs interfaces.
 
 ### Mining extraction now follows the same shell/core pattern
 
-The mining executor has the same ownership rule as transport: Jobs owns the tick core, App owns concrete adapters.
+The mining executor has the same ownership rule as transport: Jobs owns the tick core and concrete job adapters/emitters; Runtime owns the tick-facing wrapper; App only supplies composition-time logger/content/UI callbacks.
 
 Jobs-owned mining slices now include:
 
@@ -760,11 +836,11 @@ IMiningDiffEmitter
 IMiningJobCompletionSink
 ```
 
-Do not pass `ProfessionAssignments`, `WorkerSelectionStrategy`, `Logger`, `MiningDiffEmitter`, or `MiningDropResolver` directly into Jobs-owned mining code. App `MiningJobSystem` should remain only a composition shell.
+Do not make Jobs-owned mining code depend directly on App globals or App-owned concrete services. The tick-facing `MiningJobSystem` wrapper should remain only a composition shell, and executor dependencies should continue crossing through the narrow mining interfaces above. Source-owned Jobs/Runtime helpers may still have the old namespace until the compatibility cleanup pass, but they should not regain App assembly ownership.
 
-### Construction extraction uses adapter-only App ownership
+### Construction extraction uses callback-only App ownership
 
-Construction is simpler than transport/mining because it does not own pathing or worker assignment, but it still has important App-owned concrete concerns: diff emission, logging, and UI workshop-completion notification.
+Construction is simpler than transport/mining because it does not own pathing or worker assignment. Diff emission and logging bridges are now Jobs-owned, while App ownership is limited to binding the UI workshop-completion callback during bootstrap.
 
 Jobs-owned construction slices now include:
 
@@ -788,7 +864,7 @@ IConstructionDiffEmitter
 IConstructionWorkshopCompletionSink
 ```
 
-Do not pass `Logger`, `ConstructionDiffEmitter`, or the static `ConstructionJobSystem.UiNotifyWorkshopComplete` hook directly into Jobs-owned construction code. App `ConstructionJobSystem` should remain only a composition shell.
+Do not pass `Logger`, concrete UI services, or the static `ConstructionJobSystem.UiNotifyWorkshopComplete` hook directly into Jobs-owned construction code. The Runtime-owned `ConstructionJobSystem` should remain only a composition shell over narrow Jobs interfaces and callback injection.
 
 The current `InternalsVisibleTo("HumanFortress.App")` bridge in `HumanFortress.Jobs` is transitional. Do not let it become the permanent architecture.
 
@@ -825,7 +901,7 @@ ICraftDiffEmitter
 ICraftWorkerCandidateSource
 ```
 
-Do not pass `RecipeRegistry`, `CraftDiffEmitter`, `ProfessionAssignments`, or `WorkerSelectionStrategy` deeper into Jobs-owned craft code. App `CraftJobSystem` should remain only a composition shell.
+Do not pass `RecipeRegistry` or App globals deeper into Jobs-owned craft code. `CraftJobSystem` is now a Runtime-owned composition shell, while `CraftDiffEmitter`, `ProfessionAssignments`, and `WorkerSelectionStrategy` are Jobs-owned compatibility-namespace types.
 
 `CraftPlanner` now lives in Jobs. The important lesson is that Planner could move only after recipe lookup was hidden behind `ICraftRecipeCatalog`; otherwise Jobs-owned craft code would keep reaching into the global `RecipeRegistry.Instance` singleton.
 
@@ -840,9 +916,9 @@ Useful examples already added:
 - transport split-stack rollback is non-mutating on failure;
 - craft input failure preserves queue entry.
 
-### Do not rederive chunk/local targets in App emitters
+### Do not rederive chunk/local targets in job emitters
 
-App diff emitters should not hand-roll:
+Job diff emitters should not hand-roll:
 
 ```text
 chunkX = worldX / Chunk.SIZE_XY
@@ -865,7 +941,7 @@ Rule: if planner and executor both reason about the same gameplay concept, extra
 
 ### Do not move projects before dependencies are inverted
 
-Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`, and craft planning has also moved there. App still owns the composition shells, concrete adapters, and runtime glue that depend on UI, content singletons, or runtime wiring.
+Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`, and craft planning has also moved there. Runtime now owns the tick-facing job wrappers. App still owns concrete session/runtime glue that depends on UI lifetime, logger callbacks, and bootstrap wiring.
 
 Moving them too early would drag App/runtime/navigation dependencies into the wrong assemblies. Invert Navigation and stabilize contracts first.
 

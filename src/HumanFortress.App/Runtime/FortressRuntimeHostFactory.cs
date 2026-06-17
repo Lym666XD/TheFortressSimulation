@@ -2,6 +2,7 @@ using HumanFortress.Core.Commands;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Content.Loading;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
@@ -19,7 +20,8 @@ internal static class FortressRuntimeHostFactory
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         NavigationManager navigation,
-        string baseDir)
+        string baseDir,
+        FortressRuntimeContentSnapshot? content = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tickScheduler);
@@ -30,7 +32,7 @@ internal static class FortressRuntimeHostFactory
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var dependencies = FortressRuntimeDependencies.Load(world, baseDir);
+        var dependencies = FortressRuntimeDependencies.Load(world, baseDir, content);
 
         return new SimulationRuntimeHost<SimulationRuntimeSystems>(
             world,

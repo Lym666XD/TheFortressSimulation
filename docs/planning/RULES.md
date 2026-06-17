@@ -18,6 +18,60 @@ Low coupling, high cohesion — clear module boundaries and contracts.
 
 Safe concurrency — parallelize reads and isolated work; enforce a single, deterministic write point.
 
+1.1) Active Development Constraints - 2026-06-17 (Normative)
+
+These constraints reflect the current refactor state and override older target-only wording when there is a conflict.
+
+Current source ownership
+
+- `HumanFortress.Contracts` owns cross-module DTOs/interfaces, including profession contracts and content contract types.
+- `HumanFortress.Content` owns content path resolution, item/creature/core-data loaders, the structured runtime registry implementation, runtime content snapshot capture, strict content loading, and profession registry JSON loading.
+- `HumanFortress.Core` owns foundation primitives only; do not add content registry implementation, JSON content loaders, or App/runtime composition back into Core.
+- `HumanFortress.Simulation` owns authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
+- `HumanFortress.Navigation` owns navigation algorithms and cache structures; it must remain decoupled from Simulation through adapter interfaces.
+- `HumanFortress.Jobs` owns job executor cores, job helpers, job diff emitters, callback loggers, scheduler/workshop tuning types, worker selection, profession assignment state, and unified job orchestration.
+- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, command target seams, Simulation-backed navigation adapter/factory, startup helpers, and tick-facing job wrappers.
+- `HumanFortress.WorldGen` consumes explicit generation content; it must not read global content registries directly.
+- `HumanFortress.App` owns SadConsole/MonoGame UI, UI bootstrap, concrete session composition that has not yet moved, logger callback binding, and UI/debug surfaces. Do not add new gameplay rules, content loaders, job logic, or authoritative world mutations to App.
+
+Current compatibility debt
+
+- Some moved types intentionally preserve old namespaces such as `HumanFortress.App.Jobs` or `HumanFortress.Core.Content.Registry` until the namespace cleanup pass.
+- Transitional `InternalsVisibleTo` bridges are allowed only as migration scaffolding. Do not use them as justification for new cross-module ownership leaks.
+- `HumanFortress.App/Jobs` should remain empty of active source files.
+
+Mutation and command rules
+
+- UI/debug actions that affect simulation state should enter through Runtime command targets or typed diff logs.
+- Do not directly mutate item, creature, terrain, construction, stockpile, or profession state from App event handlers.
+- Construction/craft/transport/mining item changes must go through `ItemsDiffLog` or the relevant Jobs-owned diff emitter.
+- Any replacement of direct mutation with diffs needs focused regression coverage for duplicate application, rollback, and missing-resource behavior.
+
+Content and data rules
+
+- Runtime systems should consume explicit catalogs/tunings/snapshots, not `ContentRegistry.Instance` convenience reads.
+- App may resolve active-session content only through Runtime/Content-owned facades.
+- Content JSON compatibility belongs in Content loaders, not App startup code or Simulation managers.
+
+Verification workflow
+
+- Use .NET 8 explicitly on macOS: `/opt/homebrew/opt/dotnet@8/bin/dotnet`.
+- Do not run overlapping App/test/solution builds in parallel; macOS apphost signing and shared `obj` files can race.
+- Prefer sequential verification:
+  - `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false`
+  - `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll`
+  - `/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors`
+- For `dotnet exec`, do not insert the `dotnet run`-style `--` separator before app arguments.
+- If a build/run command has no output for roughly 30 seconds, check `pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"` and report whether anything is actually still running.
+- `Microsoft.CodeAnalysis.LanguageServer` / Roslyn alone is normal editor background activity, not a stuck game/build.
+
+Documentation workflow
+
+- Update `docs/planning/REFACTOR_BATCH_PROGRESS.md` after each meaningful architecture batch.
+- Update `docs/planning/REFACTOR_PITFALLS_AND_LESSONS.md` whenever a repeated build, runtime, ownership, or verification trap is discovered.
+- Keep `docs/architecture/GAME_ARCHITECTURE.md` and `docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md` aligned with actual source ownership, not aspirational ownership.
+- Archived documents are historical context only unless a current document explicitly points to them.
+
 2) Architectural Boundaries & Dependencies (Normative)
 
 Core: tick, time, RNG, events, serialization. (No dependencies.)

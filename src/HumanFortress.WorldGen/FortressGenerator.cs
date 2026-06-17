@@ -1,8 +1,7 @@
 using System;
 using HumanFortress.Core.World;
-using Newtonsoft.Json.Linq;
 using SadRogue.Primitives;
-using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using System.Text.Json.Nodes;
 using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
 namespace HumanFortress.WorldGen
@@ -22,23 +21,30 @@ namespace HumanFortress.WorldGen
         private readonly WorldTile _homeTile;
         private readonly Point _worldLocation;
         private readonly uint _seed;
+        private readonly FortressGenerationContent _content;
 
-        public FortressGenerator(int fortressSize, WorldTile homeTile, Point worldLocation, uint seed)
+        public FortressGenerator(
+            int fortressSize,
+            WorldTile homeTile,
+            Point worldLocation,
+            uint seed,
+            FortressGenerationContent content)
         {
             _fortressSize = fortressSize;
             _homeTile = homeTile;
             _worldLocation = worldLocation;
             _seed = seed;
+            _content = content ?? throw new ArgumentNullException(nameof(content));
         }
 
         public FortressMap Generate()
         {
-            var map = new FortressMap(_fortressSize, 50);
+            var map = new FortressMap(_fortressSize, 50, _content.Geology);
 
             int tilesPerChunk = 32;
             int totalTiles = _fortressSize * tilesPerChunk;
             // Tuning (data-driven)
-            var mapgen = ContentRegistry.Instance.GetTuning<JObject>("tuning.mapgen", "$");
+            var mapgen = _content.MapgenTuning;
             int baseZ = 25;
             int skyAbove = 15;
             bool hillsEnabled = true;
@@ -47,27 +53,27 @@ namespace HumanFortress.WorldGen
             string surfaceId = surfaceDefault;
             if (mapgen != null)
             {
-                var s = mapgen["surface"] as JObject;
+                var s = Object(mapgen, "surface");
                 if (s != null)
                 {
-                    baseZ = s["base_z"]?.Value<int?>() ?? baseZ;
-                    skyAbove = s["sky_above"]?.Value<int?>() ?? skyAbove;
+                    baseZ = Value(s, "base_z", baseZ);
+                    skyAbove = Value(s, "sky_above", skyAbove);
                 }
-                var h = mapgen["hills"] as JObject;
+                var h = Object(mapgen, "hills");
                 if (h != null)
                 {
-                    hillsEnabled = h["enabled"]?.Value<bool?>() ?? hillsEnabled;
-                    rMin = h["radius_min"]?.Value<int?>() ?? rMin;
-                    rMax = h["radius_max"]?.Value<int?>() ?? rMax;
-                    density = h["density"]?.Value<double?>() ?? density;
-                    maxDelta = h["max_delta_z"]?.Value<int?>() ?? maxDelta;
+                    hillsEnabled = Value(h, "enabled", hillsEnabled);
+                    rMin = Value(h, "radius_min", rMin);
+                    rMax = Value(h, "radius_max", rMax);
+                    density = Value(h, "density", density);
+                    maxDelta = Value(h, "max_delta_z", maxDelta);
                 }
-                var floors = mapgen["biome_surface_floor"] as JObject;
+                var floors = Object(mapgen, "biome_surface_floor");
                 if (floors != null)
                 {
-                    surfaceDefault = floors["Default"]?.Value<string>() ?? surfaceDefault;
+                    surfaceDefault = Value(floors, "Default", surfaceDefault);
                     var b = (BiomeType)_homeTile.BiomeId;
-                    surfaceId = floors[b.ToString()]?.Value<string>() ?? surfaceDefault;
+                    surfaceId = Value(floors, b.ToString(), surfaceDefault);
                 }
             }
 
@@ -152,7 +158,7 @@ namespace HumanFortress.WorldGen
             CarveCavernConnected(map, surfZ, mapgen);
 
             // Place ore deposits after caverns carved
-            PlaceOres(map, surfZ, ContentRegistry.Instance.GetTuning<JObject>("tuning.ore", "$"));
+            PlaceOres(map, surfZ, _content.OreTuning);
 
             return map;
         }
@@ -165,39 +171,45 @@ namespace HumanFortress.WorldGen
             return (1.0f - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f);
         }
 
-        private void CarveCavernConnected(FortressMap map, int[,] surfaceZ, JObject? mapgen)
+        private void CarveCavernConnected(FortressMap map, int[,] surfaceZ, JsonObject? mapgen)
         {
             int tilesPerChunk = 32;
             int worldSize = _fortressSize * tilesPerChunk;
-            var bands = mapgen? ["bands"] as JArray;
+            var bands = Array(mapgen, "bands");
             if (bands == null || bands.Count == 0) return;
 
             // Pick a single cavern band (use the one with highest caves.density) and choose its mid Z as cavern floor level
             int bestZMin = 0, bestZMax = 0; double bestDensity = -1;
-            foreach (var band in bands)
+            foreach (var bandNode in bands)
             {
-                double d = band["caves"]? ["density"]?.Value<double?>() ?? 0.0;
+                var band = bandNode as JsonObject;
+                if (band == null) continue;
+
+                double d = Value(Object(band, "caves"), "density", 0.0);
                 if (d > bestDensity)
                 {
                     bestDensity = d;
-                    bestZMin = band["z_min"]?.Value<int?>() ?? 0;
-                    bestZMax = band["z_max"]?.Value<int?>() ?? 0;
+                    bestZMin = Value(band, "z_min", 0);
+                    bestZMax = Value(band, "z_max", 0);
                 }
             }
             if (bestDensity <= 0) return;
             int zC = Math.Clamp((bestZMin + bestZMax) / 2, 1, map.MaxZ - 2);
 
             // Cavern tuning (data-driven)
-            var cavTune = ContentRegistry.Instance.GetTuning<JObject>("tuning.cavern", "$");
-            int pathThickness = cavTune?["path"]?["thickness"]?.Value<int?>() ?? 4;
-            double stepsFactor = cavTune?["path"]?["steps_factor"]?.Value<double?>() ?? 6.0;
-            double biasEast = cavTune?["path"]?["direction_bias_east"]?.Value<double?>() ?? 0.7;
-            int tunnelWidth = cavTune?["path"]?["tunnel_width"]?.Value<int?>() ?? 3;
-            int roomRMin = cavTune?["rooms"]?["radius_min"]?.Value<int?>() ?? 4;
-            int roomRMax = cavTune?["rooms"]?["radius_max"]?.Value<int?>() ?? 7;
-            double roomIntervalFactor = cavTune?["rooms"]?["interval_factor"]?.Value<double?>() ?? 0.15;
-            int shaftsCount = cavTune?["shafts"]?["count"]?.Value<int?>() ?? 3;
-            bool mossOnFloor = cavTune?["moss_on_floor"]?.Value<bool?>() ?? true;
+            var cavTune = _content.CavernTuning;
+            var pathTune = Object(cavTune, "path");
+            var roomTune = Object(cavTune, "rooms");
+            var shaftTune = Object(cavTune, "shafts");
+            int pathThickness = Value(pathTune, "thickness", 4);
+            double stepsFactor = Value(pathTune, "steps_factor", 6.0);
+            double biasEast = Value(pathTune, "direction_bias_east", 0.7);
+            int tunnelWidth = Value(pathTune, "tunnel_width", 3);
+            int roomRMin = Value(roomTune, "radius_min", 4);
+            int roomRMax = Value(roomTune, "radius_max", 7);
+            double roomIntervalFactor = Value(roomTune, "interval_factor", 0.15);
+            int shaftsCount = Value(shaftTune, "count", 3);
+            bool mossOnFloor = Value(cavTune, "moss_on_floor", true);
 
             // Create a connected walkway/rooms from a map edge using deterministic drunkard walk
             var rng = new HumanFortress.Core.Random.DeterministicRng(_seed ^ 0xC0FEBABEu);
@@ -422,7 +434,7 @@ namespace HumanFortress.WorldGen
                 chunk.SetGeology(lx, ly, z, strata[^1].WallId);
         }
 
-        private void PlaceOres(FortressMap map, int[,] surfaceZ, JObject? oreConfig)
+        private void PlaceOres(FortressMap map, int[,] surfaceZ, JsonObject? oreConfig)
         {
             if (oreConfig == null) return;
 
@@ -436,32 +448,36 @@ namespace HumanFortress.WorldGen
                     avgSurface += surfaceZ[x, y];
             avgSurface /= Math.Max(1, worldSize * worldSize);
 
-            int tilesPerDeposit = oreConfig["global"]?["tiles_per_deposit"]?.Value<int?>() ?? 8192;
-            double densityK = oreConfig["global"]?["density_k"]?.Value<double?>() ?? 1.0;
-            double abundanceMult = oreConfig["global"]?["abundance_mult"]?.Value<double?>() ?? 1.0;
-            double globalSizeMult = oreConfig["global"]?["size_mult"]?.Value<double?>() ?? 1.0;
+            var global = Object(oreConfig, "global");
+            int tilesPerDeposit = Value(global, "tiles_per_deposit", 8192);
+            double densityK = Value(global, "density_k", 1.0);
+            double abundanceMult = Value(global, "abundance_mult", 1.0);
+            double globalSizeMult = Value(global, "size_mult", 1.0);
 
-            var ores = oreConfig["ores"] as JArray;
+            var ores = Array(oreConfig, "ores");
             if (ores == null) return;
 
             var rng = new HumanFortress.Core.Random.DeterministicRng(_seed ^ 0x03BAB1Eu);
 
-            foreach (var ore in ores)
+            foreach (var oreNode in ores)
             {
-                string oreId = ore["id"]?.Value<string>() ?? string.Empty;
+                var ore = oreNode as JsonObject;
+                if (ore == null) continue;
+
+                string oreId = Value(ore, "id", string.Empty);
                 if (string.IsNullOrEmpty(oreId)) continue;
 
-                var allowed = ore["allowed_host_tags"] as JArray;
+                var allowed = Array(ore, "allowed_host_tags");
                 var allowedTags = allowed != null
-                    ? allowed.Values<string>().Where(s => s != null).Select(s => s!).ToHashSet()
+                    ? StringValues(allowed).ToHashSet()
                     : new HashSet<string>();
-                string rarity = ore["rarity"]?.Value<string>()?.ToLowerInvariant() ?? "common";
+                string rarity = Value(ore, "rarity", "common").ToLowerInvariant();
                 double rarityW = rarity switch { "common" => 1.0, "uncommon" => 0.5, "rare" => 0.25, _ => 1.0 };
 
                 double volume = worldSize * worldSize * Math.Max(1.0, avgSurface);
                 int deposits = Math.Max(1, (int)(volume / tilesPerDeposit * densityK * rarityW * abundanceMult));
 
-                string form = ore["form"]?.Value<string>() ?? "vein";
+                string form = Value(ore, "form", "vein");
                 for (int d = 0; d < deposits; d++)
                 {
                     // Pick a random valid start
@@ -478,37 +494,84 @@ namespace HumanFortress.WorldGen
 
                         if (form == "blob")
                         {
-                            var blob = ore["blob"] as JObject;
-                            var size = blob?["size"] as JArray; // total tiles target (approx)
-                            var rad = blob?["radius"] as JArray;
-                            int rMin = rad?.ElementAtOrDefault(0)?.Value<int?>() ?? 2;
-                            int rMax = rad?.ElementAtOrDefault(1)?.Value<int?>() ?? 4;
+                            var blob = Object(ore, "blob");
+                            var rad = Array(blob, "radius");
+                            int rMin = ArrayValue(rad, 0, 2);
+                            int rMax = ArrayValue(rad, 1, 4);
                             int radius = rMin + (int)(rng.NextFloat() * Math.Max(0, rMax - rMin));
-                            double oreRadiusMult = ore["radius_mult"]?.Value<double?>() ?? 1.0;
+                            double oreRadiusMult = Value(ore, "radius_mult", 1.0);
                             radius = (int)Math.Max(1, Math.Round(radius * globalSizeMult * oreRadiusMult));
                             StampBlob(map, surfaceZ, gx, gy, gz, radius, oreId, allowedTags);
                         }
                         else // vein
                         {
-                            var vein = ore["vein"] as JObject;
-                            var size = vein?["size"] as JArray;
-                            var thick = vein?["thickness"] as JArray;
-                            int lenMin = size?.ElementAtOrDefault(0)?.Value<int?>() ?? 40;
-                            int lenMax = size?.ElementAtOrDefault(1)?.Value<int?>() ?? 100;
+                            var vein = Object(ore, "vein");
+                            var size = Array(vein, "size");
+                            var thick = Array(vein, "thickness");
+                            int lenMin = ArrayValue(size, 0, 40);
+                            int lenMax = ArrayValue(size, 1, 100);
                             int len = lenMin + (int)(rng.NextFloat() * Math.Max(1, lenMax - lenMin));
-                            int tMin = thick?.ElementAtOrDefault(0)?.Value<int?>() ?? 1;
-                            int tMax = thick?.ElementAtOrDefault(1)?.Value<int?>() ?? 2;
+                            int tMin = ArrayValue(thick, 0, 1);
+                            int tMax = ArrayValue(thick, 1, 2);
                             int thickness = tMin + (int)(rng.NextFloat() * Math.Max(0, tMax - tMin));
-                            double oreSizeMult = ore["size_mult"]?.Value<double?>() ?? 1.0;
-                            double oreThickMult = ore["thickness_mult"]?.Value<double?>() ?? 1.0;
+                            double oreSizeMult = Value(ore, "size_mult", 1.0);
+                            double oreThickMult = Value(ore, "thickness_mult", 1.0);
                             len = (int)Math.Max(5, Math.Round(len * globalSizeMult * oreSizeMult));
                             thickness = (int)Math.Max(1, Math.Round(thickness * oreThickMult));
-                            double orientBias = vein?["orientation_bias"]?.Value<double?>() ?? 0.5;
-                            double branchChance = vein?["branch_chance"]?.Value<double?>() ?? 0.05;
+                            double orientBias = Value(vein, "orientation_bias", 0.5);
+                            double branchChance = Value(vein, "branch_chance", 0.05);
                             GrowVein(map, surfaceZ, gx, gy, gz, len, thickness, oreId, allowedTags, rng, orientBias, branchChance);
                         }
                         break; // next deposit
                     }
+                }
+            }
+        }
+
+        private static JsonObject? Object(JsonObject? parent, string name)
+        {
+            return parent?[name] as JsonObject;
+        }
+
+        private static JsonArray? Array(JsonObject? parent, string name)
+        {
+            return parent?[name] as JsonArray;
+        }
+
+        private static T Value<T>(JsonObject? parent, string name, T fallback)
+        {
+            if (parent?[name] is JsonValue value && value.TryGetValue<T>(out var result))
+            {
+                return result is null ? fallback : result;
+            }
+
+            return fallback;
+        }
+
+        private static int ArrayValue(JsonArray? array, int index, int fallback)
+        {
+            if (array == null || index < 0 || index >= array.Count)
+            {
+                return fallback;
+            }
+
+            if (array[index] is JsonValue value && value.TryGetValue<int>(out var result))
+            {
+                return result;
+            }
+
+            return fallback;
+        }
+
+        private static IEnumerable<string> StringValues(JsonArray array)
+        {
+            foreach (var node in array)
+            {
+                if (node is JsonValue value &&
+                    value.TryGetValue<string>(out var result) &&
+                    !string.IsNullOrEmpty(result))
+                {
+                    yield return result;
                 }
             }
         }
@@ -519,7 +582,7 @@ namespace HumanFortress.WorldGen
             if (cx < 0 || cy < 0 || cx >= _fortressSize || cy >= _fortressSize) return false;
             var chunk = map.GetChunk(cx, cy);
             var handle = chunk.GetGeologyHandle(lx, ly, gz);
-            var geo = ContentRegistry.Instance.GetGeologyByHandle(handle);
+            var geo = _content.Geology.GetGeologyByHandle(handle);
             if (geo == null) return false;
             // Must be a SolidWall and have at least one allowed tag
             if (!Enum.TryParse<TerrainKind>(geo.TerrainBits.Kind, out var k) || k != TerrainKind.SolidWall)

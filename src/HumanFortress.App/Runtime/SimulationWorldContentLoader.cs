@@ -2,7 +2,6 @@ using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
 using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.World;
-using RuntimeContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.App.Runtime;
 
@@ -11,20 +10,28 @@ namespace HumanFortress.App.Runtime;
 /// </summary>
 internal static class SimulationWorldContentLoader
 {
-    public static void LoadCoreContent(World world, string baseDir)
+    public static FortressRuntimeContentSnapshot LoadCoreContent(
+        World world,
+        string baseDir,
+        bool strictContent = false,
+        bool treatWarningsAsErrors = false)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
         var loadedContent = FortressContentLoader.Load(baseDir);
         FortressContentIssueLogger.LogIssues(loadedContent);
+        if (strictContent)
+        {
+            loadedContent.ThrowIfInvalid(treatWarningsAsErrors);
+        }
 
         if (loadedContent.CoreCatalogs == null)
         {
             Logger.Log("[GameStateManager] WARNING: Data directory not found. Tried:");
             Logger.Log($"  - {loadedContent.CoreDataPath.PublishedPath}");
             Logger.Log($"  - {loadedContent.CoreDataPath.DevelopmentPath}");
-            return;
+            return FortressRuntimeContentSnapshotLoader.CaptureLoaded();
         }
 
         Logger.Log($"[GameStateManager] Loading core content catalogs from {loadedContent.CoreDataPath.ResolvedPath}");
@@ -33,13 +40,13 @@ internal static class SimulationWorldContentLoader
         LogCreatureDefinitions(content.Creatures);
         world.Creatures.SetDefinitionCatalog(content.Creatures.Catalog);
 
-        world.Items.SetDependencies(world, RuntimeContentRegistry.Instance);
+        world.Items.SetDependencies(world);
         LogItemDefinitions(content.Items);
         world.Items.SetDefinitionCatalog(content.Items.Catalog);
 
-        RuntimeContentRegistry.Instance.ApplyCoreData(content.CoreData);
+        var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(content.CoreData);
 
-        foreach (var zoneData in RuntimeContentRegistry.Instance.Zones.Values)
+        foreach (var zoneData in runtimeContent.ZoneDefinitions)
         {
             world.Zones.Manager.RegisterDefinition(zoneData);
         }
@@ -47,6 +54,7 @@ internal static class SimulationWorldContentLoader
         Logger.Log($"[GameStateManager] Loaded {world.Creatures.DefinitionCount} creatures, {world.Items.DefinitionCount} items, {world.Zones.Manager.GetAllDefinitions().Count()} zone definitions");
 
         LogCoreDataRegistries(content.CoreData);
+        return runtimeContent;
     }
 
     private static void LogCreatureDefinitions(CreatureDefinitionCatalogLoadResult result)

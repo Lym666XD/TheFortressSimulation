@@ -314,7 +314,8 @@ namespace HumanFortress.App
                     fortressSize: 2,
                     homeTile: worldTile,
                     worldLocation: new SadRogue.Primitives.Point(10, 10),
-                    seed: 12345
+                    seed: 12345,
+                    content: CreateFortressGenerationContent()
                 );
                 
                 var fortressMap = generator.Generate();
@@ -408,7 +409,7 @@ namespace HumanFortress.App
                     Elevation = 0.3f
                 };
                 
-                var generator = new FortressGenerator(2, worldTile, new SadRogue.Primitives.Point(5, 5), 54321);
+                var generator = new FortressGenerator(2, worldTile, new SadRogue.Primitives.Point(5, 5), 54321, CreateFortressGenerationContent());
                 var fortressMap = generator.Generate();
                 var world = new World(fortressMap.Size, fortressMap.MaxZ);
                 fortressMap.FillWorld(world);
@@ -437,12 +438,12 @@ namespace HumanFortress.App
                 var worldTile = new WorldTile { BiomeId = (ushort)BiomeType.Mountain, Elevation = 0.8f, Temperature = 0.3f, Rainfall = 0.5f };
 
                 // Test minimum size
-                var gen2 = new FortressGenerator(2, worldTile, new SadRogue.Primitives.Point(0, 0), 1);
+                var gen2 = new FortressGenerator(2, worldTile, new SadRogue.Primitives.Point(0, 0), 1, CreateFortressGenerationContent());
                 var map2 = gen2.Generate();
                 if (map2.Size != 2) throw new Exception("Size 2 failed");
 
                 // Test maximum size
-                var gen8 = new FortressGenerator(8, worldTile, new SadRogue.Primitives.Point(0, 0), 2);
+                var gen8 = new FortressGenerator(8, worldTile, new SadRogue.Primitives.Point(0, 0), 2, CreateFortressGenerationContent());
                 var map8 = gen8.Generate();
                 if (map8.Size != 8) throw new Exception("Size 8 failed");
 
@@ -467,8 +468,8 @@ namespace HumanFortress.App
                 };
 
                 // Generate same fortress twice with same seed
-                var gen1 = new FortressGenerator(3, worldTile, new SadRogue.Primitives.Point(10, 10), 99999);
-                var gen2 = new FortressGenerator(3, worldTile, new SadRogue.Primitives.Point(10, 10), 99999);
+                var gen1 = new FortressGenerator(3, worldTile, new SadRogue.Primitives.Point(10, 10), 99999, CreateFortressGenerationContent());
+                var gen2 = new FortressGenerator(3, worldTile, new SadRogue.Primitives.Point(10, 10), 99999, CreateFortressGenerationContent());
 
                 var map1 = gen1.Generate();
                 var map2 = gen2.Generate();
@@ -728,6 +729,16 @@ namespace HumanFortress.App
             }
 
             return allPass;
+        }
+
+        private static FortressGenerationContent CreateFortressGenerationContent()
+        {
+            var registry = HumanFortress.Core.Content.Registry.ContentRegistry.Instance;
+            return new FortressGenerationContent(
+                registry,
+                registry.GetTuningJson("tuning.mapgen", "$"),
+                registry.GetTuningJson("tuning.ore", "$"),
+                registry.GetTuningJson("tuning.cavern", "$"));
         }
 
         // Helper test tick system class

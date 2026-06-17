@@ -1,5 +1,6 @@
 using HumanFortress.App;
 using HumanFortress.App.Commands;
+using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Runtime;
 using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
@@ -14,6 +15,7 @@ using HumanFortress.Simulation.World;
 using HumanFortress.Navigation;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime;
+using HumanFortress.WorldGen;
 
 namespace HumanFortress.App.GameStates;
 
@@ -30,15 +32,23 @@ public sealed class GameStateManager
     private readonly DiffLog _diffLog;
     private readonly HumanFortress.Simulation.Items.ItemsDiffLog _itemsDiffLog;
     private readonly bool _enqueueAutoDig;
+    private readonly bool _strictContent;
+    private readonly bool _contentWarningsAsErrors;
     private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory;
 
     private GameState? _currentState;
     private SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>? _runtimeSession;
     private JobsDebugData? _jobsDebugCache;
     private ulong _jobsDebugCacheTick = 0;
+    private FortressRuntimeContentSnapshot? _runtimeContentSnapshot;
+    private FortressGenerationContent? _generationContent;
     private const ulong JobsDebugRefreshTicks = 10;
 
-    public GameStateManager(ulong masterSeed, bool enqueueAutoDig = false)
+    public GameStateManager(
+        ulong masterSeed,
+        bool enqueueAutoDig = false,
+        bool strictContent = false,
+        bool contentWarningsAsErrors = false)
     {
         _states = new Dictionary<GameStateType, GameState>();
         _tickScheduler = new TickScheduler();
@@ -48,13 +58,25 @@ public sealed class GameStateManager
         _diffLog = new DiffLog();
         _itemsDiffLog = new HumanFortress.Simulation.Items.ItemsDiffLog();
         _enqueueAutoDig = enqueueAutoDig;
+        _strictContent = strictContent;
+        _contentWarningsAsErrors = contentWarningsAsErrors;
         var baseDir = AppContext.BaseDirectory;
         _runtimeSessionFactory = new SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>(
             _tickScheduler,
             _commandQueue,
             _diffLog,
             _itemsDiffLog,
-            world => SimulationWorldContentLoader.LoadCoreContent(world, baseDir),
+            world =>
+            {
+                _runtimeContentSnapshot = null;
+                _generationContent = null;
+                _runtimeContentSnapshot = SimulationWorldContentLoader.LoadCoreContent(
+                    world,
+                    baseDir,
+                    _strictContent,
+                    _contentWarningsAsErrors);
+                _generationContent = CreateFortressGenerationContent(_runtimeContentSnapshot);
+            },
             (world, navigation) => FortressRuntimeHostFactory.Create(
                 world,
                 _tickScheduler,
@@ -63,8 +85,9 @@ public sealed class GameStateManager
                 _diffLog,
                 _itemsDiffLog,
                 navigation,
-                baseDir),
-            () => NavigationTuning.LoadFromJson(FortressRuntimeContentSnapshotLoader.CaptureLoaded().NavigationTuningJson));
+                baseDir,
+                _runtimeContentSnapshot),
+            () => NavigationTuning.LoadFromJson(_runtimeContentSnapshot?.NavigationTuningJson));
     }
 
     /// <summary>
@@ -101,6 +124,12 @@ public sealed class GameStateManager
     public IRecipeCatalog? Recipes => RuntimeHost?.Recipes;
     public IConstructionCatalog? Constructions => RuntimeHost?.Constructions;
     public IRuntimeGeologyCatalog? Geology => RuntimeHost?.Geology;
+    public FortressGenerationContent? GenerationContent => _generationContent;
+
+    public DiagnosticSnapshot GetDiagnosticSnapshot()
+    {
+        return Logger.GetSnapshot();
+    }
 
     /// <summary>
     /// Cached debug data for Jobs/Work drawer. Gated by SchedulerTunings.DebugPanel.
@@ -328,4 +357,13 @@ public sealed class GameStateManager
     }
 
     private SimulationRuntimeHost<SimulationRuntimeSystems>? RuntimeHost => _runtimeSession?.Host;
+
+    private static FortressGenerationContent CreateFortressGenerationContent(FortressRuntimeContentSnapshot content)
+    {
+        return new FortressGenerationContent(
+            content.Geology,
+            content.MapgenTuningJson,
+            content.OreTuningJson,
+            content.CavernTuningJson);
+    }
 }

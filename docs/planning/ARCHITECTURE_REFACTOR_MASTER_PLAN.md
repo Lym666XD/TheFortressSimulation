@@ -25,18 +25,18 @@ The problem is that these ideas are not enforced by boundaries. Runtime composit
 
 The current codebase is best described as a working prototype with several professional architecture pieces present but bypassed. The refactor should first stop new architectural drift, then extract a headless deterministic runtime, then move gameplay systems out of App.
 
-## Current Refactor Progress - 2026-06-12
+## Current Refactor Progress - 2026-06-17
 
-Estimated architecture-foundation progress: **98%**.
+Estimated architecture-foundation progress: **99%**.
 
-This percentage tracks the refactor from prototype structure toward a maintainable deterministic simulation architecture. It is not a gameplay feature-completion estimate.
+This percentage tracks the foundation/boundary cleanup from prototype structure toward a maintainable deterministic simulation architecture. It is not a gameplay feature-completion estimate and not the total refactor-program completion estimate. The wider refactor still includes UI snapshot isolation, deterministic replay hardening, save/migration, namespace cleanup, diagnostics polish, movement ownership, and performance work.
 
 ### 2026-06-12 Main-Branch Audit Reconciliation
 
 - The external audit's Content project build concern has been checked against the current branch. `HumanFortress.Content` and `HumanFortress.sln` build successfully; the apparent dependency issue is caused by transitional namespaces that now compile from `HumanFortress.Contracts`.
-- The audit's warning about construction/recipe singleton registries has been partly resolved after the audit snapshot. `ContentRegistry.LoadCoreData(...)` now swaps immutable construction/recipe catalog snapshots instead of mutating `ConstructionRegistry.Instance` / `RecipeRegistry.Instance`.
-- The audit's Content orchestration concern is now substantially reduced: item/creature loading, construction/recipe core-data loading, runtime registry bootstrap, and App registry-file path resolution now enter through `HumanFortress.Content`. Remaining work is deleting compatibility paths and adding strict content-mode diagnostics.
-- The audit's runtime-composition concern has been reduced after the audit snapshot. `HumanFortress.Runtime` now owns the generic `SimulationRuntimeHost<TSystems>` and host-core lifecycle; App still owns the concrete `SimulationRuntimeSystems` composition shell and `FortressRuntimeHostFactory` because those pieces wire App job adapters, logging, startup hooks, and current content catalogs.
+- The audit's warning about construction/recipe singleton registries has been resolved after the audit snapshot. The old singleton compatibility classes have been deleted, core-data loading now returns immutable construction/recipe catalog snapshots through `HumanFortress.Content`, and `ContentRegistry.ApplyCoreData(...)` swaps those snapshots without mutating global construction/recipe registries.
+- The audit's Content orchestration concern is now substantially reduced: item/creature loading, construction/recipe core-data loading, runtime registry bootstrap, structured registry implementation, strict fail-fast loading, and App registry-file path resolution now enter through `HumanFortress.Content`. Remaining work is richer debug surfaces, compatibility naming cleanup, and future compiled-pack support.
+- The audit's runtime-composition concern has been reduced after the audit snapshot. `HumanFortress.Runtime` now owns the generic `SimulationRuntimeHost<TSystems>`, host-core lifecycle, and tick-facing job wrappers; App still owns the concrete `SimulationRuntimeSystems` composition shell and `FortressRuntimeHostFactory` because those pieces wire UI lifetime, logger callbacks, startup hooks, and active-session content/workforce dependencies.
 - The audit remains correct that UI still reads live world/runtime state and that movement/path ownership is still fragmented. Those are later phases after Content and Runtime/App boundary cleanup.
 
 ### Completed Since This Plan Was Created
@@ -53,7 +53,7 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Moved construction target mapping, requirement matching, footprint/ring scanning, material tracking, site progress, site safety, completion application/coordinator, and executor core into `HumanFortress.Jobs`.
 - Added Jobs-owned construction seams for logging, diff emission, and workshop-completion notification, with App adapters over the existing logger, `ConstructionDiffEmitter`, and UI notification hook.
 - Added a Jobs-owned `ConstructionJobExecutor` core that owns construction site scanning, readiness/progress, material consumption, safety relocation, completion, and stats.
-- Reduced App `ConstructionJobSystem` to a composition shell that wires concrete diff emission, logging, and UI notification into the Jobs-owned construction executor.
+- Reduced `ConstructionJobSystem` to a composition shell, then moved that wrapper source to Runtime; concrete construction diff/logging helpers are now Jobs-owned and App only binds the UI completion callback during bootstrap.
 - Fixed L0 terrain construction completion so the construction site is removed after emitting `SetTerrain`; this prevents completed walls/floors from remaining as stale material-requesting sites.
 - Fixed construction completion iteration by snapshotting owned placeables before mutating the placeable collection.
 - Added construction terrain-completion regression coverage for site removal, one-time material consumption, residual item relocation, and terrain application.
@@ -66,7 +66,7 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Moved craft executor state, stats, assignment, active runner, material consumer, output emitter, workshop locator, input counter, material readiness helper, transport request emitter, transport/path seeds, finalizer, and executor core into `HumanFortress.Jobs`.
 - Added Jobs-owned craft seams for planned-job intake, item diff emission, and worker candidate selection, with App adapters over the existing planner, item diff emitter, and profession assignment system.
 - Added a Jobs-owned `CraftJobExecutor` core that owns planned-job drain/backlog handling, worker assignment/pathing, active craft work, input consumption, output emission, finalization, and stat snapshots.
-- Reduced App `CraftJobSystem` to a composition shell that wires navigation, item diff emission, and profession adapters into the Jobs-owned craft executor.
+- Reduced `CraftJobSystem` to a composition shell, then moved that wrapper source to Runtime; craft diff emission and profession/recipe adapters are now Jobs-owned.
 - Moved `CraftPlanner` into `HumanFortress.Jobs.Craft`, so craft planning and execution now share one Jobs-owned domain boundary.
 - Added a Jobs-owned `ICraftRecipeCatalog` seam and App `CraftRecipeCatalogAdapter`, removing direct `RecipeRegistry.Instance` access from Jobs-owned craft planner/executor/consumer/output/assignment code.
 - Added a first formal regression-test project at `tests/HumanFortress.App.Tests` and wired it into `HumanFortress.sln`.
@@ -106,6 +106,13 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Changed runtime session creation so content loads before the shared `NavigationManager` is created, allowing the active session navigation cache, App job path services, overlay, and path-debug tooling to use the same injected `NavigationTuning`.
 - Moved placeable tuning into the runtime snapshot and injected `PlaceableTuning` through construction completion, so completed placeables no longer rely on hidden default tuning when content supplies `tuning.placeable`.
 - Removed obsolete direct file/registry loading entry points for scheduler/workshop tuning; runtime tuning now flows through the Content snapshot and explicit `LoadFromJson(...)` calls.
+- Added mining tuning JSON to the Content-owned runtime snapshot and changed App mining/construction terrain resolver adapters to use injected `IRuntimeGeologyCatalog` and snapshot JSON instead of direct structured-registry reads.
+- Added mapgen/ore/cavern tuning JSON to the Content-owned runtime snapshot and introduced `FortressGenerationContent`, so `FortressGenerator`, `FortressMap`, and `FortressChunk` consume injected geology/tuning instead of reading the structured registry directly.
+- Cached the active runtime content snapshot in `GameStateManager` during session content loading and reused it for navigation tuning, runtime dependency composition, and fortress generation content.
+- Added zone definitions to the runtime content snapshot and moved structured core-data application behind `FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)`, so `SimulationWorldContentLoader` no longer directly calls `ContentRegistry.Instance.ApplyCoreData(...)` or reads `ContentRegistry.Instance.Zones`.
+- Changed runtime content bootstrap to load only the structured runtime registry; the legacy `HumanFortress.Core.Content.ContentRegistry` is no longer part of normal startup.
+- Moved the structured runtime registry implementation from Core into `HumanFortress.Content/Registry`, preserving the historical namespace while removing Core's `Newtonsoft.Json` dependency.
+- Added a Content-owned strict load path (`FortressContentLoadException`, `ThrowIfInvalid(...)`, `LoadStrict(...)`) and App CLI flags `--strict-content` / `--content-warnings-as-errors` for CI/headless content gates.
 - Added an explicit `SimulationCommandStage` for the authoritative pre-read command execution boundary, with regression coverage proving queued commands execute inside the tick pipeline before systems enter `ReadTick` and receive the real runtime tick.
 - Converted profession weight changes from direct `GameStateManager -> ProfessionAssignments` mutation into `SetProfessionWeightCommand`, executed through the tick command stage with regression coverage.
 - Converted debug `SpawnItemCommand` from direct `world.Items.SpawnItem` mutation into an `ItemsDiffLog.AddItem` command target, so item creation is applied by the post-tick item diff applicator. Added regression coverage for command-stage item spawning.
@@ -133,7 +140,7 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Added Jobs-owned item/carry diff and job-completion seams, then moved `TransportPickupHandler` and `TransportDeliveryHandler` into `HumanFortress.Jobs`.
 - Moved `TransportActiveJobRunner` into `HumanFortress.Jobs`, with movement and item/carry writes routed through narrow Jobs-owned diff interfaces.
 - Added a Jobs-owned `TransportJobExecutor` core that owns transport request drain/backlog handling, assignment throttling, active write ticks, scheduling hints, and transport debug snapshots.
-- Reduced App `TransportJobSystem` to a composition shell that wires navigation, diff emission, logging, and profession adapters into the Jobs-owned transport executor.
+- Reduced `TransportJobSystem` to a composition shell, then moved that wrapper source to Runtime; transport diff emission, logging bridge, and profession adapters are now Jobs-owned.
 - Removed business reliance on obsolete item carry/reservation flags (`IsCarried`, `IsReserved`, `ReservedBy`) in favor of `IsOnGround`, `CarriedBy`, and `ReservationManager`.
 - Added ground-item query helpers to `ItemManager` for safer system access.
 - Made `SimulationDiffApplicator` carry/un-carry behavior use `CarriedBy` and item-position updates instead of legacy flags.
@@ -161,13 +168,13 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Moved mining state/debug/stats/backlog/deferred-stairwell/tile-reservation/path-seed/ordering/adjacency/finalization/intake/stairwell/read-processing/assignment/result-application/active-runner slices into `HumanFortress.Jobs`.
 - Added Jobs-owned mining seams for logging, worker candidate selection, work-cost/drop resolution, diff emission, and job-completion reporting, with App adapters over the existing logger, profession assignment system, drop resolver, and diff emitter.
 - Added a Jobs-owned `MiningJobExecutor` core that owns mining request intake, deterministic dig ordering, assignment/read processing, active write ticks, stats, and debug snapshots.
-- Reduced App `MiningJobSystem` to a composition shell that wires navigation, diff emission, drop resolution, logging, and profession adapters into the Jobs-owned mining executor.
+- Reduced `MiningJobSystem` to a composition shell, then moved that wrapper source to Runtime; mining diff emission, drop resolution, logging bridge, and profession adapters are now Jobs-owned.
 - Fixed stale mining intake/stat snapshots when no planned digs are dequeued.
 - Fixed mining backlog carryover-age tracking so it is counted per queued retry item instead of by shared designation id.
 - Fixed a mining channel reservation leak where worker-missing and replan-timeout paths released the target tile but not the reserved lower channel footprint; covered with a regression test.
 - Moved runtime geology, geology handle assignment, tuning, and zone loading into `HumanFortress.Core.Content.Registry.ContentRegistry`.
 - Migrated worldgen, mining/construction terrain resolution, simulation diff application, and fortress map rendering/popups to read runtime geology and tuning through the structured registry.
-- Moved construction/workshop and recipe JSON loading behind `ContentRegistry.LoadCoreData`, removing App-local parsing for `data/core/workshops`, legacy `data/core/placeable/workshops.json`, and `data/core/recipes`.
+- Moved construction/workshop and recipe JSON loading behind the Content-owned core-data loader, removing App-local parsing for `data/core/workshops`, legacy `data/core/placeable/workshops.json`, and `data/core/recipes`.
 - Kept `ConstructionRegistry` and `RecipeRegistry` as transitional sub-registries under the structured registry boundary, with smoke coverage proving the unified core-data load populates known construction and recipe definitions.
 - Added read-only `IConstructionCatalog` and `IRecipeCatalog` interfaces, exposed them from the structured `ContentRegistry`, and migrated runtime/gameplay construction/recipe reads away from direct `ConstructionRegistry.Instance` / `RecipeRegistry.Instance` access.
 - Injected `IConstructionCatalog` into Jobs-owned construction and craft execution paths, so Jobs code no longer pulls construction definitions through a construction singleton.
@@ -182,7 +189,7 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 - Moved item/creature definition JSON loading, parsing, validation, normalization, and catalog snapshot creation into `HumanFortress.Content.Definitions`.
 - Removed Simulation-owned item/creature definition file loading from `ItemManager` and `CreatureManager`; runtime managers now accept prebuilt catalog snapshots through `SetDefinitionCatalog(...)`.
 - Changed App startup and regression tests to load item/creature catalog snapshots through `HumanFortress.Content` and inject them into the active world, keeping `Simulation` independent from `Content`.
-- Added immutable construction and recipe catalog snapshots, and changed `ContentRegistry.LoadCoreData(...)` to swap instance-owned snapshots instead of mutating `ConstructionRegistry.Instance` / `RecipeRegistry.Instance`.
+- Added immutable construction and recipe catalog snapshots, and changed `ContentRegistry.ApplyCoreData(...)` to swap instance-owned snapshots instead of mutating `ConstructionRegistry.Instance` / `RecipeRegistry.Instance`.
 - Changed craft recipe composition to inject `IRecipeCatalog` explicitly into the App craft adapter, removing one more runtime read from global content state.
 - Added regression coverage proving repeated core-data loads keep construction/recipe counts and workshop/category queries stable.
 - Added a unified `HumanFortress.Content.Definitions.CoreContentCatalogLoader` that returns item, creature, construction, and recipe catalog snapshots in one load result.
@@ -198,33 +205,32 @@ This percentage tracks the refactor from prototype structure toward a maintainab
 
 ### Current Known Runtime/Architecture Issues
 
-- `TransportJobSystem` is now an App-owned composition shell around `HumanFortress.Jobs.Transport.TransportJobExecutor`. Remaining App transport responsibilities are navigation composition, concrete diff emission, logging adaptation, and profession adapters.
-- `MiningJobSystem` is now an App-owned composition shell around `HumanFortress.Jobs.Mining.MiningJobExecutor`. Remaining App mining responsibilities are navigation composition, concrete diff emission, drop/content resolution, logging adaptation, and profession adapters.
-- `ConstructionJobSystem` is now an App-owned composition shell around `HumanFortress.Jobs.Construction.ConstructionJobExecutor`. Remaining App construction responsibilities are concrete diff emission, logging adaptation, and UI workshop-completion notification.
-- `CraftJobSystem` is now an App-owned composition shell around `HumanFortress.Jobs.Craft.CraftJobExecutor`. Remaining App craft responsibilities are navigation composition, concrete item diff emission, profession adapters, and recipe catalog adaptation.
+- `TransportJobSystem`, `MiningJobSystem`, `ConstructionJobSystem`, and `CraftJobSystem` are now Runtime-owned composition wrappers around Jobs-owned executors.
+- Concrete job diff emitters, callback loggers, profession adapters, mining drop resolution, construction terrain-material resolution, and craft recipe adaptation now live outside App.
+- Remaining App job/runtime responsibilities are concrete session/system group construction, logger callback binding, construction UI completion binding, and UI/debug access surfaces.
 - `CraftPlanner` now lives in `HumanFortress.Jobs.Craft`. Jobs-owned craft code no longer directly reads `RecipeRegistry.Instance`; App bridges existing recipe content through `ICraftRecipeCatalog`.
 - Navigation no longer has a project dependency on Simulation or Core, and navigation DTO/interface contracts now compile from `HumanFortress.Contracts`. Their namespace is still `HumanFortress.Navigation` as a transitional compatibility choice.
-- `HumanFortress.Jobs` now owns transport, mining, construction, and craft executor cores plus their state/helper/stats/debug slices.
+- `HumanFortress.Jobs` now owns transport, mining, construction, and craft executor cores plus their state/helper/stats/debug slices. It also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, and the low-frequency `SanitizeSystem`, while preserving old namespaces as transitional compatibility.
 - `HumanFortress.Jobs` currently exposes internals to App/tests as a transitional bridge. This should shrink as full executors and their tests move into Jobs-owned boundaries.
-- `HumanFortress.Runtime` now owns the command-stage/status/tick-pipeline/command-target/navigation-adapter/session-handle/session-factory/host-core slice plus the generic `SimulationRuntimeHost<TSystems>`. `GameStateManager` delegates session creation to Runtime's `SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>` and keeps a single runtime session handle; App still owns the `SimulationRuntimeSystems` collection, concrete `FortressRuntimeSystemsFactory` / `FortressRuntimeHostFactory` / `FortressRuntimeStartup` composition bridges, grouped catalog/tuning/workforce dependencies, content-loading callback, concrete job adapters, startup seeding hooks, and UI/SadConsole lifetime. The catalog/tuning/geology dependency group now consumes a Content-owned runtime snapshot rather than directly reading the structured registry from App composition, Runtime command targets no longer fall back to global construction/recipe registry reads, and navigation/placeable tuning is exposed through active-session runtime dependencies.
+- `HumanFortress.Runtime` now owns the command-stage/status/tick-pipeline/command-target/navigation-adapter/session-handle/session-factory/host-core slice plus the generic `SimulationRuntimeHost<TSystems>`, initial-worker seeding, and shared startup dig-target lookup. `GameStateManager` delegates session creation to Runtime's `SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>` and keeps a single runtime session handle; App still owns the `SimulationRuntimeSystems` collection, concrete `FortressRuntimeSystemsFactory` / `FortressRuntimeHostFactory` / `FortressRuntimeStartup` composition bridges, grouped catalog/tuning/workforce dependencies, content-loading callback, concrete job adapters, App command wrapping for auto-dig, and UI/SadConsole lifetime. The catalog/tuning/geology/generation dependency group now consumes a Content-owned runtime snapshot rather than directly reading the structured registry from App composition, Runtime command targets no longer fall back to global construction/recipe registry reads, and navigation/placeable tuning is exposed through active-session runtime dependencies.
 - Command execution now has an explicit pre-read runtime stage. Profession weight changes are command-driven, debug item spawning emits `ItemsDiffLog` additions, debug creature spawning emits a minimal spawn-only `CreaturesDiffLog` operation, and App command implementations route through Runtime target interfaces instead of directly casting to `Simulation.World` or depending on App runtime internals. Remaining command-boundary work is reducing the broad transitional target interface surface and eventually replacing direct manager mutations with authoritative typed diffs where each subsystem has an applicator path.
 - `StockpileDiff` exists but is not currently wired into the tick pipeline and still has applicator TODOs, so stockpile command migration should wait until stockpile diffs have an authoritative runtime stage.
-- `ContentRegistry` is being collapsed toward `HumanFortress.Core.Content.Registry.ContentRegistry`. The structured registry now owns runtime geology loading, deterministic geology handles, tuning files, zone definitions, and construction/recipe core-data loading, and worldgen/mining/construction/rendering read paths have moved to it. The legacy `HumanFortress.Core.Content.ContentRegistry` still exists as a compatibility load target behind `HumanFortress.Content.Loading.RuntimeContentRegistryLoader` until remaining compatibility consumers are removed.
-- `ConstructionRegistry` and `RecipeRegistry` still exist as compatibility classes, but normal startup no longer loads or reads through their singleton instances. `ContentRegistry` now owns immutable construction/recipe catalog snapshots and exposes them through `IConstructionCatalog` / `IRecipeCatalog`.
+- `ContentRegistry` has been collapsed to the structured `HumanFortress.Core.Content.Registry.ContentRegistry` runtime path. The old `HumanFortress.Core.Content.ContentRegistry` source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content/Registry` while preserving its old namespace. Runtime geology/zone DTOs, construction/recipe definitions/catalog interfaces/catalog stores, `IRuntimeGeologyCatalog`, `ConstructionTuning`, and `PlaceableTuning` now compile from Contracts. The structured registry still owns runtime geology loading, deterministic geology handles, tuning files, zone definitions, and construction/recipe snapshot application. Mining/construction App adapters, rendering, navigation/placeable tuning, and WorldGen now consume injected active-session snapshot dependencies instead of reading the structured registry directly.
+- `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. `ContentRegistry` owns immutable construction/recipe catalog snapshots and exposes them through `IConstructionCatalog` / `IRecipeCatalog`.
 - Creature and item definition loading/validation now lives in `HumanFortress.Content.Definitions`. `ItemManager` and `CreatureManager` no longer parse files; they consume immutable catalog snapshots supplied by App/runtime composition.
-- Static item/creature definition DTOs, shared placeable DTOs, definition catalog interfaces, and immutable catalog snapshot stores now compile from `HumanFortress.Contracts`, but their old namespaces are preserved as a transitional compatibility step.
-- Content loading now has a first unified `HumanFortress.Content` boundary for item, creature, construction, recipe snapshots, runtime registry bootstrap, strict bootstrap diagnostics, App registry-file resolution, and runtime catalog/tuning/geology snapshot capture. Runtime construction/navigation/placeable/scheduler/workshop tuning now enters through this snapshot. Remaining content ownership work is deleting compatibility registry paths where possible and eventually moving construction/recipe/geology DTO/catalog ownership out of Core.
+- Static item/creature/construction/recipe/material/terrain/geology/biome definition DTOs, terrain bit-layout DTOs, alias/migration DTOs, shared placeable/geology/zone DTOs, fixed-point material primitives, tuning contract types, content version/snapshot/validation result types, runtime geology catalog interface, definition catalog interfaces, and immutable catalog snapshot stores now compile from `HumanFortress.Contracts`, but their old namespaces are preserved as a transitional compatibility step.
+- Content loading now has a first unified `HumanFortress.Content` boundary for item, creature, construction, recipe snapshots, structured runtime registry bootstrap and implementation, strict bootstrap diagnostics, App registry-file resolution, runtime catalog/tuning/geology/zone snapshot capture, Content-owned core-data loading, and structured core-data application. Runtime construction/mining/navigation/placeable/scheduler/workshop tuning and WorldGen mapgen/ore/cavern tuning now enter through this snapshot. Remaining content work is richer debug surfaces, compatibility naming cleanup, and the future compiled content-pack pipeline.
 - Startup content diagnostics are improved and current legacy content loads without registry errors. The structured registry now loads successfully and reports remaining validation warnings explicitly.
-- Logging now has a first-pass structured async diagnostics pipeline with category/level events, a main timeline log, category log files, and a ring-buffer sink for future UI debug panels. The secondary content registry, WorldGen progress/error paths, stockpile diff errors, and key Simulation orders/jobs fallbacks now route through diagnostic helpers. Remaining work is mostly command-line/test output, no-logger fallback helpers, and exposing diagnostics in UI.
+- Logging now has a first-pass structured async diagnostics pipeline with category/level events, a main timeline log, category log files, and a ring-buffer sink. The Debug Status tab can show first-pass diagnostic counts and latest Content issue from a `DiagnosticSnapshot`. The secondary content registry, WorldGen progress/error paths, stockpile diff errors, and key Simulation orders/jobs fallbacks now route through diagnostic helpers. Remaining work is mostly command-line/test output, no-logger fallback helpers, and a dedicated diagnostics/debug UI.
 - The world map embarkability UI now shows first-pass rule failures for the current tile. It still needs richer terrain/biome/geology diagnostics if embark rules become more complex.
 - A formal regression-test project now exists and the former App `TestRunner` plus `PhaseTests` coverage has moved into `tests/HumanFortress.App.Tests`; App `--test` and `--validate` are compatibility pointers to `./RunTests.sh`.
 - Historical analyzer warnings remain; they are not currently blocking runtime but should be cleaned during build-hygiene work.
 
 ### Updated Near-Term Order
 
-1. Finish the remaining Content hygiene: compatibility-registry deletion plan and eventual construction/recipe DTO/catalog ownership move out of Core.
+1. Tighten Content hygiene: improve debug visibility and plan final namespace/compiled-pack cleanup now that structured registry implementation and strict fail-fast loading are Content-owned.
 2. Move the remaining concrete runtime composition out of App: migrate the new dependency/planner/job-system groups, job adapter wiring, and startup hooks now that the generic host is Runtime-owned and `SimulationRuntimeSystems` is only a collection/registration surface.
-3. Move remaining App-owned job wrappers/tunings/orchestrator pieces to Jobs or Runtime according to ownership.
+3. Normalize compatibility namespaces and remove transitional `InternalsVisibleTo` bridges where modules now have correct source ownership.
 4. Normalize diff priority semantics with explicit documentation and regression tests.
 5. Introduce UI/debug snapshot facades so `FortressRuntimeAccess` can stop exposing live `World`, concrete job systems, and navigation internals.
 6. Centralize path/movement ownership into runtime-wide navigation/movement services after Jobs/Runtime boundaries are stable.
@@ -338,9 +344,11 @@ Fix:
 4. Move commands into the tick pipeline.
 5. Add a headless deterministic replay test.
 
-### P0: Job Systems Live in App
+### P0: Job System Composition Still Leaks Through App
 
-Mining, hauling, construction, crafting, scheduler tunings, and profession assignment live under `HumanFortress.App.Jobs`. These systems are core simulation logic and should run headlessly.
+Mining, hauling, construction, and crafting executor cores now live in `HumanFortress.Jobs`, along with scheduler/workshop tunings, worker-selection strategy, profession assignment state, concrete job diff emitters, profession/craft adapters, callback job loggers, mining drop/tuning resolution, construction terrain-material resolution, the sanitizer safety net, and `UnifiedJobsOrchestrator`.
+
+The remaining App leak is the concrete session/system composition layer: App runtime group factories still instantiate planners and Runtime-owned job wrappers, pass App logger callbacks, compose the Content-loaded `ProfessionRegistry` with Jobs-owned `ProfessionAssignments`, and bind construction completion to UI notifications. The tick-facing transport/mining/construction/craft wrapper source now lives under `HumanFortress.Runtime/Jobs`, and profession registry file loading now lives under `HumanFortress.Content`.
 
 Target:
 
@@ -371,22 +379,22 @@ World or Runtime
 
 Also remove on-demand rebuild from query paths. Rebuild must be scheduled in `RebuildDerived`, not triggered by path queries.
 
-### P1: Content Registry Is Split
+### P1: Content Registry Unification Is Mostly Done
 
-There are two `ContentRegistry` classes:
+The old split between:
 
 - `HumanFortress.Core.Content.ContentRegistry`
 - `HumanFortress.Core.Content.Registry.ContentRegistry`
 
-They use different loading styles and different responsibilities. Some consumers use the older loaded registry, while others receive the newer singleton that is not consistently loaded in production.
+has been collapsed. The old legacy source has been deleted, normal bootstrap loads the structured registry only, and the structured registry implementation now lives under `HumanFortress.Content/Registry` while preserving its historical namespace.
 
-Fix:
+Remaining fix:
 
-1. Pick one content model.
-2. Move it into `HumanFortress.Content`.
-3. Content loading happens once in `ContentBootstrapper`.
-4. Runtime receives immutable registry snapshots.
-5. Managers do not discover/load content themselves.
+1. Keep content loading behind `FortressContentLoader` and `FortressRuntimeContentSnapshotLoader`.
+2. [Done first pass] Add strict fail-fast mode for CI/release bootstraps.
+3. Expose better content diagnostics in logs/debug UI.
+4. Finish namespace cleanup when the compatibility blast radius is acceptable.
+5. Keep runtime systems on immutable snapshots and injected catalog interfaces.
 
 ### P1: Rendering Snapshot Is Not Yet a Real Boundary
 
@@ -835,10 +843,10 @@ Progress:
 - Transport destination-validation failure now has regression coverage for carry-state cleanup, reservation release, and no item relocation.
 - Transport moved-pickup behavior now has regression coverage for replanning before carry pickup.
 - Transport throttle/backlog behavior now has regression coverage so drained requests are not dropped when active slots are full.
-- `WorldCellTargetEncoding` now centralizes Simulation world-cell target encoding for App diff emitters that still need `ChunkKey + localIndex`.
+- `WorldCellTargetEncoding` now centralizes Simulation world-cell target encoding for job diff emitters that still need `ChunkKey + localIndex`.
 - `ItemsDiffLog` now accepts `WorldCellTarget` directly for add/remove/split operations.
 - Mining diff emission is isolated behind `MiningDiffEmitter`.
-- Mining drop/tuning lookup and caching is isolated behind `MiningDropResolver`.
+- Mining drop/tuning lookup and caching is isolated behind `MiningDropResolver`; its source ownership has moved to `HumanFortress.Jobs/Mining` and it no longer depends on Newtonsoft JSON APIs.
 - Mining terrain-result branching is isolated behind `MiningResultApplier`.
 - Mining active execution is isolated behind `MiningActiveJobRunner`.
 - Mining worker/path assignment is isolated behind `MiningAssignmentHandler`.
@@ -870,7 +878,7 @@ Progress:
 
 ### Phase 5: Move Jobs Out of App
 
-Status: executor-core move is mostly complete; App composition shells and adapters remain.
+Status: executor-core move is complete for the current transport/mining/construction/craft slice. Runtime owns the tick-facing job wrappers, Jobs owns executor cores and adapters, Content owns profession registry loading, and App retains concrete session/system composition plus UI/debug surfaces.
 
 After Navigation is inverted:
 
@@ -893,15 +901,15 @@ Preparation progress:
 - Mining intake coordination, per-dig read processing, backlog, deferred stairwell retry, deterministic dig ordering, stat snapshots, debug snapshot building, diff emission, drop resolution, tile reservation tracking, adjacency lookup, stairwell gating, assignment, active execution, result application, path seeding, and finalization have been isolated from the main executor.
 - Construction material tracking, site safety/clearance, progress/diagnostics, diff emission, target mapping, completion sequencing, and completion application have been isolated from the main executor.
 - Craft diff emission, workshop lookup, input counting/readiness, material transport requests, material consumption, output emission, worker assignment, active execution, stat snapshots, and finalization have been isolated from the main executor/planner.
-- Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`; craft planning also lives in Jobs. App still owns composition shells, concrete adapters, tunings that depend on App/runtime concerns, and UI/debug surfaces.
+- Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`; craft planning, diff emitters, callback loggers, profession/craft adapters, scheduler/workshop tuning types, and profession assignment state also live outside App. Runtime owns the tick-facing job wrappers. App still owns concrete session/runtime composition and UI/debug surfaces.
 
 ### Phase 6: Split Content
 
-1. Pick the modern registry model or explicitly retire it.
-2. Move registry code to `HumanFortress.Content`.
-3. Load once in Runtime.
-4. Inject immutable registry snapshots into systems.
-5. Remove global singleton reliance where practical.
+1. [Done] Pick the modern structured registry model and retire the old legacy registry source.
+2. [Done] Move structured registry implementation to `HumanFortress.Content`.
+3. [Mostly done] Load through the Content facade and active runtime snapshot.
+4. [Mostly done] Inject immutable registry snapshots/catalog interfaces into systems.
+5. [Ongoing] Remove remaining global singleton reliance where practical and improve strict diagnostics/debug UI.
 
 ### Phase 7: Snapshot-Driven UI and Rendering
 
@@ -946,10 +954,10 @@ Recommended PR order:
 7. [Mostly done] Add headless regression checks; former App `TestRunner` and `PhaseTests` coverage has moved into `tests/HumanFortress.App.Tests`.
 8. [Mostly done] Invert Navigation dependency; direct Navigation -> Simulation reference and query-time rebuilds have been removed. Contracts relocation remains.
 9. [Mostly done] Move job executor cores out of App; remaining work is planner/runtime/content seams and cleanup of transitional App adapters.
-10. [Pending] Start Content split.
+10. [Mostly done] Split Content; remaining work is diagnostics/debug UI, compatibility naming, and compiled-pack planning.
 
 Immediate next PR-sized work:
 
-1. Start ContentRegistry unification and continue structured logging/debug diagnostics cleanup.
+1. Continue structured logging/debug diagnostics cleanup and expose content diagnostics in a UI/debug surface.
 2. Carve a real Runtime composition boundary out of `GameStateManager` and App runtime helpers.
 3. Split the current monolithic App test project into focused module-level test projects when dependencies make that practical.

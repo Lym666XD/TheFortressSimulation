@@ -1,5 +1,4 @@
 using HumanFortress.Content.Definitions;
-using HumanFortress.Core.Content.Registry;
 using HumanFortress.Simulation.World;
 using IoPath = System.IO.Path;
 
@@ -11,7 +10,7 @@ internal static class DefinitionCatalogTestSupport
     {
         ArgumentNullException.ThrowIfNull(world);
 
-        world.Items.SetDependencies(world, ContentRegistry.Instance);
+        world.Items.SetDependencies(world);
         var result = CoreContentCatalogLoader.Load(dataPath ?? CoreDataPath).Items;
         world.Items.SetDefinitionCatalog(result.Catalog);
         return result;

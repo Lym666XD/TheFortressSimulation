@@ -34,16 +34,20 @@ internal sealed class FortressRuntimeDependencies
     public ConstructionTuning ConstructionTuning => Tunings.Construction;
     public NavigationTuning NavigationTuning => Tunings.Navigation;
     public PlaceableTuning PlaceableTuning => Tunings.Placeable;
+    public string? MiningTuningJson => Tunings.MiningJson;
     public SchedulerTunings SchedulerTunings => Tunings.Scheduler;
     public WorkshopTunings WorkshopTunings => Tunings.Workshops;
     public ProfessionAssignments ProfessionAssignments => Workforce.ProfessionAssignments;
 
-    public static FortressRuntimeDependencies Load(World world, string baseDir)
+    public static FortressRuntimeDependencies Load(
+        World world,
+        string baseDir,
+        FortressRuntimeContentSnapshot? content = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var content = FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+        content ??= FortressRuntimeContentSnapshotLoader.CaptureLoaded();
 
         return new FortressRuntimeDependencies(
             FortressRuntimeCatalogs.FromContent(content),
@@ -87,12 +91,14 @@ internal sealed class FortressRuntimeTunings
 {
     private FortressRuntimeTunings(
         ConstructionTuning construction,
+        string? miningJson,
         NavigationTuning navigation,
         PlaceableTuning placeable,
         SchedulerTunings scheduler,
         WorkshopTunings workshops)
     {
         Construction = construction;
+        MiningJson = miningJson;
         Navigation = navigation;
         Placeable = placeable;
         Scheduler = scheduler;
@@ -100,6 +106,7 @@ internal sealed class FortressRuntimeTunings
     }
 
     public ConstructionTuning Construction { get; }
+    public string? MiningJson { get; }
     public NavigationTuning Navigation { get; }
     public PlaceableTuning Placeable { get; }
     public SchedulerTunings Scheduler { get; }
@@ -111,10 +118,11 @@ internal sealed class FortressRuntimeTunings
 
         return new FortressRuntimeTunings(
             ConstructionTuning.LoadFromJson(content.ConstructionTuningJson),
+            content.MiningTuningJson,
             NavigationTuning.LoadFromJson(content.NavigationTuningJson),
             PlaceableTuning.LoadFromJson(content.PlaceableTuningJson),
-            SchedulerTunings.LoadFromJson(content.SchedulerTuningJson, "runtime content snapshot"),
-            WorkshopTunings.LoadFromJson(content.WorkshopTuningJson, "runtime content snapshot"));
+            SchedulerTunings.LoadFromJson(content.SchedulerTuningJson, "runtime content snapshot", Logger.Log),
+            WorkshopTunings.LoadFromJson(content.WorkshopTuningJson, "runtime content snapshot", Logger.Log));
     }
 }
 
@@ -132,7 +140,7 @@ internal sealed class FortressRuntimeWorkforce
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var professionRegistry = ProfessionRegistry.Load(baseDir);
+        var professionRegistry = ProfessionRegistry.Load(baseDir, Logger.Log);
         return new FortressRuntimeWorkforce(new ProfessionAssignments(professionRegistry, world.Creatures));
     }
 }
@@ -178,7 +186,7 @@ internal sealed class FortressRuntimePlanningSystems
         var construction = new ConstructionSystem(
             world,
             world.Orders,
-            new ConstructionTerrainMaterialResolver(),
+            new ConstructionTerrainMaterialResolver(dependencies.Geology),
             dependencies.ConstructionTuning);
         var buildable = new BuildableConstructionSystem(world, world.Orders, dependencies.Constructions);
         var craft = new CraftPlanner(
@@ -245,7 +253,10 @@ internal sealed class FortressRuntimeJobSystems
             carryoverMaxTicks: schedulerTunings.BackpressureMaxCarryoverTicks,
             professions: professions,
             workerStrategy: schedulerTunings.WorkerSelection,
-            navigationTuning: dependencies.NavigationTuning);
+            navigationTuning: dependencies.NavigationTuning,
+            miningTuningJson: dependencies.MiningTuningJson,
+            geology: dependencies.Geology,
+            log: Logger.Log);
 
         var transport = new TransportJobSystem(
             world,
@@ -258,7 +269,8 @@ internal sealed class FortressRuntimeJobSystems
             maxActiveJobs: schedulerTunings.HaulingLimits.MaxActive,
             professions: professions,
             workerStrategy: schedulerTunings.WorkerSelection,
-            navigationTuning: dependencies.NavigationTuning);
+            navigationTuning: dependencies.NavigationTuning,
+            log: Logger.Log);
 
         var construction = new ConstructionJobSystem(
             world,
@@ -268,7 +280,8 @@ internal sealed class FortressRuntimeJobSystems
             dependencies.Constructions,
             dependencies.ConstructionTuning,
             dependencies.PlaceableTuning,
-            maxPerTick: schedulerTunings.Construction.PlanPerTick);
+            maxPerTick: schedulerTunings.Construction.PlanPerTick,
+            log: Logger.Log);
 
         var craft = new CraftJobSystem(
             world,

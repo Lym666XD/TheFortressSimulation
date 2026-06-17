@@ -8,7 +8,6 @@ using HumanFortress.Core.Diagnostics;
 using SadConsole;
 using SadConsole.Configuration;
 using SadRogue.Primitives;
-using LegacyContentRegistry = HumanFortress.Core.Content.ContentRegistry;
 
 namespace HumanFortress.App;
 
@@ -19,6 +18,8 @@ public static class Program
 {
     private static GameStateManager? _gameStateManager;
     private static bool _autoDigRequested;
+    private static bool _strictContentRequested;
+    private static bool _contentWarningsAsErrors;
 
     public static void Main(string[] args)
     {
@@ -51,6 +52,13 @@ public static class Program
             _autoDigRequested = true;
         }
 
+        _strictContentRequested = args.Any(a => string.Equals(a, "--strict-content", StringComparison.OrdinalIgnoreCase));
+        _contentWarningsAsErrors = args.Any(a => string.Equals(a, "--content-warnings-as-errors", StringComparison.OrdinalIgnoreCase));
+        if (_contentWarningsAsErrors)
+        {
+            _strictContentRequested = true;
+        }
+
         // Normalize working directory to executable base; helps native DLL discovery
         var baseDir = AppContext.BaseDirectory;
         Directory.SetCurrentDirectory(baseDir);
@@ -58,8 +66,6 @@ public static class Program
         // Setup logging before startup diagnostics and content loading.
         var logFile = "fortress_debug.log";
         Logger.Initialize(logFile);
-        LegacyContentRegistry.LogCallback = null;
-        LegacyContentRegistry.Diagnostics = Logger.Sink;
 
         // Preload critical native libraries (SDL2/OpenAL) to avoid DllNotFound issues
         TryPreloadNative(Path.Combine(baseDir, "SDL2.dll"));
@@ -68,6 +74,10 @@ public static class Program
         // Load content registries from either published output or source checkout.
         var contentLoad = FortressContentLoader.Load(baseDir, includeCoreCatalogs: false);
         FortressContentIssueLogger.LogIssues(contentLoad);
+        if (_strictContentRequested && !TryEnforceStrictContent(contentLoad))
+        {
+            return;
+        }
 
         // Initialize logging callbacks for lower-level components (Simulation/Navigation layers)
         HumanFortress.Navigation.NavigationManager.LogCallback = Logger.CreateCallback("Navigation.Manager");
@@ -115,7 +125,10 @@ public static class Program
         {
             try
             {
-                var gsm = new GameStateManager(12345);
+                var gsm = new GameStateManager(
+                    12345,
+                    strictContent: _strictContentRequested,
+                    contentWarningsAsErrors: _contentWarningsAsErrors);
                 // Use small world size just to trigger definitions loading
                 gsm.InitializeWorld(sizeInChunks: 2, maxZ: 50);
                 Logger.Log("[HEADLESS] Init-only completed");
@@ -123,6 +136,7 @@ public static class Program
             catch (Exception ex)
             {
                 Logger.Log($"[HEADLESS] ERROR: {ex.Message}");
+                Environment.ExitCode = 1;
             }
             finally
             {
@@ -181,7 +195,11 @@ public static class Program
         // Initialize game state manager with deterministic seed
         ulong masterSeed = 12345; // TODO: Make configurable
         var session = new FortressSessionContext(_autoDigRequested);
-        _gameStateManager = new GameStateManager(masterSeed, enqueueAutoDig: _autoDigRequested);
+        _gameStateManager = new GameStateManager(
+            masterSeed,
+            enqueueAutoDig: _autoDigRequested,
+            strictContent: _strictContentRequested,
+            contentWarningsAsErrors: _contentWarningsAsErrors);
         var navigator = new AppStateNavigator(_gameStateManager);
 
         AppStateRegistration.RegisterAll(_gameStateManager, navigator, session);
@@ -197,6 +215,27 @@ public static class Program
         {
             // Start at main menu - this will set the screen
             _gameStateManager.TransitionTo(GameStateType.MainMenu);
+        }
+    }
+
+    private static bool TryEnforceStrictContent(FortressContentLoadResult contentLoad)
+    {
+        try
+        {
+            contentLoad.ThrowIfInvalid(_contentWarningsAsErrors);
+            return true;
+        }
+        catch (FortressContentLoadException ex)
+        {
+            Logger.Log("[STARTUP] STRICT CONTENT LOAD FAILED");
+            foreach (var issue in ex.BlockingIssues)
+            {
+                Logger.Log($"[STARTUP] {issue}");
+            }
+
+            Environment.ExitCode = 1;
+            Logger.Close();
+            return false;
         }
     }
 

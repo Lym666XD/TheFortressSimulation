@@ -18,7 +18,7 @@ internal static class FortressRuntimeStartup
 
         runtime.Start(systems =>
         {
-            SimulationInitialWorkerSpawner.SpawnIfNeeded(runtime.World);
+            SimulationInitialWorkerSpawner.SpawnIfNeeded(runtime.World, log: Logger.Log);
             systems.ProfessionAssignments.Initialize(runtime.World.Creatures.GetAllInstances());
 
             if (!enqueueAutoDig)

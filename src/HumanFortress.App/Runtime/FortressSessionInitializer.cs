@@ -57,11 +57,19 @@ internal sealed class FortressSessionInitializer
             Logger.Log($"[GenerateFortressMap] Got world tile at {embarkLocation}");
 
             Logger.Log("[GenerateFortressMap] Creating FortressGenerator");
+            var generationContent = _runtime.GenerationContent;
+            if (generationContent == null)
+            {
+                Logger.Log("[GenerateFortressMap] ERROR: Runtime generation content is not available");
+                return FallbackToRuntimeWorld();
+            }
+
             var generator = new FortressGenerator(
                 fortressSize,
                 worldTile,
                 embarkLocation,
-                (uint)(embarkLocation.X * 1000 + embarkLocation.Y)
+                (uint)(embarkLocation.X * 1000 + embarkLocation.Y),
+                generationContent
             );
 
             Logger.Log("[GenerateFortressMap] Generating fortress map");

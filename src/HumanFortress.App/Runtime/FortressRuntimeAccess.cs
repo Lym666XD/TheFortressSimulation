@@ -1,10 +1,12 @@
 using HumanFortress.App.GameStates;
+using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Jobs;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Content.Registry;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.World;
+using HumanFortress.WorldGen;
 
 namespace HumanFortress.App.Runtime;
 
@@ -34,6 +36,12 @@ public sealed class FortressRuntimeAccess
     public IRecipeCatalog? Recipes => _stateManager.Recipes;
     public IConstructionCatalog? Constructions => _stateManager.Constructions;
     public IRuntimeGeologyCatalog? Geology => _stateManager.Geology;
+    public FortressGenerationContent? GenerationContent => _stateManager.GenerationContent;
+
+    public DiagnosticSnapshot GetDiagnosticSnapshot()
+    {
+        return _stateManager.GetDiagnosticSnapshot();
+    }
 
     public IReadOnlyList<ProfessionAssignments.ProfessionRosterEntry> GetProfessionRosterSnapshot()
     {

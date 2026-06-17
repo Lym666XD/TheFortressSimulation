@@ -12,10 +12,16 @@ public static class Logger
     private static AsyncDiagnosticDispatcher? _dispatcher;
     private static IDiagnosticSink _sink = NullDiagnosticSink.Instance;
     private static InMemoryRingBufferDiagnosticSink? _ringBuffer;
+    private static IReadOnlyList<DiagnosticEvent> _lastEvents = Array.Empty<DiagnosticEvent>();
 
     public static IDiagnosticSink Sink => _sink;
 
-    public static IReadOnlyList<DiagnosticEvent> RecentEvents => _ringBuffer?.Snapshot() ?? Array.Empty<DiagnosticEvent>();
+    public static IReadOnlyList<DiagnosticEvent> RecentEvents => _ringBuffer?.Snapshot() ?? _lastEvents;
+
+    public static DiagnosticSnapshot GetSnapshot()
+    {
+        return DiagnosticSnapshot.FromEvents(RecentEvents);
+    }
 
     public static void Initialize(string logPath)
     {
@@ -24,6 +30,7 @@ public static class Logger
         lock (_lockObject)
         {
             CloseLocked();
+            _lastEvents = Array.Empty<DiagnosticEvent>();
 
             var fullLogPath = Path.GetFullPath(logPath);
             var baseDirectory = Path.GetDirectoryName(fullLogPath) ?? AppContext.BaseDirectory;
@@ -100,6 +107,7 @@ public static class Logger
     private static void CloseLocked()
     {
         _dispatcher?.Dispose();
+        _lastEvents = _ringBuffer?.Snapshot() ?? _lastEvents;
         _dispatcher = null;
         _sink = NullDiagnosticSink.Instance;
         DiagnosticHub.Sink = NullDiagnosticSink.Instance;

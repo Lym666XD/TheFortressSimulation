@@ -204,6 +204,7 @@ internal static class FortressUiOverlayRenderer
         var uiSurface = context.UiSurface;
         var ui = context.Ui;
         var world = context.World;
+        var diagnostics = ui.DebugOpen ? context.Runtime.GetDiagnosticSnapshot() : null;
 
         UiRenderer.DrawDebug(
             uiSurface,
@@ -212,7 +213,9 @@ internal static class FortressUiOverlayRenderer
             context.CurrentZ,
             context.ZoomLevel,
             context.CameraPosition,
-            context.FortressSize);
+            context.FortressSize,
+            world,
+            diagnostics);
 
         if (world != null)
             DebugPageOverlayRenderer.PostDrawItemsPage(uiSurface, ui, world);

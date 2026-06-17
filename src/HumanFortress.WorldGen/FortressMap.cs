@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
+using HumanFortress.Core.Content.Registry;
 using HumanFortress.Core.Diagnostics;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 
 namespace HumanFortress.WorldGen
 {
-    using ContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
     using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
     /// <summary>
     /// Represents the generated fortress map data.
@@ -15,14 +15,16 @@ namespace HumanFortress.WorldGen
     public class FortressMap
     {
         private readonly FortressChunk[,] _chunks;
+        private readonly IRuntimeGeologyCatalog _geology;
         private readonly int _size;
         private readonly int _maxZ;
         
         public int Size => _size;
         public int MaxZ => _maxZ;
         
-        public FortressMap(int size, int maxZ)
+        public FortressMap(int size, int maxZ, IRuntimeGeologyCatalog geology)
         {
+            _geology = geology ?? throw new ArgumentNullException(nameof(geology));
             _size = size;
             _maxZ = maxZ;
             _chunks = new FortressChunk[size, size];
@@ -32,7 +34,7 @@ namespace HumanFortress.WorldGen
             {
                 for (int y = 0; y < size; y++)
                 {
-                    _chunks[x, y] = new FortressChunk(x, y, maxZ);
+                    _chunks[x, y] = new FortressChunk(x, y, maxZ, _geology);
                 }
             }
         }
@@ -248,12 +250,12 @@ namespace HumanFortress.WorldGen
 
         private TileBase ConvertGeologyToTile(ushort geologyHandle, byte surfaceBits, int z)
         {
-            var geology = ContentRegistry.Instance.GetGeologyByHandle(geologyHandle);
+            var geology = _geology.GetGeologyByHandle(geologyHandle);
             if (geology == null)
             {
                 // Fallback to a solid rock wall if geology not found
                 return new TileBase(
-                    geoMatId: ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite"),
+                    geoMatId: _geology.GetGeologyHandle("core_terrain_wall_rock_granite"),
                     terrainBits: (ushort)TerrainKind.SolidWall,
                     surfaceBits: surfaceBits,
                     fluidKind: 0,
@@ -301,7 +303,7 @@ namespace HumanFortress.WorldGen
 
             var chunk = _chunks[cx, cy];
             var handle = chunk.GetGeologyHandle(lx, ly, z);
-            var geo = ContentRegistry.Instance.GetGeologyByHandle(handle);
+            var geo = _geology.GetGeologyByHandle(handle);
             if (geo == null) return TerrainKind.OpenNoFloor;
             return Enum.TryParse<TerrainKind>(geo.TerrainBits.Kind, out var kind) ? kind : TerrainKind.OpenNoFloor;
         }
@@ -315,6 +317,7 @@ namespace HumanFortress.WorldGen
     {
         private readonly ushort[,,] _geologyHandles;
         private readonly byte[,,] _surfaceBits;
+        private readonly IRuntimeGeologyCatalog _geology;
         private readonly int _x;
         private readonly int _y;
         private readonly int _maxZ;
@@ -322,8 +325,9 @@ namespace HumanFortress.WorldGen
         public int X => _x;
         public int Y => _y;
 
-        public FortressChunk(int x, int y, int maxZ)
+        public FortressChunk(int x, int y, int maxZ, IRuntimeGeologyCatalog geology)
         {
+            _geology = geology ?? throw new ArgumentNullException(nameof(geology));
             _x = x;
             _y = y;
             _maxZ = maxZ;
@@ -331,7 +335,7 @@ namespace HumanFortress.WorldGen
             _surfaceBits = new byte[32, 32, maxZ];
 
             // Initialize all as granite wall
-            var defaultHandle = ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite");
+            var defaultHandle = _geology.GetGeologyHandle("core_terrain_wall_rock_granite");
             for (int lx = 0; lx < 32; lx++)
             {
                 for (int ly = 0; ly < 32; ly++)
@@ -349,7 +353,7 @@ namespace HumanFortress.WorldGen
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
-                _geologyHandles[x, y, z] = ContentRegistry.Instance.GetGeologyHandle(geologyId);
+                _geologyHandles[x, y, z] = _geology.GetGeologyHandle(geologyId);
             }
         }
 
@@ -367,7 +371,7 @@ namespace HumanFortress.WorldGen
             {
                 return _geologyHandles[x, y, z];
             }
-            return ContentRegistry.Instance.GetGeologyHandle("core_terrain_wall_rock_granite");
+            return _geology.GetGeologyHandle("core_terrain_wall_rock_granite");
         }
 
         // Back-compat helper for tests that expect GetTerrain
@@ -376,7 +380,7 @@ namespace HumanFortress.WorldGen
         public string GetGeologyId(int x, int y, int z)
         {
             var handle = GetGeologyHandle(x, y, z);
-            var geology = ContentRegistry.Instance.GetGeologyByHandle(handle);
+            var geology = _geology.GetGeologyByHandle(handle);
             return geology?.Id ?? "core_terrain_wall_rock_granite";
         }
 

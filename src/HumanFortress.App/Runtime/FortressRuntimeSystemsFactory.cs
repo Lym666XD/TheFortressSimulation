@@ -30,7 +30,7 @@ internal static class FortressRuntimeSystemsFactory
             dependencies,
             planners);
 
-        var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8);
+        var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8, log: Logger.Log);
 
         var jobsOrchestrator = new UnifiedJobsOrchestrator(
             planners.Hauling,
@@ -42,7 +42,8 @@ internal static class FortressRuntimeSystemsFactory
             jobs.Mining,
             jobs.Construction,
             jobs.Craft,
-            dependencies.SchedulerTunings);
+            dependencies.SchedulerTunings,
+            Logger.Log);
 
         return new SimulationRuntimeSystems(
             planners.Hauling,

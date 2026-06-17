@@ -1,6 +1,6 @@
 # HumanFortress Run And Test Guide
 
-Updated: 2026-06-12
+Updated: 2026-06-16
 Status: current operating notes
 
 ## Prerequisites
@@ -51,15 +51,38 @@ RunTests.bat
 
 The old app arguments `--test` and `--validate` no longer run tests inside the game executable. They print a compatibility message that points back to `./RunTests.sh`.
 
+## Refactor Verification Commands
+
+For architecture refactor work on macOS, prefer explicit .NET 8 and sequential commands:
+
+```sh
+/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
+```
+
+Do not run overlapping App/test/solution builds in parallel; shared `obj` files and macOS apphost signing can race. For `dotnet exec`, pass app arguments directly; do not insert an extra `--` separator.
+
+If a command appears stuck, check:
+
+```sh
+pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"
+```
+
+Only Roslyn/CodeAnalysis in that list is normal editor background activity, not a stuck build.
+
 ## Useful App Arguments
 
 ```sh
 dotnet run --project src/HumanFortress.App/HumanFortress.App.csproj -- --init-only
+dotnet run --project src/HumanFortress.App/HumanFortress.App.csproj -- --init-only --strict-content --content-warnings-as-errors
 dotnet run --project src/HumanFortress.App/HumanFortress.App.csproj -- --auto-dig
 dotnet run --project src/HumanFortress.App/HumanFortress.App.csproj -- --test-crash
 ```
 
 - `--init-only`: creates a small world, loads core catalogs, then exits.
+- `--strict-content`: turns structured content load errors into startup failures.
+- `--content-warnings-as-errors`: implies `--strict-content` and treats content warnings as startup failures.
 - `--auto-dig`: starts directly into fortress play and enqueues an automated dig seed.
 - `--test-crash`: runs the crash-test path.
 

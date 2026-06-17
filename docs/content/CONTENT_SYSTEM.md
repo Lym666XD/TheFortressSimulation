@@ -1,6 +1,6 @@
 # HumanFortress Content System
 
-Updated: 2026-06-12
+Updated: 2026-06-16
 Status: current implementation notes plus future direction
 
 This document replaces the old split between `CONTENT_REGISTRY_OVERVIEW.md` and the early `.cpack` build-pipeline plan. The current game loads JSON directly at runtime. Compiled content packs remain a future goal, not the current implementation.
@@ -70,23 +70,23 @@ FortressContentLoadResult
   Issues
 ```
 
-`Issues` contains structured `FortressContentIssue` values with severity, code, and message. App logs them through `FortressContentIssueLogger`.
+`Issues` contains structured `FortressContentIssue` values with severity, code, and message. App logs them through `FortressContentIssueLogger`. `FortressContentLoadResult.ThrowIfInvalid(...)` and `FortressContentLoader.LoadStrict(...)` provide the Content-owned fail-fast path for CI/headless checks.
 
 ## Runtime Registry Loading
 
-`RuntimeContentRegistryLoader` coordinates the transitional registry load while two registry systems still coexist:
+`RuntimeContentRegistryLoader` loads the structured runtime registry:
 
-- legacy `HumanFortress.Core.Content.ContentRegistry`
-- structured `HumanFortress.Core.Content.Registry.ContentRegistry`
+- `HumanFortress.Core.Content.Registry.ContentRegistry`
+
+The concrete implementation now compiles from `HumanFortress.Content/Registry`; the historical `HumanFortress.Core.Content.Registry` namespace is preserved as a source-compatibility bridge while callers migrate to injected snapshots and catalog interfaces.
 
 Current behavior:
 
-1. Load the legacy registry from `content/`.
-2. Load the structured registry from `content/`.
-3. Optionally continue when the structured registry fails, depending on `continueOnStructuredRegistryError`.
-4. Return counts, warnings, errors, and structured failure text.
+1. Load the structured registry from `content/`.
+2. Optionally continue when the structured registry fails, depending on `continueOnStructuredRegistryError`.
+3. Return warnings, errors, and structured failure text.
 
-This transitional shape exists because not all gameplay code has migrated to the structured registry yet.
+The old `HumanFortress.Core.Content.ContentRegistry` source has been deleted. Runtime bootstrap now loads the structured registry only. Runtime geology and zone JSON DTOs now compile from `HumanFortress.Contracts` while preserving their old `HumanFortress.Core.Content` namespace for compatibility.
 
 ## Core Catalog Loading
 
@@ -107,13 +107,19 @@ Loaders:
 - `CreatureDefinitionCatalogLoader`
 - `CoreDataRegistryLoader`
 
-`CoreDataRegistryLoader` loads:
+`CoreDataRegistryLoader` lives in `HumanFortress.Content.Definitions` and loads:
 
 - `data/core/workshops/core_workshop_*.json`
 - legacy `data/core/placeable/workshops.json` when present
 - `data/core/recipes/*.json`
 
-It returns immutable construction and recipe catalog snapshots. `ContentRegistry.ApplyCoreData(...)` swaps those snapshots into the structured registry.
+It returns immutable construction and recipe catalog snapshots. `FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)` applies those snapshots to the structured registry and returns the active runtime snapshot used by App composition.
+
+Cross-module runtime content contracts such as `IRuntimeGeologyCatalog`, `ConstructionTuning`, `PlaceableTuning`, `ContentVersion`, material/terrain/geology/biome definition DTOs, terrain bit-layout DTOs, alias/migration DTOs, and fixed-point material primitives compile from `HumanFortress.Contracts` while preserving their historical namespaces. Tuning JSON parsing uses `System.Text.Json` so Simulation/Jobs/Runtime can consume tuning objects without depending on the concrete content registry implementation.
+
+The old hard-coded `MaterialIdRegistry` display table has been removed; runtime terrain display should use loaded geology/material content and active-session geology handles instead of fixed numeric material ids.
+
+The old Core-owned `MaterialSelectionService` global preference cache has also been removed because it had no write call sites. Future user material preferences should live in an explicit App/UI or saved-player-preferences model, not in Core content state.
 
 ## Runtime Application Flow
 
@@ -124,33 +130,34 @@ SimulationWorldContentLoader.LoadCoreContent(world, baseDir)
   -> FortressContentLoader.Load(baseDir)
   -> FortressContentIssueLogger.LogIssues(...)
   -> world.Creatures.SetDefinitionCatalog(...)
-  -> world.Items.SetDependencies(world, ContentRegistry.Instance)
+  -> world.Items.SetDependencies(world)
   -> world.Items.SetDefinitionCatalog(...)
-  -> ContentRegistry.Instance.ApplyCoreData(...)
-  -> RuntimeContentRegistry.Instance.Zones registered into world.Zones.Manager
+  -> FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)
+  -> snapshot.ZoneDefinitions registered into world.Zones.Manager
+  -> returns FortressRuntimeContentSnapshot
 ```
 
 Long-lived runtime systems should prefer injected read-only catalog interfaces over parsing files or using singleton registries directly.
 
-Preferred reads:
+Preferred runtime reads:
 
 ```csharp
-ContentRegistry.Instance.Constructions
-ContentRegistry.Instance.Recipes
 IItemDefinitionCatalog
 ICreatureDefinitionCatalog
 IConstructionCatalog
 IRecipeCatalog
+IRuntimeGeologyCatalog
 ```
 
 Avoid new runtime reads through:
 
 ```csharp
-ConstructionRegistry.Instance
-RecipeRegistry.Instance
+ContentRegistry.Instance
 ```
 
-Those compatibility classes still exist but should not grow new dependencies.
+Content-owned bootstrap, registry implementation, and snapshot code may still read `ContentRegistry.Instance` while capturing the active runtime snapshot. Runtime, Jobs, Simulation, Navigation, WorldGen, App UI, and App job adapters should receive the resulting snapshot/catalog interfaces instead of reaching back into the singleton.
+
+The old `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. Construction/recipe definitions, read-only catalog interfaces, and immutable catalog stores now compile from `HumanFortress.Contracts` while preserving the old `HumanFortress.Core.Content.Registry` namespace.
 
 ## App Convenience Registries
 
@@ -178,9 +185,15 @@ Current content loading should:
 - report zero-count item/creature/construction/recipe catalogs as errors;
 - report loader error counts as errors;
 - report structured registry warnings as warnings;
-- log issues without crashing the UI host unless the caller decides to treat warnings/errors as blocking.
+- log issues without crashing the UI host by default;
+- throw `FortressContentLoadException` when callers use `LoadStrict(...)` or `ThrowIfInvalid(...)`;
+- support warning promotion through `treatWarningsAsErrors`.
 
-The exact game-start blocking policy is still evolving.
+The app exposes this through `--strict-content` and `--content-warnings-as-errors`. The recommended CI smoke command is:
+
+```sh
+dotnet run --project src/HumanFortress.App/HumanFortress.App.csproj -- --init-only --strict-content --content-warnings-as-errors
+```
 
 ## Future Pack Pipeline
 

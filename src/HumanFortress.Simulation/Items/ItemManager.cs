@@ -7,7 +7,6 @@ using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
-using HumanFortress.Core.Content.Registry;
 
 namespace HumanFortress.Simulation.Items;
 
@@ -189,10 +188,9 @@ public sealed class ItemManager : IItemDefinitionCatalog
     /// <summary>
     /// Set dependencies (called after initialization)
     /// </summary>
-    public void SetDependencies(HumanFortress.Simulation.World.World world, ContentRegistry contentRegistry)
+    public void SetDependencies(HumanFortress.Simulation.World.World world)
     {
         ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(contentRegistry);
 
         _world = world;
     }

@@ -1,6 +1,7 @@
 ﻿using SadConsole;
 using SadRogue.Primitives;
 using HumanFortress.App;
+using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Runtime;
 using HumanFortress.Core.Content.Registry;
 using HumanFortress.Runtime;
@@ -1544,7 +1545,16 @@ namespace HumanFortress.App.UI;
         surf.Print(x0 + 2, y0 + 3, "ESC resume | M main menu", Color.White);
     }
 
-    public static void DrawDebug(ScreenSurface mapSurface, UiStore ui, SadRogue.Primitives.Point cursor, int currentZ, int zoomLevel, SadRogue.Primitives.Point camera, int fortressSize, HumanFortress.Simulation.World.World? world = null)
+    public static void DrawDebug(
+        ScreenSurface mapSurface,
+        UiStore ui,
+        SadRogue.Primitives.Point cursor,
+        int currentZ,
+        int zoomLevel,
+        SadRogue.Primitives.Point camera,
+        int fortressSize,
+        HumanFortress.Simulation.World.World? world = null,
+        DiagnosticSnapshot? diagnostics = null)
     {
         if (!ui.DebugOpen) return;
         var surf = mapSurface.Surface;
@@ -1616,6 +1626,34 @@ namespace HumanFortress.App.UI;
             surf.Print(x0 + 2, line++, $"Zoom: {zoomLevel}x", Color.White);
             surf.Print(x0 + 2, line++, $"Camera: {camera.X},{camera.Y}", Color.Gray);
             surf.Print(x0 + 2, line++, $"Map: {fortressSize}x{fortressSize} chunks", Color.Gray);
+            if (diagnostics != null)
+            {
+                line++;
+                var diagColor = diagnostics.ErrorOrHigherCount > 0
+                    ? Color.Red
+                    : diagnostics.WarningOrHigherCount > 0 ? Color.Orange : Color.Green;
+                surf.Print(x0 + 2, line++, "=== Diagnostics ===", Color.Yellow);
+                surf.Print(
+                    x0 + 2,
+                    line++,
+                    $"Events: {diagnostics.TotalCount}  Warn+: {diagnostics.WarningOrHigherCount}  Err+: {diagnostics.ErrorOrHigherCount}",
+                    diagColor);
+
+                var latestContentIssue = diagnostics.ContentIssues.LastOrDefault();
+                if (latestContentIssue != null)
+                {
+                    var maxIssueWidth = System.Math.Max(12, width - 6);
+                    surf.Print(
+                        x0 + 2,
+                        line++,
+                        Truncate($"Content: {latestContentIssue.Code} {latestContentIssue.Message}", maxIssueWidth),
+                        latestContentIssue.Level >= HumanFortress.Core.Diagnostics.DiagnosticLevel.Error ? Color.Red : Color.Orange);
+                }
+                else
+                {
+                    surf.Print(x0 + 2, line++, "Content: clean", Color.Green);
+                }
+            }
         }
         else if (ui.DebugMenuTab == 1) // Creatures tab
         {
