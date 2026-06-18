@@ -64,6 +64,9 @@ Verification workflow
 - For `dotnet exec`, do not insert the `dotnet run`-style `--` separator before app arguments.
 - If a build/run command has no output for roughly 30 seconds, check `pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"` and report whether anything is actually still running.
 - `Microsoft.CodeAnalysis.LanguageServer` / Roslyn alone is normal editor background activity, not a stuck game/build.
+- Codex does not have an independent timer while a tool call is pending; the 30-second rule only works when commands are launched with short wait windows and control returns at the tool boundary.
+- For broad refactors, batch several coherent source edits first, then run one bounded sequential verification pass instead of compiling after every tiny change.
+- For very large or risky batches, the human may run the full local compile manually while the agent continues with code reading, design notes, `rg` scans, and `git diff --check`.
 
 Documentation workflow
 

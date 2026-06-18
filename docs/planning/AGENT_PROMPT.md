@@ -36,6 +36,8 @@ Verification:
 - If no command output appears for about 30 seconds, check:
   pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"
   Only Roslyn/CodeAnalysis is not a stuck build.
+- Codex has no independent timer while a tool call is pending; use short wait windows and regain control before auditing.
+- For large mechanical refactors, batch coherent edits and run one bounded verification pass. For full local compiles, ask the human to run the command when that is safer.
 
 Documentation:
 - Update REFACTOR_BATCH_PROGRESS.md for completed architecture batches.

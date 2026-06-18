@@ -71,6 +71,10 @@ pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"
 
 Only Roslyn/CodeAnalysis in that list is normal editor background activity, not a stuck build.
 
+Codex does not have an independent wall-clock timer while a tool call is pending. For agent-driven refactors, prefer short sequential verification commands, then process audits, rather than one long command chain.
+
+For large mechanical batches, it is acceptable for the agent to make several coherent source edits and run only lightweight checks (`rg` scans and `git diff --check`) before asking the human to run the full local compile/test pass.
+
 ## Useful App Arguments
 
 ```sh

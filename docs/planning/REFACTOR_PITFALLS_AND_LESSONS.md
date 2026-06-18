@@ -357,6 +357,18 @@ In the managed sandbox, broad `ps` may fail with `operation not permitted`; pref
 
 Operational rule: if a build/run command has no output for about 30 seconds, check the process list and report the state instead of waiting indefinitely.
 
+Important agent limitation: Codex does not have an independent wall-clock timer that wakes it up while a tool call is still pending. The "30 seconds" rule only works if commands are launched with short wait windows and the agent regains control at the tool boundary. Do not rely on the agent to notice elapsed time while a long-running tool call is hung at the session/front-end layer.
+
+Preferred mitigation:
+
+- split verification into short, sequential commands instead of one long command chain;
+- prefer build/test commands that exit on their own;
+- avoid interactive or normal game-loop commands unless explicitly testing the UI;
+- if a command returns no output in the first wait window, immediately run the `pgrep` audit before continuing;
+- when doing broad mechanical refactors, batch several source edits first, then run one bounded verification pass instead of compiling after every tiny edit.
+
+For very large refactors, it is acceptable to ask the human to run the full local compile manually while the agent continues reading/designing. The agent should still run lightweight checks it can finish reliably, such as `rg` scans and `git diff --check`.
+
 ### Avoid `dotnet run` for the test script
 
 `dotnet run --project tests/...` can silently spend time in build/analyzer paths before producing output. This looked like a hang.
