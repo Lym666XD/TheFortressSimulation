@@ -1,4 +1,4 @@
-using HumanFortress.App.Commands;
+using HumanFortress.Runtime.Commands;
 using HumanFortress.Core.Commands;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
@@ -17,7 +17,7 @@ internal static class FortressPlacementCommandFactory
         int zMax,
         UiMiningAction action,
         int priority = 50)
-        => tick => new CreateAdvancedMiningOrderCommand(tick, rect, zMin, zMax, action, priority);
+        => tick => new CreateAdvancedMiningOrderCommand(tick, rect, zMin, zMax, ToSimulationMiningAction(action), priority);
 
     public static Func<ulong, ICommand> CreateConstructionOrder(
         Rectangle rect,

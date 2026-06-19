@@ -3,7 +3,7 @@ using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 public enum WorkshopQueueOperation
 {

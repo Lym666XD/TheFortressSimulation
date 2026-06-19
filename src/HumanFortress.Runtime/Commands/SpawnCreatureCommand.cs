@@ -5,7 +5,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
 /// Debug command for spawning a creature through the simulation command boundary.
@@ -32,14 +32,8 @@ public sealed class SpawnCreatureCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context is ICreatureSpawnCommandTarget target && target.AddCreatureSpawn(_creatureId, _worldPos, _z, _factionId))
-        {
-            Logger.Log($"[DEBUG] QUEUED: Spawn creature '{_creatureId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
-        }
-        else
-        {
-            Logger.Log($"[DEBUG] FAILED: Could not queue creature spawn '{_creatureId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
-        }
+        if (context is ICreatureSpawnCommandTarget target)
+            target.AddCreatureSpawn(_creatureId, _worldPos, _z, _factionId);
     }
 
     public byte[] Serialize()

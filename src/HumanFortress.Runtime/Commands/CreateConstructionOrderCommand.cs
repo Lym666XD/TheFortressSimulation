@@ -6,7 +6,7 @@ using HumanFortress.Runtime;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
 /// Command that creates a construction designation (L0 structural) over a world-space rectangle across z-range.

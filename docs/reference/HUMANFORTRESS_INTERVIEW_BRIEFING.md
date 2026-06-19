@@ -212,7 +212,7 @@ public void WriteTick(ulong tick)
 
 - Owns app state transitions and shared scheduler/control primitives: TickScheduler, CommandQueue, EventBus, RngStreamManager, DiffLog.
 - Holds one `SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>` for active fortress play instead of separate World/Navigation/RuntimeHost fields.
-- Delegates world reset, navigation creation, queue/diff cleanup, content-loading callback invocation, and host creation to Runtime's `SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>`.
+- Delegates world reset, navigation creation, queue/diff cleanup, content-loading callback invocation, host creation, and generic startup orchestration to Runtime-owned factories/helpers.
 - Starts/stops the runtime host when entering/leaving FortressPlay.
 
 ### 6. `src/HumanFortress.Runtime/SimulationRuntimeSessionFactory.cs`
@@ -221,7 +221,7 @@ public void WriteTick(ulong tick)
 - Creates the authoritative `World` for a new fortress session.
 - Resets scheduler/session queues and diff logs for a clean run.
 - Creates the `NavigationManager` bound to that world.
-- Calls App-supplied callbacks for core creature/item/zone/workshop/recipe content loading and concrete `SimulationRuntimeHost<SimulationRuntimeSystems>` creation. The generic host delegates scheduler/pipeline lifecycle to Runtime-owned `SimulationRuntimeHostCore`.
+- Calls App-supplied callbacks for core creature/item/zone/workshop/recipe content loading and Runtime-owned `SimulationRuntimeHost<SimulationRuntimeSystems>` creation. The generic host delegates scheduler/pipeline lifecycle to Runtime-owned `SimulationRuntimeHostCore`; App supplies logging/content inputs rather than owning the host factory source.
 
 ### 7. `src/HumanFortress.Runtime/SimulationCommandStage.cs`
 **Why:** The simulation command boundary.

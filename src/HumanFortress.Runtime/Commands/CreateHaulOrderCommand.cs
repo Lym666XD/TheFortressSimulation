@@ -5,27 +5,26 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
-/// Command that enqueues a buildable construction (L2 placeable) at an anchor cell.
+/// Command that creates a haul designation over a world-space rectangle at a given Z.
+/// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class CreateBuildableConstructionOrderCommand : ICommand
+public sealed class CreateHaulOrderCommand : ICommand
 {
     public ulong Tick { get; }
     public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.construction.buildable.anchor";
+    public string CommandType => "orders.haul.rect";
 
-    private readonly string _constructionId;
-    private readonly Point _anchor;
+    private readonly Rectangle _worldRect;
     private readonly int _z;
     private readonly int _priority;
 
-    public CreateBuildableConstructionOrderCommand(ulong tick, string constructionId, Point anchor, int z, int priority = 50)
+    public CreateHaulOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
     {
         Tick = tick;
-        _constructionId = constructionId;
-        _anchor = anchor;
+        _worldRect = worldRect;
         _z = z;
         _priority = priority;
     }
@@ -34,7 +33,7 @@ public sealed class CreateBuildableConstructionOrderCommand : ICommand
     {
         if (context is IOrderCommandTarget target)
         {
-            target.EnqueueBuildableConstructionOrder(_constructionId, _anchor, _z, _priority, context.CurrentTick);
+            target.EnqueueHaulOrder(_worldRect, _z, _priority, context.CurrentTick);
         }
     }
 
@@ -42,9 +41,10 @@ public sealed class CreateBuildableConstructionOrderCommand : ICommand
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);
-        bw.Write(_constructionId);
-        bw.Write(_anchor.X);
-        bw.Write(_anchor.Y);
+        bw.Write((int)_worldRect.X);
+        bw.Write((int)_worldRect.Y);
+        bw.Write((int)_worldRect.Width);
+        bw.Write((int)_worldRect.Height);
         bw.Write(_z);
         bw.Write(_priority);
         return ms.ToArray();

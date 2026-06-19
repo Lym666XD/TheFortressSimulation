@@ -1,8 +1,8 @@
+using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
-using HumanFortress.Content.Loading;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
@@ -10,7 +10,7 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App.Runtime;
 
-internal static class FortressRuntimeHostFactory
+public static class FortressRuntimeHostFactory
 {
     public static SimulationRuntimeHost<SimulationRuntimeSystems> Create(
         World world,
@@ -21,7 +21,8 @@ internal static class FortressRuntimeHostFactory
         ItemsDiffLog itemsDiffLog,
         NavigationManager navigation,
         string baseDir,
-        FortressRuntimeContentSnapshot? content = null)
+        FortressRuntimeContentSnapshot? content = null,
+        FortressRuntimeLogging? logging = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(tickScheduler);
@@ -32,7 +33,9 @@ internal static class FortressRuntimeHostFactory
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var dependencies = FortressRuntimeDependencies.Load(world, baseDir, content);
+        logging ??= FortressRuntimeLogging.None;
+
+        var dependencies = FortressRuntimeDependencies.Load(world, baseDir, content, logging.Log);
 
         return new SimulationRuntimeHost<SimulationRuntimeSystems>(
             world,
@@ -47,9 +50,10 @@ internal static class FortressRuntimeHostFactory
                 diffLog,
                 itemsDiffLog,
                 navigation,
-                dependencies),
+                dependencies,
+                logging),
             (context, systems) => context.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
-            Logger.Log,
+            logging.Log,
             dependencies.Recipes,
             dependencies.Constructions,
             dependencies.Geology,

@@ -23,9 +23,9 @@ Current solution projects:
 - `HumanFortress.Simulation` - world, tiles, orders, items, creatures, stockpiles, zones, diff applicators.
 - `HumanFortress.Navigation` - pathfinding and navigation caches; no direct dependency on Simulation.
 - `HumanFortress.Jobs` - transport, mining, construction, and craft executor cores plus domain helpers.
-- `HumanFortress.Runtime` - command stage, runtime command targets, tick pipeline, navigation adapter, session factory/core, and generic runtime host.
+- `HumanFortress.Runtime` - command stage, runtime command implementations/targets, tick pipeline, navigation adapter, session factory/core, generic runtime host, and concrete fortress runtime composition.
 - `HumanFortress.WorldGen` - world generation.
-- `HumanFortress.App` - SadConsole app, game states, UI, and concrete simulation-system composition.
+- `HumanFortress.App` - SadConsole app, game states, UI, logger binding, and App-specific delegates.
 - `HumanFortress.App.Tests` - lightweight regression/smoke test executable.
 
 Current broad dependency direction:
@@ -37,7 +37,7 @@ Contracts
   <- App / Tests
 ```
 
-There are still transitional dependencies. In particular, `HumanFortress.App` still owns concrete runtime composition and job-system wrappers.
+There are still transitional dependencies and compatibility namespaces. In particular, several Runtime/Jobs-owned types still expose historical `HumanFortress.App.*` namespaces until the namespace cleanup pass.
 
 ## Startup And Content Loading
 
@@ -87,12 +87,13 @@ GameStateManager
 HumanFortress.Runtime
   owns SimulationRuntimeSessionFactory, SimulationRuntimeHost<TSystems>,
   SimulationRuntimeHostCore, SimulationTickPipeline, SimulationCommandStage,
-  and command target helpers.
+  command target helpers, SimulationRuntimeSystems, concrete runtime system
+  factories, dependency groups, planning groups, job-system groups,
+  FortressRuntimeHostFactory, and FortressRuntimeStartup.
 
 HumanFortress.App.Runtime
-  owns FortressRuntimeHostFactory, SimulationRuntimeSystems,
-  FortressRuntimeSystemsFactory, FortressRuntimeSystemGroups,
-  and FortressRuntimeStartup.
+  owns App logger callback binding, the optional auto-dig command delegate,
+  UI/session bootstrap glue, and SadConsole lifetime integration.
 ```
 
 Current tick shape:
@@ -130,8 +131,8 @@ This is not yet the full nine-stage `UPDATE_ORDER.md` model. The important curre
 Current job composition:
 
 ```text
-SimulationRuntimeSystems
-  builds planners and executors:
+FortressRuntimeSystemsFactory
+  builds the SimulationRuntimeSystems collection from:
     HaulingSystem
     TransportRequestQueue
     MiningSystem
@@ -156,20 +157,20 @@ SimulationRuntimeSystems
 
 `HumanFortress.Jobs` also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, concrete job diff emitters, profession/craft adapters, callback job loggers, mining drop/tuning resolution, construction terrain-material resolution, `UnifiedJobsOrchestrator`, and the low-frequency `SanitizeSystem` safety net. Profession contract DTOs/interfaces compile from `HumanFortress.Contracts`, and several Jobs/Runtime types still preserve the old namespace until the compatibility cleanup pass.
 
-`HumanFortress.Runtime` now owns the tick-facing transport/mining/construction/craft job-system wrappers in `HumanFortress.Runtime/Jobs`, while preserving the old `HumanFortress.App.Jobs` namespace as a compatibility layer. `HumanFortress.Content` owns profession registry file loading from `professions.json`.
+`HumanFortress.Runtime` now owns the tick-facing transport/mining/construction/craft job-system wrappers in `HumanFortress.Runtime/Jobs`, plus the concrete fortress runtime system collection/factory/grouping layer. Several of these types still preserve old namespaces as a compatibility layer. `HumanFortress.Content` owns profession registry file loading from `professions.json`.
 
-App still owns concrete runtime composition and UI bootstrap: it creates the Runtime-owned job wrappers, passes App logging callbacks, composes the Content-loaded profession registry with Jobs-owned `ProfessionAssignments`, and binds construction workshop-completion notifications into the UI.
+App still owns UI bootstrap and App-specific delegates: it passes logging callbacks, supplies the optional auto-dig command implementation, and binds construction workshop-completion notifications into the UI.
 
 The App runtime composition layer is now split into smaller migration points:
 
-- `FortressRuntimeHostFactory` creates the generic Runtime host for a fortress world.
-- `FortressRuntimeDependencies` groups construction/recipe catalogs, scheduler/workshop tunings, and workforce dependencies.
-- `FortressRuntimePlanningSystems` builds planners and the shared `TransportRequestQueue`.
-- `FortressRuntimeJobSystems` builds Runtime-owned job-system wrappers over Jobs-owned executor cores.
-- `FortressRuntimeSystemsFactory` assembles the concrete runtime system collection.
-- `FortressRuntimeStartup` owns initial-worker setup and optional auto-dig seeding.
+- Runtime-owned `FortressRuntimeHostFactory` creates the generic Runtime host for a fortress world.
+- Runtime-owned `FortressRuntimeDependencies` groups construction/recipe catalogs, scheduler/workshop tunings, and workforce dependencies.
+- Runtime-owned `FortressRuntimePlanningSystems` builds planners and the shared `TransportRequestQueue`.
+- Runtime-owned `FortressRuntimeJobSystems` builds Runtime-owned job-system wrappers over Jobs-owned executor cores.
+- Runtime-owned `FortressRuntimeSystemsFactory` assembles the concrete runtime system collection.
+- Runtime-owned `FortressRuntimeStartup` handles initial-worker/profession setup and invokes an optional App-provided auto-dig delegate.
 
-This is still App-owned composition, but it is no longer concentrated inside the host wrapper or `SimulationRuntimeSystems`.
+The composition center has moved to Runtime. The remaining App coupling is mostly logging callback injection, optional App command delegates, UI completion binding, live debug/UI access, and compatibility namespaces.
 
 Target direction:
 

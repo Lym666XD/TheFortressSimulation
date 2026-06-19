@@ -10,7 +10,7 @@ namespace HumanFortress.App.Runtime;
 /// <summary>
 /// Exposes the simulation systems that participate in the runtime tick loop.
 /// </summary>
-internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
+public sealed class SimulationRuntimeSystems : IRuntimeTickSystems
 {
     internal SimulationRuntimeSystems(
         HaulingSystem haulingPlanner,

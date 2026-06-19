@@ -4,10 +4,9 @@ using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Orders;
-using HumanFortress.App.UI;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
 /// Command that creates an advanced mining designation with z-range and mining action.
@@ -23,10 +22,10 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
     private readonly Rectangle _worldRect;
     private readonly int _zMin;
     private readonly int _zMax;
-    private readonly UI.MiningAction _action;
+    private readonly MiningAction _action;
     private readonly int _priority;
 
-    public CreateAdvancedMiningOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, UI.MiningAction action, int priority = 50)
+    public CreateAdvancedMiningOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority = 50)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -40,17 +39,8 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
     {
         if (context is IOrderCommandTarget target)
         {
-            var act = _action switch
-            {
-                UI.MiningAction.Dig => HumanFortress.Simulation.Orders.MiningAction.Dig,
-                UI.MiningAction.DigStairwell => HumanFortress.Simulation.Orders.MiningAction.DigStairwell,
-                UI.MiningAction.DigRamp => HumanFortress.Simulation.Orders.MiningAction.DigRamp,
-                UI.MiningAction.DigChannel => HumanFortress.Simulation.Orders.MiningAction.DigChannel,
-                UI.MiningAction.RemoveDigging => HumanFortress.Simulation.Orders.MiningAction.RemoveDigging,
-                _ => HumanFortress.Simulation.Orders.MiningAction.Dig
-            };
             // Always enqueue; planner will skip if nothing eligible. This avoids false negatives at UI boundary.
-            target.EnqueueAdvancedMiningOrder(_worldRect, _zMin, _zMax, act, _priority, context.CurrentTick);
+            target.EnqueueAdvancedMiningOrder(_worldRect, _zMin, _zMax, _action, _priority, context.CurrentTick);
         }
     }
 

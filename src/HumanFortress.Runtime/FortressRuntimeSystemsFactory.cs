@@ -6,14 +6,15 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App.Runtime;
 
-internal static class FortressRuntimeSystemsFactory
+public static class FortressRuntimeSystemsFactory
 {
     public static SimulationRuntimeSystems Create(
         World world,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         NavigationManager navigation,
-        FortressRuntimeDependencies dependencies)
+        FortressRuntimeDependencies dependencies,
+        FortressRuntimeLogging? logging = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(diffLog);
@@ -21,16 +22,19 @@ internal static class FortressRuntimeSystemsFactory
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(dependencies);
 
-        var planners = FortressRuntimePlanningSystems.Create(world, dependencies);
+        logging ??= FortressRuntimeLogging.None;
+
+        var planners = FortressRuntimePlanningSystems.Create(world, dependencies, logging);
         var jobs = FortressRuntimeJobSystems.Create(
             world,
             diffLog,
             itemsDiffLog,
             navigation,
             dependencies,
-            planners);
+            planners,
+            logging);
 
-        var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8, log: Logger.Log);
+        var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8, log: logging.Log);
 
         var jobsOrchestrator = new UnifiedJobsOrchestrator(
             planners.Hauling,
@@ -43,7 +47,7 @@ internal static class FortressRuntimeSystemsFactory
             jobs.Construction,
             jobs.Craft,
             dependencies.SchedulerTunings,
-            Logger.Log);
+            logging.Log);
 
         return new SimulationRuntimeSystems(
             planners.Hauling,

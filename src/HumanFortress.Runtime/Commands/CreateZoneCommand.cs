@@ -5,7 +5,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
 /// Command to create a new zone with specified cells.

@@ -1,4 +1,4 @@
-using HumanFortress.App.Commands;
+using HumanFortress.Runtime.Commands;
 using HumanFortress.App.UI;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;

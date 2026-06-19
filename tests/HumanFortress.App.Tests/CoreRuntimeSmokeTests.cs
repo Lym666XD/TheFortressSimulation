@@ -1,4 +1,4 @@
-using HumanFortress.App.Commands;
+using HumanFortress.Runtime.Commands;
 using HumanFortress.App.Jobs;
 using HumanFortress.App;
 using HumanFortress.Content.Definitions;
@@ -995,7 +995,7 @@ internal static class CoreRuntimeSmokeTests
 
         pipeline.AttachTo(scheduler);
         commandQueue.Enqueue(new CreateMiningOrderCommand(tick: 0, rect, z: 2, priority: 11));
-        commandQueue.Enqueue(new CreateAdvancedMiningOrderCommand(tick: 0, rect, zMin: 1, zMax: 3, action: HumanFortress.App.UI.MiningAction.Dig, priority: 12));
+        commandQueue.Enqueue(new CreateAdvancedMiningOrderCommand(tick: 0, rect, zMin: 1, zMax: 3, action: HumanFortress.Simulation.Orders.MiningAction.Dig, priority: 12));
         commandQueue.Enqueue(new CreateHaulOrderCommand(tick: 0, rect, z: 2, priority: 13));
         commandQueue.Enqueue(new CreateConstructionOrderCommand(tick: 0, rect, zMin: 2, zMax: 2, shape: ConstructionShape.Floor, filter: filter, priority: 14));
         commandQueue.Enqueue(new CreateBuildableConstructionOrderCommand(tick: 0, "core_workshop_carpenter", buildAnchor, z: 2, priority: 15));

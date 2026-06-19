@@ -5,36 +5,33 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
-/// Command that creates a haul designation over a world-space rectangle at a given Z.
-/// Executed through the simulation tick command stage.
+/// Command to create a stockpile zone and its per-chunk stockpile cell shards.
 /// </summary>
-public sealed class CreateHaulOrderCommand : ICommand
+public sealed class CreateStockpileCommand : ICommand
 {
     public ulong Tick { get; }
     public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.haul.rect";
+    public string CommandType => "stockpiles.create";
 
     private readonly Rectangle _worldRect;
     private readonly int _z;
-    private readonly int _priority;
+    private readonly string _presetId;
 
-    public CreateHaulOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
+    public CreateStockpileCommand(ulong tick, Rectangle worldRect, int z, string presetId)
     {
         Tick = tick;
         _worldRect = worldRect;
         _z = z;
-        _priority = priority;
+        _presetId = string.IsNullOrWhiteSpace(presetId) ? "all" : presetId;
     }
 
     public void Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            target.EnqueueHaulOrder(_worldRect, _z, _priority, context.CurrentTick);
-        }
+        if (context is IStockpileCommandTarget target)
+            target.CreateStockpile(_worldRect, _z, _presetId, context.CurrentTick);
     }
 
     public byte[] Serialize()
@@ -46,7 +43,7 @@ public sealed class CreateHaulOrderCommand : ICommand
         bw.Write((int)_worldRect.Width);
         bw.Write((int)_worldRect.Height);
         bw.Write(_z);
-        bw.Write(_priority);
+        bw.Write(_presetId);
         return ms.ToArray();
     }
 }

@@ -1,5 +1,5 @@
 using HumanFortress.App;
-using HumanFortress.App.Commands;
+using HumanFortress.Runtime.Commands;
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Runtime;
 using HumanFortress.Content.Loading;
@@ -77,16 +77,21 @@ public sealed class GameStateManager
                     _contentWarningsAsErrors);
                 _generationContent = CreateFortressGenerationContent(_runtimeContentSnapshot);
             },
-            (world, navigation) => FortressRuntimeHostFactory.Create(
-                world,
-                _tickScheduler,
-                _commandQueue,
-                _eventBus,
-                _diffLog,
-                _itemsDiffLog,
-                navigation,
-                baseDir,
-                _runtimeContentSnapshot),
+            (world, navigation) =>
+            {
+                var runtimeLogging = CreateRuntimeLogging();
+                return FortressRuntimeHostFactory.Create(
+                    world,
+                    _tickScheduler,
+                    _commandQueue,
+                    _eventBus,
+                    _diffLog,
+                    _itemsDiffLog,
+                    navigation,
+                    baseDir,
+                    _runtimeContentSnapshot,
+                    runtimeLogging);
+            },
             () => NavigationTuning.LoadFromJson(_runtimeContentSnapshot?.NavigationTuningJson));
     }
 
@@ -265,7 +270,13 @@ public sealed class GameStateManager
                 var runtime = RequireRuntimeHost();
                 _jobsDebugCache = null;
                 _jobsDebugCacheTick = 0;
-                FortressRuntimeStartup.Start(runtime, _enqueueAutoDig, _commandQueue, _tickScheduler);
+                FortressRuntimeStartup.Start(
+                    runtime,
+                    _enqueueAutoDig,
+                    _commandQueue,
+                    _tickScheduler,
+                    (world, queue, tick) => SimulationAutoDigSeeder.EnqueueIfPossible(world, queue, tick, Logger.Log),
+                    Logger.Log);
             }
         }
         catch (Exception ex)
@@ -357,6 +368,13 @@ public sealed class GameStateManager
     }
 
     private SimulationRuntimeHost<SimulationRuntimeSystems>? RuntimeHost => _runtimeSession?.Host;
+
+    private static FortressRuntimeLogging CreateRuntimeLogging()
+    {
+        return new FortressRuntimeLogging(
+            Logger.Log,
+            Logger.CreateCallback("Jobs.ConstructionMaterials"));
+    }
 
     private static FortressGenerationContent CreateFortressGenerationContent(FortressRuntimeContentSnapshot content)
     {

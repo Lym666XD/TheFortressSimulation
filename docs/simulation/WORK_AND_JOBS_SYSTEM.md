@@ -1,6 +1,6 @@
 # Work And Jobs System
 
-Updated: 2026-06-12
+Updated: 2026-06-18
 Status: current implementation notes plus target scheduler constraints
 
 This document is the active entry point for fortress work planning, job execution,
@@ -11,8 +11,9 @@ Use [TRANSPORT_SYSTEM.md](TRANSPORT_SYSTEM.md) for transport-specific behavior.
 
 ## Current Runtime Shape
 
-Current fortress work is composed by App runtime factories and executed through
-the normal runtime tick scheduler:
+Current fortress work is composed by Runtime factories with App-provided logging
+and optional command delegates, then executed through the normal runtime tick
+scheduler:
 
 ```text
 GameStateManager.InitializeWorld
@@ -25,16 +26,20 @@ GameStateManager.InitializeWorld
 ```
 
 `HumanFortress.Runtime` owns the generic session host, command stage, pre/post
-tick pipeline, and navigation rebuild barrier. `HumanFortress.App.Runtime` still
-owns concrete fortress system composition.
+tick pipeline, navigation rebuild barrier, concrete fortress system collection,
+runtime dependency groups, system factories, host factory, and startup
+orchestration.
 
-The current App composition split is:
+The current Runtime composition split is:
 
 - `FortressRuntimeDependencies` loads catalogs, tunings, and workforce state.
 - `FortressRuntimePlanningSystems` builds planners and the shared transport queue.
-- `FortressRuntimeJobSystems` builds App job shells over Jobs-owned executor cores.
+- `FortressRuntimeJobSystems` builds Runtime job shells over Jobs-owned executor cores.
 - `FortressRuntimeSystemsFactory` assembles the concrete system collection.
 - `SimulationRuntimeSystems` exposes the systems and registers the tick systems.
+
+App still supplies logging callbacks, the active content snapshot, and optional
+App command delegates such as auto-dig.
 
 ## Current Planners
 

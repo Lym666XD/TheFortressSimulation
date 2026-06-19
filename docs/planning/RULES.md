@@ -18,7 +18,7 @@ Low coupling, high cohesion — clear module boundaries and contracts.
 
 Safe concurrency — parallelize reads and isolated work; enforce a single, deterministic write point.
 
-1.1) Active Development Constraints - 2026-06-17 (Normative)
+1.1) Active Development Constraints - 2026-06-18 (Normative)
 
 These constraints reflect the current refactor state and override older target-only wording when there is a conflict.
 
@@ -30,15 +30,16 @@ Current source ownership
 - `HumanFortress.Simulation` owns authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
 - `HumanFortress.Navigation` owns navigation algorithms and cache structures; it must remain decoupled from Simulation through adapter interfaces.
 - `HumanFortress.Jobs` owns job executor cores, job helpers, job diff emitters, callback loggers, scheduler/workshop tuning types, worker selection, profession assignment state, and unified job orchestration.
-- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, command target seams, Simulation-backed navigation adapter/factory, startup helpers, and tick-facing job wrappers.
+- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, command implementations and target seams, Simulation-backed navigation adapter/factory, startup helpers, tick-facing job wrappers, concrete runtime system collection/factories/groups, runtime dependency groups, and runtime host/startup factories.
 - `HumanFortress.WorldGen` consumes explicit generation content; it must not read global content registries directly.
-- `HumanFortress.App` owns SadConsole/MonoGame UI, UI bootstrap, concrete session composition that has not yet moved, logger callback binding, and UI/debug surfaces. Do not add new gameplay rules, content loaders, job logic, or authoritative world mutations to App.
+- `HumanFortress.App` owns SadConsole/MonoGame UI, UI bootstrap, logger callback binding, App-specific optional command delegates, construction UI completion binding, and UI/debug surfaces. Do not add new gameplay rules, content loaders, job logic, or authoritative world mutations to App.
 
 Current compatibility debt
 
 - Some moved types intentionally preserve old namespaces such as `HumanFortress.App.Jobs` or `HumanFortress.Core.Content.Registry` until the namespace cleanup pass.
 - Transitional `InternalsVisibleTo` bridges are allowed only as migration scaffolding. Do not use them as justification for new cross-module ownership leaks.
 - `HumanFortress.App/Jobs` should remain empty of active source files.
+- `HumanFortress.App/Commands` should remain empty of active source files.
 
 Mutation and command rules
 

@@ -5,7 +5,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
 /// Debug command for spawning an item through the simulation command boundary.
@@ -32,14 +32,8 @@ public sealed class SpawnItemCommand : ICommand
 
     public void Execute(ISimulationContext context)
     {
-        if (context is IItemSpawnCommandTarget target && target.AddItemSpawn(_itemId, _worldPos, _z, _quantity))
-        {
-            Logger.Log($"[DEBUG] QUEUED: Spawn item '{_itemId}' qty={_quantity} at ({_worldPos.X},{_worldPos.Y},{_z})");
-        }
-        else
-        {
-            Logger.Log($"[DEBUG] FAILED: Could not queue item spawn '{_itemId}' at ({_worldPos.X},{_worldPos.Y},{_z})");
-        }
+        if (context is IItemSpawnCommandTarget target)
+            target.AddItemSpawn(_itemId, _worldPos, _z, _quantity);
     }
 
     public byte[] Serialize()

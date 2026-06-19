@@ -582,7 +582,7 @@ Current first pass:
 GameStateManager
   -> Runtime-owned SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>.CreateNew(...)
   -> App content-loading callback
-  -> App host-factory callback through FortressRuntimeHostFactory
+  -> Runtime-owned FortressRuntimeHostFactory through an App callback that supplies logging/content inputs
   -> Runtime-owned SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>(World, Navigation, Host)
   -> Runtime-owned generic SimulationRuntimeHost<TSystems>
   -> Runtime-owned SimulationRuntimeHostCore
@@ -590,11 +590,11 @@ GameStateManager
 
 Keep future runtime construction behind this seam. UI/state code should not directly reset schedulers, clear command queues, create navigation managers, or new up runtime hosts. Content loading and concrete system construction are still App callbacks because they depend on current content registries, job adapters, logger callbacks, UI hooks, and SadConsole-facing lifetime.
 
-`SimulationRuntimeHostCore` owns scheduler restart, tick-system registration, pipeline attachment, and stop-time pipeline detachment. `SimulationRuntimeHost<TSystems>` owns the generic lifecycle shell. `SimulationRuntimeSystems` is now only the App-owned system collection/registration surface; concrete App-specific system creation is grouped under `FortressRuntimeDependencies`, `FortressRuntimePlanningSystems`, and `FortressRuntimeJobSystems`, orchestrated by `FortressRuntimeSystemsFactory`. `FortressRuntimeDependencies` is further split into `FortressRuntimeCatalogs`, `FortressRuntimeTunings`, and `FortressRuntimeWorkforce`. Keep initial worker spawning and auto-dig seeding in `FortressRuntimeStartup` until those dependencies have their own Runtime/Content seams.
+`SimulationRuntimeHostCore` owns scheduler restart, tick-system registration, pipeline attachment, and stop-time pipeline detachment. `SimulationRuntimeHost<TSystems>` owns the generic lifecycle shell. `SimulationRuntimeSystems`, `FortressRuntimeDependencies`, `FortressRuntimePlanningSystems`, `FortressRuntimeJobSystems`, `FortressRuntimeSystemsFactory`, `FortressRuntimeHostFactory`, and `FortressRuntimeStartup` now compile from Runtime. `FortressRuntimeDependencies` is split into `FortressRuntimeCatalogs`, `FortressRuntimeTunings`, and `FortressRuntimeWorkforce`. App still supplies logger callbacks and optional command delegates, such as auto-dig, because those remain App-specific.
 
 Do not collapse those groups back into one long factory method. They are migration handles: dependencies point toward Content/Runtime, planners point toward Simulation/Jobs boundaries, and job-system shells point toward Jobs/App adapter cleanup.
 
-`FortressRuntimeHostFactory` should create `FortressRuntimeDependencies` once and use that same instance for both `SimulationRuntimeContext` catalog injection and concrete system creation. If host construction reads content separately from systems creation, command targets and gameplay systems can accidentally observe different catalog snapshots after a future hot-reload/content-reload pass.
+`FortressRuntimeHostFactory` should create `FortressRuntimeDependencies` once and use that same instance for both `SimulationRuntimeContext` catalog injection and concrete system creation. If host construction reads content separately from systems creation, command targets and gameplay systems can accidentally observe different catalog snapshots after a future hot-reload/content-reload pass. It should receive logging as callbacks; do not reintroduce direct App `Logger` calls into Runtime source.
 
 For runtime composition, structured registry reads should stay behind the Content-owned `FortressRuntimeContentSnapshotLoader`. `FortressRuntimeDependencies.Load(...)` should consume that snapshot, then split it into catalog/tuning/geology/workforce groups. Do not add new direct `ContentRegistry.Instance` / `JObject` tuning reads to host factory, systems factory, job-system group creation, runtime command targets, App rendering helpers, App workshop/build UI helper code, or Navigation.
 

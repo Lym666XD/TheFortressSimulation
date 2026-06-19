@@ -5,43 +5,35 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Commands;
+namespace HumanFortress.Runtime.Commands;
 
 /// <summary>
-/// Command to add or remove cells from an existing zone.
+/// Command that creates a mining designation over a world-space rectangle at a given Z.
+/// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class UpdateZoneCellsCommand : ICommand
+public sealed class CreateMiningOrderCommand : ICommand
 {
     public ulong Tick { get; }
     public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "zones.update_cells";
+    public string CommandType => "orders.mining.rect";
 
-    private readonly int _zoneId;
     private readonly Rectangle _worldRect;
     private readonly int _z;
-    private readonly bool _isAdding; // true = add, false = remove
+    private readonly int _priority;
 
-    public UpdateZoneCellsCommand(ulong tick, int zoneId, Rectangle worldRect, int z, bool isAdding)
+    public CreateMiningOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
     {
         Tick = tick;
-        _zoneId = zoneId;
         _worldRect = worldRect;
         _z = z;
-        _isAdding = isAdding;
+        _priority = priority;
     }
 
     public void Execute(ISimulationContext context)
     {
-        if (context is IZoneCommandTarget target)
+        if (context is IOrderCommandTarget target)
         {
-            if (_isAdding)
-            {
-                target.AddZoneCells(_zoneId, _worldRect, _z);
-            }
-            else
-            {
-                target.RemoveZoneCells(_zoneId, _worldRect, _z);
-            }
+            target.EnqueueMiningOrder(_worldRect, _z, _priority, context.CurrentTick);
         }
     }
 
@@ -49,13 +41,12 @@ public sealed class UpdateZoneCellsCommand : ICommand
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);
-        bw.Write(_zoneId);
         bw.Write((int)_worldRect.X);
         bw.Write((int)_worldRect.Y);
         bw.Write((int)_worldRect.Width);
         bw.Write((int)_worldRect.Height);
         bw.Write(_z);
-        bw.Write(_isAdding);
+        bw.Write(_priority);
         return ms.ToArray();
     }
 }

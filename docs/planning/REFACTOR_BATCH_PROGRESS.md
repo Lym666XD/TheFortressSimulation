@@ -2,16 +2,20 @@
 
 This document tracks the current multi-step refactor batches so progress is visible without relying on chat history.
 
-## Current Status Snapshot - 2026-06-17
+## Current Status Snapshot - 2026-06-18
 
 - `HumanFortress.App/Jobs` no longer contains active source files.
 - Profession contracts now compile from `HumanFortress.Contracts`.
 - Profession assignment state now lives in `HumanFortress.Jobs`.
 - Profession registry JSON loading now lives in `HumanFortress.Content.Definitions`.
 - Tick-facing transport/mining/construction/craft job wrappers now live in `HumanFortress.Runtime/Jobs`.
+- Runtime dependency grouping (`FortressRuntimeDependencies`, catalogs, tunings, and workforce composition) now lives in `HumanFortress.Runtime`.
+- Runtime concrete system composition (`SimulationRuntimeSystems`, `FortressRuntimeSystemsFactory`, planning groups, and job-system groups) now lives in `HumanFortress.Runtime`.
 - Jobs owns the executor cores, diff emitters, callback loggers, profession/craft adapters, scheduler/workshop tuning types, worker-selection strategy, unified jobs orchestrator, sanitizer, mining drop resolver, and construction terrain-material resolver.
-- App still owns concrete runtime/session composition, logger callback binding, UI bootstrap, construction completion UI notification binding, and live UI/debug access surfaces.
-- Remaining high-priority architecture work is moving concrete session composition out of App, reducing compatibility namespaces/internal bridges, and introducing UI/debug snapshot facades.
+- Runtime host factory and generic startup orchestration now live in `HumanFortress.Runtime`; App injects logging and the optional auto-dig command delegate.
+- Runtime command source files now live in `HumanFortress.Runtime/Commands` under the `HumanFortress.Runtime.Commands` namespace.
+- App still owns the SadConsole/platform host, logger callback binding, auto-dig command implementation, UI bootstrap, construction completion UI notification binding, and live UI/debug access surfaces.
+- Remaining high-priority architecture work is reducing compatibility namespaces/internal bridges and introducing UI/debug snapshot facades.
 
 ## Current Batch: Runtime Generic Host and App Factory Cleanup
 
@@ -21,15 +25,17 @@ Status: completed
 
 - Added `HumanFortress.Runtime.SimulationRuntimeHost<TSystems>` as a Runtime-owned generic runtime host over `SimulationRuntimeHostCore`.
 - Deleted the old App-owned `SimulationRuntimeHost` wrapper.
-- Kept `SimulationRuntimeSystems` App-owned for now because it still wires App job shells, profession assignments, logger callbacks, scheduler/workshop tunings, and current content catalog adapters.
+- Moved `SimulationRuntimeSystems` into `HumanFortress.Runtime`; it is now a Runtime-owned system collection and tick-registration surface.
+- Added `FortressRuntimeLogging` as a small injected logging callback bundle so Runtime composition no longer calls App `Logger` directly.
 - Added `FortressRuntimeHostFactory` in App as the remaining App composition bridge:
   - creates `SimulationRuntimeHost<SimulationRuntimeSystems>`
   - injects recipe/construction catalogs into `SimulationRuntimeContext`
   - registers the profession-weight callback without making Runtime depend on App professions
-- Added `FortressRuntimeStartup` so initial-worker spawning and optional auto-dig seeding are separated from host creation.
+- Moved `FortressRuntimeHostFactory` into `HumanFortress.Runtime`; App now supplies `FortressRuntimeLogging` and the active content snapshot instead of letting the factory call App `Logger`.
+- Added then moved `FortressRuntimeStartup` into `HumanFortress.Runtime`; initial-worker/profession setup is Runtime-owned, while optional auto-dig remains an App-provided command delegate.
 - Updated `GameStateManager` so it no longer directly constructs the runtime host or owns initial-worker/auto-dig startup details. It now delegates host creation to `FortressRuntimeHostFactory` and startup hooks to `FortressRuntimeStartup`.
-- Split App-side concrete system assembly out of `SimulationRuntimeSystems` into `FortressRuntimeSystemsFactory`, leaving `SimulationRuntimeSystems` as a system collection plus tick-registration surface.
-- Split `FortressRuntimeSystemsFactory` into explicit App-owned runtime system groups:
+- Split concrete system assembly out of `SimulationRuntimeSystems` into `FortressRuntimeSystemsFactory`, leaving `SimulationRuntimeSystems` as a system collection plus tick-registration surface.
+- Split `FortressRuntimeSystemsFactory` into explicit Runtime-owned runtime system groups:
   - `FortressRuntimeDependencies` for content catalogs, scheduler/workshop tunings, craft recipe adapter, and profession assignments
   - `FortressRuntimePlanningSystems` for mining/hauling/construction/craft planners and the shared transport request queue
   - `FortressRuntimeJobSystems` for mining/transport/construction/craft job executor shells
@@ -117,6 +123,15 @@ Status: completed
   - `HumanFortress.sln` fast build passed with `0 Warning(s), 0 Error(s)`
   - App `--init-only` passed; startup loaded 79 materials, 17 geology entries, and 19 zone definitions
   - App analyzer build passed with the existing 41 historical analyzer warnings and `0 Error(s)`
+- Latest 2026-06-18 no-compile runtime-composition sub-batch:
+  - Moved `SimulationRuntimeSystems`, `FortressRuntimeSystemsFactory`, `FortressRuntimePlanningSystems`, and `FortressRuntimeJobSystems` from App source into `HumanFortress.Runtime`.
+  - Added `FortressRuntimeLogging` so Runtime composition receives App logging callbacks without calling App `Logger` directly.
+  - Moved `FortressRuntimeHostFactory` and `FortressRuntimeStartup` from App source into `HumanFortress.Runtime`.
+  - Changed `GameStateManager` to pass explicit runtime logging and the App-owned auto-dig command delegate into Runtime.
+  - Moved all App command source files into `HumanFortress.Runtime/Commands`, changed their namespace to `HumanFortress.Runtime.Commands`, and removed the UI enum dependency from `CreateAdvancedMiningOrderCommand`; App now maps UI mining actions before constructing the command.
+  - First fast build caught two migrated debug spawn commands still calling App `Logger`; those calls were removed so Runtime commands no longer depend on App logging.
+  - `HumanFortress.sln` fast build passed with `0 Warning(s), 0 Error(s)` after the fix.
+  - Tests and headless `--init-only` were not run in this sub-batch.
   - `git diff --check` passed
 - Latest 2026-06-14 SimulationWorldContentLoader content-boundary sub-batch:
   - Content fast build passed with `0 Warning(s), 0 Error(s)`
