@@ -1,11 +1,11 @@
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Craft;
-using HumanFortress.Runtime;
+using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 /// <summary>
 /// Exposes the simulation systems that participate in the runtime tick loop.

@@ -1,11 +1,12 @@
-using HumanFortress.App.Jobs;
+using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Jobs;
 using HumanFortress.Jobs.Craft;
 using HumanFortress.Navigation;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public sealed class FortressRuntimeDependencies
 {

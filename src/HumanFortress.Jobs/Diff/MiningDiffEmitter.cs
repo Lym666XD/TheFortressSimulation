@@ -6,7 +6,7 @@ using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 internal sealed class MiningDiffEmitter : IMiningDiffEmitter
 {

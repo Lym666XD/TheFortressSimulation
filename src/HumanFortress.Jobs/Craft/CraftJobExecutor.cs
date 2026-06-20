@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Navigation;
 using WorldModel = HumanFortress.Simulation.World.World;
 

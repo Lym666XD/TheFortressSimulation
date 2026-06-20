@@ -5,7 +5,7 @@ using HumanFortress.Navigation;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 internal sealed class TransportDiffEmitter : ITransportMovementDiffEmitter, ITransportItemDiffEmitter
 {

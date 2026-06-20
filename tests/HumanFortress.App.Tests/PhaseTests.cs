@@ -365,7 +365,7 @@ namespace HumanFortress.App
             try
             {
                 var world = new World(2, 50);
-                var builder = new RenderSnapshotBuilder(world, HumanFortress.Core.Content.Registry.ConstructionCatalogStore.Empty);
+                var builder = new RenderSnapshotBuilder(world, HumanFortress.Contracts.Content.Registry.ConstructionCatalogStore.Empty);
                 
                 var camera = new CameraInfo
                 {
@@ -733,7 +733,7 @@ namespace HumanFortress.App
 
         private static FortressGenerationContent CreateFortressGenerationContent()
         {
-            var registry = HumanFortress.Core.Content.Registry.ContentRegistry.Instance;
+            var registry = HumanFortress.Content.Registry.ContentRegistry.Instance;
             return new FortressGenerationContent(
                 registry,
                 registry.GetTuningJson("tuning.mapgen", "$"),

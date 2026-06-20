@@ -2,7 +2,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 /// <summary>
 /// Low-frequency sanitizer that relocates any creatures/items stuck in non-walkable tiles

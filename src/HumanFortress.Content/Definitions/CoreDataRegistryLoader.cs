@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Definitions;
 
 /// <summary>
 /// Loads construction/workshop and recipe core data into immutable catalog snapshots.

@@ -1,9 +1,9 @@
 using System.Text.Json.Nodes;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Jobs.Mining;
 using SimTerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 internal sealed class MiningDropResolver : IMiningDropResolver
 {

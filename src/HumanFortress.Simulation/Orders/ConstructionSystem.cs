@@ -24,13 +24,13 @@ public sealed class ConstructionSystem : ITick
 
     private readonly List<PlannedBuild> _planned = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedBuild> _outbox = new();
-    private readonly HumanFortress.Core.Content.Registry.ConstructionTuning _tuning;
+    private readonly HumanFortress.Contracts.Content.Registry.ConstructionTuning _tuning;
 
     public ConstructionSystem(
         World.World world,
         OrdersManager orders,
         IConstructionTerrainMaterialResolver terrainMaterials,
-        HumanFortress.Core.Content.Registry.ConstructionTuning tuning,
+        HumanFortress.Contracts.Content.Registry.ConstructionTuning tuning,
         int maxPerTick = 256)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
@@ -185,7 +185,7 @@ public sealed class ConstructionSystem : ITick
                     p.Z,
                     tick,
                     targetId: $"l0:{p.Shape}",
-                    fp: new HumanFortress.Core.Content.Registry.Footprint(1,1,1),
+                    fp: new HumanFortress.Contracts.Content.Registry.Footprint(1,1,1),
                     materialsRequired: req,
                     totalBuildTicks: p.Shape switch {
                         ConstructionShape.Wall => tuning.BuildTicksWall,

@@ -1,5 +1,5 @@
 using HumanFortress.Core.Commands;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.Creatures;

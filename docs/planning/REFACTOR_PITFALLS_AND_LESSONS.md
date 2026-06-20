@@ -699,7 +699,7 @@ Current first-pass behavior:
 - construction duplicates are explicitly skipped and counted;
 - recipe loading reports `errors=0`.
 
-Remaining architecture risk: there is now one normal runtime registry source model, the structured registry, and production direct reads are concentrated in Content bootstrap/snapshot capture/application. The old legacy registry source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content` while preserving its old namespace. The remaining risk is policy and compatibility: strict content-load failure rules, richer diagnostics/debug surfaces, and final namespace cleanup should be handled without adding new singleton reads.
+Remaining architecture risk: there is now one normal runtime registry source model, the structured registry, and production direct reads are concentrated in Content bootstrap/snapshot capture/application. The old legacy registry source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content.Registry`. The remaining risk is policy and compatibility: strict content-load failure rules, richer diagnostics/debug surfaces, and cleanup of the few remaining non-registry content DTO compatibility namespaces should be handled without adding new singleton reads.
 
 Runtime geology and zone JSON DTOs have moved to `HumanFortress.Contracts` while keeping their old namespace. The zone loader now uses explicit `System.Text.Json` property mappings, which prevents `zones.json` snake_case fields such as `display_name`, `ui_hints`, and `default_policies` from silently deserializing to defaults.
 

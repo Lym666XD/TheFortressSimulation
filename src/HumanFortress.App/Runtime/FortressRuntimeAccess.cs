@@ -1,10 +1,11 @@
 using HumanFortress.App.GameStates;
 using HumanFortress.App.Diagnostics;
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.Core.Commands;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime;
+using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 

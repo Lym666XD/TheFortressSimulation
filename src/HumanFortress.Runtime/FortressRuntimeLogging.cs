@@ -1,4 +1,4 @@
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public sealed class FortressRuntimeLogging
 {

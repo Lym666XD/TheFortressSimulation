@@ -1,7 +1,8 @@
+using HumanFortress.Contracts.Jobs;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 public sealed class ProfessionAssignments
 {

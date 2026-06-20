@@ -1,7 +1,8 @@
 using System.Text.Json;
+using HumanFortress.Contracts.Jobs;
 using HumanFortress.Content.Loading;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Content.Definitions;
 
 public sealed class ProfessionRegistry : IProfessionRegistry
 {

@@ -1,5 +1,5 @@
 using HumanFortress.App.UI;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.Orders;
 using SadConsole.Input;
 

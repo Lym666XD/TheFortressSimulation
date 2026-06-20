@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Placeables;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 
 namespace HumanFortress.Simulation.Rendering
 {

@@ -1,5 +1,6 @@
 using System;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Jobs;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Mining;
@@ -8,7 +9,7 @@ using HumanFortress.Runtime;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Runtime.Jobs;
 
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned mining executor.

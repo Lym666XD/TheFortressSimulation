@@ -3,7 +3,7 @@ using SadRogue.Primitives;
 using HumanFortress.App;
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Runtime;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Placeables;
@@ -229,7 +229,7 @@ namespace HumanFortress.App.UI;
         }
 
         var roster = runtime?.GetProfessionRosterSnapshot()
-            ?? Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
+            ?? Array.Empty<HumanFortress.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
         int areaHeight = System.Math.Max(10, maxHeight);
         var area = new SadRogue.Primitives.Rectangle(1, startY, surf.Width - 2, areaHeight);
         FillArea(surf, area, new Color(15, 15, 15));
@@ -510,7 +510,7 @@ namespace HumanFortress.App.UI;
     private static void RenderDwarfRosterColumn(ICellSurface surf, Rectangle area, HumanFortress.Simulation.World.World world, UiStore ui, FortressRuntimeAccess? runtime)
     {
         var roster = runtime?.GetProfessionRosterSnapshot()
-            ?? Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
+            ?? Array.Empty<HumanFortress.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
         var service = runtime?.ProfessionAssignments;
         var nameLookup = service?.Registry.Definitions.ToDictionary(d => d.Id, d => d.Name, StringComparer.OrdinalIgnoreCase)
             ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -1200,7 +1200,7 @@ namespace HumanFortress.App.UI;
     }
 
     // Simple workshop footprint preview: draws a gold rectangle at the anchor with given footprint
-    public static void DrawWorkshopPlacementPreview(ScreenSurface mapSurface, SadRogue.Primitives.Point anchor, HumanFortress.Core.Content.Registry.Footprint footprint, SadRogue.Primitives.Rectangle viewport, HumanFortress.Simulation.World.World? world)
+    public static void DrawWorkshopPlacementPreview(ScreenSurface mapSurface, SadRogue.Primitives.Point anchor, HumanFortress.Contracts.Content.Registry.Footprint footprint, SadRogue.Primitives.Rectangle viewport, HumanFortress.Simulation.World.World? world)
     {
         var gold = new Color(255, 230, 0);
         for (int dy = 0; dy < footprint.D; dy++)
@@ -1242,7 +1242,7 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    public static void DrawMiningJobHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
+    public static void DrawMiningJobHighlights(ScreenSurface mapSurface, HumanFortress.Runtime.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
     {
         if (jobs == null) return;
         var surf = mapSurface.Surface;
@@ -1262,7 +1262,7 @@ namespace HumanFortress.App.UI;
         }
     }
 
-    public static void DrawMiningCompletedHighlights(ScreenSurface mapSurface, HumanFortress.App.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
+    public static void DrawMiningCompletedHighlights(ScreenSurface mapSurface, HumanFortress.Runtime.Jobs.MiningJobSystem? jobs, SadRogue.Primitives.Point camera, int currentZ, ulong tick)
     {
         if (jobs == null) return;
         var surf = mapSurface.Surface;

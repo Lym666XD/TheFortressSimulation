@@ -1,6 +1,6 @@
 using HumanFortress.Runtime.Commands;
 using HumanFortress.App.UI;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.Placeables;
 using SadConsole.Input;
 

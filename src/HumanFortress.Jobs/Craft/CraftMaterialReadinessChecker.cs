@@ -1,4 +1,4 @@
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.Placeables;
 
 namespace HumanFortress.Jobs.Craft;

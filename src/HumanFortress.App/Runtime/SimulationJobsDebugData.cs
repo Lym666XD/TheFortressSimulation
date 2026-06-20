@@ -1,4 +1,4 @@
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.Jobs.Craft;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;

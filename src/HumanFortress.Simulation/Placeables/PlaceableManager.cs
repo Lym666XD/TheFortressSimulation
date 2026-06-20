@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 using WorldClass = HumanFortress.Simulation.World.World;

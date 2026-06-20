@@ -1,6 +1,6 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.Runtime;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using SadConsole;
 using SadRogue.Primitives;
 

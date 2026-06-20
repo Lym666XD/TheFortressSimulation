@@ -1,9 +1,8 @@
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Time;
-using HumanFortress.Runtime;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public static class FortressRuntimeStartup
 {

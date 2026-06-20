@@ -1,4 +1,4 @@
-using StructuredContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
 

@@ -2,20 +2,71 @@
 
 This document tracks the current multi-step refactor batches so progress is visible without relying on chat history.
 
-## Current Status Snapshot - 2026-06-18
+## Current Status Snapshot - 2026-06-19
 
 - `HumanFortress.App/Jobs` no longer contains active source files.
-- Profession contracts now compile from `HumanFortress.Contracts`.
-- Profession assignment state now lives in `HumanFortress.Jobs`.
+- Profession contracts now compile from `HumanFortress.Contracts` under `HumanFortress.Contracts.Jobs`.
+- Profession assignment state now lives in `HumanFortress.Jobs`; the old App-owned Jobs namespace has been removed from active source.
 - Profession registry JSON loading now lives in `HumanFortress.Content.Definitions`.
+- Content registry contracts now compile from `HumanFortress.Contracts.Content.Registry`.
+- The structured runtime content registry implementation now compiles from `HumanFortress.Content.Registry`.
+- `CoreDataRegistryLoader` now compiles from `HumanFortress.Content.Definitions`.
 - Tick-facing transport/mining/construction/craft job wrappers now live in `HumanFortress.Runtime/Jobs`.
 - Runtime dependency grouping (`FortressRuntimeDependencies`, catalogs, tunings, and workforce composition) now lives in `HumanFortress.Runtime`.
 - Runtime concrete system composition (`SimulationRuntimeSystems`, `FortressRuntimeSystemsFactory`, planning groups, and job-system groups) now lives in `HumanFortress.Runtime`.
 - Jobs owns the executor cores, diff emitters, callback loggers, profession/craft adapters, scheduler/workshop tuning types, worker-selection strategy, unified jobs orchestrator, sanitizer, mining drop resolver, and construction terrain-material resolver.
 - Runtime host factory and generic startup orchestration now live in `HumanFortress.Runtime`; App injects logging and the optional auto-dig command delegate.
 - Runtime command source files now live in `HumanFortress.Runtime/Commands` under the `HumanFortress.Runtime.Commands` namespace.
+- Runtime composition types now use the `HumanFortress.Runtime` namespace, and tick-facing job wrappers now use `HumanFortress.Runtime.Jobs`.
 - App still owns the SadConsole/platform host, logger callback binding, auto-dig command implementation, UI bootstrap, construction completion UI notification binding, and live UI/debug access surfaces.
-- Remaining high-priority architecture work is reducing compatibility namespaces/internal bridges and introducing UI/debug snapshot facades.
+- Remaining high-priority architecture work is reducing transitional internal bridges, cleaning remaining compatibility namespaces, and introducing UI/debug snapshot facades.
+
+## Current No-Build Batch: Content Registry Namespace Cleanup
+
+Status: build verified
+
+### Completed
+
+- Changed content registry contract DTOs, catalog interfaces/stores, tuning types, `IRuntimeGeologyCatalog`, `Footprint`, and the material `FixedPoint` helper from the old Core registry/content namespaces to `HumanFortress.Contracts.Content.Registry`.
+- Changed the structured runtime `ContentRegistry` implementation and its helper registries from the old Core registry namespace to `HumanFortress.Content.Registry`.
+- Changed `CoreDataRegistryLoader` from the old Core registry namespace to `HumanFortress.Content.Definitions`.
+- Updated App, Runtime, Jobs, Simulation, WorldGen, Content, and regression-test call sites to use `HumanFortress.Contracts.Content.Registry` for contract types.
+- Updated `ContentRegistry.Instance` call sites and structured registry aliases to use `HumanFortress.Content.Registry.ContentRegistry`.
+- Added a direct `HumanFortress.Contracts` project reference to `HumanFortress.WorldGen` because WorldGen now directly consumes Contracts content types.
+- Updated active architecture/rules/planning docs so current ownership no longer claims that the structured registry preserves the old Core registry namespace.
+
+### Verification
+
+- First fast build caught a namespace follow-up bug: `MaterialDefinition` had moved to `HumanFortress.Contracts.Content.Registry` while `FixedPoint` still lived under the old Core content namespace.
+- Moved `FixedPoint` into `HumanFortress.Contracts.Content.Registry`.
+- `HumanFortress.sln` fast build then passed with `0 Warning(s), 0 Error(s)` using .NET 8, `--no-restore`, single MSBuild worker, analyzers disabled, and `UseAppHost=false`.
+- Source scans found no active source or test files using the old Core content registry namespace.
+- `git diff --check` passed after the source namespace migration.
+
+## Verified Batch: Runtime and Jobs Namespace Cleanup
+
+Status: build verified
+
+### Completed
+
+- Changed Runtime composition source files that had already moved into `src/HumanFortress.Runtime` from the transitional `HumanFortress.App.Runtime` namespace to `HumanFortress.Runtime`.
+- Changed tick-facing transport/mining/construction/craft wrapper systems in `src/HumanFortress.Runtime/Jobs` to the `HumanFortress.Runtime.Jobs` namespace.
+- Changed Jobs-owned diff emitters, callback loggers, profession assignment/adapters, scheduler/workshop tunings, worker selection, unified jobs orchestration, sanitizer, mining drop resolver, and construction terrain-material resolver from the old App-owned namespace to `HumanFortress.Jobs`.
+- Kept App UI/session glue under `HumanFortress.App.Runtime`; only non-UI Runtime composition source moved to the Runtime namespace.
+- Split the profession namespace cleanup into its real module owners:
+  - profession contracts now use `HumanFortress.Contracts.Jobs`
+  - profession registry JSON loading now uses `HumanFortress.Content.Definitions`
+  - profession assignment state remains in `HumanFortress.Jobs`
+- Updated App, Runtime, and regression-test call sites to reference `HumanFortress.Runtime.Jobs`, `HumanFortress.Jobs`, and the Content/Contracts profession namespaces.
+- Updated active architecture and simulation docs so they no longer describe the old App-owned Jobs namespace as live compatibility surface.
+
+### Verification
+
+- `HumanFortress.sln` fast build passed with `0 Warning(s), 0 Error(s)` using .NET 8, `--no-restore`, single MSBuild worker, analyzers disabled, and `UseAppHost=false`.
+- Source scans found no active source files using the old App-owned Jobs namespace.
+- Source scans found no moved Runtime source files still declaring `HumanFortress.App.Runtime`.
+- `git diff --check` passed before the build.
+- Content registry compatibility namespaces were handled in the follow-up content registry namespace cleanup batch.
 
 ## Current Batch: Runtime Generic Host and App Factory Cleanup
 
@@ -27,7 +78,7 @@ Status: completed
 - Deleted the old App-owned `SimulationRuntimeHost` wrapper.
 - Moved `SimulationRuntimeSystems` into `HumanFortress.Runtime`; it is now a Runtime-owned system collection and tick-registration surface.
 - Added `FortressRuntimeLogging` as a small injected logging callback bundle so Runtime composition no longer calls App `Logger` directly.
-- Added `FortressRuntimeHostFactory` in App as the remaining App composition bridge:
+- Initially added `FortressRuntimeHostFactory` in App as a temporary App composition bridge:
   - creates `SimulationRuntimeHost<SimulationRuntimeSystems>`
   - injects recipe/construction catalogs into `SimulationRuntimeContext`
   - registers the profession-weight callback without making Runtime depend on App professions
@@ -60,7 +111,7 @@ Status: completed
 - Moved mining channel air-geology lookup behind the mining drop resolver seam, so Jobs-owned mining result application no longer reads the global content registry.
 - Changed `NavigationTuning` to parse injected JSON and removed `HumanFortress.Navigation`'s dependency on `HumanFortress.Core`.
 - Changed runtime session creation to load content before creating the shared `NavigationManager`, then build navigation with the runtime snapshot's navigation tuning.
-- Exposed `NavigationTuning` through the generic runtime host and runtime facade so App job shells, navigation overlay, and debug path tooling use one active-session tuning source.
+- Exposed `NavigationTuning` through the generic runtime host and runtime facade so Runtime job wrappers, navigation overlay, and debug path tooling use one active-session tuning source.
 - Added `tuning.placeable` to the runtime content snapshot and injected `PlaceableTuning` into construction completion so completed placeables no longer implicitly use hard-coded defaults when content provides tuning.
 - Removed unused scheduler/workshop direct file/registry tuning loaders; runtime composition now consumes scheduler/workshop tuning JSON only through the Content-owned snapshot.
 - Removed unused `ConstructionTuning.LoadFromContent()` and replaced `PlaceableTuning.LoadFromContent()` with `LoadFromJson(...)`, preventing new Core-side global registry reads for tuning.
@@ -82,8 +133,8 @@ Status: completed
 - Moved runtime geology and zone JSON DTOs to `HumanFortress.Contracts` while preserving their old `HumanFortress.Core.Content` namespace.
 - Changed structured registry geology and zone loading to use explicit `System.Text.Json` mappings instead of Newtonsoft DTO attributes/`JToken.ToObject`.
 - Added smoke coverage for `zones.json` snake_case field mapping (`display_name`, `ui_hints`, and `default_policies`).
-- Moved construction and recipe definitions, read-only catalog interfaces, and immutable catalog stores to `HumanFortress.Contracts` while preserving their old `HumanFortress.Core.Content.Registry` namespace.
-- Moved `CoreDataLoadResult`, `ConstructionContentLoadResult`, and `RecipeContentLoadResult` to `HumanFortress.Contracts` while preserving their old namespace.
+- Moved construction and recipe definitions, read-only catalog interfaces, and immutable catalog stores to `HumanFortress.Contracts`; they now use `HumanFortress.Contracts.Content.Registry` after the namespace cleanup pass.
+- Moved `CoreDataLoadResult`, `ConstructionContentLoadResult`, and `RecipeContentLoadResult` to `HumanFortress.Contracts`; they now use the content contract namespace after the namespace cleanup pass.
 - Deleted the unused `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes after source scans found no external `*.Instance` consumers.
 - Moved `CoreDataRegistryLoader` from Core to `HumanFortress.Content.Definitions`, leaving Core with `ContentRegistry.ApplyCoreData(...)` but no construction/recipe JSON parsing ownership.
 - Removed the unused `ContentRegistry.LoadCoreData(...)` compatibility method; App/tests now enter core-data loading through `CoreContentCatalogLoader`.
@@ -237,7 +288,7 @@ Status: completed
   - Moved initial worker seeding into `HumanFortress.Runtime.SimulationInitialWorkerSpawner`, with App now passing only the logger callback
   - Added `HumanFortress.Runtime.StartupDigTargetFinder` and routed both App auto-dig bootstrap paths through it, removing duplicated dig-target search logic from App runtime helpers
   - Added smoke coverage for startup dig-target lookup and one-time initial-worker seeding
-  - Moved `SchedulerTunings`, `WorkshopTunings`, and `WorkerSelectionStrategy` source ownership into `HumanFortress.Jobs/Configuration` while preserving the old namespace as a transitional compatibility layer
+  - Moved `SchedulerTunings`, `WorkshopTunings`, and `WorkerSelectionStrategy` source ownership into `HumanFortress.Jobs/Configuration`; a later namespace cleanup moved these to `HumanFortress.Jobs`
   - Changed scheduler/workshop tuning parse failures to use injected log callbacks instead of depending on App `Logger`
   - Moved `SanitizeSystem` source ownership into `HumanFortress.Jobs/Safety`, with App composition passing the logger callback
   - Moved profession contracts into `HumanFortress.Contracts`, moved `ProfessionAssignments` source ownership into `HumanFortress.Jobs/Profession`, and moved `ProfessionRegistry` file loading into `HumanFortress.Content/Definitions`
@@ -248,10 +299,10 @@ Status: completed
   - Moved callback-backed transport/mining/construction job loggers into `HumanFortress.Jobs/Logging`
   - Moved construction terrain-material resolution into `HumanFortress.Jobs/Construction`
   - Moved mining drop/tuning resolution into `HumanFortress.Jobs/Mining` and converted it from Newtonsoft `JObject`/`JArray` parsing to `System.Text.Json.Nodes`
-  - Moved tick-facing transport/mining/construction/craft job-system wrappers into `HumanFortress.Runtime/Jobs`, preserving the old namespace for compatibility
+  - Moved tick-facing transport/mining/construction/craft job-system wrappers into `HumanFortress.Runtime/Jobs`; a later namespace cleanup moved these to `HumanFortress.Runtime.Jobs`
   - Collapsed the construction workshop-completion sink into the Runtime-owned construction wrapper as a callback bridge; App now only binds the UI callback during bootstrap
   - Added a transitional `HumanFortress.Runtime` internals bridge to `HumanFortress.Jobs` so Runtime composition can consume Jobs-owned internal diff emitters/adapters while namespace cleanup remains pending
-  - `HumanFortress.App/Jobs` no longer contains active source files; moved Jobs/Runtime/Content types still preserve the old namespace for compatibility
+  - `HumanFortress.App/Jobs` no longer contains active source files; later namespace cleanup removed the old App-owned Jobs namespace from active source
   - Added smoke coverage for unified job orchestration order, mining-backlog hauling hints, and intake-stat propagation
   - Added smoke coverage for mining tuning JSON parsing, geology alias drop lookup, air-handle lookup, and wall/ramp tick resolution
   - Runtime fast build passed with `0 Warning(s), 0 Error(s)`
@@ -344,13 +395,13 @@ Status: completed
 - `docs/archive/plans/HUMANFORTRESS_MAIN_BRANCH_ARCHITECTURE_AUDIT_FOR_CODEX.md` was read on 2026-06-12.
 - Its `HumanFortress.Content` build concern is no longer a current build blocker; the solution builds successfully.
 - Its larger Content concern is now substantially reduced: item, creature, construction, recipe, runtime registry bootstrap, structured registry implementation, and App registry-file path resolution now enter through `HumanFortress.Content`.
-- Remaining Content work is strict content-mode diagnostics, richer debug surfaces, final namespace cleanup, and future compiled-pack support.
+- Remaining Content work is strict content-mode diagnostics, richer debug surfaces, cleanup of the few remaining non-registry content DTO compatibility namespaces, and future compiled-pack support.
 - The agreed next priority after the remaining Content hygiene is moving concrete runtime composition out of App.
 
 ### Important Notes
 
 - At that point, the legacy `HumanFortress.Core.Content.ContentRegistry` source still existed, but `RuntimeContentRegistryLoader` loaded only the structured runtime registry. A later sub-batch deleted the old source after splitting `GeologyData` into its own file.
-- The structured `HumanFortress.Core.Content.Registry.ContentRegistry` remains the runtime registry for geology handles, tuning, zones, construction catalogs, and recipe catalogs; its implementation now compiles from `HumanFortress.Content` while preserving the old namespace.
+- The structured `HumanFortress.Content.Registry.ContentRegistry` remains the runtime registry for geology handles, tuning, zones, construction catalogs, and recipe catalogs; its implementation now compiles from `HumanFortress.Content.Registry`.
 - `FortressContentLoader` is a Content-owned facade over the structured registry and catalog snapshot loaders; do not add another App-side bootstrapper.
 - Core no longer owns a legacy/structured registry coordinator, construction/recipe singleton registries, the construction/recipe core-data JSON loader, or the structured registry implementation. The remaining cleanup is policy/diagnostics and compatibility naming, not a second runtime registry source model.
 - Remaining direct references to `HumanFortress.Core.Content.ContentRegistry` are now historical documentation/source-compatibility references, not normal bootstrap requirements.
@@ -582,7 +633,7 @@ Status: completed
 - Added read-only catalog interfaces in Core:
   - `IConstructionCatalog`
   - `IRecipeCatalog`
-- Changed `HumanFortress.Core.Content.Registry.ContentRegistry` to expose construction and recipe content through read-only catalog interfaces instead of concrete mutable registry types.
+- Changed `HumanFortress.Content.Registry.ContentRegistry` to expose construction and recipe content through read-only catalog interfaces instead of concrete mutable registry types.
 - Kept `ConstructionRegistry` and `RecipeRegistry` as internal compatibility stores for that batch. A later batch replaced the normal `ContentRegistry.LoadCoreData` path with immutable construction/recipe snapshots.
 - Migrated runtime/gameplay read paths from direct singleton access to catalog access:
   - Runtime workshop queue commands
@@ -620,7 +671,7 @@ Status: completed
 
 ### Completed
 
-- Moved construction/workshop and recipe JSON loading behind `HumanFortress.Core.Content.Registry.ContentRegistry.LoadCoreData`.
+- Moved construction/workshop and recipe JSON loading behind `HumanFortress.Content.Registry.ContentRegistry.LoadCoreData`.
 - Added a Core-owned `CoreDataRegistryLoader` that parses:
   - `data/core/workshops/core_workshop_*.json`
   - legacy `data/core/placeable/workshops.json`
@@ -649,7 +700,7 @@ Status: completed
 - This removes App-level file parsing for construction and recipe content, but it does not yet delete `ConstructionRegistry` or `RecipeRegistry`.
 - `ConstructionRegistry` and `RecipeRegistry` are now better treated as compatibility sub-registries under the structured registry boundary. The next content pass should either fold their storage into `ContentRegistry` or hide them behind read-only catalog interfaces.
 - At that point, creature and item definition loading still lived in their managers. This was completed later by moving their loaders into `HumanFortress.Content.Definitions` and injecting catalog snapshots.
-- The legacy `HumanFortress.Core.Content.ContentRegistry` still exists for compatibility while material/geology migration is completed.
+- At that point, the legacy `HumanFortress.Core.Content.ContentRegistry` still existed for compatibility while material/geology migration was completed. Later batches deleted that legacy registry source.
 
 ## Previous Batch: Runtime Content Registry Unification
 
@@ -657,7 +708,7 @@ Status: completed
 
 ### Completed
 
-- Promoted `HumanFortress.Core.Content.Registry.ContentRegistry` toward the single authoritative content registry by adding runtime content capabilities that previously only existed in the legacy registry:
+- Promoted `HumanFortress.Content.Registry.ContentRegistry` toward the single authoritative content registry by adding runtime content capabilities that previously only existed in the legacy registry:
   - runtime `geology.json` loading
   - deterministic geology handle assignment
   - `GetGeologyHandle`
@@ -708,7 +759,7 @@ Status: completed
 - Added the first shared loading entry point while the legacy and structured content registries still coexist. This was later superseded by `HumanFortress.Content.Loading.RuntimeContentRegistryLoader`.
 - App startup now loads both:
   - legacy `HumanFortress.Core.Content.ContentRegistry`
-  - structured `HumanFortress.Core.Content.Registry.ContentRegistry`
+  - structured `HumanFortress.Content.Registry.ContentRegistry`
 - `SimulationWorldContentLoader` now has a headless/session safety check that loads the registries if a caller bypasses `Program`.
 - Fixed structured registry reload hygiene by resetting `ValidationResult`, `ContentHash`, and `IsLoaded` before each load.
 - Fixed structured material loading for top-level array files such as `materials.authoring.json`.
@@ -761,7 +812,7 @@ Status: completed
 - Added an in-memory ring-buffer sink for a later UI/debug diagnostics panel.
 - Added a Simulation-local `SimulationDiagnostics` helper so Simulation systems can use `Core.Diagnostics` without depending on App.
 - Routed startup `ContentRegistry` diagnostics through `IDiagnosticSink` while preserving its console summary for command-line visibility.
-- Routed the secondary `HumanFortress.Core.Content.Registry.ContentRegistry` and its material/terrain/geology/biome/alias helper registries through a shared content diagnostics helper with console fallback when App logging is not initialized.
+- Routed the secondary `HumanFortress.Content.Registry.ContentRegistry` and its material/terrain/geology/biome/alias helper registries through a shared content diagnostics helper with console fallback when App logging is not initialized.
 - Bridged existing static lower-level callbacks into categorized diagnostics:
   - `NavigationManager`
   - `CreatureManager`
@@ -827,7 +878,7 @@ Status: completed
   - `WorkshopQueueCommandTarget`
   - `StockpileCommandTarget`
 - Removed `HumanFortress.App.Commands` dependency on `HumanFortress.App.Runtime`; player/debug commands now depend on Runtime command target seams.
-- Updated App job shells, session creation, runtime host wiring, fortress initialization, and smoke tests to consume the Runtime-owned pipeline/navigation/session factory.
+- Updated Runtime job wrappers, session creation, runtime host wiring, fortress initialization, and smoke tests to consume the Runtime-owned pipeline/navigation/session factory.
 - Updated App to reference Runtime while keeping UI, SadConsole hosting, concrete job adapters, content loading implementation, and concrete host-wrapper composition callbacks in App for now.
 
 ### Verification

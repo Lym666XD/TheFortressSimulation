@@ -1,8 +1,8 @@
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Tiles;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 internal sealed class ConstructionTerrainMaterialResolver : IConstructionTerrainMaterialResolver
 {

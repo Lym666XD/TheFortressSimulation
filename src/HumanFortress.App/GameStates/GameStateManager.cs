@@ -4,7 +4,7 @@ using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Runtime;
 using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
@@ -113,18 +113,18 @@ public sealed class GameStateManager
 
     public HumanFortress.Simulation.Orders.HaulingSystem? HaulingPlanner => RuntimeHost?.Systems?.HaulingPlanner;
     public HumanFortress.Simulation.Jobs.ITransportRequestQueue? TransportQueue => RuntimeHost?.Systems?.TransportQueue;
-    public HumanFortress.App.Jobs.TransportJobSystem? TransportJobs => RuntimeHost?.Systems?.TransportJobs;
+    public HumanFortress.Runtime.Jobs.TransportJobSystem? TransportJobs => RuntimeHost?.Systems?.TransportJobs;
     public HumanFortress.Simulation.Orders.MiningSystem? MiningPlanner => RuntimeHost?.Systems?.MiningPlanner;
-    public HumanFortress.App.Jobs.MiningJobSystem? MiningJobs => RuntimeHost?.Systems?.MiningJobs;
+    public HumanFortress.Runtime.Jobs.MiningJobSystem? MiningJobs => RuntimeHost?.Systems?.MiningJobs;
     public HumanFortress.Simulation.Orders.ConstructionSystem? ConstructionPlanner => RuntimeHost?.Systems?.ConstructionPlanner;
-    public HumanFortress.App.Jobs.ConstructionJobSystem? ConstructionJobs => RuntimeHost?.Systems?.ConstructionJobs;
+    public HumanFortress.Runtime.Jobs.ConstructionJobSystem? ConstructionJobs => RuntimeHost?.Systems?.ConstructionJobs;
     public HumanFortress.Jobs.Craft.CraftPlanner? CraftPlanner => RuntimeHost?.Systems?.CraftPlanner;
-    public HumanFortress.App.Jobs.CraftJobSystem? CraftJobs => RuntimeHost?.Systems?.CraftJobs;
-    public HumanFortress.App.Jobs.ProfessionAssignments? ProfessionAssignments => RuntimeHost?.Systems?.ProfessionAssignments;
+    public HumanFortress.Runtime.Jobs.CraftJobSystem? CraftJobs => RuntimeHost?.Systems?.CraftJobs;
+    public HumanFortress.Jobs.ProfessionAssignments? ProfessionAssignments => RuntimeHost?.Systems?.ProfessionAssignments;
     public NavigationManager? NavManager => _runtimeSession?.Navigation;
-    public HumanFortress.App.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => RuntimeHost?.Systems?.JobsOrchestrator;
-    public HumanFortress.App.Jobs.SchedulerTunings? SchedulerTunings => RuntimeHost?.Systems?.SchedulerTunings;
-    public HumanFortress.App.Jobs.WorkshopTunings? WorkshopTunings => RuntimeHost?.Systems?.WorkshopTunings;
+    public HumanFortress.Jobs.UnifiedJobsOrchestrator? JobsOrchestrator => RuntimeHost?.Systems?.JobsOrchestrator;
+    public HumanFortress.Jobs.SchedulerTunings? SchedulerTunings => RuntimeHost?.Systems?.SchedulerTunings;
+    public HumanFortress.Jobs.WorkshopTunings? WorkshopTunings => RuntimeHost?.Systems?.WorkshopTunings;
     public NavigationTuning? NavigationTuning => RuntimeHost?.NavigationTuning;
     public IRecipeCatalog? Recipes => RuntimeHost?.Recipes;
     public IConstructionCatalog? Constructions => RuntimeHost?.Constructions;
@@ -168,10 +168,10 @@ public sealed class GameStateManager
         return _jobsDebugCache;
     }
 
-    public IReadOnlyList<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry> GetProfessionRosterSnapshot()
+    public IReadOnlyList<HumanFortress.Jobs.ProfessionAssignments.ProfessionRosterEntry> GetProfessionRosterSnapshot()
     {
         var professions = RuntimeHost?.Systems?.ProfessionAssignments;
-        if (professions == null) return Array.Empty<HumanFortress.App.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
+        if (professions == null) return Array.Empty<HumanFortress.Jobs.ProfessionAssignments.ProfessionRosterEntry>();
         return professions.GetRosterSnapshot(World);
     }
 
@@ -334,7 +334,7 @@ public sealed class GameStateManager
         TransportDebugSnapshot? Transport,
         MiningDebugSnapshot? Mining,
         CraftJobStatsSnapshot? Craft,
-        HumanFortress.App.Jobs.SchedulerTunings? Tunings);
+        HumanFortress.Jobs.SchedulerTunings? Tunings);
 
     /// <summary>
     /// Shutdown and cleanup all systems before application exit.

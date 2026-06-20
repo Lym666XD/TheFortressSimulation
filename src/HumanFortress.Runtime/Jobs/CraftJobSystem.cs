@@ -1,4 +1,5 @@
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Jobs;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Craft;
@@ -7,7 +8,7 @@ using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Runtime.Jobs;
 
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned craft executor.

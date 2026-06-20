@@ -1,7 +1,8 @@
 using System;
 using System.Text.Json;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Parser for material definitions: supports authoring and runtime formats.

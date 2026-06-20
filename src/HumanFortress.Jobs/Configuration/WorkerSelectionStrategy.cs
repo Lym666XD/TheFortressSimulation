@@ -1,4 +1,4 @@
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 public enum WorkerSelectionStrategy
 {

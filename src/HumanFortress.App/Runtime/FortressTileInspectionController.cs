@@ -1,6 +1,6 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 using HumanFortress.WorldGen;
 using SadRogue.Primitives;

@@ -1,10 +1,10 @@
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Navigation;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public static class FortressRuntimeSystemsFactory
 {

@@ -4,11 +4,10 @@ using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
-using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public static class FortressRuntimeHostFactory
 {

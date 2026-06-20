@@ -36,7 +36,7 @@ Current source ownership
 
 Current compatibility debt
 
-- Some moved types intentionally preserve old namespaces such as `HumanFortress.App.Jobs` or `HumanFortress.Core.Content.Registry` until the namespace cleanup pass.
+- Some moved contracts still preserve historical domain namespaces, such as Navigation contracts under `HumanFortress.Navigation`, until their cleanup pass.
 - Transitional `InternalsVisibleTo` bridges are allowed only as migration scaffolding. Do not use them as justification for new cross-module ownership leaks.
 - `HumanFortress.App/Jobs` should remain empty of active source files.
 - `HumanFortress.App/Commands` should remain empty of active source files.

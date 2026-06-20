@@ -1,13 +1,14 @@
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Craft;
 using HumanFortress.Navigation;
+using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Runtime;
+namespace HumanFortress.Runtime;
 
 public sealed class FortressRuntimePlanningSystems
 {

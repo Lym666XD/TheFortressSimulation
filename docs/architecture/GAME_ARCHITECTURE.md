@@ -1,6 +1,6 @@
 # HumanFortress Architecture Overview
 
-Updated: 2026-06-16
+Updated: 2026-06-19
 Status: current overview plus target boundaries
 
 This document describes the current codebase shape. Older architecture docs described a complete deterministic, data-driven fortress simulator. That is still the target, but the implementation is currently in a transitional refactor.
@@ -37,7 +37,7 @@ Contracts
   <- App / Tests
 ```
 
-There are still transitional dependencies and compatibility namespaces. In particular, several Runtime/Jobs-owned types still expose historical `HumanFortress.App.*` namespaces until the namespace cleanup pass.
+There are still transitional dependencies and a few compatibility namespaces, but Runtime/Jobs and Content registry ownership now use their module namespaces in active source.
 
 ## Startup And Content Loading
 
@@ -155,9 +155,9 @@ FortressRuntimeSystemsFactory
 - construction;
 - crafting.
 
-`HumanFortress.Jobs` also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, concrete job diff emitters, profession/craft adapters, callback job loggers, mining drop/tuning resolution, construction terrain-material resolution, `UnifiedJobsOrchestrator`, and the low-frequency `SanitizeSystem` safety net. Profession contract DTOs/interfaces compile from `HumanFortress.Contracts`, and several Jobs/Runtime types still preserve the old namespace until the compatibility cleanup pass.
+`HumanFortress.Jobs` also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, concrete job diff emitters, profession/craft adapters, callback job loggers, mining drop/tuning resolution, construction terrain-material resolution, `UnifiedJobsOrchestrator`, and the low-frequency `SanitizeSystem` safety net. Profession contract DTOs/interfaces compile from `HumanFortress.Contracts.Jobs`, and profession registry JSON loading compiles from `HumanFortress.Content.Definitions`.
 
-`HumanFortress.Runtime` now owns the tick-facing transport/mining/construction/craft job-system wrappers in `HumanFortress.Runtime/Jobs`, plus the concrete fortress runtime system collection/factory/grouping layer. Several of these types still preserve old namespaces as a compatibility layer. `HumanFortress.Content` owns profession registry file loading from `professions.json`.
+`HumanFortress.Runtime` now owns the tick-facing transport/mining/construction/craft job-system wrappers in `HumanFortress.Runtime.Jobs`, plus the concrete fortress runtime system collection/factory/grouping layer. `HumanFortress.Content` owns profession registry file loading from `professions.json`.
 
 App still owns UI bootstrap and App-specific delegates: it passes logging callbacks, supplies the optional auto-dig command implementation, and binds construction workshop-completion notifications into the UI.
 
@@ -194,7 +194,7 @@ Current UI implementation is SadConsole-first and has a real `UiStore`, input se
 
 Important current limitation:
 
-- UI still reads live `World`, concrete job systems, and `ContentRegistry` in multiple renderer/panel paths.
+- UI still reads live `World` and concrete job/runtime systems in multiple renderer/panel paths.
 
 Target direction remains:
 
@@ -223,7 +223,7 @@ Current loaders:
 
 - `FortressContentLoader`
 - `RuntimeContentRegistryLoader`
-- `ContentRegistry` implementation, compiled from `HumanFortress.Content` while preserving its historical `HumanFortress.Core.Content.Registry` namespace
+- `HumanFortress.Content.Registry.ContentRegistry`
 - `CoreContentCatalogLoader`
 - `ItemDefinitionCatalogLoader`
 - `CreatureDefinitionCatalogLoader`
@@ -233,12 +233,12 @@ The old `.cpack` content build pipeline remains a future design archived at `doc
 
 ## Current Known Gaps
 
-- Generic runtime host/lifecycle now lives in `HumanFortress.Runtime`; concrete system construction still lives in `HumanFortress.App.Runtime`.
-- Runtime-owned job wrappers now exist around Jobs-owned executor cores; App still owns concrete session/system construction and UI/bootstrap binding.
+- Generic runtime host/lifecycle and concrete fortress system construction now live in `HumanFortress.Runtime`.
+- Runtime-owned job wrappers now exist around Jobs-owned executor cores; App still owns UI/bootstrap binding, logger callback injection, and App-specific delegates.
 - UI still reads live runtime state and concrete systems.
 - The old legacy content registry source has been deleted; normal bootstrap loads the structured runtime registry only.
-- `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted; construction/recipe/material/terrain/geology/biome definitions, terrain bit-layout DTOs, alias/migration DTOs, catalog interfaces, immutable catalog stores, runtime geology catalog interface, construction/placeable tuning types, fixed-point material primitives, and content version/snapshot/validation result types now compile from Contracts while preserving their old namespace.
-- `CoreDataRegistryLoader` and the structured `ContentRegistry` implementation are now Content-owned; the remaining content gaps are strict fail-fast policy, richer diagnostics/debug surfaces, eventual namespace cleanup, and the future compiled pack pipeline.
+- `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted; construction/recipe/material/terrain/geology/biome definitions, terrain bit-layout DTOs, alias/migration DTOs, catalog interfaces, immutable catalog stores, runtime geology catalog interface, construction/placeable tuning types, fixed-point material primitives, and content version/snapshot/validation result types now compile from `HumanFortress.Contracts.Content.Registry`.
+- `CoreDataRegistryLoader` now compiles from `HumanFortress.Content.Definitions`, and the structured `ContentRegistry` implementation compiles from `HumanFortress.Content.Registry`; the remaining content gaps are strict fail-fast policy, richer diagnostics/debug surfaces, and the future compiled pack pipeline.
 - Full save/load, storyteller, combat, full snapshot rendering, and compiled content packs are not complete current systems.
 
 ## High-Signal References

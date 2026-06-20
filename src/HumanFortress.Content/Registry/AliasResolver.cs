@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Resolves aliases and handles content migrations.

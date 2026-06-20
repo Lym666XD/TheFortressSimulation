@@ -1,6 +1,6 @@
 using System;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Placeable profile for items and constructions.

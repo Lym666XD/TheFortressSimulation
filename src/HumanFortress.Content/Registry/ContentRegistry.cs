@@ -8,8 +8,9 @@ using Newtonsoft.Json.Linq;
 using JsonFormatting = Newtonsoft.Json.Formatting;
 using RuntimeGeologyData = HumanFortress.Core.Content.GeologyData;
 using RuntimeZoneDefinitionData = HumanFortress.Core.Content.ZoneDefinitionData;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Main content registry that manages loaded runtime content.

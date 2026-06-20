@@ -19,7 +19,7 @@ Defines the end‑to‑end mining pipeline across Orders → Planner (read) → 
   - Scans selection rectangles per Z and produces PlannedDig DTOs into an outbox (budgeted).
   - For stairwells, scans from ZMax down to ZMin (Top → Middle → Bottom) and applies terrain eligibility filters.
 
-- MiningJobSystem (App) – Executor, Write phase
+- MiningJobSystem (Runtime) – Executor, Write phase
   - Dequeues PlannedDig batches and assigns to workers, handling adjacency search and deterministic pathfinding.
   - Enforces vertical connectivity gates for stairwells, emits pre‑open steps, commits terrain changes and drops via Diff, and manages reservation lifetimes.
   - Honors cancellation regions by dropping planned or aborting active jobs.
@@ -196,4 +196,3 @@ Scan and execution order per cell (single column example):
 16) Superseded Docs
 
 This spec replaces previous drafts MINING_SPEC.md and miningorders_spec.md. The internal Z convention here (Z increases upward) is authoritative; UI stairwell ranges are inverted in OrdersManager to match player expectations.
-

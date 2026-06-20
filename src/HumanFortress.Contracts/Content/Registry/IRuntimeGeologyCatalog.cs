@@ -1,6 +1,6 @@
 using RuntimeGeologyData = HumanFortress.Core.Content.GeologyData;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 public interface IRuntimeGeologyCatalog
 {

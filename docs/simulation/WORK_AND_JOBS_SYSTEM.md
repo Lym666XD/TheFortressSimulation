@@ -71,19 +71,21 @@ Most executor cores live in `HumanFortress.Jobs`:
 - `ConstructionJobExecutor`
 - `CraftJobExecutor`
 
-`HumanFortress.App.Jobs` still owns composition shells and concrete adapters:
+`HumanFortress.Runtime.Jobs` owns the tick-facing composition shells:
 
 - `TransportJobSystem`
 - `MiningJobSystem`
 - `ConstructionJobSystem`
 - `CraftJobSystem`
-- concrete diff emitters;
-- profession/workforce adapters;
-- logger and UI notification adapters;
-- scheduler/workshop tuning adapters.
 
-This is intentional during the boundary migration. Do not add new domain logic to
-the App shells unless a seam is missing and the change is part of a migration.
+`HumanFortress.Jobs` owns executor cores, diff emitters, callback loggers,
+profession assignment state, scheduler/workshop tuning types, worker selection,
+and concrete adapters. Profession contracts compile from
+`HumanFortress.Contracts.Jobs`, and profession registry JSON loading compiles
+from `HumanFortress.Content.Definitions`.
+
+Do not add new domain logic to the Runtime shells unless a seam is missing and the
+change is part of a migration.
 
 ## Current Tick Fit
 
@@ -131,7 +133,7 @@ Transport is the current shared movement/material-delivery path:
 ```text
 producers
   -> ITransportRequestQueue
-  -> App TransportJobSystem
+  -> Runtime TransportJobSystem
   -> Jobs TransportJobExecutor
   -> DiffLog / ItemsDiffLog
 ```
@@ -193,7 +195,7 @@ Current:
 
 Still pending:
 
-- move more concrete App job shells/adapters down once clean seams exist;
+- remove compatibility namespaces once clean seams exist;
 - centralize movement and reservation ownership;
 - convert remaining direct world writes to command targets or diff applicators;
 - add a formal runtime/debug snapshot facade for UI job panels;

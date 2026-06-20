@@ -1,4 +1,5 @@
 using System;
+using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Transport;
@@ -7,7 +8,7 @@ using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Runtime.Jobs;
 
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned transport executor.

@@ -1,5 +1,5 @@
 using System;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using System.Text.Json.Nodes;
 
 namespace HumanFortress.WorldGen

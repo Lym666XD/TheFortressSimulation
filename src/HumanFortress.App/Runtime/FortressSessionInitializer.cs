@@ -100,7 +100,7 @@ internal sealed class FortressSessionInitializer
             Logger.Log("[GenerateFortressMap] World filled with terrain data");
 
             Logger.Log("[GenerateFortressMap] Creating RenderSnapshotBuilder");
-            var constructions = _runtime.Constructions ?? HumanFortress.Core.Content.Registry.ConstructionCatalogStore.Empty;
+            var constructions = _runtime.Constructions ?? HumanFortress.Contracts.Content.Registry.ConstructionCatalogStore.Empty;
             var snapshotBuilder = new RenderSnapshotBuilder(world, constructions);
 
             Logger.Log("[GenerateFortressMap] Using shared NavigationManager");

@@ -2,7 +2,7 @@ using HumanFortress.Jobs.Construction;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 internal sealed class TransportCallbackJobLogger : ITransportJobLogger
 {

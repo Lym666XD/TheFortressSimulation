@@ -1,6 +1,6 @@
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.App.Runtime;

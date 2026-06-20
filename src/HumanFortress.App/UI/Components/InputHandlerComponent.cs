@@ -2,7 +2,7 @@
 using SadConsole.Components;
 using SadConsole.Input;
 using SadRogue.Primitives;
-using HumanFortress.App.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.App.UI.Commands;
 using HumanFortress.App.UI;
 using HumanFortress.Simulation.World;

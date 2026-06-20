@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace HumanFortress.Core.Content;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Fixed-point math utilities for performance-critical material calculations.

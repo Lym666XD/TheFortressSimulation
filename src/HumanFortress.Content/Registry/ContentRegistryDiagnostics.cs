@@ -1,6 +1,6 @@
 using HumanFortress.Core.Diagnostics;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 internal static class ContentRegistryDiagnostics
 {

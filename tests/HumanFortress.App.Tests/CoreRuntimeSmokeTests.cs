@@ -1,10 +1,12 @@
 using HumanFortress.Runtime.Commands;
-using HumanFortress.App.Jobs;
+using HumanFortress.Runtime.Jobs;
+using HumanFortress.Jobs;
 using HumanFortress.App;
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
+using HumanFortress.Content.Registry;
 using HumanFortress.Core.Commands;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Diagnostics;
 using HumanFortress.Core.Random;

@@ -1,5 +1,5 @@
 using System;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -37,7 +37,7 @@ public static class PlaceableFactory
     /// <summary>
     /// Create a construction site placeable (non-blocking footprint by default) with site state.
     /// </summary>
-    public static PlaceableInstance CreateConstructionSite(Point worldPos, int z, ulong tickSeed, string targetId, Core.Content.Registry.Footprint fp,
+    public static PlaceableInstance CreateConstructionSite(Point worldPos, int z, ulong tickSeed, string targetId, Footprint fp,
         IReadOnlyDictionary<string, int> materialsRequired, int totalBuildTicks)
     {
         var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z);

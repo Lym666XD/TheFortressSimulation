@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs;
 
 public sealed class SchedulerTunings
 {
