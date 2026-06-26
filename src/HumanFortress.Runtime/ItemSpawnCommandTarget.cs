@@ -4,18 +4,18 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
 
-public sealed class ItemSpawnCommandTarget : IItemSpawnCommandTarget
+internal sealed class ItemSpawnCommandTarget : IItemSpawnCommandTarget
 {
     private readonly World _world;
     private readonly ItemsDiffLog _itemsDiffLog;
 
-    public ItemSpawnCommandTarget(World world, ItemsDiffLog itemsDiffLog)
+    internal ItemSpawnCommandTarget(World world, ItemsDiffLog itemsDiffLog)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
     }
 
-    public bool AddItemSpawn(string itemId, Point worldPos, int z, int quantity)
+    bool IItemSpawnCommandTarget.AddItemSpawn(string itemId, Point worldPos, int z, int quantity)
     {
         if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0) return false;
         if (worldPos.X < 0 || worldPos.Y < 0 || z < 0) return false;

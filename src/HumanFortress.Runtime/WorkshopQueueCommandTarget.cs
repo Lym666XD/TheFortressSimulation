@@ -1,16 +1,15 @@
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
-public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
+internal sealed partial class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
 {
     private readonly World _world;
     private readonly IRecipeCatalog _recipes;
     private readonly IConstructionCatalog _constructions;
 
-    public WorkshopQueueCommandTarget(
+    internal WorkshopQueueCommandTarget(
         World world,
         IRecipeCatalog recipes,
         IConstructionCatalog constructions)
@@ -20,7 +19,7 @@ public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
     }
 
-    public bool AddWorkshopRecipe(Guid workshopGuid, string recipeId, ulong currentTick)
+    bool IWorkshopQueueCommandTarget.AddWorkshopRecipe(Guid workshopGuid, string recipeId, ulong currentTick)
     {
         if (string.IsNullOrWhiteSpace(recipeId)) return false;
         if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
@@ -32,19 +31,19 @@ public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
         return true;
     }
 
-    public bool RemoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId)
+    bool IWorkshopQueueCommandTarget.RemoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId)
     {
         return TryGetWorkshopState(workshopGuid, out var state)
             && state.RemoveEntry(entryId);
     }
 
-    public bool MoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId, int moveOffset)
+    bool IWorkshopQueueCommandTarget.MoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId, int moveOffset)
     {
         return TryGetWorkshopState(workshopGuid, out var state)
             && state.MoveEntry(entryId, moveOffset);
     }
 
-    public bool ClearWorkshopQueue(Guid workshopGuid)
+    bool IWorkshopQueueCommandTarget.ClearWorkshopQueue(Guid workshopGuid)
     {
         if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
 
@@ -52,7 +51,7 @@ public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
         return true;
     }
 
-    public bool SetWorkshopWorkerSlots(Guid workshopGuid, int workerSlots)
+    bool IWorkshopQueueCommandTarget.SetWorkshopWorkerSlots(Guid workshopGuid, int workerSlots)
     {
         if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
 
@@ -60,7 +59,7 @@ public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
         return true;
     }
 
-    public bool SetWorkshopAutoStockpile(Guid workshopGuid, bool? value)
+    bool IWorkshopQueueCommandTarget.SetWorkshopAutoStockpile(Guid workshopGuid, bool? value)
     {
         if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
 
@@ -68,39 +67,11 @@ public sealed class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
         return true;
     }
 
-    public bool SetWorkshopAutoSupply(Guid workshopGuid, bool? value)
+    bool IWorkshopQueueCommandTarget.SetWorkshopAutoSupply(Guid workshopGuid, bool? value)
     {
         if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
 
         state.AutoRequestMaterials = value ?? !state.AutoRequestMaterials;
         return true;
-    }
-
-    private bool TryGetWorkshopState(Guid workshopGuid, out WorkshopState state)
-    {
-        foreach (var chunk in _world.GetAllChunks())
-        {
-            var placeableData = chunk.GetPlaceableData();
-            if (placeableData == null) continue;
-
-            foreach (var placeable in placeableData.GetAllOwnedPlaceables())
-            {
-                if (placeable.Guid != workshopGuid) continue;
-
-                placeable.Workshop ??= new WorkshopState();
-                var definition = _constructions.GetConstruction(placeable.DefinitionId);
-                if (definition != null && placeable.Workshop.MaxWorkers <= 1)
-                {
-                    int maxWorkers = Math.Max(1, definition.Io?.InputSlots ?? 1);
-                    placeable.Workshop.ConfigureWorkers(placeable.Workshop.AllowedWorkers, maxWorkers);
-                }
-
-                state = placeable.Workshop;
-                return true;
-            }
-        }
-
-        state = null!;
-        return false;
     }
 }

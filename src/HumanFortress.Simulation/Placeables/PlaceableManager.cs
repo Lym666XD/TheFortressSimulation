@@ -11,7 +11,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// Manager for placeable operations across chunks.
 /// Handles collision detection, cross-chunk footprints, and two-phase placement protocol.
 /// </summary>
-public sealed class PlaceableManager
+internal sealed class PlaceableManager
 {
     /// <summary>
     /// Check if placeable can be placed at position without collision.
@@ -241,7 +241,7 @@ public sealed class PlaceableManager
 /// <summary>
 /// Result of collision detection
 /// </summary>
-public sealed class CollisionResult
+internal sealed class CollisionResult
 {
     public bool CanPlace { get; set; }
     public string? FailureReason { get; set; }

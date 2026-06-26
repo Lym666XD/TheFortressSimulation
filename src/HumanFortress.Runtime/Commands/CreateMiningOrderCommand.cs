@@ -11,17 +11,21 @@ namespace HumanFortress.Runtime.Commands;
 /// Command that creates a mining designation over a world-space rectangle at a given Z.
 /// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class CreateMiningOrderCommand : ICommand
+internal sealed class CreateMiningOrderCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.mining.rect";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "orders.mining.rect";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly Rectangle _worldRect;
     private readonly int _z;
     private readonly int _priority;
 
-    public CreateMiningOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
+    internal CreateMiningOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -29,15 +33,14 @@ public sealed class CreateMiningOrderCommand : ICommand
         _priority = priority;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            target.EnqueueMiningOrder(_worldRect, _z, _priority, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeOrderCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Orders.EnqueueMiningOrder(_worldRect, _z, _priority, context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

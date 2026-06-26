@@ -1,6 +1,6 @@
 namespace HumanFortress.Runtime;
 
-public interface IProfessionAssignmentCommandTarget
+internal interface IProfessionAssignmentCommandTarget
 {
     void SetProfessionWeight(Guid workerId, string professionId, int weight);
 }

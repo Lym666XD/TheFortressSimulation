@@ -11,24 +11,28 @@ internal sealed class CraftDiffEmitter : ICraftDiffEmitter
     private readonly int _priority;
     private readonly string _systemId;
 
-    public CraftDiffEmitter(ItemsDiffLog itemsDiff, int priority, string systemId)
+    internal CraftDiffEmitter(ItemsDiffLog itemsDiff, int priority, string systemId)
     {
         _itemsDiff = itemsDiff ?? throw new ArgumentNullException(nameof(itemsDiff));
         _priority = priority;
         _systemId = systemId ?? throw new ArgumentNullException(nameof(systemId));
     }
 
-    public void AddItem(Point cell, int z, string itemId, int quantity)
+    internal void AddItem(Point cell, int z, string itemId, int quantity)
     {
         if (string.IsNullOrWhiteSpace(itemId) || quantity <= 0) return;
         if (!WorldCellTargetEncoding.TryEncode(cell, z, out var target)) return;
         _itemsDiff.Add(ItemsDiffOp.AddItem, target, itemId, quantity, _priority, _systemId);
     }
 
-    public void RemoveItem(Guid itemGuid, Point cell, int z, int quantity)
+    internal void RemoveItem(Guid itemGuid, Point cell, int z, int quantity)
     {
         if (itemGuid == Guid.Empty || quantity <= 0) return;
         if (!WorldCellTargetEncoding.TryEncode(cell, z, out var target)) return;
         _itemsDiff.AddRemoveItem(itemGuid, target, quantity, _priority, _systemId);
     }
+
+    void ICraftDiffEmitter.AddItem(Point cell, int z, string itemId, int quantity) => AddItem(cell, z, itemId, quantity);
+
+    void ICraftDiffEmitter.RemoveItem(Guid itemGuid, Point cell, int z, int quantity) => RemoveItem(itemGuid, cell, z, quantity);
 }

@@ -11,7 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\HumanFortress.Contracts\HumanFortress.Contracts.csproj" />
     <ProjectReference Include="..\HumanFortress.Core\HumanFortress.Core.csproj" />
-    <ProjectReference Include="..\HumanFortress.Navigation\HumanFortress.Navigation.csproj" />
     <ProjectReference Include="..\HumanFortress.Simulation\HumanFortress.Simulation.csproj" />
   </ItemGroup>
 

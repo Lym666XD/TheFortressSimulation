@@ -4,9 +4,9 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
-public static class FortressRuntimeStartup
+internal static class FortressRuntimeStartup
 {
-    public static void Start(
+    internal static void Start(
         SimulationRuntimeHost<SimulationRuntimeSystems> runtime,
         bool enqueueAutoDig,
         CommandQueue commandQueue,

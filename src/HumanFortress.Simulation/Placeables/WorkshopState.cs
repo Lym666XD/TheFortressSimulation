@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// <summary>
 /// Runtime state for a workshop placeable. Tracks queue, worker slots, and automation toggles.
 /// </summary>
-public sealed class WorkshopState
+internal sealed class WorkshopState
 {
     private const ulong WorkshopQueueEntryGuidScope = 0x574F524B51454E54UL;
 
@@ -91,7 +91,7 @@ public sealed class WorkshopState
     public CraftQueueEntry? GetEntry(Guid entryId) => _queue.FirstOrDefault(e => e.EntryId == entryId);
 }
 
-public enum CraftQueueStatus
+internal enum CraftQueueStatus
 {
     Pending,
     AwaitingMaterials,
@@ -99,7 +99,7 @@ public enum CraftQueueStatus
     InProgress
 }
 
-public sealed class CraftQueueEntry
+internal sealed class CraftQueueEntry
 {
     public CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
     {

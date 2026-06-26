@@ -12,7 +12,7 @@ namespace HumanFortress.WorldGen
     /// Represents the generated fortress map data.
     /// Uses geology handles directly instead of TerrainType enum.
     /// </summary>
-    public class FortressMap
+    internal sealed class FortressMap
     {
         private readonly FortressChunk[,] _chunks;
         private readonly IRuntimeGeologyCatalog _geology;
@@ -313,7 +313,7 @@ namespace HumanFortress.WorldGen
     /// Represents a single chunk in the fortress map.
     /// Now stores geology handles directly instead of TerrainType enum.
     /// </summary>
-    public class FortressChunk
+    internal sealed class FortressChunk
     {
         private readonly ushort[,,] _geologyHandles;
         private readonly byte[,,] _surfaceBits;

@@ -1,4 +1,4 @@
-namespace HumanFortress.Simulation.Items;
+namespace HumanFortress.Contracts.Simulation.Items;
 
 /// <summary>
 /// Read-only item definition catalog. Runtime systems should prefer this over the full item manager

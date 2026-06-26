@@ -6,7 +6,7 @@ namespace HumanFortress.Simulation.Creatures;
 /// <summary>
 /// Runtime instance of a creature in the world
 /// </summary>
-public sealed class CreatureInstance
+internal sealed class CreatureInstance
 {
     public Guid Guid { get; }
     public string DefinitionId { get; }

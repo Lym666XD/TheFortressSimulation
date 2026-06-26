@@ -13,11 +13,11 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned construction executor.
 /// </summary>
-public sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExecutor
+internal sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExecutor
 {
     private readonly ConstructionJobExecutor _executor;
 
-    public ConstructionJobSystem(
+    internal ConstructionJobSystem(
         HumanFortress.Simulation.World.World world,
         ConstructionSystem planner,
         DiffLog? diffLog,
@@ -41,36 +41,43 @@ public sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExecut
             maxPerTick);
     }
 
-    public int LastProcessedSites => _executor.LastProcessedSites;
+    internal int LastProcessedSites => _executor.LastProcessedSites;
 
-    public int LastIntakeCount => _executor.LastIntakeCount;
+    internal int LastIntakeCount => _executor.LastIntakeCount;
 
-    public static Action<int, int, int, Rectangle, string, ulong>? UiNotifyWorkshopComplete;
+    internal int Priority => UpdateOrder.Priority.WorldTerrain;
 
-    public int Priority => UpdateOrder.Priority.WorldTerrain;
+    internal string SystemId => ConstructionJobExecutor.SystemId;
 
-    public string SystemId => ConstructionJobExecutor.SystemId;
+    int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    public void ReadTick(ulong tick)
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+
+    internal void ReadTick(ulong tick)
     {
     }
 
-    public void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
 
     private sealed class CallbackConstructionWorkshopCompletionSink : IConstructionWorkshopCompletionSink
     {
         private readonly Action<int, int, int, Rectangle, string, ulong>? _workshopCompletion;
 
-        public CallbackConstructionWorkshopCompletionSink(
+        internal CallbackConstructionWorkshopCompletionSink(
             Action<int, int, int, Rectangle, string, ulong>? workshopCompletion)
         {
             _workshopCompletion = workshopCompletion;
         }
 
-        public void NotifyWorkshopComplete(int x, int y, int z, Rectangle footprint, string constructionId, ulong tick)
+        void IConstructionWorkshopCompletionSink.NotifyWorkshopComplete(int x, int y, int z, Rectangle footprint, string constructionId, ulong tick)
         {
-            var callback = _workshopCompletion ?? UiNotifyWorkshopComplete;
-            callback?.Invoke(x, y, z, footprint, constructionId, tick);
+            _workshopCompletion?.Invoke(x, y, z, footprint, constructionId, tick);
         }
     }
 }

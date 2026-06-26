@@ -1,4 +1,4 @@
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Contracts.Navigation;
 
 /// <summary>
 /// Navigation capability bits per NAVIGATION_SPEC.md section 3.1.

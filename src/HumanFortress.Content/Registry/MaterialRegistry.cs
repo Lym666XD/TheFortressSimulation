@@ -8,7 +8,7 @@ namespace HumanFortress.Content.Registry;
 /// <summary>
 /// Registry for material definitions loaded from content JSON.
 /// </summary>
-public class MaterialRegistry
+internal sealed class MaterialRegistry : IRuntimeMaterialCatalog
 {
     private readonly Dictionary<ushort, MaterialDefinition> _materialsById = new();
     private readonly Dictionary<string, ushort> _materialsByStringId = new();  // string ID → numeric ID
@@ -18,21 +18,21 @@ public class MaterialRegistry
 
     private ushort _nextNumericId = 10;  // Start after reserved IDs (0-9)
 
-    public ContentVersion Version { get; private set; }
-    public string ContentHash { get; private set; } = "";
+    internal ContentVersion Version { get; private set; }
+    internal string ContentHash { get; private set; } = "";
 
     /// <summary>
     /// Reserved material IDs
     /// </summary>
-    public const ushort None = 0;
-    public const ushort Void = ushort.MaxValue;
-    public const ushort Air = ushort.MaxValue - 1;
-    public const ushort Bedrock = ushort.MaxValue - 2;
+    internal const ushort None = 0;
+    internal const ushort Void = ushort.MaxValue;
+    internal const ushort Air = ushort.MaxValue - 1;
+    internal const ushort Bedrock = ushort.MaxValue - 2;
 
     /// <summary>
     /// Load materials from definitions
     /// </summary>
-    public void LoadMaterials(IEnumerable<MaterialDefinition> materials, ContentVersion version)
+    internal void LoadMaterials(IEnumerable<MaterialDefinition> materials, ContentVersion version)
     {
         Version = version;
         Clear();
@@ -192,7 +192,7 @@ public class MaterialRegistry
     /// <summary>
     /// Get material by ID
     /// </summary>
-    public MaterialDefinition? GetMaterial(ushort id)
+    internal MaterialDefinition? GetMaterial(ushort id)
     {
         return _materialsById.GetValueOrDefault(id);
     }
@@ -200,7 +200,7 @@ public class MaterialRegistry
     /// <summary>
     /// Get material by name (checks aliases too)
     /// </summary>
-    public MaterialDefinition? GetMaterial(string name)
+    internal MaterialDefinition? GetMaterial(string name)
     {
         // Try direct name first
         if (_materialsByName.TryGetValue(name, out var id))
@@ -220,7 +220,7 @@ public class MaterialRegistry
     /// <summary>
     /// Get material ID by name
     /// </summary>
-    public ushort? GetMaterialId(string name)
+    internal ushort? GetMaterialId(string name)
     {
         // Try direct name first
         if (_materialsByName.TryGetValue(name, out var id))
@@ -240,7 +240,7 @@ public class MaterialRegistry
     /// <summary>
     /// Resolve material name to ID with fallback
     /// </summary>
-    public ushort ResolveMaterial(string name, ushort fallback = None)
+    internal ushort ResolveMaterial(string name, ushort fallback = None)
     {
         var id = GetMaterialId(name);
         if (id.HasValue)
@@ -255,7 +255,7 @@ public class MaterialRegistry
     /// <summary>
     /// Get all materials in a category
     /// </summary>
-    public IEnumerable<MaterialDefinition> GetMaterialsByCategory(string category)
+    internal IEnumerable<MaterialDefinition> GetMaterialsByCategory(string category)
     {
         return _allMaterials.Where(m => m.Category == category);
     }
@@ -263,7 +263,7 @@ public class MaterialRegistry
     /// <summary>
     /// Get all materials with a tag
     /// </summary>
-    public IEnumerable<MaterialDefinition> GetMaterialsByTag(string tag)
+    internal IEnumerable<MaterialDefinition> GetMaterialsByTag(string tag)
     {
         return _allMaterials.Where(m => m.Tags.Contains(tag));
     }
@@ -271,13 +271,13 @@ public class MaterialRegistry
     /// <summary>
     /// Check if material exists
     /// </summary>
-    public bool HasMaterial(ushort id) => _materialsById.ContainsKey(id);
-    public bool HasMaterial(string name) => _materialsByName.ContainsKey(name) || _aliases.ContainsKey(name);
+    internal bool HasMaterial(ushort id) => _materialsById.ContainsKey(id);
+    internal bool HasMaterial(string name) => _materialsByName.ContainsKey(name) || _aliases.ContainsKey(name);
 
     /// <summary>
     /// Get a snapshot of name to ID mappings for saves
     /// </summary>
-    public Dictionary<string, ushort> GetNameToIdSnapshot()
+    internal Dictionary<string, ushort> GetNameToIdSnapshot()
     {
         return new Dictionary<string, ushort>(_materialsByName);
     }
@@ -285,7 +285,7 @@ public class MaterialRegistry
     /// <summary>
     /// Apply aliases for save migration
     /// </summary>
-    public void ApplyAliases(Dictionary<string, string> aliasMap)
+    internal void ApplyAliases(Dictionary<string, string> aliasMap)
     {
         foreach (var (oldName, newName) in aliasMap)
         {
@@ -304,7 +304,7 @@ public class MaterialRegistry
     /// <summary>
     /// Resolve material string ID to numeric ID (supports aliases)
     /// </summary>
-    public ushort? ResolveStringId(string stringId)
+    internal ushort? ResolveStringId(string stringId)
     {
         // Try direct string ID first
         if (_materialsByStringId.TryGetValue(stringId, out var id))
@@ -320,6 +320,31 @@ public class MaterialRegistry
 
         return null;
     }
+
+    ContentVersion IRuntimeMaterialCatalog.Version => Version;
+
+    string IRuntimeMaterialCatalog.ContentHash => ContentHash;
+
+    MaterialDefinition? IRuntimeMaterialCatalog.GetMaterial(ushort id) => GetMaterial(id);
+
+    MaterialDefinition? IRuntimeMaterialCatalog.GetMaterial(string name) => GetMaterial(name);
+
+    ushort? IRuntimeMaterialCatalog.GetMaterialId(string name) => GetMaterialId(name);
+
+    ushort IRuntimeMaterialCatalog.ResolveMaterial(string name, ushort fallback) => ResolveMaterial(name, fallback);
+
+    IEnumerable<MaterialDefinition> IRuntimeMaterialCatalog.GetMaterialsByCategory(string category) =>
+        GetMaterialsByCategory(category);
+
+    IEnumerable<MaterialDefinition> IRuntimeMaterialCatalog.GetMaterialsByTag(string tag) => GetMaterialsByTag(tag);
+
+    bool IRuntimeMaterialCatalog.HasMaterial(ushort id) => HasMaterial(id);
+
+    bool IRuntimeMaterialCatalog.HasMaterial(string name) => HasMaterial(name);
+
+    Dictionary<string, ushort> IRuntimeMaterialCatalog.GetNameToIdSnapshot() => GetNameToIdSnapshot();
+
+    ushort? IRuntimeMaterialCatalog.ResolveStringId(string stringId) => ResolveStringId(stringId);
 
     /// <summary>
     /// Clear the registry

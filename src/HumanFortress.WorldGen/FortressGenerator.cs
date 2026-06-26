@@ -15,7 +15,7 @@ namespace HumanFortress.WorldGen
     /// - Below surface: granite wall
     /// - Above surface: air
     /// </summary>
-    public class FortressGenerator
+    internal sealed class FortressGenerator
     {
         private readonly int _fortressSize;
         private readonly WorldTile _homeTile;

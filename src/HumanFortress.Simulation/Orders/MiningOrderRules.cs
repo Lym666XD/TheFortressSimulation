@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Shared eligibility and counting rules for mining selections.
 /// Centralizes UI and command-side prechecks to avoid drift.
 /// </summary>
-public static class MiningOrderRules
+internal static class MiningOrderRules
 {
     public static int CountEligible(World.World world, Rectangle rect, int zMin, int zMax, MiningAction action)
     {

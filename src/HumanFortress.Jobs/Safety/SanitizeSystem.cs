@@ -8,7 +8,7 @@ namespace HumanFortress.Jobs;
 /// Low-frequency sanitizer that relocates any creatures/items stuck in non-walkable tiles
 /// to a nearby safe cell.
 /// </summary>
-public sealed class SanitizeSystem : ITick
+internal sealed class SanitizeSystem : ITick
 {
     private readonly HumanFortress.Simulation.World.World _world;
     private readonly DiffLog? _diff;
@@ -17,7 +17,7 @@ public sealed class SanitizeSystem : ITick
     private readonly int _interval;
     private readonly int _maxPerTick;
 
-    public SanitizeSystem(
+    internal SanitizeSystem(
         HumanFortress.Simulation.World.World world,
         DiffLog? diffLog = null,
         int intervalTicks = 40,
@@ -31,15 +31,15 @@ public sealed class SanitizeSystem : ITick
         _log = log;
     }
 
-    public int Priority => UpdateOrder.Priority.Jobs;
-    public string SystemId => "Jobs.Sanitize";
+    internal int Priority => UpdateOrder.Priority.Jobs;
+    internal string SystemId => "Jobs.Sanitize";
 
-    public void ReadTick(ulong tick)
+    internal void ReadTick(ulong tick)
     {
         // no-op
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         _counter++;
         if ((_counter % _interval) != 0) return;
@@ -99,4 +99,12 @@ public sealed class SanitizeSystem : ITick
         _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target.ToDiffTarget(DiffTargetEncoding.SignedEntityId(itemId)), SystemId, Priority));
         return true;
     }
+
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
 }

@@ -16,7 +16,8 @@ and optional command delegates, then executed through the normal runtime tick
 scheduler:
 
 ```text
-GameStateManager.InitializeWorld
+FortressPlayGameState
+  -> IFortressPlayRuntimeHost.InitializeWorld
   -> SimulationRuntimeSessionFactory.CreateNew
   -> SimulationRuntimeHost<SimulationRuntimeSystems>
   -> SimulationRuntimeSystems.RegisterWith(TickScheduler)

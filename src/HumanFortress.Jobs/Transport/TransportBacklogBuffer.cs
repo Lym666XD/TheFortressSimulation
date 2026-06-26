@@ -9,9 +9,9 @@ internal sealed class TransportBacklogBuffer
     private readonly HashSet<Guid> _ids = new();
     private readonly Dictionary<Guid, ulong> _enqueueTick = new();
 
-    public int Count => _queue.Count;
+    internal int Count => _queue.Count;
 
-    public void DrainInto(int intakeBudget, IList<TransportRequest> into)
+    internal void DrainInto(int intakeBudget, IList<TransportRequest> into)
     {
         while (into.Count < intakeBudget && _queue.TryDequeue(out var retry))
         {
@@ -21,7 +21,7 @@ internal sealed class TransportBacklogBuffer
         }
     }
 
-    public bool TryEnqueue(in TransportRequest request, ulong tick)
+    internal bool TryEnqueue(in TransportRequest request, ulong tick)
     {
         if (!_ids.Add(request.ItemGuid)) return false;
 
@@ -30,7 +30,7 @@ internal sealed class TransportBacklogBuffer
         return true;
     }
 
-    public void EnqueueRange(IReadOnlyList<TransportRequest> requests, int startIndex, ulong tick)
+    internal void EnqueueRange(IReadOnlyList<TransportRequest> requests, int startIndex, ulong tick)
     {
         for (int i = startIndex; i < requests.Count; i++)
         {
@@ -38,7 +38,7 @@ internal sealed class TransportBacklogBuffer
         }
     }
 
-    public int CountOlderThan(ulong tick, int maxAgeTicks)
+    internal int CountOlderThan(ulong tick, int maxAgeTicks)
     {
         int count = 0;
         foreach (var kv in _enqueueTick)

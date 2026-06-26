@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Jobs;
 
 namespace HumanFortress.Jobs.Transport;
@@ -12,7 +12,7 @@ internal sealed class TransportDeliveryHandler
     private readonly ITransportJobLogger _logger;
     private readonly string _jobTag;
 
-    public TransportDeliveryHandler(
+    internal TransportDeliveryHandler(
         TransportDestinationValidator destinationValidator,
         ITransportItemDiffEmitter diffEmitter,
         TransportJobFinalizer jobFinalizer,
@@ -28,7 +28,7 @@ internal sealed class TransportDeliveryHandler
         _jobTag = jobTag ?? throw new ArgumentNullException(nameof(jobTag));
     }
 
-    public void HandleArrivedAtDestination(ActiveJob job, ulong tick, Point3 workerPosition, ICollection<ActiveJob> finished)
+    internal void HandleArrivedAtDestination(ActiveJob job, ulong tick, Point3 workerPosition, ICollection<ActiveJob> finished)
     {
         if (!_destinationValidator.ValidateDestination(job.Dest.X, job.Dest.Y, job.Dest.Z, job.Reason))
         {

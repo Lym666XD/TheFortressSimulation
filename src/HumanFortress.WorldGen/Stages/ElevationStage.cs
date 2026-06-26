@@ -4,7 +4,7 @@ using HumanFortress.Core.World;
 
 namespace HumanFortress.WorldGen.Stages
 {
-    public class ElevationStage : IWorldGenStage
+    internal sealed class ElevationStage : IWorldGenStage
     {
         public string Name => "Elevation";
         

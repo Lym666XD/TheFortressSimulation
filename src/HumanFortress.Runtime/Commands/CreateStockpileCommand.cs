@@ -10,17 +10,21 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Command to create a stockpile zone and its per-chunk stockpile cell shards.
 /// </summary>
-public sealed class CreateStockpileCommand : ICommand
+internal sealed class CreateStockpileCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "stockpiles.create";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "stockpiles.create";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly Rectangle _worldRect;
     private readonly int _z;
     private readonly string _presetId;
 
-    public CreateStockpileCommand(ulong tick, Rectangle worldRect, int z, string presetId)
+    internal CreateStockpileCommand(ulong tick, Rectangle worldRect, int z, string presetId)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -28,13 +32,14 @@ public sealed class CreateStockpileCommand : ICommand
         _presetId = string.IsNullOrWhiteSpace(presetId) ? "all" : presetId;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IStockpileCommandTarget target)
-            target.CreateStockpile(_worldRect, _z, _presetId, context.CurrentTick);
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeStockpileCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Stockpiles.CreateStockpile(_worldRect, _z, _presetId, context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

@@ -7,7 +7,7 @@ namespace HumanFortress.Simulation.Rendering
     /// <summary>
     /// Immutable per-tick snapshot for rendering per RENDERING_SNAPSHOT.md.
     /// </summary>
-    public sealed class RenderSnapshot
+    internal sealed class RenderSnapshot
     {
         public WorldInfo World { get; init; }
         public ViewInfo View { get; init; }
@@ -26,20 +26,20 @@ namespace HumanFortress.Simulation.Rendering
         }
     }
     
-    public sealed class WorldInfo
+    internal sealed class WorldInfo
     {
         public string Id { get; init; } = "";
         public ulong Tick { get; init; }
         public uint Seed { get; init; }
     }
     
-    public sealed class ViewInfo
+    internal sealed class ViewInfo
     {
         public CameraInfo Camera { get; init; } = new();
         public ViewportInfo Viewport { get; init; } = new();
     }
     
-    public sealed class CameraInfo
+    internal sealed class CameraInfo
     {
         public ChunkKey ChunkKey { get; init; }
         public int CenterX { get; init; }
@@ -49,20 +49,20 @@ namespace HumanFortress.Simulation.Rendering
         public int ZCount { get; init; } = 1;
     }
     
-    public sealed class ViewportInfo
+    internal sealed class ViewportInfo
     {
         public int TilesWidth { get; init; }
         public int TilesHeight { get; init; }
     }
     
-    public sealed class TilesetInfo
+    internal sealed class TilesetInfo
     {
         public string AtlasId { get; init; } = "tileset/base";
         public int PaletteVersion { get; init; }
         public int PaletteCount { get; init; } = 4096;
     }
     
-    public sealed class ChunkSnapshot
+    internal sealed class ChunkSnapshot
     {
         public ChunkKey ChunkId { get; init; }
         public ulong Version { get; init; }
@@ -70,7 +70,7 @@ namespace HumanFortress.Simulation.Rendering
         public List<Billboard> Billboards { get; init; } = new();
     }
     
-    public sealed class ZSliceSnapshot
+    internal sealed class ZSliceSnapshot
     {
         public int ZIndex { get; init; }
         public ulong Version { get; init; }
@@ -83,7 +83,7 @@ namespace HumanFortress.Simulation.Rendering
         public List<OverlayRect> PlaceablesOverlay { get; init; } = new();
     }
     
-    public sealed class Billboard
+    internal sealed class Billboard
     {
         public string Id { get; init; } = "";
         public int TileX { get; init; }
@@ -97,14 +97,14 @@ namespace HumanFortress.Simulation.Rendering
         public int ZOrderBias { get; init; }
     }
     
-    public sealed class UIInfo
+    internal sealed class UIInfo
     {
         public CursorInfo? Cursor { get; init; }
         public List<SelectionRange> Selection { get; init; } = new();
         public DebugInfo Debug { get; init; } = new();
     }
 
-    public sealed class OverlayRect
+    internal sealed class OverlayRect
     {
         public int X { get; init; }
         public int Y { get; init; }
@@ -115,14 +115,14 @@ namespace HumanFortress.Simulation.Rendering
         public string DefId { get; init; } = string.Empty; // construction id
     }
     
-    public sealed class CursorInfo
+    internal sealed class CursorInfo
     {
         public int TileX { get; init; }
         public int TileY { get; init; }
         public int TileZ { get; init; }
     }
     
-    public sealed class SelectionRange
+    internal sealed class SelectionRange
     {
         public int MinX { get; init; }
         public int MinY { get; init; }
@@ -132,14 +132,14 @@ namespace HumanFortress.Simulation.Rendering
         public int MaxZ { get; init; }
     }
     
-    public sealed class DebugInfo
+    internal sealed class DebugInfo
     {
         public bool ShowNav { get; init; }
         public bool ShowLOS { get; init; }
         public bool ShowSupport { get; init; }
     }
     
-    public struct BitArray32
+    internal struct BitArray32
     {
         public uint Bits;
         

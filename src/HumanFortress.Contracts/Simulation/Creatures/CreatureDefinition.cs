@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace HumanFortress.Simulation.Creatures;
+namespace HumanFortress.Contracts.Simulation.Creatures;
 
 /// <summary>
 /// Static definition of a creature type loaded from data/core/creatures/*.json.

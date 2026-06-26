@@ -14,7 +14,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// NOTE: Will be serialized to chunk saves when save system is implemented.
 /// Currently stored in memory only via Chunk._placeableData.
 /// </summary>
-public sealed class ChunkPlaceableData
+internal sealed class ChunkPlaceableData
 {
     // Owned placeable instances (key = local cell index)
     // Local cell index = y * Chunk.SIZE_XY + x

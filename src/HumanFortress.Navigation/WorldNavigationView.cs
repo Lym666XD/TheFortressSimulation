@@ -1,23 +1,24 @@
+using HumanFortress.Contracts.Navigation;
 namespace HumanFortress.Navigation;
 
 /// <summary>
 /// Concrete IWorldNavigationView over a NavigationManager cache and a navigation world source.
 /// </summary>
-public sealed class WorldNavigationView : IWorldNavigationView
+internal sealed class WorldNavigationView : IWorldNavigationView
 {
     private readonly NavigationManager _nav;
     private readonly INavigationWorldSource _source;
 
-    public WorldNavigationView(NavigationManager nav)
+    internal WorldNavigationView(NavigationManager nav)
     {
         _nav = nav;
         _source = nav.Source;
     }
 
-    public bool IsValid(Point3 position)
+    internal bool IsValid(Point3 position)
         => _source.IsValid(position);
 
-    public NavCapability GetCapabilities(Point3 position)
+    internal NavCapability GetCapabilities(Point3 position)
     {
         var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
         if (navData == null) return NavCapability.None;
@@ -26,7 +27,7 @@ public sealed class WorldNavigationView : IWorldNavigationView
         return (NavCapability)navData.NavMask[localIdx];
     }
 
-    public ushort GetCost(Point3 position)
+    internal ushort GetCost(Point3 position)
     {
         var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
         if (navData == null) return ushort.MaxValue;
@@ -35,7 +36,7 @@ public sealed class WorldNavigationView : IWorldNavigationView
         return navData.NavCost[localIdx];
     }
 
-    public bool IsWalkable(Point3 position, MoveMode mode)
+    internal bool IsWalkable(Point3 position, MoveMode mode)
     {
         // Allow traversal through construction site anchors (avoid partitioning),
         // but disallow standing on them in IsStandable.
@@ -49,31 +50,31 @@ public sealed class WorldNavigationView : IWorldNavigationView
         };
     }
 
-    public bool HasStairsUp(Point3 position)
+    internal bool HasStairsUp(Point3 position)
     {
         if (!_source.TryGetTile(position, out var tile)) return false;
         return tile.Kind == NavigationTileKind.StairsUp || tile.Kind == NavigationTileKind.StairsUD;
     }
 
-    public bool HasStairsDown(Point3 position)
+    internal bool HasStairsDown(Point3 position)
     {
         if (!_source.TryGetTile(position, out var tile)) return false;
         return tile.Kind == NavigationTileKind.StairsDown || tile.Kind == NavigationTileKind.StairsUD;
     }
 
-    public int GetConnectivityVersion(ChunkKey chunk)
+    internal int GetConnectivityVersion(ChunkKey chunk)
     {
         var nav = _nav.GetNavData(chunk);
         return nav?.ConnectivityVersion ?? 0;
     }
 
-    public bool TryGetRampDirection(Point3 position, out byte rampDirection)
+    internal bool TryGetRampDirection(Point3 position, out byte rampDirection)
     {
         rampDirection = 0;
         return false;
     }
 
-    public bool IsStandable(Point3 position)
+    internal bool IsStandable(Point3 position)
     {
         // Treat construction site anchor as not standable (cannot end movement here)
         if (_source.IsConstructionSiteAnchor(position)) return false;
@@ -83,13 +84,13 @@ public sealed class WorldNavigationView : IWorldNavigationView
         return _source.TryGetTile(position, out var tile) && tile.Kind == NavigationTileKind.OpenWithFloor;
     }
 
-    public bool TryGetDownRampDirection(Point3 position, out byte rampDirection)
+    internal bool TryGetDownRampDirection(Point3 position, out byte rampDirection)
     {
         rampDirection = 0;
         return false;
     }
 
-    public bool TryGetUpRampMask(Point3 position, out byte mask)
+    internal bool TryGetUpRampMask(Point3 position, out byte mask)
     {
         mask = 0;
         var navData = _nav.GetNavDataAt(position.X, position.Y, position.Z);
@@ -109,4 +110,23 @@ public sealed class WorldNavigationView : IWorldNavigationView
         int localY = ((position.Y % ChunkSize) + ChunkSize) % ChunkSize;
         return localY * ChunkSize + localX;
     }
+
+    bool IWorldNavigationView.IsValid(Point3 position) => IsValid(position);
+
+    NavCapability IWorldNavigationView.GetCapabilities(Point3 position) => GetCapabilities(position);
+
+    ushort IWorldNavigationView.GetCost(Point3 position) => GetCost(position);
+
+    bool IWorldNavigationView.IsWalkable(Point3 position, MoveMode mode) => IsWalkable(position, mode);
+
+    bool IWorldNavigationView.HasStairsUp(Point3 position) => HasStairsUp(position);
+
+    bool IWorldNavigationView.HasStairsDown(Point3 position) => HasStairsDown(position);
+
+    int IWorldNavigationView.GetConnectivityVersion(ChunkKey chunk) => GetConnectivityVersion(chunk);
+
+    bool IWorldNavigationView.IsStandable(Point3 position) => IsStandable(position);
+
+    bool IWorldNavigationView.TryGetUpRampMask(Point3 position, out byte mask) =>
+        TryGetUpRampMask(position, out mask);
 }

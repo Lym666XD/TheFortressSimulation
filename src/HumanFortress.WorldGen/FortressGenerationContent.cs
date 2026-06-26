@@ -4,7 +4,7 @@ using System.Text.Json.Nodes;
 
 namespace HumanFortress.WorldGen
 {
-    public sealed class FortressGenerationContent
+    internal sealed class FortressGenerationContent
     {
         public FortressGenerationContent(
             IRuntimeGeologyCatalog geology,

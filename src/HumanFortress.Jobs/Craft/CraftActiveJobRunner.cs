@@ -1,5 +1,5 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Craft;
@@ -9,17 +9,17 @@ internal sealed class CraftActiveJobRunner
     private readonly WorldModel _world;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly CraftMaterialConsumer _materialConsumer;
     private readonly CraftOutputEmitter _outputEmitter;
     private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
 
-    public CraftActiveJobRunner(
+    internal CraftActiveJobRunner(
         WorldModel world,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         CraftMaterialConsumer materialConsumer,
         CraftOutputEmitter outputEmitter,
         string systemId,
@@ -35,7 +35,7 @@ internal sealed class CraftActiveJobRunner
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
-    public bool Run(ActiveCraftJob job, ulong tick, out CraftJobFinishReason finishReason)
+    internal bool Run(ActiveCraftJob job, ulong tick, out CraftJobFinishReason finishReason)
     {
         finishReason = default;
 

@@ -12,7 +12,7 @@ namespace HumanFortress.Simulation.Diff;
 /// Handles MoveCreature, MoveItem, MarkCarried, UnmarkCarried.
 /// This runs after systems' Write phase per UPDATE_ORDER.
 /// </summary>
-public static class SimulationDiffApplicator
+internal static class SimulationDiffApplicator
 {
     /// <summary>
     /// Optional logging callback (set by App layer to write to fortress_debug.log)

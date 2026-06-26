@@ -1,12 +1,10 @@
-using RuntimeGeologyData = HumanFortress.Core.Content.GeologyData;
-
 namespace HumanFortress.Contracts.Content.Registry;
 
 public interface IRuntimeGeologyCatalog
 {
-    RuntimeGeologyData? GetGeologyEntry(string id);
+    GeologyData? GetGeologyEntry(string id);
 
-    RuntimeGeologyData? GetGeologyByHandle(ushort handle);
+    GeologyData? GetGeologyByHandle(ushort handle);
 
     ushort GetGeologyHandle(string id);
 

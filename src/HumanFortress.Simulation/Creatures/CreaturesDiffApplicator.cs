@@ -2,7 +2,7 @@ namespace HumanFortress.Simulation.Creatures;
 
 using HumanFortress.Simulation.Diagnostics;
 
-public static class CreaturesDiffApplicator
+internal static class CreaturesDiffApplicator
 {
     public static Action<string>? LogCallback { get; set; }
 

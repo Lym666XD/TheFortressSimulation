@@ -2,7 +2,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI.Selection;
 
-public sealed class DragRectSelectionTool : ISelectionTool
+internal sealed partial class DragRectSelectionTool : ISelectionTool
 {
     private enum State { Idle, Dragging }
     private State _state = State.Idle;
@@ -66,39 +66,4 @@ public sealed class DragRectSelectionTool : ISelectionTool
         }
     }
 
-    public void AdjustZRange(int delta)
-    {
-        if (_state != State.Dragging) return;
-        if (delta == 0) return;
-        // Symmetric expand around start: keep start inside [zMin..zMax]
-        if (delta > 0)
-        {
-            _zMax = Math.Min(_worldSizeTiles - 1, _zMax + 1);
-        }
-        else
-        {
-            _zMin = Math.Max(0, _zMin - 1);
-        }
-        // Ensure start stays inside
-        if (_zStart < _zMin) _zMin = _zStart;
-        if (_zStart > _zMax) _zMax = _zStart;
-        Changed?.Invoke(Current);
-    }
-
-    public void SetZRangeEnd(int z)
-    {
-        if (_state != State.Dragging) return;
-
-        int clampedZ = Math.Max(0, Math.Min(_worldSizeTiles - 1, z));
-        _zMin = Math.Min(_zStart, clampedZ);
-        _zMax = Math.Max(_zStart, clampedZ);
-        Changed?.Invoke(Current);
-    }
-
-    private Point Clamp(Point p)
-    {
-        int x = Math.Max(0, Math.Min(_worldSizeTiles - 1, p.X));
-        int y = Math.Max(0, Math.Min(_worldSizeTiles - 1, p.Y));
-        return new Point(x, y);
-    }
 }

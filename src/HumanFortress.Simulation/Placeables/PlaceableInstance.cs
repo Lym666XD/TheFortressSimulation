@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Simulation.Items;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.Items;
 using SadRogue.Primitives;
@@ -17,7 +18,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// NOTE: PlaceableData is serialized to chunk saves when save system is implemented.
 /// Currently stored in memory only via Chunk.PlaceableData layer.
 /// </summary>
-public sealed class PlaceableInstance
+internal sealed class PlaceableInstance
 {
     private const ulong UninstalledItemGuidScope = 0x554E494E53544954UL;
 
@@ -352,7 +353,7 @@ public sealed class PlaceableInstance
 /// <summary>
 /// Placeable kind (Installable from item, or Construction built on-site)
 /// </summary>
-public enum PlaceableKind
+internal enum PlaceableKind
 {
     /// <summary>
     /// Installable from item (has source_item_* fields, preserves quality/material/decorations)
@@ -368,7 +369,7 @@ public enum PlaceableKind
 /// <summary>
 /// Door state component (only for placeables with passability=doorway)
 /// </summary>
-public sealed class DoorState
+internal sealed class DoorState
 {
     /// <summary>
     /// Is door currently open (affects passability)
@@ -384,7 +385,7 @@ public sealed class DoorState
 /// <summary>
 /// Runtime state for a construction site placeable.
 /// </summary>
-public sealed class ConstructionSiteState
+internal sealed class ConstructionSiteState
 {
     /// <summary>
     /// Target construction id (e.g., core_construction_workshop_* or l0.* synthetic ids).

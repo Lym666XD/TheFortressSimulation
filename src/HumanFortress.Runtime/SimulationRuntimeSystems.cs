@@ -10,7 +10,7 @@ namespace HumanFortress.Runtime;
 /// <summary>
 /// Exposes the simulation systems that participate in the runtime tick loop.
 /// </summary>
-public sealed class SimulationRuntimeSystems : IRuntimeTickSystems
+internal sealed class SimulationRuntimeSystems : IRuntimeTickSystems
 {
     internal SimulationRuntimeSystems(
         HaulingSystem haulingPlanner,
@@ -48,24 +48,24 @@ public sealed class SimulationRuntimeSystems : IRuntimeTickSystems
         Sanitizer = sanitizer;
     }
 
-    public HaulingSystem HaulingPlanner { get; }
-    public ITransportRequestQueue TransportQueue { get; }
-    public TransportJobSystem TransportJobs { get; }
-    public MiningSystem MiningPlanner { get; }
-    public BuildableConstructionSystem BuildablePlanner { get; }
-    public ConstructionMaterialsPlanner ConstructionMaterialsPlanner { get; }
-    public MiningJobSystem MiningJobs { get; }
-    public ConstructionSystem ConstructionPlanner { get; }
-    public ConstructionJobSystem ConstructionJobs { get; }
-    public CraftPlanner CraftPlanner { get; }
-    public CraftJobSystem CraftJobs { get; }
-    public ProfessionAssignments ProfessionAssignments { get; }
-    public SchedulerTunings SchedulerTunings { get; }
-    public WorkshopTunings WorkshopTunings { get; }
-    public UnifiedJobsOrchestrator JobsOrchestrator { get; }
-    public SanitizeSystem Sanitizer { get; }
+    internal HaulingSystem HaulingPlanner { get; }
+    internal ITransportRequestQueue TransportQueue { get; }
+    internal TransportJobSystem TransportJobs { get; }
+    internal MiningSystem MiningPlanner { get; }
+    internal BuildableConstructionSystem BuildablePlanner { get; }
+    internal ConstructionMaterialsPlanner ConstructionMaterialsPlanner { get; }
+    internal MiningJobSystem MiningJobs { get; }
+    internal ConstructionSystem ConstructionPlanner { get; }
+    internal ConstructionJobSystem ConstructionJobs { get; }
+    internal CraftPlanner CraftPlanner { get; }
+    internal CraftJobSystem CraftJobs { get; }
+    internal ProfessionAssignments ProfessionAssignments { get; }
+    internal SchedulerTunings SchedulerTunings { get; }
+    internal WorkshopTunings WorkshopTunings { get; }
+    internal UnifiedJobsOrchestrator JobsOrchestrator { get; }
+    internal SanitizeSystem Sanitizer { get; }
 
-    public void RegisterWith(TickScheduler scheduler)
+    void IRuntimeTickSystems.RegisterWith(TickScheduler scheduler)
     {
         scheduler.RegisterSystem(BuildablePlanner);
         scheduler.RegisterSystem(JobsOrchestrator);

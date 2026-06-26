@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Navigation;
 using System;
 using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
@@ -13,12 +14,12 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned transport executor.
 /// </summary>
-public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
+internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly TransportJobExecutor _executor;
 
-    public TransportJobSystem(
+    internal TransportJobSystem(
         HumanFortress.Simulation.World.World world,
         ITransportRequestQueue requestQueue,
         DiffLog? diffLog = null,
@@ -37,6 +38,7 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = pathService ?? new PathService(tuning);
         var navView = new WorldNavigationView(_nav);
+        var move = new MovementExecutor(paths);
         var logger = new TransportCallbackJobLogger(log);
         ITransportWorkerCandidateSource? workerCandidates = professions == null
             ? null
@@ -55,6 +57,7 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             requestQueue,
             paths,
             navView,
+            move,
             diffEmitter,
             diffEmitter,
             workerCandidates,
@@ -65,27 +68,42 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             maxActiveJobs);
     }
 
-    public int LastIntakeCount => _executor.LastIntakeCount;
+    internal int LastIntakeCount => _executor.LastIntakeCount;
 
-    public int Priority => UpdateOrder.Priority.Jobs;
+    internal int Priority => UpdateOrder.Priority.Jobs;
 
-    public string SystemId => TransportJobExecutor.SystemId;
+    internal string SystemId => TransportJobExecutor.SystemId;
 
-    public NavigationManager NavigationManager => _nav;
+    internal NavigationManager NavigationManager => _nav;
 
-    public TransportJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+    int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    public int GetBacklogCount() => _executor.GetBacklogCount();
+    int ITick.Priority => Priority;
 
-    public void ReadTick(ulong tick) => _executor.ReadTick(tick);
+    string ITick.SystemId => SystemId;
 
-    public void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
 
-    public List<TransportActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
 
-    public TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
+    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
+
+    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+
+    internal TransportJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+
+    TransportJobStatsSnapshot IUnifiedTransportJobExecutor.GetLastStatsSnapshot() => GetLastStatsSnapshot();
+
+    internal int GetBacklogCount() => _executor.GetBacklogCount();
+
+    internal List<TransportActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+
+    internal TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
         => _executor.GetDebugSnapshot(maxActive, maxRequests, includeSeeds);
 
-    public void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+    internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
         => _executor.ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);
+
+    void IUnifiedTransportJobExecutor.ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+        => ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);
 }

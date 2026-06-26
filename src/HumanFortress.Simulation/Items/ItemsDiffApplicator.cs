@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Items;
 /// <summary>
 /// Applies ItemsDiff operations during the post-tick write boundary.
 /// </summary>
-public static class ItemsDiffApplicator
+internal static class ItemsDiffApplicator
 {
     public static Action<string>? LogCallback { get; set; }
 

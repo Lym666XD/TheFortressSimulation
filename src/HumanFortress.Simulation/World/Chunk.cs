@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.World;
 /// Fixed-size chunk of tiles per CHUNK_AND_DATA_LAYOUT.md.
 /// Default 32x32 cells per Z-level.
 /// </summary>
-public sealed class Chunk
+internal sealed class Chunk
 {
     public const int SIZE_XY = 32;
     public const int CELLS_PER_LAYER = SIZE_XY * SIZE_XY; // 1024
@@ -267,7 +267,7 @@ public sealed class Chunk
 /// <summary>
 /// Unique chunk identifier.
 /// </summary>
-public readonly struct ChunkKey : IEquatable<ChunkKey>
+internal readonly struct ChunkKey : IEquatable<ChunkKey>
 {
     public readonly int ChunkX;
     public readonly int ChunkY;
@@ -304,7 +304,7 @@ public readonly struct ChunkKey : IEquatable<ChunkKey>
 /// <summary>
 /// L2 overlay - furniture/constructions.
 /// </summary>
-public sealed class FurnitureCell
+internal sealed class FurnitureCell
 {
     public FurnitureRef? Blocker { get; set; }
     public List<FurnitureRef>? Passables { get; set; }
@@ -316,7 +316,7 @@ public sealed class FurnitureCell
 /// Reference to furniture/placeable instance.
 /// MIGRATION: Old system uses Id + TypeId, new system uses PlaceableGuid.
 /// </summary>
-public readonly struct FurnitureRef
+internal readonly struct FurnitureRef
 {
     public readonly int Id;  // Legacy: numeric ID
     public readonly ushort TypeId;  // Legacy: type ID
@@ -344,7 +344,7 @@ public readonly struct FurnitureRef
 /// <summary>
 /// L4 overlay - fields (gases/decals).
 /// </summary>
-public sealed class FieldCell
+internal sealed class FieldCell
 {
     public ushort Id { get; set; }
     public byte Intensity { get; set; }
@@ -354,7 +354,7 @@ public sealed class FieldCell
 /// <summary>
 /// L5 overlay - item stacks.
 /// </summary>
-public readonly struct ItemStackRef
+internal readonly struct ItemStackRef
 {
     public readonly int Handle;
 

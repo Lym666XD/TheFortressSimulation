@@ -4,12 +4,12 @@ namespace HumanFortress.Content.Registry;
 
 internal static class ContentRegistryDiagnostics
 {
-    public static void Emit(string message)
+    internal static void Emit(string message)
     {
         Emit(message, ResolveLevel(message));
     }
 
-    public static void Emit(string message, DiagnosticLevel level)
+    internal static void Emit(string message, DiagnosticLevel level)
     {
         DiagnosticHub.Sink.Write(DiagnosticEvent.Create(level, "Content.Registry", message));
 
@@ -19,7 +19,7 @@ internal static class ContentRegistryDiagnostics
         }
     }
 
-    public static void Emit(string message, Exception exception)
+    internal static void Emit(string message, Exception exception)
     {
         DiagnosticHub.Sink.Write(DiagnosticEvent.Create(DiagnosticLevel.Error, "Content.Registry", message, exception));
 

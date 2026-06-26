@@ -8,18 +8,18 @@ namespace HumanFortress.Content.Registry;
 /// <summary>
 /// Resolves aliases and handles content migrations.
 /// </summary>
-public class AliasResolver
+internal sealed class AliasResolver
 {
     private readonly List<AliasDefinition> _materialAliases = new();
     private readonly List<AliasDefinition> _terrainAliases = new();
     private readonly List<ContentMigration> _migrations = new();
 
-    public ContentVersion Version { get; private set; }
+    internal ContentVersion Version { get; private set; }
 
     /// <summary>
     /// Load aliases from definitions
     /// </summary>
-    public void LoadAliases(IEnumerable<AliasDefinition> materialAliases,
+    internal void LoadAliases(IEnumerable<AliasDefinition> materialAliases,
         IEnumerable<AliasDefinition> terrainAliases,
         IEnumerable<ContentMigration> migrations,
         ContentVersion version)
@@ -38,7 +38,7 @@ public class AliasResolver
     /// <summary>
     /// Resolve a material name through aliases
     /// </summary>
-    public string ResolveMaterialName(string name, ContentVersion? fromVersion = null)
+    internal string ResolveMaterialName(string name, ContentVersion? fromVersion = null)
     {
         // If we have a from version, apply migrations first
         if (fromVersion != null)
@@ -60,7 +60,7 @@ public class AliasResolver
     /// <summary>
     /// Resolve a terrain kind name through aliases
     /// </summary>
-    public string ResolveTerrainName(string name, ContentVersion? fromVersion = null)
+    internal string ResolveTerrainName(string name, ContentVersion? fromVersion = null)
     {
         // If we have a from version, apply migrations first
         if (fromVersion != null)
@@ -169,7 +169,7 @@ public class AliasResolver
     /// <summary>
     /// Get all active aliases for a given version
     /// </summary>
-    public Dictionary<string, string> GetActiveMaterialAliases(ContentVersion? maxVersion = null)
+    internal Dictionary<string, string> GetActiveMaterialAliases(ContentVersion? maxVersion = null)
     {
         var result = new Dictionary<string, string>();
 
@@ -191,7 +191,7 @@ public class AliasResolver
     /// <summary>
     /// Check if an alias is deprecated
     /// </summary>
-    public bool IsDeprecated(string aliasName, bool isMaterial = true)
+    internal bool IsDeprecated(string aliasName, bool isMaterial = true)
     {
         var aliases = isMaterial ? _materialAliases : _terrainAliases;
         var alias = aliases.FirstOrDefault(a => a.From == aliasName);
@@ -202,7 +202,7 @@ public class AliasResolver
     /// <summary>
     /// Get deprecation warning for an alias
     /// </summary>
-    public string? GetDeprecationWarning(string aliasName, bool isMaterial = true)
+    internal string? GetDeprecationWarning(string aliasName, bool isMaterial = true)
     {
         var aliases = isMaterial ? _materialAliases : _terrainAliases;
         var alias = aliases.FirstOrDefault(a => a.From == aliasName);

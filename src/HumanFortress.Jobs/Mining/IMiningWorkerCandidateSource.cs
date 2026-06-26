@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;

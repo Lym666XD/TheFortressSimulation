@@ -8,12 +8,12 @@ internal sealed class ConstructionTerrainMaterialResolver : IConstructionTerrain
 {
     private readonly IRuntimeGeologyCatalog _geology;
 
-    public ConstructionTerrainMaterialResolver(IRuntimeGeologyCatalog geology)
+    internal ConstructionTerrainMaterialResolver(IRuntimeGeologyCatalog geology)
     {
         _geology = geology ?? throw new ArgumentNullException(nameof(geology));
     }
 
-    public ushort ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind)
+    internal ushort ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind)
     {
         if (!string.IsNullOrWhiteSpace(filter.PreferredMaterialId)
             && _geology.TryGetGeologyHandleByMaterialAndKind(filter.PreferredMaterialId, kind.ToString(), out var preferredHandle))
@@ -24,7 +24,7 @@ internal sealed class ConstructionTerrainMaterialResolver : IConstructionTerrain
         return 0;
     }
 
-    public ushort TryMatchFromCurrent(TileBase tile, TerrainKind kind)
+    internal ushort TryMatchFromCurrent(TileBase tile, TerrainKind kind)
     {
         try
         {
@@ -41,4 +41,10 @@ internal sealed class ConstructionTerrainMaterialResolver : IConstructionTerrain
 
         return 0;
     }
+
+    ushort IConstructionTerrainMaterialResolver.ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind) =>
+        ResolveGeologyHandle(filter, kind);
+
+    ushort IConstructionTerrainMaterialResolver.TryMatchFromCurrent(TileBase tile, TerrainKind kind) =>
+        TryMatchFromCurrent(tile, kind);
 }

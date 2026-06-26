@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Tiles;
 using SadRogue.Primitives;
 

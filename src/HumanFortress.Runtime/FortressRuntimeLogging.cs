@@ -1,17 +1,20 @@
 namespace HumanFortress.Runtime;
 
-public sealed class FortressRuntimeLogging
+internal sealed class FortressRuntimeLogging
 {
-    public static FortressRuntimeLogging None { get; } = new();
+    internal static FortressRuntimeLogging None { get; } = new();
 
-    public FortressRuntimeLogging(
+    internal FortressRuntimeLogging(
         Action<string>? log = null,
-        Action<string>? constructionMaterials = null)
+        Action<string>? constructionMaterials = null,
+        FortressRuntimeWorkshopCompletionNotifier? workshopCompletion = null)
     {
         Log = log;
         ConstructionMaterials = constructionMaterials ?? log;
+        WorkshopCompletion = workshopCompletion;
     }
 
-    public Action<string>? Log { get; }
-    public Action<string>? ConstructionMaterials { get; }
+    internal Action<string>? Log { get; }
+    internal Action<string>? ConstructionMaterials { get; }
+    internal FortressRuntimeWorkshopCompletionNotifier? WorkshopCompletion { get; }
 }

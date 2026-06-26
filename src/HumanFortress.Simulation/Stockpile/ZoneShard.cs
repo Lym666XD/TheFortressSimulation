@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Per-chunk fragment of a stockpile zone.
 /// Maintains local member cells and capacity tracking per STOCKPILE_SPEC.md.
 /// </summary>
-public sealed class ZoneShard
+internal sealed class ZoneShard
 {
     /// <summary>
     /// Zone ID this shard belongs to.

@@ -6,7 +6,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Diff operations for stockpile system per STOCKPILE_SPEC.md.
 /// Follows the Diff-Log pattern from CONCURRENCY_MODEL.md.
 /// </summary>
-public enum StockpileDiffOp
+internal enum StockpileDiffOp
 {
     CreateZone = 1,
     DeleteZone = 2,
@@ -24,7 +24,7 @@ public enum StockpileDiffOp
 /// Immutable diff entry for stockpile operations.
 /// Generated during Read phase, applied during Write phase.
 /// </summary>
-public readonly struct StockpileDiff
+internal readonly struct StockpileDiff
 {
     /// <summary>
     /// Operation to perform.

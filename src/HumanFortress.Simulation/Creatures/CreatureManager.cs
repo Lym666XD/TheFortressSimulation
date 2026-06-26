@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Random;
+using HumanFortress.Contracts.Simulation.Creatures;
 using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
@@ -14,7 +15,7 @@ namespace HumanFortress.Simulation.Creatures;
 /// Thread-safe for concurrent reads; writes use locks.
 /// Follows data-driven principles per CREATURE_SPEC.md and UPDATE_ORDER.md
 /// </summary>
-public sealed class CreatureManager : ICreatureDefinitionCatalog
+internal sealed class CreatureManager : ICreatureDefinitionCatalog
 {
     private const ulong CreatureInstanceGuidScope = 0x4352454154555245UL;
 

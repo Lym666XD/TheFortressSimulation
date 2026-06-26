@@ -3,7 +3,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
 
-public interface IOrderCommandTarget
+internal interface IOrderCommandTarget
 {
     void EnqueueMiningOrder(Rectangle worldRect, int z, int priority, ulong createdTick);
 

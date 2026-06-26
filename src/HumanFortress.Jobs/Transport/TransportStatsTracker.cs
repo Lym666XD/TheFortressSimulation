@@ -7,9 +7,9 @@ internal sealed class TransportStatsTracker
     private int _lastNoPathTotal;
     private TransportJobStatsSnapshot _lastStats;
 
-    public TransportJobStatsSnapshot LastStats => _lastStats;
+    internal TransportJobStatsSnapshot LastStats => _lastStats;
 
-    public void RecordRead(int intake, int active, int backlog, int carryoverOld)
+    internal void RecordRead(int intake, int active, int backlog, int carryoverOld)
     {
         _lastStats = new TransportJobStatsSnapshot(
             intake,
@@ -21,7 +21,7 @@ internal sealed class TransportStatsTracker
             CarryoverOld: carryoverOld);
     }
 
-    public void RecordFinishedJobs()
+    internal void RecordFinishedJobs()
     {
         _lastCompletedTotal = JobStats.Completed;
         _lastNoPathTotal = JobStats.NoPath;

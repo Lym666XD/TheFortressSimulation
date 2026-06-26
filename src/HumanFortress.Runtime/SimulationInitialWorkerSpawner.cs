@@ -6,9 +6,9 @@ namespace HumanFortress.Runtime;
 /// <summary>
 /// Seeds a new simulation session with basic workers when no loaded creatures exist.
 /// </summary>
-public static class SimulationInitialWorkerSpawner
+internal static class SimulationInitialWorkerSpawner
 {
-    public static int SpawnIfNeeded(World world, int desired = 5, Action<string>? log = null)
+    internal static int SpawnIfNeeded(World world, int desired = 5, Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         if (world.Creatures.InstanceCount > 0) return 0;

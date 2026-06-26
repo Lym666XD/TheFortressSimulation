@@ -1,5 +1,5 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Placeables;
 using WorldModel = HumanFortress.Simulation.World.World;
@@ -12,18 +12,18 @@ internal sealed class CraftAssignmentHandler
     private readonly CraftWorkshopLocator _workshops;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ICraftRecipeCatalog _recipes;
     private readonly ICraftWorkerCandidateSource? _workerCandidates;
     private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
 
-    public CraftAssignmentHandler(
+    internal CraftAssignmentHandler(
         WorldModel world,
         CraftWorkshopLocator workshops,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ICraftRecipeCatalog recipes,
         ICraftWorkerCandidateSource? workerCandidates,
         string systemId,
@@ -40,7 +40,7 @@ internal sealed class CraftAssignmentHandler
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
-    public CraftAssignmentResult TryAssign(
+    internal CraftAssignmentResult TryAssign(
         PlannedCraftJob job,
         IReadOnlyList<CreatureInstance> workers,
         HashSet<Guid> busy,

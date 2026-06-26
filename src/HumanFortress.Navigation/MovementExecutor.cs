@@ -1,17 +1,20 @@
+using HumanFortress.Contracts.Navigation;
+using NavPath = HumanFortress.Contracts.Navigation.Path;
+
 namespace HumanFortress.Navigation;
 
 /// <summary>
 /// Handles movement execution along paths with stuck detection.
 /// Per NAVIGATION_SPEC.md section 7.
 /// </summary>
-public sealed class MovementExecutor
+internal sealed class MovementExecutor : IMovementExecutor
 {
     private readonly Dictionary<uint, MovementState> _movementStates;
     private readonly IPathService _pathService;
     private readonly NavigationTuning _tuning;
     private readonly int _stepDelay;
 
-    public MovementExecutor(IPathService pathService, NavigationTuning? tuning = null)
+    internal MovementExecutor(IPathService pathService, NavigationTuning? tuning = null)
     {
         _movementStates = new Dictionary<uint, MovementState>();
         _pathService = pathService;
@@ -22,7 +25,7 @@ public sealed class MovementExecutor
     /// <summary>
     /// Start or update movement for an entity.
     /// </summary>
-    public void BeginMovement(uint entityId, PathRequest request, Path path)
+    internal void BeginMovement(uint entityId, PathRequest request, NavPath path)
     {
         _movementStates[entityId] = new MovementState
         {
@@ -40,7 +43,7 @@ public sealed class MovementExecutor
     /// Update movement for all entities.
     /// Called during movement system update.
     /// </summary>
-    public MovementUpdate UpdateMovement(uint entityId, IWorldNavigationView world)
+    internal MovementUpdate UpdateMovement(uint entityId, IWorldNavigationView world)
     {
         if (!_movementStates.TryGetValue(entityId, out var state))
         {
@@ -139,7 +142,7 @@ public sealed class MovementExecutor
     /// <summary>
     /// Cancel movement for an entity.
     /// </summary>
-    public void CancelMovement(uint entityId)
+    internal void CancelMovement(uint entityId)
     {
         _movementStates.Remove(entityId);
     }
@@ -147,7 +150,7 @@ public sealed class MovementExecutor
     /// <summary>
     /// Check if entity has active movement.
     /// </summary>
-    public bool HasMovement(uint entityId)
+    internal bool HasMovement(uint entityId)
     {
         return _movementStates.ContainsKey(entityId);
     }
@@ -155,7 +158,7 @@ public sealed class MovementExecutor
     /// <summary>
     /// Get movement progress for an entity.
     /// </summary>
-    public float GetProgress(uint entityId)
+    internal float GetProgress(uint entityId)
     {
         if (!_movementStates.TryGetValue(entityId, out var state))
             return 0f;
@@ -180,52 +183,25 @@ public sealed class MovementExecutor
     /// </summary>
     private struct MovementState
     {
-        public PathRequest Request;
-        public Path Path;
-        public int CurrentStep;
-        public Point3 Position;
-        public int StuckTicks;
-        public int LastProgress;
-        public int LastConnectivityVersion;
-        public int StepWait;
+        internal PathRequest Request;
+        internal NavPath Path;
+        internal int CurrentStep;
+        internal Point3 Position;
+        internal int StuckTicks;
+        internal int LastProgress;
+        internal int LastConnectivityVersion;
+        internal int StepWait;
     }
+
+    void IMovementExecutor.BeginMovement(uint entityId, PathRequest request, NavPath path) =>
+        BeginMovement(entityId, request, path);
+
+    MovementUpdate IMovementExecutor.UpdateMovement(uint entityId, IWorldNavigationView world) =>
+        UpdateMovement(entityId, world);
+
+    void IMovementExecutor.CancelMovement(uint entityId) => CancelMovement(entityId);
+
+    bool IMovementExecutor.HasMovement(uint entityId) => HasMovement(entityId);
+
+    float IMovementExecutor.GetProgress(uint entityId) => GetProgress(entityId);
 }
-
-/// <summary>
-/// Movement status for execution.
-/// </summary>
-public enum MovementStatus
-{
-    /// <summary>Entity is moving along path.</summary>
-    Moving,
-
-    /// <summary>Entity arrived at destination.</summary>
-    Arrived,
-
-    /// <summary>Entity is waiting (temporary obstacle).</summary>
-    Waiting,
-
-    /// <summary>Path is blocked.</summary>
-    Blocked,
-
-    /// <summary>Entity is stuck (needs intervention).</summary>
-    Stuck,
-
-    /// <summary>No valid path exists.</summary>
-    NoPath,
-
-    /// <summary>Path completed but not at destination.</summary>
-    PathComplete,
-
-    /// <summary>Topology changed, need replan.</summary>
-    TopologyChanged,
-}
-
-/// <summary>
-/// Result of movement update.
-/// </summary>
-public readonly record struct MovementUpdate(
-    MovementStatus Status,
-    Point3 Position,
-    bool NeedsReplan,
-    Point3? LookAhead);

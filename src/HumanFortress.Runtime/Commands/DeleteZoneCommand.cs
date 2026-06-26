@@ -9,29 +9,32 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Command to delete a zone entirely.
 /// </summary>
-public sealed class DeleteZoneCommand : ICommand
+internal sealed class DeleteZoneCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "zones.delete";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "zones.delete";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly int _zoneId;
 
-    public DeleteZoneCommand(ulong tick, int zoneId)
+    internal DeleteZoneCommand(ulong tick, int zoneId)
     {
         Tick = tick;
         _zoneId = zoneId;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IZoneCommandTarget target)
-        {
-            target.DeleteZone(_zoneId);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeZoneCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Zones.DeleteZone(_zoneId);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

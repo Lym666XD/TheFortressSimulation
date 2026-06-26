@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.World;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -9,16 +9,16 @@ internal sealed class TransportReplanHandler
     private readonly WorldModel _world;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ITransportMovementDiffEmitter _diffEmitter;
     private readonly ITransportJobLogger _logger;
     private readonly Func<Guid, Guid, uint> _seedFrom;
 
-    public TransportReplanHandler(
+    internal TransportReplanHandler(
         WorldModel world,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ITransportMovementDiffEmitter diffEmitter,
         ITransportJobLogger? logger,
         Func<Guid, Guid, uint> seedFrom)
@@ -32,7 +32,7 @@ internal sealed class TransportReplanHandler
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
 
-    public void HandleReplan(ActiveJob job, ulong tick, uint entityId, MovementUpdate update, Point3 goal)
+    internal void HandleReplan(ActiveJob job, ulong tick, uint entityId, MovementUpdate update, Point3 goal)
     {
         var source = update.Position;
         var request = new PathRequest(source, goal, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));

@@ -8,12 +8,12 @@ namespace HumanFortress.Content.Registry;
 /// Parser for material definitions: supports authoring and runtime formats.
 /// Per MATERIALS_SPEC v4-min, authoring uses human-readable values and runtime uses FX integers.
 /// </summary>
-public static class MaterialParser
+internal static class MaterialParser
 {
     /// <summary>
     /// Parse material from JSON element (auto-detects authoring vs runtime format)
     /// </summary>
-    public static MaterialDefinition ParseMaterial(JsonElement elem, bool isAuthoringFormat = true)
+    internal static MaterialDefinition ParseMaterial(JsonElement elem, bool isAuthoringFormat = true)
     {
         var material = new MaterialDefinition();
 

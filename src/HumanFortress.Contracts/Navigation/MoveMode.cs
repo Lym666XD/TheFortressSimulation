@@ -1,4 +1,4 @@
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Contracts.Navigation;
 
 /// <summary>
 /// Movement mode for pathfinding requests.

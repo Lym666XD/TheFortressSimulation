@@ -7,7 +7,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Read in the read phase by the hauling system to generate moves.
 /// Thread-safe lifetime: created from UI via command; consumed by HaulingSystem.
 /// </summary>
-public sealed class HaulDesignation
+internal sealed class HaulDesignation
 {
     public readonly Rectangle WorldRect;
     public readonly int Z;

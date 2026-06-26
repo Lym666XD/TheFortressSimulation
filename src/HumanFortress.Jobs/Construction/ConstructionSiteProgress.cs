@@ -11,7 +11,7 @@ internal sealed class ConstructionSiteProgress
     private readonly ConstructionTuning _tuning;
     private readonly IConstructionJobLogger _logger;
 
-    public ConstructionSiteProgress(
+    internal ConstructionSiteProgress(
         WorldModel world,
         ConstructionMaterialTracker materials,
         ConstructionTuning tuning,
@@ -23,7 +23,7 @@ internal sealed class ConstructionSiteProgress
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    public bool AdvanceIfReady(PlaceableInstance site, ulong tick)
+    internal bool AdvanceIfReady(PlaceableInstance site, ulong tick)
     {
         var construction = site.ConstructionSite;
         if (construction == null)

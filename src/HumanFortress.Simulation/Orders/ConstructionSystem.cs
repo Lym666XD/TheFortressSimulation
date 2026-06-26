@@ -15,7 +15,7 @@ namespace HumanFortress.Simulation.Orders;
 /// - Material resolution: queries ContentRegistry for (material, kind) → geology handle, with last-used preference cache.
 /// - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
 /// </summary>
-public sealed class ConstructionSystem : ITick
+internal sealed class ConstructionSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;

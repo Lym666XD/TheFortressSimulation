@@ -14,14 +14,14 @@ internal sealed class MiningDropResolver : IMiningDropResolver
     private readonly Action<string>? _log;
     private bool _dropsCacheBuilt;
 
-    public MiningDropResolver(IRuntimeGeologyCatalog? geology, string? miningTuningJson, Action<string>? log = null)
+    internal MiningDropResolver(IRuntimeGeologyCatalog? geology, string? miningTuningJson, Action<string>? log = null)
     {
         _geology = geology;
         _miningTuning = ParseMiningTuning(miningTuningJson);
         _log = log;
     }
 
-    public int CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind)
+    internal int CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind)
     {
         try
         {
@@ -38,7 +38,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         }
     }
 
-    public ushort ResolveAirGeologyHandle()
+    internal ushort ResolveAirGeologyHandle()
     {
         try
         {
@@ -55,7 +55,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         return 0;
     }
 
-    public List<(string itemId, int qty)> ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind)
+    internal List<(string itemId, int qty)> ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind)
     {
         var result = new List<(string, int)>();
         try
@@ -178,6 +178,14 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         }
     }
 
+    int IMiningWorkCostResolver.CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind) =>
+        CalculateRequiredTicks(geologyHandle, terrainKind);
+
+    ushort IMiningDropResolver.ResolveAirGeologyHandle() => ResolveAirGeologyHandle();
+
+    List<(string itemId, int qty)> IMiningDropResolver.ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind) =>
+        ChooseDropsFor(geologyHandle, terrainKind);
+
     private void EnsureDropsCache()
     {
         if (_dropsCacheBuilt) return;
@@ -263,15 +271,15 @@ internal sealed class MiningDropResolver : IMiningDropResolver
 
     private struct DropDef
     {
-        public string Id;
-        public int Min;
-        public int Max;
-        public double Weight;
+        internal string Id;
+        internal int Min;
+        internal int Max;
+        internal double Weight;
     }
 
     private sealed class DropTable
     {
-        public List<DropDef> Wall { get; } = new();
-        public List<DropDef> Ramp { get; } = new();
+        internal List<DropDef> Wall { get; } = new();
+        internal List<DropDef> Ramp { get; } = new();
     }
 }

@@ -10,18 +10,22 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Debug command for spawning an item through the simulation command boundary.
 /// </summary>
-public sealed class SpawnItemCommand : ICommand
+internal sealed class SpawnItemCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "debug.spawn.item";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "debug.spawn.item";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly string _itemId;
     private readonly Point _worldPos;
     private readonly int _z;
     private readonly int _quantity;
 
-    public SpawnItemCommand(ulong tick, string itemId, Point worldPos, int z, int quantity = 1)
+    internal SpawnItemCommand(ulong tick, string itemId, Point worldPos, int z, int quantity = 1)
     {
         Tick = tick;
         _itemId = itemId ?? throw new ArgumentNullException(nameof(itemId));
@@ -30,13 +34,14 @@ public sealed class SpawnItemCommand : ICommand
         _quantity = Math.Max(1, quantity);
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IItemSpawnCommandTarget target)
-            target.AddItemSpawn(_itemId, _worldPos, _z, _quantity);
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeItemSpawnCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Items.AddItemSpawn(_itemId, _worldPos, _z, _quantity);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

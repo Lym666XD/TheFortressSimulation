@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Random;
+using HumanFortress.Core.Simulation;
+using HumanFortress.Contracts.Simulation.Items;
 using HumanFortress.Simulation.Diagnostics;
 using SadRogue.Primitives;
 using HumanFortress.Simulation.World;
@@ -15,7 +16,7 @@ namespace HumanFortress.Simulation.Items;
 /// Thread-safe for concurrent reads; writes use locks.
 /// Follows data-driven principles per ITEMS_SPEC.md and UPDATE_ORDER.md
 /// </summary>
-public sealed class ItemManager : IItemDefinitionCatalog
+internal sealed class ItemManager : IItemDefinitionCatalog
 {
     private const ulong ItemInstanceGuidScope = 0x4954454D53544143UL;
 

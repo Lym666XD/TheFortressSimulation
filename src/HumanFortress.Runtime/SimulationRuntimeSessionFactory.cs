@@ -11,7 +11,7 @@ namespace HumanFortress.Runtime;
 /// Creates fresh simulation sessions while keeping App-specific host/content
 /// composition behind callbacks.
 /// </summary>
-public sealed class SimulationRuntimeSessionFactory<THost>
+internal sealed class SimulationRuntimeSessionFactory<THost>
     where THost : class
 {
     private readonly TickScheduler _tickScheduler;
@@ -22,7 +22,7 @@ public sealed class SimulationRuntimeSessionFactory<THost>
     private readonly Func<NavigationTuning?>? _getNavigationTuning;
     private readonly Func<World, NavigationManager, THost> _createHost;
 
-    public SimulationRuntimeSessionFactory(
+    internal SimulationRuntimeSessionFactory(
         TickScheduler tickScheduler,
         CommandQueue commandQueue,
         DiffLog diffLog,
@@ -40,7 +40,7 @@ public sealed class SimulationRuntimeSessionFactory<THost>
         _getNavigationTuning = getNavigationTuning;
     }
 
-    public SimulationRuntimeSession<THost> CreateNew(int sizeInChunks, int maxZ)
+    internal SimulationRuntimeSession<THost> CreateNew(int sizeInChunks, int maxZ)
     {
         if (sizeInChunks <= 0)
             throw new ArgumentOutOfRangeException(nameof(sizeInChunks), "Session size must be positive.");

@@ -25,25 +25,31 @@ These constraints reflect the current refactor state and override older target-o
 Current source ownership
 
 - `HumanFortress.Contracts` owns cross-module DTOs/interfaces, including profession contracts and content contract types.
-- `HumanFortress.Content` owns content path resolution, item/creature/core-data loaders, the structured runtime registry implementation, runtime content snapshot capture, strict content loading, and profession registry JSON loading.
+- `HumanFortress.Content` owns public content path/loading diagnostics through `FortressContentLoader`, internal/friend item/creature/core-data loader implementations, the structured runtime registry implementation, internal/friend runtime content snapshot capture, strict content loading, and internal/friend profession registry JSON loading through a contract-returning facade.
 - `HumanFortress.Core` owns foundation primitives only; do not add content registry implementation, JSON content loaders, or App/runtime composition back into Core.
 - `HumanFortress.Simulation` owns authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
-- `HumanFortress.Navigation` owns navigation algorithms and cache structures; it must remain decoupled from Simulation through adapter interfaces.
-- `HumanFortress.Jobs` owns job executor cores, job helpers, job diff emitters, callback loggers, scheduler/workshop tuning types, worker selection, profession assignment state, and unified job orchestration.
-- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, command implementations and target seams, Simulation-backed navigation adapter/factory, startup helpers, tick-facing job wrappers, concrete runtime system collection/factories/groups, runtime dependency groups, and runtime host/startup factories.
-- `HumanFortress.WorldGen` consumes explicit generation content; it must not read global content registries directly.
+- `HumanFortress.Navigation` owns internal concrete navigation algorithms and cache structures; its cross-module surface is `HumanFortress.Contracts.Navigation`, and Navigation must remain decoupled from Simulation through adapter interfaces.
+- `HumanFortress.Jobs` owns internal job executor cores, job helpers, job diff emitters, callback loggers, scheduler/workshop tuning types, worker selection, profession assignment state, and unified job orchestration. Runtime may consume these through the transitional friend bridge; App must not.
+- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, internal command implementations/target graph, Simulation-backed navigation adapter/factory, startup helpers, tick-facing job wrappers, concrete runtime system collection/factories/groups, runtime dependency groups, and runtime host/startup factories.
+- `HumanFortress.WorldGen` consumes explicit generation content; it must not read global content registries directly. Stable generated-world DTO/settings/service contracts live in `HumanFortress.Contracts.WorldGen`; concrete WorldGen service/data implementations should stay internal behind the WorldGen factory, and App screens should use App-owned world-generation ports rather than direct concrete WorldGen service/data types.
 - `HumanFortress.App` owns SadConsole/MonoGame UI, UI bootstrap, logger callback binding, App-specific optional command delegates, construction UI completion binding, and UI/debug surfaces. Do not add new gameplay rules, content loaders, job logic, or authoritative world mutations to App.
 
 Current compatibility debt
 
-- Some moved contracts still preserve historical domain namespaces, such as Navigation contracts under `HumanFortress.Navigation`, until their cleanup pass.
+- Navigation contracts now use `HumanFortress.Contracts.Navigation`; do not add new `HumanFortress.Navigation` contract-shaped DTOs or interfaces.
 - Transitional `InternalsVisibleTo` bridges are allowed only as migration scaffolding. Do not use them as justification for new cross-module ownership leaks.
+- Do not add `InternalsVisibleTo("HumanFortress.App")` back to Jobs, Navigation, or Runtime implementation assemblies. App should cross those boundaries through Runtime/Content/WorldGen/contracts and App-owned facades.
 - `HumanFortress.App/Jobs` should remain empty of active source files.
 - `HumanFortress.App/Commands` should remain empty of active source files.
 
 Mutation and command rules
 
-- UI/debug actions that affect simulation state should enter through Runtime command targets or typed diff logs.
+- UI/debug actions that affect simulation state should enter through semantic Runtime facade methods, the Runtime command stage, or typed diff logs.
+- App input/UI code should call semantic Runtime facade methods for simulation-affecting actions; do not construct Runtime command objects, use `Runtime.Commands` factories, or pass `ICommand` factories from App.
+- App UI/presentation code should consume App-owned view snapshots or Runtime/Contracts read-model DTOs. `SimulationStatus` is a Contracts runtime snapshot and may be passed to UI chrome; do not introduce App-local duplicate wrappers for it.
+- Runtime public session ports should expose Contracts DTOs/primitives, not SadConsole/SadRogue or other presentation-library geometry. App may use SadRogue inside App-owned UI/access interfaces, but the App.Runtime adapter must map those values to `HumanFortress.Contracts.Runtime` primitives before crossing into Runtime.
+- App game-state wrappers should depend on narrow collaborators such as screen presenters and fortress-play runtime hosts; do not pass the whole `GameStateManager` into a state just to reach runtime/session helpers.
+- Keep `Program` as a thin startup entrypoint. SadConsole lifetime, CLI parsing, native preload, strict-content gates, headless init, and diagnostic runners belong in App startup helpers rather than in the entrypoint.
 - Do not directly mutate item, creature, terrain, construction, stockpile, or profession state from App event handlers.
 - Construction/craft/transport/mining item changes must go through `ItemsDiffLog` or the relevant Jobs-owned diff emitter.
 - Any replacement of direct mutation with diffs needs focused regression coverage for duplicate application, rollback, and missing-resource behavior.
@@ -53,6 +59,7 @@ Content and data rules
 - Runtime systems should consume explicit catalogs/tunings/snapshots, not `ContentRegistry.Instance` convenience reads.
 - App may resolve active-session content only through Runtime/Content-owned facades.
 - Content JSON compatibility belongs in Content loaders, not App startup code or Simulation managers.
+- Content concrete registries/loaders should remain internal where possible; ordinary external entry should be `FortressContentLoader`, while Runtime/tests may use friend-only loader/snapshot surfaces. Cross-module reads should use Contracts catalog interfaces such as `IRuntimeMaterialCatalog`, `IRuntimeTerrainKindCatalog`, `IRuntimeGeologyCatalog`, `IConstructionCatalog`, `IRecipeCatalog`, and `IProfessionRegistry`.
 
 Verification workflow
 

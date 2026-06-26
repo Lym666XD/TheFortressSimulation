@@ -10,7 +10,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Single arbitration point for matching stockpile pull requests with available items.
 /// Per STOCKPILE_SPEC.md section 3: Broker ensures deterministic matching and prevents ping-pong.
 /// </summary>
-public sealed class StockpileHaulingBroker
+internal sealed class StockpileHaulingBroker
 {
     private readonly World.World _world;
     private readonly StockpileTuning _tuning;
@@ -371,7 +371,7 @@ public sealed class StockpileHaulingBroker
 /// Tuning parameters for stockpile system.
 /// Loaded from tuning.stockpile.json per STOCKPILE_SPEC.md.
 /// </summary>
-public sealed class StockpileTuning
+internal sealed class StockpileTuning
 {
     // Budgets
     public int MaxZonesPerChunk { get; set; } = 32;

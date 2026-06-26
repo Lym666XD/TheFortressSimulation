@@ -1,13 +1,13 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Simulation.Items;
+using HumanFortress.Contracts.Simulation.Items;
 
 namespace HumanFortress.Content.Definitions;
 
-public sealed class ItemDefinitionCatalogLoadResult
+internal sealed class ItemDefinitionCatalogLoadResult
 {
-    public ItemDefinitionCatalogLoadResult(
+    internal ItemDefinitionCatalogLoadResult(
         ItemDefinitionCatalogStore catalog,
         int loadedCount,
         int fileCount,
@@ -21,18 +21,18 @@ public sealed class ItemDefinitionCatalogLoadResult
         Messages = messages;
     }
 
-    public ItemDefinitionCatalogStore Catalog { get; }
-    public int LoadedCount { get; }
-    public int FileCount { get; }
-    public int ErrorCount { get; }
-    public IReadOnlyList<string> Messages { get; }
+    internal ItemDefinitionCatalogStore Catalog { get; }
+    internal int LoadedCount { get; }
+    internal int FileCount { get; }
+    internal int ErrorCount { get; }
+    internal IReadOnlyList<string> Messages { get; }
 }
 
-public static class ItemDefinitionCatalogLoader
+internal static class ItemDefinitionCatalogLoader
 {
     private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
 
-    public static ItemDefinitionCatalogLoadResult Load(string dataPath)
+    internal static ItemDefinitionCatalogLoadResult Load(string dataPath)
     {
         var itemsPath = Path.Combine(dataPath, "items");
         var messages = new List<string>();

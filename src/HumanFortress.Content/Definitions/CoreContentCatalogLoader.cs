@@ -5,9 +5,9 @@ namespace HumanFortress.Content.Definitions;
 /// <summary>
 /// Aggregated immutable catalog load result for data/core content used by a fortress session.
 /// </summary>
-public sealed class CoreContentCatalogLoadResult
+internal sealed class CoreContentCatalogLoadResult
 {
-    public CoreContentCatalogLoadResult(
+    internal CoreContentCatalogLoadResult(
         ItemDefinitionCatalogLoadResult items,
         CreatureDefinitionCatalogLoadResult creatures,
         CoreDataLoadResult coreData)
@@ -17,13 +17,13 @@ public sealed class CoreContentCatalogLoadResult
         CoreData = coreData ?? throw new ArgumentNullException(nameof(coreData));
     }
 
-    public ItemDefinitionCatalogLoadResult Items { get; }
-    public CreatureDefinitionCatalogLoadResult Creatures { get; }
-    public CoreDataLoadResult CoreData { get; }
-    public ConstructionContentLoadResult Constructions => CoreData.Constructions;
-    public RecipeContentLoadResult Recipes => CoreData.Recipes;
+    internal ItemDefinitionCatalogLoadResult Items { get; }
+    internal CreatureDefinitionCatalogLoadResult Creatures { get; }
+    internal CoreDataLoadResult CoreData { get; }
+    internal ConstructionContentLoadResult Constructions => CoreData.Constructions;
+    internal RecipeContentLoadResult Recipes => CoreData.Recipes;
 
-    public bool HasErrors =>
+    internal bool HasErrors =>
         Items.ErrorCount > 0
         || Creatures.ErrorCount > 0
         || CoreData.HasErrors;
@@ -32,9 +32,9 @@ public sealed class CoreContentCatalogLoadResult
 /// <summary>
 /// Loads the data/core catalogs that used to be loaded through separate App/Core paths.
 /// </summary>
-public static class CoreContentCatalogLoader
+internal static class CoreContentCatalogLoader
 {
-    public static CoreContentCatalogLoadResult Load(string coreDataPath)
+    internal static CoreContentCatalogLoadResult Load(string coreDataPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(coreDataPath);
 

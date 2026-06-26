@@ -5,7 +5,7 @@ namespace HumanFortress.Simulation.Tiles;
 /// Size: 10 bytes (may be padded by CLR).
 /// Immutable for thread safety - use atomic replacement for updates.
 /// </summary>
-public readonly struct TileBase
+internal readonly struct TileBase
 {
     public readonly ushort GeoMatId;     // L0: geology/terrain material (IdMap index)
     public readonly ushort TerrainBits;  // L0: kind/flags (bit layout below)
@@ -98,7 +98,7 @@ public readonly struct TileBase
 /// <summary>
 /// Terrain types per TILE_SPEC.md.
 /// </summary>
-public enum TerrainKind : byte
+internal enum TerrainKind : byte
 {
     SolidWall = 0,      // Blocks all movement, provides support
     OpenWithFloor = 1,  // Walkable floor, provides support
@@ -113,7 +113,7 @@ public enum TerrainKind : byte
 /// <summary>
 /// Ramp directions helper enum retained for offsets.
 /// </summary>
-public enum RampDirection : byte
+internal enum RampDirection : byte
 {
     North = 0,
     Northeast = 1,

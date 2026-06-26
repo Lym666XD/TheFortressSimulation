@@ -5,9 +5,9 @@ namespace HumanFortress.Content.Loading;
 /// <summary>
 /// Coordinates the runtime structured registry load.
 /// </summary>
-public static class RuntimeContentRegistryLoader
+internal static class RuntimeContentRegistryLoader
 {
-    public static RuntimeContentRegistryLoadResult Load(
+    internal static RuntimeContentRegistryLoadResult Load(
         string contentPath,
         bool continueOnStructuredRegistryError = true)
     {
@@ -35,9 +35,9 @@ public static class RuntimeContentRegistryLoader
     }
 }
 
-public sealed class RuntimeContentRegistryLoadResult
+internal sealed class RuntimeContentRegistryLoadResult
 {
-    public RuntimeContentRegistryLoadResult(
+    internal RuntimeContentRegistryLoadResult(
         bool structuredLoaded,
         int structuredWarningCount,
         int structuredErrorCount,

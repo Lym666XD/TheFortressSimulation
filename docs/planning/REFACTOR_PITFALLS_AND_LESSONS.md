@@ -1,8 +1,320 @@
 # HumanFortress Refactor Pitfalls and Lessons
 
-Date: 2026-06-06
+Date: 2026-06-26
 
 This document records practical pitfalls found during the current architecture refactor. It is meant to keep future refactor work fast and predictable.
+
+## App/UI Boundary Pitfalls
+
+### Internal implementations still need explicit interface entrypoints
+
+When hardening implementation classes inside Jobs, Navigation, or Runtime, changing a class member from `public` to `internal` is not enough if the class implements an interface. C# requires either a public implicit implementation or an explicit interface implementation.
+
+Preferred pattern for implementation assemblies:
+
+```text
+internal method/property
+  -> used by same assembly, Runtime, and friend tests where useful
+
+explicit interface implementation
+  -> used by cross-module contracts and command/runtime seams
+```
+
+Do this especially for `ITick`, navigation contracts, job diff emitters, loggers, profession adapters, command targets, and snapshot/session facades. If existing friend tests instantiate a concrete implementation, keep an internal direct method and delegate the explicit interface method to it instead of making tests cast to the interface everywhere.
+
+### Do not pass loaded-session snapshots through input controllers
+
+`FortressLoadedSessionSnapshot` is frame-render presentation state, not a general input dependency bag. Passing that whole snapshot through mouse, keyboard, overlay-click, placement, or map-click controllers makes UI code look like it is allowed to grow new dependencies on render/session state.
+
+Prefer explicit dependencies:
+
+```text
+UiServices?
+NavigationOverlay?
+HasFortressMap
+FortressRuntimeAccess snapshot/query methods
+```
+
+The frame renderer is currently the only App path that should need the loaded-session snapshot. New UI/debug panels should ask Runtime for DTOs instead of adding another `LoadedSession` parameter.
+
+### App map renderers should draw viewport DTOs only
+
+Main map terrain/entity display now enters App through:
+
+```text
+Runtime snapshot builder
+  -> SimulationMapViewportData / MapViewportCellView
+
+FortressMapRenderer
+  -> clears the SadConsole surface
+  -> draws DTO glyph/color cells
+  -> draws the App-owned navigation overlay from Runtime navigation DTOs
+```
+
+Do not reintroduce App-side reads of `World`, `FortressMap`, chunks, tiles, geology catalogs, item managers, creature managers, or terrain kinds inside `FortressMapRenderer` or frame/overlay render helpers. If map rendering needs another visible fact, add it to the Runtime map viewport DTO or a focused Runtime overlay DTO.
+
+Frame-level render data should stay aggregated:
+
+```text
+SimulationFrameRenderData
+  -> SimulationMapViewportData
+  -> SimulationNavigationOverlayData
+  -> SimulationTileInspectionData
+```
+
+Avoid splitting `FortressFrameRenderer` back into separate Runtime calls for map viewport, navigation overlay, and tile inspection. Add fields to the frame DTO when the frame needs more read-side simulation data.
+
+Overlay-level render data should also stay aggregated:
+
+```text
+SimulationUiOverlayFrameData
+  -> build catalog
+  -> jobs/workshops
+  -> zone/stockpile overlay/detail
+  -> management drawer / Work drawer / Debug menu data
+```
+
+Avoid adding new per-panel Runtime calls directly in `FortressUiOverlayRenderer`; add fields to the overlay-frame DTO unless the query depends on immediate drag state, command input, or App diagnostics.
+
+### Runtime public ports should not expose presentation primitives
+
+App can keep using SadRogue `Point`/`Rectangle` inside App-owned input, rendering, and role-access interfaces because those files are presentation glue. The cross-project Runtime session ports should instead use Contracts-owned DTOs/primitives such as `RuntimePoint`, `RuntimeRect`, and focused notification records.
+
+Current shape:
+
+```text
+App input/rendering
+  -> SadRogue Point/Rectangle
+
+FortressRuntimeAccess
+  -> maps to Contracts.Runtime primitives
+
+Runtime session ports
+  -> Contracts DTOs/primitives only
+
+Runtime core
+  -> maps back to internal SadRogue/world geometry where current implementation requires it
+```
+
+Do not "fix" a signature mismatch by importing `SadRogue.Primitives` into a public Runtime port. Add or extend a Contracts primitive/DTO, then keep the third-party geometry conversion at the App.Runtime or Runtime-internal edge.
+
+### Runtime snapshot builders should not become new god objects
+
+Snapshot builders are allowed to know about live Runtime/Simulation internals, but each builder should own one read-model family or one mapping policy. Do not put navigation overlay modes, map terrain glyph rules, entity glyph rules, workshop queue summaries, construction-material progress, and aggregate frame composition into one ever-growing file just because they all return DTOs.
+
+Current split pattern:
+
+```text
+FortressRuntimeSnapshotBuilder
+  -> base/debug/catalog entrypoints
+  -> frame/overlay aggregate composition
+  -> map/navigation/inspection/placement queries
+  -> Work/jobs/workforce/orders/workshop read models
+
+MapViewportSnapshotBuilder
+  -> viewport orchestration
+  -> terrain glyph policy
+  -> visible creature/item glyph policy
+
+NavigationOverlaySnapshotBuilder
+  -> basic mode overlays
+  -> structural/flow/ramp mode overlays
+  -> path-cell mapping
+  -> grid/nav-data helpers
+
+WorkshopSnapshotBuilder
+  -> workshop scanning
+  -> summary/queue mapping
+  -> construction-material progress
+
+ManagementDrawerSnapshotBuilder
+  -> creatures/items/zones
+
+StockpileSnapshotBuilder
+  -> overlay/detail/hit-test/geometry
+
+JobsDebugSnapshotBuilder
+  -> active jobs/transport debug/stats
+
+FortressRuntimeSessionSnapshotFacade
+  -> frame/map/work/session access queries
+```
+
+When a snapshot needs new data, add it near the read-model family it belongs to. If the mapping starts to look like reusable domain policy rather than presentation/read-model policy, move that policy closer to Runtime/Simulation/Content instead of hiding it in a snapshot helper.
+
+### Work drawer panels should consume one aggregate read model
+
+The Work drawer needs jobs, workforce, order summaries, and workshop summaries in the same panel. Avoid letting each helper call a different runtime facade method from inside App UI renderers.
+
+Current shape:
+
+```text
+Runtime snapshot builder
+  -> SimulationWorkDrawerData
+
+FortressUiOverlayRenderer
+  -> fetches the aggregate when the Work drawer is open
+
+UiWorkDrawerRenderer
+  -> renders Work tabs from that DTO
+```
+
+Input paths that need a narrower read model, such as profession-weight clicks, should use a clearly named input DTO/provider instead of reaching for live systems or forcing the full drawer aggregate.
+
+### Split App presentation by surface, not by domain ownership
+
+SadConsole rendering helpers that take `ScreenSurface`, `ICellSurface`, `UiStore`, mouse/camera state, or UI service objects are App presentation code even when they draw simulation-derived facts. Do not move those helpers into Runtime, Jobs, Simulation, or Content just because they are large.
+
+Current shape:
+
+```text
+Runtime snapshot DTOs
+  -> App.Rendering frame/overlay coordinators
+  -> App.Rendering/App.UI SadConsole glyph/panel renderers
+```
+
+Good split targets are presentation surfaces:
+
+```text
+FortressMapOverlayGlyphRenderer
+FortressPlacementOverlayRenderer
+UiChromeRenderer
+UiManagementDrawerRenderer
+UiDebugMenuRenderer
+UiQuickMenuRenderer
+UiWorkDrawerRenderer
+UiWorkshopPanelRenderer
+FortressDebugUnitOverlayRenderer
+```
+
+If a renderer needs more simulation information, add the data to a Runtime snapshot/query DTO first. Keep the App class focused on glyphs, layout, transient UI state, and command-preview visuals.
+
+Avoid moving SadConsole renderers to Runtime, Jobs, Simulation, Content, or Contracts only because a file is large. Module ownership follows the dependency boundary: surface drawing that touches `ScreenSurface`, `ICellSurface`, `UiStore`, or App input state stays in App; simulation facts cross the boundary as Runtime DTOs.
+
+For chrome controls, keep labels, keyboard shortcuts, and slot-to-drawer/menu mappings in `UiChromeSlots`, with geometry in `ButtonLayoutCalculator`. Do not reintroduce separate F-key or Z/X/C/V lookup arrays in renderers and input handlers.
+
+When App UI files are still large after moving live simulation reads behind snapshots, split them by presentation surface or state domain inside App first. Partial files for `UiStore`, `UiManagementDrawerRenderer`, `UiWorkDrawerRenderer`, and `UiDebugMenuRenderer` are acceptable because they keep SadConsole/App dependencies local without pretending those UI concerns belong in Runtime, Simulation, Jobs, Content, or Contracts.
+
+Input dispatchers should split by event channel or feature panel, not by lower-layer domain. Keep SadConsole component input, screen chrome hit testing, root quick-menu hit testing, submenu hit testing, Debug overlay click handling, Work allocation keyboard/mouse handling, and placement/menu hit testing in App input/UI partials. Do not move them to Runtime simply because they trigger Runtime commands; the command/query boundary is the facade call, not the mouse/keyboard routing code.
+
+As App input files shrink, keep the same ownership rule: keyboard/mouse context records, root quick-menu hit testing, main-menu/world-map input, and SadConsole overlay pass-through logic remain App concerns. Split them by event channel or feature menu inside `HumanFortress.App.Input` / `HumanFortress.App.States`; do not move them to Contracts/Runtime just because they produce semantic Runtime requests.
+
+When splitting SadConsole presentation or input partials, carry the exact extension-method imports with the moved code. Files that call `Print`, `SetGlyph`, `Keyboard`, `ScreenSurface`, or `Color` usually need `SadConsole`, `SadConsole.Input`, and/or `SadRogue.Primitives` locally. Do not rely on a sibling partial file's imports; C# using directives are file-scoped.
+
+Runtime command targets should also split by operation role instead of accumulating helper logic in one target class. Keep command entrypoints, world-cell eligibility/collection, lookup/bootstrap of mutable runtime state, and display/name compatibility helpers in separate Runtime partial files. Do not move those helpers into App, and do not hide reusable domain policy inside App-side command factories.
+
+Build, placement, and chrome presentation should follow the same App-local split rule. `BuildUI`, `FortressBuildKeyboardInput`, `NavigationOverlay`, `FortressPlacementOverlayRenderer`, `FortressPlacementController`, `UiChromeRenderer`, and UI command objects are App presentation/input orchestration. Split them by UI surface, event family, or command family; do not move SadConsole drawing, keyboard selection, or mouse placement routing into Runtime/Jobs/Simulation just because the final action queues a Runtime command.
+
+Runtime composition files should split by system group, not by App caller. Planning systems and tick-facing job wrappers are both Runtime composition, but they should not live in one mixed "system groups" file once each group has enough constructor policy. Keep concrete factory wiring in Runtime and keep App limited to session/bootstrap adapters and callback injection.
+
+### Contracts should define shapes, not runtime policy
+
+Moving a request type to Contracts must not pull runtime defaults, content category mapping, or Simulation conversion policy with it. Contracts can own enums/records that express cross-boundary intent; Runtime should own how those intents become commands, material filters, content category keys, and Simulation DTOs.
+
+Good shape:
+
+```text
+App UI intent
+  -> Contracts.Runtime enum/record/request parameters
+  -> Runtime command factory applies defaults/mapping/conversion
+  -> Simulation command payload
+```
+
+If App needs to pass material preferences or UI tool options, pass the raw semantic values through the runtime facade and build the concrete filter inside Runtime. Do not put default material ids, category keys, or Simulation-facing conversion helpers in Contracts just because both App and Runtime can reference them.
+
+### Generated-world UI should use Contracts DTOs through Session queries
+
+World generation screens should use the App-owned `IWorldGenerationAccess` port. The concrete adapter may call `HumanFortress.WorldGen.WorldGenerationServiceFactory` and hold the contract `IWorldGenerationService`, but screen/session code should not directly construct or store concrete WorldGen service/data types.
+
+Later App screens should read through `FortressSessionContext.TryGetWorldSize(...)`, `TryGetWorldTileView(...)`, or bootstrap-only `WorldTileSnapshot` queries instead of reading `WorldGenResult.Tiles`, raw `WorldTile`, `BiomeType`, or `WorldParams`.
+
+Keep stable generated-world shapes in `HumanFortress.Contracts.WorldGen` (`WorldGenerationSettings`, `WorldMapTileView`, `WorldTileSnapshot`). Keep SadConsole glyph/color policy in App.Rendering because it depends on presentation choices. Keep fortress-session selection, embark configuration, and Runtime request mapping in App.Session because those are App flow concerns.
+
+### Runtime access facades should narrow by caller role
+
+Do not pass the full concrete `FortressRuntimeAccess` into every App helper just because it is convenient. Rendering should use a read-only interface, play/input controllers should use a play-time query/command interface, and session initialization should be the only path that can see startup-only operations such as fortress-map generation/fill or auto-dig bootstrap.
+
+Current interface split:
+
+```text
+IFortressRuntimeReadAccess
+  -> frame/overlay renderers
+IFortressRuntimeBuildCatalogAccess
+  -> build menu/context keyboard queries
+IFortressRuntimeUiInputAccess
+  -> UI component debug/workforce/profession callbacks
+IFortressRuntimePlacementAccess
+  -> placement and zone/stockpile hit-test controllers
+IFortressRuntimeMapInspectionAccess
+  -> normal map-click/tile-inspection paths
+IFortressRuntimeDebugSpawnAccess
+  -> debug spawn input
+IFortressRuntimeWorkshopPanelAccess
+  -> workshop panel queue editing
+IFortressRuntimeNavigationDebugAccess
+  -> path-debug input
+IFortressRuntimeSimulationControlAccess
+  -> pause/speed keyboard controls
+IFortressRuntimeSessionAccess
+  -> composition-time role aggregate only; do not pass it into narrow UI helpers
+```
+
+For fortress play composition, use a named ports object such as `FortressStateRuntimePorts` at the state boundary, then pass individual role interfaces into input/render/session helpers. Do not recreate a broad keyboard/runtime facade that inherits unrelated workshop, navigation-debug, simulation-control, and build-catalog capabilities just because the keyboard router touches all four.
+
+Likewise, avoid putting active runtime session ownership back into `GameStateManager`. Keep `SimulationRuntimeSession`, live `World`, content snapshot handling, navigation rebuild, fortress generation/fill, and startup auto-dig policy in Runtime/session-controller boundaries. App.Runtime may adapt logger/UI callbacks and forward request DTOs, but it should not grow new gameplay/domain logic.
+
+Runtime snapshot builder/facade helpers are implementation details. Public boundaries should be snapshot DTOs plus Runtime session port interfaces/App.Runtime facade query methods, not direct calls from App into `FortressRuntimeSnapshotBuilder`, `FortressRuntimeSessionSnapshotFacade`, or the internal `FortressRuntimeSessionCore`.
+
+Internal Runtime implementation classes should not keep ordinary `public` members just because they implement a public or friend-visible interface. Prefer explicit interface implementations for concrete commands, command targets, job-system wrappers, navigation-source adapters, command contexts, and small catalog adapters. Keep Runtime helper/factory/builder methods `internal` unless App or another project is meant to call that exact helper as a supported API. This keeps source scans aligned with the intended boundary and prevents internal implementation types from looking like stable extension points.
+
+Keep App project references aligned with source ownership. If App source no
+longer uses a module namespace directly, remove the direct ProjectReference
+instead of keeping it as a convenience bridge. App currently should not directly
+reference Jobs, Simulation, or Navigation; it should reach those systems through
+Runtime/WorldGen DTOs, queries, or commands.
+
+Command translation is a Runtime boundary, not an App-to-Simulation shortcut.
+App may map App UI enums/options to stable Runtime request DTOs, but it should
+not construct Runtime command objects, call `Runtime.Commands` factories, or
+pass `Func<ulong, ICommand>` delegates. Semantic queue methods such as
+`QueueHaulOrder(...)`, `QueueCreatureSpawn(...)`, and
+`QueueAddWorkshopRecipe(...)` should cross the App facade; concrete command
+construction belongs in Runtime session port implementations/Runtime command code.
+
+Runtime concrete command classes, command factories, command target interfaces,
+and `SimulationRuntimeCommandTargets` are implementation details. Keep them
+internal and let tests use the Runtime friend bridge when they need direct
+command-stage coverage. Do not make them public again just to simplify App
+input code; add a semantic Runtime session port method or request DTO
+instead.
+
+Commands should also depend on the narrowest runtime target context they need.
+Use `IRuntimeOrderCommandTargetContext`, `IRuntimeZoneCommandTargetContext`,
+`IRuntimeWorkshopCommandTargetContext`, or the matching spawn/profession/
+stockpile role instead of reintroducing a single all-target command context.
+The tick pipeline should pass only `ISimulationContext` plus the clock role into
+the command stage; individual commands should use `RuntimeCommandContext.Require<T>()`
+for their specific role so a missing runtime role fails visibly instead of
+silently no-oping.
+
+Runtime session construction options and `FortressRuntimeSessionCore` are Runtime-internal helpers. App should create sessions through `FortressRuntimeSessionFactory`, keep App-specific logger/content callbacks at the `GameStateRuntimeCoordinator` composition boundary, store only `IFortressRuntimeSessionPorts`, then hand the rest of App only narrow `FortressRuntimeAccess` role interfaces.
+
+### Workshop input should read snapshot DTOs and write commands
+
+The workshop panel needs queue entry ids and current worker-slot state to enqueue `UpdateWorkshopQueueCommand`, but App input code should not resolve `WorkshopState` by scanning live placeables.
+
+Current shape:
+
+```text
+Runtime snapshot builder
+  -> WorkshopSummaryView / WorkshopQueueEntryView.EntryId
+
+FortressWorkshopPanelKeyboardInput
+  -> reads DTO state through FortressRuntimeAccess.GetWorkshopPanelData(...)
+  -> enqueues UpdateWorkshopQueueCommand
+```
+
+Do not recreate an App-side `World.GetAllChunks()` / `PlaceableInstance.Workshop` resolver for panel input. If more mutable workshop operations are added, expose the read side as DTO fields and keep writes command-driven.
 
 ## Content Boundary Pitfalls
 
@@ -31,10 +343,24 @@ HumanFortress.Content
 App/Runtime composition
   applies snapshots to world managers
   captures runtime catalog/tuning dependencies through FortressRuntimeContentSnapshotLoader
-  exposes construction/recipe catalogs through the structured ContentRegistry while legacy compatibility remains
+  exposes construction/recipe/material/terrain/geology/zone facts through FortressRuntimeContentSnapshot contract properties
 ```
 
 Do not introduce new App-local JSON traversal or a second content bootstrapper while this is being consolidated.
+
+Single-purpose Content loaders and parsing helpers are implementation details. Public entry points should stay centered on:
+
+```text
+FortressContentLoader
+```
+
+`CoreContentCatalogLoader`, `FortressRuntimeContentSnapshotLoader`, `ProfessionRegistryLoader`,
+item/creature catalog result types, `RuntimeContentRegistryLoader`, and material/registry
+parser helpers are internal/friend surfaces for Content, Runtime, and tests. Public
+`FortressContentLoadResult` should expose issues and summary counts rather than full
+mutable or runtime catalog objects.
+
+Concrete Content registry helpers are also implementation details. External code should depend on Contracts catalog interfaces surfaced by Content loader/snapshot facades, such as `IRuntimeMaterialCatalog`, `IRuntimeTerrainKindCatalog`, `IRuntimeGeologyCatalog`, `IConstructionCatalog`, `IRecipeCatalog`, and `IProfessionRegistry`, not on `ContentRegistry`, `MaterialRegistry`, `TerrainKindRegistry`, `GeologyRegistry`, `BiomeTemplateRegistry`, `AliasResolver`, or the concrete profession registry implementation.
 
 ### Resolve App registry files through Content
 
@@ -68,7 +394,7 @@ data/core/placeable/workshops.json
 data/core/recipes/*.json
 ```
 
-`SimulationWorldContentLoader` should not locate the runtime content directory itself. It now calls `FortressContentLoader`, and schema compatibility plus registry population belong behind the Content/structured registry boundary.
+Runtime's `SimulationWorldContentLoader` should not locate the runtime content directory itself or call App logging directly. It now calls `FortressContentLoader` and receives logging/content-issue callbacks from App; schema compatibility plus registry population belong behind the Content/structured registry boundary.
 
 Important compatibility behavior preserved by the Content-owned core-data loader:
 
@@ -79,13 +405,13 @@ Important compatibility behavior preserved by the Content-owned core-data loader
 
 ### Construction and recipe catalogs should be snapshots, not singletons
 
-`ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. `CoreDataRegistryLoader.Load(...)` parses core data into fresh immutable snapshots, and `ContentRegistry.ApplyCoreData(...)` swaps those snapshots into the runtime registry instance.
+`ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. `CoreDataRegistryLoader.Load(...)` parses core data into fresh immutable snapshots, and the internal structured registry applies those snapshots behind `FortressRuntimeContentSnapshotLoader`.
 
-Runtime/gameplay reads should use the read-only catalog surface:
+Runtime/gameplay reads should use the read-only catalog surface from the Content runtime snapshot or explicit constructor-injected interfaces:
 
 ```csharp
-ContentRegistry.Instance.Constructions.GetConstruction(id)
-ContentRegistry.Instance.Recipes.GetRecipe(id)
+FortressRuntimeContentSnapshot.Constructions.GetConstruction(id)
+FortressRuntimeContentSnapshot.Recipes.GetRecipe(id)
 ```
 
 For long-lived systems and Jobs-owned code, prefer constructor-injected interfaces:
@@ -95,14 +421,15 @@ IConstructionCatalog
 IRecipeCatalog
 ```
 
-Do not add new `ConstructionRegistry.Instance.Get...` or `RecipeRegistry.Instance.Get...` reads in runtime systems. The normal read path is now:
+Do not add new `ConstructionRegistry.Instance.Get...`, `RecipeRegistry.Instance.Get...`, or external `ContentRegistry.Instance` reads in runtime systems. The normal read path is now:
 
 ```text
-ContentRegistry.Instance.Constructions
-ContentRegistry.Instance.Recipes
+FortressContentLoader
+  -> internal CoreContentCatalogLoader / FortressRuntimeContentSnapshotLoader
+  -> FortressRuntimeContentSnapshot.Constructions / Recipes
 ```
 
-Those properties expose immutable snapshots through read-only interfaces. Keep it that way; do not recreate the old singleton classes for convenience.
+Those properties expose immutable snapshots through read-only interfaces. Keep it that way; do not recreate the old singleton classes or public registry singleton for convenience.
 
 Preferred direction:
 
@@ -144,12 +471,13 @@ ConstructionJobExecutor
   -> PlaceableTuning
 ```
 
-The App adapter may bridge those calls to the transitional structured registry, but Simulation/JOBS-owned construction logic should not call `ConstructionTuning.LoadFromContent()` or `ContentRegistry.Instance` directly.
+Runtime/Content composition may bridge those calls inside the Content snapshot loader, but Simulation/JOBS-owned construction logic should not call `ConstructionTuning.LoadFromContent()` or `ContentRegistry.Instance` directly.
 
 Runtime tuning objects should enter through the Content-owned runtime snapshot:
 
 ```text
 FortressRuntimeContentSnapshot
+  -> materials / terrain kinds
   -> constructions / recipes
   -> runtime geology catalog
   -> zone definitions
@@ -167,12 +495,12 @@ Structured core-data application should also stay behind the Content-owned snaps
 
 ```text
 FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)
-  -> ContentRegistry.ApplyCoreData(...)
+  -> internal structured registry applies core-data snapshots
   -> CaptureLoaded()
-  -> returns constructions / recipes / geology / zones / tuning JSON
+  -> returns materials / terrain / constructions / recipes / geology / zones / tuning JSON
 ```
 
-`SimulationWorldContentLoader` may inject snapshots into the active `World`, but it should not call `ContentRegistry.Instance.ApplyCoreData(...)` or read `ContentRegistry.Instance.Zones` directly. Use the returned `FortressRuntimeContentSnapshot.ZoneDefinitions` when registering zone definitions with the simulation world.
+Runtime's `SimulationWorldContentLoader` may inject snapshots into the active `World`, but it should not call `ContentRegistry.Instance.ApplyCoreData(...)` or read `ContentRegistry.Instance.Zones` directly. Use the returned `FortressRuntimeContentSnapshot.ZoneDefinitions` when registering zone definitions with the simulation world, and keep App-specific logging behind callbacks.
 
 App adapter seams should also consume the active runtime snapshot instead of the singleton registry:
 
@@ -201,7 +529,7 @@ FortressGenerator / FortressMap / FortressChunk
   -> never read ContentRegistry.Instance directly
 ```
 
-`GameStateManager` caches the active `FortressRuntimeContentSnapshot` returned by session content loading. Reuse that snapshot for navigation tuning, runtime dependency composition, and fortress generation. Do not recapture the global registry from `FortressSessionInitializer` or from WorldGen just because the registry is already loaded.
+`FortressRuntimeSessionCore` caches the active `FortressRuntimeContentSnapshot` returned by session content loading. Reuse that snapshot for navigation tuning, runtime dependency composition, and fortress generation. Runtime owns the `FortressGenerationContent` adaptation and the generate+fill operation; App should pass a primitive `RuntimeFortressGenerationRequest` from session/embark data rather than adapting content snapshots, holding `FortressMap`, or calling a separate world-fill operation. `FortressSessionInitializer`, `GameStateManager`, and WorldGen must not recapture the global registry just because the registry is already loaded.
 
 Repeated core-data loads must replace construction/recipe snapshots, not append to mutable indexes. The current smoke tests verify construction count, recipe count, construction category queries, and workshop recipe queries stay stable after reload.
 
@@ -257,7 +585,7 @@ Stockpile filtering is still a partial TODO path. Do not wire it back to the leg
 
 ### Move contracts by assembly before rewriting namespaces
 
-Navigation contracts already use a transitional compatibility pattern: types compile from `HumanFortress.Contracts` while keeping their old namespace until a broader namespace cleanup is safe.
+Navigation has completed the follow-up namespace cleanup: shared navigation contracts now compile from `HumanFortress.Contracts` under `HumanFortress.Contracts.Navigation`. Use it as the example for later compatibility cleanup batches: move assembly ownership first, then rewrite namespaces once the dependency graph is stable.
 
 Static item/creature definitions now follow the same pattern. These types compile from `HumanFortress.Contracts`:
 
@@ -274,7 +602,7 @@ PassabilityMode
 EffectsBlock
 ```
 
-Do not move them back into Simulation/Core just because their namespace still looks old. The namespace is intentionally transitional to avoid a repo-wide rewrite in the same pass.
+Do not move them back into Simulation/Core just because their namespace still looks old. Those namespaces are intentionally transitional until the owning modules are stable enough for a focused cleanup pass.
 
 Preferred direction:
 
@@ -566,7 +894,7 @@ This is intentionally a runtime seam rather than `StockpileDiff`. The current st
 
 The richer workshop and stockpile target behavior now lives in Runtime-owned helper classes rather than directly in `SimulationRuntimeContext`. Item spawning, creature spawning, order enqueueing, and zone mutation also now live behind Runtime-owned target helpers.
 
-`SimulationRuntimeContext` itself is Runtime-owned now. It remains a broad transitional adapter that implements several command target interfaces; the next cleanup is reducing that interface surface or grouping targets by command family once the command model is clearer.
+`SimulationRuntimeContext` itself is Runtime-owned and should stay a runtime command clock/target context, not a dumping ground for every target interface. Commands should resolve mutations through the target-context role; do not reintroduce `context is IOrderCommandTarget` / `context is IZoneCommandTarget` style casts or make the context implement every target interface again.
 
 Profession assignment remains a special case: Runtime only stores an injected weight-write callback, while App composition still wires the Jobs-owned `ProfessionAssignments` instance into the active session systems.
 
@@ -625,9 +953,14 @@ NavigationChunkSnapshot
 NavigationTile
 PathRequest / Path / PathNode / Point3 / ChunkKey
 MoveMode / PathFlags / NavCapability
+IMovementExecutor / MovementStatus / MovementUpdate
 ```
 
-The namespace intentionally remains `HumanFortress.Navigation` for now. Treat this as a transitional compatibility decision: the assembly boundary matters more than forcing a large namespace churn before job systems are moved out of App.
+These contract types live in the `HumanFortress.Contracts.Navigation` namespace. Concrete navigation implementation types such as `NavigationManager`, `NavigationTuning`, `PathService`, `WorldNavigationView`, `ChunkNavData`, `DeterministicAStar`, and `MovementExecutor` remain in `HumanFortress.Navigation` as internal implementation types.
+
+Be careful with `ChunkKey`: Simulation world chunks and navigation contracts both define a `ChunkKey`. Files that import both `HumanFortress.Contracts.Navigation` and `HumanFortress.Simulation.World` should use explicit namespaces or aliases where both meanings appear.
+
+Jobs should depend on navigation contracts only. Runtime job-system wrappers are responsible for creating concrete `PathService`, `WorldNavigationView`, and `MovementExecutor` instances and injecting `IPathService`, `IWorldNavigationView`, and `IMovementExecutor` into Jobs-owned executors.
 
 Any project that implements test doubles or directly consumes these contracts should reference `HumanFortress.Contracts` explicitly. Do not rely on transitive references through App.
 
@@ -657,6 +990,24 @@ Content snapshot
 ```
 
 Do not reintroduce `NavigationTuning.LoadFromContent()` or a Core/Content project reference from `HumanFortress.Navigation`.
+
+## App Composition Pitfalls
+
+### Avoid null-forgiving callback cycles in state/input composition
+
+When a state-level composition factory needs callbacks into a controller that is created later in the same method, do not capture `controller!` in lambdas. Use an explicit callback hub or binder that fails with a clear "used before binding" error. This keeps initialization order auditable and prevents hidden null-reference traps during future constructor changes.
+
+### Keep GameState wrappers as adapters, not runtime service locators
+
+State wrappers should create their screen and call narrow state-transition collaborators. Do not pass the whole `GameStateManager` into a state just to reach runtime init/access methods, and do not repeat direct `GameHost.Instance.Screen` writes in every wrapper. Centralize SadConsole presentation behind an App-owned presenter.
+
+### Do not keep no-op frame hooks as architectural placeholders
+
+The App state-machine wrappers are not the SadConsole screens themselves. If no `GameState` wrapper overrides a frame `Update(...)`, do not keep a `Program -> GameStateManager.Update -> GameState.Update` hook as a placeholder. It suggests the wrong owner for frame work and makes future UI changes harder to reason about. Let SadConsole drive `ScreenObject.Update(TimeSpan)` and keep the state machine focused on transitions.
+
+### Centralize session-size rules
+
+Fortress session size is used by embark UI, runtime world initialization, viewport math, and placement bounds. Do not duplicate `2..8` checks in each caller. Use `FortressSessionSizeRules` so logging, session storage, runtime initialization, and UI viewport sizing stay consistent.
 
 ### Query-time rebuild must stay removed
 
@@ -848,6 +1199,24 @@ IMiningDiffEmitter
 IMiningJobCompletionSink
 ```
 
+### UI state should not store Simulation enum/DTO types
+
+App UI state can mirror a Simulation concept, but the stored type should be an
+App-owned presentation option unless it is already a stable contract DTO. Map to
+Simulation enums and command DTOs only at the command factory or runtime query
+boundary. This keeps menu rendering, input selection, and debug highlight labels
+from becoming accidental Simulation API consumers.
+
+The same rule applies to simple menu DTOs: stockpile preset menu options are UI
+options until the command boundary only needs a preset id.
+
+### App supplies log callbacks; Runtime owns lower-layer callback targets
+
+App lifetime code can decide which logger implementation to use, but it should
+not maintain the list of every lower-layer Simulation/Navigation static
+callback target. Keep that list in Runtime composition (`FortressRuntimeLogBindings`)
+and let App pass a category-to-callback factory.
+
 Do not make Jobs-owned mining code depend directly on App globals or App-owned concrete services. The tick-facing `MiningJobSystem` wrapper should remain only a composition shell, and executor dependencies should continue crossing through the narrow mining interfaces above. Source-owned Jobs/Runtime helpers may still have the old namespace until the compatibility cleanup pass, but they should not regain App assembly ownership.
 
 ### Construction extraction uses callback-only App ownership
@@ -876,9 +1245,15 @@ IConstructionDiffEmitter
 IConstructionWorkshopCompletionSink
 ```
 
-Do not pass `Logger`, concrete UI services, or the static `ConstructionJobSystem.UiNotifyWorkshopComplete` hook directly into Jobs-owned construction code. The Runtime-owned `ConstructionJobSystem` should remain only a composition shell over narrow Jobs interfaces and callback injection.
+Do not pass `Logger`, concrete UI services, or a static `ConstructionJobSystem` UI hook directly into Jobs-owned construction code. App should bind UI notifications through `IFortressRuntimeBootstrapAccess.SetWorkshopCompletionHandler(...)`; Runtime should route that through `FortressRuntimeWorkshopCompletionNotifier`, while the Runtime-owned `ConstructionJobSystem` remains only a composition shell over narrow Jobs interfaces and callback injection.
 
-The current `InternalsVisibleTo("HumanFortress.App")` bridge in `HumanFortress.Jobs` is transitional. Do not let it become the permanent architecture.
+The former `InternalsVisibleTo("HumanFortress.App")` bridge in `HumanFortress.Jobs` has been removed. Do not add it back; App should use Runtime facades and Contracts snapshot DTOs, not Jobs internals.
+
+Jobs implementation types should stay internal. Runtime and tests currently use
+friend access for executor cores, tunings, orchestration probes, debug snapshots,
+and adapters. If a shape must become a long-term public cross-module contract,
+move that shape to `HumanFortress.Contracts` first instead of exposing the Jobs
+implementation type.
 
 ### Craft extraction needs three explicit seams
 
@@ -956,6 +1331,34 @@ Rule: if planner and executor both reason about the same gameplay concept, extra
 Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`, and craft planning has also moved there. Runtime now owns the tick-facing job wrappers. App still owns concrete session/runtime glue that depends on UI lifetime, logger callbacks, and bootstrap wiring.
 
 Moving them too early would drag App/runtime/navigation dependencies into the wrong assemblies. Invert Navigation and stabilize contracts first.
+
+### UI snapshots are not App-owned just because UI consumes them
+
+The App may own SadConsole rendering, input routing, and session glue, but UI/debug read models that aggregate live Runtime/Simulation/Jobs data should not live in `HumanFortress.App.Runtime`.
+
+Current rule:
+
+```text
+Contracts.Runtime.Snapshots
+  owns public snapshot DTO contracts consumed by App/UI
+
+Runtime.Snapshots
+  owns builders/facades that aggregate Runtime/Simulation/Jobs state into
+  the contract DTOs
+
+App.Runtime
+  calls snapshot facades and adapts them to SadConsole UI/input flows
+```
+
+Do not move job/workforce/order/workshop/build/debug/tile-inspection DTOs or aggregation helpers back into App for convenience. If a snapshot builder starts growing into a God Object, split it by read-model domain inside `HumanFortress.Runtime.Snapshots` instead of making `GameStateManager` or `FortressRuntimeAccess` responsible for the mapping.
+
+When a read model needs multiple live session parts, add a Runtime-owned session facade such as `FortressRuntimeSessionSnapshotFacade` instead of unpacking `_runtimeSession.World`, `.Navigation`, `.Host.Geology`, `.Host.Constructions`, or `.Host.Recipes` in App. Keep live world use in App limited to scoped bootstrap operations like fortress-map fill and optional startup debug seeding.
+
+`HumanFortress.Contracts` should stay renderer-agnostic. Runtime snapshot DTOs
+use project-owned `SnapshotColor` and `SnapshotPoint` primitives; Runtime maps
+from SadRogue types while building read models, and App maps back to SadRogue
+types at drawing boundaries. Do not add `TheSadRogue.Primitives` back to
+Contracts just because a DTO is consumed by SadConsole.
 
 ### Keep build verification short and explicit
 

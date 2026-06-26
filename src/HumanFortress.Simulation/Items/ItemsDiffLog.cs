@@ -7,7 +7,7 @@ namespace HumanFortress.Simulation.Items;
 /// <summary>
 /// Thread-safe log for ItemsDiff operations per tick.
 /// </summary>
-public sealed class ItemsDiffLog
+internal sealed class ItemsDiffLog
 {
     private readonly List<ItemsDiff> _ops = new();
     private int _localSeq = 0;

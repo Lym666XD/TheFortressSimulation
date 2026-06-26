@@ -4,7 +4,6 @@ using HumanFortress.Jobs;
 using HumanFortress.App;
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
-using HumanFortress.Content.Registry;
 using HumanFortress.Core.Commands;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Events;
@@ -65,7 +64,7 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("=== Core Runtime Smoke Tests Completed ===\n");
     }
 
-    private static SimulationRuntimeContext CreateRuntimeContext(
+    private static SimulationCommandExecutionContext CreateRuntimeContext(
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         CreaturesDiffLog creaturesDiffLog,
@@ -75,12 +74,17 @@ internal static class CoreRuntimeSmokeTests
         IConstructionCatalog? constructions = null,
         Action<string>? log = null)
     {
-        return new SimulationRuntimeContext(
+        var simulationContext = new SimulationRuntimeContext(
             diffLog,
+            world,
+            eventBus ?? new EventBus());
+
+        return new SimulationCommandExecutionContext(
+            simulationContext,
+            simulationContext,
+            world,
             itemsDiffLog,
             creaturesDiffLog,
-            world,
-            eventBus ?? new EventBus(),
             recipes ?? RecipeCatalogStore.Empty,
             constructions ?? ConstructionCatalogStore.Empty,
             log);
@@ -318,7 +322,7 @@ internal static class CoreRuntimeSmokeTests
         var eventBus = new EventBus();
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, eventBus);
         var probe = new CommandStageProbe();
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var readSystem = new CommandStageReadSystem(probe);
 
         scheduler.RegisterSystem(readSystem);
@@ -353,6 +357,7 @@ internal static class CoreRuntimeSmokeTests
             world,
             scheduler,
             commandQueue,
+            context,
             context,
             diffLog,
             itemsDiffLog,
@@ -774,20 +779,21 @@ internal static class CoreRuntimeSmokeTests
                 bootstrap.IsValid(treatWarningsAsErrors: true),
                 $"Content bootstrapper reported blocking issues:{Environment.NewLine}{bootstrap.FormatBlockingIssues(treatWarningsAsErrors: true)}");
 
-            var result = bootstrap.Registries
-                ?? throw new InvalidOperationException("Content bootstrapper did not load content registries.");
+            RegressionAssert.True(
+                bootstrap.StructuredRegistriesLoaded,
+                "Content bootstrapper did not load content registries.");
 
-            var structured = ContentRegistry.Instance;
-            var graniteWallHandle = structured.GetGeologyHandle("core_terrain_wall_rock_granite");
-            var graniteWall = structured.GetGeologyByHandle(graniteWallHandle);
-            var hasAirGeology = structured.TryGetGeologyHandleByMaterialAndKind(
+            var structured = FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+            var graniteWallHandle = structured.Geology.GetGeologyHandle("core_terrain_wall_rock_granite");
+            var graniteWall = structured.Geology.GetGeologyByHandle(graniteWallHandle);
+            var hasAirGeology = structured.Geology.TryGetGeologyHandleByMaterialAndKind(
                 "air",
                 TerrainKind.OpenNoFloor.ToString(),
                 out var airHandle);
-            var airGeology = structured.GetGeologyByHandle(airHandle);
-            var navigationTuning = structured.GetTuning<Newtonsoft.Json.Linq.JObject>("tuning.navigation", "$");
-            var lumberingZone = structured.GetZoneDefinition("lumbering");
-            var bedroomZone = structured.GetZoneDefinition("bedroom");
+            var airGeology = structured.Geology.GetGeologyByHandle(airHandle);
+            var navigationTuning = structured.NavigationTuningJson;
+            structured.ZonesById.TryGetValue("lumbering", out var lumberingZone);
+            structured.ZonesById.TryGetValue("bedroom", out var bedroomZone);
             var loadedContent = bootstrap.CoreCatalogs
                 ?? throw new InvalidOperationException("Content bootstrapper did not load core content catalogs.");
 
@@ -804,17 +810,16 @@ internal static class CoreRuntimeSmokeTests
             var stoneBlocksRecipe = runtimeContent.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
 
             RegressionAssert.True(
-                result.StructuredLoaded
-                && structured.IsLoaded
+                bootstrap.StructuredRegistriesLoaded
                 && structured.Materials.ResolveStringId("core_mat_stone_granite").HasValue
                 && structured.TerrainKinds.GetKind("solid_wall") != null
                 && structured.GeologyEntries.Count >= 10
-                && structured.Zones.Count >= 1
+                && structured.ZonesById.Count >= 1
                 && graniteWall != null
                 && graniteWall.Material == "core_mat_stone_granite"
                 && hasAirGeology
                 && airGeology?.Id == "core_terrain_air"
-                && navigationTuning != null
+                && !string.IsNullOrWhiteSpace(navigationTuning)
                 && lumberingZone?.DisplayName == "Lumbering Zone"
                 && lumberingZone.UiHints.Glyph == '\u2663'
                 && lumberingZone.UiHints.Keybind == "Z"
@@ -883,7 +888,6 @@ internal static class CoreRuntimeSmokeTests
         var warningOnly = new FortressContentLoadResult(
             new ContentPathResolution("published-content", "development-content", "published-content"),
             new ContentPathResolution("published-core", "development-core", "published-core"),
-            registries: null,
             coreCatalogs: null,
             registriesAlreadyLoaded: false,
             issues: new[]
@@ -960,13 +964,13 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var registry = ProfessionRegistry.Load(AppContext.BaseDirectory);
+        var registry = ProfessionRegistryLoader.Load(AppContext.BaseDirectory);
         var assignments = new ProfessionAssignments(registry);
         var professionId = registry.Definitions[0].Id;
         var workerId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
 
-        context.SetProfessionWeightHandler(assignments.SetWeight);
+        context.ProfessionCommandBindings.SetProfessionWeightHandler(assignments.SetWeight);
         pipeline.AttachTo(scheduler);
 
         commandQueue.Enqueue(new SetProfessionWeightCommand(tick: 0, workerId, professionId, weight: 12));
@@ -989,7 +993,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
 
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
         var buildAnchor = new SadRogue.Primitives.Point(4, 4);
@@ -1042,7 +1046,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
 
         var initialRect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
         var extraRect = new SadRogue.Primitives.Rectangle(4, 4, 1, 1);
@@ -1120,8 +1124,8 @@ internal static class CoreRuntimeSmokeTests
             creaturesDiffLog,
             world,
             recipes: recipeCatalog,
-            constructions: ContentRegistry.Instance.Constructions);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+            constructions: FortressRuntimeContentSnapshotLoader.CaptureLoaded().Constructions);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var workshopPosition = new SadRogue.Primitives.Point(5, 5);
         var workshopGuid = Guid.Parse("aaaaaaaa-4444-4444-4444-aaaaaaaaaaaa");
         var workshop = new PlaceableInstance(
@@ -1192,7 +1196,7 @@ internal static class CoreRuntimeSmokeTests
         var creaturesDiffLog = new CreaturesDiffLog();
         var world = new World(2, 10);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
 
         for (int x = rect.X; x < rect.X + rect.Width; x++)
@@ -1244,7 +1248,7 @@ internal static class CoreRuntimeSmokeTests
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadItems(world);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(2, 2);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
 
@@ -1271,7 +1275,7 @@ internal static class CoreRuntimeSmokeTests
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadCreatures(world);
         var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
         var target = new SadRogue.Primitives.Point(3, 3);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
 
@@ -1646,28 +1650,28 @@ internal static class CoreRuntimeSmokeTests
 
     private sealed class TestRuntimeGeologyCatalog : IRuntimeGeologyCatalog
     {
-        private readonly Dictionary<ushort, HumanFortress.Core.Content.GeologyData> _byHandle;
+        private readonly Dictionary<ushort, HumanFortress.Contracts.Content.Registry.GeologyData> _byHandle;
         private readonly Dictionary<string, ushort> _handles;
 
         public TestRuntimeGeologyCatalog()
         {
-            var granite = new HumanFortress.Core.Content.GeologyData
+            var granite = new HumanFortress.Contracts.Content.Registry.GeologyData
             {
                 Id = "core_geology_granite",
                 Material = "granite"
             };
-            var aliasGranite = new HumanFortress.Core.Content.GeologyData
+            var aliasGranite = new HumanFortress.Contracts.Content.Registry.GeologyData
             {
                 Id = "core_terrain_wall_rock_granite",
                 Material = "granite"
             };
-            var air = new HumanFortress.Core.Content.GeologyData
+            var air = new HumanFortress.Contracts.Content.Registry.GeologyData
             {
                 Id = "core_geology_air",
                 Material = "air"
             };
 
-            _byHandle = new Dictionary<ushort, HumanFortress.Core.Content.GeologyData>
+            _byHandle = new Dictionary<ushort, HumanFortress.Contracts.Content.Registry.GeologyData>
             {
                 [GraniteWallHandle] = granite,
                 [AliasGraniteWallHandle] = aliasGranite,
@@ -1686,12 +1690,12 @@ internal static class CoreRuntimeSmokeTests
         public ushort AliasGraniteWallHandle => 12;
         public ushort AirHandle => 1;
 
-        public HumanFortress.Core.Content.GeologyData? GetGeologyEntry(string id)
+        public HumanFortress.Contracts.Content.Registry.GeologyData? GetGeologyEntry(string id)
         {
             return _handles.TryGetValue(id, out var handle) ? GetGeologyByHandle(handle) : null;
         }
 
-        public HumanFortress.Core.Content.GeologyData? GetGeologyByHandle(ushort handle)
+        public HumanFortress.Contracts.Content.Registry.GeologyData? GetGeologyByHandle(ushort handle)
         {
             return _byHandle.GetValueOrDefault(handle);
         }
@@ -1768,19 +1772,36 @@ internal static class CoreRuntimeSmokeTests
         }
     }
 
-    private sealed class TestRuntimeCommandContext : IRuntimeCommandContext
+    private sealed class TestRuntimeCommandContext :
+        IRuntimeCommandClockContext,
+        IRuntimeCommandExecutionContext
     {
+        private readonly SimulationRuntimeCommandTargets _commandTargets;
+
         public TestRuntimeCommandContext(DiffLog diffLog, World world, IEventBus eventBus)
         {
             DiffLog = diffLog;
             World = world;
             EventBus = eventBus;
+            _commandTargets = new SimulationRuntimeCommandTargets(
+                world,
+                new ItemsDiffLog(),
+                new CreaturesDiffLog(),
+                RecipeCatalogStore.Empty,
+                ConstructionCatalogStore.Empty);
         }
 
         public DiffLog DiffLog { get; }
         public ulong CurrentTick { get; private set; }
         public IWorldReader World { get; }
         public IEventBus EventBus { get; }
+        public IProfessionAssignmentCommandTarget Professions => _commandTargets.Professions;
+        public IItemSpawnCommandTarget Items => _commandTargets.Items;
+        public ICreatureSpawnCommandTarget Creatures => _commandTargets.Creatures;
+        public IOrderCommandTarget Orders => _commandTargets.Orders;
+        public IZoneCommandTarget Zones => _commandTargets.Zones;
+        public IWorkshopQueueCommandTarget Workshops => _commandTargets.Workshops;
+        public IStockpileCommandTarget Stockpiles => _commandTargets.Stockpiles;
 
         public void SetCurrentTick(ulong tick)
         {

@@ -5,20 +5,25 @@ namespace HumanFortress.Runtime;
 /// <summary>
 /// Executes queued simulation commands at the authoritative pre-read tick boundary.
 /// </summary>
-public sealed class SimulationCommandStage
+internal sealed class SimulationCommandStage
 {
     private readonly CommandQueue _commandQueue;
-    private readonly IRuntimeCommandContext _context;
+    private readonly IRuntimeCommandClockContext _clockContext;
+    private readonly IRuntimeCommandExecutionContext _commandContext;
 
-    public SimulationCommandStage(CommandQueue commandQueue, IRuntimeCommandContext context)
+    internal SimulationCommandStage(
+        CommandQueue commandQueue,
+        IRuntimeCommandClockContext clockContext,
+        IRuntimeCommandExecutionContext commandContext)
     {
         _commandQueue = commandQueue ?? throw new ArgumentNullException(nameof(commandQueue));
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _clockContext = clockContext ?? throw new ArgumentNullException(nameof(clockContext));
+        _commandContext = commandContext ?? throw new ArgumentNullException(nameof(commandContext));
     }
 
-    public void Execute(ulong tick)
+    internal void Execute(ulong tick)
     {
-        _context.SetCurrentTick(tick);
-        _commandQueue.ExecuteCommands(tick, _context);
+        _clockContext.SetCurrentTick(tick);
+        _commandQueue.ExecuteCommands(tick, _commandContext);
     }
 }

@@ -14,9 +14,9 @@ namespace HumanFortress.Simulation.Orders;
 /// Mining planner: reads mining designations and produces PlannedDig DTOs.
 /// Read phase only; no world mutation. Write phase hands off to executor inbox.
 /// </summary>
-public enum MiningSegment { None, Top, Middle, Bottom }
+internal enum MiningSegment { None, Top, Middle, Bottom }
 
-public sealed class MiningSystem : ITick
+internal sealed class MiningSystem : ITick
 {
     public static System.Action<string>? LogCallback { get; set; }
     private readonly World.World _world;
@@ -338,7 +338,7 @@ public sealed class MiningSystem : ITick
         }
     }
 
-    public readonly record struct PlannedDig(Point Cell, int Z, ushort GeologyHandle, byte TerrainKind, int Priority, ulong Seed, MiningAction Action, MiningSegment Segment, int DesignationId);
+    internal readonly record struct PlannedDig(Point Cell, int Z, ushort GeologyHandle, byte TerrainKind, int Priority, ulong Seed, MiningAction Action, MiningSegment Segment, int DesignationId);
 
     /// <summary>
     /// Dequeue up to max planned digs for job creation.

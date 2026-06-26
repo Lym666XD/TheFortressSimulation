@@ -15,10 +15,11 @@
     <ProjectReference Include="..\HumanFortress.Jobs\HumanFortress.Jobs.csproj" />
     <ProjectReference Include="..\HumanFortress.Navigation\HumanFortress.Navigation.csproj" />
     <ProjectReference Include="..\HumanFortress.Simulation\HumanFortress.Simulation.csproj" />
+    <ProjectReference Include="..\HumanFortress.WorldGen\HumanFortress.WorldGen.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="TheSadRogue.Primitives" Version="1.6.0-rc1" />
+    <PackageReference Include="TheSadRogue.Primitives" Version="1.6.0" />
   </ItemGroup>
 
 </Project>

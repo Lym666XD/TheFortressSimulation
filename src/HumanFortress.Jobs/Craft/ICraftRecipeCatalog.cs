@@ -2,7 +2,7 @@ using HumanFortress.Contracts.Content.Registry;
 
 namespace HumanFortress.Jobs.Craft;
 
-public interface ICraftRecipeCatalog
+internal interface ICraftRecipeCatalog
 {
     RecipeDefinition? GetRecipe(string recipeId);
 }

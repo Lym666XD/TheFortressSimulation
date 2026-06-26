@@ -13,11 +13,15 @@ namespace HumanFortress.Runtime.Commands;
 /// For now, OrdersManager will decompose DIG/DIG_RAMP into per-Z MiningDesignation.
 /// Other actions are queued for future handling.
 /// </summary>
-public sealed class CreateAdvancedMiningOrderCommand : ICommand
+internal sealed class CreateAdvancedMiningOrderCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.mining.advanced_rect";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "orders.mining.advanced_rect";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly Rectangle _worldRect;
     private readonly int _zMin;
@@ -25,7 +29,7 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
     private readonly MiningAction _action;
     private readonly int _priority;
 
-    public CreateAdvancedMiningOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority = 50)
+    internal CreateAdvancedMiningOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority = 50)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -35,16 +39,21 @@ public sealed class CreateAdvancedMiningOrderCommand : ICommand
         _priority = priority;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            // Always enqueue; planner will skip if nothing eligible. This avoids false negatives at UI boundary.
-            target.EnqueueAdvancedMiningOrder(_worldRect, _zMin, _zMax, _action, _priority, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeOrderCommandTargetContext>(context, CommandType);
+
+        // Always enqueue; planner will skip if nothing eligible. This avoids false negatives at UI boundary.
+        runtimeContext.Orders.EnqueueAdvancedMiningOrder(
+            _worldRect,
+            _zMin,
+            _zMax,
+            _action,
+            _priority,
+            context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

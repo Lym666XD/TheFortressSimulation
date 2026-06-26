@@ -10,7 +10,7 @@ namespace HumanFortress.Simulation.Rendering
     /// <summary>
     /// Builds immutable render snapshots from world state per RENDERING_SNAPSHOT.md.
     /// </summary>
-    public sealed class RenderSnapshotBuilder
+    internal sealed class RenderSnapshotBuilder
     {
         private readonly World.World _world;
         private readonly TileRegistry _tileRegistry;
@@ -234,7 +234,7 @@ namespace HumanFortress.Simulation.Rendering
     /// <summary>
     /// Registry for tile visual data.
     /// </summary>
-    public sealed class TileRegistry
+    internal sealed class TileRegistry
     {
         private readonly Dictionary<ushort, TileVisualData> _visualData = new();
         

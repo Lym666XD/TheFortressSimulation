@@ -1,10 +1,9 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Jobs;
-using HumanFortress.Content.Registry;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Craft;
 using HumanFortress.Jobs.Transport;
-using HumanFortress.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.Items;
@@ -323,7 +322,7 @@ internal static class TransportConstructionCraftRegressionTests
                 ConstructionTuning.Default),
             diffLog,
             itemsDiffLog,
-            ContentRegistry.Instance.Constructions,
+            ConstructionCatalogStore.Empty,
             ConstructionTuning.Default,
             PlaceableTuning.Default,
             maxPerTick: 1);
@@ -367,7 +366,7 @@ internal static class TransportConstructionCraftRegressionTests
         entry.Status = CraftQueueStatus.InProgress;
         entry.ActiveWorkerId = Guid.Parse("bbbbbbbb-2222-2222-2222-bbbbbbbbbbbb");
 
-        var locator = new CraftWorkshopLocator(world, ContentRegistry.Instance.Constructions);
+        var locator = new CraftWorkshopLocator(world, ConstructionCatalogStore.Empty);
         var itemsDiffLog = new ItemsDiffLog();
         var consumer = new CraftMaterialConsumer(
             world,
@@ -415,7 +414,7 @@ internal static class TransportConstructionCraftRegressionTests
         var itemsDiffLog = new ItemsDiffLog();
         var consumer = new CraftMaterialConsumer(
             world,
-            new CraftWorkshopLocator(world, ContentRegistry.Instance.Constructions),
+            new CraftWorkshopLocator(world, ConstructionCatalogStore.Empty),
             recipes,
             new CraftDiffEmitter(itemsDiffLog, priority: 100, systemId: "test"));
         var job = CreateCraftJob(entry, workshop, recipeId, workshopPos);
@@ -508,15 +507,15 @@ internal static class TransportConstructionCraftRegressionTests
 
     private sealed class PickupFoundDestinationBlockedPathService : IPathService
     {
-        public HumanFortress.Navigation.Path Solve(in PathRequest request, in IWorldNavigationView world)
+        public HumanFortress.Contracts.Navigation.Path Solve(in PathRequest request, in IWorldNavigationView world)
         {
             if (request.Source == request.Destination)
             {
                 var steps = new[] { new PathNode(request.Source, 1) };
-                return new HumanFortress.Navigation.Path(PathResultKind.Found, steps.Length, 0, 0, steps);
+                return new HumanFortress.Contracts.Navigation.Path(PathResultKind.Found, steps.Length, 0, 0, steps);
             }
 
-            return HumanFortress.Navigation.Path.Failed;
+            return HumanFortress.Contracts.Navigation.Path.Failed;
         }
 
         public void BeginTick()
@@ -527,18 +526,18 @@ internal static class TransportConstructionCraftRegressionTests
         {
         }
 
-        public void InvalidateChunk(HumanFortress.Navigation.ChunkKey chunk)
+        public void InvalidateChunk(HumanFortress.Contracts.Navigation.ChunkKey chunk)
         {
         }
     }
 
     private sealed class AllPathsFoundPathService : IPathService
     {
-        public HumanFortress.Navigation.Path Solve(in PathRequest request, in IWorldNavigationView world)
+        public HumanFortress.Contracts.Navigation.Path Solve(in PathRequest request, in IWorldNavigationView world)
         {
             var end = request.Source == request.Destination ? request.Source : request.Destination;
             var steps = new[] { new PathNode(end, 1) };
-            return new HumanFortress.Navigation.Path(PathResultKind.Found, steps.Length, 0, 0, steps);
+            return new HumanFortress.Contracts.Navigation.Path(PathResultKind.Found, steps.Length, 0, 0, steps);
         }
 
         public void BeginTick()
@@ -549,7 +548,7 @@ internal static class TransportConstructionCraftRegressionTests
         {
         }
 
-        public void InvalidateChunk(HumanFortress.Navigation.ChunkKey chunk)
+        public void InvalidateChunk(HumanFortress.Contracts.Navigation.ChunkKey chunk)
         {
         }
     }

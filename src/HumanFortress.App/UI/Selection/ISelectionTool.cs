@@ -2,7 +2,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI.Selection;
 
-public interface ISelectionTool
+internal interface ISelectionTool
 {
     bool IsActive { get; }
     Selection3D Current { get; }

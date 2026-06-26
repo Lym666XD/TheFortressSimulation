@@ -1,4 +1,4 @@
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Contracts.Navigation;
 
 /// <summary>
 /// Optional flags for pathfinding behavior.

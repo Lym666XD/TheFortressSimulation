@@ -11,7 +11,7 @@ namespace HumanFortress.Simulation.Jobs
     /// Classification of transport intents. Used for priority policies, destination validation, and diagnostics.
     /// The executor uses this to determine which validation logic to apply at the destination.
     /// </summary>
-    public enum TransportReason
+    internal enum TransportReason
     {
         // === Stockpile Operations ===
         /// <summary>Hauling loose items to a stockpile zone. Validates destination is a stockpile cell.</summary>
@@ -58,7 +58,7 @@ namespace HumanFortress.Simulation.Jobs
     /// A single transport request: move an item from (From,FromZ) to (To,ToZ).
     /// This is a read-only planning artifact; executors must revalidate state on pickup.
     /// </summary>
-    public readonly record struct TransportRequest(
+    internal readonly record struct TransportRequest(
         Guid ItemGuid,
         Point From,
         int FromZ,
@@ -74,7 +74,7 @@ namespace HumanFortress.Simulation.Jobs
     /// <summary>
     /// Intake interface for producers (construction/workshop/install/stockpile planners).
     /// </summary>
-    public interface ITransportIntake
+    internal interface ITransportIntake
     {
         void Enqueue(in TransportRequest request);
     }
@@ -82,7 +82,7 @@ namespace HumanFortress.Simulation.Jobs
     /// <summary>
     /// Drainable queue interface for the executor. Thread-safe.
     /// </summary>
-    public interface ITransportRequestQueue : ITransportIntake
+    internal interface ITransportRequestQueue : ITransportIntake
     {
         int Drain(int max, IList<TransportRequest> into);
         /// <summary>Peek up to max pending requests in stable order without dequeuing.</summary>
@@ -112,7 +112,7 @@ namespace HumanFortress.Simulation.Jobs
     /// Design: multi-producer/single-consumer typical pattern. We keep an internal list guarded by a lock
     /// and sort upon drain to ensure stable ordering across platforms/threads.
     /// </summary>
-    public sealed class TransportRequestQueue : ITransportRequestQueue
+    internal sealed class TransportRequestQueue : ITransportRequestQueue
     {
         private readonly object _lock = new();
         private readonly List<TransportRequest> _pending = new();

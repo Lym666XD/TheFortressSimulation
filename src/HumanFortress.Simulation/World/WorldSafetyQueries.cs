@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace HumanFortress.Simulation.World;
 
-public readonly record struct WorldPoint3(int X, int Y, int Z);
+internal readonly record struct WorldPoint3(int X, int Y, int Z);
 
-public static class WorldSafetyQueries
+internal static class WorldSafetyQueries
 {
     public static WorldPoint3? FindNearestStandableNonConstructionSite(
         World world,

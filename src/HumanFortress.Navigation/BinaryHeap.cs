@@ -9,20 +9,20 @@ internal sealed class BinaryHeap
     private HeapEntry[] _heap;
     private int _count;
 
-    public BinaryHeap(int capacity)
+    internal BinaryHeap(int capacity)
     {
         _heap = new HeapEntry[capacity];
         _count = 0;
     }
 
-    public int Count => _count;
+    internal int Count => _count;
 
-    public void Clear()
+    internal void Clear()
     {
         _count = 0;
     }
 
-    public void Push(HeapEntry entry)
+    internal void Push(HeapEntry entry)
     {
         // Grow if needed
         if (_count >= _heap.Length)
@@ -36,7 +36,7 @@ internal sealed class BinaryHeap
         _count++;
     }
 
-    public HeapEntry Pop()
+    internal HeapEntry Pop()
     {
         if (_count == 0)
             throw new InvalidOperationException("Heap is empty");
@@ -54,7 +54,7 @@ internal sealed class BinaryHeap
         return result;
     }
 
-    public IEnumerable<HeapEntry> GetAll()
+    internal IEnumerable<HeapEntry> GetAll()
     {
         for (int i = 0; i < _count; i++)
         {
@@ -147,13 +147,13 @@ internal sealed class BinaryHeap
 /// </summary>
 internal readonly struct HeapEntry
 {
-    public readonly ulong Key;      // Node identifier
-    public readonly uint F;         // f = g + h (scaled fixed-point)
-    public readonly uint H;         // Heuristic (scaled fixed-point)
-    public readonly uint G;         // Cost from start (scaled fixed-point)
-    public readonly int LocalIndex; // Deterministic tie-breaker
+    internal readonly ulong Key;      // Node identifier
+    internal readonly uint F;         // f = g + h (scaled fixed-point)
+    internal readonly uint H;         // Heuristic (scaled fixed-point)
+    internal readonly uint G;         // Cost from start (scaled fixed-point)
+    internal readonly int LocalIndex; // Deterministic tie-breaker
 
-    public HeapEntry(ulong key, uint f, uint h, uint g, int localIndex)
+    internal HeapEntry(ulong key, uint f, uint h, uint g, int localIndex)
     {
         Key = key;
         F = f;

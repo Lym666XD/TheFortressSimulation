@@ -2,7 +2,7 @@ using HumanFortress.Core.Diagnostics;
 
 namespace HumanFortress.App.Diagnostics;
 
-public sealed class DiagnosticSnapshot
+internal sealed class DiagnosticSnapshot
 {
     private DiagnosticSnapshot(
         IReadOnlyList<DiagnosticEvent> events,
@@ -16,15 +16,15 @@ public sealed class DiagnosticSnapshot
         ContentIssues = contentIssues;
     }
 
-    public IReadOnlyList<DiagnosticEvent> Events { get; }
-    public IReadOnlyDictionary<DiagnosticLevel, int> LevelCounts { get; }
-    public IReadOnlyDictionary<string, int> CategoryCounts { get; }
-    public IReadOnlyList<DiagnosticIssueSummary> ContentIssues { get; }
-    public int TotalCount => Events.Count;
-    public int WarningOrHigherCount => CountAtLeast(DiagnosticLevel.Warning);
-    public int ErrorOrHigherCount => CountAtLeast(DiagnosticLevel.Error);
+    internal IReadOnlyList<DiagnosticEvent> Events { get; }
+    internal IReadOnlyDictionary<DiagnosticLevel, int> LevelCounts { get; }
+    internal IReadOnlyDictionary<string, int> CategoryCounts { get; }
+    internal IReadOnlyList<DiagnosticIssueSummary> ContentIssues { get; }
+    internal int TotalCount => Events.Count;
+    internal int WarningOrHigherCount => CountAtLeast(DiagnosticLevel.Warning);
+    internal int ErrorOrHigherCount => CountAtLeast(DiagnosticLevel.Error);
 
-    public static DiagnosticSnapshot FromEvents(IEnumerable<DiagnosticEvent> events)
+    internal static DiagnosticSnapshot FromEvents(IEnumerable<DiagnosticEvent> events)
     {
         ArgumentNullException.ThrowIfNull(events);
 
@@ -57,40 +57,5 @@ public sealed class DiagnosticSnapshot
     {
         return diagnosticEvent.Level >= DiagnosticLevel.Warning
             && diagnosticEvent.Category.StartsWith("Content.", StringComparison.Ordinal);
-    }
-}
-
-public sealed record DiagnosticIssueSummary(
-    DiagnosticLevel Level,
-    string Category,
-    string Code,
-    string Message,
-    long Sequence,
-    DateTimeOffset TimestampUtc)
-{
-    public static DiagnosticIssueSummary FromEvent(DiagnosticEvent diagnosticEvent)
-    {
-        ArgumentNullException.ThrowIfNull(diagnosticEvent);
-
-        var code = diagnosticEvent.Category;
-        var message = diagnosticEvent.Message;
-
-        if (message.Length > 2 && message[0] == '[')
-        {
-            var end = message.IndexOf(']', StringComparison.Ordinal);
-            if (end > 1)
-            {
-                code = message.Substring(1, end - 1);
-                message = message[(end + 1)..].TrimStart();
-            }
-        }
-
-        return new DiagnosticIssueSummary(
-            diagnosticEvent.Level,
-            diagnosticEvent.Category,
-            code,
-            message,
-            diagnosticEvent.Sequence,
-            diagnosticEvent.TimestampUtc);
     }
 }

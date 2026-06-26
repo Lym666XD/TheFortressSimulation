@@ -1,4 +1,4 @@
-namespace HumanFortress.Simulation.Creatures;
+namespace HumanFortress.Contracts.Simulation.Creatures;
 
 /// <summary>
 /// Immutable read-only creature definition catalog snapshot.

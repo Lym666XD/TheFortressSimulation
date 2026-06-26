@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Jobs;
 
 namespace HumanFortress.Jobs.Transport;
@@ -11,11 +11,11 @@ internal enum JobStage
 
 internal sealed class ActiveJob
 {
-    public Guid CreatureId { get; set; }
-    public Guid ItemId { get; set; }
-    public Point3 Dest { get; set; }
-    public JobStage Stage { get; set; }
-    public int Quantity { get; set; }
-    public int InvalidReplanCount { get; set; }
-    public TransportReason Reason { get; set; }
+    internal Guid CreatureId { get; set; }
+    internal Guid ItemId { get; set; }
+    internal Point3 Dest { get; set; }
+    internal JobStage Stage { get; set; }
+    internal int Quantity { get; set; }
+    internal int InvalidReplanCount { get; set; }
+    internal TransportReason Reason { get; set; }
 }

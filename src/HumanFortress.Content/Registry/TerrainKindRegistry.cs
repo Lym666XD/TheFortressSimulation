@@ -8,19 +8,19 @@ namespace HumanFortress.Content.Registry;
 /// <summary>
 /// Registry for terrain kind definitions loaded from content JSON.
 /// </summary>
-public class TerrainKindRegistry
+internal sealed class TerrainKindRegistry : IRuntimeTerrainKindCatalog
 {
     private readonly Dictionary<byte, TerrainKindDefinition> _kindsById = new();
     private readonly Dictionary<string, byte> _kindsByName = new();
     private readonly List<TerrainKindDefinition> _allKinds = new();
 
-    public ContentVersion Version { get; private set; }
-    public TerrainBitLayout BitLayout { get; private set; } = new();
+    internal ContentVersion Version { get; private set; }
+    internal TerrainBitLayout BitLayout { get; private set; } = new();
 
     /// <summary>
     /// Load terrain kinds from definitions
     /// </summary>
-    public void LoadTerrainKinds(IEnumerable<TerrainKindDefinition> kinds,
+    internal void LoadTerrainKinds(IEnumerable<TerrainKindDefinition> kinds,
         TerrainBitLayout bitLayout, ContentVersion version)
     {
         Version = version;
@@ -70,7 +70,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Get terrain kind by ID
     /// </summary>
-    public TerrainKindDefinition? GetKind(byte id)
+    internal TerrainKindDefinition? GetKind(byte id)
     {
         return _kindsById.GetValueOrDefault(id);
     }
@@ -78,7 +78,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Get terrain kind by name
     /// </summary>
-    public TerrainKindDefinition? GetKind(string name)
+    internal TerrainKindDefinition? GetKind(string name)
     {
         if (_kindsByName.TryGetValue(name, out var id))
         {
@@ -90,7 +90,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Get terrain kind ID by name
     /// </summary>
-    public byte? GetKindId(string name)
+    internal byte? GetKindId(string name)
     {
         return _kindsByName.GetValueOrDefault(name);
     }
@@ -98,7 +98,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Resolve terrain kind name to ID with fallback
     /// </summary>
-    public byte ResolveKind(string name, byte fallback = 0)
+    internal byte ResolveKind(string name, byte fallback = 0)
     {
         if (_kindsByName.TryGetValue(name, out var id))
         {
@@ -112,7 +112,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Check if a material can have a specific terrain kind
     /// </summary>
-    public bool IsMaterialAllowed(TerrainKindDefinition kind, string materialCategory)
+    internal bool IsMaterialAllowed(TerrainKindDefinition kind, string materialCategory)
     {
         // If no restrictions, allow all
         if (kind.AllowedMaterials.Count == 0)
@@ -126,7 +126,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Get all terrain kinds that allow a material category
     /// </summary>
-    public IEnumerable<TerrainKindDefinition> GetKindsForMaterial(string materialCategory)
+    internal IEnumerable<TerrainKindDefinition> GetKindsForMaterial(string materialCategory)
     {
         return _allKinds.Where(k => IsMaterialAllowed(k, materialCategory));
     }
@@ -134,7 +134,7 @@ public class TerrainKindRegistry
     /// <summary>
     /// Build navigation mask from terrain kind
     /// </summary>
-    public byte BuildNavigationMask(TerrainKindDefinition kind)
+    internal byte BuildNavigationMask(TerrainKindDefinition kind)
     {
         byte mask = 0;
 
@@ -158,5 +158,27 @@ public class TerrainKindRegistry
         _allKinds.Clear();
     }
 
-    public IEnumerable<TerrainKindDefinition> GetAllKinds() => _allKinds;
+    internal IEnumerable<TerrainKindDefinition> GetAllKinds() => _allKinds;
+
+    ContentVersion IRuntimeTerrainKindCatalog.Version => Version;
+
+    TerrainBitLayout IRuntimeTerrainKindCatalog.BitLayout => BitLayout;
+
+    TerrainKindDefinition? IRuntimeTerrainKindCatalog.GetKind(byte id) => GetKind(id);
+
+    TerrainKindDefinition? IRuntimeTerrainKindCatalog.GetKind(string name) => GetKind(name);
+
+    byte? IRuntimeTerrainKindCatalog.GetKindId(string name) => GetKindId(name);
+
+    byte IRuntimeTerrainKindCatalog.ResolveKind(string name, byte fallback) => ResolveKind(name, fallback);
+
+    bool IRuntimeTerrainKindCatalog.IsMaterialAllowed(TerrainKindDefinition kind, string materialCategory) =>
+        IsMaterialAllowed(kind, materialCategory);
+
+    IEnumerable<TerrainKindDefinition> IRuntimeTerrainKindCatalog.GetKindsForMaterial(string materialCategory) =>
+        GetKindsForMaterial(materialCategory);
+
+    byte IRuntimeTerrainKindCatalog.BuildNavigationMask(TerrainKindDefinition kind) => BuildNavigationMask(kind);
+
+    IEnumerable<TerrainKindDefinition> IRuntimeTerrainKindCatalog.GetAllKinds() => GetAllKinds();
 }

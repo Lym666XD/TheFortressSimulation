@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Central store for player orders (designations), starting with Haul.
 /// Thread-safe for enqueue/dequeue across UI thread and sim thread.
 /// </summary>
-public sealed class OrdersManager
+internal sealed class OrdersManager
 {
     public static System.Action<string>? LogCallback { get; set; }
     private readonly ConcurrentQueue<HaulDesignation> _haulQueue = new();
@@ -232,7 +232,7 @@ public sealed class OrdersManager
     public List<BuildableConstructionDesignation> GetActiveBuildableSnapshot() => _activeBuildable.ToList();
 
     // Unified mining designation contract
-    public readonly record struct MiningDesignation(int Id, Rectangle Rect, int ZMin, int ZMax, MiningAction Action, int Priority, ulong CreatedTick);
-    public enum MiningCancelKind { AllMining }
-    public readonly record struct MiningCancelRegion(Rectangle Rect, int ZMin, int ZMax, MiningCancelKind Kind);
+    internal readonly record struct MiningDesignation(int Id, Rectangle Rect, int ZMin, int ZMax, MiningAction Action, int Priority, ulong CreatedTick);
+    internal enum MiningCancelKind { AllMining }
+    internal readonly record struct MiningCancelRegion(Rectangle Rect, int ZMin, int ZMax, MiningCancelKind Kind);
 }

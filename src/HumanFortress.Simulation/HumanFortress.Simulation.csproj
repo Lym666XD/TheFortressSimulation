@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="TheSadRogue.Primitives" Version="1.6.0-rc1" />
+    <PackageReference Include="TheSadRogue.Primitives" Version="1.6.0" />
   </ItemGroup>
 
 </Project>

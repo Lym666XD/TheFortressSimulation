@@ -11,18 +11,22 @@ namespace HumanFortress.Runtime.Commands;
 /// Command to create a new zone with specified cells.
 /// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class CreateZoneCommand : ICommand
+internal sealed class CreateZoneCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "zones.create";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "zones.create";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly string _defId;
     private readonly string _name;
     private readonly Rectangle _worldRect;
     private readonly int _z;
 
-    public CreateZoneCommand(ulong tick, string defId, string name, Rectangle worldRect, int z)
+    internal CreateZoneCommand(ulong tick, string defId, string name, Rectangle worldRect, int z)
     {
         Tick = tick;
         _defId = defId ?? throw new ArgumentNullException(nameof(defId));
@@ -31,15 +35,14 @@ public sealed class CreateZoneCommand : ICommand
         _z = z;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IZoneCommandTarget target)
-        {
-            target.CreateZone(_defId, _name, _worldRect, _z, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeZoneCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Zones.CreateZone(_defId, _name, _worldRect, _z, context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

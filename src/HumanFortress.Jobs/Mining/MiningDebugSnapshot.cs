@@ -2,7 +2,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Jobs.Mining;
 
-public readonly record struct MiningActiveJobView(
+internal readonly record struct MiningActiveJobView(
     Guid WorkerId,
     Point Target,
     int Z,
@@ -11,7 +11,7 @@ public readonly record struct MiningActiveJobView(
     int ProgressTicks,
     int RequiredTicks);
 
-public readonly record struct MiningActiveJobDebugView(
+internal readonly record struct MiningActiveJobDebugView(
     Guid WorkerId,
     Point Target,
     int Z,
@@ -21,9 +21,9 @@ public readonly record struct MiningActiveJobDebugView(
     int RequiredTicks,
     uint Seed);
 
-public readonly record struct MiningJobStatsSnapshot(int Intake, int Active, int Backlog, int Deferred, int ReservedTiles, int CarryoverOld);
+internal readonly record struct MiningJobStatsSnapshot(int Intake, int Active, int Backlog, int Deferred, int ReservedTiles, int CarryoverOld);
 
-public readonly record struct MiningDebugSnapshot(
+internal readonly record struct MiningDebugSnapshot(
     MiningJobStatsSnapshot Stats,
     List<MiningActiveJobDebugView> Active,
     int BacklogCount,

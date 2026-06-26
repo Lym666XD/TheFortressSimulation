@@ -3,9 +3,9 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
-public static class SimulationNavigationFactory
+internal static class SimulationNavigationFactory
 {
-    public static NavigationManager Create(World world, bool rebuildAll, NavigationTuning? tuning = null)
+    internal static NavigationManager Create(World world, bool rebuildAll, NavigationTuning? tuning = null)
     {
         var manager = new NavigationManager(new SimulationNavigationSource(world), tuning);
         if (rebuildAll)

@@ -4,13 +4,13 @@ using HumanFortress.Runtime;
 
 namespace HumanFortress.Runtime.Commands;
 
-public sealed class SetProfessionWeightCommand : ICommand
+internal sealed class SetProfessionWeightCommand : ICommand
 {
     private readonly Guid _workerId;
     private readonly string _professionId;
     private readonly int _weight;
 
-    public SetProfessionWeightCommand(ulong tick, Guid workerId, string professionId, int weight)
+    internal SetProfessionWeightCommand(ulong tick, Guid workerId, string professionId, int weight)
     {
         Tick = tick;
         _workerId = workerId;
@@ -18,19 +18,22 @@ public sealed class SetProfessionWeightCommand : ICommand
         _weight = weight;
     }
 
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "professions.set_weight";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "professions.set_weight";
 
-    public void Execute(ISimulationContext context)
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
+
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IProfessionAssignmentCommandTarget target)
-        {
-            target.SetProfessionWeight(_workerId, _professionId, _weight);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeProfessionCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Professions.SetProfessionWeight(_workerId, _professionId, _weight);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

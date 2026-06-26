@@ -2,7 +2,7 @@ namespace HumanFortress.Jobs.Craft;
 
 internal static class CraftTransportSeed
 {
-    public static uint From(Guid itemId)
+    internal static uint From(Guid itemId)
     {
         unchecked
         {

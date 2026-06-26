@@ -10,18 +10,22 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Command that enqueues a buildable construction (L2 placeable) at an anchor cell.
 /// </summary>
-public sealed class CreateBuildableConstructionOrderCommand : ICommand
+internal sealed class CreateBuildableConstructionOrderCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.construction.buildable.anchor";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "orders.construction.buildable.anchor";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly string _constructionId;
     private readonly Point _anchor;
     private readonly int _z;
     private readonly int _priority;
 
-    public CreateBuildableConstructionOrderCommand(ulong tick, string constructionId, Point anchor, int z, int priority = 50)
+    internal CreateBuildableConstructionOrderCommand(ulong tick, string constructionId, Point anchor, int z, int priority = 50)
     {
         Tick = tick;
         _constructionId = constructionId;
@@ -30,15 +34,19 @@ public sealed class CreateBuildableConstructionOrderCommand : ICommand
         _priority = priority;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            target.EnqueueBuildableConstructionOrder(_constructionId, _anchor, _z, _priority, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeOrderCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Orders.EnqueueBuildableConstructionOrder(
+            _constructionId,
+            _anchor,
+            _z,
+            _priority,
+            context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

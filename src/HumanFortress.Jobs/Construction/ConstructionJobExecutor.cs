@@ -6,7 +6,7 @@ namespace HumanFortress.Jobs.Construction;
 
 internal sealed class ConstructionJobExecutor
 {
-    public const string SystemId = "Jobs.Construction";
+    internal const string SystemId = "Jobs.Construction";
 
     private readonly WorldModel _world;
     private readonly IConstructionDiffEmitter _diffEmitter;
@@ -14,7 +14,7 @@ internal sealed class ConstructionJobExecutor
     private readonly ConstructionCompletionCoordinator _completionCoordinator;
     private readonly int _maxPerTick;
 
-    public ConstructionJobExecutor(
+    internal ConstructionJobExecutor(
         WorldModel world,
         IConstructionDiffEmitter diffEmitter,
         IConstructionCatalog constructions,
@@ -39,11 +39,11 @@ internal sealed class ConstructionJobExecutor
         _maxPerTick = Math.Max(1, maxPerTick);
     }
 
-    public int LastProcessedSites { get; private set; }
+    internal int LastProcessedSites { get; private set; }
 
-    public int LastIntakeCount { get; private set; }
+    internal int LastIntakeCount { get; private set; }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         if (!_diffEmitter.CanEmitWorldDiffs)
         {

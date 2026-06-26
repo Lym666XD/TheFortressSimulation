@@ -7,13 +7,13 @@ internal interface IMiningJobLogger
 
 internal sealed class NullMiningJobLogger : IMiningJobLogger
 {
-    public static readonly NullMiningJobLogger Instance = new();
+    internal static readonly NullMiningJobLogger Instance = new();
 
     private NullMiningJobLogger()
     {
     }
 
-    public void Log(string message)
+    void IMiningJobLogger.Log(string message)
     {
     }
 }

@@ -9,7 +9,7 @@ internal sealed class CraftMaterialReadinessChecker
     private readonly CraftTransportRequestEmitter _transportRequests;
     private readonly int _requestRetryTicks;
 
-    public CraftMaterialReadinessChecker(
+    internal CraftMaterialReadinessChecker(
         CraftInputCounter inputCounter,
         CraftTransportRequestEmitter transportRequests,
         int requestRetryTicks)
@@ -19,7 +19,7 @@ internal sealed class CraftMaterialReadinessChecker
         _requestRetryTicks = requestRetryTicks;
     }
 
-    public bool HasMaterials(
+    internal bool HasMaterials(
         PlaceableInstance placeable,
         WorkshopState state,
         CraftQueueEntry entry,

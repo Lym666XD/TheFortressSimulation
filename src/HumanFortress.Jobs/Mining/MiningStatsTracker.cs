@@ -5,19 +5,19 @@ internal sealed class MiningStatsTracker
     private readonly int _carryoverMaxTicks;
     private MiningJobStatsSnapshot _lastStats;
 
-    public MiningStatsTracker(int carryoverMaxTicks)
+    internal MiningStatsTracker(int carryoverMaxTicks)
     {
         _carryoverMaxTicks = carryoverMaxTicks;
     }
 
-    public int LastIntakeCount { get; private set; }
+    internal int LastIntakeCount { get; private set; }
 
-    public void RecordIntake(int intakeCount)
+    internal void RecordIntake(int intakeCount)
     {
         LastIntakeCount = intakeCount;
     }
 
-    public void Update(
+    internal void Update(
         ulong tick,
         int activeCount,
         MiningBacklogBuffer backlog,
@@ -33,5 +33,5 @@ internal sealed class MiningStatsTracker
             CarryoverOld: backlog.CountOlderThan(tick, _carryoverMaxTicks));
     }
 
-    public MiningJobStatsSnapshot GetSnapshot() => _lastStats;
+    internal MiningJobStatsSnapshot GetSnapshot() => _lastStats;
 }

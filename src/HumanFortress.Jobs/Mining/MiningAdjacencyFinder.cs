@@ -7,12 +7,12 @@ internal sealed class MiningAdjacencyFinder
 {
     private readonly WorldModel _world;
 
-    public MiningAdjacencyFinder(WorldModel world)
+    internal MiningAdjacencyFinder(WorldModel world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    public (int X, int Y)? FindForAction(MiningAction action, int x, int y, int z)
+    internal (int X, int Y)? FindForAction(MiningAction action, int x, int y, int z)
     {
         static IEnumerable<(int dx, int dy)> Ortho()
         {

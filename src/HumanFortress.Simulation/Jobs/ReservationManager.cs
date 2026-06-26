@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Jobs;
 /// v1.1.1 minimal: item-level reservations with TTL and holder.
 /// Read-safe; writes happen in Write phase only.
 /// </summary>
-public sealed class ReservationManager
+internal sealed class ReservationManager
 {
     private sealed class ItemReservation
     {

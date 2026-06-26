@@ -2,7 +2,7 @@ namespace HumanFortress.Jobs.Craft;
 
 internal static class CraftPathSeed
 {
-    public static uint From(Guid workerId, Guid workshopGuid)
+    internal static uint From(Guid workerId, Guid workshopGuid)
     {
         unchecked
         {

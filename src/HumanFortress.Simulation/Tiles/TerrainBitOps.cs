@@ -4,7 +4,7 @@ namespace HumanFortress.Simulation.Tiles;
 /// Canonical terrain bit operations per TILES_MATERIALS_ARCHITECTURE.md.
 /// This is the single source of truth for TerrainBits encoding/decoding.
 /// </summary>
-public static class TerrainBitOps
+internal static class TerrainBitOps
 {
     // Bit layout constants (v2)
     private const int KindMask = 0xF;        // bits 0-3

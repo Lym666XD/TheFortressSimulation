@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Per-chunk fragment of a zone per ZONE_SPEC.md §4.3.
 /// Maintains local member cells and candidate furniture caches.
 /// </summary>
-public sealed class ZoneShard
+internal sealed class ZoneShard
 {
     /// <summary>
     /// Zone ID this shard belongs to.

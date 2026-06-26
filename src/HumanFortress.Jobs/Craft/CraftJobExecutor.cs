@@ -1,13 +1,13 @@
+using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Navigation;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Craft;
 
 internal sealed class CraftJobExecutor
 {
-    public const string SystemId = "Jobs.Craft";
+    internal const string SystemId = "Jobs.Craft";
 
     private const int CreatureReserveTtlTicks = 200;
 
@@ -23,13 +23,14 @@ internal sealed class CraftJobExecutor
     private readonly ConcurrentQueue<PlannedCraftJob> _backlog = new();
     private readonly List<ActiveCraftJob> _active = new();
 
-    public CraftJobExecutor(
+    internal CraftJobExecutor(
         WorldModel world,
         ICraftJobPlanner planner,
         ICraftRecipeCatalog recipes,
         IConstructionCatalog constructions,
         IPathService paths,
         IWorldNavigationView navView,
+        IMovementExecutor move,
         ICraftDiffEmitter diffEmitter,
         ICraftWorkerCandidateSource? workerCandidates)
     {
@@ -37,12 +38,12 @@ internal sealed class CraftJobExecutor
         _planner = planner ?? throw new ArgumentNullException(nameof(planner));
         recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        move = move ?? throw new ArgumentNullException(nameof(move));
 
         var workshops = new CraftWorkshopLocator(world, constructions);
         var materialConsumer = new CraftMaterialConsumer(world, workshops, recipes, diffEmitter);
         var outputEmitter = new CraftOutputEmitter(recipes, diffEmitter);
         _finalizer = new CraftJobFinalizer(world, workshops);
-        var move = new MovementExecutor(paths);
         _assignmentHandler = new CraftAssignmentHandler(
             world,
             workshops,
@@ -64,9 +65,9 @@ internal sealed class CraftJobExecutor
             CreatureReserveTtlTicks);
     }
 
-    public int LastIntakeCount { get; private set; }
+    internal int LastIntakeCount { get; private set; }
 
-    public void ReadTick(ulong tick)
+    internal void ReadTick(ulong tick)
     {
         _paths.BeginTick();
         _inbox.Clear();
@@ -105,7 +106,7 @@ internal sealed class CraftJobExecutor
         _stats.RecordRead(LastIntakeCount, _active.Count, _backlog.Count);
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         if (_active.Count == 0)
         {
@@ -134,7 +135,7 @@ internal sealed class CraftJobExecutor
         _stats.RecordWrite(LastIntakeCount, _active.Count, _backlog.Count);
     }
 
-    public IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot()
+    internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot()
     {
         var list = new List<ActiveCraftJobView>(_active.Count);
         foreach (var job in _active)
@@ -145,5 +146,5 @@ internal sealed class CraftJobExecutor
         return list;
     }
 
-    public CraftJobStatsSnapshot GetLastStatsSnapshot() => _stats.Snapshot;
+    internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _stats.Snapshot;
 }

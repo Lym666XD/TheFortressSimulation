@@ -10,14 +10,14 @@ internal sealed class MiningResultApplier
     private readonly IMiningDiffEmitter _diffEmitter;
     private readonly IMiningDropResolver _dropResolver;
 
-    public MiningResultApplier(WorldModel world, IMiningDiffEmitter diffEmitter, IMiningDropResolver dropResolver)
+    internal MiningResultApplier(WorldModel world, IMiningDiffEmitter diffEmitter, IMiningDropResolver dropResolver)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
         _dropResolver = dropResolver ?? throw new ArgumentNullException(nameof(dropResolver));
     }
 
-    public void Apply(ActiveMiningJob job)
+    internal void Apply(ActiveMiningJob job)
     {
         var here = _world.GetTile(job.Target.X, job.Target.Y, job.Z);
         SimTerrainKind? kindHere = here != null ? here.Value.Kind : null;

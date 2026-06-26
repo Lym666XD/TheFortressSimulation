@@ -11,17 +11,21 @@ namespace HumanFortress.Runtime.Commands;
 /// Command that creates a haul designation over a world-space rectangle at a given Z.
 /// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class CreateHaulOrderCommand : ICommand
+internal sealed class CreateHaulOrderCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.haul.rect";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "orders.haul.rect";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly Rectangle _worldRect;
     private readonly int _z;
     private readonly int _priority;
 
-    public CreateHaulOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
+    internal CreateHaulOrderCommand(ulong tick, Rectangle worldRect, int z, int priority = 50)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -29,15 +33,14 @@ public sealed class CreateHaulOrderCommand : ICommand
         _priority = priority;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            target.EnqueueHaulOrder(_worldRect, _z, _priority, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeOrderCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Orders.EnqueueHaulOrder(_worldRect, _z, _priority, context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

@@ -3,12 +3,12 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Creatures;
 
-public enum CreaturesDiffOp
+internal enum CreaturesDiffOp
 {
     SpawnCreature
 }
 
-public readonly struct CreaturesDiff
+internal readonly struct CreaturesDiff
 {
     public CreaturesDiff(
         CreaturesDiffOp op,
@@ -58,7 +58,7 @@ public readonly struct CreaturesDiff
     }
 }
 
-public sealed class CreaturesDiffLog
+internal sealed class CreaturesDiffLog
 {
     private readonly List<CreaturesDiff> _ops = new();
     private readonly object _lock = new();

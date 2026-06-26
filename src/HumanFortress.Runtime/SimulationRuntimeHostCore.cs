@@ -12,12 +12,13 @@ namespace HumanFortress.Runtime;
 /// <summary>
 /// Owns scheduler/pipeline lifecycle for one active simulation session.
 /// </summary>
-public sealed class SimulationRuntimeHostCore
+internal sealed partial class SimulationRuntimeHostCore
 {
     private readonly World _world;
     private readonly TickScheduler _tickScheduler;
     private readonly CommandQueue _commandQueue;
-    private readonly IRuntimeCommandContext _context;
+    private readonly IRuntimeCommandClockContext _clockContext;
+    private readonly IRuntimeCommandExecutionContext _commandContext;
     private readonly DiffLog _diffLog;
     private readonly ItemsDiffLog _itemsDiffLog;
     private readonly CreaturesDiffLog _creaturesDiffLog;
@@ -26,11 +27,12 @@ public sealed class SimulationRuntimeHostCore
 
     private SimulationTickPipeline? _pipeline;
 
-    public SimulationRuntimeHostCore(
+    internal SimulationRuntimeHostCore(
         World world,
         TickScheduler tickScheduler,
         CommandQueue commandQueue,
-        IRuntimeCommandContext context,
+        IRuntimeCommandClockContext clockContext,
+        IRuntimeCommandExecutionContext commandContext,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         CreaturesDiffLog creaturesDiffLog,
@@ -40,7 +42,8 @@ public sealed class SimulationRuntimeHostCore
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _tickScheduler = tickScheduler ?? throw new ArgumentNullException(nameof(tickScheduler));
         _commandQueue = commandQueue ?? throw new ArgumentNullException(nameof(commandQueue));
-        _context = context ?? throw new ArgumentNullException(nameof(context));
+        _clockContext = clockContext ?? throw new ArgumentNullException(nameof(clockContext));
+        _commandContext = commandContext ?? throw new ArgumentNullException(nameof(commandContext));
         _diffLog = diffLog ?? throw new ArgumentNullException(nameof(diffLog));
         _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
         _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
@@ -48,9 +51,9 @@ public sealed class SimulationRuntimeHostCore
         _geology = geology;
     }
 
-    public bool IsRunning => _tickScheduler.IsRunning;
+    internal bool IsRunning => _tickScheduler.IsRunning;
 
-    public TSystems Configure<TSystems>(
+    internal TSystems Configure<TSystems>(
         Func<TSystems> createSystems,
         Action<TSystems>? afterSystemsRegistered = null,
         Action<TSystems>? afterPipelineAttached = null)
@@ -71,7 +74,8 @@ public sealed class SimulationRuntimeHostCore
         _pipeline = new SimulationTickPipeline(
             _world,
             _commandQueue,
-            _context,
+            _clockContext,
+            _commandContext,
             _diffLog,
             _itemsDiffLog,
             _creaturesDiffLog,
@@ -83,34 +87,4 @@ public sealed class SimulationRuntimeHostCore
         return systems;
     }
 
-    public TSystems Start<TSystems>(
-        Func<TSystems> createSystems,
-        Action<TSystems>? afterSystemsRegistered = null,
-        Action<TSystems>? afterPipelineAttached = null)
-        where TSystems : class, IRuntimeTickSystems
-    {
-        var systems = Configure(createSystems, afterSystemsRegistered, afterPipelineAttached);
-        _tickScheduler.Start();
-        return systems;
-    }
-
-    public void Stop()
-    {
-        StopScheduler();
-        DetachPipeline();
-    }
-
-    private void StopScheduler()
-    {
-        _tickScheduler.Stop();
-    }
-
-    private void DetachPipeline()
-    {
-        if (_pipeline == null)
-            return;
-
-        _pipeline.DetachFrom(_tickScheduler);
-        _pipeline = null;
-    }
 }

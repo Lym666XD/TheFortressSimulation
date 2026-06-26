@@ -251,7 +251,7 @@ public void WriteTick(ulong tick)
 
 4. **Created the UnifiedJobsOrchestrator** — coordinates four job subsystems (mining, hauling, construction, crafting) in a single deterministic pipeline with adaptive scheduling hints (reserves workers for high-priority backlogs).
 
-5. **Implemented a data-driven content loading path** — `FortressContentLoader` and `SimulationWorldContentLoader` load JSON-backed creature, item, recipe, construction, tuning, geology, and zone data, then expose runtime catalogs to world managers and runtime composition.
+5. **Implemented a data-driven content loading path** — `FortressContentLoader` loads/validates JSON-backed creature, item, recipe, construction, tuning, geology, and zone data; Runtime's `SimulationWorldContentLoader` applies those snapshots to the active world managers and runtime composition.
 
 6. **Built a multi-stage procedural world generator** — `WorldGen/Stages/` pipeline (Elevation -> Climate -> Biome) produces the overworld map; `FortressGenerator` carves the detailed local map with geology and ore placement.
 
@@ -282,9 +282,9 @@ public void WriteTick(ulong tick)
 - **Stockpile creation uses a runtime seam, not stockpile diffs** — intentionally chosen because stockpile diffs are not yet authoritative and the current `StockpileDiffApplicator` has unresolved item/job TODO paths.
 - **StockpileDiffApplicator** has many stub methods (TODO comments for actual item placement/removal). Don't steer the interviewer toward stockpiles.
 - **Test suite is early**: focused regression/smoke coverage and former Phase A-D validation now live in `tests/HumanFortress.App.Tests`, but it is still a lightweight runner rather than mature module-level CI. Don't claim full TDD yet.
-- **Content compatibility naming is smaller but not gone**: startup now uses `FortressContentLoader` and `RuntimeContentRegistryLoader` to load the structured registry only. The structured registry implementation now compiles from `HumanFortress.Content.Registry`, and registry contracts compile from `HumanFortress.Contracts.Content.Registry`. A few non-registry content DTOs still preserve historical `HumanFortress.Core.Content.*` namespaces.
+- **Content compatibility naming is mostly outside Content now**: startup uses `FortressContentLoader` and `RuntimeContentRegistryLoader` to load the structured registry only. The structured registry implementation compiles from `HumanFortress.Content.Registry`; registry contracts compile from `HumanFortress.Contracts.Content.Registry`; runtime geology/zone DTOs compile from `HumanFortress.Contracts.Content`. Navigation contracts still use a transitional namespace even though they compile from `HumanFortress.Contracts`.
 - **Diagnostics migration is partial**: the App logger is now async and category-routed, while content registries, WorldGen, stockpile diff errors, and key Simulation orders/jobs paths use diagnostic bridges. Test/CLI output and no-logger fallbacks still print to console. Don't claim logging is fully production-grade yet.
-- **UI is not snapshot-only yet**: `RenderSnapshotBuilder` exists and some workshop overlays can render from snapshots, but the main map, drawers, debug pages, and placement previews still read live `World` or runtime facades.
+- **UI is not fully presentation-pure yet**: active map/drawer/debug/placement/workshop paths now read Runtime-owned snapshot DTOs instead of live `World`, concrete job systems, or the legacy App `RenderSnapshotBuilder` bridge. The remaining caution is that App still owns sizeable UI state/input orchestration and calls runtime facades for read/query and command enqueue operations.
 
 **Things that are solid and safe to highlight:**
 - The tick scheduler / read-write phase separation is clean and well-structured.

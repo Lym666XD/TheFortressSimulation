@@ -6,16 +6,16 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using JsonFormatting = Newtonsoft.Json.Formatting;
-using RuntimeGeologyData = HumanFortress.Core.Content.GeologyData;
-using RuntimeZoneDefinitionData = HumanFortress.Core.Content.ZoneDefinitionData;
 using HumanFortress.Contracts.Content.Registry;
+using RuntimeGeologyData = HumanFortress.Contracts.Content.Registry.GeologyData;
+using RuntimeZoneDefinitionData = HumanFortress.Contracts.Content.Registry.ZoneDefinitionData;
 
 namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Main content registry that manages loaded runtime content.
 /// </summary>
-public class ContentRegistry : IRuntimeGeologyCatalog
+internal sealed class ContentRegistry : IRuntimeGeologyCatalog
 {
     private static readonly JsonSerializerOptions RuntimeContentJsonOptions = new()
     {
@@ -25,15 +25,17 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     };
 
     private static ContentRegistry? _instance;
-    public static ContentRegistry Instance => _instance ??= new ContentRegistry();
+    internal static ContentRegistry Instance => _instance ??= new ContentRegistry();
 
-    public MaterialRegistry Materials { get; } = new();
-    public TerrainKindRegistry TerrainKinds { get; } = new();
-    public GeologyRegistry Geology { get; } = new();
-    public BiomeTemplateRegistry BiomeTemplates { get; } = new();
-    public AliasResolver AliasResolver { get; } = new();
-    public IConstructionCatalog Constructions => _constructions;
-    public IRecipeCatalog Recipes => _recipes;
+    private readonly MaterialRegistry _materials = new();
+    private readonly TerrainKindRegistry _terrainKinds = new();
+    private readonly GeologyRegistry _geology = new();
+    private readonly BiomeTemplateRegistry _biomeTemplates = new();
+
+    internal IRuntimeMaterialCatalog Materials => _materials;
+    internal IRuntimeTerrainKindCatalog TerrainKinds => _terrainKinds;
+    internal IConstructionCatalog Constructions => _constructions;
+    internal IRecipeCatalog Recipes => _recipes;
 
     private readonly Dictionary<string, RuntimeGeologyData> _geologyEntries = new();
     private readonly Dictionary<string, RuntimeZoneDefinitionData> _zones = new();
@@ -44,23 +46,23 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     private ConstructionCatalogStore _constructions = ConstructionCatalogStore.Empty;
     private RecipeCatalogStore _recipes = RecipeCatalogStore.Empty;
 
-    public IReadOnlyDictionary<string, RuntimeGeologyData> GeologyEntries => _geologyEntries;
-    public IReadOnlyDictionary<string, RuntimeZoneDefinitionData> Zones => _zones;
+    internal IReadOnlyDictionary<string, RuntimeGeologyData> GeologyEntries => _geologyEntries;
+    internal IReadOnlyDictionary<string, RuntimeZoneDefinitionData> Zones => _zones;
 
-    public ContentVersion Version { get; private set; }
-    public string ContentPath { get; private set; } = "";
-    public string ContentHash { get; private set; } = "";
-    public bool IsLoaded { get; private set; }
+    internal ContentVersion Version { get; private set; }
+    internal string ContentPath { get; private set; } = "";
+    internal string ContentHash { get; private set; } = "";
+    internal bool IsLoaded { get; private set; }
 
     // Validation statistics
-    public ContentValidationResult ValidationResult { get; private set; } = new();
+    internal ContentValidationResult ValidationResult { get; private set; } = new();
 
     private ContentRegistry() { }
 
     /// <summary>
     /// Load all content from the specified path
     /// </summary>
-    public async Task LoadContentAsync(string contentPath)
+    internal async Task LoadContentAsync(string contentPath)
     {
         ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loading content from: {contentPath}");
         ContentPath = contentPath;
@@ -173,12 +175,12 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     /// <summary>
     /// Load content synchronously (for compatibility)
     /// </summary>
-    public void LoadContent(string contentPath)
+    internal void LoadContent(string contentPath)
     {
         LoadContentAsync(contentPath).GetAwaiter().GetResult();
     }
 
-    public void ApplyCoreData(CoreDataLoadResult result)
+    internal void ApplyCoreData(CoreDataLoadResult result)
     {
         ArgumentNullException.ThrowIfNull(result);
 
@@ -186,30 +188,30 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         _recipes = result.Recipes.Catalog;
     }
 
-    public RuntimeZoneDefinitionData? GetZoneDefinition(string id)
+    internal RuntimeZoneDefinitionData? GetZoneDefinition(string id)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         return _zones.TryGetValue(id, out var zone) ? zone : null;
     }
 
-    public RuntimeGeologyData? GetGeologyEntry(string id)
+    internal RuntimeGeologyData? GetGeologyEntry(string id)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         return _geologyEntries.TryGetValue(id, out var geology) ? geology : null;
     }
 
-    public RuntimeGeologyData? GetGeologyByHandle(ushort handle)
+    internal RuntimeGeologyData? GetGeologyByHandle(ushort handle)
     {
         return _handleToGeologyId.TryGetValue(handle, out var id) ? GetGeologyEntry(id) : null;
     }
 
-    public ushort GetGeologyHandle(string id)
+    internal ushort GetGeologyHandle(string id)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         return _geologyHandles.TryGetValue(id, out var handle) ? handle : (ushort)0;
     }
 
-    public bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle)
+    internal bool TryGetGeologyHandleByMaterialAndKind(string materialId, string terrainKindName, out ushort handle)
     {
         if (string.IsNullOrWhiteSpace(materialId) || string.IsNullOrWhiteSpace(terrainKindName))
         {
@@ -220,7 +222,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         return _geologyByMaterialAndKind.TryGetValue((materialId, terrainKindName), out handle);
     }
 
-    public T? GetTuning<T>(string file, string path) where T : class
+    internal T? GetTuning<T>(string file, string path) where T : class
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(file);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -234,7 +236,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         return token?.ToObject<T>();
     }
 
-    public string? GetTuningJson(string file, string path)
+    internal string? GetTuningJson(string file, string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(file);
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -246,6 +248,29 @@ public class ContentRegistry : IRuntimeGeologyCatalog
 
         var token = root.SelectToken(path);
         return token?.ToString(JsonFormatting.None);
+    }
+
+    RuntimeGeologyData? IRuntimeGeologyCatalog.GetGeologyEntry(string id)
+    {
+        return GetGeologyEntry(id);
+    }
+
+    RuntimeGeologyData? IRuntimeGeologyCatalog.GetGeologyByHandle(ushort handle)
+    {
+        return GetGeologyByHandle(handle);
+    }
+
+    ushort IRuntimeGeologyCatalog.GetGeologyHandle(string id)
+    {
+        return GetGeologyHandle(id);
+    }
+
+    bool IRuntimeGeologyCatalog.TryGetGeologyHandleByMaterialAndKind(
+        string materialId,
+        string terrainKindName,
+        out ushort handle)
+    {
+        return TryGetGeologyHandleByMaterialAndKind(materialId, terrainKindName, out handle);
     }
 
     private void ClearRuntimeContent()
@@ -357,7 +382,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         }
 
         // Load into registry
-        Materials.LoadMaterials(materials, Version);
+        _materials.LoadMaterials(materials, Version);
 
         return materials;
     }
@@ -441,7 +466,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         }
 
         // Load into registry
-        TerrainKinds.LoadTerrainKinds(kinds, bitLayout ?? new TerrainBitLayout(), Version);
+        _terrainKinds.LoadTerrainKinds(kinds, bitLayout ?? new TerrainBitLayout(), Version);
 
         return kinds;
     }
@@ -687,7 +712,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
             }
         }
 
-        BiomeTemplates.LoadTemplates(templates, Version);
+        _biomeTemplates.LoadTemplates(templates, Version);
         return templates;
     }
 
@@ -829,7 +854,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
             prototypes.Add(ConvertRuntimeGeologyToPrototype(entry));
         }
 
-        Geology.LoadPrototypes(prototypes, Version);
+        _geology.LoadPrototypes(prototypes, Version);
         ContentRegistryDiagnostics.Emit($"[ContentRegistry] Loaded {_geologyEntries.Count} runtime geology entries");
         return prototypes;
     }
@@ -859,7 +884,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         }
 
         // Load into registry
-        Geology.LoadPrototypes(prototypes, Version);
+        _geology.LoadPrototypes(prototypes, Version);
 
         return prototypes;
     }
@@ -1024,7 +1049,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
             AddGeologyMaterialKindIndex(geology.Material, geology.TerrainBits.Kind, handle);
             AddGeologyMaterialKindIndex(geology.Material, ToStructuredTerrainKindName(geology.TerrainBits.Kind), handle);
 
-            var material = Materials.GetMaterial(geology.Material);
+            var material = _materials.GetMaterial(geology.Material);
             if (material == null)
             {
                 continue;
@@ -1068,7 +1093,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
                 var to = elem.GetProperty("to").GetString() ?? "";
                 aliases[from] = to;
             }
-            Materials.ApplyAliases(aliases);
+            _materials.ApplyAliases(aliases);
         }
 
         // Additional alias parsing would go here...
@@ -1080,13 +1105,13 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     private void CrossValidateContent()
     {
         // Validate material references in templates
-        foreach (var template in BiomeTemplates.GetAllTemplates())
+        foreach (var template in _biomeTemplates.GetAllTemplates())
         {
             foreach (var layer in template.Layers)
             {
                 if (!string.IsNullOrEmpty(layer.Material))
                 {
-                    if (!Materials.HasMaterial(layer.Material))
+                    if (!_materials.HasMaterial(layer.Material))
                     {
                         ValidationResult.Warnings.Add(
                             $"Template '{template.Id}' references unknown material '{layer.Material}'");
@@ -1097,7 +1122,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
                 {
                     foreach (var mat in layer.MaterialDistribution.Materials)
                     {
-                        if (!Materials.HasMaterial(mat.Name))
+                        if (!_materials.HasMaterial(mat.Name))
                         {
                             ValidationResult.Warnings.Add(
                                 $"Template '{template.Id}' references unknown material '{mat.Name}'");
@@ -1107,7 +1132,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
 
                 if (!string.IsNullOrEmpty(layer.TerrainKind))
                 {
-                    if (TerrainKinds.GetKind(layer.TerrainKind) == null)
+                    if (_terrainKinds.GetKind(layer.TerrainKind) == null)
                     {
                         ValidationResult.Warnings.Add(
                             $"Template '{template.Id}' references unknown terrain kind '{layer.TerrainKind}'");
@@ -1117,13 +1142,13 @@ public class ContentRegistry : IRuntimeGeologyCatalog
         }
 
         // Validate terrain kind material restrictions
-        foreach (var kind in TerrainKinds.GetAllKinds())
+        foreach (var kind in _terrainKinds.GetAllKinds())
         {
             foreach (var matCategory in kind.AllowedMaterials)
             {
                 if (matCategory != "*")
                 {
-                    var hasCategory = Materials.GetMaterialsByCategory(matCategory).Any();
+                    var hasCategory = _materials.GetMaterialsByCategory(matCategory).Any();
                     if (!hasCategory)
                     {
                         ValidationResult.Warnings.Add(
@@ -1139,7 +1164,7 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     /// </summary>
     private void ComputeContentHash()
     {
-        var combined = $"{Materials.ContentHash}|{TerrainKinds.Version}|{BiomeTemplates.GetTemplateCount()}";
+        var combined = $"{_materials.ContentHash}|{_terrainKinds.Version}|{_biomeTemplates.GetTemplateCount()}";
         using var sha256 = System.Security.Cryptography.SHA256.Create();
         var bytes = System.Text.Encoding.UTF8.GetBytes(combined);
         var hash = sha256.ComputeHash(bytes);
@@ -1149,21 +1174,21 @@ public class ContentRegistry : IRuntimeGeologyCatalog
     /// <summary>
     /// Get content snapshot for saves
     /// </summary>
-    public ContentSnapshot GetSnapshot()
+    internal ContentSnapshot GetSnapshot()
     {
         return new ContentSnapshot
         {
             Version = Version,
             ContentHash = ContentHash,
-            MaterialNames = Materials.GetNameToIdSnapshot(),
-            LoadedTemplates = BiomeTemplates.GetTemplateIds()
+            MaterialNames = _materials.GetNameToIdSnapshot(),
+            LoadedTemplates = _biomeTemplates.GetTemplateIds()
         };
     }
 
     /// <summary>
     /// Apply content snapshot when loading saves
     /// </summary>
-    public void ApplySnapshot(ContentSnapshot snapshot)
+    internal void ApplySnapshot(ContentSnapshot snapshot)
     {
         // Validate version compatibility
         if (!Version.IsCompatibleWith(snapshot.Version))

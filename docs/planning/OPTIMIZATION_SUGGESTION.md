@@ -54,8 +54,8 @@ Current facts checked against code:
 - `PathService` already exposes basic cache/path stats.
 - `UnifiedJobsOrchestrator`, transport, mining, and craft systems expose some stats, but there is no unified perf counter surface or stress harness.
 - `NavigationManager.GetNavDataAt(...)` is read-only; navigation rebuilds belong to explicit runtime/session rebuild points.
-- `RenderSnapshotBuilder` exists, but active UI/rendering code still has live `World` and `FortressRuntimeAccess` reads in several panels.
-- `RenderSnapshotBuilder` still computes autotile/connect masks directly from visible chunks; full delta/versioned presenter behavior is target, not complete current code.
+- Active UI/rendering code now consumes Runtime-owned snapshot DTOs for the main map, overlays, drawers, debug pages, and placement previews instead of live `World` reads.
+- Full delta/versioned presenter behavior is still target, not complete current code.
 - `HumanFortress.Runtime` contains the core tick pipeline and the tick-facing job wrappers, but concrete session/system composition still has App-owned pieces.
 - `HumanFortress.Jobs` contains real job executors, tunings, orchestration, diff emitters, adapters, job loggers, and profession assignment state; profession registry file loading now lives in `HumanFortress.Content`.
 - `HumanFortress.Content` owns content definition loading, runtime registry bootstrap, the structured registry implementation, runtime content snapshot capture, and the first strict content failure policy; final compatibility naming is still transitional.

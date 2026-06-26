@@ -2,7 +2,7 @@ namespace HumanFortress.Jobs.Construction;
 
 internal static class ConstructionRequirementMatcher
 {
-    public static bool Matches(IEnumerable<string> itemTags, string requirement)
+    internal static bool Matches(IEnumerable<string> itemTags, string requirement)
     {
         var set = new HashSet<string>(itemTags, StringComparer.OrdinalIgnoreCase);
         switch (requirement.ToLowerInvariant())

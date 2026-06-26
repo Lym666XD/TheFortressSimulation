@@ -3,7 +3,7 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Items;
 
-public enum ItemsDiffOp
+internal enum ItemsDiffOp
 {
     AddItem = 1,
     RemoveItem = 2,
@@ -14,7 +14,7 @@ public enum ItemsDiffOp
 /// Immutable diff entry for Items layer operations (L5).
 /// Applied around Simulation diffs: removals/splits before entity diffs, additions after terrain diffs.
 /// </summary>
-public readonly struct ItemsDiff
+internal readonly struct ItemsDiff
 {
     public readonly ItemsDiffOp Op;
     public readonly ChunkKey Chunk;

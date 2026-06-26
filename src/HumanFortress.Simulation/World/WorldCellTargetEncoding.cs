@@ -3,7 +3,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Simulation.World;
 
-public readonly struct WorldCellTarget
+internal readonly struct WorldCellTarget
 {
     public WorldCellTarget(ChunkKey chunkKey, int localIndex)
     {
@@ -24,7 +24,7 @@ public readonly struct WorldCellTarget
     }
 }
 
-public static class WorldCellTargetEncoding
+internal static class WorldCellTargetEncoding
 {
     public static bool TryEncode(Point cell, int z, out WorldCellTarget target)
     {

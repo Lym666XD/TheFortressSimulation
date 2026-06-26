@@ -6,7 +6,7 @@ using HumanFortress.WorldGen.Stages;
 
 namespace HumanFortress.WorldGen
 {
-    public class WorldGenerator
+    internal sealed class WorldGenerator
     {
         private readonly List<IWorldGenStage> _stages;
         public event Action<string, float>? ProgressChanged;
@@ -59,7 +59,7 @@ namespace HumanFortress.WorldGen
         }
     }
     
-    public struct WorldGenResult
+    internal struct WorldGenResult
     {
         public bool Success { get; set; }
         public WorldTile[,] Tiles { get; set; }

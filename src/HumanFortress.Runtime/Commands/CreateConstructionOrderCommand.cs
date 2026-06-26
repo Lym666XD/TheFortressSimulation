@@ -12,11 +12,15 @@ namespace HumanFortress.Runtime.Commands;
 /// Command that creates a construction designation (L0 structural) over a world-space rectangle across z-range.
 /// Executed through the simulation tick command stage.
 /// </summary>
-public sealed class CreateConstructionOrderCommand : ICommand
+internal sealed class CreateConstructionOrderCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "orders.construction.rect";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "orders.construction.rect";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly Rectangle _worldRect;
     private readonly int _zMin;
@@ -25,7 +29,7 @@ public sealed class CreateConstructionOrderCommand : ICommand
     private readonly MaterialFilterSpec _filter;
     private readonly int _priority;
 
-    public CreateConstructionOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority = 50)
+    internal CreateConstructionOrderCommand(ulong tick, Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority = 50)
     {
         Tick = tick;
         _worldRect = worldRect;
@@ -36,15 +40,21 @@ public sealed class CreateConstructionOrderCommand : ICommand
         _priority = priority;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IOrderCommandTarget target)
-        {
-            target.EnqueueConstructionOrder(_worldRect, _zMin, _zMax, _shape, _filter, _priority, context.CurrentTick);
-        }
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeOrderCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Orders.EnqueueConstructionOrder(
+            _worldRect,
+            _zMin,
+            _zMax,
+            _shape,
+            _filter,
+            _priority,
+            context.CurrentTick);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

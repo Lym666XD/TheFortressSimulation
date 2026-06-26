@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 using WorldModel = HumanFortress.Simulation.World.World;
@@ -7,7 +7,7 @@ namespace HumanFortress.Jobs.Mining;
 
 internal sealed class MiningJobExecutor
 {
-    public const string SystemId = "Jobs.MiningJobSystem";
+    internal const string SystemId = "Jobs.MiningJobSystem";
 
     private const int CreatureReserveTtlTicks = 200;
     private const string JobTag = "mining";
@@ -27,7 +27,7 @@ internal sealed class MiningJobExecutor
     private readonly MiningTileReservationTracker _reservedTiles = new();
     private readonly MiningDeferredStairwellBuffer _deferredStairwells = new();
 
-    public MiningJobExecutor(
+    internal MiningJobExecutor(
         WorldModel world,
         MiningSystem planner,
         IPathService paths,
@@ -36,15 +36,16 @@ internal sealed class MiningJobExecutor
         IMiningDropResolver dropResolver,
         IMiningWorkerCandidateSource? workerCandidates,
         IMiningJobCompletionSink? completionSink,
+        IMovementExecutor move,
         IMiningJobLogger? logger,
         int intakeBudget,
         int carryoverMaxTicks)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        move = move ?? throw new ArgumentNullException(nameof(move));
         _logger = logger ?? NullMiningJobLogger.Instance;
 
-        var move = new MovementExecutor(paths);
         var adjacencyFinder = new MiningAdjacencyFinder(world);
         var resultApplier = new MiningResultApplier(world, diffEmitter, dropResolver);
         var finalizer = new MiningJobFinalizer(_reservedTiles, world.Reservations);
@@ -89,9 +90,9 @@ internal sealed class MiningJobExecutor
         _statsTracker = new MiningStatsTracker(Math.Max(1, carryoverMaxTicks));
     }
 
-    public int LastIntakeCount => _statsTracker.LastIntakeCount;
+    internal int LastIntakeCount => _statsTracker.LastIntakeCount;
 
-    public void ReadTick(ulong tick)
+    internal void ReadTick(ulong tick)
     {
         _paths.BeginTick();
         int intakeCount = _intakeCoordinator.Fill(tick, _inboxBuffer);
@@ -128,7 +129,7 @@ internal sealed class MiningJobExecutor
         UpdateStats(tick);
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         if (_active.Count == 0)
         {
@@ -140,7 +141,7 @@ internal sealed class MiningJobExecutor
         UpdateStats(tick);
     }
 
-    public List<(Point Cell, int Z)> GetRecentCompletions(ulong now)
+    internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now)
     {
         for (int i = _recentCompleted.Count - 1; i >= 0; i--)
         {
@@ -153,12 +154,12 @@ internal sealed class MiningJobExecutor
         return _recentCompleted.Select(rc => (rc.Cell, rc.Z)).ToList();
     }
 
-    public List<MiningActiveJobView> GetActiveJobsSnapshot()
+    internal List<MiningActiveJobView> GetActiveJobsSnapshot()
     {
         return MiningDebugSnapshotBuilder.BuildActiveJobs(_active);
     }
 
-    public MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
+    internal MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
     {
         return MiningDebugSnapshotBuilder.BuildDebugSnapshot(
             _active,
@@ -170,13 +171,13 @@ internal sealed class MiningJobExecutor
             includeSeeds);
     }
 
-    public int GetBacklogCount() => _backlog.Count;
+    internal int GetBacklogCount() => _backlog.Count;
 
-    public int GetDeferredCount() => _deferredStairwells.Count;
+    internal int GetDeferredCount() => _deferredStairwells.Count;
 
-    public int GetReservedTileCount() => _reservedTiles.Count;
+    internal int GetReservedTileCount() => _reservedTiles.Count;
 
-    public MiningJobStatsSnapshot GetLastStatsSnapshot() => _statsTracker.GetSnapshot();
+    internal MiningJobStatsSnapshot GetLastStatsSnapshot() => _statsTracker.GetSnapshot();
 
     private void UpdateStats(ulong tick)
     {

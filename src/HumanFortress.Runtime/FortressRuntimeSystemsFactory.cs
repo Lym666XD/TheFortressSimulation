@@ -6,9 +6,9 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
-public static class FortressRuntimeSystemsFactory
+internal static class FortressRuntimeSystemsFactory
 {
-    public static SimulationRuntimeSystems Create(
+    internal static SimulationRuntimeSystems Create(
         World world,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,

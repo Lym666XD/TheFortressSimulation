@@ -14,7 +14,7 @@ internal sealed class MiningReadJobProcessor
     private readonly IMiningAssignmentHandler _assignmentHandler;
     private readonly IMiningJobLogger _logger;
 
-    public MiningReadJobProcessor(
+    internal MiningReadJobProcessor(
         MiningSystem planner,
         MiningBacklogBuffer backlog,
         MiningTileReservationTracker reservedTiles,
@@ -32,7 +32,7 @@ internal sealed class MiningReadJobProcessor
         _logger = logger ?? NullMiningJobLogger.Instance;
     }
 
-    public void Process(
+    internal void Process(
         in MiningSystem.PlannedDig dig,
         IReadOnlyList<CreatureInstance> creatures,
         HashSet<Guid> busy,

@@ -4,18 +4,18 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
 
-public sealed class CreatureSpawnCommandTarget : ICreatureSpawnCommandTarget
+internal sealed class CreatureSpawnCommandTarget : ICreatureSpawnCommandTarget
 {
     private readonly World _world;
     private readonly CreaturesDiffLog _creaturesDiffLog;
 
-    public CreatureSpawnCommandTarget(World world, CreaturesDiffLog creaturesDiffLog)
+    internal CreatureSpawnCommandTarget(World world, CreaturesDiffLog creaturesDiffLog)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
     }
 
-    public bool AddCreatureSpawn(string creatureId, Point worldPos, int z, string factionId)
+    bool ICreatureSpawnCommandTarget.AddCreatureSpawn(string creatureId, Point worldPos, int z, string factionId)
     {
         if (string.IsNullOrWhiteSpace(creatureId)) return false;
         if (!IsValidSpawnTarget(worldPos, z)) return false;

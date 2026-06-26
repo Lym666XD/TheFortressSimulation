@@ -7,14 +7,14 @@ internal sealed class MiningDeferredStairwellBuffer
     private const ulong RetryCadenceTicks = 10UL;
     private readonly Queue<MiningSystem.PlannedDig> _queue = new();
 
-    public int Count => _queue.Count;
+    internal int Count => _queue.Count;
 
-    public void Enqueue(in MiningSystem.PlannedDig dig)
+    internal void Enqueue(in MiningSystem.PlannedDig dig)
     {
         _queue.Enqueue(dig);
     }
 
-    public int RetryInto(ulong tick, int intakeBudget, IList<MiningSystem.PlannedDig> into)
+    internal int RetryInto(ulong tick, int intakeBudget, IList<MiningSystem.PlannedDig> into)
     {
         if (into.Count >= intakeBudget || (tick % RetryCadenceTicks) != 0UL)
         {

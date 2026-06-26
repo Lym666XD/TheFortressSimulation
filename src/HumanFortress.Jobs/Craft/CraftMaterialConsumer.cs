@@ -11,7 +11,7 @@ internal sealed class CraftMaterialConsumer
     private readonly ICraftRecipeCatalog _recipes;
     private readonly ICraftDiffEmitter _diffEmitter;
 
-    public CraftMaterialConsumer(
+    internal CraftMaterialConsumer(
         WorldModel world,
         CraftWorkshopLocator workshops,
         ICraftRecipeCatalog recipes,
@@ -23,7 +23,7 @@ internal sealed class CraftMaterialConsumer
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
     }
 
-    public bool TryConsumeInputs(ActiveCraftJob job)
+    internal bool TryConsumeInputs(ActiveCraftJob job)
     {
         if (!_workshops.TryFind(job.WorkshopGuid, out var placeable, out var state) || placeable == null || state == null)
         {

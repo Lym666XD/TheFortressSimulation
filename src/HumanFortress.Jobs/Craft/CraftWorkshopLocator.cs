@@ -9,7 +9,7 @@ internal sealed class CraftWorkshopLocator
     private readonly WorldModel _world;
     private readonly IConstructionCatalog _constructions;
 
-    public CraftWorkshopLocator(
+    internal CraftWorkshopLocator(
         WorldModel world,
         IConstructionCatalog constructions)
     {
@@ -17,7 +17,7 @@ internal sealed class CraftWorkshopLocator
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
     }
 
-    public bool TryFind(Guid workshopGuid, out PlaceableInstance? placeable, out WorkshopState? state)
+    internal bool TryFind(Guid workshopGuid, out PlaceableInstance? placeable, out WorkshopState? state)
     {
         placeable = null;
         state = null;
@@ -45,7 +45,7 @@ internal sealed class CraftWorkshopLocator
         return false;
     }
 
-    public IEnumerable<(PlaceableInstance Placeable, ConstructionDefinition? Definition)> EnumerateWorkshops()
+    internal IEnumerable<(PlaceableInstance Placeable, ConstructionDefinition? Definition)> EnumerateWorkshops()
     {
         var list = new List<(PlaceableInstance, ConstructionDefinition?)>();
         foreach (var chunk in _world.GetAllChunks())
@@ -74,19 +74,19 @@ internal sealed class CraftWorkshopLocator
             .ThenBy(t => t.Item1.Position.X);
     }
 
-    public static bool IsOnFootprint(PlaceableInstance placeable, int x, int y, int z)
+    internal static bool IsOnFootprint(PlaceableInstance placeable, int x, int y, int z)
     {
         return z == placeable.Z && IsOnFootprint(placeable, x, y);
     }
 
-    public static bool IsOnFootprint(PlaceableInstance placeable, int x, int y)
+    internal static bool IsOnFootprint(PlaceableInstance placeable, int x, int y)
     {
         var footprint = placeable.Footprint;
         return x >= placeable.Position.X && x < placeable.Position.X + footprint.W
                && y >= placeable.Position.Y && y < placeable.Position.Y + footprint.D;
     }
 
-    public static IEnumerable<(int X, int Y)> EnumerateFootprintAndRing(PlaceableInstance placeable)
+    internal static IEnumerable<(int X, int Y)> EnumerateFootprintAndRing(PlaceableInstance placeable)
     {
         var seen = new HashSet<(int, int)>();
         var footprint = placeable.Footprint;

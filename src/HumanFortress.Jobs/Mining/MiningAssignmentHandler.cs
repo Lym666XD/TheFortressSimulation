@@ -1,5 +1,5 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Tiles;
@@ -13,7 +13,7 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
     private readonly WorldModel _world;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly IMiningWorkCostResolver _workCostResolver;
     private readonly MiningTileReservationTracker _reservedTiles;
     private readonly IMiningWorkerCandidateSource? _workerCandidates;
@@ -22,11 +22,11 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
     private readonly string _jobTag;
     private readonly int _creatureReserveTtlTicks;
 
-    public MiningAssignmentHandler(
+    internal MiningAssignmentHandler(
         WorldModel world,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         IMiningWorkCostResolver workCostResolver,
         MiningTileReservationTracker reservedTiles,
         IMiningWorkerCandidateSource? workerCandidates,
@@ -48,7 +48,7 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
-    public ActiveMiningJob? TryAssign(
+    internal ActiveMiningJob? TryAssign(
         in MiningSystem.PlannedDig dig,
         Point adjacent,
         IReadOnlyList<CreatureInstance> creatures,
@@ -124,4 +124,13 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
 
         return null;
     }
+
+    ActiveMiningJob? IMiningAssignmentHandler.TryAssign(
+        in MiningSystem.PlannedDig dig,
+        Point adjacent,
+        IReadOnlyList<CreatureInstance> creatures,
+        HashSet<Guid> busy,
+        ulong tick,
+        bool middleAlreadySatisfied) =>
+        TryAssign(in dig, adjacent, creatures, busy, tick, middleAlreadySatisfied);
 }

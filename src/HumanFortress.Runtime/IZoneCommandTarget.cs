@@ -2,7 +2,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
 
-public interface IZoneCommandTarget
+internal interface IZoneCommandTarget
 {
     int CreateZone(string defId, string name, Rectangle worldRect, int z, ulong createdTick);
 

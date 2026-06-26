@@ -10,16 +10,16 @@ namespace HumanFortress.App.Input;
 /// Loads orders registry to provide display names for orders/tools.
 /// File: content/registries/orders.registry.json
 /// </summary>
-public sealed class OrdersRegistryService
+internal sealed class OrdersRegistryService
 {
     private static OrdersRegistryService? _instance;
-    public static OrdersRegistryService Instance => _instance ??= new OrdersRegistryService();
+    internal static OrdersRegistryService Instance => _instance ??= new OrdersRegistryService();
 
     private readonly Dictionary<string, string> _orderNames = new(StringComparer.OrdinalIgnoreCase);
 
     private OrdersRegistryService() { }
 
-    public void Load(string baseDir)
+    internal void Load(string baseDir)
     {
         var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "orders.registry.json");
         if (registryFile.ResolvedPath == null) return;
@@ -35,7 +35,7 @@ public sealed class OrdersRegistryService
         }
     }
 
-    public string GetOrderName(string orderId)
+    internal string GetOrderName(string orderId)
     {
         return _orderNames.TryGetValue(orderId, out var name) ? name : orderId;
     }

@@ -1,4 +1,4 @@
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Contracts.Navigation;
 
 /// <summary>
 /// Read-only view of world navigation data for pathfinding.

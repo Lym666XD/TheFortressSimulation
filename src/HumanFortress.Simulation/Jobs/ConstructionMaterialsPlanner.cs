@@ -2,8 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Core.Time;
+using HumanFortress.Contracts.Simulation.Items;
 using HumanFortress.Simulation.Diagnostics;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -15,7 +15,7 @@ namespace HumanFortress.Simulation.Jobs
     /// v1.1: naive item selection by tag and nearest distance; no advanced filters.
     /// Integrates with the unified Jobs stage (Read-only).
     /// </summary>
-    public sealed class ConstructionMaterialsPlanner : ITick
+    internal sealed class ConstructionMaterialsPlanner : ITick
     {
         public static Action<string>? LogCallback { get; set; }
         private readonly World.World _world;

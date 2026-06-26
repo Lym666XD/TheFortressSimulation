@@ -1,4 +1,6 @@
+using HumanFortress.Contracts.Navigation;
 using System.Diagnostics;
+using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation;
 
@@ -6,7 +8,7 @@ namespace HumanFortress.Navigation;
 /// Deterministic A* pathfinder per NAVIGATION_SPEC.md section 5.
 /// Uses binary heap with stable ordering.
 /// </summary>
-public sealed class DeterministicAStar
+internal sealed class DeterministicAStar
 {
     private readonly NavigationTuning _tuning;
     private readonly BinaryHeap _openSet;
@@ -15,7 +17,7 @@ public sealed class DeterministicAStar
     private int _nodesExpanded;
     private readonly Stopwatch _timer;
 
-    public DeterministicAStar(NavigationTuning tuning)
+    internal DeterministicAStar(NavigationTuning tuning)
     {
         _tuning = tuning;
         _openSet = new BinaryHeap(1024);
@@ -27,7 +29,7 @@ public sealed class DeterministicAStar
     /// <summary>
     /// Find path from source to destination.
     /// </summary>
-    public Path FindPath(PathRequest request, IWorldNavigationView world)
+    internal NavPath FindPath(PathRequest request, IWorldNavigationView world)
     {
         // Reset state
         _openSet.Clear();
@@ -39,7 +41,7 @@ public sealed class DeterministicAStar
         // Validate request
         if (!world.IsValid(request.Source) || !world.IsValid(request.Destination))
         {
-            return Path.Invalid;
+            return NavPath.Invalid;
         }
 
         // Check if source and destination are walkable
@@ -49,7 +51,7 @@ public sealed class DeterministicAStar
         if (!HasRequiredCapability(srcCaps, request.Mode) ||
             !HasRequiredCapability(dstCaps, request.Mode))
         {
-            return Path.Invalid;
+            return NavPath.Invalid;
         }
 
         // Initialize start node
@@ -99,7 +101,7 @@ public sealed class DeterministicAStar
         }
 
         // No path found
-        return Path.Failed;
+        return NavPath.Failed;
     }
 
     private void ExpandNeighbors(AStarNode current, PathRequest request, IWorldNavigationView world)
@@ -326,7 +328,7 @@ public sealed class DeterministicAStar
         }
     }
 
-    private Path BuildCompletePath(PathRequest request, ulong goalKey, IWorldNavigationView world)
+    private NavPath BuildCompletePath(PathRequest request, ulong goalKey, IWorldNavigationView world)
     {
         var path = new List<PathNode>();
         var current = goalKey;
@@ -347,10 +349,10 @@ public sealed class DeterministicAStar
         // Calculate path hash for determinism verification
         var hash = CalculatePathHash(path);
         var total = _nodeMap[goalKey].G; // scaled by FP
-        return new Path(PathResultKind.Found, path.Count, total, hash, path.ToArray());
+        return new NavPath(PathResultKind.Found, path.Count, total, hash, path.ToArray());
     }
 
-    private Path BuildPartialPath(PathRequest request, IWorldNavigationView world)
+    private NavPath BuildPartialPath(PathRequest request, IWorldNavigationView world)
     {
         // Find the best frontier node (lowest F)
         ulong bestKey = 0;
@@ -366,7 +368,7 @@ public sealed class DeterministicAStar
         }
 
         if (bestKey == 0 || !_nodeMap.ContainsKey(bestKey))
-            return Path.Failed;
+            return NavPath.Failed;
 
         return BuildCompletePath(request, bestKey, world);
     }
@@ -406,10 +408,10 @@ public sealed class DeterministicAStar
     /// </summary>
     private struct AStarNode
     {
-        public Point3 Position;
-        public uint G; // Cost from start (scaled fixed-point)
-        public uint H; // Heuristic to goal (scaled)
-        public uint F; // G + H (scaled)
-        public ulong Parent; // Parent node key
+        internal Point3 Position;
+        internal uint G; // Cost from start (scaled fixed-point)
+        internal uint H; // Heuristic to goal (scaled)
+        internal uint F; // G + H (scaled)
+        internal ulong Parent; // Parent node key
     }
 }

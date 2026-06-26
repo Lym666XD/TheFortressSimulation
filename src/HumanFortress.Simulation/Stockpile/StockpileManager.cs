@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Global manager for stockpile zones.
 /// Maintains zone definitions and coordinates with chunks.
 /// </summary>
-public sealed class StockpileManager
+internal sealed class StockpileManager
 {
     private readonly Dictionary<int, StockpileZone> _zones = new();
     private readonly object _lock = new();

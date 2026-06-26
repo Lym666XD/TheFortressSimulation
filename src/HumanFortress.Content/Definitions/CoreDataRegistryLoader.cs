@@ -10,7 +10,7 @@ namespace HumanFortress.Content.Definitions;
 /// <summary>
 /// Loads construction/workshop and recipe core data into immutable catalog snapshots.
 /// </summary>
-public static class CoreDataRegistryLoader
+internal static class CoreDataRegistryLoader
 {
     private static readonly JsonDocumentOptions JsonOptions = new()
     {
@@ -18,7 +18,7 @@ public static class CoreDataRegistryLoader
         CommentHandling = JsonCommentHandling.Skip
     };
 
-    public static CoreDataLoadResult Load(string coreDataPath)
+    internal static CoreDataLoadResult Load(string coreDataPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(coreDataPath);
 

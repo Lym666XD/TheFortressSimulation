@@ -5,15 +5,15 @@ namespace HumanFortress.Jobs;
 /// <summary>
 /// Tunings for workshops and crafting.
 /// </summary>
-public sealed class WorkshopTunings
+internal sealed class WorkshopTunings
 {
-    public int MaxQueuedRecipesDefault { get; init; } = 10;
-    public int CraftTicksPerVolume { get; init; } = 1;
-    public int WorkersPerWorkshop { get; init; } = 1;
-    public int IoScanRadius { get; init; } = 2;
-    public bool CheckAttachments { get; init; }
+    internal int MaxQueuedRecipesDefault { get; init; } = 10;
+    internal int CraftTicksPerVolume { get; init; } = 1;
+    internal int WorkersPerWorkshop { get; init; } = 1;
+    internal int IoScanRadius { get; init; } = 2;
+    internal bool CheckAttachments { get; init; }
 
-    public static WorkshopTunings LoadFromJson(string? json, string source, Action<string>? log = null)
+    internal static WorkshopTunings LoadFromJson(string? json, string source, Action<string>? log = null)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

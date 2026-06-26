@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Filter determining which items a stockpile zone accepts.
 /// Data-driven per STOCKPILE_SPEC.md.
 /// </summary>
-public sealed class StockpileFilter
+internal sealed class StockpileFilter
 {
     /// <summary>
     /// Filter mode (whitelist or blacklist).
@@ -84,7 +84,7 @@ public sealed class StockpileFilter
 /// <summary>
 /// Filter mode for stockpile zones.
 /// </summary>
-public enum FilterMode
+internal enum FilterMode
 {
     /// <summary>
     /// Only accept items matching the filter criteria.
@@ -100,7 +100,7 @@ public enum FilterMode
 /// <summary>
 /// Stockpile preset loaded from JSON.
 /// </summary>
-public sealed class StockpilePreset
+internal sealed class StockpilePreset
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
@@ -125,7 +125,7 @@ internal class ItemDefinition
 /// <summary>
 /// Reference to an item stack with stockpile-related properties.
 /// </summary>
-public struct ItemStackRef
+internal struct ItemStackRef
 {
     /// <summary>
     /// Unique handle for this item stack.

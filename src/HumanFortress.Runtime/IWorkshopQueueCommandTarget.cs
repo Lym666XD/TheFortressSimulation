@@ -1,6 +1,6 @@
 namespace HumanFortress.Runtime;
 
-public interface IWorkshopQueueCommandTarget
+internal interface IWorkshopQueueCommandTarget
 {
     bool AddWorkshopRecipe(Guid workshopGuid, string recipeId, ulong currentTick);
 

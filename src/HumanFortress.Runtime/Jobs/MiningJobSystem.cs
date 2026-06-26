@@ -14,12 +14,12 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned mining executor.
 /// </summary>
-public sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
+internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly MiningJobExecutor _executor;
 
-    public MiningJobSystem(
+    internal MiningJobSystem(
         HumanFortress.Simulation.World.World world,
         MiningSystem planner,
         DiffLog? diffLog = null,
@@ -38,6 +38,7 @@ public sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = new PathService(tuning);
         var navView = new WorldNavigationView(_nav);
+        var move = new MovementExecutor(paths);
         var logger = new MiningCallbackJobLogger(log);
         var dropResolver = new MiningDropResolver(geology, miningTuningJson, log);
         var diffEmitter = new MiningDiffEmitter(diffLog, itemsDiff, SystemId, Priority);
@@ -57,35 +58,50 @@ public sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
             dropResolver,
             workerCandidates,
             completionSink,
+            move,
             logger,
             intakeBudget,
             carryoverMaxTicks);
     }
 
-    public int LastIntakeCount => _executor.LastIntakeCount;
+    internal int LastIntakeCount => _executor.LastIntakeCount;
 
-    public int Priority => UpdateOrder.Priority.Jobs;
+    internal int Priority => UpdateOrder.Priority.Jobs;
 
-    public string SystemId => MiningJobExecutor.SystemId;
+    internal string SystemId => MiningJobExecutor.SystemId;
 
-    public NavigationManager NavigationManager => _nav;
+    internal NavigationManager NavigationManager => _nav;
 
-    public void ReadTick(ulong tick) => _executor.ReadTick(tick);
+    int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    public void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    int ITick.Priority => Priority;
 
-    public List<(Point Cell, int Z)> GetRecentCompletions(ulong now) => _executor.GetRecentCompletions(now);
+    string ITick.SystemId => SystemId;
 
-    public List<MiningActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
 
-    public MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+
+    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
+
+    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+
+    internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now) => _executor.GetRecentCompletions(now);
+
+    internal List<MiningActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+
+    internal MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
         => _executor.GetDebugSnapshot(maxActive, includeSeeds);
 
-    public int GetBacklogCount() => _executor.GetBacklogCount();
+    internal int GetBacklogCount() => _executor.GetBacklogCount();
 
-    public int GetDeferredCount() => _executor.GetDeferredCount();
+    int IUnifiedMiningJobExecutor.GetBacklogCount() => GetBacklogCount();
 
-    public int GetReservedTileCount() => _executor.GetReservedTileCount();
+    internal int GetDeferredCount() => _executor.GetDeferredCount();
 
-    public MiningJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+    internal int GetReservedTileCount() => _executor.GetReservedTileCount();
+
+    internal MiningJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+
+    MiningJobStatsSnapshot IUnifiedMiningJobExecutor.GetLastStatsSnapshot() => GetLastStatsSnapshot();
 }

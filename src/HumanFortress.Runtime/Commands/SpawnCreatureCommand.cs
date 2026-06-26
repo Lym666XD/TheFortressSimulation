@@ -10,18 +10,22 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Debug command for spawning a creature through the simulation command boundary.
 /// </summary>
-public sealed class SpawnCreatureCommand : ICommand
+internal sealed class SpawnCreatureCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "debug.spawn.creature";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "debug.spawn.creature";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly string _creatureId;
     private readonly Point _worldPos;
     private readonly int _z;
     private readonly string _factionId;
 
-    public SpawnCreatureCommand(ulong tick, string creatureId, Point worldPos, int z, string factionId = "neutral")
+    internal SpawnCreatureCommand(ulong tick, string creatureId, Point worldPos, int z, string factionId = "neutral")
     {
         Tick = tick;
         _creatureId = creatureId ?? throw new ArgumentNullException(nameof(creatureId));
@@ -30,13 +34,14 @@ public sealed class SpawnCreatureCommand : ICommand
         _factionId = string.IsNullOrWhiteSpace(factionId) ? "neutral" : factionId;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is ICreatureSpawnCommandTarget target)
-            target.AddCreatureSpawn(_creatureId, _worldPos, _z, _factionId);
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeCreatureSpawnCommandTargetContext>(context, CommandType);
+
+        runtimeContext.Creatures.AddCreatureSpawn(_creatureId, _worldPos, _z, _factionId);
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

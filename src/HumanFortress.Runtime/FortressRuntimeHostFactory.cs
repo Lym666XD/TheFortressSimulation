@@ -9,9 +9,9 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
-public static class FortressRuntimeHostFactory
+internal static class FortressRuntimeHostFactory
 {
-    public static SimulationRuntimeHost<SimulationRuntimeSystems> Create(
+    internal static SimulationRuntimeHost<SimulationRuntimeSystems> Create(
         World world,
         TickScheduler tickScheduler,
         CommandQueue commandQueue,
@@ -51,7 +51,7 @@ public static class FortressRuntimeHostFactory
                 navigation,
                 dependencies,
                 logging),
-            (context, systems) => context.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
+            (bindings, systems) => bindings.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
             logging.Log,
             dependencies.Recipes,
             dependencies.Constructions,

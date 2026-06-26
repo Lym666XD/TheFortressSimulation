@@ -14,7 +14,7 @@ internal sealed class ConstructionCompletionApplier
     private readonly IConstructionCatalog _constructions;
     private readonly PlaceableTuning _placeableTuning;
 
-    public ConstructionCompletionApplier(
+    internal ConstructionCompletionApplier(
         WorldModel world,
         IConstructionDiffEmitter diffEmitter,
         IConstructionCatalog constructions,
@@ -30,7 +30,7 @@ internal sealed class ConstructionCompletionApplier
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    public void Complete(PlaceableInstance site, ulong tick)
+    internal void Complete(PlaceableInstance site, ulong tick)
     {
         if (site.ConstructionSite == null)
         {

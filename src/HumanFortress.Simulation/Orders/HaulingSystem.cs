@@ -15,7 +15,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Minimal v1 hauling system: reads haul designations, plans moves, and applies instant relocations.
 /// Design for extensibility: later replace instant moves with creature-assigned jobs and path execution.
 /// </summary>
-public sealed class HaulingSystem : ITick
+internal sealed class HaulingSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
@@ -210,7 +210,7 @@ public sealed class HaulingSystem : ITick
         SimulationDiagnostics.Information(OrdersManager.LogCallback, "Jobs.Hauling", message);
     }
 
-    public struct PlannedMove
+    internal struct PlannedMove
     {
         public Guid ItemGuid;
         public Point From;

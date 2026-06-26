@@ -2,7 +2,7 @@ namespace HumanFortress.Jobs.Mining;
 
 internal static class MiningDebugSnapshotBuilder
 {
-    public static List<MiningActiveJobView> BuildActiveJobs(IReadOnlyList<ActiveMiningJob> active)
+    internal static List<MiningActiveJobView> BuildActiveJobs(IReadOnlyList<ActiveMiningJob> active)
     {
         var list = new List<MiningActiveJobView>(active.Count);
         foreach (var job in active)
@@ -20,7 +20,7 @@ internal static class MiningDebugSnapshotBuilder
         return list;
     }
 
-    public static MiningDebugSnapshot BuildDebugSnapshot(
+    internal static MiningDebugSnapshot BuildDebugSnapshot(
         IReadOnlyList<ActiveMiningJob> active,
         MiningJobStatsSnapshot stats,
         int backlogCount,

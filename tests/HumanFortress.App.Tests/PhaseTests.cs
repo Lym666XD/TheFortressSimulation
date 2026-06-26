@@ -8,6 +8,7 @@ using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.World;
+using HumanFortress.Content.Loading;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Rendering;
 using HumanFortress.WorldGen;
@@ -559,16 +560,16 @@ namespace HumanFortress.App
             try
             {
                 var tuning = HumanFortress.Navigation.NavigationTuning.Default;
-                var chunkKey = new HumanFortress.Navigation.ChunkKey(0, 0, 0);
+                var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(0, 0, 0);
                 var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
 
                 // Create test tile data with walkable floor
-                var tiles = CreateNavigationTiles(HumanFortress.Navigation.NavigationTileKind.OpenWithFloor);
+                var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor);
 
                 navData.RebuildFromTiles(tiles, tuning);
 
                 // Check that floor tiles are walkable
-                if (!navData.HasCapability(0, HumanFortress.Navigation.NavCapability.Walk))
+                if (!navData.HasCapability(0, HumanFortress.Contracts.Navigation.NavCapability.Walk))
                     throw new Exception("Floor tiles should be walkable");
 
                 Console.WriteLine("✅ PASS");
@@ -583,11 +584,11 @@ namespace HumanFortress.App
             Console.Write("[TEST] ConnectivityVersion invalidation... ");
             try
             {
-                var chunkKey = new HumanFortress.Navigation.ChunkKey(0, 0, 0);
+                var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(0, 0, 0);
                 var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
                 var initialVersion = navData.ConnectivityVersion;
 
-                var tiles = CreateNavigationTiles(HumanFortress.Navigation.NavigationTileKind.SolidWall);
+                var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.SolidWall);
                 navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
 
                 if (navData.ConnectivityVersion <= initialVersion)
@@ -608,18 +609,18 @@ namespace HumanFortress.App
                 var pathService = new HumanFortress.Navigation.PathService();
                 var world = new TestNavigationWorld();
 
-                var request1 = new HumanFortress.Navigation.PathRequest(
-                    new HumanFortress.Navigation.Point3(0, 0, 0),
-                    new HumanFortress.Navigation.Point3(10, 10, 0),
-                    HumanFortress.Navigation.MoveMode.Walk,
-                    HumanFortress.Navigation.PathFlags.None,
+                var request1 = new HumanFortress.Contracts.Navigation.PathRequest(
+                    new HumanFortress.Contracts.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Contracts.Navigation.Point3(10, 10, 0),
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                    HumanFortress.Contracts.Navigation.PathFlags.None,
                     12345);
 
-                var request2 = new HumanFortress.Navigation.PathRequest(
-                    new HumanFortress.Navigation.Point3(0, 0, 0),
-                    new HumanFortress.Navigation.Point3(10, 10, 0),
-                    HumanFortress.Navigation.MoveMode.Walk,
-                    HumanFortress.Navigation.PathFlags.None,
+                var request2 = new HumanFortress.Contracts.Navigation.PathRequest(
+                    new HumanFortress.Contracts.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Contracts.Navigation.Point3(10, 10, 0),
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                    HumanFortress.Contracts.Navigation.PathFlags.None,
                     12345);
 
                 pathService.BeginTick();
@@ -649,11 +650,11 @@ namespace HumanFortress.App
                 });
                 var world = new TestNavigationWorld();
 
-                var request = new HumanFortress.Navigation.PathRequest(
-                    new HumanFortress.Navigation.Point3(0, 0, 0),
-                    new HumanFortress.Navigation.Point3(5, 5, 0),
-                    HumanFortress.Navigation.MoveMode.Walk,
-                    HumanFortress.Navigation.PathFlags.None,
+                var request = new HumanFortress.Contracts.Navigation.PathRequest(
+                    new HumanFortress.Contracts.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Contracts.Navigation.Point3(5, 5, 0),
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                    HumanFortress.Contracts.Navigation.PathFlags.None,
                     99999);
 
                 pathService.BeginTick();
@@ -681,7 +682,7 @@ namespace HumanFortress.App
             {
                 var pathService = new HumanFortress.Navigation.PathService();
                 var world = new TestNavigationWorld();
-                var tasks = new System.Threading.Tasks.Task<HumanFortress.Navigation.Path>[10];
+                var tasks = new System.Threading.Tasks.Task<HumanFortress.Contracts.Navigation.Path>[10];
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
                 pathService.BeginTick();
@@ -692,11 +693,11 @@ namespace HumanFortress.App
                     int localI = i;
                     tasks[i] = System.Threading.Tasks.Task.Run(() =>
                     {
-                        var request = new HumanFortress.Navigation.PathRequest(
-                            new HumanFortress.Navigation.Point3(localI, 0, 0),
-                            new HumanFortress.Navigation.Point3(20 + localI, 20, 0),
-                            HumanFortress.Navigation.MoveMode.Walk,
-                            HumanFortress.Navigation.PathFlags.None,
+                        var request = new HumanFortress.Contracts.Navigation.PathRequest(
+                            new HumanFortress.Contracts.Navigation.Point3(localI, 0, 0),
+                            new HumanFortress.Contracts.Navigation.Point3(20 + localI, 20, 0),
+                            HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                            HumanFortress.Contracts.Navigation.PathFlags.None,
                             (uint)(10000 + localI));
                         return pathService.Solve(in request, world);
                     });
@@ -709,7 +710,7 @@ namespace HumanFortress.App
                 int foundPaths = 0;
                 foreach (var task in tasks)
                 {
-                    if (task.Result.Kind == HumanFortress.Navigation.PathResultKind.Found)
+                    if (task.Result.Kind == HumanFortress.Contracts.Navigation.PathResultKind.Found)
                         foundPaths++;
                 }
 
@@ -733,12 +734,12 @@ namespace HumanFortress.App
 
         private static FortressGenerationContent CreateFortressGenerationContent()
         {
-            var registry = HumanFortress.Content.Registry.ContentRegistry.Instance;
+            var content = FortressRuntimeContentSnapshotLoader.CaptureLoaded();
             return new FortressGenerationContent(
-                registry,
-                registry.GetTuningJson("tuning.mapgen", "$"),
-                registry.GetTuningJson("tuning.ore", "$"),
-                registry.GetTuningJson("tuning.cavern", "$"));
+                content.Geology,
+                content.MapgenTuningJson,
+                content.OreTuningJson,
+                content.CavernTuningJson);
         }
 
         // Helper test tick system class
@@ -771,24 +772,24 @@ namespace HumanFortress.App
         }
 
         // Helper test navigation world
-        private class TestNavigationWorld : HumanFortress.Navigation.IWorldNavigationView
+        private class TestNavigationWorld : HumanFortress.Contracts.Navigation.IWorldNavigationView
         {
-            private readonly Dictionary<HumanFortress.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData> _chunks;
+            private readonly Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData> _chunks;
 
             public TestNavigationWorld()
             {
-                _chunks = new Dictionary<HumanFortress.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData>();
+                _chunks = new Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData>();
 
                 // Create a simple walkable world (3x3 chunks)
                 for (int cx = -1; cx <= 1; cx++)
                 {
                     for (int cy = -1; cy <= 1; cy++)
                     {
-                        var chunkKey = new HumanFortress.Navigation.ChunkKey(cx, cy, 0);
+                        var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(cx, cy, 0);
                         var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
 
                         // Fill with walkable floor tiles
-                        var tiles = CreateNavigationTiles(HumanFortress.Navigation.NavigationTileKind.OpenWithFloor);
+                        var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor);
 
                         navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
                         _chunks[chunkKey] = navData;
@@ -796,29 +797,29 @@ namespace HumanFortress.App
                 }
             }
 
-            public bool IsValid(HumanFortress.Navigation.Point3 position)
+            public bool IsValid(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 return position.X >= -32 && position.X < 96 &&
                        position.Y >= -32 && position.Y < 96 &&
                        position.Z == 0;
             }
 
-            public HumanFortress.Navigation.NavCapability GetCapabilities(HumanFortress.Navigation.Point3 position)
+            public HumanFortress.Contracts.Navigation.NavCapability GetCapabilities(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 if (!IsValid(position))
-                    return HumanFortress.Navigation.NavCapability.None;
+                    return HumanFortress.Contracts.Navigation.NavCapability.None;
 
                 var chunk = ToChunkKey(position);
                 if (_chunks.TryGetValue(chunk, out var navData))
                 {
                     var localIdx = ToLocalIndex(position);
-                    return (HumanFortress.Navigation.NavCapability)navData.NavMask[localIdx];
+                    return (HumanFortress.Contracts.Navigation.NavCapability)navData.NavMask[localIdx];
                 }
 
-                return HumanFortress.Navigation.NavCapability.None;
+                return HumanFortress.Contracts.Navigation.NavCapability.None;
             }
 
-            public ushort GetCost(HumanFortress.Navigation.Point3 position)
+            public ushort GetCost(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 if (!IsValid(position))
                     return ushort.MaxValue;
@@ -833,29 +834,29 @@ namespace HumanFortress.App
                 return ushort.MaxValue;
             }
 
-            public bool IsWalkable(HumanFortress.Navigation.Point3 position, HumanFortress.Navigation.MoveMode mode)
+            public bool IsWalkable(HumanFortress.Contracts.Navigation.Point3 position, HumanFortress.Contracts.Navigation.MoveMode mode)
             {
                 var caps = GetCapabilities(position);
                 return mode switch
                 {
-                    HumanFortress.Navigation.MoveMode.Walk => (caps & HumanFortress.Navigation.NavCapability.Walk) != 0,
-                    HumanFortress.Navigation.MoveMode.Swim => (caps & HumanFortress.Navigation.NavCapability.Swim) != 0,
-                    HumanFortress.Navigation.MoveMode.Fly => (caps & HumanFortress.Navigation.NavCapability.Fly) != 0,
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk => (caps & HumanFortress.Contracts.Navigation.NavCapability.Walk) != 0,
+                    HumanFortress.Contracts.Navigation.MoveMode.Swim => (caps & HumanFortress.Contracts.Navigation.NavCapability.Swim) != 0,
+                    HumanFortress.Contracts.Navigation.MoveMode.Fly => (caps & HumanFortress.Contracts.Navigation.NavCapability.Fly) != 0,
                     _ => false,
                 };
             }
 
-            public bool HasStairsUp(HumanFortress.Navigation.Point3 position)
+            public bool HasStairsUp(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 return false; // No stairs in test world
             }
 
-            public bool HasStairsDown(HumanFortress.Navigation.Point3 position)
+            public bool HasStairsDown(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 return false; // No stairs in test world
             }
 
-            public int GetConnectivityVersion(HumanFortress.Navigation.ChunkKey chunk)
+            public int GetConnectivityVersion(HumanFortress.Contracts.Navigation.ChunkKey chunk)
             {
                 if (_chunks.TryGetValue(chunk, out var navData))
                 {
@@ -864,16 +865,16 @@ namespace HumanFortress.App
                 return 0;
             }
 
-            private static HumanFortress.Navigation.ChunkKey ToChunkKey(HumanFortress.Navigation.Point3 position)
+            private static HumanFortress.Contracts.Navigation.ChunkKey ToChunkKey(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 const int ChunkSize = 32;
-                return new HumanFortress.Navigation.ChunkKey(
+                return new HumanFortress.Contracts.Navigation.ChunkKey(
                     position.X / ChunkSize,
                     position.Y / ChunkSize,
                     position.Z);
             }
 
-            private static int ToLocalIndex(HumanFortress.Navigation.Point3 position)
+            private static int ToLocalIndex(HumanFortress.Contracts.Navigation.Point3 position)
             {
                 const int ChunkSize = 32;
                 int localX = ((position.X % ChunkSize) + ChunkSize) % ChunkSize;
@@ -882,33 +883,33 @@ namespace HumanFortress.App
             }
         }
 
-        private static HumanFortress.Navigation.NavigationTile[] CreateNavigationTiles(HumanFortress.Navigation.NavigationTileKind kind)
+        private static HumanFortress.Contracts.Navigation.NavigationTile[] CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind kind)
         {
-            var tiles = new HumanFortress.Navigation.NavigationTile[HumanFortress.Navigation.ChunkNavData.TilesPerChunk];
+            var tiles = new HumanFortress.Contracts.Navigation.NavigationTile[HumanFortress.Navigation.ChunkNavData.TilesPerChunk];
             for (int i = 0; i < tiles.Length; i++)
                 tiles[i] = CreateNavigationTile(kind);
             return tiles;
         }
 
-        private static HumanFortress.Navigation.NavigationTile CreateNavigationTile(HumanFortress.Navigation.NavigationTileKind kind)
+        private static HumanFortress.Contracts.Navigation.NavigationTile CreateNavigationTile(HumanFortress.Contracts.Navigation.NavigationTileKind kind)
         {
             bool isWalkable = kind switch
             {
-                HumanFortress.Navigation.NavigationTileKind.OpenWithFloor => true,
-                HumanFortress.Navigation.NavigationTileKind.Ramp => true,
-                HumanFortress.Navigation.NavigationTileKind.Slope => true,
-                HumanFortress.Navigation.NavigationTileKind.StairsUp => true,
-                HumanFortress.Navigation.NavigationTileKind.StairsDown => true,
-                HumanFortress.Navigation.NavigationTileKind.StairsUD => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.Ramp => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.Slope => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.StairsUp => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.StairsDown => true,
+                HumanFortress.Contracts.Navigation.NavigationTileKind.StairsUD => true,
                 _ => false,
             };
 
-            return new HumanFortress.Navigation.NavigationTile(
+            return new HumanFortress.Contracts.Navigation.NavigationTile(
                 kind,
                 IsNatural: true,
                 IsWalkable: isWalkable,
-                IsStandable: kind == HumanFortress.Navigation.NavigationTileKind.OpenWithFloor,
-                IsFlyable: kind != HumanFortress.Navigation.NavigationTileKind.SolidWall,
+                IsStandable: kind == HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor,
+                IsFlyable: kind != HumanFortress.Contracts.Navigation.NavigationTileKind.SolidWall,
                 FluidDepth: 0,
                 MetaBits: 0);
         }

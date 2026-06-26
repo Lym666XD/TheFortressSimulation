@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Represents a stockpile zone that can span multiple chunks.
 /// Global definition per STOCKPILE_SPEC.md.
 /// </summary>
-public sealed class StockpileZone
+internal sealed class StockpileZone
 {
     /// <summary>
     /// Unique zone identifier.
@@ -102,7 +102,7 @@ public sealed class StockpileZone
 /// <summary>
 /// Priority levels for stockpile zones.
 /// </summary>
-public enum ZonePriority
+internal enum ZonePriority
 {
     Low = 0,
     Normal = 1,

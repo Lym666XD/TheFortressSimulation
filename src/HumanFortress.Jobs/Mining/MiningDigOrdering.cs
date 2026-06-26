@@ -4,7 +4,7 @@ namespace HumanFortress.Jobs.Mining;
 
 internal static class MiningDigOrdering
 {
-    public static List<MiningSystem.PlannedDig> Sort(IEnumerable<MiningSystem.PlannedDig> digs)
+    internal static List<MiningSystem.PlannedDig> Sort(IEnumerable<MiningSystem.PlannedDig> digs)
     {
         return digs
             .OrderByDescending(p => p.Priority)

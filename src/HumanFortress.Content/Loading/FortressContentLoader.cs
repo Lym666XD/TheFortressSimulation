@@ -44,7 +44,23 @@ public sealed class ContentFileResolution
 /// </summary>
 public sealed class FortressContentLoadResult
 {
-    public FortressContentLoadResult(
+    internal FortressContentLoadResult(
+        ContentPathResolution contentPath,
+        ContentPathResolution coreDataPath,
+        CoreContentCatalogLoadResult? coreCatalogs,
+        bool registriesAlreadyLoaded,
+        IReadOnlyList<FortressContentIssue> issues)
+        : this(
+            contentPath,
+            coreDataPath,
+            registries: null,
+            coreCatalogs,
+            registriesAlreadyLoaded,
+            issues)
+    {
+    }
+
+    internal FortressContentLoadResult(
         ContentPathResolution contentPath,
         ContentPathResolution coreDataPath,
         RuntimeContentRegistryLoadResult? registries,
@@ -62,10 +78,23 @@ public sealed class FortressContentLoadResult
 
     public ContentPathResolution ContentPath { get; }
     public ContentPathResolution CoreDataPath { get; }
-    public RuntimeContentRegistryLoadResult? Registries { get; }
-    public CoreContentCatalogLoadResult? CoreCatalogs { get; }
+    internal RuntimeContentRegistryLoadResult? Registries { get; }
+    internal CoreContentCatalogLoadResult? CoreCatalogs { get; }
     public bool RegistriesAlreadyLoaded { get; }
     public IReadOnlyList<FortressContentIssue> Issues { get; }
+    public bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
+    public int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
+    public int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
+    public string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
+    public bool CoreCatalogsLoaded => CoreCatalogs != null;
+    public int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
+    public int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
+    public int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
+    public int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
+    public int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
+    public int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
+    public int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
+    public int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
     public bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
     public bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
 

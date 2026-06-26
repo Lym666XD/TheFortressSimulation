@@ -7,13 +7,13 @@ internal interface ITransportJobCompletionSink
 
 internal sealed class NullTransportJobCompletionSink : ITransportJobCompletionSink
 {
-    public static readonly NullTransportJobCompletionSink Instance = new();
+    internal static readonly NullTransportJobCompletionSink Instance = new();
 
     private NullTransportJobCompletionSink()
     {
     }
 
-    public void RecordJobCompletion(Guid workerId, string jobTag)
+    void ITransportJobCompletionSink.RecordJobCompletion(Guid workerId, string jobTag)
     {
     }
 }

@@ -10,7 +10,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Applies stockpile diffs during Write phase.
 /// Per STOCKPILE_SPEC.md section 7: deterministic merge and atomic application.
 /// </summary>
-public sealed class StockpileDiffApplicator
+internal sealed class StockpileDiffApplicator
 {
     public static Action<string>? LogCallback { get; set; }
 

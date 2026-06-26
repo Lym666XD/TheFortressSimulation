@@ -7,12 +7,12 @@ internal sealed class CraftInputCounter
 {
     private readonly WorldModel _world;
 
-    public CraftInputCounter(WorldModel world)
+    internal CraftInputCounter(WorldModel world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    public Dictionary<string, int> CountAvailableInputs(PlaceableInstance workshop)
+    internal Dictionary<string, int> CountAvailableInputs(PlaceableInstance workshop)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var inputCells = CraftWorkshopLocator.EnumerateFootprintAndRing(workshop).ToHashSet();
@@ -35,7 +35,7 @@ internal sealed class CraftInputCounter
         return delivered;
     }
 
-    public static bool IsInInputArea(PlaceableInstance workshop, int x, int y, int z)
+    internal static bool IsInInputArea(PlaceableInstance workshop, int x, int y, int z)
     {
         return z == workshop.Z && CraftWorkshopLocator.EnumerateFootprintAndRing(workshop).Contains((x, y));
     }

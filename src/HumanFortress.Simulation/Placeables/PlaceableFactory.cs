@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// <summary>
 /// Factory helpers for placeable instances.
 /// </summary>
-public static class PlaceableFactory
+internal static class PlaceableFactory
 {
     /// <summary>
     /// Create a non-blocking construction ghost (1x1) at position for a planned L0 build.

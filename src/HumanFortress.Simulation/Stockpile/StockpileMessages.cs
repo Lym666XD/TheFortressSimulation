@@ -6,7 +6,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Message types for cross-chunk stockpile coordination.
 /// Per STOCKPILE_SPEC.md section 6.
 /// </summary>
-public enum StockpileMessageType
+internal enum StockpileMessageType
 {
     HaulJobAssigned = 1,   // Notify destination chunk
     HaulJobComplete = 2,   // Update source/dest
@@ -18,7 +18,7 @@ public enum StockpileMessageType
 /// Cross-chunk message for stockpile operations.
 /// Sent via Actor mailbox per CONCURRENCY_MODEL.md.
 /// </summary>
-public readonly struct StockpileMessage
+internal readonly struct StockpileMessage
 {
     /// <summary>
     /// Message type.

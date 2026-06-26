@@ -1,5 +1,5 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;
@@ -11,7 +11,7 @@ internal sealed class TransportAssignmentHandler
     private readonly WorldModel _world;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ITransportWorkerCandidateSource? _workerCandidates;
     private readonly ITransportJobLogger _logger;
     private readonly string _systemId;
@@ -19,11 +19,11 @@ internal sealed class TransportAssignmentHandler
     private readonly int _creatureReserveTtlTicks;
     private readonly Func<Guid, Guid, uint> _seedFrom;
 
-    public TransportAssignmentHandler(
+    internal TransportAssignmentHandler(
         WorldModel world,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ITransportWorkerCandidateSource? workerCandidates,
         ITransportJobLogger? logger,
         string systemId,
@@ -43,7 +43,7 @@ internal sealed class TransportAssignmentHandler
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
 
-    public ActiveJob? TryAssign(TransportRequest request, IReadOnlyList<CreatureInstance> creatures, HashSet<Guid> busy, ulong tick)
+    internal ActiveJob? TryAssign(TransportRequest request, IReadOnlyList<CreatureInstance> creatures, HashSet<Guid> busy, ulong tick)
     {
         var jobPoint = new Point3(request.From.X, request.From.Y, request.FromZ);
         var candidates = _workerCandidates?.SelectCandidates(_world, _jobTag, busy, _world.Reservations, tick, jobPoint)

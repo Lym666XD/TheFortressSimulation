@@ -56,7 +56,7 @@ Procedure (deterministic, no simulation advance)
 
 Parse args; set [STAThread] (Windows).
 
-Create GameStateManager, TickScheduler (paused), EventBus, WriteContextManager, RngStreamManager, SaveManager, ErrorBus.
+Create GameStateManager and app state registration. Fortress runtime services such as TickScheduler, CommandQueue, EventBus, and diff logs are owned by Runtime session/core services behind the App.Runtime session controller; GameStateManager reaches that controller through a thin GameStateRuntimeCoordinator rather than holding runtime services directly.
 
 Initialize SadConsole (screen, font, palette, double-buffer).
 

@@ -2,7 +2,7 @@ using HumanFortress.Core.World;
 
 namespace HumanFortress.WorldGen.Stages
 {
-    public class BiomeStage : IWorldGenStage
+    internal sealed class BiomeStage : IWorldGenStage
     {
         public string Name => "Biomes";
         

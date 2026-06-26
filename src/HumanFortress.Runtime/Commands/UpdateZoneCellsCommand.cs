@@ -10,18 +10,22 @@ namespace HumanFortress.Runtime.Commands;
 /// <summary>
 /// Command to add or remove cells from an existing zone.
 /// </summary>
-public sealed class UpdateZoneCellsCommand : ICommand
+internal sealed class UpdateZoneCellsCommand : ICommand
 {
-    public ulong Tick { get; }
-    public Guid CommandId { get; } = Guid.NewGuid();
-    public string CommandType => "zones.update_cells";
+    internal ulong Tick { get; }
+    private Guid CommandId { get; } = Guid.NewGuid();
+    private string CommandType => "zones.update_cells";
+
+    ulong ICommand.Tick => Tick;
+    Guid ICommand.CommandId => CommandId;
+    string ICommand.CommandType => CommandType;
 
     private readonly int _zoneId;
     private readonly Rectangle _worldRect;
     private readonly int _z;
     private readonly bool _isAdding; // true = add, false = remove
 
-    public UpdateZoneCellsCommand(ulong tick, int zoneId, Rectangle worldRect, int z, bool isAdding)
+    internal UpdateZoneCellsCommand(ulong tick, int zoneId, Rectangle worldRect, int z, bool isAdding)
     {
         Tick = tick;
         _zoneId = zoneId;
@@ -30,22 +34,21 @@ public sealed class UpdateZoneCellsCommand : ICommand
         _isAdding = isAdding;
     }
 
-    public void Execute(ISimulationContext context)
+    void ICommand.Execute(ISimulationContext context)
     {
-        if (context is IZoneCommandTarget target)
+        var runtimeContext = RuntimeCommandContext.Require<IRuntimeZoneCommandTargetContext>(context, CommandType);
+
+        if (_isAdding)
         {
-            if (_isAdding)
-            {
-                target.AddZoneCells(_zoneId, _worldRect, _z);
-            }
-            else
-            {
-                target.RemoveZoneCells(_zoneId, _worldRect, _z);
-            }
+            runtimeContext.Zones.AddZoneCells(_zoneId, _worldRect, _z);
+        }
+        else
+        {
+            runtimeContext.Zones.RemoveZoneCells(_zoneId, _worldRect, _z);
         }
     }
 
-    public byte[] Serialize()
+    byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
         using var bw = new BinaryWriter(ms);

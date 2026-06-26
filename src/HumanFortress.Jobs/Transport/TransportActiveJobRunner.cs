@@ -1,7 +1,7 @@
+using HumanFortress.Contracts.Navigation;
 using System;
 using System.Collections.Generic;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Transport;
@@ -10,7 +10,7 @@ internal sealed class TransportActiveJobRunner
 {
     private readonly WorldModel _world;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ITransportMovementDiffEmitter _movementDiffEmitter;
     private readonly ITransportItemDiffEmitter _itemDiffEmitter;
     private readonly TransportReplanHandler _replanHandler;
@@ -20,10 +20,10 @@ internal sealed class TransportActiveJobRunner
     private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
 
-    public TransportActiveJobRunner(
+    internal TransportActiveJobRunner(
         WorldModel world,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ITransportMovementDiffEmitter movementDiffEmitter,
         ITransportItemDiffEmitter itemDiffEmitter,
         TransportReplanHandler replanHandler,
@@ -46,7 +46,7 @@ internal sealed class TransportActiveJobRunner
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
-    public void RunWriteTick(IEnumerable<ActiveJob> activeJobs, ulong tick, ICollection<ActiveJob> finished)
+    internal void RunWriteTick(IEnumerable<ActiveJob> activeJobs, ulong tick, ICollection<ActiveJob> finished)
     {
         foreach (var job in activeJobs)
         {

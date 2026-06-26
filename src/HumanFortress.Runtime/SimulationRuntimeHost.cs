@@ -13,7 +13,7 @@ namespace HumanFortress.Runtime;
 /// <summary>
 /// Owns the lifecycle and composition hooks for one active simulation session.
 /// </summary>
-public sealed class SimulationRuntimeHost<TSystems>
+internal sealed partial class SimulationRuntimeHost<TSystems>
     where TSystems : class, IRuntimeTickSystems
 {
     private readonly World _world;
@@ -27,14 +27,14 @@ public sealed class SimulationRuntimeHost<TSystems>
     private readonly IRecipeCatalog _recipes;
     private readonly IConstructionCatalog _constructions;
     private readonly IRuntimeGeologyCatalog _geology;
-    private readonly SimulationRuntimeContext _context;
+    private readonly SimulationCommandExecutionContext _commandContext;
     private readonly SimulationRuntimeHostCore _core;
     private readonly Func<TSystems> _createSystems;
-    private readonly Action<SimulationRuntimeContext, TSystems>? _afterSystemsRegistered;
+    private readonly Action<IRuntimeProfessionCommandBindings, TSystems>? _afterSystemsRegistered;
 
     private TSystems? _systems;
 
-    public SimulationRuntimeHost(
+    internal SimulationRuntimeHost(
         World world,
         TickScheduler tickScheduler,
         CommandQueue commandQueue,
@@ -43,7 +43,7 @@ public sealed class SimulationRuntimeHost<TSystems>
         ItemsDiffLog itemsDiffLog,
         NavigationManager navigation,
         Func<TSystems> createSystems,
-        Action<SimulationRuntimeContext, TSystems>? afterSystemsRegistered = null,
+        Action<IRuntimeProfessionCommandBindings, TSystems>? afterSystemsRegistered = null,
         Action<string>? log = null,
         IRecipeCatalog? recipes = null,
         IConstructionCatalog? constructions = null,
@@ -64,12 +64,16 @@ public sealed class SimulationRuntimeHost<TSystems>
         _createSystems = createSystems ?? throw new ArgumentNullException(nameof(createSystems));
         _afterSystemsRegistered = afterSystemsRegistered;
 
-        _context = new SimulationRuntimeContext(
+        var context = new SimulationRuntimeContext(
             diffLog,
+            world,
+            eventBus);
+        _commandContext = new SimulationCommandExecutionContext(
+            context,
+            context,
+            world,
             itemsDiffLog,
             _creaturesDiffLog,
-            world,
-            eventBus,
             _recipes,
             _constructions,
             log);
@@ -77,7 +81,8 @@ public sealed class SimulationRuntimeHost<TSystems>
             world,
             tickScheduler,
             commandQueue,
-            _context,
+            _commandContext,
+            _commandContext,
             diffLog,
             itemsDiffLog,
             _creaturesDiffLog,
@@ -85,26 +90,4 @@ public sealed class SimulationRuntimeHost<TSystems>
             _geology);
     }
 
-    public World World => _world;
-    public NavigationManager Navigation => _navigation;
-    public NavigationTuning NavigationTuning => _navigationTuning;
-    public IRecipeCatalog Recipes => _recipes;
-    public IConstructionCatalog Constructions => _constructions;
-    public IRuntimeGeologyCatalog Geology => _geology;
-    public TSystems? Systems => _systems;
-    public bool IsRunning => _core.IsRunning;
-
-    public void Start(Action<TSystems>? afterPipelineAttached = null)
-    {
-        _systems = null;
-        _systems = _core.Start(
-            _createSystems,
-            systems => _afterSystemsRegistered?.Invoke(_context, systems),
-            afterPipelineAttached);
-    }
-
-    public void Stop()
-    {
-        _core.Stop();
-    }
 }

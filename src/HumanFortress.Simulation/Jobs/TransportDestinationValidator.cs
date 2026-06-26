@@ -4,7 +4,7 @@ using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Jobs;
 
-public sealed class TransportDestinationValidator
+internal sealed class TransportDestinationValidator
 {
     private readonly WorldModel _world;
 

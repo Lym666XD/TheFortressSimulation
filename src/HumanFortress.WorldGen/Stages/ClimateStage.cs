@@ -3,7 +3,7 @@ using HumanFortress.Core.Random;
 
 namespace HumanFortress.WorldGen.Stages
 {
-    public class ClimateStage : IWorldGenStage
+    internal sealed class ClimateStage : IWorldGenStage
     {
         public string Name => "Climate";
         

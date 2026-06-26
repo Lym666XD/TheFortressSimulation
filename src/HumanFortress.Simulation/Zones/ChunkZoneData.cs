@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Per-chunk zone data including zone shards per ZONE_SPEC.md §4.3.
 /// Thread-safe for reads during Read phase, mutations only in Write phase.
 /// </summary>
-public sealed class ChunkZoneData
+internal sealed class ChunkZoneData
 {
     private readonly Dictionary<int, ZoneShard> _shards = new();
     private readonly int[] _cellZones; // zoneId per cell, 0=none

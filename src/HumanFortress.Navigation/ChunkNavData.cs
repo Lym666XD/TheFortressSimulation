@@ -1,51 +1,53 @@
+using HumanFortress.Contracts.Navigation;
+
 namespace HumanFortress.Navigation;
 
 /// <summary>
 /// Per-chunk navigation data per NAVIGATION_SPEC.md section 2.
 /// Rebuilt during RebuildDerived phase in UPDATE_ORDER.
 /// </summary>
-    public sealed class ChunkNavData
-    {
-        public const int ChunkSize = 32;
-        public const int TilesPerChunk = ChunkSize * ChunkSize;
+internal sealed class ChunkNavData
+{
+    internal const int ChunkSize = 32;
+    internal const int TilesPerChunk = ChunkSize * ChunkSize;
 
     /// <summary>
     /// Navigation capability mask for each tile.
     /// Index = y * 32 + x.
     /// </summary>
-    public byte[] NavMask { get; }
+    internal byte[] NavMask { get; }
 
     /// <summary>
     /// Movement cost for each tile.
     /// Base cost + traffic + fluid + surface adjustments.
     /// </summary>
-    public ushort[] NavCost { get; }
+    internal ushort[] NavCost { get; }
 
     /// <summary>
     /// Per-tile mask of allowed ascend directions for ramps.
     /// Bits 0..7 correspond to N,NE,E,SE,S,SW,W,NW. 0 = no ascend from this tile.
     /// </summary>
-    public byte[] UpRampMask { get; }
+    internal byte[] UpRampMask { get; }
 
     /// <summary>
     /// Connectivity version for cache invalidation.
     /// Bumped when topology changes.
     /// </summary>
-    public int ConnectivityVersion { get; set; }
+    internal int ConnectivityVersion { get; set; }
 
     /// <summary>
     /// Snapshot of the source chunk's connectivity version that this nav was built from.
     /// Used to detect staleness vs the authoritative navigation source.
     /// </summary>
-    public ulong SourceConnectivityVersion { get; set; }
+    internal ulong SourceConnectivityVersion { get; set; }
 
     /// <summary>
     /// Chunk position in world.
     /// </summary>
-    public ChunkKey Key { get; }
+    internal ChunkKey Key { get; }
 
-        public ChunkNavData(ChunkKey key)
-        {
+    internal ChunkNavData(ChunkKey key)
+    {
         Key = key;
         NavMask = new byte[TilesPerChunk];
         NavCost = new ushort[TilesPerChunk];
@@ -58,7 +60,7 @@ namespace HumanFortress.Navigation;
     /// Rebuild navigation data from tile information.
     /// Called during RebuildDerived phase.
     /// </summary>
-    public void RebuildFromTiles(NavigationTile[] tiles, NavigationTuning tuning)
+    internal void RebuildFromTiles(NavigationTile[] tiles, NavigationTuning tuning)
     {
         if (tiles.Length != TilesPerChunk)
             throw new ArgumentException($"Expected {TilesPerChunk} tiles, got {tiles.Length}");
@@ -86,7 +88,6 @@ namespace HumanFortress.Navigation;
                 capabilities |= (byte)NavCapability.Fly;
             }
 
-            // Apply terrain-specific cost adjustments
             switch (tile.Kind)
             {
                 case NavigationTileKind.Ramp:
@@ -99,34 +100,30 @@ namespace HumanFortress.Navigation;
                     break;
             }
 
-            // Apply fluid modifiers
             if (tile.FluidDepth > 0)
             {
                 if (tile.FluidDepth <= tuning.FluidShallowThreshold)
                 {
-                    // Shallow fluid - walkable with cost
                     cost += tuning.FluidWadeCost;
                 }
                 else if (tile.FluidDepth >= tuning.FluidDeepThreshold)
                 {
-                    // Deep fluid - blocks walking unless swimming
                     capabilities &= (byte)~NavCapability.Walk;
                     capabilities |= (byte)NavCapability.Swim;
                     cost = tuning.FluidSwimCost;
                 }
             }
 
-            // Apply traffic modifiers (from MetaBits)
-            var trafficLevel = (tile.MetaBits >> 4) & 0x3; // Assuming traffic in bits 4-5
+            var trafficLevel = (tile.MetaBits >> 4) & 0x3; // Traffic in bits 4-5.
             switch (trafficLevel)
             {
-                case 1: // Low traffic
+                case 1:
                     cost = (ushort)Math.Max(1, (int)cost + tuning.TrafficLow);
                     break;
-                case 2: // High traffic
+                case 2:
                     cost += (ushort)tuning.TrafficHigh;
                     break;
-                case 3: // Restricted
+                case 3:
                     cost += (ushort)tuning.TrafficRestricted;
                     break;
             }
@@ -135,27 +132,28 @@ namespace HumanFortress.Navigation;
             NavCost[idx] = cost;
         }
 
-        // Bump connectivity version after rebuild
         ConnectivityVersion++;
     }
 
     /// <summary>
     /// Check if a tile has specific capability.
     /// </summary>
-    public bool HasCapability(int localIdx, NavCapability capability)
+    internal bool HasCapability(int localIdx, NavCapability capability)
     {
         if (localIdx < 0 || localIdx >= TilesPerChunk)
             return false;
+
         return (NavMask[localIdx] & (byte)capability) != 0;
     }
 
     /// <summary>
     /// Get movement cost for a tile.
     /// </summary>
-    public ushort GetCost(int localIdx)
+    internal ushort GetCost(int localIdx)
     {
         if (localIdx < 0 || localIdx >= TilesPerChunk)
             return ushort.MaxValue;
+
         return NavCost[localIdx];
     }
 }
