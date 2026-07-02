@@ -15,7 +15,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed class CreateConstructionOrderCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "orders.construction.rect";
 
     ulong ICommand.Tick => Tick;
@@ -67,6 +67,16 @@ internal sealed class CreateConstructionOrderCommand : ICommand
         bw.Write((byte)_shape);
         bw.Write(_filter.PreferredMaterialId ?? string.Empty);
         bw.Write(_filter.CategoryKey ?? string.Empty);
+        var tags = _filter.Tags
+            .Where(tag => !string.IsNullOrWhiteSpace(tag))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        bw.Write(tags.Length);
+        foreach (var tag in tags)
+        {
+            bw.Write(tag);
+        }
+
         bw.Write(_priority);
         return ms.ToArray();
     }

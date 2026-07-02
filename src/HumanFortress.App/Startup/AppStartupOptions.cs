@@ -15,7 +15,7 @@ internal readonly record struct AppStartupOptions(
     bool StrictContent,
     bool ContentWarningsAsErrors)
 {
-    public static AppStartupOptions Parse(string[] args)
+    internal static AppStartupOptions Parse(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
 

@@ -59,7 +59,7 @@ src/
     Creatures/                 # CreatureManager, definitions, instances
     Items/                     # ItemManager, ItemsDiffLog
     Orders/                    # MiningSystem, HaulingSystem, ConstructionSystem
-    Stockpile/                 # StockpileManager, filters, hauling broker
+    Stockpile/                 # StockpileManager, filters, item projection, diff applicator
     World/                     # Chunk, World, ChunkLifecycleManager
     Zones/                     # ZoneManager, ZoneCoordinator
   HumanFortress.Navigation/    # Pathfinding
@@ -229,15 +229,15 @@ public void WriteTick(ulong tick)
 - Runs queued `ICommand` instances from the tick pipeline's pre-read boundary.
 - Sets the runtime command context's current tick before command execution.
 - Keeps UI/App input paths enqueue-only: commands are applied by the simulation thread before systems read.
-- Profession allocation changes now use `SetProfessionWeightCommand` instead of directly mutating `ProfessionAssignments` from UI/game-state code.
+- Profession allocation changes now use `SetProfessionWeightCommand` and `ProfessionAssignmentDiffLog` instead of directly mutating `ProfessionAssignments` from UI/game-state code or command execution.
 - Debug item spawning now emits `ItemsDiffLog.AddItem` through `IItemSpawnCommandTarget`, then the post-tick item applicator creates the item.
 - Debug creature spawning now emits a spawn-only `CreaturesDiffLog` operation through `ICreatureSpawnCommandTarget`, then the post-tick creature applicator creates the creature.
-- Mining, haul, structural construction, and buildable construction order commands now enqueue through `IOrderCommandTarget`, so command implementations no longer cast `context.World` to the concrete Simulation world.
-- Runtime command-target behavior now lives in focused helpers for item spawning, creature spawning, order enqueueing, zone mutation, workshop queue edits, and stockpile creation. `SimulationRuntimeContext` is Runtime-owned and remains the transitional adapter that implements the interfaces and delegates to those helpers.
+- Mining, haul, structural construction, and buildable construction order commands now enqueue through `IOrderCommandTarget` into `OrderDiffLog`, so command implementations no longer cast `context.World` to the concrete Simulation world and order manager mutation happens post-tick.
+- Runtime command-target behavior now lives in focused helpers for item spawning, creature spawning, order diffs, workshop queue/settings diffs, zone mutation diffs, and stockpile create/delete commands. `SimulationRuntimeContext` is Runtime-owned and remains the transitional adapter that implements the interfaces and delegates to those helpers.
 - Profession assignment is bridged through an injected Runtime callback, so Runtime does not reference App `ProfessionAssignments`.
-- Zone create/update/delete commands now route through `IZoneCommandTarget`, preserving `ZoneCoordinator` cell-shard updates while keeping command implementations away from concrete `World`.
-- Workshop queue update commands now route through `IWorkshopQueueCommandTarget`, keeping recipe lookup, placeable lookup, worker-slot initialization, and queue mutation inside runtime.
-- Stockpile creation commands now route through `IStockpileCommandTarget`, keeping stockpile cell validation, overlap checks, zone naming, and shard writes inside runtime.
+- Zone create/update/delete commands now route through `IZoneCommandTarget` into `ZoneDiffLog`, preserving `ZoneCoordinator` cell-shard behavior while moving authoritative mutation to the post-tick zone applicator.
+- Workshop queue update commands now route through `IWorkshopQueueCommandTarget` into `WorkshopDiffLog`, keeping recipe validation in Runtime while moving placeable lookup, worker-slot initialization, and queue/settings mutation to the post-tick workshop applicator.
+- Stockpile create/delete commands now route through `IStockpileCommandTarget`, with authoritative global-zone/shard mutation applied by the post-tick `StockpileDiffApplicator`.
 
 ---
 
@@ -279,8 +279,7 @@ public void WriteTick(ulong tick)
 - **Creature spawning is only partially diff-backed** — `SpawnCreatureCommand` now uses a spawn-only creature diff, but `CreatureManager.SpawnCreature` remains the low-level applicator write and this is not yet a full creature mutation pipeline.
 - **Order commands use a runtime seam, not an order diff log** — mining/haul/construction commands no longer touch concrete `World` directly, but they still enqueue into `OrdersManager` rather than emitting a formal order diff.
 - **SimulationRuntimeContext still exposes transitional target interfaces** — concrete behavior now lives in Runtime helper classes, but the next architecture step is reducing the context's broad interface surface.
-- **Stockpile creation uses a runtime seam, not stockpile diffs** — intentionally chosen because stockpile diffs are not yet authoritative and the current `StockpileDiffApplicator` has unresolved item/job TODO paths.
-- **StockpileDiffApplicator** has many stub methods (TODO comments for actual item placement/removal). Don't steer the interviewer toward stockpiles.
+- **Stockpile is mid-refactor, not finished gameplay** — create/delete, preset filters, item projection, item-index updates, and planner reservations now use typed diffs through Runtime/Jobs/Simulation seams. Remaining work is richer long-horizon reservation and stockpile maintenance behavior, not App-owned mutation.
 - **Test suite is early**: focused regression/smoke coverage and former Phase A-D validation now live in `tests/HumanFortress.App.Tests`, but it is still a lightweight runner rather than mature module-level CI. Don't claim full TDD yet.
 - **Content compatibility naming is mostly outside Content now**: startup uses `FortressContentLoader` and `RuntimeContentRegistryLoader` to load the structured registry only. The structured registry implementation compiles from `HumanFortress.Content.Registry`; registry contracts compile from `HumanFortress.Contracts.Content.Registry`; runtime geology/zone DTOs compile from `HumanFortress.Contracts.Content`. Navigation contracts still use a transitional namespace even though they compile from `HumanFortress.Contracts`.
 - **Diagnostics migration is partial**: the App logger is now async and category-routed, while content registries, WorldGen, stockpile diff errors, and key Simulation orders/jobs paths use diagnostic bridges. Test/CLI output and no-logger fallbacks still print to console. Don't claim logging is fully production-grade yet.

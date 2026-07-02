@@ -2,6 +2,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -39,6 +40,7 @@ internal sealed partial class FortressRuntimeJobSystems
         World world,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
+        StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
@@ -52,6 +54,7 @@ internal sealed partial class FortressRuntimeJobSystems
             diffLog,
             navigation,
             itemsDiffLog: itemsDiffLog,
+            stockpileDiffLog: stockpileDiffLog,
             intakeBudget: schedulerTunings.Hauling.PlanPerTick,
             carryoverMaxTicks: schedulerTunings.BackpressureMaxCarryoverTicks,
             maxActiveJobs: schedulerTunings.HaulingLimits.MaxActive,

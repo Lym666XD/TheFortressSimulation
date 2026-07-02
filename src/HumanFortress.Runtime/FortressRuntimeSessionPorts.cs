@@ -118,6 +118,7 @@ public interface IFortressRuntimeSessionPlacementCommandPort
     void QueueCreateZone(string defId, RuntimeRect rect, int z);
     void QueueDeleteZone(int zoneId);
     void QueueCreateStockpile(RuntimeRect rect, int z, string presetId);
+    void QueueDeleteStockpile(int zoneId);
 }
 
 public interface IFortressRuntimeSessionDebugCommandPort

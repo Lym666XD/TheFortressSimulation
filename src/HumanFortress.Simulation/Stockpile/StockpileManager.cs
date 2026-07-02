@@ -18,7 +18,7 @@ internal sealed class StockpileManager
     /// <summary>
     /// Create a new stockpile zone.
     /// </summary>
-    public int CreateZone(string name, ChunkKey homeChunk, ulong currentTick)
+    internal int CreateZone(string name, ChunkKey homeChunk, ulong currentTick)
     {
         lock (_lock)
         {
@@ -32,7 +32,7 @@ internal sealed class StockpileManager
     /// <summary>
     /// Get a zone by ID (thread-safe).
     /// </summary>
-    public StockpileZone? GetZone(int zoneId)
+    internal StockpileZone? GetZone(int zoneId)
     {
         lock (_lock)
         {
@@ -43,7 +43,7 @@ internal sealed class StockpileManager
     /// <summary>
     /// Get all zones (thread-safe).
     /// </summary>
-    public IEnumerable<StockpileZone> GetAllZones()
+    internal IEnumerable<StockpileZone> GetAllZones()
     {
         lock (_lock)
         {
@@ -54,7 +54,7 @@ internal sealed class StockpileManager
     /// <summary>
     /// Delete a zone.
     /// </summary>
-    public bool DeleteZone(int zoneId)
+    internal bool DeleteZone(int zoneId)
     {
         lock (_lock)
         {
@@ -65,7 +65,7 @@ internal sealed class StockpileManager
     /// <summary>
     /// Update zone configuration.
     /// </summary>
-    public void UpdateZone(int zoneId, Action<StockpileZone> update)
+    internal void UpdateZone(int zoneId, Action<StockpileZone> update)
     {
         lock (_lock)
         {

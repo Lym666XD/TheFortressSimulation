@@ -6,6 +6,7 @@ using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Construction;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Orders;
+using HumanFortress.Simulation.Stockpile;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime.Jobs;
@@ -27,9 +28,16 @@ internal sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExec
         PlaceableTuning placeableTuning,
         int maxPerTick = 64,
         Action<string>? log = null,
-        Action<int, int, int, Rectangle, string, ulong>? workshopCompletion = null)
+        Action<int, int, int, Rectangle, string, ulong>? workshopCompletion = null,
+        StockpileDiffLog? stockpileDiffLog = null)
     {
-        var diffEmitter = new ConstructionDiffEmitter(diffLog, itemsDiffLog, SystemId, Priority);
+        var diffEmitter = new ConstructionDiffEmitter(
+            diffLog,
+            itemsDiffLog,
+            SystemId,
+            Priority,
+            world,
+            stockpileDiffLog);
         _executor = new ConstructionJobExecutor(
             world,
             diffEmitter,

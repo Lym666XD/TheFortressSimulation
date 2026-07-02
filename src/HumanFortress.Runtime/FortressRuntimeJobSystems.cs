@@ -2,6 +2,7 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -29,6 +30,7 @@ internal sealed partial class FortressRuntimeJobSystems
         World world,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
+        StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
@@ -37,6 +39,7 @@ internal sealed partial class FortressRuntimeJobSystems
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(diffLog);
         ArgumentNullException.ThrowIfNull(itemsDiffLog);
+        ArgumentNullException.ThrowIfNull(stockpileDiffLog);
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(dependencies);
         ArgumentNullException.ThrowIfNull(planners);
@@ -44,9 +47,9 @@ internal sealed partial class FortressRuntimeJobSystems
         logging ??= FortressRuntimeLogging.None;
 
         var mining = CreateMining(world, diffLog, itemsDiffLog, navigation, dependencies, planners, logging);
-        var transport = CreateTransport(world, diffLog, itemsDiffLog, navigation, dependencies, planners, logging);
-        var construction = CreateConstruction(world, diffLog, itemsDiffLog, dependencies, planners, logging);
-        var craft = CreateCraft(world, itemsDiffLog, navigation, dependencies, planners);
+        var transport = CreateTransport(world, diffLog, itemsDiffLog, stockpileDiffLog, navigation, dependencies, planners, logging);
+        var construction = CreateConstruction(world, diffLog, itemsDiffLog, stockpileDiffLog, dependencies, planners, logging);
+        var craft = CreateCraft(world, itemsDiffLog, stockpileDiffLog, navigation, dependencies, planners);
 
         return new FortressRuntimeJobSystems(mining, transport, construction, craft);
     }

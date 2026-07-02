@@ -2,7 +2,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class UnhandledExceptionLogger
 {
-    public static void Bind()
+    internal static void Bind()
     {
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {

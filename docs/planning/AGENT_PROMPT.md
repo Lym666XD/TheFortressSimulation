@@ -14,14 +14,14 @@ Current ownership:
 - Simulation: authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
 - Navigation: pathfinding/cache algorithms through adapter interfaces, no Simulation dependency.
 - Jobs: job executor cores, diff emitters, log adapters, profession assignment, scheduler/workshop tunings, unified orchestration.
-- Runtime: generic host, tick pipeline, command stage, command targets, Simulation navigation adapter, startup helpers, tick-facing job wrappers.
-- WorldGen: consumes explicit generation content; no direct global registry reads.
-- App: SadConsole/MonoGame UI, concrete session composition still not moved, logger callback binding, UI/debug surfaces.
+- Runtime: generic host, tick pipeline, command stage, command targets, typed mutation-log bundle ownership, Simulation navigation adapter, startup helpers, tick-facing job wrappers, public session/world-generation factories.
+- WorldGen: internal/friend concrete generation service/data/factory; consumes explicit generation content; no direct global registry reads.
+- App: SadConsole/MonoGame UI, logger callback binding, UI completion binding, session/bootstrap flow, and UI/debug surfaces through Runtime/Contracts snapshots.
 
 Hard rules:
 - Do not add gameplay logic, content loading, direct world mutation, or job logic back into App.
 - Do not add content registry implementation or JSON loaders back into Core.
-- Simulation mutations should flow through Runtime command targets or typed diff logs.
+- Simulation mutations should flow through Runtime command targets and typed post-tick diff/applicator paths where active.
 - Keep deterministic ordering, named RNG streams, fixed ticks, and explicit dependencies.
 - Transitional old namespaces and InternalsVisibleTo bridges are compatibility debt, not permission for new coupling.
 - Keep HumanFortress.App/Jobs empty of active source files.
@@ -45,8 +45,8 @@ Documentation:
 - Keep GAME_ARCHITECTURE.md and ARCHITECTURE_REFACTOR_MASTER_PLAN.md aligned with source ownership.
 
 Current next priorities:
-1. Move concrete session/system composition out of App into Runtime.
-2. Introduce UI/debug snapshot facades so UI stops reading live World/concrete systems.
-3. Clean compatibility namespaces and temporary internal bridges.
-4. Harden deterministic replay, explicit system order, save/migration, and diagnostics.
+1. Keep hardening typed diff/applicator coverage for remaining direct mutation paths.
+2. Clean compatibility namespaces and temporary internal bridges without widening public surfaces.
+3. Harden deterministic replay, explicit system order, save/migration, and diagnostics.
+4. Continue stockpile broker/maintenance hardening through Jobs/Transport seams; preset/filter catalog, item-projection matching, planner reserve-slot diffs, and transport/construction/craft stockpile item-index diffs are already in place.
 ```

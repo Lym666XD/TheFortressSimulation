@@ -2,9 +2,9 @@ using HumanFortress.Contracts.WorldGen;
 
 namespace HumanFortress.WorldGen;
 
-public static class WorldGenerationServiceFactory
+internal static class WorldGenerationServiceFactory
 {
-    public static IWorldGenerationService Create()
+    internal static IWorldGenerationService Create()
     {
         return new WorldGenerationService();
     }

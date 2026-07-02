@@ -13,6 +13,7 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
     internal IRecipeCatalog Recipes => _recipes;
     internal IConstructionCatalog Constructions => _constructions;
     internal IRuntimeGeologyCatalog Geology => _geology;
+    internal FortressRuntimeStockpilePresetCatalog StockpilePresets => _stockpilePresets;
     internal TSystems? Systems => _systems;
     internal bool IsRunning => _core.IsRunning;
 }

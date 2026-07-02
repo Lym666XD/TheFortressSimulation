@@ -2,15 +2,17 @@ namespace HumanFortress.Runtime;
 
 internal sealed class ProfessionAssignmentCommandTarget : IProfessionAssignmentCommandTarget
 {
-    private Action<Guid, string, int>? _setProfessionWeight;
+    private const string SystemId = "Runtime.ProfessionCommand";
 
-    internal void SetHandler(Action<Guid, string, int>? setProfessionWeight)
+    private readonly ProfessionAssignmentDiffLog _professionDiffLog;
+
+    internal ProfessionAssignmentCommandTarget(ProfessionAssignmentDiffLog professionDiffLog)
     {
-        _setProfessionWeight = setProfessionWeight;
+        _professionDiffLog = professionDiffLog ?? throw new ArgumentNullException(nameof(professionDiffLog));
     }
 
     void IProfessionAssignmentCommandTarget.SetProfessionWeight(Guid workerId, string professionId, int weight)
     {
-        _setProfessionWeight?.Invoke(workerId, professionId, weight);
+        _professionDiffLog.AddSetWeight(workerId, professionId, weight, SystemId);
     }
 }

@@ -5,4 +5,5 @@ namespace HumanFortress.Runtime;
 internal interface IStockpileCommandTarget
 {
     bool CreateStockpile(Rectangle worldRect, int z, string presetId, ulong currentTick);
+    bool DeleteStockpile(int zoneId, ulong currentTick);
 }

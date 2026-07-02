@@ -1,6 +1,7 @@
 using HumanFortress.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -11,6 +12,7 @@ internal sealed partial class FortressRuntimeJobSystems
         World world,
         HumanFortress.Core.Simulation.DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
+        StockpileDiffLog stockpileDiffLog,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
         FortressRuntimeLogging logging)
@@ -30,12 +32,14 @@ internal sealed partial class FortressRuntimeJobSystems
             log: logging.Log,
             workshopCompletion: workshopCompletion == null
                 ? null
-                : workshopCompletion.Notify);
+                : workshopCompletion.Notify,
+            stockpileDiffLog: stockpileDiffLog);
     }
 
     private static CraftJobSystem CreateCraft(
         World world,
         ItemsDiffLog itemsDiffLog,
+        StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners)
@@ -49,6 +53,7 @@ internal sealed partial class FortressRuntimeJobSystems
             navigation,
             dependencies.ProfessionAssignments,
             dependencies.SchedulerTunings.WorkerSelection,
-            dependencies.NavigationTuning);
+            dependencies.NavigationTuning,
+            stockpileDiffLog);
     }
 }

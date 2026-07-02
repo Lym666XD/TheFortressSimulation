@@ -9,12 +9,12 @@ internal sealed class SimulationCommandStage
 {
     private readonly CommandQueue _commandQueue;
     private readonly IRuntimeCommandClockContext _clockContext;
-    private readonly IRuntimeCommandExecutionContext _commandContext;
+    private readonly ISimulationContext _commandContext;
 
     internal SimulationCommandStage(
         CommandQueue commandQueue,
         IRuntimeCommandClockContext clockContext,
-        IRuntimeCommandExecutionContext commandContext)
+        ISimulationContext commandContext)
     {
         _commandQueue = commandQueue ?? throw new ArgumentNullException(nameof(commandQueue));
         _clockContext = clockContext ?? throw new ArgumentNullException(nameof(clockContext));

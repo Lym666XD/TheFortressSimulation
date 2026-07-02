@@ -4,7 +4,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class HeadlessInitRunner
 {
-    public static void Run(AppStartupOptions options)
+    internal static void Run(AppStartupOptions options)
     {
         try
         {

@@ -13,7 +13,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed class SpawnCreatureCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "debug.spawn.creature";
 
     ulong ICommand.Tick => Tick;

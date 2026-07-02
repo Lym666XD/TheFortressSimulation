@@ -1,40 +1,41 @@
 using HumanFortress.Simulation.Orders;
-using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
 
 internal sealed class OrderCommandTarget : IOrderCommandTarget
 {
-    private readonly World _world;
+    private const string SystemId = "Runtime.OrderCommand";
 
-    internal OrderCommandTarget(World world)
+    private readonly OrderDiffLog _orderDiffLog;
+
+    internal OrderCommandTarget(OrderDiffLog orderDiffLog)
     {
-        _world = world ?? throw new ArgumentNullException(nameof(world));
+        _orderDiffLog = orderDiffLog ?? throw new ArgumentNullException(nameof(orderDiffLog));
     }
 
     void IOrderCommandTarget.EnqueueMiningOrder(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
-        _world.Orders.EnqueueMining(worldRect, z, priority, createdTick);
+        _orderDiffLog.AddMining(worldRect, z, priority, createdTick, SystemId);
     }
 
     void IOrderCommandTarget.EnqueueAdvancedMiningOrder(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
     {
-        _world.Orders.EnqueueMiningAdvanced(worldRect, zMin, zMax, action, priority, createdTick);
+        _orderDiffLog.AddAdvancedMining(worldRect, zMin, zMax, action, priority, createdTick, SystemId);
     }
 
     void IOrderCommandTarget.EnqueueHaulOrder(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
-        _world.Orders.EnqueueHaul(worldRect, z, priority, createdTick);
+        _orderDiffLog.AddHaul(worldRect, z, priority, createdTick, SystemId);
     }
 
     void IOrderCommandTarget.EnqueueConstructionOrder(Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority, ulong createdTick)
     {
-        _world.Orders.EnqueueConstruction(worldRect, zMin, zMax, shape, filter, priority, createdTick);
+        _orderDiffLog.AddConstruction(worldRect, zMin, zMax, shape, filter, priority, createdTick, SystemId);
     }
 
     void IOrderCommandTarget.EnqueueBuildableConstructionOrder(string constructionId, Point anchor, int z, int priority, ulong createdTick)
     {
-        _world.Orders.EnqueueBuildableConstruction(constructionId, anchor, z, priority, createdTick);
+        _orderDiffLog.AddBuildableConstruction(constructionId, anchor, z, priority, createdTick, SystemId);
     }
 }

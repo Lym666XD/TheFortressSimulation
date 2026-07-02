@@ -13,7 +13,8 @@ internal sealed class FortressRuntimeTunings
         NavigationTuning navigation,
         PlaceableTuning placeable,
         SchedulerTunings scheduler,
-        WorkshopTunings workshops)
+        WorkshopTunings workshops,
+        FortressRuntimeStockpilePresetCatalog stockpilePresets)
     {
         Construction = construction;
         MiningJson = miningJson;
@@ -21,6 +22,7 @@ internal sealed class FortressRuntimeTunings
         Placeable = placeable;
         Scheduler = scheduler;
         Workshops = workshops;
+        StockpilePresets = stockpilePresets;
     }
 
     internal ConstructionTuning Construction { get; }
@@ -29,12 +31,15 @@ internal sealed class FortressRuntimeTunings
     internal PlaceableTuning Placeable { get; }
     internal SchedulerTunings Scheduler { get; }
     internal WorkshopTunings Workshops { get; }
+    internal FortressRuntimeStockpilePresetCatalog StockpilePresets { get; }
 
     internal static FortressRuntimeTunings FromContent(
         FortressRuntimeContentSnapshot content,
+        string baseDir,
         Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(content);
+        ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
         return new FortressRuntimeTunings(
             ConstructionTuning.LoadFromJson(content.ConstructionTuningJson),
@@ -42,6 +47,7 @@ internal sealed class FortressRuntimeTunings
             NavigationTuning.LoadFromJson(content.NavigationTuningJson),
             PlaceableTuning.LoadFromJson(content.PlaceableTuningJson),
             SchedulerTunings.LoadFromJson(content.SchedulerTuningJson, "runtime content snapshot", log),
-            WorkshopTunings.LoadFromJson(content.WorkshopTuningJson, "runtime content snapshot", log));
+            WorkshopTunings.LoadFromJson(content.WorkshopTuningJson, "runtime content snapshot", log),
+            FortressRuntimeStockpilePresetCatalog.Load(baseDir, log));
     }
 }

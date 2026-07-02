@@ -1,22 +1,12 @@
 using HumanFortress.Content.Loading;
-using HumanFortress.Core.Commands;
-using HumanFortress.Core.Events;
-using HumanFortress.Core.Simulation;
-using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
-using HumanFortress.Simulation.Items;
-using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessionPorts
 {
     private readonly string _baseDir;
-    private readonly TickScheduler _tickScheduler;
-    private readonly CommandQueue _commandQueue;
-    private readonly IEventBus _eventBus;
-    private readonly DiffLog _diffLog;
-    private readonly ItemsDiffLog _itemsDiffLog;
+    private readonly RuntimeSessionServices _services;
     private readonly bool _strictContent;
     private readonly bool _contentWarningsAsErrors;
     private readonly Action<string> _log;
@@ -33,11 +23,7 @@ internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessi
         ArgumentNullException.ThrowIfNull(options);
 
         _baseDir = options.BaseDir;
-        _tickScheduler = new TickScheduler();
-        _commandQueue = new CommandQueue();
-        _eventBus = new EventBus();
-        _diffLog = new DiffLog();
-        _itemsDiffLog = new ItemsDiffLog();
+        _services = new RuntimeSessionServices();
         _strictContent = options.StrictContent;
         _contentWarningsAsErrors = options.ContentWarningsAsErrors;
         _log = options.Log ?? (_ => { });
@@ -45,10 +31,7 @@ internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessi
         _logContentIssues = options.LogContentIssues ?? (_ => { });
 
         _runtimeSessionFactory = new SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>(
-            _tickScheduler,
-            _commandQueue,
-            _diffLog,
-            _itemsDiffLog,
+            _services,
             LoadSessionContent,
             CreateRuntimeHost,
             () => NavigationTuning.LoadFromJson(_runtimeContentSnapshot?.NavigationTuningJson));

@@ -1,12 +1,11 @@
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Simulation.Creatures;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
 internal sealed class SimulationRuntimeCommandTargets : IRuntimeProfessionCommandBindings
 {
+    private readonly RuntimeMutationDiffLogs _mutationDiffs;
     private readonly ProfessionAssignmentCommandTarget _professions;
     private readonly ItemSpawnCommandTarget _items;
     private readonly CreatureSpawnCommandTarget _creatures;
@@ -17,25 +16,23 @@ internal sealed class SimulationRuntimeCommandTargets : IRuntimeProfessionComman
 
     internal SimulationRuntimeCommandTargets(
         World world,
-        ItemsDiffLog itemsDiffLog,
-        CreaturesDiffLog creaturesDiffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
         IRecipeCatalog recipes,
-        IConstructionCatalog constructions,
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
         Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(itemsDiffLog);
-        ArgumentNullException.ThrowIfNull(creaturesDiffLog);
+        ArgumentNullException.ThrowIfNull(mutationDiffs);
         ArgumentNullException.ThrowIfNull(recipes);
-        ArgumentNullException.ThrowIfNull(constructions);
 
-        _professions = new ProfessionAssignmentCommandTarget();
-        _items = new ItemSpawnCommandTarget(world, itemsDiffLog);
-        _creatures = new CreatureSpawnCommandTarget(world, creaturesDiffLog);
-        _orders = new OrderCommandTarget(world);
-        _zones = new ZoneCommandTarget(world);
-        _workshops = new WorkshopQueueCommandTarget(world, recipes, constructions);
-        _stockpiles = new StockpileCommandTarget(world, log);
+        _mutationDiffs = mutationDiffs;
+        _professions = new ProfessionAssignmentCommandTarget(mutationDiffs.Professions);
+        _items = new ItemSpawnCommandTarget(world, mutationDiffs.Items);
+        _creatures = new CreatureSpawnCommandTarget(world, mutationDiffs.Creatures);
+        _orders = new OrderCommandTarget(mutationDiffs.Orders);
+        _zones = new ZoneCommandTarget(mutationDiffs.Zones, log);
+        _workshops = new WorkshopQueueCommandTarget(mutationDiffs.Workshops, recipes, log);
+        _stockpiles = new StockpileCommandTarget(world, mutationDiffs.Stockpiles, stockpilePresets, log);
     }
 
     internal IProfessionAssignmentCommandTarget Professions => _professions;
@@ -48,6 +45,7 @@ internal sealed class SimulationRuntimeCommandTargets : IRuntimeProfessionComman
 
     void IRuntimeProfessionCommandBindings.SetProfessionWeightHandler(Action<Guid, string, int>? setProfessionWeight)
     {
-        _professions.SetHandler(setProfessionWeight);
+        _mutationDiffs.Professions.SetProfessionWeightHandler(setProfessionWeight);
     }
+
 }

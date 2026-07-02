@@ -3,8 +3,6 @@ using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
-using HumanFortress.Simulation.Creatures;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -18,10 +16,10 @@ internal sealed partial class SimulationRuntimeHostCore
     private readonly TickScheduler _tickScheduler;
     private readonly CommandQueue _commandQueue;
     private readonly IRuntimeCommandClockContext _clockContext;
-    private readonly IRuntimeCommandExecutionContext _commandContext;
+    private readonly ISimulationContext _commandContext;
     private readonly DiffLog _diffLog;
-    private readonly ItemsDiffLog _itemsDiffLog;
-    private readonly CreaturesDiffLog _creaturesDiffLog;
+    private readonly RuntimeMutationDiffLogs _mutationDiffs;
+    private readonly IConstructionCatalog _constructions;
     private readonly NavigationManager? _navigation;
     private readonly IRuntimeGeologyCatalog? _geology;
 
@@ -32,10 +30,10 @@ internal sealed partial class SimulationRuntimeHostCore
         TickScheduler tickScheduler,
         CommandQueue commandQueue,
         IRuntimeCommandClockContext clockContext,
-        IRuntimeCommandExecutionContext commandContext,
+        ISimulationContext commandContext,
         DiffLog diffLog,
-        ItemsDiffLog itemsDiffLog,
-        CreaturesDiffLog creaturesDiffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
+        IConstructionCatalog constructions,
         NavigationManager? navigation,
         IRuntimeGeologyCatalog? geology = null)
     {
@@ -45,8 +43,8 @@ internal sealed partial class SimulationRuntimeHostCore
         _clockContext = clockContext ?? throw new ArgumentNullException(nameof(clockContext));
         _commandContext = commandContext ?? throw new ArgumentNullException(nameof(commandContext));
         _diffLog = diffLog ?? throw new ArgumentNullException(nameof(diffLog));
-        _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
-        _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
+        _mutationDiffs = mutationDiffs ?? throw new ArgumentNullException(nameof(mutationDiffs));
+        _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _navigation = navigation;
         _geology = geology;
     }
@@ -77,8 +75,8 @@ internal sealed partial class SimulationRuntimeHostCore
             _clockContext,
             _commandContext,
             _diffLog,
-            _itemsDiffLog,
-            _creaturesDiffLog,
+            _mutationDiffs,
+            _constructions,
             _navigation,
             _geology);
         _pipeline.AttachTo(_tickScheduler);

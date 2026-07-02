@@ -1,5 +1,17 @@
 namespace HumanFortress.Contracts.Runtime.Snapshots;
 
+public readonly record struct SimulationStockpilePresetMenuData(
+    IReadOnlyList<StockpilePresetMenuOptionView> Options)
+{
+    public static SimulationStockpilePresetMenuData Default { get; } = new(
+        new[] { new StockpilePresetMenuOptionView("all", "All", 1) });
+}
+
+public readonly record struct StockpilePresetMenuOptionView(
+    string Id,
+    string Name,
+    int Priority);
+
 public readonly record struct SimulationStockpileOverlayData(
     IReadOnlyList<StockpileOverlayCellView> Cells)
 {

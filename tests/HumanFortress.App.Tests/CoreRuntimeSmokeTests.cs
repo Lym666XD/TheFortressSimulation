@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Jobs;
@@ -6,6 +7,7 @@ using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Diagnostics;
 using HumanFortress.Core.Random;
@@ -21,8 +23,10 @@ using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Placeables;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
+using HumanFortress.Simulation.Zones;
 
 internal static class CoreRuntimeSmokeTests
 {
@@ -35,7 +39,15 @@ internal static class CoreRuntimeSmokeTests
         TestTickScheduler();
         TestDeterministicRng();
         TestDeterministicRuntimeIds();
+        TestRuntimeCommandIdsAreStable();
         TestDiffLog();
+        TestTypedCommandDiffOrderingPolicy();
+        TestMiningRectanglesIncludeSingleCellMaxExtent();
+        TestStockpileFilterUsesItemProjection();
+        TestStockpileDataIndexUpdatesAreIdempotent();
+        TestTransportStockpileIndexEmitterUsesStockpileDiffs();
+        TestHaulingPlannerReservesStockpileCapacity();
+        TestHaulingPlannerDoesNotReserveDuplicatePendingTransport();
         TestWorldChunks();
         TestReservations();
         TestCommandQueue();
@@ -56,6 +68,7 @@ internal static class CoreRuntimeSmokeTests
         TestZoneCommandsUseRuntimeTarget();
         TestWorkshopQueueCommandUsesRuntimeTarget();
         TestStockpileCommandUsesRuntimeTarget();
+        TestRuntimeStockpilePresetMenuUsesContentCatalog();
         TestProfessionWeightCommand();
         TestSpawnItemCommandUsesItemDiff();
         TestSpawnCreatureCommandUsesCreatureDiff();
@@ -66,12 +79,11 @@ internal static class CoreRuntimeSmokeTests
 
     private static SimulationCommandExecutionContext CreateRuntimeContext(
         DiffLog diffLog,
-        ItemsDiffLog itemsDiffLog,
-        CreaturesDiffLog creaturesDiffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
         World world,
         IEventBus? eventBus = null,
         IRecipeCatalog? recipes = null,
-        IConstructionCatalog? constructions = null,
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
         Action<string>? log = null)
     {
         var simulationContext = new SimulationRuntimeContext(
@@ -83,11 +95,10 @@ internal static class CoreRuntimeSmokeTests
             simulationContext,
             simulationContext,
             world,
-            itemsDiffLog,
-            creaturesDiffLog,
+            mutationDiffs,
             recipes ?? RecipeCatalogStore.Empty,
-            constructions ?? ConstructionCatalogStore.Empty,
-            log);
+            stockpilePresets,
+            log: log);
     }
 
     private static void TestTickScheduler()
@@ -184,6 +195,72 @@ internal static class CoreRuntimeSmokeTests
         return string.Join("|", state.Queue.Select(e => e.EntryId.ToString("N")));
     }
 
+    private static void TestRuntimeCommandIdsAreStable()
+    {
+        var rect = new SadRogue.Primitives.Rectangle(1, 2, 3, 4);
+        ICommand haulA = new CreateHaulOrderCommand(42, rect, z: 0, priority: 10);
+        ICommand haulB = new CreateHaulOrderCommand(42, rect, z: 0, priority: 10);
+        ICommand haulDifferentTick = new CreateHaulOrderCommand(43, rect, z: 0, priority: 10);
+        ICommand constructionStoneTags = new CreateConstructionOrderCommand(
+            42,
+            rect,
+            zMin: 0,
+            zMax: 0,
+            ConstructionShape.Wall,
+            new MaterialFilterSpec
+            {
+                CategoryKey = "test.wall",
+                Tags = new[] { "stone_block", "construction" }
+            },
+            priority: 10);
+        ICommand constructionStoneTagsReordered = new CreateConstructionOrderCommand(
+            42,
+            rect,
+            zMin: 0,
+            zMax: 0,
+            ConstructionShape.Wall,
+            new MaterialFilterSpec
+            {
+                CategoryKey = "test.wall",
+                Tags = new[] { "construction", "stone_block" }
+            },
+            priority: 10);
+        ICommand constructionWoodTags = new CreateConstructionOrderCommand(
+            42,
+            rect,
+            zMin: 0,
+            zMax: 0,
+            ConstructionShape.Wall,
+            new MaterialFilterSpec
+            {
+                CategoryKey = "test.wall",
+                Tags = new[] { "construction", "wood_log" }
+            },
+            priority: 10);
+
+        var workshopId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        ICommand addRecipeA = RuntimeWorkshopCommandFactory.AddRecipe(workshopId, "core_recipe_plank")(42);
+        ICommand addRecipeB = RuntimeWorkshopCommandFactory.AddRecipe(workshopId, "core_recipe_plank")(42);
+        ICommand setSlots = RuntimeWorkshopCommandFactory.SetWorkerSlots(workshopId, 2)(42);
+        ICommand wrappedA1 = new RuntimeIdentifiedCommand(haulA, sequence: 1);
+        ICommand wrappedA2 = new RuntimeIdentifiedCommand(haulB, sequence: 1);
+        ICommand wrappedB = new RuntimeIdentifiedCommand(haulB, sequence: 2);
+
+        RegressionAssert.True(
+            haulA.CommandId == haulB.CommandId
+            && haulA.CommandId != haulDifferentTick.CommandId
+            && constructionStoneTags.CommandId == constructionStoneTagsReordered.CommandId
+            && constructionStoneTags.CommandId != constructionWoodTags.CommandId
+            && addRecipeA.CommandId == addRecipeB.CommandId
+            && addRecipeA.CommandId != setSlots.CommandId
+            && wrappedA1.CommandId == wrappedA2.CommandId
+            && wrappedA1.CommandId != wrappedB.CommandId
+            && addRecipeA.Serialize().Length > 0,
+            "Runtime command ids should be stable for replay inputs and workshop commands should serialize their payload.");
+
+        Console.WriteLine("[PASS] Runtime command ids");
+    }
+
     private static void TestDiffLog()
     {
         var diffLog = new DiffLog();
@@ -212,6 +289,412 @@ internal static class CoreRuntimeSmokeTests
         RegressionAssert.True(merged.Count == 2 && encodingRoundTrips, "DiffLog merge or target encoding round trip failed.");
 
         Console.WriteLine("[PASS] DiffLog");
+    }
+
+    private static void TestTypedCommandDiffOrderingPolicy()
+    {
+        var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
+
+        var orderDiffLog = new OrderDiffLog();
+        orderDiffLog.AddHaul(rect, z: 0, priority: 1, createdTick: 10, systemId: "test");
+        orderDiffLog.AddMining(rect, z: 0, priority: 99, createdTick: 10, systemId: "test");
+        var orderDiffs = orderDiffLog.MergeAndSort();
+
+        var zoneDiffLog = new ZoneDiffLog();
+        zoneDiffLog.AddDeleteZone(zoneId: 42, priority: 1, systemId: "test");
+        zoneDiffLog.AddCreateZone("meeting", "Meeting", rect, z: 0, createdTick: 10, priority: 99, systemId: "test");
+        var zoneDiffs = zoneDiffLog.MergeAndSort();
+
+        var workshopDiffLog = new WorkshopDiffLog();
+        var workshopId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-000000000001");
+        workshopDiffLog.SetWorkerSlots(workshopId, workerSlots: 1, priority: 1, systemId: "test");
+        workshopDiffLog.AddRecipe(workshopId, "recipe.high", "High Priority Recipe", currentTick: 10, priority: 99, systemId: "test");
+        var workshopDiffs = workshopDiffLog.MergeAndSort();
+
+        var itemsDiffLog = new ItemsDiffLog();
+        var targetChunk = new ChunkKey(0, 0, 0);
+        itemsDiffLog.Add(ItemsDiffOp.AddItem, targetChunk, localIndex: 7, itemId: "item.low", quantity: 1, priority: 1, systemId: "test");
+        itemsDiffLog.Add(ItemsDiffOp.AddItem, targetChunk, localIndex: 7, itemId: "item.high", quantity: 1, priority: 99, systemId: "test");
+        var itemDiffs = itemsDiffLog.MergeAndSort();
+
+        var stockpileDiffLog = new StockpileDiffLog();
+        var stockpileCells = new Dictionary<ChunkKey, IReadOnlyList<int>>
+        {
+            [targetChunk] = new[] { 7 }
+        };
+        stockpileDiffLog.AddCreateZone("Low", targetChunk, stockpileCells, createdTick: 10, priority: 1, systemId: "test");
+        stockpileDiffLog.AddCreateZone("High", targetChunk, stockpileCells, createdTick: 10, priority: 99, systemId: "test");
+        var stockpileDiffs = stockpileDiffLog.MergeAndSort();
+        var firstStockpileCreate = stockpileDiffs[0].Data as StockpileCreateZoneData;
+
+        RegressionAssert.True(
+            orderDiffs[0].Op == OrderDiffOp.Haul
+            && orderDiffs[1].Op == OrderDiffOp.Mining
+            && zoneDiffs[0].Op == ZoneDiffOp.DeleteZone
+            && zoneDiffs[1].Op == ZoneDiffOp.CreateZone
+            && workshopDiffs[0].Op == WorkshopDiffOp.SetWorkerSlots
+            && workshopDiffs[1].Op == WorkshopDiffOp.AddRecipe
+            && itemDiffs[0].ItemId == "item.high"
+            && firstStockpileCreate?.Name == "High",
+            "Typed command diff ordering policy regressed.");
+
+        Console.WriteLine("[PASS] Typed command diff ordering policy");
+    }
+
+    private static void TestMiningRectanglesIncludeSingleCellMaxExtent()
+    {
+        var world = new World(2, 2);
+        var cell = new SadRogue.Primitives.Point(1, 1);
+        var rect = new SadRogue.Primitives.Rectangle(cell.X, cell.Y, 1, 1);
+        world.SetTile(cell.X, cell.Y, 0, new TileBase(0, (ushort)TerrainKind.SolidWall, 0, 0, 0, 0, 1), 0);
+
+        int eligible = MiningOrderRules.CountEligible(world, rect, zMin: 0, zMax: 0, MiningAction.Dig);
+        world.Orders.EnqueueMining(rect, z: 0, priority: 50, createdTick: 0);
+
+        var mining = new MiningSystem(world, world.Orders, maxPerTick: 8);
+        mining.ReadTick(0);
+        mining.WriteTick(0);
+
+        var planned = new List<MiningSystem.PlannedDig>();
+        int plannedCount = mining.DequeuePlannedDigs(max: 8, planned);
+
+        RegressionAssert.True(
+            eligible == 1
+            && plannedCount == 1
+            && planned[0].Cell == cell,
+            "Mining one-cell rectangles did not include SadRogue inclusive MaxExtent bounds.");
+
+        Console.WriteLine("[PASS] Mining rectangle inclusive bounds");
+    }
+
+    private static void TestStockpileFilterUsesItemProjection()
+    {
+        var woodStack = new HumanFortress.Simulation.Stockpile.ItemStackRef(
+            1,
+            "core_item_log",
+            new[] { "wood", "raw" },
+            "core_mat_wood_oak");
+
+        var stoneStack = new HumanFortress.Simulation.Stockpile.ItemStackRef(
+            2,
+            "core_item_stone",
+            new[] { "stone", "raw" },
+            "core_mat_stone_granite");
+
+        var defaultFilter = new StockpileFilter();
+        var woodTagFilter = new StockpileFilter
+        {
+            Tags = ImmutableHashSet.Create(StringComparer.Ordinal, "wood")
+        };
+        var logIdFilter = new StockpileFilter
+        {
+            ItemIds = ImmutableHashSet.Create(StringComparer.Ordinal, "core_item_log")
+        };
+        var oakMaterialFilter = new StockpileFilter
+        {
+            Materials = ImmutableHashSet.Create(StringComparer.Ordinal, "core_mat_wood_oak")
+        };
+        var woodBlacklist = new StockpileFilter
+        {
+            Mode = FilterMode.Blacklist,
+            Tags = ImmutableHashSet.Create(StringComparer.Ordinal, "wood")
+        };
+        var presetDefinitions = StockpilePresetLoader.LoadJson(
+            "[{\"id\":\"wood\",\"name\":\"Wood Storage\",\"mode\":\"Whitelist\",\"tags\":[\"wood\"],\"priority\":2}]",
+            "test stockpile presets");
+        var presetCatalog = FortressRuntimeStockpilePresetCatalog.FromDefinitions(
+            presetDefinitions,
+            "test stockpile presets");
+        var contentPresetFilter = presetCatalog.Resolve("wood").CreateFilter();
+
+        RegressionAssert.True(defaultFilter.Accepts(woodStack), "Default stockpile filter did not accept a valid item handle.");
+        RegressionAssert.True(woodTagFilter.Accepts(woodStack), "Stockpile tag filter did not match projected item tags.");
+        RegressionAssert.True(logIdFilter.Accepts(woodStack), "Stockpile item id filter did not match projected item definition id.");
+        RegressionAssert.True(oakMaterialFilter.Accepts(woodStack), "Stockpile material filter did not match projected material id.");
+        RegressionAssert.True(!woodBlacklist.Accepts(woodStack), "Stockpile blacklist did not reject matching projected item tags.");
+        RegressionAssert.True(woodBlacklist.Accepts(stoneStack), "Stockpile blacklist rejected a non-matching projected item.");
+        RegressionAssert.True(
+            presetCatalog.Resolve("wood").Priority == 2
+            && contentPresetFilter.Accepts(woodStack)
+            && !contentPresetFilter.Accepts(stoneStack),
+            "Content-loaded stockpile preset did not map to the Runtime stockpile filter catalog.");
+
+        Console.WriteLine("[PASS] Stockpile filter item projection");
+    }
+
+    private static void TestStockpileDataIndexUpdatesAreIdempotent()
+    {
+        var data = new ChunkStockpileData();
+        var chunkKey = new ChunkKey(0, 0, 0);
+        const int zoneId = 7;
+        const int itemHandle = 42;
+        const int cellIndex = 3;
+        var tags = new List<string> { "wood", "raw" };
+
+        data.CreateOrUpdateShard(zoneId, chunkKey);
+        data.AddCellsToZone(zoneId, new[] { cellIndex });
+
+        data.OnItemRemoved(itemHandle, cellIndex, zoneId, tags);
+        data.OnItemPlaced(itemHandle, cellIndex, zoneId, tags);
+        data.OnItemPlaced(itemHandle, cellIndex, zoneId, tags);
+
+        var shard = data.GetShard(zoneId)
+            ?? throw new InvalidOperationException("Stockpile shard should exist after CreateOrUpdateShard.");
+        RegressionAssert.True(
+            data.GetItemsInZone(zoneId).Count() == 1
+            && data.GetItemsByTag("wood").Count() == 1
+            && shard.UsedSlots == 1,
+            "Stockpile item indexes counted duplicate placements.");
+
+        data.OnItemRemoved(itemHandle, cellIndex, zoneId, tags);
+        data.OnItemRemoved(itemHandle, cellIndex, zoneId, tags);
+
+        RegressionAssert.True(
+            !data.GetItemsInZone(zoneId).Any()
+            && !data.GetItemsByTag("wood").Any()
+            && shard.UsedSlots == 0,
+            "Stockpile item indexes did not handle repeated removals safely.");
+
+        Console.WriteLine("[PASS] Stockpile item index idempotence");
+    }
+
+    private static void TestTransportStockpileIndexEmitterUsesStockpileDiffs()
+    {
+        var world = new World(2, 2);
+        DefinitionCatalogTestSupport.LoadItems(world);
+
+        var source = new SadRogue.Primitives.Point(2, 2);
+        var destination = new SadRogue.Primitives.Point(5, 5);
+        world.SetTile(source.X, source.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+        world.SetTile(destination.X, destination.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        var itemId = world.Items.SpawnItem("core_item_log_oak", source, 0, quantity: 1, currentTick: 0)
+            ?? throw new InvalidOperationException("Expected test item to spawn.");
+        int itemHandle = DiffTargetEncoding.SignedEntityId(itemId);
+
+        var chunkKey = new ChunkKey(0, 0, 0);
+        var chunk = world.GetChunk(chunkKey)
+            ?? throw new InvalidOperationException("Expected test chunk to exist.");
+        chunk.EnsureStockpileData();
+        var stockpileData = chunk.GetStockpileData()
+            ?? throw new InvalidOperationException("Expected stockpile data to exist.");
+
+        int zoneId = world.Stockpiles.CreateZone("Test Stockpile", chunkKey, 0);
+        int cellIndex = Chunk.LocalIndex(destination.X, destination.Y);
+        stockpileData.CreateOrUpdateShard(zoneId, chunkKey);
+        stockpileData.AddCellsToZone(zoneId, new[] { cellIndex });
+        var zone = world.Stockpiles.GetZone(zoneId)
+            ?? throw new InvalidOperationException("Expected stockpile zone to exist.");
+        zone.UpdateMemberChunks(new[] { chunkKey });
+
+        var validator = new TransportDestinationValidator(world);
+        zone.Filter = new StockpileFilter
+        {
+            ItemIds = ImmutableHashSet.Create(StringComparer.Ordinal, "core_item_boulder_granite")
+        };
+        RegressionAssert.True(
+            validator.ValidateDestination(destination.X, destination.Y, 0, TransportReason.ToStockpile)
+            && !validator.ValidateDestinationForItem(itemId, destination.X, destination.Y, 0, TransportReason.ToStockpile),
+            "Transport stockpile destination validation did not re-check the zone filter against the item projection.");
+        zone.Filter = new StockpileFilter();
+
+        var stockpileDiffLog = new StockpileDiffLog();
+        var emitter = new TransportStockpileIndexEmitter(
+            world,
+            stockpileDiffLog,
+            priority: 100,
+            systemId: "test.transport");
+
+        world.Items.UpdateItemPosition(itemId, source, 0, destination, 0);
+        emitter.RecordDelivery(itemId, new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0), TransportReason.ToStockpile);
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        stockpileDiffLog.Clear();
+
+        var shard = stockpileData.GetShard(zoneId)
+            ?? throw new InvalidOperationException("Expected stockpile shard to exist.");
+        RegressionAssert.True(
+            stockpileData.GetItemsInZone(zoneId).SingleOrDefault() == itemHandle
+            && shard.UsedSlots == 1,
+            "Transport stockpile delivery did not enqueue a post-tick stockpile place-item diff.");
+        RegressionAssert.True(
+            !StockpileWorldQueries.TryFindDestination(world, world.Items.GetInstance(itemId)!, new[] { zone }, out _, out _),
+            "Stockpile destination selection did not respect shard capacity after transport indexed delivery.");
+
+        emitter.RecordPickup(itemId, new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0));
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        stockpileDiffLog.Clear();
+
+        RegressionAssert.True(
+            !stockpileData.GetItemsInZone(zoneId).Any()
+            && shard.UsedSlots == 0,
+            "Transport stockpile pickup did not enqueue a post-tick stockpile remove-item diff.");
+
+        RegressionAssert.True(stockpileData.TryReserveSlot(zoneId), "Stockpile test setup failed to reserve a slot.");
+        emitter.ReleaseDestinationReservation(new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0), TransportReason.ToStockpile);
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+
+        RegressionAssert.True(
+            shard.ReservedSlots == 0,
+            "Transport stockpile cancellation did not enqueue a post-tick stockpile release-slot diff.");
+
+        emitter.RecordDelivery(itemId, new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0), TransportReason.ToStockpile);
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        stockpileDiffLog.Clear();
+
+        var constructionItemsDiffs = new ItemsDiffLog();
+        var constructionDiffEmitter = new ConstructionDiffEmitter(
+            null,
+            constructionItemsDiffs,
+            "test.construction",
+            100,
+            world,
+            stockpileDiffLog);
+        constructionDiffEmitter.RemoveItem(itemId, destination, 0, quantity: 1);
+        ItemsDiffApplicator.ApplyPreSimulation(world, constructionItemsDiffs.MergeAndSort());
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        stockpileDiffLog.Clear();
+
+        RegressionAssert.True(
+            constructionItemsDiffs.MergeAndSort().Any(diff => diff.Op == ItemsDiffOp.RemoveItem)
+            && !stockpileData.GetItemsInZone(zoneId).Any()
+            && !stockpileData.GetItemsByTag("wood").Any()
+            && shard.UsedSlots == 0,
+            "Construction item consumption did not enqueue a stockpile remove-item diff for a fully consumed stockpile stack.");
+
+        itemId = world.Items.SpawnItem("core_item_log_oak", destination, 0, quantity: 1, currentTick: 0)
+            ?? throw new InvalidOperationException("Expected replacement craft test item to spawn.");
+        emitter.RecordDelivery(itemId, new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0), TransportReason.ToStockpile);
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        stockpileDiffLog.Clear();
+
+        var craftItemsDiffs = new ItemsDiffLog();
+        var craftDiffEmitter = new CraftDiffEmitter(
+            craftItemsDiffs,
+            100,
+            "test.craft",
+            world,
+            stockpileDiffLog);
+        craftDiffEmitter.RemoveItem(itemId, destination, 0, quantity: 1);
+        ItemsDiffApplicator.ApplyPreSimulation(world, craftItemsDiffs.MergeAndSort());
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+
+        RegressionAssert.True(
+            craftItemsDiffs.MergeAndSort().Any(diff => diff.Op == ItemsDiffOp.RemoveItem)
+            && !stockpileData.GetItemsInZone(zoneId).Any()
+            && !stockpileData.GetItemsByTag("wood").Any()
+            && shard.UsedSlots == 0,
+            "Craft item consumption did not enqueue a stockpile remove-item diff for a fully consumed stockpile stack.");
+
+        Console.WriteLine("[PASS] Transport stockpile index diffs");
+    }
+
+    private static void TestHaulingPlannerReservesStockpileCapacity()
+    {
+        var world = new World(2, 2);
+        DefinitionCatalogTestSupport.LoadItems(world);
+
+        var sourceA = new SadRogue.Primitives.Point(1, 1);
+        var sourceB = new SadRogue.Primitives.Point(2, 1);
+        var destination = new SadRogue.Primitives.Point(5, 5);
+        world.SetTile(sourceA.X, sourceA.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+        world.SetTile(sourceB.X, sourceB.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+        world.SetTile(destination.X, destination.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        var itemA = world.Items.SpawnItem("core_item_log_oak", sourceA, 0, quantity: 1, currentTick: 0);
+        var itemB = world.Items.SpawnItem("core_item_log_oak", sourceB, 0, quantity: 1, currentTick: 0);
+        RegressionAssert.True(itemA.HasValue && itemB.HasValue, "Hauling planner reserve setup failed to spawn items.");
+
+        var chunkKey = new ChunkKey(0, 0, 0);
+        var chunk = world.GetChunk(chunkKey)
+            ?? throw new InvalidOperationException("Expected test chunk to exist.");
+        chunk.EnsureStockpileData();
+        var stockpileData = chunk.GetStockpileData()
+            ?? throw new InvalidOperationException("Expected stockpile data to exist.");
+
+        int zoneId = world.Stockpiles.CreateZone("Single Cell", chunkKey, 0);
+        int cellIndex = Chunk.LocalIndex(destination.X, destination.Y);
+        stockpileData.CreateOrUpdateShard(zoneId, chunkKey);
+        stockpileData.AddCellsToZone(zoneId, new[] { cellIndex });
+        world.Stockpiles.GetZone(zoneId)?.UpdateMemberChunks(new[] { chunkKey });
+
+        var transportQueue = new TransportRequestQueue();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var hauling = new HaulingSystem(
+            world,
+            world.Orders,
+            transportIntake: transportQueue,
+            stockpileDiffLog: stockpileDiffLog);
+
+        world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 2, 1), z: 0, priority: 50, createdTick: 0);
+        hauling.ReadTick(0);
+        hauling.WriteTick(0);
+
+        var reserveDiffs = stockpileDiffLog.MergeAndSort()
+            .Where(diff => diff.Op == StockpileDiffOp.ReserveSlot)
+            .ToList();
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+
+        var shard = stockpileData.GetShard(zoneId)
+            ?? throw new InvalidOperationException("Expected stockpile shard to exist.");
+        RegressionAssert.True(
+            transportQueue.Count == 1
+            && reserveDiffs.Count == 1
+            && shard.ReservedSlots == 1,
+            $"Hauling planner did not cap same-tick stockpile requests by available shard capacity. queue={transportQueue.Count} reserveDiffs={reserveDiffs.Count} reservedSlots={shard.ReservedSlots}");
+
+        Console.WriteLine("[PASS] Hauling planner stockpile reservations");
+    }
+
+    private static void TestHaulingPlannerDoesNotReserveDuplicatePendingTransport()
+    {
+        var world = new World(2, 2);
+        DefinitionCatalogTestSupport.LoadItems(world);
+
+        var source = new SadRogue.Primitives.Point(1, 1);
+        var destination = new SadRogue.Primitives.Point(5, 5);
+        world.SetTile(source.X, source.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+        world.SetTile(destination.X, destination.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        var itemId = world.Items.SpawnItem("core_item_log_oak", source, 0, quantity: 1, currentTick: 0);
+        RegressionAssert.True(itemId.HasValue, "Hauling duplicate reservation setup failed to spawn item.");
+
+        var chunkKey = new ChunkKey(0, 0, 0);
+        var chunk = world.GetChunk(chunkKey)
+            ?? throw new InvalidOperationException("Expected test chunk to exist.");
+        chunk.EnsureStockpileData();
+        var stockpileData = chunk.GetStockpileData()
+            ?? throw new InvalidOperationException("Expected stockpile data to exist.");
+
+        int zoneId = world.Stockpiles.CreateZone("Duplicate Guard", chunkKey, 0);
+        int cellIndex = Chunk.LocalIndex(destination.X, destination.Y);
+        stockpileData.CreateOrUpdateShard(zoneId, chunkKey);
+        stockpileData.AddCellsToZone(zoneId, new[] { cellIndex });
+        world.Stockpiles.GetZone(zoneId)?.UpdateMemberChunks(new[] { chunkKey });
+
+        var transportQueue = new TransportRequestQueue();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var hauling = new HaulingSystem(
+            world,
+            world.Orders,
+            transportIntake: transportQueue,
+            stockpileDiffLog: stockpileDiffLog);
+
+        world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 1, 1), z: 0, priority: 50, createdTick: 0);
+        hauling.ReadTick(0);
+        hauling.WriteTick(0);
+
+        world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 1, 1), z: 0, priority: 50, createdTick: 1);
+        hauling.ReadTick(1);
+        hauling.WriteTick(1);
+
+        var reserveDiffs = stockpileDiffLog.MergeAndSort()
+            .Where(diff => diff.Op == StockpileDiffOp.ReserveSlot)
+            .ToList();
+        RegressionAssert.True(
+            transportQueue.Count == 1 && reserveDiffs.Count == 1,
+            "Hauling planner reserved stockpile capacity for a duplicate pending transport request.");
+
+        Console.WriteLine("[PASS] Hauling planner duplicate pending transport guard");
     }
 
     private static void TestWorldChunks()
@@ -308,6 +791,28 @@ internal static class CoreRuntimeSmokeTests
             !staleFutureCommand.Executed && clearedQueue.GetExecutedCommands().Count == 0,
             "CommandQueue clear left stale pending or executed commands behind.");
 
+        var diagnostics = new RecordingDiagnosticSink();
+        var previousSink = DiagnosticHub.Sink;
+        var failingQueue = new CommandQueue();
+        var failingCommandId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        try
+        {
+            DiagnosticHub.Sink = diagnostics;
+            failingQueue.Enqueue(new TestCommand(0, "failing", commandId: failingCommandId, throwOnExecute: true));
+            failingQueue.ExecuteCommands(0, context);
+        }
+        finally
+        {
+            DiagnosticHub.Sink = previousSink;
+        }
+
+        var failureDiagnostic = diagnostics.Events.SingleOrDefault(e => e.Category == "Core.CommandQueue");
+        RegressionAssert.True(
+            failureDiagnostic != null
+            && failureDiagnostic.Message.Contains(failingCommandId.ToString(), StringComparison.Ordinal)
+            && failureDiagnostic.Message.Contains("seq=1", StringComparison.Ordinal),
+            "CommandQueue failure diagnostics did not include the deterministic command id and queue sequence.");
+
         Console.WriteLine("[PASS] CommandQueue");
     }
 
@@ -318,11 +823,12 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(itemsDiffLog, creaturesDiffLog);
         var world = new World(2, 10);
         var eventBus = new EventBus();
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world, eventBus);
+        var context = CreateRuntimeContext(diffLog, mutationDiffs, world, eventBus);
         var probe = new CommandStageProbe();
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, mutationDiffs, navigation: null);
         var readSystem = new CommandStageReadSystem(probe);
 
         scheduler.RegisterSystem(readSystem);
@@ -348,8 +854,9 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(itemsDiffLog, creaturesDiffLog);
         var world = new World(2, 10);
-        var context = new TestRuntimeCommandContext(diffLog, world, new EventBus());
+        var context = new TestRuntimeCommandContext(diffLog, world, new EventBus(), mutationDiffs);
         var probe = new CommandStageProbe();
         var readSystem = new CommandStageReadSystem(probe);
         var systems = new HostCoreTestSystems(readSystem);
@@ -360,8 +867,8 @@ internal static class CoreRuntimeSmokeTests
             context,
             context,
             diffLog,
-            itemsDiffLog,
-            creaturesDiffLog,
+            mutationDiffs,
+            ConstructionCatalogStore.Empty,
             navigation: null);
 
         bool registeredHookCalled = false;
@@ -456,16 +963,29 @@ internal static class CoreRuntimeSmokeTests
             quantity: 1,
             priority: 1,
             systemId: "factory-test");
+        var services = new RuntimeSessionServices(
+            scheduler,
+            commandQueue,
+            new EventBus(),
+            diffLog,
+            itemsDiffLog);
+        services.MutationDiffs.Orders.AddHaul(
+            new SadRogue.Primitives.Rectangle(0, 0, 1, 1),
+            z: 0,
+            priority: 1,
+            createdTick: 0,
+            systemId: "factory-test");
+        services.MutationDiffs.Stockpiles.AddDeleteZone(
+            zoneId: 1,
+            priority: 1,
+            systemId: "factory-test");
 
         World? contentWorld = null;
         World? hostWorld = null;
         HumanFortress.Navigation.NavigationManager? hostNavigation = null;
         var hostObject = new object();
         var factory = new SimulationRuntimeSessionFactory<object>(
-            scheduler,
-            commandQueue,
-            diffLog,
-            itemsDiffLog,
+            services,
             world => contentWorld = world,
             (world, navigation) =>
             {
@@ -492,7 +1012,9 @@ internal static class CoreRuntimeSmokeTests
             && !staleCommand.Executed
             && commandQueue.GetExecutedCommands().Count == 0
             && diffLog.MergeAndSort().Count == 0
-            && itemsDiffLog.MergeAndSort().Count == 0,
+            && itemsDiffLog.MergeAndSort().Count == 0
+            && services.MutationDiffs.Orders.MergeAndSort().Count == 0
+            && services.MutationDiffs.Stockpiles.MergeAndSort().Count == 0,
             "SimulationRuntimeSessionFactory did not reset session state or compose world/navigation/host correctly.");
 
         Console.WriteLine("[PASS] Simulation runtime session factory");
@@ -962,18 +1484,34 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var professionDiffLog = new ProfessionAssignmentDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(itemsDiffLog, creaturesDiffLog, professions: professionDiffLog);
         var world = new World(2, 10);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
+        var context = CreateRuntimeContext(
+            diffLog,
+            mutationDiffs,
+            world,
+            recipes: RecipeCatalogStore.Empty);
         var registry = ProfessionRegistryLoader.Load(AppContext.BaseDirectory);
         var assignments = new ProfessionAssignments(registry);
         var professionId = registry.Definitions[0].Id;
         var workerId = Guid.Parse("12345678-1234-1234-1234-123456789abc");
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            commandQueue,
+            context,
+            context,
+            diffLog,
+            mutationDiffs,
+            navigation: null);
 
         context.ProfessionCommandBindings.SetProfessionWeightHandler(assignments.SetWeight);
         pipeline.AttachTo(scheduler);
 
         commandQueue.Enqueue(new SetProfessionWeightCommand(tick: 0, workerId, professionId, weight: 12));
+        RegressionAssert.True(
+            assignments.GetWeight(workerId, professionId) == 5,
+            "SetProfessionWeightCommand mutated profession assignments before the post-tick profession diff applicator.");
         scheduler.ExecuteSingleTick();
         pipeline.DetachFrom(scheduler);
 
@@ -991,9 +1529,26 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var orderDiffLog = new OrderDiffLog();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(
+            itemsDiffLog,
+            creaturesDiffLog,
+            orders: orderDiffLog,
+            stockpiles: stockpileDiffLog);
         var world = new World(2, 10);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var context = CreateRuntimeContext(
+            diffLog,
+            mutationDiffs,
+            world);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            commandQueue,
+            context,
+            context,
+            diffLog,
+            mutationDiffs,
+            navigation: null);
 
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
         var buildAnchor = new SadRogue.Primitives.Point(4, 4);
@@ -1005,6 +1560,12 @@ internal static class CoreRuntimeSmokeTests
         commandQueue.Enqueue(new CreateHaulOrderCommand(tick: 0, rect, z: 2, priority: 13));
         commandQueue.Enqueue(new CreateConstructionOrderCommand(tick: 0, rect, zMin: 2, zMax: 2, shape: ConstructionShape.Floor, filter: filter, priority: 14));
         commandQueue.Enqueue(new CreateBuildableConstructionOrderCommand(tick: 0, "core_workshop_carpenter", buildAnchor, z: 2, priority: 15));
+        RegressionAssert.True(
+            !world.Orders.GetActiveMiningSnapshot().Any()
+            && !world.Orders.GetActiveHaulsSnapshot().Any()
+            && !world.Orders.GetActiveConstructionSnapshot().Any()
+            && !world.Orders.GetActiveBuildableSnapshot().Any(),
+            "Order commands mutated order manager state before the post-tick order diff applicator.");
         scheduler.ExecuteSingleTick();
         pipeline.DetachFrom(scheduler);
 
@@ -1044,9 +1605,26 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var zoneDiffLog = new ZoneDiffLog();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(
+            itemsDiffLog,
+            creaturesDiffLog,
+            zones: zoneDiffLog,
+            stockpiles: stockpileDiffLog);
         var world = new World(2, 10);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var context = CreateRuntimeContext(
+            diffLog,
+            mutationDiffs,
+            world);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            commandQueue,
+            context,
+            context,
+            diffLog,
+            mutationDiffs,
+            navigation: null);
 
         var initialRect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
         var extraRect = new SadRogue.Primitives.Rectangle(4, 4, 1, 1);
@@ -1054,6 +1632,9 @@ internal static class CoreRuntimeSmokeTests
 
         pipeline.AttachTo(scheduler);
         commandQueue.Enqueue(new CreateZoneCommand(tick: 0, defId: "core_zone_stockpile", name: "Runtime Zone", worldRect: initialRect, z: 0));
+        RegressionAssert.True(
+            !world.Zones.Manager.GetAllZones().Any(),
+            "CreateZoneCommand mutated zone state before the post-tick zone diff applicator.");
         scheduler.ExecuteSingleTick();
 
         var zone = world.Zones.Manager.GetAllZones().SingleOrDefault();
@@ -1066,6 +1647,9 @@ internal static class CoreRuntimeSmokeTests
 
         int zoneId = zone!.ZoneId;
         commandQueue.Enqueue(new UpdateZoneCellsCommand(0, zoneId, extraRect, 0, true));
+        RegressionAssert.True(
+            world.Zones.GetZoneAtPosition(4, 4, 0) == 0,
+            "UpdateZoneCellsCommand added cells before the post-tick zone diff applicator.");
         scheduler.ExecuteSingleTick();
 
         RegressionAssert.True(
@@ -1073,6 +1657,9 @@ internal static class CoreRuntimeSmokeTests
             "UpdateZoneCellsCommand did not add cells through the runtime zone command target.");
 
         commandQueue.Enqueue(new UpdateZoneCellsCommand(0, zoneId, removeRect, 0, false));
+        RegressionAssert.True(
+            world.Zones.GetZoneAtPosition(1, 1, 0) == zoneId,
+            "UpdateZoneCellsCommand removed cells before the post-tick zone diff applicator.");
         scheduler.ExecuteSingleTick();
 
         RegressionAssert.True(
@@ -1081,6 +1668,9 @@ internal static class CoreRuntimeSmokeTests
             "UpdateZoneCellsCommand did not remove cells through the runtime zone command target.");
 
         commandQueue.Enqueue(new DeleteZoneCommand(tick: 0, zoneId));
+        RegressionAssert.True(
+            world.Zones.Manager.GetZone(zoneId) != null,
+            "DeleteZoneCommand deleted the zone before the post-tick zone diff applicator.");
         scheduler.ExecuteSingleTick();
         pipeline.DetachFrom(scheduler);
 
@@ -1100,6 +1690,7 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var workshopDiffLog = new WorkshopDiffLog();
         var world = new World(2, 10);
         var recipeCatalog = new TestRecipeCatalog(new[]
         {
@@ -1118,14 +1709,25 @@ internal static class CoreRuntimeSmokeTests
                 Outputs = new[] { new RecipeOutput { DefId = "test_output_b", Count = 1 } }
             }
         });
-        var context = CreateRuntimeContext(
-            diffLog,
+        var constructionCatalog = FortressRuntimeContentSnapshotLoader.CaptureLoaded().Constructions;
+        var mutationDiffs = new RuntimeMutationDiffLogs(
             itemsDiffLog,
             creaturesDiffLog,
+            workshops: workshopDiffLog);
+        var context = CreateRuntimeContext(
+            diffLog,
+            mutationDiffs,
             world,
-            recipes: recipeCatalog,
-            constructions: FortressRuntimeContentSnapshotLoader.CaptureLoaded().Constructions);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+            recipes: recipeCatalog);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            commandQueue,
+            context,
+            context,
+            diffLog,
+            mutationDiffs,
+            constructionCatalog,
+            navigation: null);
         var workshopPosition = new SadRogue.Primitives.Point(5, 5);
         var workshopGuid = Guid.Parse("aaaaaaaa-4444-4444-4444-aaaaaaaaaaaa");
         var workshop = new PlaceableInstance(
@@ -1146,6 +1748,9 @@ internal static class CoreRuntimeSmokeTests
         pipeline.AttachTo(scheduler);
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.AddRecipe, recipeId: "test_recipe_a"));
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.AddRecipe, recipeId: "test_recipe_b"));
+        RegressionAssert.True(
+            workshop.Workshop.Queue.Count == 0,
+            "UpdateWorkshopQueueCommand added recipes before the post-tick workshop diff applicator.");
         scheduler.ExecuteSingleTick();
 
         RegressionAssert.True(
@@ -1159,6 +1764,12 @@ internal static class CoreRuntimeSmokeTests
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.SetWorkerSlots, intValue: 3));
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.ToggleAutoSupply, boolValue: false));
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.ToggleAutoStockpile, boolValue: false));
+        RegressionAssert.True(
+            workshop.Workshop.Queue[0].RecipeId == "test_recipe_a"
+            && workshop.Workshop.AllowedWorkers == 1
+            && workshop.Workshop.AutoRequestMaterials
+            && workshop.Workshop.AutoStockpileOutputs,
+            "UpdateWorkshopQueueCommand moved entries or changed workshop settings before the post-tick workshop diff applicator.");
         scheduler.ExecuteSingleTick();
 
         RegressionAssert.True(
@@ -1169,6 +1780,9 @@ internal static class CoreRuntimeSmokeTests
             "UpdateWorkshopQueueCommand did not move queue entries or update workshop settings through the runtime target.");
 
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.RemoveEntry, entryId: secondEntryId));
+        RegressionAssert.True(
+            workshop.Workshop.Queue.Count == 2,
+            "UpdateWorkshopQueueCommand removed a queue entry before the post-tick workshop diff applicator.");
         scheduler.ExecuteSingleTick();
 
         RegressionAssert.True(
@@ -1177,6 +1791,9 @@ internal static class CoreRuntimeSmokeTests
             "UpdateWorkshopQueueCommand did not remove queue entries through the runtime target.");
 
         commandQueue.Enqueue(new UpdateWorkshopQueueCommand(0, workshopGuid, WorkshopQueueOperation.ClearQueue));
+        RegressionAssert.True(
+            workshop.Workshop.Queue.Count == 1,
+            "UpdateWorkshopQueueCommand cleared the queue before the post-tick workshop diff applicator.");
         scheduler.ExecuteSingleTick();
         pipeline.DetachFrom(scheduler);
 
@@ -1194,9 +1811,39 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(
+            itemsDiffLog,
+            creaturesDiffLog,
+            stockpiles: stockpileDiffLog);
         var world = new World(2, 10);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var stockpilePresets = FortressRuntimeStockpilePresetCatalog.FromDefinitions(
+            new[]
+            {
+                new StockpilePresetDefinition
+                {
+                    Id = "wood",
+                    Name = "Wood Storage",
+                    Mode = "Whitelist",
+                    Tags = new[] { "wood", "log", "plank" },
+                    Priority = 2
+                }
+            },
+            "test stockpile presets",
+            log: null);
+        var context = CreateRuntimeContext(
+            diffLog,
+            mutationDiffs,
+            world,
+            stockpilePresets: stockpilePresets);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            commandQueue,
+            context,
+            context,
+            diffLog,
+            mutationDiffs,
+            navigation: null);
         var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
 
         for (int x = rect.X; x < rect.X + rect.Width; x++)
@@ -1209,6 +1856,9 @@ internal static class CoreRuntimeSmokeTests
 
         pipeline.AttachTo(scheduler);
         commandQueue.Enqueue(new CreateStockpileCommand(tick: 0, rect, z: 0, presetId: "wood"));
+        RegressionAssert.True(
+            !world.Stockpiles.GetAllZones().Any(),
+            "CreateStockpileCommand mutated stockpile state before the post-tick diff applicator.");
         scheduler.ExecuteSingleTick();
 
         var zone = world.Stockpiles.GetAllZones().SingleOrDefault();
@@ -1220,6 +1870,8 @@ internal static class CoreRuntimeSmokeTests
         RegressionAssert.True(
             zone != null
             && zone.Name == "Wood Stockpile 1"
+            && zone.Priority == 2
+            && zone.Filter.Tags.SetEquals(new[] { "wood", "log", "plank" })
             && zone.MemberChunks.Contains(new ChunkKey(0, 0, 0))
             && stockpileData != null
             && stockpileData.GetZoneAtCell(firstCell) == zone.ZoneId
@@ -1227,15 +1879,166 @@ internal static class CoreRuntimeSmokeTests
             && shard.Capacity == 4,
             "CreateStockpileCommand did not create stockpile zone shards through the runtime stockpile command target.");
 
+        var createdZone = zone ?? throw new InvalidOperationException("Stockpile zone should exist after create command applies.");
+        var createdStockpileData = stockpileData ?? throw new InvalidOperationException("Stockpile chunk data should exist after create command applies.");
+
         commandQueue.Enqueue(new CreateStockpileCommand(tick: 0, rect, z: 0, presetId: "wood"));
         scheduler.ExecuteSingleTick();
-        pipeline.DetachFrom(scheduler);
 
         RegressionAssert.True(
             world.Stockpiles.GetAllZones().Count() == 1,
             "CreateStockpileCommand created a duplicate stockpile for a fully overlapping rectangle.");
 
+        int zoneId = createdZone.ZoneId;
+        commandQueue.Enqueue(new DeleteStockpileCommand(tick: 0, zoneId));
+        RegressionAssert.True(
+            world.Stockpiles.GetZone(zoneId) != null
+            && createdStockpileData.GetZoneAtCell(firstCell) == zoneId
+            && createdStockpileData.GetShard(zoneId) != null,
+            "DeleteStockpileCommand mutated stockpile state before the post-tick diff applicator.");
+        scheduler.ExecuteSingleTick();
+        pipeline.DetachFrom(scheduler);
+
+        RegressionAssert.True(
+            !world.Stockpiles.GetAllZones().Any()
+            && createdStockpileData.GetZoneAtCell(firstCell) == 0
+            && createdStockpileData.GetShard(zoneId) == null,
+            "DeleteStockpileCommand did not delete stockpile zone shards through the post-tick diff applicator.");
+
+        var overlapScheduler = new TickScheduler();
+        var overlapCommandQueue = new CommandQueue();
+        var overlapDiffLog = new DiffLog();
+        var overlapItemsDiffLog = new ItemsDiffLog();
+        var overlapCreaturesDiffLog = new CreaturesDiffLog();
+        var overlapStockpileDiffLog = new StockpileDiffLog();
+        var overlapMutationDiffs = new RuntimeMutationDiffLogs(
+            overlapItemsDiffLog,
+            overlapCreaturesDiffLog,
+            stockpiles: overlapStockpileDiffLog);
+        var overlapWorld = new World(2, 10);
+        var overlapContext = CreateRuntimeContext(
+            overlapDiffLog,
+            overlapMutationDiffs,
+            overlapWorld);
+        var overlapPipeline = new SimulationTickPipeline(
+            overlapWorld,
+            overlapCommandQueue,
+            overlapContext,
+            overlapContext,
+            overlapDiffLog,
+            overlapMutationDiffs,
+            navigation: null);
+        var firstRect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
+        var secondRect = new SadRogue.Primitives.Rectangle(2, 2, 2, 2);
+        for (int x = 1; x <= 3; x++)
+        {
+            for (int y = 1; y <= 3; y++)
+            {
+                overlapWorld.SetTile(x, y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+            }
+        }
+
+        overlapPipeline.AttachTo(overlapScheduler);
+        overlapCommandQueue.Enqueue(new CreateStockpileCommand(tick: 0, firstRect, z: 0, presetId: "wood"));
+        overlapCommandQueue.Enqueue(new CreateStockpileCommand(tick: 0, secondRect, z: 0, presetId: "stone"));
+        overlapScheduler.ExecuteSingleTick();
+        overlapPipeline.DetachFrom(overlapScheduler);
+
+        var overlapZones = overlapWorld.Stockpiles.GetAllZones()
+            .OrderBy(static zone => zone.ZoneId)
+            .ToList();
+        var overlapChunk = overlapWorld.GetChunk(new ChunkKey(0, 0, 0));
+        var overlapStockpileData = overlapChunk?.GetStockpileData();
+        int overlappedCell = Chunk.LocalIndex(2, 2);
+        var firstShard = overlapZones.Count > 0
+            ? overlapStockpileData?.GetShard(overlapZones[0].ZoneId)
+            : null;
+        var secondShard = overlapZones.Count > 1
+            ? overlapStockpileData?.GetShard(overlapZones[1].ZoneId)
+            : null;
+
+        RegressionAssert.True(
+            overlapZones.Count == 2
+            && overlapStockpileData != null
+            && overlapZones.Count > 1
+            && overlapStockpileData.GetZoneAtCell(overlappedCell) == overlapZones[0].ZoneId
+            && firstShard?.Capacity == 4
+            && secondShard?.Capacity == 3,
+            "StockpileDiffApplicator did not resolve same-tick overlapping stockpile creates deterministically.");
+
+        var terrainScheduler = new TickScheduler();
+        var terrainCommandQueue = new CommandQueue();
+        var terrainDiffLog = new DiffLog();
+        var terrainItemsDiffLog = new ItemsDiffLog();
+        var terrainCreaturesDiffLog = new CreaturesDiffLog();
+        var terrainMutationDiffs = new RuntimeMutationDiffLogs(
+            terrainItemsDiffLog,
+            terrainCreaturesDiffLog,
+            stockpiles: new StockpileDiffLog());
+        var terrainWorld = new World(2, 10);
+        var terrainContext = CreateRuntimeContext(
+            terrainDiffLog,
+            terrainMutationDiffs,
+            terrainWorld);
+        var terrainPipeline = new SimulationTickPipeline(
+            terrainWorld,
+            terrainCommandQueue,
+            terrainContext,
+            terrainContext,
+            terrainDiffLog,
+            terrainMutationDiffs,
+            navigation: null);
+        var terrainRect = new SadRogue.Primitives.Rectangle(6, 6, 1, 1);
+        terrainWorld.SetTile(6, 6, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        RegressionAssert.True(
+            WorldCellTargetEncoding.TryEncode(6, 6, 0, out var terrainTarget),
+            "Failed to encode stockpile terrain regression target.");
+
+        terrainPipeline.AttachTo(terrainScheduler);
+        terrainCommandQueue.Enqueue(new CreateStockpileCommand(tick: 0, terrainRect, z: 0, presetId: "wood"));
+        terrainDiffLog.AddOp(new DiffOp(
+            DiffOpType.SetTerrain,
+            terrainTarget.ToDiffTarget(),
+            "test.stockpile-terrain",
+            priority: 0,
+            args: (ulong)TerrainKind.SolidWall));
+        terrainScheduler.ExecuteSingleTick();
+        terrainPipeline.DetachFrom(terrainScheduler);
+
+        RegressionAssert.True(
+            !terrainWorld.Stockpiles.GetAllZones().Any()
+            && terrainWorld.GetTile(6, 6, 0)?.Kind == TerrainKind.SolidWall,
+            "StockpileDiffApplicator accepted a cell that became ineligible after same-tick terrain diffs.");
+
         Console.WriteLine("[PASS] Stockpile command runtime target");
+    }
+
+    private static void TestRuntimeStockpilePresetMenuUsesContentCatalog()
+    {
+        var runtime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        runtime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+
+        var frame = runtime.GetUiOverlayFrameData(
+            currentZ: 0,
+            viewport: new RuntimeRect(0, 0, 10, 10),
+            showZoneOverlay: false,
+            includeManagementDrawer: false,
+            includeWorkDrawer: false,
+            includeDebugMenu: false,
+            stockpileDetailZoneId: null,
+            zoneDetailId: null,
+            tick: 0);
+
+        RegressionAssert.True(
+            frame.StockpilePresets.Options.Any(option => option.Id == "weapons" && option.Name == "Weapon Storage")
+            && frame.StockpilePresets.Options.FirstOrDefault().Id == "all",
+            "Runtime stockpile preset menu did not use content-backed preset definitions.");
+
+        Console.WriteLine("[PASS] Runtime stockpile preset menu uses content catalog");
     }
 
     private static void TestSpawnItemCommandUsesItemDiff()
@@ -1245,10 +2048,11 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(itemsDiffLog, creaturesDiffLog);
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadItems(world);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var context = CreateRuntimeContext(diffLog, mutationDiffs, world);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, mutationDiffs, navigation: null);
         var target = new SadRogue.Primitives.Point(2, 2);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
 
@@ -1272,10 +2076,11 @@ internal static class CoreRuntimeSmokeTests
         var diffLog = new DiffLog();
         var itemsDiffLog = new ItemsDiffLog();
         var creaturesDiffLog = new CreaturesDiffLog();
+        var mutationDiffs = new RuntimeMutationDiffLogs(itemsDiffLog, creaturesDiffLog);
         var world = new World(2, 10);
         DefinitionCatalogTestSupport.LoadCreatures(world);
-        var context = CreateRuntimeContext(diffLog, itemsDiffLog, creaturesDiffLog, world);
-        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, itemsDiffLog, creaturesDiffLog, navigation: null);
+        var context = CreateRuntimeContext(diffLog, mutationDiffs, world);
+        var pipeline = new SimulationTickPipeline(world, commandQueue, context, context, diffLog, mutationDiffs, navigation: null);
         var target = new SadRogue.Primitives.Point(3, 3);
         world.SetTile(target.X, target.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
 
@@ -1393,7 +2198,8 @@ internal static class CoreRuntimeSmokeTests
           "geology_drops": {
             "core_geology_granite": {
               "wall": [
-                { "item_id": "core_item_boulder_granite", "min": 2, "max": 2 }
+                { "item_id": "core_item_boulder_granite", "min": 2, "max": 2 },
+                { "item_id": "core_item_trace_granite", "min": 1, "max": 3 }
               ],
               "ramp": [
                 { "item_id": "core_item_boulder_granite", "min": 1, "max": 1 }
@@ -1407,6 +2213,7 @@ internal static class CoreRuntimeSmokeTests
         var resolver = new MiningDropResolver(geology, tuningJson);
 
         var wallDrops = resolver.ChooseDropsFor(geology.GraniteWallHandle, TerrainKind.SolidWall);
+        var wallDropsAgain = resolver.ChooseDropsFor(geology.GraniteWallHandle, TerrainKind.SolidWall);
         var rampDrops = resolver.ChooseDropsFor(geology.GraniteWallHandle, TerrainKind.Ramp);
         var aliasDrops = resolver.ChooseDropsFor(geology.AliasGraniteWallHandle, TerrainKind.SolidWall);
 
@@ -1414,13 +2221,16 @@ internal static class CoreRuntimeSmokeTests
             resolver.CalculateRequiredTicks(geology.GraniteWallHandle, TerrainKind.SolidWall) == 17
             && resolver.CalculateRequiredTicks(geology.GraniteWallHandle, TerrainKind.Ramp) == 5
             && resolver.ResolveAirGeologyHandle() == geology.AirHandle
-            && wallDrops.Count == 1
+            && wallDrops.Count == 2
             && wallDrops[0].itemId == "core_item_boulder_granite"
             && wallDrops[0].qty == 2
+            && wallDrops[1].itemId == "core_item_trace_granite"
+            && wallDrops.SequenceEqual(wallDropsAgain)
             && rampDrops.Count == 1
             && rampDrops[0].qty == 1
-            && aliasDrops.Count == 1
-            && aliasDrops[0].itemId == "core_item_boulder_granite",
+            && aliasDrops.Count == 2
+            && aliasDrops[0].itemId == "core_item_boulder_granite"
+            && aliasDrops[1].itemId == "core_item_trace_granite",
             "MiningDropResolver JSON parsing or geology alias lookup changed.");
 
         Console.WriteLine("[PASS] Mining drop resolver JSON");
@@ -1447,13 +2257,20 @@ internal static class CoreRuntimeSmokeTests
     private sealed class TestCommand : ICommand
     {
         private readonly List<string>? _executionLog;
+        private readonly bool _throwOnExecute;
 
-        public TestCommand(ulong tick, string type, List<string>? executionLog = null, Guid? commandId = null)
+        public TestCommand(
+            ulong tick,
+            string type,
+            List<string>? executionLog = null,
+            Guid? commandId = null,
+            bool throwOnExecute = false)
         {
             Tick = tick;
             CommandId = commandId ?? Guid.NewGuid();
             CommandType = type;
             _executionLog = executionLog;
+            _throwOnExecute = throwOnExecute;
         }
 
         public ulong Tick { get; }
@@ -1463,6 +2280,11 @@ internal static class CoreRuntimeSmokeTests
 
         public void Execute(ISimulationContext context)
         {
+            if (_throwOnExecute)
+            {
+                throw new InvalidOperationException("intentional command failure");
+            }
+
             Executed = true;
             _executionLog?.Add(CommandType);
         }
@@ -1470,6 +2292,18 @@ internal static class CoreRuntimeSmokeTests
         public byte[] Serialize()
         {
             return Array.Empty<byte>();
+        }
+    }
+
+    private sealed class RecordingDiagnosticSink : IDiagnosticSink
+    {
+        private readonly List<DiagnosticEvent> _events = new();
+
+        public IReadOnlyList<DiagnosticEvent> Events => _events;
+
+        public void Write(DiagnosticEvent diagnosticEvent)
+        {
+            _events.Add(diagnosticEvent);
         }
     }
 
@@ -1774,21 +2608,30 @@ internal static class CoreRuntimeSmokeTests
 
     private sealed class TestRuntimeCommandContext :
         IRuntimeCommandClockContext,
-        IRuntimeCommandExecutionContext
+        ISimulationContext,
+        IRuntimeProfessionCommandTargetContext,
+        IRuntimeItemSpawnCommandTargetContext,
+        IRuntimeCreatureSpawnCommandTargetContext,
+        IRuntimeOrderCommandTargetContext,
+        IRuntimeZoneCommandTargetContext,
+        IRuntimeWorkshopCommandTargetContext,
+        IRuntimeStockpileCommandTargetContext
     {
         private readonly SimulationRuntimeCommandTargets _commandTargets;
 
-        public TestRuntimeCommandContext(DiffLog diffLog, World world, IEventBus eventBus)
+        public TestRuntimeCommandContext(
+            DiffLog diffLog,
+            World world,
+            IEventBus eventBus,
+            RuntimeMutationDiffLogs mutationDiffs)
         {
             DiffLog = diffLog;
             World = world;
             EventBus = eventBus;
             _commandTargets = new SimulationRuntimeCommandTargets(
                 world,
-                new ItemsDiffLog(),
-                new CreaturesDiffLog(),
-                RecipeCatalogStore.Empty,
-                ConstructionCatalogStore.Empty);
+                mutationDiffs,
+                RecipeCatalogStore.Empty);
         }
 
         public DiffLog DiffLog { get; }

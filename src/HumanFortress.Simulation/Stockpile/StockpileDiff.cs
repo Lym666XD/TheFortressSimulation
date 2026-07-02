@@ -13,8 +13,7 @@ internal enum StockpileDiffOp
     AddCells = 3,
     RemoveCells = 4,
     UpdateFilter = 5,
-    CreateHaulJob = 6,   // Broker output
-    ReserveSlot = 7,     // Atomic with CreateHaulJob
+    ReserveSlot = 7,     // Active hauling planner reservation
     ReleaseSlot = 8,
     PlaceItem = 9,
     RemoveItem = 10
@@ -29,59 +28,59 @@ internal readonly struct StockpileDiff
     /// <summary>
     /// Operation to perform.
     /// </summary>
-    public StockpileDiffOp Op { get; init; }
+    internal StockpileDiffOp Op { get; init; }
 
     /// <summary>
     /// Target chunk for this operation.
     /// </summary>
-    public ChunkKey TargetChunk { get; init; }
+    internal ChunkKey TargetChunk { get; init; }
 
     /// <summary>
     /// Zone ID for this operation.
     /// </summary>
-    public int ZoneId { get; init; }
+    internal int ZoneId { get; init; }
 
     /// <summary>
     /// Cell index within chunk (-1 if N/A).
     /// </summary>
-    public int CellIndex { get; init; }
+    internal int CellIndex { get; init; }
 
     /// <summary>
     /// Item handle (0 if N/A).
     /// </summary>
-    public int ItemHandle { get; init; }
+    internal int ItemHandle { get; init; }
 
     /// <summary>
     /// Quantity for operations involving amounts.
     /// </summary>
-    public int Quantity { get; init; }
+    internal int Quantity { get; init; }
 
     /// <summary>
     /// Priority for merge ordering.
     /// </summary>
-    public int Priority { get; init; }
+    internal int Priority { get; init; }
 
     /// <summary>
     /// System that generated this diff.
     /// </summary>
-    public string SystemId { get; init; }
+    internal string SystemId { get; init; }
 
     /// <summary>
     /// Local sequence number for stable ordering.
     /// </summary>
-    public int LocalSeq { get; init; }
+    internal int LocalSeq { get; init; }
 
     /// <summary>
     /// Job ID for reservation tracking.
     /// </summary>
-    public int JobId { get; init; }
+    internal int JobId { get; init; }
 
     /// <summary>
     /// Additional data for specific operations.
     /// </summary>
-    public object? Data { get; init; }
+    internal object? Data { get; init; }
 
-    public StockpileDiff(
+    internal StockpileDiff(
         StockpileDiffOp op,
         ChunkKey targetChunk,
         int zoneId,
@@ -105,7 +104,7 @@ internal readonly struct StockpileDiff
     /// Create a deterministic sort key for merge ordering.
     /// Per STOCKPILE_SPEC: cellIndex → priority(desc) → op → zoneId → itemHandle → systemId → localSeq
     /// </summary>
-    public long GetSortKey()
+    internal long GetSortKey()
     {
         // Pack into a long for efficient sorting
         // Format: [cellIndex:16][priority:8][op:8][zoneId:16][localSeq:16]

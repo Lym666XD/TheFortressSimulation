@@ -5,7 +5,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class StartupContentGate
 {
-    public static bool TryLoadAndValidate(
+    internal static bool TryLoadAndValidate(
         string baseDir,
         AppStartupOptions options,
         out FortressContentLoadResult contentLoad)
@@ -17,7 +17,7 @@ internal static class StartupContentGate
         return !options.StrictContent || TryEnforceStrictContent(contentLoad, options.ContentWarningsAsErrors);
     }
 
-    public static void LogResolvedPath(FortressContentLoadResult contentLoad)
+    internal static void LogResolvedPath(FortressContentLoadResult contentLoad)
     {
         ArgumentNullException.ThrowIfNull(contentLoad);
 

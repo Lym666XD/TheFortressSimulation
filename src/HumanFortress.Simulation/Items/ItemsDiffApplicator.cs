@@ -11,21 +11,21 @@ namespace HumanFortress.Simulation.Items;
 /// </summary>
 internal static class ItemsDiffApplicator
 {
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public static void ApplyAll(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
+    internal static void ApplyAll(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
     {
         ApplyPreSimulation(world, diffs);
         ApplyAdditions(world, diffs, tick);
     }
 
-    public static void ApplyPreSimulation(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplyPreSimulation(World.World world, IReadOnlyList<ItemsDiff> diffs)
     {
         ApplyRemovals(world, diffs);
         ApplySplits(world, diffs);
     }
 
-    public static void ApplyRemovals(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplyRemovals(World.World world, IReadOnlyList<ItemsDiff> diffs)
     {
         if (diffs.Count == 0) return;
         foreach (var d in diffs)
@@ -42,7 +42,7 @@ internal static class ItemsDiffApplicator
         }
     }
 
-    public static void ApplyAdditions(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
+    internal static void ApplyAdditions(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
     {
         if (diffs.Count == 0) return;
         foreach (var d in diffs)
@@ -59,7 +59,7 @@ internal static class ItemsDiffApplicator
         }
     }
 
-    public static void ApplySplits(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplySplits(World.World world, IReadOnlyList<ItemsDiff> diffs)
     {
         if (diffs.Count == 0) return;
         foreach (var d in diffs)

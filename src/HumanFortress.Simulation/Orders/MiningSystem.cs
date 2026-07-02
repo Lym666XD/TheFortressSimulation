@@ -18,7 +18,7 @@ internal enum MiningSegment { None, Top, Middle, Bottom }
 
 internal sealed class MiningSystem : ITick
 {
-    public static System.Action<string>? LogCallback { get; set; }
+    internal static System.Action<string>? LogCallback { get; set; }
     private readonly World.World _world;
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
@@ -31,7 +31,7 @@ internal sealed class MiningSystem : ITick
     // Persistent cancellation regions (RemoveDigging)
     private readonly List<OrdersManager.MiningCancelRegion> _cancels = new();
 
-    public MiningSystem(World.World world, OrdersManager orders, int maxPerTick = 128)
+    internal MiningSystem(World.World world, OrdersManager orders, int maxPerTick = 128)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
@@ -160,9 +160,9 @@ internal sealed class MiningSystem : ITick
                 if (ad.CurZ > ad.ZMax) break;
             }
 
-            for (; ad.CurY < ad.Rect.MaxExtentY; ad.CurY++, ad.CurX = ad.Rect.X)
+            for (; ad.CurY <= ad.Rect.MaxExtentY; ad.CurY++, ad.CurX = ad.Rect.X)
             {
-                for (; ad.CurX < ad.Rect.MaxExtentX; ad.CurX++)
+                for (; ad.CurX <= ad.Rect.MaxExtentX; ad.CurX++)
                 {
                     // cancellation check
                     if (IsCanceled(ad.CurX, ad.CurY, ad.CurZ)) continue;
@@ -229,7 +229,7 @@ internal sealed class MiningSystem : ITick
             }
 
             // Y loop完成但没有找到符合条件的tile，推进到下一个Z层
-            if (ad.CurY >= ad.Rect.MaxExtentY)
+            if (ad.CurY > ad.Rect.MaxExtentY)
             {
                 ad.CurY = ad.Rect.Y;
                 ad.CurX = ad.Rect.X;
@@ -264,12 +264,12 @@ internal sealed class MiningSystem : ITick
     private static void AdvanceCursor(ref ActiveDesignation ad)
     {
         ad.CurX++;
-        if (ad.CurX >= ad.Rect.MaxExtentX)
+        if (ad.CurX > ad.Rect.MaxExtentX)
         {
             ad.CurX = ad.Rect.X;
             ad.CurY++;
         }
-        if (ad.CurY >= ad.Rect.MaxExtentY)
+        if (ad.CurY > ad.Rect.MaxExtentY)
         {
             ad.CurY = ad.Rect.Y;
             // Stairwells scan downward (Z decreases), others scan upward (Z increases)
@@ -343,7 +343,7 @@ internal sealed class MiningSystem : ITick
     /// <summary>
     /// Dequeue up to max planned digs for job creation.
     /// </summary>
-    public int DequeuePlannedDigs(int max, IList<PlannedDig> into)
+    internal int DequeuePlannedDigs(int max, IList<PlannedDig> into)
     {
         int n = 0;
         while (n < max && _outbox.TryDequeue(out var m))
@@ -358,7 +358,7 @@ internal sealed class MiningSystem : ITick
     /// Query if a tile is covered by any active cancellation region.
     /// Read-safe; consumed by job executors to drop or abort work reliably.
     /// </summary>
-    public bool IsTileCanceled(int x, int y, int z)
+    internal bool IsTileCanceled(int x, int y, int z)
     {
         return IsCanceled(x, y, z);
     }

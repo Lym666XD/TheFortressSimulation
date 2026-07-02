@@ -1,3 +1,4 @@
+using System.IO;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Runtime;
@@ -47,5 +48,37 @@ internal sealed partial class UpdateWorkshopQueueCommand
         }
     }
 
-    byte[] ICommand.Serialize() => Array.Empty<byte>();
+    byte[] ICommand.Serialize()
+    {
+        using var ms = new MemoryStream();
+        using var bw = new BinaryWriter(ms);
+        bw.Write(_workshopGuid.ToByteArray());
+        bw.Write((byte)_operation);
+        bw.Write(_recipeId ?? string.Empty);
+        bw.Write(_entryId.HasValue);
+        if (_entryId.HasValue)
+        {
+            bw.Write(_entryId.Value.ToByteArray());
+        }
+
+        bw.Write(_intValue.HasValue);
+        if (_intValue.HasValue)
+        {
+            bw.Write(_intValue.Value);
+        }
+
+        bw.Write(_moveOffset.HasValue);
+        if (_moveOffset.HasValue)
+        {
+            bw.Write(_moveOffset.Value);
+        }
+
+        bw.Write(_boolValue.HasValue);
+        if (_boolValue.HasValue)
+        {
+            bw.Write(_boolValue.Value);
+        }
+
+        return ms.ToArray();
+    }
 }

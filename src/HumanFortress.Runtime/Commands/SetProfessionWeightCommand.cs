@@ -19,7 +19,7 @@ internal sealed class SetProfessionWeightCommand : ICommand
     }
 
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "professions.set_weight";
 
     ulong ICommand.Tick => Tick;

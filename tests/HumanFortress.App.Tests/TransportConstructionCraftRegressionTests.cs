@@ -10,6 +10,7 @@ using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Placeables;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -23,8 +24,10 @@ internal static class TransportConstructionCraftRegressionTests
         Console.WriteLine("=== Transport/Construction/Craft Regression Tests ===");
 
         TestTransportJobFinalizerReleasesReservations();
+        TestTransportRequestQueueDeduplicatesByItemAndKeepsShardIndex();
         TestTransportNoPathRollbackReleasesReservations();
         TestTransportDestinationValidationFailureReleasesReservations();
+        TestTransportCanPickupFromStockpileForNonStockpileJobs();
         TestTransportMovedPickupTargetReplans();
         TestTransportThrottleBacklogsRemainingRequests();
         TestConstructionTerrainCompletionRemovesSite();
@@ -64,6 +67,83 @@ internal static class TransportConstructionCraftRegressionTests
         RegressionAssert.True(finished.Count == 1 && ReferenceEquals(finished[0], job), "Transport finalizer did not track finished job.");
 
         Console.WriteLine("[PASS] Transport finalizer releases reservations");
+    }
+
+    private static void TestTransportRequestQueueDeduplicatesByItemAndKeepsShardIndex()
+    {
+        var itemId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        var source = new Point(1, 1);
+        var dest = new Point(2, 1);
+        var competingDest = new Point(33, 1);
+        var queue = new TransportRequestQueue();
+
+        bool firstAccepted = queue.Enqueue(new TransportRequest(
+            itemId,
+            source,
+            FromZ: 0,
+            dest,
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 0,
+            Seed: 0));
+        bool mergedAccepted = queue.Enqueue(new TransportRequest(
+            itemId,
+            source,
+            FromZ: 0,
+            dest,
+            ToZ: 0,
+            Quantity: 2,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 1,
+            Seed: 0));
+
+        var shardCounts = queue.GetShardCountsSnapshot();
+        RegressionAssert.True(firstAccepted, "Transport queue rejected the first request for an item.");
+        RegressionAssert.True(!mergedAccepted, "Transport queue reported a merged duplicate as a new request.");
+        RegressionAssert.True(queue.Count == 1, "Transport queue kept duplicate pending requests for one item.");
+        RegressionAssert.True(shardCounts.Count == 1 && shardCounts.Values.FirstOrDefault() == 1, "Transport queue shard index did not match merged pending requests.");
+
+        var drained = new List<TransportRequest>();
+        int drainedCount = queue.Drain(10, drained);
+        RegressionAssert.True(drainedCount == 1 && drained[0].Quantity == 3, "Transport queue did not drain the merged request quantity.");
+        RegressionAssert.True(queue.Count == 0 && queue.GetShardCountsSnapshot().Count == 0, "Transport queue left stale shard data after draining a merged request.");
+
+        bool secondRoundAccepted = queue.Enqueue(new TransportRequest(
+            itemId,
+            source,
+            FromZ: 0,
+            dest,
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 2,
+            Seed: 0));
+        bool competingAccepted = queue.Enqueue(new TransportRequest(
+            itemId,
+            source,
+            FromZ: 0,
+            competingDest,
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 3,
+            Seed: 0));
+
+        drained.Clear();
+        queue.Drain(10, drained);
+        RegressionAssert.True(secondRoundAccepted && !competingAccepted, "Transport queue did not reject competing destinations for one pending item.");
+        RegressionAssert.True(drained.Count == 1 && drained[0].To == dest, "Transport queue did not preserve the earlier destination for a pending item.");
+
+        Console.WriteLine("[PASS] Transport request queue item dedupe");
     }
 
     private static void TestTransportNoPathRollbackReleasesReservations()
@@ -170,6 +250,79 @@ internal static class TransportConstructionCraftRegressionTests
         RegressionAssert.True(transport.GetActiveJobsSnapshot().Count == 0, "Destination validation rollback left active job.");
 
         Console.WriteLine("[PASS] Transport destination validation rollback");
+    }
+
+    private static void TestTransportCanPickupFromStockpileForNonStockpileJobs()
+    {
+        var world = CreateWorldWithContent();
+        var source = new Point(1, 1);
+        var dest = new Point(2, 1);
+        SetOpen(world, source);
+        SetOpen(world, dest);
+
+        var workerId = world.Creatures.SpawnCreature("core_race_dwarf", source, 0, "player", 0);
+        var itemId = world.Items.SpawnItem("core_item_log_oak", source, 0, 1, 0);
+        RegressionAssert.True(workerId.HasValue && itemId.HasValue, "Transport stockpile pickup setup failed.");
+        var item = itemId.GetValueOrDefault();
+
+        var chunkKey = new WorldChunkKey(0, 0, 0);
+        var chunk = world.GetChunk(chunkKey)
+            ?? throw new InvalidOperationException("Expected transport stockpile test chunk.");
+        chunk.EnsureStockpileData();
+        var stockpileData = chunk.GetStockpileData()
+            ?? throw new InvalidOperationException("Expected transport stockpile test data.");
+        int zoneId = world.Stockpiles.CreateZone("Input Stockpile", chunkKey, 0);
+        int sourceCell = Chunk.LocalIndex(source.X, source.Y);
+        stockpileData.CreateOrUpdateShard(zoneId, chunkKey);
+        stockpileData.AddCellsToZone(zoneId, new[] { sourceCell });
+        stockpileData.OnItemPlaced(
+            DiffTargetEncoding.SignedEntityId(item),
+            sourceCell,
+            zoneId,
+            new List<string> { "wood" });
+        world.Stockpiles.GetZone(zoneId)?.UpdateMemberChunks(new[] { chunkKey });
+
+        var requests = new TransportRequestQueue();
+        requests.Enqueue(new TransportRequest(
+            item,
+            source,
+            FromZ: 0,
+            dest,
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 0,
+            Seed: 0));
+
+        var diffLog = new DiffLog();
+        var stockpileDiffLog = new StockpileDiffLog();
+        var transport = new TransportJobSystem(
+            world,
+            requests,
+            diffLog,
+            itemsDiffLog: new ItemsDiffLog(),
+            stockpileDiffLog: stockpileDiffLog,
+            intakeBudget: 1,
+            maxActiveJobs: 1,
+            pathService: new AllPathsFoundPathService());
+
+        transport.ReadTick(0);
+        for (ulong tick = 0; tick <= 4; tick++)
+            transport.WriteTick(tick);
+
+        var shard = stockpileData.GetShard(zoneId)
+            ?? throw new InvalidOperationException("Expected transport stockpile test shard.");
+        StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
+        var merged = diffLog.MergeAndSort();
+
+        RegressionAssert.True(merged.Any(op => op.Op == DiffOpType.MarkCarried), "Transport refused to pick up a stockpiled item for a non-stockpile job.");
+        RegressionAssert.True(!stockpileData.GetItemsInZone(zoneId).Any(), "Transport stockpile pickup did not remove the item from zone index.");
+        RegressionAssert.True(!stockpileData.GetItemsByTag("wood").Any(), "Transport stockpile pickup did not remove the item from tag index.");
+        RegressionAssert.True(shard.UsedSlots == 0, "Transport stockpile pickup did not free the stockpile slot.");
+
+        Console.WriteLine("[PASS] Transport can pick up stockpiled items for non-stockpile jobs");
     }
 
     private static void TestTransportMovedPickupTargetReplans()

@@ -40,6 +40,28 @@ internal static partial class FortressPlacementController
         return true;
     }
 
+    public static bool TryHandleStockpileDeleteClick(
+        FortressPlacementControllerContext context,
+        Point worldPos)
+    {
+        var ui = context.Ui;
+        var hit = context.Runtime.FindStockpileAt(worldPos, context.CurrentZ);
+        if (!hit.HasZone)
+        {
+            ui.AddToast("No stockpile at this location", context.UiTick + 100);
+            context.Redraw();
+            return true;
+        }
+
+        context.Runtime.QueueDeleteStockpile(hit.ZoneId);
+        context.StockpileUi?.CloseEditPopup();
+        ui.CancelPlacement();
+        ui.AddToast($"Stockpile remove order queued (#{hit.ZoneId})", context.UiTick + 150);
+        Logger.Log($"[STOCKPILE.UI] Enqueue delete zone={hit.ZoneId} at ({worldPos.X},{worldPos.Y},{context.CurrentZ})");
+        context.Redraw();
+        return true;
+    }
+
     public static void CreateStockpile(FortressPlacementControllerContext context, string presetId)
     {
         var ui = context.Ui;

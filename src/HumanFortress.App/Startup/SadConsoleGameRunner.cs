@@ -5,7 +5,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class SadConsoleGameRunner
 {
-    public static void Run(AppStartupOptions options)
+    internal static void Run(AppStartupOptions options)
     {
         Settings.WindowTitle = "HumanFortress";
         var gameApp = new SadConsoleGameApp(options);

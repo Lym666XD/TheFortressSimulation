@@ -1,6 +1,6 @@
 # HumanFortress Architecture Overview
 
-Updated: 2026-06-26
+Updated: 2026-07-01
 Status: current overview plus target boundaries
 
 This document describes the current codebase shape. Older architecture docs described a complete deterministic, data-driven fortress simulator. That is still the target, but the implementation is currently in a transitional refactor.
@@ -23,8 +23,8 @@ Current solution projects:
 - `HumanFortress.Simulation` - internal/friend simulation implementation for world, tiles, orders, items, creatures, stockpiles, zones, and diff applicators. Stable cross-module contracts live in `HumanFortress.Contracts`; Runtime/Jobs/WorldGen/tests use friend access while App does not reference Simulation directly.
 - `HumanFortress.Navigation` - internal concrete pathfinding and navigation cache implementation with no ordinary public implementation surface; public navigation contracts live in `HumanFortress.Contracts.Navigation`.
 - `HumanFortress.Jobs` - internal transport, mining, construction, and craft executor cores plus domain helpers consumed by Runtime; implementation access is through internal/friend surfaces and Jobs-owned contracts rather than public helper classes.
-- `HumanFortress.Runtime` - public runtime session factory/port interfaces plus internal command stage, runtime command implementations/targets, tick pipeline, navigation adapter, session core, WorldGen-backed fortress-map generation/fill bootstrap, generic runtime host, and concrete fortress runtime composition.
-- `HumanFortress.WorldGen` - public world-generation service factory plus internal concrete world-generation service/data implementation; stable generated-world DTO/settings/service contracts live in `HumanFortress.Contracts.WorldGen`.
+- `HumanFortress.Runtime` - public runtime session/world-generation factories and session port interfaces plus internal command stage, runtime command implementations/targets, tick pipeline, navigation adapter, session core, WorldGen-backed fortress-map generation/fill bootstrap, generic runtime host, and concrete fortress runtime composition.
+- `HumanFortress.WorldGen` - internal/friend concrete world-generation service/data/factory implementation; stable generated-world DTO/settings/service contracts live in `HumanFortress.Contracts.WorldGen`, and ordinary external creation enters through Runtime.
 - `HumanFortress.App` - startup/SadConsole app host, game states, session flow, input, rendering, UI, logger binding, and App-specific delegates. It no longer directly references Jobs, Simulation, or Navigation projects.
 - `HumanFortress.App.Tests` - lightweight regression/smoke test executable.
 
@@ -97,6 +97,7 @@ HumanFortress.Runtime
   SimulationRuntimeSystems,
   concrete runtime system factories, dependency groups, planning groups,
   job-system groups, WorldGen-backed fortress-map generation/fill bootstrap,
+  RuntimeFortressGenerationRunner, RuntimeSessionServices,
   FortressRuntimeHostFactory, and FortressRuntimeStartup.
   Runtime read-model and command-target helpers are split by snapshot family,
   lookup/eligibility, and lifecycle role so Runtime does not become a new
@@ -109,14 +110,25 @@ HumanFortress.Runtime
   adapters use explicit interface implementations where possible so concrete
   helper types do not present a misleading public API. Runtime commands cast to
   narrow target-context roles for order, zone, stockpile, workshop, spawn, and
-  profession operations instead of receiving an all-target command aggregate.
+  profession operations instead of receiving an all-target command aggregate;
+  the command stage, tick pipeline, and host core only depend on
+  `ISimulationContext` plus the separate clock role.
   The simulation clock/read context is separate from the command execution
   context: `SimulationRuntimeContext` owns `ISimulationContext` plus tick
   updates, while `SimulationCommandExecutionContext` composes that read context
   with command target roles for the command stage.
+  Command-side mutation logs are grouped in the Runtime-owned
+  `RuntimeMutationDiffLogs` bundle, owned by `RuntimeSessionServices` for the
+  active session, so command targets and post-tick applicators drain the same
+  authoritative log instances and session reset clears all typed command
+  mutation logs together. Runtime session enqueue also wraps commands with a
+  deterministic session command identity sequence, so replay-facing Runtime
+  command ids avoid random GUID generation while `CommandQueue` remains the
+  authority for execution order.
   Public Runtime surface is intentionally centered on `FortressRuntimeSessionFactory`,
-  `IFortressRuntimeSession*Port` interfaces, logging bootstrap, and Runtime
-  request/result DTOs. Public session ports use Contracts runtime primitives
+  `FortressRuntimeWorldGenerationFactory`, `IFortressRuntimeSession*Port`
+  interfaces, logging bootstrap, and Runtime request/result DTOs. Public session
+  ports use Contracts runtime primitives
   rather than SadConsole/SadRogue geometry, while Runtime maps those DTOs to
   current internal world geometry where needed. `FortressRuntimeSessionCore`
   and Runtime session options are internal construction/session helpers, and
@@ -138,7 +150,8 @@ HumanFortress.App.Session
 HumanFortress.App.GameStates
   owns app state registration/navigation and delegates runtime lifetime through
   GameStateRuntimeCoordinator, GameStateRuntimeLifecycle, narrow fortress-play
-  runtime host interfaces, and App-owned SadConsole screen presentation.
+  runtime host interfaces, App-owned world-generation service provider glue,
+  and App-owned SadConsole screen presentation.
 
 HumanFortress.App.Startup
   owns CLI startup option parsing, native preload, startup content gate,
@@ -173,6 +186,11 @@ PostTick
   DiffLog terrain/entity operations,
   CreaturesDiffLog operations,
   item additions,
+  OrderDiffLog operations,
+  WorkshopDiffLog operations,
+  ZoneDiffLog operations,
+  StockpileDiffLog operations,
+  ProfessionAssignmentDiffLog operations,
   and navigation rebuilds for dirty chunks.
 ```
 
@@ -181,6 +199,15 @@ This is not yet the full nine-stage `UPDATE_ORDER.md` model. The important curre
 - commands execute before read systems;
 - planning is read phase;
 - authoritative mutation happens in write/post-tick applicators;
+- profession weight commands now queue `ProfessionAssignmentDiffLog` entries and are applied post-tick through the bound profession assignment handler;
+- order commands now queue `OrderDiffLog` entries and are applied by the post-tick order applicator rather than by direct Runtime command-target mutation;
+- workshop queue/settings commands now queue `WorkshopDiffLog` entries and are applied by the post-tick workshop applicator rather than by direct Runtime command-target mutation;
+- zone create/update/delete commands now queue `ZoneDiffLog` entries and are applied by the post-tick zone applicator rather than by direct Runtime command-target mutation;
+- stockpile creation and deletion now queue `StockpileDiffLog` entries and are applied by the post-tick stockpile applicator rather than by direct Runtime command-target mutation;
+- stockpile create diffs carry preset-derived filter/priority data loaded through Content contract definitions and mapped by Runtime, so preset rules are applied by the post-tick stockpile applicator;
+- stockpile delete diffs carry only the zone id; the stockpile applicator reads current authoritative member chunks at apply time before deleting shards and the global zone;
+- stockpile filter matching uses Simulation item projections for definition id/tags/materials; stockpile cell/destination lookup is centralized in Simulation `StockpileWorldQueries`; the hauling planner queues stockpile reserve-slot diffs beside transport requests while tracking same-tick planned reservations; Jobs/Transport queues stockpile item-index place/remove/release diffs for transport pickup/delivery/cancel paths and for construction/craft full-stack item consumption; remaining stockpile maintenance/broker work belongs with Jobs/Transport rather than App or Content;
+- command-target construction and tick-pipeline application share `RuntimeMutationDiffLogs` instead of passing every typed log separately through host/context/pipeline constructors;
 - navigation rebuild happens after terrain/entity diffs.
 
 ## Jobs Boundary
@@ -254,11 +281,11 @@ Current UI implementation is SadConsole-first and has a real `UiStore`, input se
 Important current limitation:
 
 - UI still has transitional runtime/session/bootstrap glue, especially around session initialization and App-owned UI callback binding.
-- Main map terrain/entity rendering, frame render data, overlay frame data, Work/jobs/profession panels, Work drawer labor/order summaries, Work drawer workshop lists/status panels, F1/F2/F4 management drawer lists, zone/stockpile overlay/detail popups, stockpile/zone hit-testing, navigation debug overlay draw modes, F10 path-debug queries, tile click logging, haul/mining/construction placement previews, construction order highlight dots, debug spawn readiness/count logging, workshop panel keyboard editing, detailed workshop panel rendering, workshop overlay/material-progress rendering, workshop map-click hit-testing, build quick-menu workshop browsing, buildable placement preview, Debug menu status/items, tile inspection popups, and mining job highlights now consume Runtime-built snapshot DTO contracts from `HumanFortress.Contracts.Runtime.Snapshots` through App facade methods instead of reading concrete Runtime job wrappers, `ProfessionAssignments`, construction/recipe catalogs, live order/creature/item/zone/stockpile lists, item definitions, tile/geology data, visible zone/stockpile chunks/shards, live navigation chunks/caches/path objects, mutable `WorkshopState`, live workshop placeables, `FortressMap`, or live terrain/entity managers directly through `FortressRuntimeAccess`/former `UiRenderer`/map-click/rendering helpers. Overlay/input contexts carry explicit UI/navigation/map-availability dependencies rather than the full loaded-session snapshot, and loaded-session state/load results no longer carry live `World` or `FortressMap` objects.
+- Main map terrain/entity rendering, frame render data, overlay frame data, Work/jobs/profession panels, Work drawer labor/order summaries, Work drawer workshop lists/status panels, F1/F2/F4 management drawer lists, zone/stockpile overlay/detail popups, stockpile preset menu options, stockpile/zone hit-testing, navigation debug overlay draw modes, F10 path-debug queries, tile click logging, haul/mining/construction placement previews, construction order highlight dots, debug spawn readiness/count logging, workshop panel keyboard editing, detailed workshop panel rendering, workshop overlay/material-progress rendering, workshop map-click hit-testing, build quick-menu workshop browsing, buildable placement preview, Debug menu status/items, tile inspection popups, and mining job highlights now consume Runtime-built snapshot DTO contracts from `HumanFortress.Contracts.Runtime.Snapshots` through App facade methods instead of reading concrete Runtime job wrappers, `ProfessionAssignments`, construction/recipe catalogs, live order/creature/item/zone/stockpile lists, item definitions, tile/geology data, visible zone/stockpile chunks/shards, live navigation chunks/caches/path objects, mutable `WorkshopState`, live workshop placeables, `FortressMap`, or live terrain/entity managers directly through `FortressRuntimeAccess`/former `UiRenderer`/map-click/rendering helpers. Overlay/input contexts carry explicit UI/navigation/map-availability dependencies rather than the full loaded-session snapshot, and loaded-session state/load results no longer carry live `World` or `FortressMap` objects.
 - The SadConsole presentation layer is being split within App instead of pushed down into Runtime: overlay orchestration lives in `HumanFortress.App.Rendering`, map overlay glyph drawing is split by overlay type in `FortressMapOverlayGlyphRenderer` partials, placement preview rendering lives in `FortressPlacementOverlayRenderer`, chrome/topbar/dock drawing in `UiChromeRenderer`, management drawer drawing in `UiManagementDrawerRenderer` partial tab renderers, Debug menu drawing in `UiDebugMenuRenderer` partial tab renderers, quick-menu drawing in `UiQuickMenuRenderer` plus focused `OrdersUI`/`ZonesUI`/`StockpileUI` partials, Work drawer panels in `UiWorkDrawerRenderer` partial tab renderers, and workshop modal drawing in `UiWorkshopPanelRenderer`. These classes are allowed to know about `ScreenSurface`, `UiStore`, and input presentation state, but simulation facts should continue to enter as Contracts snapshot DTOs.
 - App input/presentation helpers are being split by event channel and UI surface inside App: SadConsole component input, screen chrome hit testing, root/submenu quick-menu hit testing, Build/Zone menu input/rendering, Debug menu clicks, Work allocation input, placement overlay/controller behavior, navigation overlay drawing, UI state navigation/drawers/quick menus, chrome buttons/modals/toasts, button layout, main/embark/worldgen menu rendering, UI command objects, and legacy log classification are separate App partials/helpers rather than Runtime/Jobs/Simulation code.
 - Runtime snapshot construction is split by read-model family rather than concentrated behind a single god builder: navigation basic/structural overlay modes/path cells, map viewport terrain/entity glyph policy, workshop summaries/material progress, management drawer data, stockpile overlay/detail/hit tests, jobs debug data, frame/overlay aggregates, and session-level Work/map/debug query entrypoints live in focused snapshot builder partials.
-- Generated-world world-map/embark presentation reads through `HumanFortress.App.Session` query methods over `HumanFortress.Contracts.WorldGen` DTOs such as `WorldMapTileView` and `WorldTileSnapshot` rather than letting App screens read `WorldGenResult.Tiles`, raw `WorldTile`, concrete `GeneratedWorldData`, or `BiomeType`; the only App source that references the WorldGen assembly is the `App.WorldGeneration` adapter, which uses `WorldGenerationServiceFactory` and the contract `IWorldGenerationService`, and Runtime owns fortress-map generation/fill.
+- Generated-world world-map/embark presentation reads through `HumanFortress.App.Session` query methods over `HumanFortress.Contracts.WorldGen` DTOs such as `WorldMapTileView` and `WorldTileSnapshot` rather than letting App screens read `WorldGenResult.Tiles`, raw `WorldTile`, concrete `GeneratedWorldData`, or `BiomeType`. App no longer references the WorldGen assembly directly; world-generation UI receives the contract `IWorldGenerationService` from Runtime's `FortressRuntimeWorldGenerationFactory`, and Runtime owns fortress-map generation/fill.
 - App runtime access is split by caller role. `IFortressRuntimeReadAccess` is the render-only facade; keyboard, UI-input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, and semantic command-request paths use smaller interfaces instead of the full play facade; `IFortressRuntimeBootstrapAccess` is reserved for session initialization/bootstrap operations; and `IFortressRuntimeSessionAccess` only composes those roles at creation time. `GameStateRuntimeCoordinator` creates the active Runtime session through `FortressRuntimeSessionFactory` and keeps only `IFortressRuntimeSessionPorts`, while App helpers receive only `FortressRuntimeAccess` role interfaces. App active source should not reference `HumanFortress.Core.Commands` or `HumanFortress.Runtime.Commands`; command construction belongs in Runtime.
 - `FortressRuntimeAccess` is an App-internal adapter over Runtime session ports. Runtime access is consumed through explicit App role interfaces rather than ordinary public methods on a concrete Runtime core, and GameStates no longer construct Runtime options or concrete Runtime session implementations directly.
 

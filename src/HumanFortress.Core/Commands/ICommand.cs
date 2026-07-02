@@ -15,8 +15,9 @@ public interface ICommand
     ulong Tick { get; }
 
     /// <summary>
-    /// Unique identifier for debugging and external correlation.
-    /// Execution order is owned by CommandQueue, not by this value.
+    /// Stable identifier for debugging, replay diagnostics, and external correlation.
+    /// Duplicate payload commands may share a value until a runtime/session wrapper adds
+    /// enqueue identity; execution order is owned by CommandQueue, not by this value.
     /// </summary>
     Guid CommandId { get; }
 

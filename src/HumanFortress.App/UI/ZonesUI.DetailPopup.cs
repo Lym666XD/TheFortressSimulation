@@ -47,10 +47,10 @@ internal sealed partial class ZonesUI
         surf.Print(x0 + 2, line++, $"Enabled: {(detail.Enabled ? "Yes" : "No")}", detail.Enabled ? Color.Green : Color.Red);
         line++;
 
-        surf.Print(x0 + 2, line++, "--- Settings (Placeholder) ---", Color.Yellow);
-        surf.Print(x0 + 2, line++, "[TODO] Zone-specific settings", Color.DarkGray);
-        surf.Print(x0 + 2, line++, "[TODO] Priority adjustment", Color.DarkGray);
-        surf.Print(x0 + 2, line++, "[TODO] Enable/Disable toggle", Color.DarkGray);
+        surf.Print(x0 + 2, line++, "--- Settings ---", Color.Yellow);
+        surf.Print(x0 + 2, line++, "Runtime settings: None", Color.DarkGray);
+        surf.Print(x0 + 2, line++, "Priority: Default", Color.DarkGray);
+        surf.Print(x0 + 2, line++, $"State: {(detail.Enabled ? "Active" : "Inactive")}", detail.Enabled ? Color.Green : Color.Red);
 
         surf.Print(x0 + 2, y0 + h - 2, "Press ESC to close", Color.Gray);
     }

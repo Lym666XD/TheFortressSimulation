@@ -5,12 +5,12 @@ owner: client/rendering
 last_updated: 2025-09-14
 version_policy: semver
 
-Current implementation note (2026-06-12):
+Current implementation note (2026-07-02):
 
-- `RenderSnapshotBuilder` and App snapshot build flow exist.
-- Some overlays can render from `RenderSnapshot`.
-- Many SadConsole UI drawers, debug pages, placement previews, and panels still read live `World`, `FortressRuntimeAccess`, or content registries.
-- Treat the snapshot-only rule below as the target rendering boundary until those live reads are replaced by snapshot/query facades.
+- The old `HumanFortress.Simulation.Rendering.RenderSnapshot` and builder have been removed from active code.
+- Active fortress map, overlay, drawer, debug, workshop, stockpile/zone, tile-inspection, and placement-preview paths consume Runtime-built DTOs from `HumanFortress.Contracts.Runtime.Snapshots`.
+- SadConsole drawing and transient UI state remain App-owned; App reaches Runtime through facade/query ports rather than live `World` or concrete job systems.
+- Treat the schema below as the target versioned presenter contract. The concrete active DTO names are currently the Runtime/Contracts snapshot DTOs rather than the old Simulation rendering DTOs.
 
 0) Scope
 

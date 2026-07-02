@@ -1,38 +1,43 @@
 using HumanFortress.Core.Commands;
 using HumanFortress.Contracts.Runtime;
+using HumanFortress.Runtime.Commands;
 
 namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore
 {
     private SimulationStatus CurrentSimulationStatus => new(
-        _tickScheduler.CurrentTick,
-        _tickScheduler.IsPaused,
-        _tickScheduler.SpeedMultiplier);
+        _services.TickScheduler.CurrentTick,
+        _services.TickScheduler.IsPaused,
+        _services.TickScheduler.SpeedMultiplier);
 
     SimulationStatus IFortressRuntimeSessionReadPort.SimulationStatus => CurrentSimulationStatus;
 
     private void EnqueueCurrentTickCommand(Func<ulong, ICommand> commandFactory)
     {
         ArgumentNullException.ThrowIfNull(commandFactory);
-        _commandQueue.Enqueue(commandFactory(_tickScheduler.CurrentTick));
+        var command = commandFactory(_services.TickScheduler.CurrentTick);
+        var identifiedCommand = new RuntimeIdentifiedCommand(
+            command,
+            _services.NextCommandIdentitySequence());
+        _services.CommandQueue.Enqueue(identifiedCommand);
     }
 
     SimulationStatus IFortressRuntimeSessionSimulationControlPort.ToggleSimulationPause()
     {
-        _tickScheduler.TogglePause();
+        _services.TickScheduler.TogglePause();
         return CurrentSimulationStatus;
     }
 
     SimulationStatus IFortressRuntimeSessionSimulationControlPort.CycleSimulationSpeedDown()
     {
-        _tickScheduler.CycleSpeedDown();
+        _services.TickScheduler.CycleSpeedDown();
         return CurrentSimulationStatus;
     }
 
     SimulationStatus IFortressRuntimeSessionSimulationControlPort.CycleSimulationSpeedUp()
     {
-        _tickScheduler.CycleSpeedUp();
+        _services.TickScheduler.CycleSpeedUp();
         return CurrentSimulationStatus;
     }
 }

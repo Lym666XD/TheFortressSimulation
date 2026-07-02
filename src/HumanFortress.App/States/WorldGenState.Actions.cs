@@ -65,10 +65,9 @@ internal sealed partial class WorldGenState
     private void RandomizeAll()
     {
         _settings.Seed = WorldGenerationSettingsDefaults.NewSeed();
-        int[] sizes = { 128, 256, 512 };
-        _settings.Width = sizes[new Random().Next(sizes.Length)];
+        _settings.Width = WorldGenerationSettingsDefaults.RandomSize();
         _settings.Height = _settings.Width;
-        _settings.Difficulty = (WorldGenerationDifficulty)new Random().Next(4);
+        _settings.Difficulty = WorldGenerationSettingsDefaults.RandomDifficulty();
         DrawUI();
     }
 

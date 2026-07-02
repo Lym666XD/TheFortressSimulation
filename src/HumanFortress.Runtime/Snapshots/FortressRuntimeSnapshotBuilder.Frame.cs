@@ -25,6 +25,7 @@ internal static partial class FortressRuntimeSnapshotBuilder
             BuildCatalogSnapshot(constructions),
             BuildJobsSnapshot(runtimeHost, tick),
             BuildWorkshopSnapshot(world, constructions),
+            BuildStockpilePresetMenuSnapshot(runtimeHost?.StockpilePresets),
             BuildStockpileOverlaySnapshot(world, currentZ, viewport),
             stockpileDetailZoneId.HasValue
                 ? BuildStockpileDetailSnapshot(world, stockpileDetailZoneId.Value)

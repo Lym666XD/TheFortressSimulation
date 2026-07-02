@@ -3,9 +3,11 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Construction;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Orders;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
+using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs;
 
@@ -13,13 +15,23 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
 {
     private readonly DiffLog? _diff;
     private readonly ItemsDiffLog _itemsDiff;
+    private readonly WorldModel? _world;
+    private readonly StockpileDiffLog? _stockpileDiffs;
     private readonly string _systemId;
     private readonly int _priority;
 
-    internal ConstructionDiffEmitter(DiffLog? diff, ItemsDiffLog itemsDiff, string systemId, int priority)
+    internal ConstructionDiffEmitter(
+        DiffLog? diff,
+        ItemsDiffLog itemsDiff,
+        string systemId,
+        int priority,
+        WorldModel? world = null,
+        StockpileDiffLog? stockpileDiffs = null)
     {
         _diff = diff;
         _itemsDiff = itemsDiff ?? throw new ArgumentNullException(nameof(itemsDiff));
+        _world = world;
+        _stockpileDiffs = stockpileDiffs;
         _systemId = systemId ?? throw new ArgumentNullException(nameof(systemId));
         _priority = priority;
     }
@@ -40,6 +52,7 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
         if (itemGuid == Guid.Empty || quantity <= 0) return;
         if (!WorldCellTargetEncoding.TryEncode(cell, z, out var target)) return;
         _itemsDiff.AddRemoveItem(itemGuid, target, quantity, _priority, _systemId);
+        RecordStockpileStackRemoval(itemGuid, cell, z, quantity);
     }
 
     internal void MoveItem(Guid itemId, Point dest, int z)
@@ -67,4 +80,27 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
     void IConstructionDiffEmitter.MoveItem(Guid itemId, Point dest, int z) => MoveItem(itemId, dest, z);
 
     void IConstructionDiffEmitter.MoveCreature(Guid creatureId, Point3 dest) => MoveCreature(creatureId, dest);
+
+    private void RecordStockpileStackRemoval(Guid itemGuid, Point cell, int z, int quantity)
+    {
+        if (_world == null || _stockpileDiffs == null)
+            return;
+
+        var item = _world.Items.GetInstance(itemGuid);
+        if (item == null || quantity < item.StackCount)
+            return;
+
+        if (!StockpileWorldQueries.TryGetStockpileCell(_world, cell.X, cell.Y, z, out var location))
+            return;
+
+        _stockpileDiffs.AddRemoveItem(
+            DiffTargetEncoding.SignedEntityId(itemGuid),
+            location.ChunkKey,
+            location.CellIndex,
+            location.ZoneId,
+            quantity: 1,
+            priority: _priority,
+            systemId: _systemId,
+            StockpileItemProjection.FromItem(item, _world.Items.GetDefinition(item.DefinitionId)));
+    }
 }

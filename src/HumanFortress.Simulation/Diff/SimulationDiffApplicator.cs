@@ -15,11 +15,11 @@ namespace HumanFortress.Simulation.Diff;
 internal static class SimulationDiffApplicator
 {
     /// <summary>
-    /// Optional logging callback (set by App layer to write to fortress_debug.log)
+    /// Optional logging callback supplied by Runtime composition.
     /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
+    internal static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
     {
         if (ops.Count == 0) return;
 

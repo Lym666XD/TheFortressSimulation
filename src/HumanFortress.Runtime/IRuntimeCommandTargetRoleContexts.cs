@@ -1,18 +1,4 @@
-using HumanFortress.Core.Commands;
-
 namespace HumanFortress.Runtime;
-
-internal interface IRuntimeCommandExecutionContext :
-    ISimulationContext,
-    IRuntimeProfessionCommandTargetContext,
-    IRuntimeItemSpawnCommandTargetContext,
-    IRuntimeCreatureSpawnCommandTargetContext,
-    IRuntimeOrderCommandTargetContext,
-    IRuntimeZoneCommandTargetContext,
-    IRuntimeWorkshopCommandTargetContext,
-    IRuntimeStockpileCommandTargetContext
-{
-}
 
 internal interface IRuntimeProfessionCommandTargetContext
 {

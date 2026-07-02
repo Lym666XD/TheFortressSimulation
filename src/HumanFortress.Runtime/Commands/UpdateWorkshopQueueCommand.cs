@@ -10,7 +10,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed partial class UpdateWorkshopQueueCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "workshops.queue.update";
 
     ulong ICommand.Tick => Tick;

@@ -2,7 +2,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class NativeLibraryPreloader
 {
-    public static void TryPreload(string fullPath)
+    internal static void TryPreload(string fullPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fullPath);
 

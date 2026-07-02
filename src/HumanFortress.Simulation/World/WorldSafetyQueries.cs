@@ -6,7 +6,7 @@ internal readonly record struct WorldPoint3(int X, int Y, int Z);
 
 internal static class WorldSafetyQueries
 {
-    public static WorldPoint3? FindNearestStandableNonConstructionSite(
+    internal static WorldPoint3? FindNearestStandableNonConstructionSite(
         World world,
         int startX,
         int startY,
@@ -41,13 +41,13 @@ internal static class WorldSafetyQueries
         return null;
     }
 
-    public static bool IsStandableOrWalkable(World world, int x, int y, int z)
+    internal static bool IsStandableOrWalkable(World world, int x, int y, int z)
     {
         var tile = world.GetTile(x, y, z);
         return tile != null && (tile.Value.IsStandable || tile.Value.IsWalkable);
     }
 
-    public static bool IsConstructionSiteCell(World world, int x, int y, int z)
+    internal static bool IsConstructionSiteCell(World world, int x, int y, int z)
     {
         int cx = x / Chunk.SIZE_XY;
         int cy = y / Chunk.SIZE_XY;

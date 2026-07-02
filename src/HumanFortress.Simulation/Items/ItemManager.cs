@@ -463,9 +463,9 @@ internal sealed class ItemManager : IItemDefinitionCatalog
         lock (_instanceLock)
         {
             var list = new List<ItemInstance>();
-            for (int y = worldRect.Y; y < worldRect.MaxExtentY; y++)
+            for (int y = worldRect.Y; y <= worldRect.MaxExtentY; y++)
             {
-                for (int x = worldRect.X; x < worldRect.MaxExtentX; x++)
+                for (int x = worldRect.X; x <= worldRect.MaxExtentX; x++)
                 {
                     var key = KeyFor(new Point(x, y), z);
                     if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)

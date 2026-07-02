@@ -21,9 +21,9 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Dirty generation for cache invalidation.
     /// </summary>
-    public uint DirtyGeneration { get; private set; }
+    internal uint DirtyGeneration { get; private set; }
 
-    public ChunkStockpileData()
+    internal ChunkStockpileData()
     {
         _cellZones = new int[Chunk.CELLS_PER_LAYER];
         DirtyGeneration = 1;
@@ -34,7 +34,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get zones at a specific cell (Read-safe).
     /// </summary>
-    public int GetZoneAtCell(int cellIndex)
+    internal int GetZoneAtCell(int cellIndex)
     {
         if (cellIndex < 0 || cellIndex >= Chunk.CELLS_PER_LAYER)
             return 0;
@@ -48,7 +48,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get shard for a zone (Read-safe).
     /// </summary>
-    public ZoneShard? GetShard(int zoneId)
+    internal ZoneShard? GetShard(int zoneId)
     {
         lock (_readLock)
         {
@@ -59,7 +59,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get all shards in this chunk (Read-safe).
     /// </summary>
-    public IEnumerable<ZoneShard> GetAllShards()
+    internal IEnumerable<ZoneShard> GetAllShards()
     {
         lock (_readLock)
         {
@@ -70,7 +70,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get items by tag (Read-safe).
     /// </summary>
-    public IEnumerable<int> GetItemsByTag(string tag)
+    internal IEnumerable<int> GetItemsByTag(string tag)
     {
         lock (_readLock)
         {
@@ -83,7 +83,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get items in a zone (Read-safe).
     /// </summary>
-    public IEnumerable<int> GetItemsInZone(int zoneId)
+    internal IEnumerable<int> GetItemsInZone(int zoneId)
     {
         lock (_readLock)
         {
@@ -96,7 +96,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Get loose items not in any zone (Read-safe).
     /// </summary>
-    public IEnumerable<int> GetLooseItems()
+    internal IEnumerable<int> GetLooseItems()
     {
         lock (_readLock)
         {
@@ -111,7 +111,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Create or update a zone shard (Write phase only).
     /// </summary>
-    public void CreateOrUpdateShard(int zoneId, ChunkKey chunkKey)
+    internal void CreateOrUpdateShard(int zoneId, ChunkKey chunkKey)
     {
         if (!_shards.ContainsKey(zoneId))
         {
@@ -123,7 +123,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Add cells to a zone (Write phase only).
     /// </summary>
-    public void AddCellsToZone(int zoneId, IEnumerable<int> cellIndices)
+    internal void AddCellsToZone(int zoneId, IEnumerable<int> cellIndices)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;
@@ -143,7 +143,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Remove cells from a zone (Write phase only).
     /// </summary>
-    public void RemoveCellsFromZone(int zoneId, IEnumerable<int> cellIndices)
+    internal void RemoveCellsFromZone(int zoneId, IEnumerable<int> cellIndices)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;
@@ -163,7 +163,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Delete a zone shard (Write phase only).
     /// </summary>
-    public void DeleteShard(int zoneId)
+    internal void DeleteShard(int zoneId)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;
@@ -190,7 +190,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Update item placement (Write phase only).
     /// </summary>
-    public void OnItemPlaced(int itemHandle, int cellIndex, int zoneId, List<string> tags)
+    internal void OnItemPlaced(int itemHandle, int cellIndex, int zoneId, List<string> tags)
     {
         // Remove from loose if present
         _looseItems.Remove(itemHandle);
@@ -198,12 +198,18 @@ internal sealed class ChunkStockpileData
         // Add to zone index
         if (zoneId > 0)
         {
-            if (!_itemsByZone.ContainsKey(zoneId))
-                _itemsByZone[zoneId] = new List<int>();
-            _itemsByZone[zoneId].Add(itemHandle);
+            if (!_itemsByZone.TryGetValue(zoneId, out var zoneItems))
+            {
+                zoneItems = new List<int>();
+                _itemsByZone[zoneId] = zoneItems;
+            }
+
+            bool addedToZone = !zoneItems.Contains(itemHandle);
+            if (addedToZone)
+                zoneItems.Add(itemHandle);
 
             // Update shard counts
-            if (_shards.TryGetValue(zoneId, out var shard))
+            if (addedToZone && _shards.TryGetValue(zoneId, out var shard))
             {
                 shard.OccupySlot();
             }
@@ -216,9 +222,14 @@ internal sealed class ChunkStockpileData
         // Update tag index
         foreach (var tag in tags)
         {
-            if (!_itemsByTag.ContainsKey(tag))
-                _itemsByTag[tag] = new List<int>();
-            _itemsByTag[tag].Add(itemHandle);
+            if (!_itemsByTag.TryGetValue(tag, out var taggedItems))
+            {
+                taggedItems = new List<int>();
+                _itemsByTag[tag] = taggedItems;
+            }
+
+            if (!taggedItems.Contains(itemHandle))
+                taggedItems.Add(itemHandle);
         }
 
         DirtyGeneration++;
@@ -227,15 +238,21 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Update item removal (Write phase only).
     /// </summary>
-    public void OnItemRemoved(int itemHandle, int cellIndex, int zoneId, List<string> tags)
+    internal void OnItemRemoved(int itemHandle, int cellIndex, int zoneId, List<string> tags)
     {
         // Remove from zone index
         if (zoneId > 0)
         {
-            _itemsByZone[zoneId]?.Remove(itemHandle);
+            bool removedFromZone = false;
+            if (_itemsByZone.TryGetValue(zoneId, out var zoneItems))
+            {
+                removedFromZone = zoneItems.Remove(itemHandle);
+                if (zoneItems.Count == 0)
+                    _itemsByZone.Remove(zoneId);
+            }
 
             // Update shard counts
-            if (_shards.TryGetValue(zoneId, out var shard))
+            if (removedFromZone && _shards.TryGetValue(zoneId, out var shard))
             {
                 shard.FreeSlot();
             }
@@ -248,7 +265,12 @@ internal sealed class ChunkStockpileData
         // Update tag index
         foreach (var tag in tags)
         {
-            _itemsByTag[tag]?.Remove(itemHandle);
+            if (!_itemsByTag.TryGetValue(tag, out var taggedItems))
+                continue;
+
+            taggedItems.Remove(itemHandle);
+            if (taggedItems.Count == 0)
+                _itemsByTag.Remove(tag);
         }
 
         DirtyGeneration++;
@@ -257,7 +279,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Reserve a slot in a zone (Write phase only).
     /// </summary>
-    public bool TryReserveSlot(int zoneId)
+    internal bool TryReserveSlot(int zoneId)
     {
         if (_shards.TryGetValue(zoneId, out var shard))
         {
@@ -269,7 +291,7 @@ internal sealed class ChunkStockpileData
     /// <summary>
     /// Release a reserved slot (Write phase only).
     /// </summary>
-    public void ReleaseSlot(int zoneId)
+    internal void ReleaseSlot(int zoneId)
     {
         if (_shards.TryGetValue(zoneId, out var shard))
         {

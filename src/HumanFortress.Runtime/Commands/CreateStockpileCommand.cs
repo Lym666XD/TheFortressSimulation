@@ -13,7 +13,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed class CreateStockpileCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "stockpiles.create";
 
     ulong ICommand.Tick => Tick;

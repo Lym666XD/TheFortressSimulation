@@ -76,7 +76,11 @@ namespace HumanFortress.Simulation.Jobs
     /// </summary>
     internal interface ITransportIntake
     {
-        void Enqueue(in TransportRequest request);
+        /// <summary>
+        /// Enqueue a request if it is not already represented by a pending request for the same item.
+        /// Returns true only when a new pending queue entry was added.
+        /// </summary>
+        bool Enqueue(in TransportRequest request);
     }
 
     /// <summary>
@@ -128,15 +132,19 @@ namespace HumanFortress.Simulation.Jobs
             get { lock (_lock) return _pending.Count; }
         }
 
-        public void Enqueue(in TransportRequest request)
+        public bool Enqueue(in TransportRequest request)
         {
             lock (_lock)
             {
-                // Optional: simple de-dup/merge by (ItemGuid,To,ToZ) to avoid thrash
+                // Keep one pending transport intent per item. Same-destination requests can merge
+                // quantities; competing destinations preserve the earlier deterministic request.
                 for (int i = 0; i < _pending.Count; i++)
                 {
                     var r = _pending[i];
-                    if (r.ItemGuid == request.ItemGuid && r.To == request.To && r.ToZ == request.ToZ)
+                    if (r.ItemGuid != request.ItemGuid)
+                        continue;
+
+                    if (r.To == request.To && r.ToZ == request.ToZ)
                     {
                         // Merge quantities to a single request, keep earlier CreatedTick
                         var merged = new TransportRequest(
@@ -151,10 +159,14 @@ namespace HumanFortress.Simulation.Jobs
                             r.RequestorId,
                             r.CreatedTick,
                             r.Seed);
+                        ReplaceShardRequest(r, merged);
                         _pending[i] = merged;
                         _droppedTotal++;
-                        return;
+                        return false;
                     }
+
+                    _droppedTotal++;
+                    return false;
                 }
                 _pending.Add(request);
                 // Shard by destination chunk (derive chunk id from To/ToZ)
@@ -166,6 +178,7 @@ namespace HumanFortress.Simulation.Jobs
                 }
                 list.Add(request);
                 Interlocked.Increment(ref _enqueuedTotal);
+                return true;
             }
         }
 
@@ -270,6 +283,22 @@ namespace HumanFortress.Simulation.Jobs
             int chunkX = worldX / DiffTargetEncoding.ChunkSizeXY;
             int chunkY = worldY / DiffTargetEncoding.ChunkSizeXY;
             return DiffTargetEncoding.EncodeChunkId(chunkX, chunkY, z);
+        }
+
+        private void ReplaceShardRequest(TransportRequest existing, TransportRequest replacement)
+        {
+            int shardId = EncodeChunkIdFromTo(existing.To.X, existing.To.Y, existing.ToZ);
+            if (!_shards.TryGetValue(shardId, out var list))
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(existing))
+                {
+                    list[i] = replacement;
+                    return;
+                }
+            }
         }
     }
 }

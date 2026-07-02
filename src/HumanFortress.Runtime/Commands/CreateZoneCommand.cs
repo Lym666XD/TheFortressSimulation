@@ -14,7 +14,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed class CreateZoneCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "zones.create";
 
     ulong ICommand.Tick => Tick;

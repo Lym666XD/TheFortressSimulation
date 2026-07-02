@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 
 namespace HumanFortress.Core.World
@@ -14,7 +13,7 @@ namespace HumanFortress.Core.World
         public static WorldParams Default => new WorldParams
         {
             Name = "World",
-            Seed = (uint)Environment.TickCount,
+            Seed = 1,
             Width = 256,
             Height = 256,
             Difficulty = DifficultyPreset.Normal

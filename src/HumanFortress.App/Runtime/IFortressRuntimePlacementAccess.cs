@@ -30,4 +30,5 @@ internal interface IFortressRuntimePlacementAccess
     void QueueCreateZone(string defId, Rectangle rect, int z);
     void QueueDeleteZone(int zoneId);
     void QueueCreateStockpile(Rectangle rect, int z, string presetId);
+    void QueueDeleteStockpile(int zoneId);
 }

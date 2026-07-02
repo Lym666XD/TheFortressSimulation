@@ -1,16 +1,31 @@
 using SadConsole;
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI;
 
 internal sealed partial class StockpileUI
 {
+    public void ApplyPresetMenu(SimulationStockpilePresetMenuData menu)
+    {
+        var options = menu.Options ?? Array.Empty<StockpilePresetMenuOptionView>();
+        _presets = options.Count == 0
+            ? DefaultPresets
+            : options
+                .Take(9)
+                .Select(static option => new StockpilePresetOption(option.Id, option.Name))
+                .ToArray();
+
+        if (_selectedPresetIndex >= _presets.Length)
+            _selectedPresetIndex = Math.Max(0, _presets.Length - 1);
+    }
+
     /// <summary>
     /// Handle preset selection input.
     /// </summary>
     public string? HandlePresetSelection(int key)
     {
-        if (_presets == null || key < 1 || key > 9)
+        if (key < 1 || key > 9)
             return null;
 
         int index = key - 1;
@@ -28,7 +43,7 @@ internal sealed partial class StockpileUI
     /// </summary>
     private void DrawPresetSelection(ScreenSurface surface)
     {
-        if (_presets == null || _presets.Length == 0)
+        if (_presets.Length == 0)
             return;
 
         int x = surface.Width / 2 - 15;

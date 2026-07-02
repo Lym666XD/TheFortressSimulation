@@ -26,12 +26,12 @@ internal readonly struct WorldCellTarget
 
 internal static class WorldCellTargetEncoding
 {
-    public static bool TryEncode(Point cell, int z, out WorldCellTarget target)
+    internal static bool TryEncode(Point cell, int z, out WorldCellTarget target)
     {
         return TryEncode(cell.X, cell.Y, z, out target);
     }
 
-    public static bool TryEncode(int worldX, int worldY, int z, out WorldCellTarget target)
+    internal static bool TryEncode(int worldX, int worldY, int z, out WorldCellTarget target)
     {
         target = default;
         if (worldX < 0 || worldY < 0 || z < 0) return false;

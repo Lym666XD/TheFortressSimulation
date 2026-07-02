@@ -16,22 +16,22 @@ internal static class TerrainBitOps
     /// <summary>
     /// Extract TerrainKind from TerrainBits (bits 0-3).
     /// </summary>
-    public static TerrainKind GetKind(ushort bits) => (TerrainKind)(bits & KindMask);
+    internal static TerrainKind GetKind(ushort bits) => (TerrainKind)(bits & KindMask);
 
     /// <summary>
     /// Check if terrain is natural (bit 6).
     /// </summary>
-    public static bool IsNatural(ushort bits) => (bits & (1 << NaturalBit)) != 0;
+    internal static bool IsNatural(ushort bits) => (bits & (1 << NaturalBit)) != 0;
 
     /// <summary>
     /// Check if terrain is modifiable (bit 6).
     /// </summary>
-    public static bool IsModifiable(ushort bits) => (bits & (1 << ModifiableBit)) != 0;
+    internal static bool IsModifiable(ushort bits) => (bits & (1 << ModifiableBit)) != 0;
 
     /// <summary>
     /// Create TerrainBits from components (v2).
     /// </summary>
-    public static ushort CreateTerrainBits(
+    internal static ushort CreateTerrainBits(
         TerrainKind kind,
         bool natural = true,
         bool modifiable = true)
@@ -55,7 +55,7 @@ internal static class TerrainBitOps
     /// <summary>
     /// Modify terrain kind while preserving other bits.
     /// </summary>
-    public static ushort SetKind(ushort bits, TerrainKind kind)
+    internal static ushort SetKind(ushort bits, TerrainKind kind)
     {
         // Clear kind bits and set new kind
         bits = (ushort)(bits & ~KindMask);
@@ -67,7 +67,7 @@ internal static class TerrainBitOps
     /// <summary>
     /// Set natural flag.
     /// </summary>
-    public static ushort SetNatural(ushort bits, bool natural)
+    internal static ushort SetNatural(ushort bits, bool natural)
     {
         if (natural)
             bits |= (ushort)(1 << NaturalBit);
@@ -80,7 +80,7 @@ internal static class TerrainBitOps
     /// <summary>
     /// Set modifiable flag.
     /// </summary>
-    public static ushort SetModifiable(ushort bits, bool modifiable)
+    internal static ushort SetModifiable(ushort bits, bool modifiable)
     {
         if (modifiable)
             bits |= (ushort)(1 << ModifiableBit);
@@ -94,7 +94,7 @@ internal static class TerrainBitOps
     /// Get direction offsets for ramp navigation.
     /// Direction encoding: 0=N, 1=NE, 2=E, 3=SE, 4=S, 5=SW, 6=W, 7=NW.
     /// </summary>
-    public static (int dx, int dy) GetDirectionOffset(byte direction)
+    internal static (int dx, int dy) GetDirectionOffset(byte direction)
     {
         return direction switch
         {
@@ -113,7 +113,7 @@ internal static class TerrainBitOps
     /// <summary>
     /// Check if approach direction is valid for ascending a ramp (helper used in UI/tests).
     /// </summary>
-    public static bool CanAscendRamp(int fromX, int fromY, int rampX, int rampY, byte rampDirection)
+    internal static bool CanAscendRamp(int fromX, int fromY, int rampX, int rampY, byte rampDirection)
     {
         var (dx, dy) = GetDirectionOffset(rampDirection);
         int expectedFromX = rampX - dx;
@@ -125,7 +125,7 @@ internal static class TerrainBitOps
     /// <summary>
     /// Get destination position when ascending a ramp.
     /// </summary>
-    public static (int x, int y, int z) GetRampDestination(int rampX, int rampY, int rampZ, byte rampDirection)
+    internal static (int x, int y, int z) GetRampDestination(int rampX, int rampY, int rampZ, byte rampDirection)
     {
         var (dx, dy) = GetDirectionOffset(rampDirection);
         return (rampX + dx, rampY + dy, rampZ + 1);

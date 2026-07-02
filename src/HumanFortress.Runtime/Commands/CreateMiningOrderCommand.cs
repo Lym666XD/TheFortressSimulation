@@ -14,7 +14,7 @@ namespace HumanFortress.Runtime.Commands;
 internal sealed class CreateMiningOrderCommand : ICommand
 {
     internal ulong Tick { get; }
-    private Guid CommandId { get; } = Guid.NewGuid();
+    private Guid CommandId => RuntimeCommandId.Create(this);
     private string CommandType => "orders.mining.rect";
 
     ulong ICommand.Tick => Tick;

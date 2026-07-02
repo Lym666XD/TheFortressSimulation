@@ -34,6 +34,7 @@ internal sealed class FortressRuntimeDependencies
     internal string? MiningTuningJson => Tunings.MiningJson;
     internal SchedulerTunings SchedulerTunings => Tunings.Scheduler;
     internal WorkshopTunings WorkshopTunings => Tunings.Workshops;
+    internal FortressRuntimeStockpilePresetCatalog StockpilePresets => Tunings.StockpilePresets;
     internal ProfessionAssignments ProfessionAssignments => Workforce.ProfessionAssignments;
 
     internal static FortressRuntimeDependencies Load(
@@ -49,7 +50,7 @@ internal sealed class FortressRuntimeDependencies
 
         return new FortressRuntimeDependencies(
             FortressRuntimeCatalogs.FromContent(content),
-            FortressRuntimeTunings.FromContent(content, log),
+            FortressRuntimeTunings.FromContent(content, baseDir, log),
             FortressRuntimeWorkforce.Load(world, baseDir, log));
     }
 }

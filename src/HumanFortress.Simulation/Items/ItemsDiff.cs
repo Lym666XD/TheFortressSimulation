@@ -16,18 +16,18 @@ internal enum ItemsDiffOp
 /// </summary>
 internal readonly struct ItemsDiff
 {
-    public readonly ItemsDiffOp Op;
-    public readonly ChunkKey Chunk;
-    public readonly int LocalIndex; // 0..1023
-    public readonly string ItemId;
-    public readonly int Quantity;
-    public readonly int Priority;
-    public readonly string SystemId;
-    public readonly int LocalSeq;
-    public readonly Guid ItemGuid;
-    public readonly Guid NewItemGuid;
+    internal readonly ItemsDiffOp Op;
+    internal readonly ChunkKey Chunk;
+    internal readonly int LocalIndex; // 0..1023
+    internal readonly string ItemId;
+    internal readonly int Quantity;
+    internal readonly int Priority;
+    internal readonly string SystemId;
+    internal readonly int LocalSeq;
+    internal readonly Guid ItemGuid;
+    internal readonly Guid NewItemGuid;
 
-    public ItemsDiff(
+    internal ItemsDiff(
         ItemsDiffOp op,
         ChunkKey chunk,
         int localIndex,
@@ -51,7 +51,7 @@ internal readonly struct ItemsDiff
         NewItemGuid = newItemGuid;
     }
 
-    public long GetSortKey()
+    internal long GetSortKey()
     {
         // [chunkZ:10][chunkX:10][chunkY:10][localIndex:16][priority:8][localSeq:10]
         long key = 0;

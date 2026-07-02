@@ -2,15 +2,20 @@ using HumanFortress.Core.Commands;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Simulation.Creatures;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
 
 internal sealed class SimulationCommandExecutionContext :
     IRuntimeCommandClockContext,
-    IRuntimeCommandExecutionContext
+    ISimulationContext,
+    IRuntimeProfessionCommandTargetContext,
+    IRuntimeItemSpawnCommandTargetContext,
+    IRuntimeCreatureSpawnCommandTargetContext,
+    IRuntimeOrderCommandTargetContext,
+    IRuntimeZoneCommandTargetContext,
+    IRuntimeWorkshopCommandTargetContext,
+    IRuntimeStockpileCommandTargetContext
 {
     private readonly IRuntimeCommandClockContext _clockContext;
     private readonly ISimulationContext _simulationContext;
@@ -20,20 +25,18 @@ internal sealed class SimulationCommandExecutionContext :
         IRuntimeCommandClockContext clockContext,
         ISimulationContext simulationContext,
         World world,
-        ItemsDiffLog itemsDiffLog,
-        CreaturesDiffLog creaturesDiffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
         IRecipeCatalog recipes,
-        IConstructionCatalog constructions,
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
         Action<string>? log = null)
     {
         _clockContext = clockContext ?? throw new ArgumentNullException(nameof(clockContext));
         _simulationContext = simulationContext ?? throw new ArgumentNullException(nameof(simulationContext));
         _commandTargets = new SimulationRuntimeCommandTargets(
             world,
-            itemsDiffLog,
-            creaturesDiffLog,
+            mutationDiffs,
             recipes,
-            constructions,
+            stockpilePresets,
             log);
     }
 

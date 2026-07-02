@@ -1,77 +1,78 @@
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Simulation.World;
+using HumanFortress.Simulation.Placeables;
 
 namespace HumanFortress.Runtime;
 
 internal sealed partial class WorkshopQueueCommandTarget : IWorkshopQueueCommandTarget
 {
-    private readonly World _world;
+    private const int CommandPriority = 50;
+    private const string SystemId = "Runtime.WorkshopCommand";
+
+    private readonly WorkshopDiffLog _workshopDiffLog;
     private readonly IRecipeCatalog _recipes;
-    private readonly IConstructionCatalog _constructions;
+    private readonly Action<string>? _log;
 
     internal WorkshopQueueCommandTarget(
-        World world,
+        WorkshopDiffLog workshopDiffLog,
         IRecipeCatalog recipes,
-        IConstructionCatalog constructions)
+        Action<string>? log = null)
     {
-        _world = world ?? throw new ArgumentNullException(nameof(world));
+        _workshopDiffLog = workshopDiffLog ?? throw new ArgumentNullException(nameof(workshopDiffLog));
         _recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
-        _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
+        _log = log;
     }
 
     bool IWorkshopQueueCommandTarget.AddWorkshopRecipe(Guid workshopGuid, string recipeId, ulong currentTick)
     {
         if (string.IsNullOrWhiteSpace(recipeId)) return false;
-        if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
 
         var recipe = _recipes.GetRecipe(recipeId);
         if (recipe == null) return false;
 
-        state.AddEntry(recipe.Id, recipe.Name, workshopGuid, currentTick);
+        _workshopDiffLog.AddRecipe(workshopGuid, recipe.Id, recipe.Name, currentTick, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued add recipe workshop={workshopGuid} recipe={recipe.Id}");
         return true;
     }
 
     bool IWorkshopQueueCommandTarget.RemoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId)
     {
-        return TryGetWorkshopState(workshopGuid, out var state)
-            && state.RemoveEntry(entryId);
+        _workshopDiffLog.RemoveEntry(workshopGuid, entryId, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued remove entry workshop={workshopGuid} entry={entryId}");
+        return true;
     }
 
     bool IWorkshopQueueCommandTarget.MoveWorkshopQueueEntry(Guid workshopGuid, Guid entryId, int moveOffset)
     {
-        return TryGetWorkshopState(workshopGuid, out var state)
-            && state.MoveEntry(entryId, moveOffset);
+        _workshopDiffLog.MoveEntry(workshopGuid, entryId, moveOffset, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued move entry workshop={workshopGuid} entry={entryId} offset={moveOffset}");
+        return true;
     }
 
     bool IWorkshopQueueCommandTarget.ClearWorkshopQueue(Guid workshopGuid)
     {
-        if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
-
-        state.ClearQueue();
+        _workshopDiffLog.ClearQueue(workshopGuid, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued clear queue workshop={workshopGuid}");
         return true;
     }
 
     bool IWorkshopQueueCommandTarget.SetWorkshopWorkerSlots(Guid workshopGuid, int workerSlots)
     {
-        if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
-
-        state.SetAllowedWorkers(workerSlots);
+        _workshopDiffLog.SetWorkerSlots(workshopGuid, workerSlots, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued worker slots workshop={workshopGuid} slots={workerSlots}");
         return true;
     }
 
     bool IWorkshopQueueCommandTarget.SetWorkshopAutoStockpile(Guid workshopGuid, bool? value)
     {
-        if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
-
-        state.AutoStockpileOutputs = value ?? !state.AutoStockpileOutputs;
+        _workshopDiffLog.SetAutoStockpile(workshopGuid, value, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued auto-stockpile workshop={workshopGuid} value={value?.ToString() ?? "toggle"}");
         return true;
     }
 
     bool IWorkshopQueueCommandTarget.SetWorkshopAutoSupply(Guid workshopGuid, bool? value)
     {
-        if (!TryGetWorkshopState(workshopGuid, out var state)) return false;
-
-        state.AutoRequestMaterials = value ?? !state.AutoRequestMaterials;
+        _workshopDiffLog.SetAutoSupply(workshopGuid, value, CommandPriority, SystemId);
+        _log?.Invoke($"[WORKSHOP] Queued auto-supply workshop={workshopGuid} value={value?.ToString() ?? "toggle"}");
         return true;
     }
 }

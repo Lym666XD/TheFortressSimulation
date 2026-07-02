@@ -23,6 +23,7 @@ internal static class FortressUiOverlayRenderer
             stockpileDetailZoneId: context.UiServices?.StockpileUI?.EditingZoneId,
             zoneDetailId: context.UiServices?.ZonesUI?.DetailPopupZoneId,
             tick: context.UiTick);
+        context.UiServices?.StockpileUI?.ApplyPresetMenu(overlayData.StockpilePresets);
 
         ClearOverlaySurface(uiSurface);
         UiChromeRenderer.DrawTopBar(uiSurface, context.Runtime.SimulationStatus);
@@ -34,7 +35,6 @@ internal static class FortressUiOverlayRenderer
             context.UiTick,
             overlayData.ManagementDrawer,
             overlayData.WorkDrawer);
-        WorkDrawerOverlay.DrawWorkSchedulerOverlay(uiSurface, ui, context.UiTick);
         UiQuickMenuRenderer.Draw(
             uiSurface,
             ui,

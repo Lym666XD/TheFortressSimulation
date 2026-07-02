@@ -8,6 +8,7 @@ using HumanFortress.Navigation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
+using HumanFortress.Simulation.Stockpile;
 
 namespace HumanFortress.Runtime.Jobs;
 
@@ -25,6 +26,7 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         DiffLog? diffLog = null,
         NavigationManager? sharedNav = null,
         ItemsDiffLog? itemsDiffLog = null,
+        StockpileDiffLog? stockpileDiffLog = null,
         int intakeBudget = 16,
         int carryoverMaxTicks = 8,
         int maxActiveJobs = 0,
@@ -51,6 +53,13 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog), "TransportJobSystem requires ItemsDiffLog for deterministic split-stack hauling."),
             UpdateOrder.Priority.Jobs,
             TransportJobExecutor.SystemId);
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter = stockpileDiffLog == null
+            ? null
+            : new TransportStockpileIndexEmitter(
+                world,
+                stockpileDiffLog,
+                UpdateOrder.Priority.Jobs,
+                TransportJobExecutor.SystemId);
 
         _executor = new TransportJobExecutor(
             world,
@@ -60,6 +69,7 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             move,
             diffEmitter,
             diffEmitter,
+            stockpileIndexEmitter,
             workerCandidates,
             completionSink,
             logger,

@@ -9,8 +9,10 @@ using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.World;
 using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Runtime;
+using HumanFortress.Contracts.Runtime.Snapshots;
+using HumanFortress.Runtime;
 using HumanFortress.Simulation.World;
-using HumanFortress.Simulation.Rendering;
 using HumanFortress.WorldGen;
 
 namespace HumanFortress.App
@@ -295,7 +297,7 @@ namespace HumanFortress.App
             Console.WriteLine("- EmbarkPrep: N×N chunks (2-8)");
             Console.WriteLine("- Fortress terrain generation");
             Console.WriteLine("- Chunk lifecycle (LOD L0-L4)");
-            Console.WriteLine("- RenderSnapshot system\n");
+            Console.WriteLine("- Runtime frame snapshot system\n");
 
             bool allPass = true;
 
@@ -361,36 +363,39 @@ namespace HumanFortress.App
                 allPass = false;
             }
 
-            // Test 3: RenderSnapshot
-            Console.Write("[TEST] RenderSnapshot builder... ");
+            // Test 3: Runtime frame snapshot
+            Console.Write("[TEST] Runtime frame snapshot... ");
             try
             {
-                var world = new World(2, 50);
-                var builder = new RenderSnapshotBuilder(world, HumanFortress.Contracts.Content.Registry.ConstructionCatalogStore.Empty);
-                
-                var camera = new CameraInfo
-                {
-                    ChunkKey = new ChunkKey(0, 0, 25),
-                    CenterX = 16,
-                    CenterY = 16,
-                    Z = 25,
-                    Z0 = 25,
-                    ZCount = 1
-                };
-                
-                var viewport = new ViewportInfo
-                {
-                    TilesWidth = 80,
-                    TilesHeight = 40
-                };
-                
-                var snapshot = builder.BuildSnapshot(camera, viewport, 0);
-                
-                if (snapshot == null)
-                    throw new Exception("Snapshot is null");
-                
-                if (snapshot.Tick != 0)
-                    throw new Exception("Snapshot tick incorrect");
+                var runtime = FortressRuntimeSessionFactory.Create(
+                    AppContext.BaseDirectory,
+                    strictContent: false,
+                    contentWarningsAsErrors: false);
+                runtime.InitializeWorld(sizeInChunks: 2, maxZ: 50);
+
+                SimulationFrameRenderData frame = runtime.GetFrameRenderData(
+                    includeMapViewport: true,
+                    fortressSize: 2,
+                    cameraPosition: new RuntimePoint(0, 0),
+                    cursorPosition: new RuntimePoint(1, 1),
+                    currentZ: 0,
+                    zoomLevel: 1,
+                    viewWidth: 20,
+                    viewHeight: 10,
+                    cursorGlyph: '@',
+                    navigationMode: SimulationNavigationOverlayMode.None,
+                    selectedNavigationTarget: null,
+                    tileInspectionWorldPosition: new RuntimePoint(1, 1),
+                    tileInspectionZ: 0);
+
+                if (!frame.MapViewport.IsAvailable || !frame.MapViewport.HasWorld)
+                    throw new Exception("Runtime map viewport snapshot unavailable");
+
+                if (frame.MapViewport.Width != 20 || frame.MapViewport.Height != 10)
+                    throw new Exception("Runtime map viewport dimensions incorrect");
+
+                if (frame.MapViewport.Cells.Count == 0)
+                    throw new Exception("Runtime map viewport snapshot has no cells");
                 
                 Console.WriteLine("✅ PASS");
             }

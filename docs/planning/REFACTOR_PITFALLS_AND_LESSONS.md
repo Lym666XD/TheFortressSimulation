@@ -98,6 +98,111 @@ Runtime core
 
 Do not "fix" a signature mismatch by importing `SadRogue.Primitives` into a public Runtime port. Add or extend a Contracts primitive/DTO, then keep the third-party geometry conversion at the App.Runtime or Runtime-internal edge.
 
+### Command targets and post-tick applicators must share the same diff log
+
+When moving a direct mutation into an authoritative diff pipeline, wire one diff log instance through the command execution context and the post-tick pipeline. Creating one log for the command target and a second log for the applicator silently drops queued mutations.
+
+Use the Runtime-owned `RuntimeMutationDiffLogs` bundle for command-side typed mutation logs. The active session should own that bundle through `RuntimeSessionServices`, alongside the scheduler, command queue, event bus, main diff log, and item diff log. Do not re-expand `SimulationRuntimeHost`, `SimulationRuntimeHostCore`, `SimulationCommandExecutionContext`, or `SimulationTickPipeline` into long parameter lists of individual mutation logs; that shape makes it too easy to accidentally give a command target and an applicator different instances.
+
+Do not create a new `RuntimeMutationDiffLogs` bundle inside Runtime host composition when a session service bundle already exists. The host, command execution context, and post-tick pipeline must receive the same bundle, and `RuntimeSessionServices.ResetForNewSession()` must clear all typed command mutation logs together.
+
+Current stockpile create/delete shape:
+
+```text
+CreateStockpileCommand
+  -> IStockpileCommandTarget
+  -> StockpileDiffLog.AddCreateZone(...)
+
+DeleteStockpileCommand
+  -> IStockpileCommandTarget
+  -> StockpileDiffLog.AddDeleteZone(zoneId)
+
+SimulationTickPipeline.PostTick
+  -> StockpileDiffApplicator.ApplyAll(world, stockpileDiffs)
+  -> StockpileDiffLog.Clear()
+```
+
+The command target can do preflight validation for user feedback and empty-command rejection, but the applicator must recheck authoritative conditions such as overlap because multiple commands in the same tick can pass preflight against the same old world state.
+
+Applicators must also recheck any condition that earlier post-tick diffs can change. Stockpile creation now rechecks tile terrain after terrain diffs have applied; command preflight may have seen a floor that became a wall in the same tick.
+
+Stockpile deletion follows the same rule: the command diff should carry the zone id, while `StockpileDiffApplicator` reads the current authoritative zone/member chunks at apply time. Do not capture a member-chunk snapshot in the command target; same-tick zone changes should be resolved by the applicator against the current world state.
+
+The active stockpile applicator entry is world-level only:
+
+```text
+SimulationTickPipeline
+  -> StockpileDiffLog.MergeAndSort()
+  -> StockpileDiffApplicator.ApplyAll(world, stockpileDiffs)
+```
+
+Do not recreate a chunk-local `ApplyDiffs(Chunk, List<StockpileDiff>)` entry for create/delete. That old shape made it too easy to apply zone membership from stale chunk-local assumptions instead of resolving against the current authoritative world.
+
+Typed command diff ordering is not one-size-fits-all. Order, zone, and workshop command-edit diffs intentionally preserve enqueue sequence because edits are order-sensitive. Item and stockpile diffs still use spatial/priority ordering. If this changes, update the explicit smoke coverage instead of silently normalizing every `GetSortKey()` implementation to the same policy.
+
+SadRogue `Rectangle.MaxExtentX/MaxExtentY` is treated as inclusive in the simulation codebase. Rectangular world scans such as order/designation/item queries should iterate `<= MaxExtent*`, not `< MaxExtent*`; otherwise one-cell-high or one-cell-wide designations silently scan no cells.
+
+Mining has the same inclusive-rectangle trap as hauling/item scans. Keep `MiningOrderRules` and `MiningSystem` cursor advancement paired: scan loops use `<= MaxExtent*`, and cursor rollover checks use `> MaxExtent*`. Add one-cell rectangle coverage when touching any designation scanner.
+
+Runtime command ids must not use `Guid.NewGuid()` on replay-facing command paths. Command payloads should serialize meaningful mutation inputs, and Runtime session enqueue should add deterministic sequence identity when duplicate payloads can appear in the same tick. Execution order still belongs to `CommandQueue`; command ids are for stable correlation/debugging.
+
+Command payload serialization is part of command identity. Every field that can change execution must be written to `Serialize()`, including optional filters and tag lists. When a field is semantically a set, serialize it in deterministic order so equivalent UI selection order does not create a different id; when the field is semantically ordered, preserve the order.
+
+The same rule now applies to zone commands:
+
+```text
+CreateZoneCommand / UpdateZoneCellsCommand / DeleteZoneCommand
+  -> IZoneCommandTarget
+  -> ZoneDiffLog
+
+SimulationTickPipeline.PostTick
+  -> ZoneDiffApplicator.ApplyAll(world, zoneDiffs)
+  -> ZoneDiffLog.Clear()
+```
+
+Do not let `ZoneCommandTarget` regain a concrete `World` field just to call `world.Zones.*` from command execution. If zone behavior needs richer validation or ordering, add it to `ZoneDiffLog`/`ZoneDiffApplicator` so it remains an authoritative post-tick mutation.
+
+And to workshop queue/settings commands:
+
+```text
+UpdateWorkshopQueueCommand
+  -> IWorkshopQueueCommandTarget
+  -> WorkshopDiffLog
+
+SimulationTickPipeline.PostTick
+  -> WorkshopDiffApplicator.ApplyAll(world, workshopDiffs, constructions)
+  -> WorkshopDiffLog.Clear()
+```
+
+Workshop diffs must preserve command enqueue order because queue edits are order-sensitive. Keep `WorkshopDiff.GetSortKey()` sequence-based unless there is a deliberate operation-level merge policy.
+
+And to order commands:
+
+```text
+CreateMiningOrderCommand / CreateHaulOrderCommand / CreateConstructionOrderCommand / ...
+  -> IOrderCommandTarget
+  -> OrderDiffLog
+
+SimulationTickPipeline.PostTick
+  -> OrderDiffApplicator.ApplyAll(world, orderDiffs)
+  -> OrderDiffLog.Clear()
+```
+
+Do not let `OrderCommandTarget` regain a concrete `World` field just to call `world.Orders.Enqueue*` during command execution. Order diffs intentionally preserve enqueue order so multi-command placement batches remain deterministic.
+
+Profession assignment commands follow the same post-tick rule even though they are Runtime-owned rather than Simulation-world-owned:
+
+```text
+SetProfessionWeightCommand
+  -> IProfessionAssignmentCommandTarget
+  -> ProfessionAssignmentDiffLog
+
+SimulationTickPipeline.PostTick
+  -> ProfessionAssignmentDiffLog.ApplyAll()
+```
+
+The profession handler binding still happens after Runtime systems are registered, but command execution must queue a diff instead of invoking the handler directly.
+
 ### Runtime snapshot builders should not become new god objects
 
 Snapshot builders are allowed to know about live Runtime/Simulation internals, but each builder should own one read-model family or one mapping policy. Do not put navigation overlay modes, map terrain glyph rules, entity glyph rules, workshop queue summaries, construction-material progress, and aggregate frame composition into one ever-growing file just because they all return DTOs.
@@ -224,7 +329,7 @@ If App needs to pass material preferences or UI tool options, pass the raw seman
 
 ### Generated-world UI should use Contracts DTOs through Session queries
 
-World generation screens should use the App-owned `IWorldGenerationAccess` port. The concrete adapter may call `HumanFortress.WorldGen.WorldGenerationServiceFactory` and hold the contract `IWorldGenerationService`, but screen/session code should not directly construct or store concrete WorldGen service/data types.
+World generation screens should use the contract `IWorldGenerationService` created through Runtime's `FortressRuntimeWorldGenerationFactory`. App screen/session code should not directly construct or store concrete WorldGen service/data/factory types, and App should not reference the `HumanFortress.WorldGen` project.
 
 Later App screens should read through `FortressSessionContext.TryGetWorldSize(...)`, `TryGetWorldTileView(...)`, or bootstrap-only `WorldTileSnapshot` queries instead of reading `WorldGenResult.Tiles`, raw `WorldTile`, `BiomeType`, or `WorldParams`.
 
@@ -581,7 +686,7 @@ manager
 
 Do not reintroduce file IO or JSON validation into `ItemManager` or `CreatureManager`. App/runtime composition should load content snapshots and inject them.
 
-Stockpile filtering is still a partial TODO path. Do not wire it back to the legacy `HumanFortress.Core.Content.ContentRegistry`; the correct next shape is an explicit item definition catalog seam, matching construction material planning and profession roster naming.
+Stockpile filtering should stay on explicit content/runtime/simulation seams. Preset JSON is loaded by Content into `StockpilePresetDefinition` contracts, Runtime maps those presets into Simulation `StockpileFilter` values, and Simulation projects `ItemInstance + ItemDefinition` into `ItemStackRef` for filter matching. Do not wire stockpile filters back to the legacy `HumanFortress.Core.Content.ContentRegistry`, and do not parse stockpile preset JSON in App or Runtime command targets.
 
 ### Move contracts by assembly before rewriting namespaces
 
@@ -849,23 +954,25 @@ SpawnCreatureCommand
 
 The creature diff path is intentionally narrow: it supports spawn-only command migration and should not be treated as a complete creature mutation system yet.
 
-Core order commands also no longer cast `context.World` to the concrete `World` type:
+Core order commands also no longer cast `context.World` to the concrete `World` type, and they should not directly mutate `OrdersManager`:
 
 ```text
 CreateMiningOrderCommand / CreateAdvancedMiningOrderCommand / CreateHaulOrderCommand
 CreateConstructionOrderCommand / CreateBuildableConstructionOrderCommand
   -> IOrderCommandTarget
-  -> OrdersManager.Enqueue...
+  -> OrderDiffLog
+  -> OrderDiffApplicator.ApplyAll
 ```
 
-This is a runtime seam, not a full order diff log. It keeps App command implementations from knowing the concrete world manager while preserving the existing order queue semantics.
+Runtime owns command target routing; Simulation owns the typed order diff applicator.
 
 Zone commands also no longer cast `context.World` to `World`:
 
 ```text
 CreateZoneCommand / UpdateZoneCellsCommand / DeleteZoneCommand
   -> IZoneCommandTarget
-  -> ZoneCoordinator
+  -> ZoneDiffLog
+  -> ZoneDiffApplicator.ApplyAll
 ```
 
 Use `ZoneCoordinator` rather than calling `ZoneManager` directly. Deleting a zone must remove chunk shards as well as the global zone instance; otherwise stale per-chunk zone data remains behind.
@@ -875,30 +982,36 @@ Workshop queue commands also no longer cast `context.World` to `World`:
 ```text
 UpdateWorkshopQueueCommand
   -> IWorkshopQueueCommandTarget
-  -> SimulationRuntimeContext workshop resolver
-  -> WorkshopState
+  -> WorkshopDiffLog
+  -> WorkshopDiffApplicator.ApplyAll
 ```
 
-Keep recipe lookup and placeable lookup out of the command implementation. The command should dispatch the requested operation only; runtime owns finding the workshop instance, initializing `WorkshopState`, and applying worker-slot/automation/queue mutations.
+Keep recipe lookup and placeable lookup out of the command implementation. The command should dispatch the requested operation only; Runtime owns validation/context routing and Simulation applies worker-slot/automation/queue mutations at the post-tick boundary.
 
-Stockpile creation commands also no longer cast `context.World` to `World`:
+Stockpile creation/deletion commands also no longer cast `context.World` to `World`:
 
 ```text
-CreateStockpileCommand
+CreateStockpileCommand / DeleteStockpileCommand
   -> IStockpileCommandTarget
-  -> StockpileCommandTarget
-  -> StockpileManager + ChunkStockpileData
+  -> StockpileDiffLog
+  -> StockpileDiffApplicator.ApplyAll
 ```
 
-This is intentionally a runtime seam rather than `StockpileDiff`. The current stockpile diff applicator is not attached to the active tick pipeline and still has unresolved item/job TODOs, so using it for command migration would make stockpile creation silently disappear or become partially applied.
+Stockpile create/delete now use the active typed diff path, and create diffs carry preset-derived filter/priority data. Stockpile filter matching uses item projection and is covered by smoke tests. Stockpile item-index updates for transport pickup/delivery/cancel and construction/craft full-stack consumption now enter through Jobs-owned emitters that queue `StockpileDiffLog` operations. Those item-index diffs must carry projected `ItemStackRef` payloads so `RemoveItem` can clear tag indexes after `ItemsDiffApplicator` has already deleted the item.
+
+Stockpile slot reservations are also a typed diff concern. `HaulingSystem` should track same-tick planned reservations before choosing more stockpile destinations and should queue `ReserveSlot` beside `TransportRequest` enqueueing. Do not call `ChunkStockpileData.TryReserveSlot(...)` from planners or App code. Transport failure/cancel paths release through `StockpileDiffLog.AddReleaseSlot(...)`.
+
+Stockpile reservations must follow accepted transport requests. `ITransportIntake.Enqueue(...)` reports whether a new pending transport entry was added; stockpile planners should only write `ReserveSlot` after a true return. `TransportRequestQueue` owns duplicate pending-item protection, so a merged or rejected duplicate request must not get a second stockpile slot reservation.
+
+Only `TransportReason.ToStockpile` should short-circuit pickup when an item is already in a stockpile. Construction, craft, refuel, and other non-stockpile jobs must be able to pick up stockpiled items and emit stockpile remove-index diffs, otherwise stockpiles become a dead end for the broader jobs pipeline.
 
 The richer workshop and stockpile target behavior now lives in Runtime-owned helper classes rather than directly in `SimulationRuntimeContext`. Item spawning, creature spawning, order enqueueing, and zone mutation also now live behind Runtime-owned target helpers.
 
 `SimulationRuntimeContext` itself is Runtime-owned and should stay a runtime command clock/target context, not a dumping ground for every target interface. Commands should resolve mutations through the target-context role; do not reintroduce `context is IOrderCommandTarget` / `context is IZoneCommandTarget` style casts or make the context implement every target interface again.
 
-Profession assignment remains a special case: Runtime only stores an injected weight-write callback, while App composition still wires the Jobs-owned `ProfessionAssignments` instance into the active session systems.
+Profession assignment updates now queue through `ProfessionAssignmentDiffLog` and apply after the typed Simulation diffs. Runtime still stores the bound handler supplied by concrete system composition, but command execution should not call the handler directly.
 
-Do not use `StockpileDiff` as a migration target yet. Its applicator is not attached to the active tick pipeline and still contains TODO paths for job creation and item placement/removal.
+Do not reintroduce stockpile-local haul-job diffs. `CreateZone` and `DeleteZone` are authoritative active-path operations, and item placement/removal/release paths are now integrated for Transport plus construction/craft consumption. The legacy broker `CreateHaulJob` diff was removed because reserving a slot without enqueueing a `TransportRequest` leaks capacity. New stockpile hauling behavior should enter through Jobs/Transport planning and queue stockpile reservation/index diffs beside transport requests.
 
 ### Do not let GameStateManager recreate the runtime graph by hand
 

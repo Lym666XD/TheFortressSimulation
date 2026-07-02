@@ -10,7 +10,7 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 internal sealed class OrdersManager
 {
-    public static System.Action<string>? LogCallback { get; set; }
+    internal static System.Action<string>? LogCallback { get; set; }
     private readonly ConcurrentQueue<HaulDesignation> _haulQueue = new();
     private readonly ConcurrentQueue<HaulDesignation> _recentHauls = new();
     private const int RecentCapacity = 32;
@@ -33,7 +33,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Enqueue a haul designation for processing.
     /// </summary>
-    public void EnqueueHaul(Rectangle worldRect, int z, int priority, ulong createdTick)
+    internal void EnqueueHaul(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
         var d = new HaulDesignation(worldRect, z, priority, createdTick);
         _haulQueue.Enqueue(d);
@@ -45,7 +45,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Legacy wrapper kept for compatibility: simple mining becomes Advanced DIG at single Z.
     /// </summary>
-    public void EnqueueMining(Rectangle worldRect, int z, int priority, ulong createdTick)
+    internal void EnqueueMining(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
         EnqueueMiningAdvanced(worldRect, z, z, MiningAction.Dig, priority, createdTick);
     }
@@ -54,7 +54,7 @@ internal sealed class OrdersManager
     /// Enqueue advanced mining order. DIG/DIG_RAMP decomposed into per-Z MiningDesignation immediately.
     /// Others queued for future handling.
     /// </summary>
-    public void EnqueueMiningAdvanced(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
+    internal void EnqueueMiningAdvanced(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
     {
         // === Z-AXIS INVERSION FOR STAIRWELLS ===
         // Game internal: Z increases upward (z=25 is ground, z=32 is higher)
@@ -112,7 +112,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Drain new unified mining designations (V2) into provided list.
     /// </summary>
-    public int DrainMiningAdds(ICollection<MiningDesignation> into, int maxCount)
+    internal int DrainMiningAdds(ICollection<MiningDesignation> into, int maxCount)
     {
         int drained = 0;
         while (drained < maxCount && _miningAdd.TryDequeue(out var d))
@@ -126,7 +126,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Drain mining cancellation regions (RemoveDigging) into provided list.
     /// </summary>
-    public int DrainMiningCancels(ICollection<MiningCancelRegion> into, int maxCount)
+    internal int DrainMiningCancels(ICollection<MiningCancelRegion> into, int maxCount)
     {
         int drained = 0;
         while (drained < maxCount && _miningCancel.TryDequeue(out var d))
@@ -140,7 +140,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Enqueue a construction designation (may span multiple Z).
     /// </summary>
-    public void EnqueueConstruction(Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority, ulong createdTick)
+    internal void EnqueueConstruction(Rectangle worldRect, int zMin, int zMax, ConstructionShape shape, MaterialFilterSpec filter, int priority, ulong createdTick)
     {
         var d = new ConstructionDesignation(worldRect, zMin, zMax, shape, filter, priority, createdTick);
         _constructionQueue.Enqueue(d);
@@ -152,7 +152,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Enqueue an L2 buildable construction (e.g., workshop) at an anchor cell.
     /// </summary>
-    public void EnqueueBuildableConstruction(string constructionId, Point anchor, int z, int priority, ulong createdTick)
+    internal void EnqueueBuildableConstruction(string constructionId, Point anchor, int z, int priority, ulong createdTick)
     {
         var d = new BuildableConstructionDesignation(constructionId, anchor, z, priority, createdTick);
         _buildableQueue.Enqueue(d);
@@ -165,7 +165,7 @@ internal sealed class OrdersManager
     /// Drain at most maxCount haul designations into the provided list.
     /// Returns number drained. Use in the Read phase.
     /// </summary>
-    public int DrainHaulDesignations(ICollection<HaulDesignation> into, int maxCount)
+    internal int DrainHaulDesignations(ICollection<HaulDesignation> into, int maxCount)
     {
         int drained = 0;
         while (drained < maxCount && _haulQueue.TryDequeue(out var desig))
@@ -179,7 +179,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Get a snapshot of recently created haul designations (for UI/debug).
     /// </summary>
-    public List<HaulDesignation> GetRecentHauls()
+    internal List<HaulDesignation> GetRecentHauls()
     {
         return _recentHauls.ToList();
     }
@@ -187,21 +187,21 @@ internal sealed class OrdersManager
     /// <summary>
     /// Get snapshot of active haul designations (persistent until manually cleared).
     /// </summary>
-    public List<HaulDesignation> GetActiveHaulsSnapshot()
+    internal List<HaulDesignation> GetActiveHaulsSnapshot()
     {
         return _activeHauls.ToList();
     }
 
     // V2 snapshots for UI/debug
-    public List<MiningDesignation> GetRecentMining() => _recentMining.ToList();
-    public List<MiningDesignation> GetActiveMiningSnapshot() => _activeMining.ToList();
+    internal List<MiningDesignation> GetRecentMining() => _recentMining.ToList();
+    internal List<MiningDesignation> GetActiveMiningSnapshot() => _activeMining.ToList();
 
     // Legacy DrainMiningAdvanced removed (unified V2 in use)
 
     /// <summary>
     /// Drain construction designations into provided list (Read phase).
     /// </summary>
-    public int DrainConstructionDesignations(ICollection<ConstructionDesignation> into, int maxCount)
+    internal int DrainConstructionDesignations(ICollection<ConstructionDesignation> into, int maxCount)
     {
         int drained = 0;
         while (drained < maxCount && _constructionQueue.TryDequeue(out var desig))
@@ -215,7 +215,7 @@ internal sealed class OrdersManager
     /// <summary>
     /// Drain buildable construction designations (L2) into provided list.
     /// </summary>
-    public int DrainBuildableConstructions(ICollection<BuildableConstructionDesignation> into, int maxCount)
+    internal int DrainBuildableConstructions(ICollection<BuildableConstructionDesignation> into, int maxCount)
     {
         int drained = 0;
         while (drained < maxCount && _buildableQueue.TryDequeue(out var d))
@@ -226,10 +226,10 @@ internal sealed class OrdersManager
         return drained;
     }
 
-    public List<ConstructionDesignation> GetRecentConstruction() => _recentConstruction.ToList();
-    public List<ConstructionDesignation> GetActiveConstructionSnapshot() => _activeConstruction.ToList();
-    public List<BuildableConstructionDesignation> GetRecentBuildable() => _recentBuildable.ToList();
-    public List<BuildableConstructionDesignation> GetActiveBuildableSnapshot() => _activeBuildable.ToList();
+    internal List<ConstructionDesignation> GetRecentConstruction() => _recentConstruction.ToList();
+    internal List<ConstructionDesignation> GetActiveConstructionSnapshot() => _activeConstruction.ToList();
+    internal List<BuildableConstructionDesignation> GetRecentBuildable() => _recentBuildable.ToList();
+    internal List<BuildableConstructionDesignation> GetActiveBuildableSnapshot() => _activeBuildable.ToList();
 
     // Unified mining designation contract
     internal readonly record struct MiningDesignation(int Id, Rectangle Rect, int ZMin, int ZMax, MiningAction Action, int Priority, ulong CreatedTick);

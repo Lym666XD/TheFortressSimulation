@@ -7,6 +7,7 @@ using HumanFortress.Jobs.Craft;
 using HumanFortress.Navigation;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Jobs;
@@ -27,7 +28,8 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         NavigationManager? sharedNav,
         ProfessionAssignments? professions,
         WorkerSelectionStrategy workerStrategy,
-        NavigationTuning? navigationTuning = null)
+        NavigationTuning? navigationTuning = null,
+        StockpileDiffLog? stockpileDiffLog = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
@@ -35,7 +37,7 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         var navView = new WorldNavigationView(navigation);
         IWorldNavigationView navViewInterface = navView;
         var move = new MovementExecutor(paths);
-        var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId);
+        var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId, world, stockpileDiffLog);
         ICraftWorkerCandidateSource? workerCandidates = professions == null
             ? null
             : new CraftProfessionCandidateSource(professions, workerStrategy);

@@ -39,6 +39,7 @@ internal static class FortressPlacementRouter
             PlacementMode.BuildableConfirmAnchor when ui.PlaceFirstCorner.HasValue => FortressPlacementController.TryHandleBuildableConfirmAnchorClick(placementContext),
             PlacementMode.ZoneSecondCorner when ui.PlaceFirstCorner.HasValue => FortressPlacementController.TryHandleZoneSecondCornerClick(placementContext, worldPos),
             PlacementMode.ZoneDelete => FortressPlacementController.TryHandleZoneDeleteClick(placementContext, worldPos),
+            PlacementMode.StockpileDelete => FortressPlacementController.TryHandleStockpileDeleteClick(placementContext, worldPos),
             PlacementMode.StockpileCopy => FortressPlacementController.TryHandleStockpileCopyClick(placementContext, worldPos),
             _ => false
         };

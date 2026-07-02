@@ -2,6 +2,7 @@ using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Navigation;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -12,6 +13,7 @@ internal static class FortressRuntimeSystemsFactory
         World world,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
+        StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
         FortressRuntimeDependencies dependencies,
         FortressRuntimeLogging? logging = null)
@@ -19,16 +21,22 @@ internal static class FortressRuntimeSystemsFactory
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(diffLog);
         ArgumentNullException.ThrowIfNull(itemsDiffLog);
+        ArgumentNullException.ThrowIfNull(stockpileDiffLog);
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(dependencies);
 
         logging ??= FortressRuntimeLogging.None;
 
-        var planners = FortressRuntimePlanningSystems.Create(world, dependencies, logging);
+        var planners = FortressRuntimePlanningSystems.Create(
+            world,
+            stockpileDiffLog,
+            dependencies,
+            logging);
         var jobs = FortressRuntimeJobSystems.Create(
             world,
             diffLog,
             itemsDiffLog,
+            stockpileDiffLog,
             navigation,
             dependencies,
             planners,

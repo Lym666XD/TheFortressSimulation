@@ -1,4 +1,5 @@
 using HumanFortress.Simulation.World;
+using HumanFortress.Simulation.Stockpile;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime;
@@ -6,11 +7,19 @@ namespace HumanFortress.Runtime;
 internal sealed partial class StockpileCommandTarget : IStockpileCommandTarget
 {
     private readonly World _world;
+    private readonly StockpileDiffLog _stockpileDiffLog;
+    private readonly FortressRuntimeStockpilePresetCatalog _presetCatalog;
     private readonly Action<string>? _log;
 
-    internal StockpileCommandTarget(World world, Action<string>? log = null)
+    internal StockpileCommandTarget(
+        World world,
+        StockpileDiffLog stockpileDiffLog,
+        FortressRuntimeStockpilePresetCatalog? presetCatalog = null,
+        Action<string>? log = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
+        _stockpileDiffLog = stockpileDiffLog ?? throw new ArgumentNullException(nameof(stockpileDiffLog));
+        _presetCatalog = presetCatalog ?? FortressRuntimeStockpilePresetCatalog.Empty;
         _log = log;
     }
 
@@ -37,22 +46,36 @@ internal sealed partial class StockpileCommandTarget : IStockpileCommandTarget
         }
 
         var homeChunk = GetHomeChunk(cellsByChunk.Keys);
-        int zoneId = _world.Stockpiles.CreateZone(BuildZoneName(normalizedPreset), homeChunk, currentTick);
+        var preset = _presetCatalog.Resolve(normalizedPreset);
+        string zoneName = BuildZoneName(preset.Id, _stockpileDiffLog.PendingCreateZoneCount);
+        _stockpileDiffLog.AddCreateZone(
+            zoneName,
+            homeChunk,
+            cellsByChunk.ToDictionary(
+                static entry => entry.Key,
+                static entry => (IReadOnlyList<int>)entry.Value.ToArray()),
+            currentTick,
+            priority: 50,
+            systemId: "Runtime.StockpileCommand",
+            filter: preset.CreateFilter(),
+            zonePriority: preset.Priority);
+        _log?.Invoke($"[STOCKPILE] Queued create preset={preset.Id} cells={totalCells} invalid={skippedInvalid} overlap={skippedOverlap}");
+        return true;
+    }
 
-        foreach (var (chunkKey, cells) in cellsByChunk)
+    bool IStockpileCommandTarget.DeleteStockpile(int zoneId, ulong currentTick)
+    {
+        if (zoneId <= 0)
         {
-            var chunk = _world.GetChunk(chunkKey);
-            if (chunk == null)
-                continue;
-
-            chunk.EnsureStockpileData();
-            var stockpileData = chunk.GetStockpileData();
-            stockpileData?.CreateOrUpdateShard(zoneId, chunkKey);
-            stockpileData?.AddCellsToZone(zoneId, cells);
+            _log?.Invoke($"[STOCKPILE] Skipped delete for invalid zone {zoneId}");
+            return false;
         }
 
-        _world.Stockpiles.GetZone(zoneId)?.UpdateMemberChunks(cellsByChunk.Keys);
-        _log?.Invoke($"[STOCKPILE] Created zone {zoneId} preset={normalizedPreset} cells={totalCells} invalid={skippedInvalid} overlap={skippedOverlap}");
+        _stockpileDiffLog.AddDeleteZone(
+            zoneId,
+            priority: 50,
+            systemId: "Runtime.StockpileCommand");
+        _log?.Invoke($"[STOCKPILE] Queued delete zone {zoneId} tick={currentTick}");
         return true;
     }
 

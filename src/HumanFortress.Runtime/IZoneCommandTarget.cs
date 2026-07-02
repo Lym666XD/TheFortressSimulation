@@ -4,7 +4,7 @@ namespace HumanFortress.Runtime;
 
 internal interface IZoneCommandTarget
 {
-    int CreateZone(string defId, string name, Rectangle worldRect, int z, ulong createdTick);
+    void CreateZone(string defId, string name, Rectangle worldRect, int z, ulong createdTick);
 
     void AddZoneCells(int zoneId, Rectangle worldRect, int z);
 

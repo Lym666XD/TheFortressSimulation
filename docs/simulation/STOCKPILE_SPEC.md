@@ -25,7 +25,7 @@ principles:
 scope_v1:
   - Stockpile zones (pull mode, tag-based filtering)
   - Sharded storage across chunks
-  - Integration with hauling broker
+  - Integration with Jobs/Transport hauling planner
   - Basic capacity management (stack counting)
 out_of_scope_v1:
   - Containers/bins; conveyors; carts/vehicles
@@ -90,8 +90,8 @@ ItemStackRef {
 2) UPDATE_ORDER Integration
 2.1 Stage Placement
 Stockpile operations occur in the **Items** stage (stage 7):
-- Read phase: scan zones, evaluate fill levels, generate PullRequests
-- Broker arbitration: match requests with available items
+- Read phase: scan haul designations and stockpile zones, choose accepting destinations
+- Transport planning: enqueue `TransportRequest` records and matching reservation diffs
 - Write phase: apply reservations, update counts, place/remove items
 
 2.2 Diff Operations
@@ -102,8 +102,7 @@ enum StockpileDiffOp {
   AddCells = 3,
   RemoveCells = 4,
   UpdateFilter = 5,
-  CreateHaulJob = 6,   // Broker output
-  ReserveSlot = 7,     // Atomic with CreateHaulJob
+  ReserveSlot = 7,     // Queued beside TransportRequest creation
   ReleaseSlot = 8,
   PlaceItem = 9,
   RemoveItem = 10
@@ -131,10 +130,10 @@ StockpileDiff {
 2. Each chunk scans loose items (parallel)
    → Produces AvailableItem[] not in suitable zones
 
-3. Broker collects all requests & items (barrier)
-   → Sorts by priority → distance → zoneId → itemHandle
-   → Matches deterministically
-   → Outputs CreateHaulJob diffs
+3. Hauling planner chooses destinations through StockpileWorldQueries
+   → Rechecks filters using item projection data
+   → Tracks same-tick planned reservations
+   → Enqueues TransportRequest records plus ReserveSlot diffs only when the transport queue accepts a new pending request
 ```
 
 3.2 PullRequest Structure
@@ -151,7 +150,7 @@ PullRequest {
 
 3.3 Matching Algorithm (deterministic)
 ```csharp
-// In StockpileHaulingBroker.MatchRequestsToItems()
+// In the active HaulingSystem destination planner
 foreach request in sortedRequests:
   candidates = items.Where(i =>
     request.filter.Accepts(i) &&
@@ -162,11 +161,17 @@ foreach request in sortedRequests:
   foreach item in candidates.OrderBy(ScoreInteger):
     score = CalculateIntegerScore(item, request)
     if score > 0:
-      CreateHaulJob(item → request.zone)
-      item.reserved = true
+      if enqueue TransportRequest(item → request.zone):
+        queue ReserveSlot(request.zone)
       request.desiredStacks--
       if request.desiredStacks <= 0: break
 ```
+
+The transport request queue owns duplicate pending-item protection. Same-item,
+same-destination requests merge quantities into the existing pending request;
+same-item, competing-destination requests preserve the earlier pending request.
+Stockpile reservations must follow the boolean enqueue result so merged or
+rejected duplicate requests do not reserve extra slots.
 
 4) Integer Scoring (Deterministic)
 ```
@@ -243,13 +248,9 @@ Sort key within chunk:
 ```csharp
 void ApplyStockpileDiff(Chunk chunk, StockpileDiff diff) {
   switch(diff.op) {
-    case CreateHaulJob:
-      // Atomic with reservation
-      if (!ValidateItemStillAvailable(diff.itemHandle))
-        return; // Silent discard
-      chunk.CreateHaulJob(diff);
-      chunk.ReserveSlot(diff.zoneId, diff.cellIndex);
-      chunk.ReserveItem(diff.itemHandle);
+    case ReserveSlot:
+      // Queued beside a TransportRequest by the hauling planner
+      chunk.ReserveSlot(diff.zoneId);
       break;
 
     case PlaceItem:
@@ -354,7 +355,7 @@ ModifyStockpileZone {
 - Hysteresis prevents oscillation at boundary
 
 13.3 Performance
-- 100 zones with 1000 items: broker < 2ms
+- 100 zones with 1000 items: hauling destination planning remains bounded per tick
 - Parallel chunk scanning scales linearly
 
 13.4 Correctness
@@ -367,7 +368,7 @@ ModifyStockpileZone {
 - [ ] StockpileZone and ZoneShard data structures
 - [ ] ChunkStockpileData integration
 - [ ] StockpileDiff operations
-- [ ] StockpileHaulingBroker
+- [x] Jobs/Transport-backed stockpile hauling planner
 - [ ] Integration with Items stage
 
 14.2 UI Integration

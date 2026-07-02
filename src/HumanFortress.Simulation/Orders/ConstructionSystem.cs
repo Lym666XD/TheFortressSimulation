@@ -12,7 +12,7 @@ namespace HumanFortress.Simulation.Orders;
 /// <summary>
 /// Planner for L0 structural construction. Reads ConstructionDesignation and produces PlannedBuilds.
 /// - Multi-Z prism support: top layer -> StairsDown, bottom -> StairsUp, middle -> StairsUD when Shape=Stairs.
-/// - Material resolution: queries ContentRegistry for (material, kind) → geology handle, with last-used preference cache.
+/// - Material resolution: delegates material/kind to geology-handle mapping to an injected runtime resolver.
 /// - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
 /// </summary>
 internal sealed class ConstructionSystem : ITick
@@ -204,7 +204,7 @@ internal sealed class ConstructionSystem : ITick
         _planned.Clear();
     }
 
-    public int DequeuePlannedBuilds(int max, IList<PlannedBuild> into)
+    internal int DequeuePlannedBuilds(int max, IList<PlannedBuild> into)
     {
         int n = 0;
         while (n < max && _outbox.TryDequeue(out var m))
@@ -218,7 +218,7 @@ internal sealed class ConstructionSystem : ITick
     /// <summary>
     /// Helper to pack SetTerrain args with optional geology override (plan A: existing opcode).
     /// </summary>
-    public static ulong PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind kind, ushort geologyHandle)
+    internal static ulong PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind kind, ushort geologyHandle)
     {
         return ((ulong)kind & 0xFFUL) | (((ulong)geologyHandle & 0xFFFFUL) << 8);
     }

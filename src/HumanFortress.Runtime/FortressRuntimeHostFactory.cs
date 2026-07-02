@@ -1,10 +1,5 @@
 using HumanFortress.Content.Loading;
-using HumanFortress.Core.Commands;
-using HumanFortress.Core.Events;
-using HumanFortress.Core.Simulation;
-using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -13,22 +8,14 @@ internal static class FortressRuntimeHostFactory
 {
     internal static SimulationRuntimeHost<SimulationRuntimeSystems> Create(
         World world,
-        TickScheduler tickScheduler,
-        CommandQueue commandQueue,
-        IEventBus eventBus,
-        DiffLog diffLog,
-        ItemsDiffLog itemsDiffLog,
+        RuntimeSessionServices services,
         NavigationManager navigation,
         string baseDir,
         FortressRuntimeContentSnapshot? content = null,
         FortressRuntimeLogging? logging = null)
     {
         ArgumentNullException.ThrowIfNull(world);
-        ArgumentNullException.ThrowIfNull(tickScheduler);
-        ArgumentNullException.ThrowIfNull(commandQueue);
-        ArgumentNullException.ThrowIfNull(eventBus);
-        ArgumentNullException.ThrowIfNull(diffLog);
-        ArgumentNullException.ThrowIfNull(itemsDiffLog);
+        ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
@@ -38,16 +25,13 @@ internal static class FortressRuntimeHostFactory
 
         return new SimulationRuntimeHost<SimulationRuntimeSystems>(
             world,
-            tickScheduler,
-            commandQueue,
-            eventBus,
-            diffLog,
-            itemsDiffLog,
+            services,
             navigation,
             () => FortressRuntimeSystemsFactory.Create(
                 world,
-                diffLog,
-                itemsDiffLog,
+                services.DiffLog,
+                services.ItemsDiffLog,
+                services.MutationDiffs.Stockpiles,
                 navigation,
                 dependencies,
                 logging),
@@ -56,6 +40,8 @@ internal static class FortressRuntimeHostFactory
             dependencies.Recipes,
             dependencies.Constructions,
             dependencies.Geology,
-            dependencies.NavigationTuning);
+            dependencies.NavigationTuning,
+            dependencies.StockpilePresets);
     }
+
 }

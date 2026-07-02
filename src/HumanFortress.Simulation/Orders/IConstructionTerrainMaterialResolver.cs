@@ -11,7 +11,7 @@ internal interface IConstructionTerrainMaterialResolver
 
 internal sealed class EmptyConstructionTerrainMaterialResolver : IConstructionTerrainMaterialResolver
 {
-    public static EmptyConstructionTerrainMaterialResolver Instance { get; } = new();
+    internal static EmptyConstructionTerrainMaterialResolver Instance { get; } = new();
 
     private EmptyConstructionTerrainMaterialResolver()
     {

@@ -3,6 +3,7 @@ using HumanFortress.Jobs.Craft;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -37,17 +38,23 @@ internal sealed class FortressRuntimePlanningSystems
 
     internal static FortressRuntimePlanningSystems Create(
         World world,
+        StockpileDiffLog stockpileDiffLog,
         FortressRuntimeDependencies dependencies,
         FortressRuntimeLogging? logging = null)
     {
         ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(stockpileDiffLog);
         ArgumentNullException.ThrowIfNull(dependencies);
 
         logging ??= FortressRuntimeLogging.None;
 
         var mining = new MiningSystem(world, world.Orders);
         var transportQueue = new TransportRequestQueue();
-        var hauling = new HaulingSystem(world, world.Orders, transportIntake: transportQueue);
+        var hauling = new HaulingSystem(
+            world,
+            world.Orders,
+            transportIntake: transportQueue,
+            stockpileDiffLog: stockpileDiffLog);
         var constructionMaterials = new ConstructionMaterialsPlanner(world, transportQueue, world.Items);
         ConstructionMaterialsPlanner.LogCallback = logging.ConstructionMaterials;
         var construction = new ConstructionSystem(

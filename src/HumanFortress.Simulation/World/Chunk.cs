@@ -129,12 +129,12 @@ internal sealed class Chunk
     /// <summary>
     /// Convert local coordinates to index.
     /// </summary>
-    public static int LocalIndex(int x, int y) => y * SIZE_XY + x;
+    internal static int LocalIndex(int x, int y) => y * SIZE_XY + x;
 
     /// <summary>
     /// Convert index to local coordinates.
     /// </summary>
-    public static (int x, int y) IndexToLocal(int index)
+    internal static (int x, int y) IndexToLocal(int index)
     {
         return (index % SIZE_XY, index / SIZE_XY);
     }

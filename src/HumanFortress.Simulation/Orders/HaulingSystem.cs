@@ -12,8 +12,7 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Minimal v1 hauling system: reads haul designations, plans moves, and applies instant relocations.
-/// Design for extensibility: later replace instant moves with creature-assigned jobs and path execution.
+/// Reads haul designations and turns them into transport requests.
 /// </summary>
 internal sealed class HaulingSystem : ITick
 {
@@ -21,18 +20,21 @@ internal sealed class HaulingSystem : ITick
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
 
-    // Planned relocations from Read phase (legacy path; retained for compatibility)
-    private readonly List<PlannedMove> _planned = new();
-    // Decoupled intake to Transport pipeline (single authority)
+    private readonly List<PlannedTransportRequest> _plannedRequests = new();
+    private readonly HashSet<Guid> _plannedItems = new();
+    private readonly Dictionary<(ChunkKey ChunkKey, int ZoneId), int> _plannedReservations = new();
     private readonly HumanFortress.Simulation.Jobs.ITransportIntake _transportIntake;
+    private readonly StockpileDiffLog? _stockpileDiffLog;
 
-    public HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128,
-        HumanFortress.Simulation.Jobs.ITransportIntake? transportIntake = null)
+    internal HaulingSystem(World.World world, OrdersManager orders, int maxPerTick = 128,
+        HumanFortress.Simulation.Jobs.ITransportIntake? transportIntake = null,
+        StockpileDiffLog? stockpileDiffLog = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _orders = orders ?? throw new ArgumentNullException(nameof(orders));
         _maxPerTick = Math.Max(1, maxPerTick);
         _transportIntake = transportIntake ?? throw new ArgumentNullException(nameof(transportIntake), "Transport intake is required after haul refactor");
+        _stockpileDiffLog = stockpileDiffLog;
     }
 
     public int Priority => UpdateOrder.Priority.Items; // Ensure writes align with Items stage
@@ -40,7 +42,9 @@ internal sealed class HaulingSystem : ITick
 
     public void ReadTick(ulong tick)
     {
-        _planned.Clear();
+        _plannedRequests.Clear();
+        _plannedItems.Clear();
+        _plannedReservations.Clear();
 
         // Drain a bounded number of new haul designations (one-shot mode: no persistent active set)
         var desigs = new List<HaulDesignation>();
@@ -63,22 +67,38 @@ internal sealed class HaulingSystem : ITick
             foreach (var item in items)
             {
                 if (plannedCount >= _maxPerTick) break;
+                if (!_plannedItems.Add(item.Guid)) continue;
                 // Skip if centrally reserved (TTL based)
-                if (_world.Reservations.IsItemReserved(item.Guid, tick)) continue;
+                if (_world.Reservations.IsItemReserved(item.Guid, tick))
+                {
+                    _plannedItems.Remove(item.Guid);
+                    continue;
+                }
 
                 // Choose nearest accepting zone cell (v1: first shard member cell)
                 if (!TryFindDestination(item, zones, out var destWorld, out var toZ))
+                {
+                    _plannedItems.Remove(item.Guid);
                     continue;
+                }
 
+                if (!StockpileWorldQueries.TryGetStockpileCell(_world, destWorld.X, destWorld.Y, toZ, out var destinationCell))
+                {
+                    _plannedItems.Remove(item.Guid);
+                    continue;
+                }
 
-                _planned.Add(new PlannedMove
+                _plannedRequests.Add(new PlannedTransportRequest
                 {
                     ItemGuid = item.Guid,
                     From = item.Position,
                     FromZ = item.Z,
                     To = destWorld,
-                    ToZ = toZ
+                    ToZ = toZ,
+                    DestinationChunk = destinationCell.ChunkKey,
+                    DestinationZoneId = destinationCell.ZoneId
                 });
+                AddPlannedReservation(destinationCell);
                 plannedCount++;
             }
         }
@@ -86,52 +106,52 @@ internal sealed class HaulingSystem : ITick
 
     private bool IsInStockpile(Items.ItemInstance item)
     {
-        int worldX = item.Position.X;
-        int worldY = item.Position.Y;
-        int z = item.Z;
-        int cx = worldX / Chunk.SIZE_XY;
-        int cy = worldY / Chunk.SIZE_XY;
-        int lx = worldX % Chunk.SIZE_XY;
-        int ly = worldY % Chunk.SIZE_XY;
-        var ck = new ChunkKey(cx, cy, z);
-        var chunk = _world.GetChunk(ck);
-        if (chunk == null) return false;
-        var stock = chunk.GetStockpileData();
-        if (stock == null) return false;
-        int cell = Chunk.LocalIndex(lx, ly);
-        bool inZone = stock.GetZoneAtCell(cell) > 0;
+        bool inZone = StockpileWorldQueries.IsItemInStockpile(_world, item);
         if (inZone)
         {
-            Log($"[HAUL-PLAN] Skip item={item.Guid} already in stockpile zone at ({worldX},{worldY},{z})");
+            Log($"[HAUL-PLAN] Skip item={item.Guid} already in stockpile zone at ({item.Position.X},{item.Position.Y},{item.Z})");
         }
         return inZone;
     }
 
     public void WriteTick(ulong tick)
     {
-        if (_planned.Count == 0) return;
+        if (_plannedRequests.Count == 0) return;
 
-        foreach (var move in _planned)
+        foreach (var request in _plannedRequests)
         {
-            uint seed = SeedFrom(move.ItemGuid);
-            var inst = _world.Items.GetInstance(move.ItemGuid);
+            uint seed = SeedFrom(request.ItemGuid);
+            var inst = _world.Items.GetInstance(request.ItemGuid);
             int qty = inst?.StackCount ?? 1;
             var req = new HumanFortress.Simulation.Jobs.TransportRequest(
-                move.ItemGuid,
-                move.From,
-                move.FromZ,
-                move.To,
-                move.ToZ,
+                request.ItemGuid,
+                request.From,
+                request.FromZ,
+                request.To,
+                request.ToZ,
                 qty,
                 HumanFortress.Simulation.Jobs.TransportReason.ToStockpile,
                 Priority: 60,
                 RequestorId: SystemId,
                 CreatedTick: tick,
                 Seed: seed);
-            _transportIntake.Enqueue(in req);
-            Log($"[HAUL-PLAN][{tick}] Enqueue item={move.ItemGuid} from=({move.From.X},{move.From.Y},{move.FromZ}) to=({move.To.X},{move.To.Y},{move.ToZ}) qty={qty}");
+            if (_transportIntake.Enqueue(in req))
+            {
+                _stockpileDiffLog?.AddReserveSlot(
+                    request.DestinationChunk,
+                    request.DestinationZoneId,
+                    Priority,
+                    SystemId);
+                Log($"[HAUL-PLAN][{tick}] Enqueue item={request.ItemGuid} from=({request.From.X},{request.From.Y},{request.FromZ}) to=({request.To.X},{request.To.Y},{request.ToZ}) qty={qty}");
+            }
+            else
+            {
+                Log($"[HAUL-PLAN][{tick}] Skip duplicate pending transport item={request.ItemGuid} to=({request.To.X},{request.To.Y},{request.ToZ})");
+            }
         }
-        _planned.Clear();
+        _plannedRequests.Clear();
+        _plannedItems.Clear();
+        _plannedReservations.Clear();
     }
 
     private static uint SeedFrom(Guid a)
@@ -153,56 +173,19 @@ internal sealed class HaulingSystem : ITick
 
     private bool TryFindDestination(Items.ItemInstance item, List<StockpileZone> zones, out Point destWorld, out int destZ)
     {
-        // v1: pick the member cell in the nearest zone by Manhattan distance (chunk-level, includes Z) and use the first cell in that shard
-        destWorld = default;
-        destZ = item.Z;
+        if (!StockpileWorldQueries.TryFindDestination(_world, item, zones, out destWorld, out destZ, _plannedReservations))
+            return false;
 
-        var itemChunkX = item.Position.X / Chunk.SIZE_XY;
-        var itemChunkY = item.Position.Y / Chunk.SIZE_XY;
-        var itemChunkKey = new ChunkKey(itemChunkX, itemChunkY, item.Z);
+        Log($"[HAUL-PLAN] Dest cell=({destWorld.X},{destWorld.Y},{destZ})");
+        return true;
+    }
 
-        StockpileZone? bestZone = null;
-        int bestDist = int.MaxValue;
-
-        foreach (var zone in zones)
-        {
-            // Must contain at least one shard at this Z
-            foreach (var ck in zone.MemberChunks)
-            {
-                int dist = Math.Abs(ck.ChunkX - itemChunkKey.ChunkX) + Math.Abs(ck.ChunkY - itemChunkKey.ChunkY) + Math.Abs(ck.Z - itemChunkKey.Z);
-                if (dist < bestDist)
-                {
-                    bestDist = dist;
-                    bestZone = zone;
-                }
-            }
-        }
-
-        if (bestZone == null) return false;
-
-        // Choose first member cell from the nearest shard
-        foreach (var ck in bestZone.MemberChunks)
-        {
-            var chunk = _world.GetChunk(ck);
-            if (chunk == null) continue;
-            var stock = chunk.GetStockpileData();
-            if (stock == null) continue;
-            var shard = stock.GetShard(bestZone.ZoneId);
-            if (shard == null) continue;
-
-            // Pick the first cell belonging to the shard
-            for (int idx = 0; idx < shard.MemberCells.Length; idx++)
-            {
-                if (!shard.MemberCells[idx]) continue;
-                var (lx, ly) = Chunk.IndexToLocal(idx);
-                destWorld = new Point(ck.ChunkX * Chunk.SIZE_XY + lx, ck.ChunkY * Chunk.SIZE_XY + ly);
-                destZ = ck.Z;
-                Log($"[HAUL-PLAN] Dest zone={bestZone.ZoneId} chunk=({ck.ChunkX},{ck.ChunkY},{ck.Z}) cell=({destWorld.X},{destWorld.Y},{destZ})");
-                return true;
-            }
-        }
-
-        return false;
+    private void AddPlannedReservation(StockpileCellLocation location)
+    {
+        var key = (location.ChunkKey, location.ZoneId);
+        _plannedReservations[key] = _plannedReservations.TryGetValue(key, out int current)
+            ? current + 1
+            : 1;
     }
 
     private static void Log(string message)
@@ -210,13 +193,15 @@ internal sealed class HaulingSystem : ITick
         SimulationDiagnostics.Information(OrdersManager.LogCallback, "Jobs.Hauling", message);
     }
 
-    internal struct PlannedMove
+    internal struct PlannedTransportRequest
     {
         public Guid ItemGuid;
         public Point From;
         public int FromZ;
         public Point To;
         public int ToZ;
+        public ChunkKey DestinationChunk;
+        public int DestinationZoneId;
     }
 
 }

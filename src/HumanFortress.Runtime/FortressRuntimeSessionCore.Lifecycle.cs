@@ -46,8 +46,8 @@ internal sealed partial class FortressRuntimeSessionCore
         FortressRuntimeStartup.Start(
             runtime,
             enqueueAutoDig,
-            _commandQueue,
-            _tickScheduler,
+            _services.CommandQueue,
+            _services.TickScheduler,
             (world, queue, tick) => RuntimeAutoDigSeeder.EnqueueIfPossible(world, queue, tick, _log),
             _log);
     }

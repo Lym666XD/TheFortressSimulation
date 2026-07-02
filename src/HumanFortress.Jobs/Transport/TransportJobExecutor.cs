@@ -42,6 +42,7 @@ internal sealed class TransportJobExecutor
         IMovementExecutor move,
         ITransportMovementDiffEmitter movementDiffEmitter,
         ITransportItemDiffEmitter itemDiffEmitter,
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         ITransportWorkerCandidateSource? workerCandidates,
         ITransportJobCompletionSink? completionSink,
         ITransportJobLogger? logger,
@@ -55,6 +56,7 @@ internal sealed class TransportJobExecutor
         move = move ?? throw new ArgumentNullException(nameof(move));
         _logger = logger ?? NullTransportJobLogger.Instance;
         _intakeFilter = new TransportIntakeFilter(world);
+        stockpileIndexEmitter ??= NullTransportStockpileIndexEmitter.Instance;
 
         var destinationValidator = new TransportDestinationValidator(world);
         var jobFinalizer = new TransportJobFinalizer(world.Reservations);
@@ -77,6 +79,7 @@ internal sealed class TransportJobExecutor
             navView,
             move,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             jobFinalizer,
             _logger,
             CreatureReserveTtlTicks,
@@ -84,6 +87,7 @@ internal sealed class TransportJobExecutor
         var deliveryHandler = new TransportDeliveryHandler(
             destinationValidator,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             jobFinalizer,
             completionSink,
             _logger,
@@ -94,6 +98,7 @@ internal sealed class TransportJobExecutor
             move,
             movementDiffEmitter,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             replanHandler,
             jobFinalizer,
             pickupHandler,

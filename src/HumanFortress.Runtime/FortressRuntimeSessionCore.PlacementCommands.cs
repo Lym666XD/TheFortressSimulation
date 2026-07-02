@@ -71,4 +71,9 @@ internal sealed partial class FortressRuntimeSessionCore
     {
         EnqueueCurrentTickCommand(RuntimePlacementCommandFactory.CreateStockpile(rect.ToSadRogueRectangle(), z, presetId));
     }
+
+    void IFortressRuntimeSessionPlacementCommandPort.QueueDeleteStockpile(int zoneId)
+    {
+        EnqueueCurrentTickCommand(RuntimePlacementCommandFactory.DeleteStockpile(zoneId));
+    }
 }

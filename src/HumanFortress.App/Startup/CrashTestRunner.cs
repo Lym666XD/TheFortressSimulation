@@ -8,7 +8,7 @@ namespace HumanFortress.App.Startup;
 
 internal static class CrashTestRunner
 {
-    public static void Run()
+    internal static void Run()
     {
         using var logWriter = new StreamWriter("fortress_crash_test.log", false)
         {
@@ -34,7 +34,7 @@ internal static class CrashTestRunner
             session.ConfigureEmbark(new Point(10, 10), 2);
 
             Console.WriteLine("[TEST-CRASH] Generating test world");
-            var worldGeneration = new WorldGenerationAccess();
+            var worldGeneration = WorldGenerationServiceProvider.Create();
             var worldSettings = new WorldGenerationSettings
             {
                 Seed = (uint)masterSeed,

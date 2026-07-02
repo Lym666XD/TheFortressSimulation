@@ -162,7 +162,7 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Get and clear all dirty chunks for navigation rebuild.
     /// </summary>
-    public List<ChunkKey> GetAndClearDirtyChunks()
+    internal List<ChunkKey> GetAndClearDirtyChunks()
     {
         lock (_dirtyLock)
         {

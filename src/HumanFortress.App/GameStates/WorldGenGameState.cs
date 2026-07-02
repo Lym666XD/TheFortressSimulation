@@ -23,6 +23,6 @@ internal sealed class WorldGenGameState : ScreenGameState<WorldGenState>
 
     protected override WorldGenState CreateScreen()
     {
-        return new WorldGenState(_navigator, _session, new WorldGenerationAccess());
+        return new WorldGenState(_navigator, _session, WorldGenerationServiceProvider.Create());
     }
 }

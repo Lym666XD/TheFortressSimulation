@@ -4,6 +4,7 @@ public readonly record struct SimulationUiOverlayFrameData(
     SimulationBuildCatalogData BuildCatalog,
     SimulationJobsDebugData? Jobs,
     SimulationWorkshopDebugData Workshops,
+    SimulationStockpilePresetMenuData StockpilePresets,
     SimulationStockpileOverlayData StockpileOverlay,
     SimulationStockpileDetailData? StockpileDetail,
     SimulationZoneOverlayData ZoneOverlay,

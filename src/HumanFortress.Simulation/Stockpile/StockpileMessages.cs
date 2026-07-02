@@ -23,52 +23,52 @@ internal readonly struct StockpileMessage
     /// <summary>
     /// Message type.
     /// </summary>
-    public StockpileMessageType Type { get; init; }
+    internal StockpileMessageType Type { get; init; }
 
     /// <summary>
     /// Zone ID this message relates to.
     /// </summary>
-    public int ZoneId { get; init; }
+    internal int ZoneId { get; init; }
 
     /// <summary>
     /// Item handle for haul operations.
     /// </summary>
-    public int ItemHandle { get; init; }
+    internal int ItemHandle { get; init; }
 
     /// <summary>
     /// Quantity being hauled.
     /// </summary>
-    public int Quantity { get; init; }
+    internal int Quantity { get; init; }
 
     /// <summary>
     /// Source chunk for the operation.
     /// </summary>
-    public ChunkKey SourceChunk { get; init; }
+    internal ChunkKey SourceChunk { get; init; }
 
     /// <summary>
     /// Destination chunk for the operation.
     /// </summary>
-    public ChunkKey DestChunk { get; init; }
+    internal ChunkKey DestChunk { get; init; }
 
     /// <summary>
     /// Cell index at destination.
     /// </summary>
-    public int CellIndex { get; init; }
+    internal int CellIndex { get; init; }
 
     /// <summary>
     /// Job ID for tracking.
     /// </summary>
-    public int JobId { get; init; }
+    internal int JobId { get; init; }
 
     /// <summary>
     /// Local sequence for deterministic ordering.
     /// </summary>
-    public int LocalSeq { get; init; }
+    internal int LocalSeq { get; init; }
 
     /// <summary>
     /// Create a haul job assigned message.
     /// </summary>
-    public static StockpileMessage HaulJobAssigned(
+    internal static StockpileMessage HaulJobAssigned(
         int jobId,
         int zoneId,
         int itemHandle,
@@ -95,7 +95,7 @@ internal readonly struct StockpileMessage
     /// <summary>
     /// Create a haul job complete message.
     /// </summary>
-    public static StockpileMessage HaulJobComplete(
+    internal static StockpileMessage HaulJobComplete(
         int jobId,
         int zoneId,
         int itemHandle,
@@ -118,7 +118,7 @@ internal readonly struct StockpileMessage
     /// <summary>
     /// Create a haul job cancelled message.
     /// </summary>
-    public static StockpileMessage HaulJobCancelled(
+    internal static StockpileMessage HaulJobCancelled(
         int jobId,
         int zoneId,
         ChunkKey sourceChunk,
@@ -140,7 +140,7 @@ internal readonly struct StockpileMessage
     /// Get deterministic sort key for mailbox draining.
     /// Per CONCURRENCY_MODEL: tick → sourceChunk.Hash → localSeq
     /// </summary>
-    public long GetDrainSortKey(ulong tick)
+    internal long GetDrainSortKey(ulong tick)
     {
         // Pack: [tick:32][chunkHash:16][localSeq:16]
         long key = 0;

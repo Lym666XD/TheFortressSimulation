@@ -16,7 +16,7 @@ namespace HumanFortress.App.States
         private readonly SadConsole.Console _progressConsole;
         private readonly IAppStateNavigator _navigator;
         private readonly FortressSessionContext _session;
-        private readonly IWorldGenerationAccess _worldGeneration;
+        private readonly IWorldGenerationService _worldGeneration;
         private WorldGenerationSettings _settings;
         private bool _isGenerating;
 
@@ -43,7 +43,7 @@ namespace HumanFortress.App.States
         internal WorldGenState(
             IAppStateNavigator navigator,
             FortressSessionContext session,
-            IWorldGenerationAccess worldGeneration)
+            IWorldGenerationService worldGeneration)
         {
             _navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
             _session = session ?? throw new ArgumentNullException(nameof(session));

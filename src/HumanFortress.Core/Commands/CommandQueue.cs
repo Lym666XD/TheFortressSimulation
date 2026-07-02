@@ -77,7 +77,7 @@ public sealed class CommandQueue
                 }
                 catch (Exception ex)
                 {
-                    HandleCommandError(command, ex);
+                    HandleCommandError(queued, ex);
                 }
             }
         }
@@ -153,12 +153,13 @@ public sealed class CommandQueue
         return tickCompare != 0 ? tickCompare : a.Sequence.CompareTo(b.Sequence);
     }
 
-    private void HandleCommandError(ICommand command, Exception ex)
+    private void HandleCommandError(QueuedCommand queued, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: log and continue
+        var command = queued.Command;
         DiagnosticHub.Error(
             "Core.CommandQueue",
-            $"[ERROR] Command {command.CommandType} ({command.CommandId}) failed: {ex.Message}",
+            $"[ERROR] Command {command.CommandType} ({command.CommandId}, seq={queued.Sequence}) failed: {ex.Message}",
             ex,
             command.Tick);
     }

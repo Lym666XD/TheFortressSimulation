@@ -33,7 +33,7 @@ internal sealed partial class StockpileUI
                 break;
 
             case PlacementMode.StockpileDelete:
-                surface.Print(2, statusY, "[DELETE] Click and drag to remove stockpile area - ESC to cancel", Color.Red);
+                surface.Print(2, statusY, "[DELETE] Click a stockpile to remove it - ESC to cancel", Color.Red);
                 break;
 
             case PlacementMode.StockpileCopy:

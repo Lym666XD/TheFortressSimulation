@@ -166,7 +166,7 @@ internal sealed class PlaceableInstance
     /// <summary>
     /// Create placeable instance from installed item
     /// </summary>
-    public static PlaceableInstance CreateFromItem(
+    internal static PlaceableInstance CreateFromItem(
         ItemInstance sourceItem,
         ItemDefinition def,
         Point position,
@@ -233,7 +233,7 @@ internal sealed class PlaceableInstance
     /// <summary>
     /// Create placeable instance from construction
     /// </summary>
-    public static PlaceableInstance CreateFromConstruction(
+    internal static PlaceableInstance CreateFromConstruction(
         ConstructionDefinition def,
         Point position,
         int z,
@@ -287,7 +287,7 @@ internal sealed class PlaceableInstance
     /// <summary>
     /// Create item instance from uninstalled placeable (generates deterministic new GUID per SPEC §15.6)
     /// </summary>
-    public static ItemInstance CreateItemFromPlaceable(
+    internal static ItemInstance CreateItemFromPlaceable(
         PlaceableInstance placeable,
         ItemDefinition def,
         ulong currentTick,

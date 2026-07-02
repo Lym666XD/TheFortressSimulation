@@ -10,7 +10,7 @@ internal enum CreaturesDiffOp
 
 internal readonly struct CreaturesDiff
 {
-    public CreaturesDiff(
+    internal CreaturesDiff(
         CreaturesDiffOp op,
         string creatureId,
         Point worldPos,
@@ -30,16 +30,16 @@ internal readonly struct CreaturesDiff
         LocalSeq = localSeq;
     }
 
-    public CreaturesDiffOp Op { get; }
-    public string CreatureId { get; }
-    public Point WorldPos { get; }
-    public int Z { get; }
-    public string FactionId { get; }
-    public int Priority { get; }
-    public string SystemId { get; }
-    public int LocalSeq { get; }
+    internal CreaturesDiffOp Op { get; }
+    internal string CreatureId { get; }
+    internal Point WorldPos { get; }
+    internal int Z { get; }
+    internal string FactionId { get; }
+    internal int Priority { get; }
+    internal string SystemId { get; }
+    internal int LocalSeq { get; }
 
-    public long GetSortKey()
+    internal long GetSortKey()
     {
         int chunkX = WorldPos.X >= 0 ? WorldPos.X / Chunk.SIZE_XY : 0;
         int chunkY = WorldPos.Y >= 0 ? WorldPos.Y / Chunk.SIZE_XY : 0;
@@ -64,7 +64,7 @@ internal sealed class CreaturesDiffLog
     private readonly object _lock = new();
     private int _localSeq;
 
-    public void AddSpawnCreature(string creatureId, Point worldPos, int z, string factionId, int priority, string systemId)
+    internal void AddSpawnCreature(string creatureId, Point worldPos, int z, string factionId, int priority, string systemId)
     {
         lock (_lock)
         {
@@ -80,7 +80,7 @@ internal sealed class CreaturesDiffLog
         }
     }
 
-    public IReadOnlyList<CreaturesDiff> MergeAndSort()
+    internal IReadOnlyList<CreaturesDiff> MergeAndSort()
     {
         lock (_lock)
         {
@@ -89,7 +89,7 @@ internal sealed class CreaturesDiffLog
         }
     }
 
-    public void Clear()
+    internal void Clear()
     {
         lock (_lock)
         {

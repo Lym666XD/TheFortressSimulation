@@ -23,11 +23,7 @@ internal sealed partial class FortressRuntimeSessionCore
     {
         return FortressRuntimeHostFactory.Create(
             world,
-            _tickScheduler,
-            _commandQueue,
-            _eventBus,
-            _diffLog,
-            _itemsDiffLog,
+            _services,
             navigation,
             _baseDir,
             _runtimeContentSnapshot,

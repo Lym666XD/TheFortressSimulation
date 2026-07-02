@@ -72,6 +72,11 @@ internal sealed partial class FortressRuntimeAccess
         _placementCommands.QueueCreateStockpile(rect.ToRuntimeRect(), z, presetId);
     }
 
+    internal void QueueDeleteStockpile(int zoneId)
+    {
+        _placementCommands.QueueDeleteStockpile(zoneId);
+    }
+
     void IFortressRuntimePlacementAccess.QueueHaulOrder(Rectangle rect, int z, int priority) =>
         QueueHaulOrder(rect, z, priority);
 
@@ -107,4 +112,6 @@ internal sealed partial class FortressRuntimeAccess
 
     void IFortressRuntimePlacementAccess.QueueCreateStockpile(Rectangle rect, int z, string presetId) =>
         QueueCreateStockpile(rect, z, presetId);
+
+    void IFortressRuntimePlacementAccess.QueueDeleteStockpile(int zoneId) => QueueDeleteStockpile(zoneId);
 }

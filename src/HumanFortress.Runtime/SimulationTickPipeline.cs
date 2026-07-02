@@ -3,9 +3,7 @@ using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation;
-using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diff;
-using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime;
@@ -18,8 +16,8 @@ internal sealed partial class SimulationTickPipeline
     private readonly World _world;
     private readonly SimulationCommandStage _commandStage;
     private readonly DiffLog _diffLog;
-    private readonly ItemsDiffLog _itemsDiffLog;
-    private readonly CreaturesDiffLog _creaturesDiffLog;
+    private readonly RuntimeMutationDiffLogs _mutationDiffs;
+    private readonly IConstructionCatalog _constructions;
     private readonly NavigationManager? _navigation;
     private readonly IRuntimeGeologyCatalog? _geology;
 
@@ -27,20 +25,42 @@ internal sealed partial class SimulationTickPipeline
         World world,
         CommandQueue commandQueue,
         IRuntimeCommandClockContext clockContext,
-        IRuntimeCommandExecutionContext commandContext,
+        ISimulationContext commandContext,
         DiffLog diffLog,
-        ItemsDiffLog itemsDiffLog,
-        CreaturesDiffLog creaturesDiffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
+        IConstructionCatalog constructions,
         NavigationManager? navigation,
         IRuntimeGeologyCatalog? geology = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _commandStage = new SimulationCommandStage(commandQueue, clockContext, commandContext);
         _diffLog = diffLog ?? throw new ArgumentNullException(nameof(diffLog));
-        _itemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
-        _creaturesDiffLog = creaturesDiffLog ?? throw new ArgumentNullException(nameof(creaturesDiffLog));
+        _mutationDiffs = mutationDiffs ?? throw new ArgumentNullException(nameof(mutationDiffs));
+        _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _navigation = navigation;
         _geology = geology;
+    }
+
+    internal SimulationTickPipeline(
+        World world,
+        CommandQueue commandQueue,
+        IRuntimeCommandClockContext clockContext,
+        ISimulationContext commandContext,
+        DiffLog diffLog,
+        RuntimeMutationDiffLogs mutationDiffs,
+        NavigationManager? navigation,
+        IRuntimeGeologyCatalog? geology = null)
+        : this(
+            world,
+            commandQueue,
+            clockContext,
+            commandContext,
+            diffLog,
+            mutationDiffs,
+            ConstructionCatalogStore.Empty,
+            navigation,
+            geology)
+    {
     }
 
     internal void AttachTo(TickScheduler scheduler)

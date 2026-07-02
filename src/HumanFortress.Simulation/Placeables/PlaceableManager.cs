@@ -17,7 +17,7 @@ internal sealed class PlaceableManager
     /// Check if placeable can be placed at position without collision.
     /// Validates full footprint across all chunks.
     /// </summary>
-    public static CollisionResult CheckCollision(
+    internal static CollisionResult CheckCollision(
         WorldClass world,
         Point position,
         int z,
@@ -76,7 +76,7 @@ internal sealed class PlaceableManager
     /// Place placeable instance with full cross-chunk footprint handling.
     /// Uses two-phase protocol for deterministic cross-chunk writes.
     /// </summary>
-    public static void PlacePlaceable(
+    internal static void PlacePlaceable(
         WorldClass world,
         PlaceableInstance placeable,
         ulong tick)
@@ -162,7 +162,7 @@ internal sealed class PlaceableManager
     /// <summary>
     /// Remove ghost placeable at anchor position if present.
     /// </summary>
-    public static bool RemoveGhostAt(WorldClass world, SadRogue.Primitives.Point position, int z, string? purpose, ulong tick)
+    internal static bool RemoveGhostAt(WorldClass world, SadRogue.Primitives.Point position, int z, string? purpose, ulong tick)
     {
         int cx = position.X / Chunk.SIZE_XY;
         int cy = position.Y / Chunk.SIZE_XY;
@@ -190,7 +190,7 @@ internal sealed class PlaceableManager
     /// Remove any owned placeable at the anchor position (regardless of ghost flag).
     /// Intended for removing construction sites upon completion.
     /// </summary>
-    public static bool RemoveOwnedAt(WorldClass world, SadRogue.Primitives.Point position, int z, ulong tick)
+    internal static bool RemoveOwnedAt(WorldClass world, SadRogue.Primitives.Point position, int z, ulong tick)
     {
         int cx = position.X / Chunk.SIZE_XY;
         int cy = position.Y / Chunk.SIZE_XY;
@@ -216,7 +216,7 @@ internal sealed class PlaceableManager
     /// Get all chunks affected by placeable footprint.
     /// Used for cross-chunk collision detection and placement.
     /// </summary>
-    public static IEnumerable<ChunkKey> GetAffectedChunks(Point position, int z, Footprint footprint)
+    internal static IEnumerable<ChunkKey> GetAffectedChunks(Point position, int z, Footprint footprint)
     {
         var chunks = new HashSet<ChunkKey>();
 
@@ -243,7 +243,7 @@ internal sealed class PlaceableManager
 /// </summary>
 internal sealed class CollisionResult
 {
-    public bool CanPlace { get; set; }
-    public string? FailureReason { get; set; }
-    public List<Point> BlockedCells { get; set; } = new();
+    internal bool CanPlace { get; set; }
+    internal string? FailureReason { get; set; }
+    internal List<Point> BlockedCells { get; set; } = new();
 }

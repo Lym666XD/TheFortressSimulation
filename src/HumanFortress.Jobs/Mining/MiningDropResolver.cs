@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Core.Random;
 using HumanFortress.Jobs.Mining;
 using SimTerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
@@ -102,11 +103,10 @@ internal sealed class MiningDropResolver : IMiningDropResolver
                 var list = terrainKind == SimTerrainKind.Ramp ? cacheTable.Ramp : cacheTable.Wall;
                 if (list.Count > 0)
                 {
-                    var seed = (uint)geologyHandle ^ (uint)terrainKind;
-                    var rng = new Random((int)seed);
+                    var rng = new DeterministicRng(CreateDropSeed(geologyHandle, terrainKind));
                     foreach (var drop in list)
                     {
-                        int quantity = rng.Next(drop.Min, drop.Max + 1);
+                        int quantity = NextInclusive(rng, drop.Min, drop.Max);
                         if (quantity > 0)
                         {
                             result.Add((drop.Id, quantity));
@@ -152,6 +152,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
                 return result;
             }
 
+            var rawDropRng = new DeterministicRng(CreateDropSeed(geologyHandle, terrainKind));
             foreach (var dropEntry in dropsList)
             {
                 if (dropEntry is not JsonObject dropObject) continue;
@@ -161,10 +162,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
 
                 var min = ReadInt(dropObject["min"], 1);
                 var max = ReadInt(dropObject["max"], min);
-
-                var seed = (uint)geologyHandle ^ (uint)terrainKind;
-                var rng = new Random((int)seed);
-                var qty = rng.Next(min, max + 1);
+                var qty = NextInclusive(rawDropRng, min, max);
 
                 result.Add((itemId, qty));
             }
@@ -185,6 +183,19 @@ internal sealed class MiningDropResolver : IMiningDropResolver
 
     List<(string itemId, int qty)> IMiningDropResolver.ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind) =>
         ChooseDropsFor(geologyHandle, terrainKind);
+
+    private static ulong CreateDropSeed(ushort geologyHandle, SimTerrainKind terrainKind)
+    {
+        return 0x4D494E4544524F50UL ^ ((ulong)geologyHandle << 32) ^ (uint)terrainKind;
+    }
+
+    private static int NextInclusive(DeterministicRng rng, int min, int max)
+    {
+        if (max < min)
+            max = min;
+
+        return rng.NextInt(min, max + 1);
+    }
 
     private void EnsureDropsCache()
     {

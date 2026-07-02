@@ -10,12 +10,12 @@ internal sealed class SadConsoleGameApp
     private readonly AppStartupOptions _options;
     private GameStateManager? _gameStateManager;
 
-    public SadConsoleGameApp(AppStartupOptions options)
+    internal SadConsoleGameApp(AppStartupOptions options)
     {
         _options = options;
     }
 
-    public void OnStarted(object? sender, GameHost gameHost)
+    internal void OnStarted(object? sender, GameHost gameHost)
     {
         var session = new FortressSessionContext(_options.AutoDig);
         _gameStateManager = new GameStateManager(
@@ -36,7 +36,7 @@ internal sealed class SadConsoleGameApp
         _gameStateManager.TransitionTo(GameStateType.MainMenu);
     }
 
-    public void Shutdown()
+    internal void Shutdown()
     {
         Logger.Log("[SHUTDOWN] Game window closed, shutting down systems");
         _gameStateManager?.Shutdown();

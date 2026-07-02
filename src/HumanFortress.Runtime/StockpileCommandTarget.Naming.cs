@@ -2,9 +2,9 @@ namespace HumanFortress.Runtime;
 
 internal sealed partial class StockpileCommandTarget
 {
-    private string BuildZoneName(string presetId)
+    private string BuildZoneName(string presetId, int pendingCreateCount)
     {
-        int number = _world.Stockpiles.GetAllZones().Count() + 1;
+        int number = _world.Stockpiles.GetAllZones().Count() + pendingCreateCount + 1;
         return presetId.Equals("all", StringComparison.OrdinalIgnoreCase)
             ? $"Stockpile {number}"
             : $"{ToTitle(presetId)} Stockpile {number}";

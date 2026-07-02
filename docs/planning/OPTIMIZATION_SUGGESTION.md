@@ -1,6 +1,6 @@
 # Architecture-Safe Optimization Backlog
 
-Updated: 2026-06-14  
+Updated: 2026-06-26
 Status: current performance and architecture-safe optimization backlog, merged from English and Chinese sources
 
 This document is the active optimization backlog. It merges the older performance
@@ -56,7 +56,7 @@ Current facts checked against code:
 - `NavigationManager.GetNavDataAt(...)` is read-only; navigation rebuilds belong to explicit runtime/session rebuild points.
 - Active UI/rendering code now consumes Runtime-owned snapshot DTOs for the main map, overlays, drawers, debug pages, and placement previews instead of live `World` reads.
 - Full delta/versioned presenter behavior is still target, not complete current code.
-- `HumanFortress.Runtime` contains the core tick pipeline and the tick-facing job wrappers, but concrete session/system composition still has App-owned pieces.
+- `HumanFortress.Runtime` owns the core tick pipeline, tick-facing job wrappers, runtime host/session core, command target graph, concrete system composition, and Runtime snapshot/query builders; App owns SadConsole/session UI adapters and logging/bootstrap callbacks.
 - `HumanFortress.Jobs` contains real job executors, tunings, orchestration, diff emitters, adapters, job loggers, and profession assignment state; profession registry file loading now lives in `HumanFortress.Content`.
 - `HumanFortress.Content` owns content definition loading, runtime registry bootstrap, the structured registry implementation, runtime content snapshot capture, and the first strict content failure policy; final compatibility naming is still transitional.
 - The old legacy content registry and `ContentLoadCoordinator` path have been retired; normal bootstrap loads the structured registry only.
@@ -158,21 +158,21 @@ Acceptance:
 - Structured registry load failure can fail CI in strict mode.
 - Runtime receives a coherent content/registry snapshot rather than silently mixing partially-loaded registries.
 
-### B. Move Concrete Runtime Composition Out Of App
+### B. Keep Concrete Runtime Composition Out Of App
 
 Current issue:
 
-- `HumanFortress.Runtime` contains the core tick pipeline, but concrete session/system composition still has App-owned pieces.
+- Concrete runtime session/system composition has moved to `HumanFortress.Runtime`. The remaining risk is regression: new startup, debug, or UI features should not move gameplay system wiring back into App.
 
 Build:
 
-- Move concrete simulation session host/composition classes out of `HumanFortress.App.Runtime` when they are not SadConsole/UI-specific.
+- Keep concrete simulation session host/composition classes in Runtime when they are not SadConsole/UI-specific.
 - Keep App responsible for platform startup, state transitions, SadConsole host setup, input, and presentation.
 - Runtime should own session lifecycle, system wiring, command queue, scheduler, navigation, jobs, and debug snapshot services.
 
 Acceptance:
 
-- A headless runtime can start a simulation without referencing `HumanFortress.App`.
+- A headless runtime path can start a simulation without referencing `HumanFortress.App`.
 - Runtime can be tested without SadConsole/MonoGame.
 - App no longer owns the concrete simulation composition root.
 
@@ -184,7 +184,7 @@ Current issue:
 
 Build:
 
-- Move remaining concrete session/system composition out of App, or isolate it behind Runtime/Content contracts. Treat compatibility namespace cleanup and temporary internal assembly bridges as separate build-hygiene tasks, not performance work.
+- Keep any remaining startup/session glue behind Runtime/Content contracts. Treat compatibility namespace cleanup and temporary internal assembly bridges as separate build-hygiene tasks, not performance work.
 - Keep only job UI/debug panels and input bindings in App.
 
 Acceptance:
@@ -202,7 +202,7 @@ Build:
 
 - Introduce focused runtime query/debug DTOs.
 - Keep command submission through a command sink.
-- Keep rendering through `RenderSnapshot` / presenter data.
+- Keep rendering through Runtime/Contracts snapshot DTOs or the future versioned presenter data.
 - Gradually remove broad live-world access from UI components.
 
 Acceptance:
@@ -366,12 +366,12 @@ Acceptance:
 
 Current issue:
 
-- `RenderSnapshotBuilder` computes connect masks from chunk tiles during snapshot build.
-- The target snapshot docs call for dirty chunks, changed rows, and presenter deltas, but active implementation is not fully there.
+- Runtime map/frame snapshot builders currently compute terrain/entity cell views during snapshot build.
+- The target snapshot docs call for dirty chunks, changed rows, and presenter deltas, but active Runtime/Contracts DTO implementation is not fully there.
 
 Build:
 
-- Cache autotile/connect masks by chunk/Z version.
+- Cache terrain/autotile/connect-mask view data by chunk/Z version.
 - Emit changed chunks/Z/row spans instead of treating all visible data as fresh.
 - Avoid full presenter clears when only row spans changed.
 

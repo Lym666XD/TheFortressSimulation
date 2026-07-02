@@ -49,4 +49,7 @@ internal static partial class RuntimePlacementCommandFactory
 
     internal static Func<ulong, ICommand> CreateStockpile(Rectangle rect, int z, string presetId)
         => tick => new CreateStockpileCommand(tick, rect, z, presetId);
+
+    internal static Func<ulong, ICommand> DeleteStockpile(int zoneId)
+        => tick => new DeleteStockpileCommand(tick, zoneId);
 }

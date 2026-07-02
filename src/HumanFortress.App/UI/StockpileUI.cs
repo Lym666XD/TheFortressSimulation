@@ -8,33 +8,19 @@ namespace HumanFortress.App.UI;
 /// </summary>
 internal sealed partial class StockpileUI
 {
-    private StockpilePresetOption[]? _presets;
+    private StockpilePresetOption[] _presets = DefaultPresets;
     private int _selectedPresetIndex = 0;
 
     private bool _editPopupOpen = false;
     private int? _editingZoneId = null;
     private Point _editPopupPos;
 
-    public StockpileUI()
-    {
-        LoadPresets();
-    }
-
     public int? EditingZoneId => _editingZoneId;
 
-    private void LoadPresets()
+    private static StockpilePresetOption[] DefaultPresets { get; } =
     {
-        // TODO: Load from stockpile_presets.json.
-        _presets = new[]
-        {
-            new StockpilePresetOption("all", "All Items"),
-            new StockpilePresetOption("wood", "Wood"),
-            new StockpilePresetOption("stone", "Stone"),
-            new StockpilePresetOption("metal", "Metal"),
-            new StockpilePresetOption("food", "Food"),
-            new StockpilePresetOption("refuse", "Refuse")
-        };
-    }
+        new("all", "All")
+    };
 
     private readonly record struct StockpilePresetOption(string Id, string Name);
 }
