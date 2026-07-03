@@ -45,7 +45,7 @@ internal sealed class CreateZoneCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_defId);
         bw.Write(_name);
         bw.Write((int)_worldRect.X);

@@ -51,7 +51,7 @@ internal sealed class UpdateZoneCellsCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_zoneId);
         bw.Write((int)_worldRect.X);
         bw.Write((int)_worldRect.Y);

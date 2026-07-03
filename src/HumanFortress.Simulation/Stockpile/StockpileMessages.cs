@@ -145,8 +145,33 @@ internal readonly struct StockpileMessage
         // Pack: [tick:32][chunkHash:16][localSeq:16]
         long key = 0;
         key |= ((long)(tick & 0xFFFFFFFF)) << 32;
-        key |= ((long)(SourceChunk.GetHashCode() & 0xFFFF)) << 16;
+        key |= ((long)StableChunkSortHash(SourceChunk)) << 16;
         key |= ((long)(LocalSeq & 0xFFFF));
         return key;
+    }
+
+    private static int StableChunkSortHash(ChunkKey chunk)
+    {
+        unchecked
+        {
+            uint hash = 2166136261;
+            hash = AddInt32(hash, chunk.ChunkX);
+            hash = AddInt32(hash, chunk.ChunkY);
+            hash = AddInt32(hash, chunk.Z);
+            return (int)(hash & 0xFFFF);
+        }
+    }
+
+    private static uint AddInt32(uint hash, int value)
+    {
+        unchecked
+        {
+            var bits = (uint)value;
+            hash = (hash ^ (bits & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 8) & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 16) & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 24) & 0xFF)) * 16777619;
+            return hash;
+        }
     }
 }

@@ -146,5 +146,33 @@ internal sealed class CraftJobExecutor
         return list;
     }
 
+    internal CraftJobReplaySnapshot GetReplaySnapshot()
+    {
+        var active = new CraftActiveJobStateSnapshot[_active.Count];
+        for (var i = 0; i < _active.Count; i++)
+        {
+            var job = _active[i];
+            active[i] = new CraftActiveJobStateSnapshot(
+                i,
+                job.WorkerId,
+                job.WorkshopGuid,
+                job.QueueEntryId,
+                job.RecipeId,
+                job.Stage,
+                job.WorkTicksRemaining,
+                job.Anchor,
+                job.Z);
+        }
+
+        var backlogJobs = _backlog.ToArray();
+        var backlog = new CraftBacklogEntrySnapshot[backlogJobs.Length];
+        for (var i = 0; i < backlogJobs.Length; i++)
+        {
+            backlog[i] = new CraftBacklogEntrySnapshot(i, backlogJobs[i]);
+        }
+
+        return new CraftJobReplaySnapshot(active, backlog);
+    }
+
     internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _stats.Snapshot;
 }

@@ -4,6 +4,155 @@ Date: 2026-06-26
 
 This document records practical pitfalls found during the current architecture refactor. It is meant to keep future refactor work fast and predictable.
 
+## Save/Replay Pitfalls
+
+### Runtime command identity is not just payload identity
+
+Normal Runtime session enqueue wraps commands in `RuntimeIdentifiedCommand` so
+duplicate same-tick/same-payload commands still have distinct replay/debug ids.
+When turning executed commands into persistence data, capture the optional
+Runtime command identity sequence in `CommandReplayRecord`; otherwise a decoder
+can rebuild the inner command payload but cannot reproduce the original wrapper
+`CommandId`.
+
+### Runtime command payloads need explicit versions
+
+Binary payloads are compact but fragile. Runtime command `Serialize()` methods
+should write the shared Runtime command payload version header and the Runtime
+replay factory should reject unsupported versions, malformed enum values, extra
+trailing bytes, and reconstructed id mismatches. Do not let the save path depend
+on undocumented field order.
+
+### Replay restore must be batch-atomic
+
+Do not call `CommandQueue.RestoreCommands(...)` while decoding records one by
+one. Decode the full batch first, collect structured issues, and only replace
+the pending queue when every record is valid. Also advance the Runtime command
+identity cursor to the restored max identity sequence, or the next live enqueue
+can reuse replay/debug ids from the restored log.
+
+### App save UI should pass slot directories, not assemble Runtime documents
+
+The App layer owns slot selection, confirmation UI, and user-facing failure
+presentation. Runtime owns save snapshot authority, document validation,
+document file helpers, command replay mapping, and restore semantics. App access
+interfaces should expose directory-level save/validate/restore operations rather
+than Runtime-internal codec/store/restorer helpers, Core command replay records,
+or live Simulation/World objects.
+
+### Partial world restore must fail closed
+
+When a world payload slice only supports terrain, it must fail with structured
+restore issues if item, creature, reservation, stockpile, placeable, or order
+sections are present. Never let a partial loader silently drop authoritative
+sections just because the payload schema does not yet cover them. Each new
+section should be added with a hash round-trip test before it becomes loadable.
+
+As the payload grows, keep the supported-section message precise. The current
+world payload restore supports terrain, ground items, creatures, global
+reservations, stockpile zones, owned placeables/workshop state, and active
+orders. Carried, contained, equipped, installed, or item-local reservation-token
+state still depends on inventory, container, and job restore paths and must
+remain rejected until those corresponding authoritative sections exist.
+
+Adding payload fields without binding them into the replay hash is also a
+partial-load bug. If the restorer claims hash-checked restoration, every
+gameplay-affecting field in the newly supported slice needs to be exported,
+restored, and included in the section hash before the slice is considered
+loadable.
+
+### Replay hashes need canonical primitive encoding
+
+Replay checkpoint hashes should be built from explicit authoritative fields
+using stable primitive encodings. Avoid object `GetHashCode()`, dictionary
+enumeration order, diagnostic strings, or render/UI DTOs. `ReplayHashBuilder`
+owns primitive encoding only; Simulation/Runtime snapshot hash builders still
+need to own the field list.
+
+The same rule applies to mailbox/drain ordering and future save-slot replay
+boundaries. If an ordering key needs a chunk, entity, system, or content key,
+encode the explicit primitive fields into a stable sort key; do not pack
+`GetHashCode()` into the persisted/replay order, even when the current runtime
+only needs a small tie-breaker.
+
+Replay hash builders must be read-only. Do not use queue-drain APIs such as
+order designation drains while hashing; use stable snapshot/read APIs instead.
+Hashing should never advance simulation queues, clear pending work, mutate cache
+generations, or change future tick behavior.
+
+Private counters can still be authoritative replay state. If a future action
+derives stable ids from a private sequence, RNG cursor, or generation counter,
+the hash/save snapshot must include that counter even when the current visible
+collection can be reconstructed. Workshop queue entry ids depend on the
+workshop queue sequence, so the placeable replay hash covers the counter in
+addition to the current queue entries.
+
+Compatibility save helpers that return dictionaries are not canonical replay
+streams. Use sorted snapshot rows for replay/save hashing. `RngStreamManager`
+still has dictionary save/restore helpers for compatibility, but deterministic
+checkpointing should use `GetStateSnapshot()` plus `RngReplayHashBuilder` so
+stream ordering cannot depend on `ConcurrentDictionary` enumeration.
+
+Derived cross-indexes should not become save authority just because they live
+beside authoritative data. Placeable hashes cover owned placeable instances and
+their construction/workshop/door state, but exclude chunk furniture cells and
+cross-chunk external refs because those are rebuildable from owned placeables
+and footprints.
+
+Long-horizon job replay snapshots should come from job-owned state, not UI
+debug DTOs. Transport now exposes pending request, active job, backlog, and
+scheduling hint snapshots for replay hashing; mining exposes active job,
+backlog, deferred stairwell, reserved tile, and recent-completion snapshots.
+Craft exposes active job and backlog snapshots, while construction-site progress
+remains placeable authority because the current construction executor is
+scan-based. Keep shard indexes, planner outboxes, and debug/stat rows out of
+the authoritative hash unless they start affecting behavior across tick
+barriers directly.
+
+Transport checkpointing has two authoritative owners: the pending request queue
+and the executor. A Runtime aggregate checkpoint must feed both snapshots into
+`TransportReplayHashBuilder`; executor-only hashing silently loses pending
+transport work.
+
+Runtime snapshot metadata should be authored by Runtime, not App. UI tick
+counters drive presentation effects and toasts; they are not simulation ticks
+and should not be passed into Runtime read-model builders as checkpoint or
+debug authority.
+
+Pending commands are save authority too. `CommandQueue.GetExecutedCommandRecords()`
+is not enough for a barrier save because future-tick commands may still be in
+the pending queue. Use `CommandQueue.GetReplaySnapshot()` when a checkpoint or
+save package needs pending and executed command records to match one manifest.
+
+Runtime save manifests should name sections, not expose live owners. World
+section hashes/counts come from Simulation-owned save/replay builders, command
+sections come from Core replay records, content signatures come from Content
+snapshots, and Runtime assembles the manifest/package. App should not collect
+`World`, job-system, or `CommandQueue` internals to build save files.
+
+Do not make App decode command replay rows. App can own slot selection and file
+IO, but the document row to `CommandReplayRecord` mapping belongs in Runtime
+because Runtime owns command payload schemas and replay restore. Public save
+documents should stay in Contracts DTOs; Core command records should remain an
+internal Runtime/load concern at the App boundary.
+
+Do not make App restore RNG streams either. The save document may expose
+primitive RNG stream rows as Contracts DTOs, but mapping them back to
+`RngStreamStateSnapshot`, checking the canonical RNG hash/count, clearing stale
+materialized streams, and restoring stream state belongs in Runtime/Core. App
+should only receive a structured result from a Runtime save-slot/restore port.
+
+Full staged restore has an intentional Runtime order: validate the document,
+restore the supported world payload through the Runtime session factory, restore
+RNG streams after the session factory resets services, then restore pending
+commands. Reversing this order silently loses RNG or pending-command state
+because new session composition clears per-session services.
+
+Keep first-pass save document IO clearly scoped. A helper that writes the
+assembled Runtime save document is useful, but it is not the full slot format:
+do not treat it as chunk-sharded world persistence, autosave policy, migration,
+or complete load orchestration.
+
 ## App/UI Boundary Pitfalls
 
 ### Internal implementations still need explicit interface entrypoints
@@ -147,6 +296,12 @@ Mining has the same inclusive-rectangle trap as hauling/item scans. Keep `Mining
 Runtime command ids must not use `Guid.NewGuid()` on replay-facing command paths. Command payloads should serialize meaningful mutation inputs, and Runtime session enqueue should add deterministic sequence identity when duplicate payloads can appear in the same tick. Execution order still belongs to `CommandQueue`; command ids are for stable correlation/debugging.
 
 Command payload serialization is part of command identity. Every field that can change execution must be written to `Serialize()`, including optional filters and tag lists. When a field is semantically a set, serialize it in deterministic order so equivalent UI selection order does not create a different id; when the field is semantically ordered, preserve the order.
+
+`CommandQueue.RestoreCommands(...)` is replay restore, not executed-history restore. Restored commands should be queued with deterministic sequence order and should not appear in `GetExecutedCommands()` until `ExecuteCommands(...)` actually runs them. Otherwise save/replay history gets duplicate entries and future commands look executed before their tick. Validate restored command batches before clearing the existing queue, so a corrupt restore payload cannot wipe pending commands and then fail halfway through.
+
+Do not persist live `ICommand` instances. They are executable objects with runtime-only behavior and dependencies. Persist `CommandReplayRecord` data from `GetExecutedCommandRecords()` instead, then deserialize records through a command factory/registry when the real save/replay loader exists.
+
+Keep replay decoding ownership aligned with command ownership. `ICommandReplayFactory` belongs in Core as a narrow contract, but concrete command type lookup and payload decoding belong in Runtime because Runtime owns command implementations, command type strings, and content-aware command construction. Do not make Core reference Runtime commands to "finish" replay deserialization.
 
 The same rule now applies to zone commands:
 

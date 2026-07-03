@@ -16,8 +16,7 @@ internal sealed partial class FortressRuntimeAccess
         bool includeWorkDrawer,
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
-        int? zoneDetailId,
-        ulong tick)
+        int? zoneDetailId)
     {
         return _read.GetUiOverlayFrameData(
             currentZ,
@@ -27,8 +26,7 @@ internal sealed partial class FortressRuntimeAccess
             includeWorkDrawer,
             includeDebugMenu,
             stockpileDetailZoneId,
-            zoneDetailId,
-            tick);
+            zoneDetailId);
     }
 
     internal SimulationPlacementPreviewData GetPlacementPreviewData(
@@ -85,8 +83,7 @@ internal sealed partial class FortressRuntimeAccess
         bool includeWorkDrawer,
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
-        int? zoneDetailId,
-        ulong tick) =>
+        int? zoneDetailId) =>
         GetUiOverlayFrameData(
             currentZ,
             viewport,
@@ -95,8 +92,7 @@ internal sealed partial class FortressRuntimeAccess
             includeWorkDrawer,
             includeDebugMenu,
             stockpileDetailZoneId,
-            zoneDetailId,
-            tick);
+            zoneDetailId);
 
     SimulationFrameRenderData IFortressRuntimeReadAccess.GetFrameRenderData(
         bool includeMapViewport,

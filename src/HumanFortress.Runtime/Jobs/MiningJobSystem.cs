@@ -93,6 +93,8 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
     internal MiningDebugSnapshot GetDebugSnapshot(int maxActive = 8, bool includeSeeds = false)
         => _executor.GetDebugSnapshot(maxActive, includeSeeds);
 
+    internal MiningJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
     internal int GetBacklogCount() => _executor.GetBacklogCount();
 
     int IUnifiedMiningJobExecutor.GetBacklogCount() => GetBacklogCount();

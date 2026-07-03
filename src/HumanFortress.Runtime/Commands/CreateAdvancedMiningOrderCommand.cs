@@ -56,7 +56,7 @@ internal sealed class CreateAdvancedMiningOrderCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write((int)_worldRect.X);
         bw.Write((int)_worldRect.Y);
         bw.Write((int)_worldRect.Width);

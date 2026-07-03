@@ -3,6 +3,7 @@ id: save.format.v1
 status: normative
 owner: engine/persistence
 last_updated: 2025-09-15
+implementation_note: Current staged implementation guidance lives in SAVE_REPLAY_ARCHITECTURE.md.
 targets:
   - Fortress/Colony mode (persistent)
   - Adventure mode (player-only personal map memory)

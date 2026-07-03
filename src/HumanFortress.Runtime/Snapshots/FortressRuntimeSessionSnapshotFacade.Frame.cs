@@ -15,7 +15,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
         int? zoneDetailId,
-        ulong tick)
+        SimulationSnapshotMetadata metadata)
     {
         return FortressRuntimeSnapshotBuilder.BuildUiOverlayFrameSnapshot(
             Host(session),
@@ -29,7 +29,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
             includeDebugMenu,
             stockpileDetailZoneId,
             zoneDetailId,
-            tick);
+            metadata);
     }
 
     internal static SimulationFrameRenderData BuildFrameRenderSnapshot(
@@ -46,7 +46,8 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
         SimulationNavigationOverlayMode navigationMode,
         Point? selectedNavigationTarget,
         Point tileInspectionWorldPosition,
-        int tileInspectionZ)
+        int tileInspectionZ,
+        SimulationSnapshotMetadata metadata)
     {
         return FortressRuntimeSnapshotBuilder.BuildFrameRenderSnapshot(
             World(session),
@@ -65,6 +66,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
             navigationMode,
             selectedNavigationTarget,
             tileInspectionWorldPosition,
-            tileInspectionZ);
+            tileInspectionZ,
+            metadata);
     }
 }

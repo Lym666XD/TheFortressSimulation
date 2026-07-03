@@ -75,5 +75,7 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
 
     internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
 
+    internal CraftJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
     internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
 }

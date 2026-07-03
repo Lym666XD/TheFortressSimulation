@@ -51,7 +51,7 @@ internal sealed partial class UpdateWorkshopQueueCommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_workshopGuid.ToByteArray());
         bw.Write((byte)_operation);
         bw.Write(_recipeId ?? string.Empty);

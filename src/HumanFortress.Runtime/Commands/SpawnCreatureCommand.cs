@@ -44,7 +44,7 @@ internal sealed class SpawnCreatureCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_creatureId);
         bw.Write((int)_worldPos.X);
         bw.Write((int)_worldPos.Y);

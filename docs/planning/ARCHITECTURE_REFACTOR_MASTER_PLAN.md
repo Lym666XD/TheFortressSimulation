@@ -25,7 +25,8 @@ The problem is that these ideas are not enforced by boundaries. Runtime composit
 
 The current codebase is best described as a working prototype with several professional architecture pieces present but bypassed. The refactor should first stop new architectural drift, then extract a headless deterministic runtime, then move gameplay systems out of App.
 
-## Current Refactor Progress - 2026-07-01
+## Current Refactor Progress - 2026-07-03
+- Save/replay architecture has a staged boundary rather than a full save implementation: Core owns immutable pending/executed command replay records, command queue replay snapshots, replay factory contracts, command journal hashing, and canonical replay hash primitives; Runtime owns a strict internal command replay factory, v1 command payload versioning, batch-atomic command replay restore, Runtime replay checkpoints, save manifest construction, and a save snapshot package port; Simulation owns field-specific and aggregate authoritative replay hash builders plus a minimal internal world save summary for section hashes/counts. App remains out of persistence/runtime decoding and does not assemble save authority from live world/job/command objects.
 
 Estimated architecture-foundation progress: **99%+**.
 
@@ -51,6 +52,7 @@ This percentage tracks the foundation/boundary cleanup from prototype structure 
 - Latest source-only module-boundary hardening removed App's direct `HumanFortress.WorldGen` project reference. App creates world generation through Runtime's `FortressRuntimeWorldGenerationFactory`, while the concrete `WorldGenerationServiceFactory` is internal to WorldGen/friend consumers.
 - Latest source-only replay/boundary hardening removed production `Guid.NewGuid()` command identity generation. Runtime command ids are deterministic from tick/type/payload, Runtime session enqueue adds a resettable deterministic sequence wrapper for duplicate-command disambiguation, workshop commands now serialize their mutation payload, mining rectangle scans now use inclusive SadRogue `MaxExtent*` bounds, and several false-public internal helper surfaces in Simulation/App were narrowed.
 - Latest source-only follow-up hardened replay diagnostics and command-context boundaries: construction command ids now include sorted material tag filters, command failure diagnostics include the queue sequence, and the remaining internal all-target command execution aggregate was deleted so host/pipeline/stage signatures depend only on `ISimulationContext` while individual commands request narrow role contexts.
+- Latest source-only save/replay planning added a staged `SAVE_REPLAY_ARCHITECTURE.md` bridge and Core `ICommandReplayFactory` seam, explicitly deferring full save/load implementation until command replay, authoritative world snapshot, and deterministic hash seams are stable.
 
 ### Completed Since This Plan Was Created
 
@@ -949,7 +951,16 @@ Preparation progress:
 1. Add headless runner.
 2. Add canonical snapshot hash.
 3. Add fixed seed scenario.
-4. Add save/load round-trip.
+4. [First pass] Add save/load round-trip: Runtime save documents now carry a
+   Simulation-owned world payload for terrain, ground items, creatures, global
+   reservations, stockpile zones, owned placeables/workshop state, and active
+   order designations, plus primitive RNG stream rows and pending/executed
+   command replay document rows. Runtime can restore the supported world
+   sections into a freshly composed session, then restore RNG streams and
+   pending commands through a Runtime-owned full restore entrypoint. Full load
+   still needs carried/contained/equipped/installed item state, item-local
+   reservation tokens, and long-horizon job-state payload restore before this
+   milestone is complete.
 5. Add command replay.
 
 ## Definition of Done for the Refactor Foundation
@@ -965,7 +976,12 @@ The foundation refactor is not done until all of these are true:
 - A fixed-seed headless run produces a stable hash.
 - Active solution builds in CI.
 - Formal tests exist outside App.
-- Save/load can round-trip a minimal fortress state.
+- Save/load can round-trip a minimal fortress state. Current status: terrain
+  chunks, ground items, creatures, global reservations, stockpile zones, and
+  active order plus owned placeable/workshop payloads round-trip by hash, and
+  Runtime full restore now also restores RNG streams plus pending command replay
+  rows. Unsupported item location modes and job-state payloads still fail
+  closed until their restore slices exist.
 
 ## Practical First Pull Requests
 

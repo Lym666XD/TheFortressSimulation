@@ -188,7 +188,7 @@ Tie-breakers (complete chain):
   2. distance_cost (ascending)
   3. zoneId (ascending)
   4. itemHandle (ascending)
-  5. targetChunk.GetHashCode() (ascending)
+  5. stable targetChunk sort key from explicit chunk coordinates (ascending)
   6. localSeq (ascending)
 ```
 

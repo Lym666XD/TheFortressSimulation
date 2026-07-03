@@ -36,5 +36,22 @@ internal sealed class MiningBacklogBuffer
         return count;
     }
 
+    internal IReadOnlyList<MiningBacklogEntrySnapshot> GetStateSnapshot()
+    {
+        var entries = _queue.ToArray();
+        var snapshot = new MiningBacklogEntrySnapshot[entries.Length];
+        for (var i = 0; i < entries.Length; i++)
+        {
+            snapshot[i] = new MiningBacklogEntrySnapshot(i, entries[i].Dig, entries[i].EnqueueTick);
+        }
+
+        return snapshot;
+    }
+
     private readonly record struct BacklogEntry(MiningSystem.PlannedDig Dig, ulong EnqueueTick);
 }
+
+internal readonly record struct MiningBacklogEntrySnapshot(
+    int Order,
+    MiningSystem.PlannedDig Dig,
+    ulong EnqueuedTick);

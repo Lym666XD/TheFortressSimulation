@@ -14,9 +14,9 @@ internal sealed partial class FortressRuntimeSessionCore
         bool includeWorkDrawer,
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
-        int? zoneDetailId,
-        ulong tick)
+        int? zoneDetailId)
     {
+        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
         return FortressRuntimeSessionSnapshotFacade.BuildUiOverlayFrameSnapshot(
             _runtimeSession,
             currentZ,
@@ -27,7 +27,7 @@ internal sealed partial class FortressRuntimeSessionCore
             includeDebugMenu,
             stockpileDetailZoneId,
             zoneDetailId,
-            tick);
+            metadata);
     }
 
     SimulationFrameRenderData IFortressRuntimeSessionReadPort.GetFrameRenderData(
@@ -45,6 +45,7 @@ internal sealed partial class FortressRuntimeSessionCore
         RuntimePoint tileInspectionWorldPosition,
         int tileInspectionZ)
     {
+        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
         return FortressRuntimeSessionSnapshotFacade.BuildFrameRenderSnapshot(
             _runtimeSession,
             includeMapViewport,
@@ -59,6 +60,7 @@ internal sealed partial class FortressRuntimeSessionCore
             navigationMode,
             selectedNavigationTarget.ToSadRoguePoint(),
             tileInspectionWorldPosition.ToSadRoguePoint(),
-            tileInspectionZ);
+            tileInspectionZ,
+            metadata);
     }
 }

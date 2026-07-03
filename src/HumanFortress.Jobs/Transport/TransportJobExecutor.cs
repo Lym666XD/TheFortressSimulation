@@ -244,6 +244,31 @@ internal sealed class TransportJobExecutor
             SeedsIncluded: includeSeeds);
     }
 
+    internal TransportJobReplaySnapshot GetReplaySnapshot()
+    {
+        var active = new TransportActiveJobStateSnapshot[_active.Count];
+        for (var i = 0; i < _active.Count; i++)
+        {
+            var job = _active[i];
+            active[i] = new TransportActiveJobStateSnapshot(
+                i,
+                job.CreatureId,
+                job.ItemId,
+                job.Dest,
+                job.Stage,
+                job.Quantity,
+                job.InvalidReplanCount,
+                job.Reason);
+        }
+
+        return new TransportJobReplaySnapshot(
+            _hintIntakeCap,
+            _hintMaxActive,
+            _hintReserveSlots,
+            active,
+            _backlog.GetStateSnapshot());
+    }
+
     internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
     {
         _hintIntakeCap = intakeCap;

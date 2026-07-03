@@ -16,8 +16,7 @@ internal interface IFortressRuntimeReadAccess
         bool includeWorkDrawer,
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
-        int? zoneDetailId,
-        ulong tick);
+        int? zoneDetailId);
 
     SimulationFrameRenderData GetFrameRenderData(
         bool includeMapViewport,

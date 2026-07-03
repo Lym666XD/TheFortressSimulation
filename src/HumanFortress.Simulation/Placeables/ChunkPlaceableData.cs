@@ -81,6 +81,17 @@ internal sealed class ChunkPlaceableData
     }
 
     /// <summary>
+    /// Get owned placeables with their authoritative local storage cell.
+    /// Snapshot consumers must sort the result before hashing or persistence.
+    /// </summary>
+    internal IReadOnlyList<(int LocalIndex, PlaceableInstance Placeable)> GetOwnedPlaceableSnapshot()
+    {
+        return _ownedPlaceables
+            .Select(static entry => (entry.Key, entry.Value))
+            .ToArray();
+    }
+
+    /// <summary>
     /// Try get owned placeable at local cell index.
     /// </summary>
     public bool TryGetOwnedAt(int localIndex, out PlaceableInstance placeable)

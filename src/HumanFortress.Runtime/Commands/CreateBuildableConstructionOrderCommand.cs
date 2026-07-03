@@ -49,7 +49,7 @@ internal sealed class CreateBuildableConstructionOrderCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_constructionId);
         bw.Write(_anchor.X);
         bw.Write(_anchor.Y);

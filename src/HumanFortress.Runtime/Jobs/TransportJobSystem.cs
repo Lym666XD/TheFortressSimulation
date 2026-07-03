@@ -111,6 +111,8 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
     internal TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
         => _executor.GetDebugSnapshot(maxActive, maxRequests, includeSeeds);
 
+    internal TransportJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
     internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
         => _executor.ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);
 

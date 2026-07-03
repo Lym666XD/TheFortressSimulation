@@ -10,6 +10,7 @@ internal interface IFortressRuntimeSessionAccess :
     IFortressRuntimeSimulationControlAccess,
     IFortressRuntimeUiInputAccess,
     IFortressRuntimePlacementAccess,
-    IFortressRuntimeBootstrapAccess
+    IFortressRuntimeBootstrapAccess,
+    IFortressRuntimeSaveAccess
 {
 }

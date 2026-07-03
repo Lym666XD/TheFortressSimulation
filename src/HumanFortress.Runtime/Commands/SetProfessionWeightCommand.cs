@@ -36,7 +36,7 @@ internal sealed class SetProfessionWeightCommand : ICommand
     byte[] ICommand.Serialize()
     {
         using var ms = new MemoryStream();
-        using var bw = new BinaryWriter(ms);
+        using var bw = RuntimeCommandPayload.CreateWriter(ms);
         bw.Write(_workerId.ToByteArray());
         bw.Write(_professionId);
         bw.Write(_weight);

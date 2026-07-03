@@ -12,8 +12,6 @@ internal static partial class UiWorkDrawerRenderer
         RenderLaborSummaryColumn(surf, layout.Left, work);
         RenderDwarfRosterColumn(surf, layout.Center, ui, work);
         RenderSchedulerColumn(surf, layout.Right, "Scheduler Diagnostics", work);
-
-        // TODO (Work panel UX #4): hook keyboard navigation between columns when input refactor lands.
     }
 
     public static void DrawOrdersTab(ICellSurface surf, int startY, int maxHeight, SimulationWorkDrawerData work)

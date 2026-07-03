@@ -31,4 +31,13 @@ internal sealed class MiningTileReservationTracker
             _reservedTiles.Remove((job.Target.X, job.Target.Y, job.Z - 1));
         }
     }
+
+    internal IReadOnlyList<MiningReservedTileSnapshot> GetStateSnapshot()
+    {
+        return _reservedTiles
+            .Select(tile => new MiningReservedTileSnapshot(tile.X, tile.Y, tile.Z))
+            .ToArray();
+    }
 }
+
+internal readonly record struct MiningReservedTileSnapshot(int X, int Y, int Z);

@@ -91,10 +91,15 @@ namespace HumanFortress.Simulation.Jobs
         int Drain(int max, IList<TransportRequest> into);
         /// <summary>Peek up to max pending requests in stable order without dequeuing.</summary>
         IReadOnlyList<TransportRequest> Peek(int max);
+        /// <summary>Get all pending requests in stable order without dequeuing.</summary>
+        TransportRequestQueueStateSnapshot GetStateSnapshot();
         /// <summary>Get current shard counts keyed by encoded chunk id.</summary>
         IReadOnlyDictionary<int, int> GetShardCountsSnapshot();
         int Count { get; }
     }
+
+    internal readonly record struct TransportRequestQueueStateSnapshot(
+        IReadOnlyList<TransportRequest> PendingRequests);
 
     internal sealed class TransportRequestComparer : IComparer<TransportRequest>
     {
@@ -221,6 +226,19 @@ namespace HumanFortress.Simulation.Jobs
                 snapshot.Sort(_cmp);
                 if (snapshot.Count > max) snapshot.RemoveRange(max, snapshot.Count - max);
                 return snapshot;
+            }
+        }
+
+        public TransportRequestQueueStateSnapshot GetStateSnapshot()
+        {
+            lock (_lock)
+            {
+                if (_pending.Count == 0)
+                    return new TransportRequestQueueStateSnapshot(Array.Empty<TransportRequest>());
+
+                var snapshot = new List<TransportRequest>(_pending);
+                snapshot.Sort(_cmp);
+                return new TransportRequestQueueStateSnapshot(snapshot.ToArray());
             }
         }
 

@@ -81,6 +81,32 @@ internal sealed class StockpileZone
         MemberChunks = ImmutableHashSet<ChunkKey>.Empty;
     }
 
+    internal StockpileZone(
+        int zoneId,
+        string name,
+        ChunkKey homeChunk,
+        StockpileFilter filter,
+        int priority,
+        int targetStacks,
+        int hysteresisLow,
+        int hysteresisHigh,
+        uint generation,
+        ulong createdTick,
+        IEnumerable<ChunkKey> memberChunks)
+    {
+        ZoneId = zoneId;
+        Name = name ?? $"Stockpile {zoneId}";
+        HomeChunk = homeChunk;
+        CreatedTick = createdTick;
+        Filter = filter ?? new StockpileFilter();
+        Priority = priority;
+        TargetStacks = targetStacks;
+        HysteresisLow = hysteresisLow;
+        HysteresisHigh = hysteresisHigh;
+        Generation = generation;
+        MemberChunks = memberChunks.ToImmutableHashSet();
+    }
+
     /// <summary>
     /// Update member chunks when cells are added/removed.
     /// </summary>

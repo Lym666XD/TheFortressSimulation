@@ -171,6 +171,50 @@ internal sealed class MiningJobExecutor
             includeSeeds);
     }
 
+    internal MiningJobReplaySnapshot GetReplaySnapshot()
+    {
+        var active = new MiningActiveJobStateSnapshot[_active.Count];
+        for (var i = 0; i < _active.Count; i++)
+        {
+            var job = _active[i];
+            active[i] = new MiningActiveJobStateSnapshot(
+                i,
+                job.WorkerId,
+                job.Target,
+                job.Z,
+                job.Adjacent,
+                job.Stage,
+                job.ProgressTicks,
+                job.RequiredTicks,
+                job.GeologyHandle,
+                job.TerrainKind,
+                job.Priority,
+                job.AssignedTick,
+                job.ReplanFailCount,
+                job.Action,
+                job.Segment,
+                job.DesignationId);
+        }
+
+        var recent = new MiningRecentCompletionSnapshot[_recentCompleted.Count];
+        for (var i = 0; i < _recentCompleted.Count; i++)
+        {
+            var completion = _recentCompleted[i];
+            recent[i] = new MiningRecentCompletionSnapshot(
+                i,
+                completion.Cell,
+                completion.Z,
+                completion.ExpireTick);
+        }
+
+        return new MiningJobReplaySnapshot(
+            active,
+            _backlog.GetStateSnapshot(),
+            _deferredStairwells.GetStateSnapshot(),
+            _reservedTiles.GetStateSnapshot(),
+            recent);
+    }
+
     internal int GetBacklogCount() => _backlog.Count;
 
     internal int GetDeferredCount() => _deferredStairwells.Count;

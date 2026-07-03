@@ -30,4 +30,15 @@ internal sealed class MiningDeferredStairwellBuffer
 
         return retried;
     }
+
+    internal IReadOnlyList<MiningDeferredStairwellSnapshot> GetStateSnapshot()
+    {
+        return _queue
+            .Select((dig, index) => new MiningDeferredStairwellSnapshot(index, dig))
+            .ToArray();
+    }
 }
+
+internal readonly record struct MiningDeferredStairwellSnapshot(
+    int Order,
+    MiningSystem.PlannedDig Dig);

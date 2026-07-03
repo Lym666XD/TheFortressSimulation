@@ -48,4 +48,25 @@ internal sealed class TransportBacklogBuffer
         }
         return count;
     }
+
+    internal IReadOnlyList<TransportBacklogEntrySnapshot> GetStateSnapshot()
+    {
+        var requests = _queue.ToArray();
+        var snapshot = new TransportBacklogEntrySnapshot[requests.Length];
+        for (var i = 0; i < requests.Length; i++)
+        {
+            var request = requests[i];
+            snapshot[i] = new TransportBacklogEntrySnapshot(
+                i,
+                request,
+                _enqueueTick.TryGetValue(request.ItemGuid, out var enqueuedTick) ? enqueuedTick : 0UL);
+        }
+
+        return snapshot;
+    }
 }
+
+internal readonly record struct TransportBacklogEntrySnapshot(
+    int Order,
+    TransportRequest Request,
+    ulong EnqueuedTick);

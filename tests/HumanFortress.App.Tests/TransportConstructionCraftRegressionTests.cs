@@ -3,6 +3,7 @@ using HumanFortress.Jobs;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Replay;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Diff;
@@ -30,6 +31,7 @@ internal static class TransportConstructionCraftRegressionTests
         TestTransportCanPickupFromStockpileForNonStockpileJobs();
         TestTransportMovedPickupTargetReplans();
         TestTransportThrottleBacklogsRemainingRequests();
+        TestTransportReplaySnapshotHashCoversPendingActiveBacklog();
         TestConstructionTerrainCompletionRemovesSite();
         TestCraftInputFailureKeepsQueueEntry();
         TestCraftConsumesInputFromWorkshopRing();
@@ -435,6 +437,63 @@ internal static class TransportConstructionCraftRegressionTests
         RegressionAssert.True(transport.GetBacklogCount() == 0, "Transport throttle backlog was not consumed.");
 
         Console.WriteLine("[PASS] Transport throttle preserves backlog");
+    }
+
+    private static void TestTransportReplaySnapshotHashCoversPendingActiveBacklog()
+    {
+        var world = CreateWorldWithContent();
+        var sourceA = new Point(1, 1);
+        var sourceB = new Point(1, 2);
+        var destA = new Point(2, 1);
+        var destB = new Point(2, 2);
+        SetOpen(world, sourceA);
+        SetOpen(world, sourceB);
+        SetOpen(world, destA);
+        SetOpen(world, destB);
+
+        var workerId = world.Creatures.SpawnCreature("core_race_dwarf", sourceA, 0, "player", 0);
+        var itemA = world.Items.SpawnItem("core_item_log_oak", sourceA, 0, 1, 0);
+        var itemB = world.Items.SpawnItem("core_item_log_oak", sourceB, 0, 1, 0);
+        RegressionAssert.True(workerId.HasValue && itemA.HasValue && itemB.HasValue, "Transport replay snapshot setup failed.");
+        var itemAId = itemA.GetValueOrDefault();
+        var itemBId = itemB.GetValueOrDefault();
+
+        var requests = new TransportRequestQueue();
+        requests.Enqueue(new TransportRequest(itemAId, sourceA, 0, destA, 0, 1, TransportReason.Misc, 0, "test-a", 0, 101));
+        requests.Enqueue(new TransportRequest(itemBId, sourceB, 0, destB, 0, 1, TransportReason.ToWorkshopInput, 1, "test-b", 0, 202));
+
+        var transport = new TransportJobSystem(
+            world,
+            requests,
+            new DiffLog(),
+            itemsDiffLog: new ItemsDiffLog(),
+            intakeBudget: 2,
+            maxActiveJobs: 1,
+            pathService: new AllPathsFoundPathService());
+
+        var initialHash = TransportReplayHashBuilder.Build(requests.GetStateSnapshot(), transport.GetReplaySnapshot());
+        var initialHashSecondRead = TransportReplayHashBuilder.Build(requests.GetStateSnapshot(), transport.GetReplaySnapshot());
+
+        transport.ApplySchedulingHints(intakeCap: 2, maxActiveCap: 1, reserveSlots: 0);
+        transport.ReadTick(0);
+        var activeBacklogSnapshot = transport.GetReplaySnapshot();
+        var activeBacklogHash = TransportReplayHashBuilder.Build(requests.GetStateSnapshot(), activeBacklogSnapshot);
+        var activeBacklogHashSecondRead = TransportReplayHashBuilder.Build(requests.GetStateSnapshot(), transport.GetReplaySnapshot());
+
+        transport.ApplySchedulingHints(intakeCap: 1, maxActiveCap: 1, reserveSlots: 1);
+        var hintChangedHash = TransportReplayHashBuilder.Build(requests.GetStateSnapshot(), transport.GetReplaySnapshot());
+
+        RegressionAssert.True(
+            initialHash == initialHashSecondRead
+            && activeBacklogHash == activeBacklogHashSecondRead
+            && initialHash != activeBacklogHash
+            && activeBacklogHash != hintChangedHash
+            && requests.GetStateSnapshot().PendingRequests.Count == 0
+            && activeBacklogSnapshot.ActiveJobs.Count == 1
+            && activeBacklogSnapshot.BacklogEntries.Count == 1,
+            "Transport replay snapshot hash did not cover pending, active, backlog, or scheduling hint state.");
+
+        Console.WriteLine("[PASS] Transport replay snapshot hash");
     }
 
     private static void TestConstructionTerrainCompletionRemovesSite()

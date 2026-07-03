@@ -9,6 +9,8 @@ namespace HumanFortress.Content.Loading;
 internal sealed class FortressRuntimeContentSnapshot
 {
     internal FortressRuntimeContentSnapshot(
+        ContentVersion contentVersion,
+        string contentHash,
         IRuntimeMaterialCatalog materials,
         IRuntimeTerrainKindCatalog terrainKinds,
         IConstructionCatalog constructions,
@@ -26,6 +28,8 @@ internal sealed class FortressRuntimeContentSnapshot
         string? schedulerTuningJson,
         string? workshopTuningJson)
     {
+        ContentVersion = contentVersion;
+        ContentHash = contentHash ?? string.Empty;
         Materials = materials ?? throw new ArgumentNullException(nameof(materials));
         TerrainKinds = terrainKinds ?? throw new ArgumentNullException(nameof(terrainKinds));
         Constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
@@ -47,6 +51,8 @@ internal sealed class FortressRuntimeContentSnapshot
         WorkshopTuningJson = workshopTuningJson;
     }
 
+    internal ContentVersion ContentVersion { get; }
+    internal string ContentHash { get; }
     internal IRuntimeMaterialCatalog Materials { get; }
     internal IRuntimeTerrainKindCatalog TerrainKinds { get; }
     internal IConstructionCatalog Constructions { get; }
@@ -81,6 +87,8 @@ internal static class FortressRuntimeContentSnapshotLoader
         var registry = StructuredContentRegistry.Instance;
 
         return new FortressRuntimeContentSnapshot(
+            registry.Version,
+            registry.ContentHash,
             registry.Materials,
             registry.TerrainKinds,
             registry.Constructions,

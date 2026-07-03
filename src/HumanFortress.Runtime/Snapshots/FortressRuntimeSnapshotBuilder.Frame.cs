@@ -19,11 +19,11 @@ internal static partial class FortressRuntimeSnapshotBuilder
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
         int? zoneDetailId,
-        ulong tick)
+        SimulationSnapshotMetadata metadata)
     {
         return new SimulationUiOverlayFrameData(
             BuildCatalogSnapshot(constructions),
-            BuildJobsSnapshot(runtimeHost, tick),
+            BuildJobsSnapshot(runtimeHost, metadata.RuntimeTick),
             BuildWorkshopSnapshot(world, constructions),
             BuildStockpilePresetMenuSnapshot(runtimeHost?.StockpilePresets),
             BuildStockpileOverlaySnapshot(world, currentZ, viewport),
@@ -38,11 +38,12 @@ internal static partial class FortressRuntimeSnapshotBuilder
                 ? BuildManagementDrawerSnapshot(world)
                 : null,
             includeWorkDrawer
-                ? BuildWorkDrawerSnapshot(runtimeHost, world, constructions, tick)
+                ? BuildWorkDrawerSnapshot(runtimeHost, world, constructions, metadata.RuntimeTick)
                 : null,
             includeDebugMenu
                 ? BuildDebugMenuSnapshot(world)
-                : null);
+                : null,
+            metadata);
     }
 
 }

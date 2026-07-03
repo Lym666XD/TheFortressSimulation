@@ -17,7 +17,7 @@ This document describes the current codebase shape. Older architecture docs desc
 
 Current solution projects:
 
-- `HumanFortress.Contracts` - shared DTOs and contract interfaces, including navigation contracts under `HumanFortress.Contracts.Navigation`, runtime request/status/geometry/notification DTOs under `HumanFortress.Contracts.Runtime`, runtime/UI snapshot DTOs under `HumanFortress.Contracts.Runtime.Snapshots`, generated-world DTO/settings contracts under `HumanFortress.Contracts.WorldGen`, static item/creature definition contracts under `HumanFortress.Contracts.Simulation.Items` and `HumanFortress.Contracts.Simulation.Creatures`, and content registry contracts/DTOs under `HumanFortress.Contracts.Content.Registry`.
+- `HumanFortress.Contracts` - shared DTOs and contract interfaces, including navigation contracts under `HumanFortress.Contracts.Navigation`, runtime request/status/geometry/notification DTOs under `HumanFortress.Contracts.Runtime`, runtime/UI snapshot DTOs under `HumanFortress.Contracts.Runtime.Snapshots`, Runtime save document DTOs under `HumanFortress.Contracts.Runtime.Save`, generated-world DTO/settings contracts under `HumanFortress.Contracts.WorldGen`, static item/creature definition contracts under `HumanFortress.Contracts.Simulation.Items` and `HumanFortress.Contracts.Simulation.Creatures`, world save payload DTOs under `HumanFortress.Contracts.Simulation.Save`, and content registry contracts/DTOs under `HumanFortress.Contracts.Content.Registry`.
 - `HumanFortress.Core` - foundational commands, events, random, time, and diagnostics.
 - `HumanFortress.Content` - content loading facade, internal runtime registry implementation, internal/friend static definition loaders, internal/friend profession registry loader, and internal/friend runtime content snapshot capture.
 - `HumanFortress.Simulation` - internal/friend simulation implementation for world, tiles, orders, items, creatures, stockpiles, zones, and diff applicators. Stable cross-module contracts live in `HumanFortress.Contracts`; Runtime/Jobs/WorldGen/tests use friend access while App does not reference Simulation directly.
@@ -124,7 +124,21 @@ HumanFortress.Runtime
   mutation logs together. Runtime session enqueue also wraps commands with a
   deterministic session command identity sequence, so replay-facing Runtime
   command ids avoid random GUID generation while `CommandQueue` remains the
-  authority for execution order.
+  authority for execution order. Save/replay persistence should read
+  `CommandReplayRecord` values from `CommandQueue.GetExecutedCommandRecords()`
+  rather than retaining live command instances. Runtime command replay decoding
+  is owned by Runtime through a versioned payload factory; Core only owns the
+  record/factory contracts. The current Runtime save document also carries a
+  Contracts-owned Simulation world payload and primitive RNG stream rows.
+  Simulation owns the world payload builder/restorer; Runtime validates the
+  manifest/document and restores terrain, ground item instances, creature
+  instances, global reservations, stockpile zones, active order designations,
+  owned placeables/workshop state, RNG streams, and pending command records
+  through a Runtime-owned full restore entrypoint. Unsupported item location
+  modes and item-local reservation tokens fail closed with structured restore
+  issues. The staged persistence plan is documented in
+  `SAVE_REPLAY_ARCHITECTURE.md`; `SAVE_FORMAT.md` remains the longer-term
+  on-disk format target.
   Public Runtime surface is intentionally centered on `FortressRuntimeSessionFactory`,
   `FortressRuntimeWorldGenerationFactory`, `IFortressRuntimeSession*Port`
   interfaces, logging bootstrap, and Runtime request/result DTOs. Public session
@@ -286,7 +300,7 @@ Important current limitation:
 - App input/presentation helpers are being split by event channel and UI surface inside App: SadConsole component input, screen chrome hit testing, root/submenu quick-menu hit testing, Build/Zone menu input/rendering, Debug menu clicks, Work allocation input, placement overlay/controller behavior, navigation overlay drawing, UI state navigation/drawers/quick menus, chrome buttons/modals/toasts, button layout, main/embark/worldgen menu rendering, UI command objects, and legacy log classification are separate App partials/helpers rather than Runtime/Jobs/Simulation code.
 - Runtime snapshot construction is split by read-model family rather than concentrated behind a single god builder: navigation basic/structural overlay modes/path cells, map viewport terrain/entity glyph policy, workshop summaries/material progress, management drawer data, stockpile overlay/detail/hit tests, jobs debug data, frame/overlay aggregates, and session-level Work/map/debug query entrypoints live in focused snapshot builder partials.
 - Generated-world world-map/embark presentation reads through `HumanFortress.App.Session` query methods over `HumanFortress.Contracts.WorldGen` DTOs such as `WorldMapTileView` and `WorldTileSnapshot` rather than letting App screens read `WorldGenResult.Tiles`, raw `WorldTile`, concrete `GeneratedWorldData`, or `BiomeType`. App no longer references the WorldGen assembly directly; world-generation UI receives the contract `IWorldGenerationService` from Runtime's `FortressRuntimeWorldGenerationFactory`, and Runtime owns fortress-map generation/fill.
-- App runtime access is split by caller role. `IFortressRuntimeReadAccess` is the render-only facade; keyboard, UI-input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, and semantic command-request paths use smaller interfaces instead of the full play facade; `IFortressRuntimeBootstrapAccess` is reserved for session initialization/bootstrap operations; and `IFortressRuntimeSessionAccess` only composes those roles at creation time. `GameStateRuntimeCoordinator` creates the active Runtime session through `FortressRuntimeSessionFactory` and keeps only `IFortressRuntimeSessionPorts`, while App helpers receive only `FortressRuntimeAccess` role interfaces. App active source should not reference `HumanFortress.Core.Commands` or `HumanFortress.Runtime.Commands`; command construction belongs in Runtime.
+- App runtime access is split by caller role. `IFortressRuntimeReadAccess` is the render-only facade; keyboard, UI-input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, save-slot directory operations, and semantic command-request paths use smaller interfaces instead of the full play facade; `IFortressRuntimeBootstrapAccess` is reserved for session initialization/bootstrap operations; and `IFortressRuntimeSessionAccess` only composes those roles at creation time. `GameStateRuntimeCoordinator` creates the active Runtime session through `FortressRuntimeSessionFactory` and keeps only `IFortressRuntimeSessionPorts`, while App helpers receive only `FortressRuntimeAccess` role interfaces. App active source should not reference `HumanFortress.Core.Commands` or `HumanFortress.Runtime.Commands`; command construction belongs in Runtime.
 - `FortressRuntimeAccess` is an App-internal adapter over Runtime session ports. Runtime access is consumed through explicit App role interfaces rather than ordinary public methods on a concrete Runtime core, and GameStates no longer construct Runtime options or concrete Runtime session implementations directly.
 
 Target direction remains:

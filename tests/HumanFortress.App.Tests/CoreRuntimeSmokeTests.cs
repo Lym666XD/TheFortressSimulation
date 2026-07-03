@@ -6,23 +6,33 @@ using HumanFortress.App;
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
 using HumanFortress.Core.Commands;
+using HumanFortress.Core.Determinism;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Contracts.Runtime;
+using HumanFortress.Contracts.Runtime.Save;
+using HumanFortress.Contracts.Simulation.Save;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Diagnostics;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.World;
+using HumanFortress.Contracts.Runtime.Snapshots;
+using HumanFortress.Jobs.Craft;
 using HumanFortress.Jobs.Mining;
+using HumanFortress.Jobs.Replay;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime;
+using HumanFortress.Runtime.Replay;
+using HumanFortress.Runtime.Save;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Placeables;
+using HumanFortress.Simulation.Replay;
+using HumanFortress.Simulation.Save;
 using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
@@ -40,8 +50,19 @@ internal static class CoreRuntimeSmokeTests
         TestDeterministicRng();
         TestDeterministicRuntimeIds();
         TestRuntimeCommandIdsAreStable();
+        TestRuntimeCommandReplayFactory();
+        TestRuntimeCommandReplayRestorer();
+        TestReplayHashBuilder();
+        TestCommandReplayJournalHashBuilder();
+        TestWorldReplayHashBuilder();
+        TestWorldSaveSnapshotBuilder();
+        TestWorldSavePayloadRestorer();
+        TestMiningReplayHashBuilder();
+        TestCraftReplayHashBuilder();
+        TestRuntimeReplayCheckpointHash();
         TestDiffLog();
         TestTypedCommandDiffOrderingPolicy();
+        TestStockpileMessageDrainSortKeyIsStable();
         TestMiningRectanglesIncludeSingleCellMaxExtent();
         TestStockpileFilterUsesItemProjection();
         TestStockpileDataIndexUpdatesAreIdempotent();
@@ -154,8 +175,27 @@ internal static class CoreRuntimeSmokeTests
         var manager = new RngStreamManager(54321);
         var stream1 = manager.GetStream("test");
         var stream2 = manager.GetStream("test");
+        var beta = manager.GetStream("beta");
+        var alpha = manager.GetStream("alpha");
+        _ = beta.Next();
+        _ = alpha.Next();
 
-        RegressionAssert.True(ReferenceEquals(stream1, stream2), "RngStreamManager returned different streams for the same name.");
+        var snapshot = manager.GetStateSnapshot();
+        var snapshotHash = RngReplayHashBuilder.Build(snapshot);
+        var reverseSnapshotHash = RngReplayHashBuilder.Build(snapshot.Reverse());
+        _ = alpha.Next();
+        var changedSnapshotHash = RngReplayHashBuilder.Build(manager);
+        var restoredManager = new RngStreamManager(54321);
+        restoredManager.RestoreStates(snapshot);
+        var restoredSnapshotHash = RngReplayHashBuilder.Build(restoredManager);
+
+        RegressionAssert.True(
+            ReferenceEquals(stream1, stream2)
+            && snapshot.Select(state => state.StreamName).SequenceEqual(new[] { "alpha", "beta", "test" })
+            && snapshotHash == reverseSnapshotHash
+            && snapshotHash != changedSnapshotHash
+            && snapshotHash == restoredSnapshotHash,
+            "RngStreamManager did not expose stable canonical stream state snapshots.");
 
         Console.WriteLine("[PASS] Deterministic RNG");
     }
@@ -261,6 +301,1209 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Runtime command ids");
     }
 
+    private static void TestRuntimeCommandReplayFactory()
+    {
+        var factory = new RuntimeCommandReplayFactory();
+        var rect = new SadRogue.Primitives.Rectangle(1, 2, 3, 4);
+        var point = new SadRogue.Primitives.Point(5, 6);
+        var workerId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+        var workshopId = Guid.Parse("bbbbbbbb-cccc-dddd-eeee-ffffffffffff");
+        var entryId = Guid.Parse("cccccccc-dddd-eeee-ffff-aaaaaaaaaaaa");
+
+        ICommand[] commands =
+        {
+            new CreateMiningOrderCommand(10, rect, z: 1, priority: 11),
+            new CreateAdvancedMiningOrderCommand(11, rect, zMin: 3, zMax: 1, MiningAction.DigRamp, priority: 12),
+            new CreateHaulOrderCommand(12, rect, z: 2, priority: 13),
+            new CreateConstructionOrderCommand(
+                13,
+                rect,
+                zMin: 4,
+                zMax: 2,
+                ConstructionShape.Wall,
+                new MaterialFilterSpec
+                {
+                    PreferredMaterialId = "core_mat_stone_granite",
+                    CategoryKey = "l0.wall",
+                    Tags = new[] { "stone", "block", "construction" }
+                },
+                priority: 14),
+            new CreateBuildableConstructionOrderCommand(14, "core_placeable_workbench", point, z: 3, priority: 15),
+            new CreateZoneCommand(15, "core_zone_stockpile", "Replay Zone", rect, z: 4),
+            new UpdateZoneCellsCommand(16, zoneId: 123, rect, z: 5, isAdding: true),
+            new DeleteZoneCommand(17, zoneId: 123),
+            new CreateStockpileCommand(18, rect, z: 6, presetId: "wood"),
+            new DeleteStockpileCommand(19, zoneId: 456),
+            new SetProfessionWeightCommand(20, workerId, "miner", weight: 8),
+            new UpdateWorkshopQueueCommand(
+                21,
+                workshopId,
+                WorkshopQueueOperation.MoveEntry,
+                recipeId: "core_recipe_plank",
+                entryId: entryId,
+                intValue: 2,
+                moveOffset: -1,
+                boolValue: false),
+            new SpawnItemCommand(22, "core_item_log_oak", point, z: 7, quantity: 9),
+            new SpawnCreatureCommand(23, "core_race_dwarf", point, z: 8, factionId: "player")
+        };
+
+        foreach (var command in commands)
+        {
+            AssertRuntimeReplayRoundTrip(factory, command);
+        }
+
+        ICommand identified = new RuntimeIdentifiedCommand(
+            new CreateHaulOrderCommand(24, rect, z: 9, priority: 16),
+            sequence: 42);
+        var identifiedRecord = CommandReplayRecord.FromCommand(identified);
+        RegressionAssert.True(
+            identifiedRecord.CommandIdentitySequence == 42,
+            "CommandReplayRecord did not preserve Runtime command identity sequence.");
+        AssertRuntimeReplayRoundTrip(factory, identified);
+
+        var unknown = new CommandReplayRecord(1, Guid.Empty, "unknown.command", Array.Empty<byte>());
+        var rejectedUnknown = !factory.TryCreateCommand(unknown, out _, out var unknownError)
+            && unknownError?.Contains("Unknown replay command type", StringComparison.Ordinal) == true;
+
+        var validRecord = CommandReplayRecord.FromCommand(new CreateHaulOrderCommand(25, rect, z: 10, priority: 17));
+        var payload = validRecord.ToPayloadArray();
+        var truncated = new CommandReplayRecord(
+            validRecord.Tick,
+            validRecord.CommandId,
+            validRecord.CommandType,
+            payload.Take(payload.Length - 1).ToArray());
+        var rejectedTruncated = !factory.TryCreateCommand(truncated, out _, out var truncatedError)
+            && truncatedError?.Contains("decode failed", StringComparison.Ordinal) == true;
+
+        var unsupportedVersionPayload = validRecord.ToPayloadArray();
+        BitConverter.GetBytes(999).CopyTo(unsupportedVersionPayload, 0);
+        var unsupportedVersion = new CommandReplayRecord(
+            validRecord.Tick,
+            validRecord.CommandId,
+            validRecord.CommandType,
+            unsupportedVersionPayload);
+        var rejectedUnsupportedVersion = !factory.TryCreateCommand(unsupportedVersion, out _, out var unsupportedVersionError)
+            && unsupportedVersionError?.Contains("Unsupported payload version", StringComparison.Ordinal) == true;
+
+        var wrongId = new CommandReplayRecord(
+            validRecord.Tick,
+            Guid.Parse("dddddddd-eeee-ffff-aaaa-bbbbbbbbbbbb"),
+            validRecord.CommandType,
+            validRecord.Payload);
+        var rejectedWrongId = !factory.TryCreateCommand(wrongId, out _, out var wrongIdError)
+            && wrongIdError?.Contains("id mismatch", StringComparison.Ordinal) == true;
+
+        RegressionAssert.True(
+            rejectedUnknown && rejectedTruncated && rejectedUnsupportedVersion && rejectedWrongId,
+            "RuntimeCommandReplayFactory did not reject invalid replay records predictably.");
+
+        Console.WriteLine("[PASS] Runtime command replay factory");
+    }
+
+    private static void AssertRuntimeReplayRoundTrip(RuntimeCommandReplayFactory factory, ICommand original)
+    {
+        var record = CommandReplayRecord.FromCommand(original);
+        var decoded = factory.TryCreateCommand(record, out var replayCommand, out var errorMessage);
+
+        RegressionAssert.True(
+            decoded
+            && replayCommand != null
+            && replayCommand.Tick == original.Tick
+            && replayCommand.CommandId == original.CommandId
+            && replayCommand.CommandType == original.CommandType
+            && replayCommand.Serialize().SequenceEqual(original.Serialize()),
+            $"RuntimeCommandReplayFactory failed replay round trip for {original.CommandType}: {errorMessage}");
+    }
+
+    private static void TestRuntimeCommandReplayRestorer()
+    {
+        var baselineHash = ExecuteOrderCommandsAndHash(BuildReplayOrderCommands(wrapWithRuntimeIdentity: false));
+        var replayServices = new RuntimeSessionServices();
+        var replayRecords = BuildReplayOrderCommands(wrapWithRuntimeIdentity: true)
+            .Select(CommandReplayRecord.FromCommand)
+            .ToArray();
+        var replayHash = ExecuteReplayRecordsAndHash(replayServices, replayRecords, out var restoreResult);
+        var nextIdentitySequence = replayServices.NextCommandIdentitySequence();
+
+        RegressionAssert.True(
+            restoreResult.Success
+            && restoreResult.RecordCount == replayRecords.Length
+            && restoreResult.RestoredCommandCount == replayRecords.Length
+            && restoreResult.MaxCommandIdentitySequence == replayRecords.Length
+            && nextIdentitySequence == replayRecords.Length + 1
+            && replayHash == baselineHash,
+            "Runtime command replay restore did not produce the same authoritative order hash or advance identity sequence.");
+
+        var atomicServices = new RuntimeSessionServices();
+        var atomicRect = new SadRogue.Primitives.Rectangle(9, 9, 1, 1);
+        var preservedCommand = new CreateHaulOrderCommand(0, atomicRect, z: 0, priority: 99);
+        atomicServices.CommandQueue.Enqueue(preservedCommand);
+        var failedResult = new RuntimeCommandReplayRestorer().RestorePending(
+            atomicServices,
+            new[] { new CommandReplayRecord(0, Guid.Empty, "unknown.command", Array.Empty<byte>()) });
+        var atomicWorld = ExecuteExistingOrderQueue(atomicServices);
+        var preservedHauls = new List<HaulDesignation>();
+        var preservedHaulCount = atomicWorld.Orders.DrainHaulDesignations(preservedHauls, maxCount: 4);
+
+        RegressionAssert.True(
+            !failedResult.Success
+            && failedResult.Issues.Count == 1
+            && preservedHaulCount == 1
+            && preservedHauls[0].Priority == 99,
+            "Runtime command replay restore failure was not atomic for the existing pending command queue.");
+
+        Console.WriteLine("[PASS] Runtime command replay restorer");
+    }
+
+    private static void TestReplayHashBuilder()
+    {
+        var first = ReplayHashBuilder.Compute(hash =>
+        {
+            hash.AddString("snapshot.test");
+            hash.AddInt32(42);
+            hash.AddUInt64(123);
+            hash.AddBoolean(true);
+            hash.AddGuid(Guid.Parse("11111111-2222-3333-4444-555555555555"));
+            hash.AddNullableString(null);
+            hash.AddBytes(new byte[] { 1, 2, 3 });
+        });
+        var second = ReplayHashBuilder.Compute(hash =>
+        {
+            hash.AddString("snapshot.test");
+            hash.AddInt32(42);
+            hash.AddUInt64(123);
+            hash.AddBoolean(true);
+            hash.AddGuid(Guid.Parse("11111111-2222-3333-4444-555555555555"));
+            hash.AddNullableString(null);
+            hash.AddBytes(new byte[] { 1, 2, 3 });
+        });
+        var different = ReplayHashBuilder.Compute(hash =>
+        {
+            hash.AddString("snapshot.test");
+            hash.AddInt32(43);
+        });
+
+        var finalizedGuarded = false;
+        using (var builder = new ReplayHashBuilder())
+        {
+            builder.AddString("done");
+            _ = builder.FinishHex();
+            try
+            {
+                builder.AddInt32(1);
+            }
+            catch (InvalidOperationException)
+            {
+                finalizedGuarded = true;
+            }
+        }
+
+        RegressionAssert.True(
+            first == second
+            && first != different
+            && finalizedGuarded,
+            "ReplayHashBuilder did not provide stable canonical primitive hashing.");
+
+        Console.WriteLine("[PASS] Replay hash builder");
+    }
+
+    private static void TestCommandReplayJournalHashBuilder()
+    {
+        var rect = new SadRogue.Primitives.Rectangle(1, 2, 3, 4);
+        var recordA = CommandReplayRecord.FromCommand(new RuntimeIdentifiedCommand(
+            new CreateHaulOrderCommand(10, rect, z: 1, priority: 5),
+            sequence: 1));
+        var recordB = CommandReplayRecord.FromCommand(new RuntimeIdentifiedCommand(
+            new CreateMiningOrderCommand(11, rect, z: 1, priority: 6),
+            sequence: 2));
+        var changedRecord = CommandReplayRecord.FromCommand(new RuntimeIdentifiedCommand(
+            new CreateHaulOrderCommand(10, rect, z: 1, priority: 7),
+            sequence: 1));
+
+        var hash = CommandReplayJournalHashBuilder.Build(new[] { recordA, recordB });
+        var sameHash = CommandReplayJournalHashBuilder.Build(new[] { recordA, recordB });
+        var reversedHash = CommandReplayJournalHashBuilder.Build(new[] { recordB, recordA });
+        var changedHash = CommandReplayJournalHashBuilder.Build(new[] { changedRecord, recordB });
+        var emptyHash = CommandReplayJournalHashBuilder.Build(Array.Empty<CommandReplayRecord>());
+
+        RegressionAssert.True(
+            hash == sameHash
+            && hash != reversedHash
+            && hash != changedHash
+            && hash != emptyHash,
+            "CommandReplayJournalHashBuilder did not provide stable command replay journal hashes.");
+
+        Console.WriteLine("[PASS] Command replay journal hash builder");
+    }
+
+    private static void TestWorldReplayHashBuilder()
+    {
+        var worldA = CreateReplayHashWorld();
+        var worldB = CreateReplayHashWorld();
+        var worldC = CreateReplayHashWorld();
+        var workshopQueueCountBefore = GetReplayHashWorkshop(worldA).Workshop!.Queue.Count;
+        var hashA = WorldReplayHashBuilder.Build(worldA);
+        var hashB = WorldReplayHashBuilder.Build(worldB);
+        var hashASecondRead = WorldReplayHashBuilder.Build(worldA);
+        var workshopQueueCountAfter = GetReplayHashWorkshop(worldA).Workshop!.Queue.Count;
+
+        GetReplayHashWorkshop(worldC).Workshop!.Queue[0].Status = CraftQueueStatus.InProgress;
+        var changedPlaceableHash = WorldReplayHashBuilder.Build(worldC);
+        worldB.SetTile(1, 1, 0, new TileBase(0, (ushort)TerrainKind.SolidWall, 0, 0, 0, 0, 1), 9);
+        var changedHash = WorldReplayHashBuilder.Build(worldB);
+
+        RegressionAssert.True(
+            hashA == hashB
+            && hashA == hashASecondRead
+            && workshopQueueCountBefore == 1
+            && workshopQueueCountAfter == workshopQueueCountBefore
+            && hashA != changedPlaceableHash
+            && hashA != changedHash,
+            "WorldReplayHashBuilder did not produce stable authoritative hashes for equivalent world state.");
+
+        Console.WriteLine("[PASS] World replay hash builder");
+    }
+
+    private static void TestWorldSaveSnapshotBuilder()
+    {
+        var world = CreateReplayHashWorld();
+        var snapshot = WorldSaveSnapshotBuilder.Build(world);
+        var secondSnapshot = WorldSaveSnapshotBuilder.Build(world);
+        var originalTerrainHash = snapshot.SectionHashes.TerrainHash;
+
+        world.SetTile(1, 1, 0, new TileBase(0, (ushort)TerrainKind.SolidWall, 0, 0, 0, 0, 1), 9);
+        var changedSnapshot = WorldSaveSnapshotBuilder.Build(world);
+
+        RegressionAssert.True(
+            snapshot.SchemaVersion == WorldSaveSnapshotSchema.CurrentVersion
+            && snapshot.ReplayHash == WorldReplayHashBuilder.Build(CreateReplayHashWorld())
+            && snapshot.ReplayHash == secondSnapshot.ReplayHash
+            && snapshot.SectionHashes == secondSnapshot.SectionHashes
+            && snapshot.ReplayHash != changedSnapshot.ReplayHash
+            && originalTerrainHash != changedSnapshot.SectionHashes.TerrainHash
+            && snapshot.SectionHashes.ItemsHash == changedSnapshot.SectionHashes.ItemsHash
+            && snapshot.Counts.ChunkCount > 0
+            && snapshot.Counts.TileCount > 0
+            && snapshot.Counts.ItemCount == 1
+            && snapshot.Counts.CreatureCount == 1
+            && snapshot.Counts.ItemReservationCount == 1
+            && snapshot.Counts.CreatureReservationCount == 1
+            && snapshot.Counts.StockpileZoneCount == 1
+            && snapshot.Counts.OwnedPlaceableCount == 2
+            && snapshot.Counts.HaulOrderCount == 1,
+            "WorldSaveSnapshotBuilder did not provide a stable Simulation-owned world save summary.");
+
+        Console.WriteLine("[PASS] World save snapshot builder");
+    }
+
+    private static void TestWorldSavePayloadRestorer()
+    {
+        var terrainWorld = new World(2, 2);
+        terrainWorld.SetTile(1, 1, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
+        terrainWorld.SetTile(2, 1, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
+        terrainWorld.SetTile(33, 2, 1, new TileBase(8, (ushort)TerrainKind.SolidWall, 0, 1, 2, 0, 9), 5);
+
+        var terrainOnlyPayload = WorldSavePayloadBuilder.Build(terrainWorld);
+        var terrainOnlyHash = WorldReplayHashBuilder.Build(terrainWorld);
+        var terrainOnlyRestore = WorldSavePayloadRestorer.RestoreTerrainOnly(terrainOnlyPayload);
+        DefinitionCatalogTestSupport.LoadItems(terrainWorld);
+        var itemId = terrainWorld.Items.SpawnItem(
+            "core_item_log_oak",
+            new SadRogue.Primitives.Point(1, 1),
+            z: 0,
+            quantity: 3,
+            currentTick: 6)
+            ?? throw new InvalidOperationException("Test item failed to spawn.");
+        var item = terrainWorld.Items.GetInstance(itemId)
+            ?? throw new InvalidOperationException("Test item could not be read.");
+        item.OwnerFactionId = "player";
+        item.UsePolicy = UsePolicy.Faction;
+        item.Forbidden = true;
+        item.QualityTier = 2;
+        item.Artifact = true;
+        item.ArtifactName = "The Regression Log";
+        item.ConditionState = "Good";
+        item.DurabilityCurrent = 7;
+        item.DurabilityMax = 9;
+        item.MakerFactionId = "player";
+        item.StyleTag = "test.style";
+        item.Improvements = new List<Improvement>
+        {
+            new()
+            {
+                Type = "engraving",
+                MaterialId = "core_mat_wood_oak",
+                QualityTier = 1,
+                Description = "save payload smoke"
+            }
+        };
+        item.Perishable = new PerishableState
+        {
+            CreatedAtTick = 6,
+            FreshDurationTicks = 100,
+            SpoilDurationTicks = 200,
+            CurrentFreshness = 0.75f
+        };
+
+        DefinitionCatalogTestSupport.LoadCreatures(terrainWorld);
+        var creatureId = terrainWorld.Creatures.SpawnCreature(
+            "core_race_dwarf",
+            new SadRogue.Primitives.Point(2, 1),
+            z: 0,
+            factionId: "player",
+            currentTick: 7)
+            ?? throw new InvalidOperationException("Test creature failed to spawn.");
+        var creature = terrainWorld.Creatures.GetInstance(creatureId)
+            ?? throw new InvalidOperationException("Test creature could not be read.");
+        creature.HP = 77;
+        creature.MaxHP = 120;
+
+        var itemReservationHolder = Guid.Parse("11111111-2222-3333-4444-555555555555");
+        var creatureReservationJob = "job-restore-smoke";
+        terrainWorld.Reservations.TryReserveItem(
+            itemId,
+            itemReservationHolder,
+            currentTick: 8,
+            expireTick: 80);
+        terrainWorld.Reservations.TryReserveCreature(
+            creatureId,
+            "save.restore.test",
+            currentTick: 8,
+            expireTick: 81,
+            jobId: creatureReservationJob);
+
+        var stockpileId = terrainWorld.Stockpiles.CreateZone(
+            "Restore Stockpile",
+            new ChunkKey(0, 0, 0),
+            currentTick: 9);
+        terrainWorld.Stockpiles.UpdateZone(stockpileId, zone =>
+        {
+            zone.Filter = new StockpileFilter
+            {
+                Mode = FilterMode.Whitelist,
+                Tags = ImmutableHashSet.Create(StringComparer.Ordinal, "wood"),
+                ItemIds = ImmutableHashSet.Create(StringComparer.Ordinal, "core_item_log_oak"),
+                Materials = ImmutableHashSet.Create(StringComparer.Ordinal, "core_mat_wood_oak")
+            };
+            zone.Priority = 3;
+            zone.TargetStacks = 12;
+            zone.HysteresisLow = 4;
+            zone.HysteresisHigh = 10;
+            zone.UpdateMemberChunks(new[] { new ChunkKey(0, 0, 0) });
+        });
+
+        terrainWorld.Orders.EnqueueMiningAdvanced(
+            new SadRogue.Primitives.Rectangle(3, 3, 1, 1),
+            zMin: 0,
+            zMax: 0,
+            MiningAction.Dig,
+            priority: 11,
+            createdTick: 10);
+        terrainWorld.Orders.EnqueueHaul(
+            new SadRogue.Primitives.Rectangle(4, 4, 1, 1),
+            z: 0,
+            priority: 12,
+            createdTick: 11);
+        terrainWorld.Orders.EnqueueConstruction(
+            new SadRogue.Primitives.Rectangle(5, 5, 1, 1),
+            zMin: 0,
+            zMax: 0,
+            ConstructionShape.Wall,
+            new MaterialFilterSpec
+            {
+                PreferredMaterialId = "core_mat_stone_granite",
+                CategoryKey = "test.wall",
+                Tags = new[] { "stone", "construction" }
+            },
+            priority: 13,
+            createdTick: 12);
+        terrainWorld.Orders.EnqueueBuildableConstruction(
+            "core_placeable_workbench",
+            new SadRogue.Primitives.Point(6, 6),
+            z: 0,
+            priority: 14,
+            createdTick: 13);
+
+        var payload = WorldSavePayloadBuilder.Build(terrainWorld);
+        var restore = WorldSavePayloadRestorer.RestoreSupportedSections(payload);
+        var restoredHash = restore.World == null
+            ? string.Empty
+            : WorldReplayHashBuilder.Build(restore.World);
+        var restoredItem = restore.World?.Items.GetInstance(itemId);
+        var restoredCreature = restore.World?.Creatures.GetInstance(creatureId);
+        var restoredItemReservations = restore.World?.Reservations.GetItemReservationsSnapshot() ?? Array.Empty<(Guid itemId, Guid holderId, ulong expireTick)>();
+        var restoredCreatureReservations = restore.World?.Reservations.GetCreatureReservationsSnapshot() ?? Array.Empty<(Guid workerId, string holderSystem, string? jobId, ulong expireTick)>();
+        var restoredStockpile = restore.World?.Stockpiles.GetZone(stockpileId);
+        var placeableWorld = CreateReplayHashWorld();
+        var placeablePayload = WorldSavePayloadBuilder.Build(placeableWorld);
+        var placeableSectionRestore = WorldSavePayloadRestorer.RestoreSupportedSections(placeablePayload);
+        var restoredWorkshop = placeableSectionRestore.World == null
+            ? null
+            : GetReplayHashWorkshop(placeableSectionRestore.World);
+        var restoredWorkshopEntry = restoredWorkshop?.Workshop?.Queue.SingleOrDefault();
+
+        RegressionAssert.True(
+            placeableSectionRestore.Success,
+            "World save payload placeable/workshop restore failed: "
+            + string.Join("; ", placeableSectionRestore.Issues));
+        RegressionAssert.True(
+            placeableSectionRestore.RestoredWorldHash == placeablePayload.ReplayHash,
+            $"World save payload placeable/workshop restore hash mismatch: saved={placeablePayload.ReplayHash} restored={placeableSectionRestore.RestoredWorldHash}.");
+
+        RegressionAssert.True(
+            terrainOnlyPayload.SchemaVersion == WorldSavePayloadFormat.CurrentVersion
+            && terrainOnlyPayload.Chunks.Length == 2
+            && terrainOnlyPayload.Items.Length == 0
+            && terrainOnlyPayload.Placeables.Length == 0
+            && terrainOnlyPayload.Counts.ChunkCount == 2
+            && terrainOnlyPayload.Counts.TileCount == 2 * Chunk.CELLS_PER_LAYER
+            && terrainOnlyPayload.ReplayHash == terrainOnlyHash
+            && terrainOnlyRestore.Success
+            && terrainOnlyRestore.RestoredWorldHash == terrainOnlyPayload.ReplayHash
+            && payload.SchemaVersion == WorldSavePayloadFormat.CurrentVersion
+            && payload.Chunks.Length == 2
+            && payload.Items.Length == 1
+            && payload.Counts.ItemCount == 1
+            && payload.Creatures.Length == 1
+            && payload.Counts.CreatureCount == 1
+            && payload.ItemReservations.Length == 1
+            && payload.CreatureReservations.Length == 1
+            && payload.StockpileZones.Length == 1
+            && payload.Placeables.Length == 0
+            && payload.MiningOrders.Length == 1
+            && payload.HaulOrders.Length == 1
+            && payload.ConstructionOrders.Length == 1
+            && payload.BuildableOrders.Length == 1
+            && payload.Counts.ChunkCount == 2
+            && payload.Counts.TileCount == 2 * Chunk.CELLS_PER_LAYER
+            && payload.ReplayHash == WorldReplayHashBuilder.Build(terrainWorld)
+            && restore.Success
+            && restore.SavedWorldHash == payload.ReplayHash
+            && restore.RestoredWorldHash == payload.ReplayHash
+            && restoredHash == payload.ReplayHash
+            && restore.RestoredChunkCount == payload.Counts.ChunkCount
+            && restore.RestoredTileCount == payload.Counts.TileCount
+            && restoredItem != null
+            && restoredItem.Guid == itemId
+            && restoredItem.StackCount == item.StackCount
+            && restoredItem.OwnerFactionId == item.OwnerFactionId
+            && restoredItem.UsePolicy == item.UsePolicy
+            && restoredItem.Improvements?.Count == 1
+            && restoredItem.Perishable?.CreatedAtTick == 6
+            && restoredCreature != null
+            && restoredCreature.Guid == creatureId
+            && restoredCreature.HP == 77
+            && restoredCreature.MaxHP == 120
+            && restoredItemReservations.Any(reservation => reservation.itemId == itemId && reservation.holderId == itemReservationHolder && reservation.expireTick == 80)
+            && restoredCreatureReservations.Any(reservation => reservation.workerId == creatureId && reservation.holderSystem == "save.restore.test" && reservation.jobId == creatureReservationJob && reservation.expireTick == 81)
+            && restoredStockpile != null
+            && restoredStockpile.Filter.ItemIds.Contains("core_item_log_oak")
+            && restore.World!.Orders.GetActiveMiningSnapshot().Count == 1
+            && restore.World.Orders.GetActiveHaulsSnapshot().Count == 1
+            && restore.World.Orders.GetActiveConstructionSnapshot().Count == 1
+            && restore.World.Orders.GetActiveBuildableSnapshot().Count == 1
+            && placeablePayload.Placeables.Length == 2
+            && placeablePayload.Counts.OwnedPlaceableCount == 2
+            && restoredWorkshop?.Workshop != null
+            && restoredWorkshop.Workshop.AllowedWorkers == 2
+            && restoredWorkshop.Workshop.MaxWorkers == 3
+            && restoredWorkshop.Workshop.NextEntrySequence == 1
+            && restoredWorkshopEntry != null
+            && restoredWorkshopEntry.Status == CraftQueueStatus.AwaitingMaterials
+            && restoredWorkshopEntry.HasPendingRequests
+            && restoredWorkshopEntry.LastRequestTick == 12
+            && restoredWorkshopEntry.ActiveWorkerId == Guid.Parse("bbbbbbbb-5555-5555-5555-bbbbbbbbbbbb")
+            && restoredWorkshopEntry.IsScheduled
+            && restoredWorkshopEntry.BlockingReason == "waiting_for_material",
+            "World save payload did not restore supported world sections and placeable/workshop authority by hash.");
+
+        Console.WriteLine("[PASS] World save payload restorer");
+    }
+
+    private static ICommand[] BuildReplayOrderCommands(bool wrapWithRuntimeIdentity)
+    {
+        var rect = new SadRogue.Primitives.Rectangle(1, 1, 2, 2);
+        var buildAnchor = new SadRogue.Primitives.Point(4, 4);
+        var filter = new MaterialFilterSpec
+        {
+            CategoryKey = "test.floor",
+            Tags = new[] { "construction", "stone" }
+        };
+        ICommand[] commands =
+        {
+            new CreateMiningOrderCommand(tick: 0, rect, z: 2, priority: 11),
+            new CreateAdvancedMiningOrderCommand(tick: 0, rect, zMin: 1, zMax: 3, action: MiningAction.Dig, priority: 12),
+            new CreateHaulOrderCommand(tick: 0, rect, z: 2, priority: 13),
+            new CreateConstructionOrderCommand(tick: 0, rect, zMin: 2, zMax: 2, shape: ConstructionShape.Floor, filter: filter, priority: 14),
+            new CreateBuildableConstructionOrderCommand(tick: 0, "core_workshop_carpenter", buildAnchor, z: 2, priority: 15)
+        };
+
+        if (!wrapWithRuntimeIdentity)
+            return commands;
+
+        return commands
+            .Select((command, index) => (ICommand)new RuntimeIdentifiedCommand(command, sequence: index + 1))
+            .ToArray();
+    }
+
+    private static string ExecuteOrderCommandsAndHash(IReadOnlyList<ICommand> commands)
+    {
+        var services = new RuntimeSessionServices();
+        foreach (var command in commands)
+        {
+            services.CommandQueue.Enqueue(command);
+        }
+
+        return ExecuteExistingOrderQueueAndHash(services);
+    }
+
+    private static string ExecuteReplayRecordsAndHash(
+        RuntimeSessionServices services,
+        IReadOnlyList<CommandReplayRecord> records,
+        out RuntimeCommandReplayRestoreResult restoreResult)
+    {
+        restoreResult = new RuntimeCommandReplayRestorer().RestorePending(services, records);
+        return ExecuteExistingOrderQueueAndHash(services);
+    }
+
+    private static string ExecuteExistingOrderQueueAndHash(RuntimeSessionServices services)
+    {
+        var world = ExecuteExistingOrderQueue(services);
+        return BuildWorldReplayHash(world);
+    }
+
+    private static World ExecuteExistingOrderQueue(RuntimeSessionServices services)
+    {
+        var world = new World(2, 10);
+        var context = CreateRuntimeContext(
+            services.DiffLog,
+            services.MutationDiffs,
+            world,
+            services.EventBus);
+        var pipeline = new SimulationTickPipeline(
+            world,
+            services.CommandQueue,
+            context,
+            context,
+            services.DiffLog,
+            services.MutationDiffs,
+            navigation: null);
+
+        pipeline.AttachTo(services.TickScheduler);
+        services.TickScheduler.ExecuteSingleTick();
+        pipeline.DetachFrom(services.TickScheduler);
+
+        return world;
+    }
+
+    private static string BuildWorldReplayHash(World world)
+    {
+        return WorldReplayHashBuilder.Build(world);
+    }
+
+    private static World CreateReplayHashWorld()
+    {
+        var world = new World(2, 2);
+        DefinitionCatalogTestSupport.LoadItems(world);
+        DefinitionCatalogTestSupport.LoadCreatures(world);
+
+        var itemCell = new SadRogue.Primitives.Point(1, 1);
+        var creatureCell = new SadRogue.Primitives.Point(2, 2);
+        world.SetTile(itemCell.X, itemCell.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+        world.SetTile(creatureCell.X, creatureCell.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 0);
+
+        var itemId = world.Items.SpawnItem("core_item_log_oak", itemCell, 0, quantity: 3, currentTick: 5)
+            ?? throw new InvalidOperationException("Test item failed to spawn.");
+        var creatureId = world.Creatures.SpawnCreature("core_race_dwarf", creatureCell, 0, "player", currentTick: 6)
+            ?? throw new InvalidOperationException("Test creature failed to spawn.");
+
+        world.Reservations.TryReserveItem(
+            itemId,
+            Guid.Parse("11111111-2222-3333-4444-555555555555"),
+            currentTick: 7,
+            expireTick: 20);
+        world.Reservations.TryReserveCreature(
+            creatureId,
+            "test.system",
+            currentTick: 7,
+            expireTick: 21,
+            jobId: "job-1");
+
+        world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 2, 2), z: 0, priority: 13, createdTick: 8);
+
+        var stockpileId = world.Stockpiles.CreateZone("Replay Stockpile", new ChunkKey(0, 0, 0), currentTick: 9);
+        world.Stockpiles.UpdateZone(stockpileId, zone =>
+        {
+            zone.Filter = new StockpileFilter
+            {
+                Mode = FilterMode.Whitelist,
+                Tags = ImmutableHashSet.Create(StringComparer.Ordinal, "wood"),
+                ItemIds = ImmutableHashSet.Create(StringComparer.Ordinal, "core_item_log_oak"),
+                Materials = ImmutableHashSet.Create(StringComparer.Ordinal, "core_mat_wood_oak")
+            };
+            zone.Priority = 2;
+            zone.TargetStacks = 16;
+            zone.HysteresisLow = 4;
+            zone.HysteresisHigh = 12;
+            zone.UpdateMemberChunks(new[] { new ChunkKey(0, 0, 0) });
+        });
+
+        AddReplayHashPlaceables(world);
+
+        return world;
+    }
+
+    private static void AddReplayHashPlaceables(World world)
+    {
+        var constructionPosition = new SadRogue.Primitives.Point(4, 4);
+        var workshopPosition = new SadRogue.Primitives.Point(8, 8);
+        world.SetTile(constructionPosition.X, constructionPosition.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 10);
+        world.SetTile(workshopPosition.X, workshopPosition.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 10);
+
+        var constructionSite = PlaceableFactory.CreateConstructionSite(
+            constructionPosition,
+            z: 0,
+            tickSeed: 10,
+            targetId: "test_construction_wall",
+            fp: new Footprint(2, 1, 1),
+            materialsRequired: new Dictionary<string, int>
+            {
+                ["stone"] = 2,
+                ["wood"] = 1
+            },
+            totalBuildTicks: 30);
+        constructionSite.ConstructionSite!.MaterialsDelivered["stone"] = 1;
+        constructionSite.ConstructionSite.BuildProgressTicks = 7;
+        PlaceableManager.PlacePlaceable(world, constructionSite, tick: 10);
+
+        var workshop = new PlaceableInstance(
+            Guid.Parse("aaaaaaaa-5555-5555-5555-aaaaaaaaaaaa"),
+            PlaceableKind.Construction,
+            "test_workshop",
+            workshopPosition,
+            z: 0,
+            footprint: new Footprint(1, 1, 1))
+        {
+            HitPoints = 10,
+            MaxHitPoints = 12,
+            Workshop = new WorkshopState()
+        };
+        workshop.Workshop.ConfigureWorkers(defaultAllowed: 2, maxWorkers: 3);
+        var queueEntry = workshop.Workshop.AddEntry("test_recipe_plank", "Replay Plank", workshop.Guid, currentTick: 11);
+        queueEntry.Status = CraftQueueStatus.AwaitingMaterials;
+        queueEntry.HasPendingRequests = true;
+        queueEntry.LastRequestTick = 12;
+        queueEntry.ActiveWorkerId = Guid.Parse("bbbbbbbb-5555-5555-5555-bbbbbbbbbbbb");
+        queueEntry.IsScheduled = true;
+        queueEntry.BlockingReason = "waiting_for_material";
+        PlaceableManager.PlacePlaceable(world, workshop, tick: 11);
+    }
+
+    private static PlaceableInstance GetReplayHashWorkshop(World world)
+    {
+        return world.GetAllChunks()
+            .SelectMany(chunk => chunk.GetPlaceableData()?.GetAllOwnedPlaceables() ?? Enumerable.Empty<PlaceableInstance>())
+            .Single(placeable => placeable.Workshop != null);
+    }
+
+    private static void TestMiningReplayHashBuilder()
+    {
+        var snapshot = CreateMiningReplaySnapshot(progressTicks: 3);
+        var sameSnapshot = CreateMiningReplaySnapshot(progressTicks: 3);
+        var changedSnapshot = CreateMiningReplaySnapshot(progressTicks: 4);
+
+        var hash = MiningReplayHashBuilder.Build(snapshot);
+        var sameHash = MiningReplayHashBuilder.Build(sameSnapshot);
+        var secondReadHash = MiningReplayHashBuilder.Build(snapshot);
+        var changedHash = MiningReplayHashBuilder.Build(changedSnapshot);
+
+        RegressionAssert.True(
+            hash == sameHash
+            && hash == secondReadHash
+            && hash != changedHash,
+            "MiningReplayHashBuilder did not produce stable hashes for authoritative mining job state.");
+
+        Console.WriteLine("[PASS] Mining replay hash builder");
+    }
+
+    private static MiningJobReplaySnapshot CreateMiningReplaySnapshot(int progressTicks)
+    {
+        var active = new[]
+        {
+            new MiningActiveJobStateSnapshot(
+                Order: 0,
+                WorkerId: Guid.Parse("aaaaaaaa-7777-7777-7777-aaaaaaaaaaaa"),
+                Target: new SadRogue.Primitives.Point(5, 6),
+                Z: 1,
+                Adjacent: new SadRogue.Primitives.Point(5, 5),
+                Stage: MiningStage.Digging,
+                ProgressTicks: progressTicks,
+                RequiredTicks: 12,
+                GeologyHandle: 33,
+                TerrainKind: TerrainKind.SolidWall,
+                Priority: 4,
+                AssignedTick: 44,
+                ReplanFailCount: 2,
+                Action: MiningAction.DigChannel,
+                Segment: MiningSegment.Middle,
+                DesignationId: 77)
+        };
+
+        var backlog = new[]
+        {
+            new MiningBacklogEntrySnapshot(
+                Order: 0,
+                Dig: new MiningSystem.PlannedDig(
+                    new SadRogue.Primitives.Point(7, 8),
+                    Z: 1,
+                    GeologyHandle: 34,
+                    TerrainKind: (byte)TerrainKind.SolidWall,
+                    Priority: 5,
+                    Seed: 1234,
+                    Action: MiningAction.Dig,
+                    Segment: MiningSegment.None,
+                    DesignationId: 78),
+                EnqueuedTick: 55)
+        };
+
+        var deferred = new[]
+        {
+            new MiningDeferredStairwellSnapshot(
+                Order: 0,
+                Dig: new MiningSystem.PlannedDig(
+                    new SadRogue.Primitives.Point(9, 10),
+                    Z: 2,
+                    GeologyHandle: 35,
+                    TerrainKind: (byte)TerrainKind.SolidWall,
+                    Priority: 6,
+                    Seed: 5678,
+                    Action: MiningAction.DigStairwell,
+                    Segment: MiningSegment.Top,
+                    DesignationId: 79))
+        };
+
+        var reserved = new[]
+        {
+            new MiningReservedTileSnapshot(5, 6, 1),
+            new MiningReservedTileSnapshot(5, 6, 0)
+        };
+
+        var completions = new[]
+        {
+            new MiningRecentCompletionSnapshot(
+                Order: 0,
+                Cell: new SadRogue.Primitives.Point(3, 4),
+                Z: 1,
+                ExpireTick: 99)
+        };
+
+        return new MiningJobReplaySnapshot(active, backlog, deferred, reserved, completions);
+    }
+
+    private static void TestCraftReplayHashBuilder()
+    {
+        var snapshot = CreateCraftReplaySnapshot(workTicksRemaining: 9);
+        var sameSnapshot = CreateCraftReplaySnapshot(workTicksRemaining: 9);
+        var changedSnapshot = CreateCraftReplaySnapshot(workTicksRemaining: 8);
+
+        var hash = CraftReplayHashBuilder.Build(snapshot);
+        var sameHash = CraftReplayHashBuilder.Build(sameSnapshot);
+        var secondReadHash = CraftReplayHashBuilder.Build(snapshot);
+        var changedHash = CraftReplayHashBuilder.Build(changedSnapshot);
+
+        RegressionAssert.True(
+            hash == sameHash
+            && hash == secondReadHash
+            && hash != changedHash,
+            "CraftReplayHashBuilder did not produce stable hashes for authoritative craft job state.");
+
+        Console.WriteLine("[PASS] Craft replay hash builder");
+    }
+
+    private static CraftJobReplaySnapshot CreateCraftReplaySnapshot(int workTicksRemaining)
+    {
+        var workshopId = Guid.Parse("aaaaaaaa-8888-8888-8888-aaaaaaaaaaaa");
+        var queueEntryId = Guid.Parse("bbbbbbbb-8888-8888-8888-bbbbbbbbbbbb");
+
+        var active = new[]
+        {
+            new CraftActiveJobStateSnapshot(
+                Order: 0,
+                WorkerId: Guid.Parse("cccccccc-8888-8888-8888-cccccccccccc"),
+                WorkshopGuid: workshopId,
+                QueueEntryId: queueEntryId,
+                RecipeId: "test_recipe_plank",
+                Stage: CraftJobStage.Working,
+                WorkTicksRemaining: workTicksRemaining,
+                Anchor: new SadRogue.Primitives.Point(11, 12),
+                Z: 1)
+        };
+
+        var backlog = new[]
+        {
+            new CraftBacklogEntrySnapshot(
+                Order: 0,
+                Job: new PlannedCraftJob(
+                    WorkshopGuid: workshopId,
+                    QueueEntryId: Guid.Parse("dddddddd-8888-8888-8888-dddddddddddd"),
+                    RecipeId: "test_recipe_block",
+                    DurationTicks: 21,
+                    Anchor: new SadRogue.Primitives.Point(13, 14),
+                    Z: 2))
+        };
+
+        return new CraftJobReplaySnapshot(active, backlog);
+    }
+
+    private static void TestRuntimeReplayCheckpointHash()
+    {
+        var services = new RuntimeSessionServices();
+        var emptyServicesData = RuntimeReplayCheckpointHashBuilder.BuildData(services, session: null);
+        var emptyServicesHash = emptyServicesData.AggregateHash;
+        var sameEmptyServicesHash = RuntimeReplayCheckpointHashBuilder.BuildData(services, session: null).AggregateHash;
+        _ = services.RngStreams.GetStream("checkpoint.test").Next();
+        var changedRngData = RuntimeReplayCheckpointHashBuilder.BuildData(services, session: null);
+        services.ResetForNewSession();
+        var resetServicesData = RuntimeReplayCheckpointHashBuilder.BuildData(services, session: null);
+        var commandLogServices = new RuntimeSessionServices();
+        var replayOrderCommands = BuildReplayOrderCommands(wrapWithRuntimeIdentity: true);
+        foreach (var command in replayOrderCommands)
+        {
+            commandLogServices.CommandQueue.Enqueue(command);
+        }
+
+        _ = ExecuteExistingOrderQueue(commandLogServices);
+        var commandLogData = RuntimeReplayCheckpointHashBuilder.BuildData(commandLogServices, session: null);
+        var pendingCommandServices = new RuntimeSessionServices();
+        pendingCommandServices.CommandQueue.Enqueue(new CreateHaulOrderCommand(
+            tick: 99,
+            new SadRogue.Primitives.Rectangle(2, 2, 1, 1),
+            z: 0,
+            priority: 3));
+        var pendingCommandData = RuntimeReplayCheckpointHashBuilder.BuildData(pendingCommandServices, session: null);
+
+        RegressionAssert.True(
+            emptyServicesHash == sameEmptyServicesHash
+            && emptyServicesHash != changedRngData.AggregateHash
+            && emptyServicesData.RngHash != changedRngData.RngHash
+            && emptyServicesData.RngStreamCount == 0
+            && changedRngData.RngStreamCount == 1
+            && emptyServicesHash == resetServicesData.AggregateHash
+            && emptyServicesData.RngHash == resetServicesData.RngHash
+            && resetServicesData.RngStreamCount == 0
+            && emptyServicesData.CommandLogRecordCount == 0
+            && emptyServicesData.PendingCommandLogRecordCount == 0
+            && commandLogData.CommandLogRecordCount == replayOrderCommands.Length
+            && commandLogData.CommandLogHash != emptyServicesData.CommandLogHash
+            && commandLogData.AggregateHash != emptyServicesData.AggregateHash
+            && pendingCommandData.PendingCommandLogRecordCount == 1
+            && pendingCommandData.PendingCommandLogHash != emptyServicesData.PendingCommandLogHash
+            && pendingCommandData.AggregateHash != emptyServicesData.AggregateHash
+            && emptyServicesData.Metadata.SchemaVersion == SimulationSnapshotSchema.CurrentVersion,
+            "Runtime replay checkpoint hash did not include session-owned RNG stream state and command replay journal state.");
+
+        var rngDocumentServices = new RuntimeSessionServices();
+        _ = rngDocumentServices.RngStreams.GetStream("save.rng").Next();
+        var rngDocumentCheckpoint = RuntimeReplayCheckpointHashBuilder.BuildData(rngDocumentServices, session: null);
+        var rngDocumentManifest = RuntimeSaveManifestBuilder.Build(
+            rngDocumentCheckpoint,
+            content: null,
+            worldSnapshot: null);
+        var rngDocument = new RuntimeSaveSnapshotData(
+            rngDocumentManifest,
+            worldPayload: null,
+            rngDocumentServices.RngStreams.GetStateSnapshot(),
+            Array.Empty<CommandReplayRecord>(),
+            Array.Empty<CommandReplayRecord>()).ToDocumentData();
+        var rngDocumentRoundTrip = RuntimeSaveSnapshotDocumentCodec.Deserialize(
+            RuntimeSaveSnapshotDocumentCodec.Serialize(rngDocument));
+        var mappedRngStreams = RuntimeSaveSnapshotDocumentRngMapper.ToRngStreamStateSnapshots(rngDocumentRoundTrip);
+        var rngRestoreServices = new RuntimeSessionServices();
+        _ = rngRestoreServices.RngStreams.GetStream("stale.before.restore").Next();
+        var rngRestore = RuntimeSaveSnapshotRngRestorer.Restore(rngRestoreServices, rngDocumentRoundTrip);
+
+        RegressionAssert.True(
+            rngDocumentRoundTrip.RngStreams.Length == 1
+            && mappedRngStreams.Count == 1
+            && mappedRngStreams[0].StreamName == "save.rng"
+            && RngReplayHashBuilder.Build(mappedRngStreams) == rngDocumentCheckpoint.RngHash
+            && rngRestore.Success
+            && rngRestore.RestoredStreamCount == 1
+            && rngRestoreServices.RngStreams.GetStateSnapshot().Count == 1
+            && RngReplayHashBuilder.Build(rngRestoreServices.RngStreams) == rngDocumentCheckpoint.RngHash,
+            "Runtime save snapshot document did not preserve and restore RNG stream payload rows.");
+
+        var runtime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var noWorldData = runtime.GetReplayCheckpointData();
+        var noWorldManifest = runtime.GetSaveManifestData();
+        runtime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        var worldData = runtime.GetReplayCheckpointData();
+        var secondWorldData = runtime.GetReplayCheckpointData();
+        var manifest = runtime.GetSaveManifestData();
+        var saveSnapshot = runtime.CreateSaveSnapshotDocumentData();
+        var sections = manifest.Sections.ToDictionary(section => section.Name, StringComparer.Ordinal);
+
+        RegressionAssert.True(
+            worldData.AggregateHash == runtime.GetReplayCheckpointHash()
+            && worldData.AggregateHash == secondWorldData.AggregateHash
+            && worldData.AggregateHash != noWorldData.AggregateHash
+            && worldData.WorldHash != null
+            && noWorldData.WorldHash == null
+            && worldData.RngHash == secondWorldData.RngHash
+            && worldData.Metadata.SchemaVersion == SimulationSnapshotSchema.CurrentVersion
+            && worldData.Metadata.RuntimeTick == runtime.SimulationStatus.CurrentTick,
+            "Runtime replay checkpoint hash did not expose a stable Runtime-authored session checkpoint.");
+
+        RegressionAssert.True(
+            noWorldManifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
+            && !noWorldManifest.Content.HasContent
+            && noWorldManifest.Checkpoint.AggregateHash == noWorldData.AggregateHash
+            && manifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
+            && manifest.Content.HasContent
+            && !string.IsNullOrWhiteSpace(manifest.Content.ContentHash)
+            && manifest.Content.MaterialCount > 0
+            && manifest.Content.TerrainKindCount > 0
+            && manifest.Content.ConstructionCount > 0
+            && manifest.Content.RecipeCount > 0
+            && manifest.Content.GeologyCount > 0
+            && manifest.Content.ZoneCount > 0
+            && manifest.Checkpoint.AggregateHash == worldData.AggregateHash
+            && sections["world"].Present
+            && sections["world"].Hash == worldData.WorldHash
+            && sections["world"].RequiredForFortressMode
+            && sections["world"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.terrain"].Present
+            && sections["world.terrain"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.items"].Present
+            && sections["world.items"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.creatures"].Present
+            && sections["world.creatures"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.reservations"].Present
+            && sections["world.reservations"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.stockpiles"].Present
+            && sections["world.stockpiles"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.placeables"].Present
+            && sections["world.placeables"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["world.orders"].Present
+            && sections["world.orders"].RecordCount.GetValueOrDefault(-1) >= 0
+            && sections["rng"].Present
+            && sections["rng"].Hash == worldData.RngHash
+            && sections["rng"].RecordCount == worldData.RngStreamCount
+            && sections["commands.executed"].Present
+            && sections["commands.executed"].Hash == worldData.CommandLogHash
+            && sections["commands.executed"].RecordCount == worldData.CommandLogRecordCount
+            && sections["commands.pending"].Present
+            && sections["commands.pending"].Hash == worldData.PendingCommandLogHash
+            && sections["commands.pending"].RecordCount == worldData.PendingCommandLogRecordCount,
+            "Runtime save manifest did not bind checkpoint sections and content signature correctly.");
+
+        RegressionAssert.True(
+            saveSnapshot.Manifest.Checkpoint.AggregateHash == manifest.Checkpoint.AggregateHash
+            && saveSnapshot.WorldPayload.HasValue
+            && saveSnapshot.WorldPayload.Value.ReplayHash == worldData.WorldHash
+            && saveSnapshot.RngStreams.Length == worldData.RngStreamCount
+            && RngReplayHashBuilder.Build(RuntimeSaveSnapshotDocumentRngMapper.ToRngStreamStateSnapshots(saveSnapshot)) == worldData.RngHash
+            && saveSnapshot.ExecutedCommandRecords.Length == worldData.CommandLogRecordCount
+            && saveSnapshot.PendingCommandRecords.Length == worldData.PendingCommandLogRecordCount
+            && saveSnapshot.Manifest.Checkpoint.CommandLogHash == worldData.CommandLogHash
+            && saveSnapshot.Manifest.Checkpoint.PendingCommandLogHash == worldData.PendingCommandLogHash,
+            "Runtime save snapshot document did not bind the manifest to the command replay journal snapshot.");
+
+        var pendingRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        pendingRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        pendingRuntime.QueueHaulOrder(new RuntimeRect(1, 1, 1, 1), z: 0, priority: 5);
+        var pendingDocument = pendingRuntime.CreateSaveSnapshotDocumentData();
+        var pendingDocumentJson = RuntimeSaveSnapshotDocumentCodec.Serialize(pendingDocument);
+        var pendingDocumentRoundTrip = RuntimeSaveSnapshotDocumentCodec.Deserialize(pendingDocumentJson);
+        var pendingCommand = pendingDocumentRoundTrip.PendingCommandRecords.Single();
+
+        RegressionAssert.True(
+            pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash == pendingDocument.Manifest.Checkpoint.AggregateHash
+            && pendingDocumentRoundTrip.WorldPayload.HasValue
+            && pendingDocumentRoundTrip.WorldPayload.Value.ReplayHash == pendingDocument.Manifest.Checkpoint.WorldHash
+            && pendingDocumentRoundTrip.RngStreams.Length == pendingDocument.Manifest.Checkpoint.RngStreamCount
+            && RngReplayHashBuilder.Build(RuntimeSaveSnapshotDocumentRngMapper.ToRngStreamStateSnapshots(pendingDocumentRoundTrip)) == pendingDocument.Manifest.Checkpoint.RngHash
+            && pendingDocumentRoundTrip.PendingCommandRecords.Length == 1
+            && pendingDocumentRoundTrip.ExecutedCommandRecords.Length == 0
+            && pendingCommand.CommandType == "orders.haul.rect"
+            && pendingCommand.PayloadLength > 0
+            && !string.IsNullOrWhiteSpace(pendingCommand.PayloadBase64)
+            && Convert.FromBase64String(pendingCommand.PayloadBase64).Length == pendingCommand.PayloadLength,
+            "Runtime save snapshot document JSON round trip did not preserve pending command replay data.");
+
+        var mappedPendingRecords = RuntimeSaveSnapshotDocumentCommandMapper.ToPendingCommandReplayRecords(pendingDocumentRoundTrip);
+        var mappedExecutedRecords = RuntimeSaveSnapshotDocumentCommandMapper.ToExecutedCommandReplayRecords(pendingDocumentRoundTrip);
+        var mappedPendingRecord = mappedPendingRecords.Single();
+
+        RegressionAssert.True(
+            mappedExecutedRecords.Count == 0
+            && mappedPendingRecords.Count == 1
+            && mappedPendingRecord.CommandType == pendingCommand.CommandType
+            && mappedPendingRecord.CommandId == pendingCommand.CommandId
+            && mappedPendingRecord.PayloadLength == pendingCommand.PayloadLength
+            && CommandReplayJournalHashBuilder.Build(mappedPendingRecords) == pendingDocumentRoundTrip.Manifest.Checkpoint.PendingCommandLogHash,
+            "Runtime save snapshot document mapper did not rebuild pending command replay records for Runtime-owned replay restore.");
+
+        var documentStoreDirectory = Path.Combine(Path.GetTempPath(), "humanfortress-save-document-" + Guid.NewGuid().ToString("N"));
+        pendingRuntime.WriteSaveSnapshotDocument(documentStoreDirectory);
+        var storedDocument = pendingRuntime.ReadSaveSnapshotDocument(documentStoreDirectory);
+        pendingRuntime.WriteSaveSnapshotDocument(documentStoreDirectory);
+        var replacedDocument = pendingRuntime.ReadSaveSnapshotDocument(documentStoreDirectory);
+        var directoryValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
+
+        RegressionAssert.True(
+            storedDocument.Manifest.Checkpoint.AggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
+            && replacedDocument.Manifest.Checkpoint.AggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
+            && storedDocument.PendingCommandRecords.Length == 1
+            && replacedDocument.PendingCommandRecords.Length == 1
+            && directoryValidationResult.Success,
+            "Runtime save snapshot document store did not atomically write/read the save document.");
+
+        var validDocumentResult = pendingRuntime.ValidateSaveSnapshotDocument(pendingDocumentRoundTrip);
+        var tamperedDocument = pendingDocumentRoundTrip with
+        {
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                Checkpoint = pendingDocumentRoundTrip.Manifest.Checkpoint with
+                {
+                    PendingCommandLogHash = "tampered"
+                }
+            }
+        };
+        var tamperedDocumentResult = pendingRuntime.ValidateSaveSnapshotDocument(tamperedDocument);
+        var tamperedRngDocument = pendingDocumentRoundTrip with
+        {
+            RngStreams = new[]
+            {
+                new RuntimeSaveRngStreamRecordData("tampered.rng", 1, 2, 3, 4)
+            }
+        };
+        var tamperedRngDocumentResult = pendingRuntime.ValidateSaveSnapshotDocument(tamperedRngDocument);
+
+        var restoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        restoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        var restoreResult = restoreRuntime.RestorePendingCommandsFromSaveSnapshotDocument(pendingDocumentRoundTrip);
+        var directoryRestoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        directoryRestoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        var directoryRestoreResult = directoryRestoreRuntime.RestorePendingCommandsFromSaveSnapshotDirectory(documentStoreDirectory);
+        var directoryWorldRestoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var directoryWorldRestoreResult = directoryWorldRestoreRuntime.RestoreWorldFromSaveSnapshotDirectory(documentStoreDirectory);
+        var directoryFullRestoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var directoryFullRestoreResult = directoryFullRestoreRuntime.RestoreFullFromSaveSnapshotDirectory(documentStoreDirectory);
+        var directoryFullRestoredDocument = directoryFullRestoreRuntime.CreateSaveSnapshotDocumentData();
+        Directory.Delete(documentStoreDirectory, recursive: true);
+        var missingDirectoryValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
+        var missingDirectoryWorldRestoreResult = pendingRuntime.RestoreWorldFromSaveSnapshotDirectory(documentStoreDirectory);
+        var missingDirectoryFullRestoreResult = pendingRuntime.RestoreFullFromSaveSnapshotDirectory(documentStoreDirectory);
+        var documentWorldRestoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var documentWorldRestoreResult = documentWorldRestoreRuntime.RestoreWorldFromSaveSnapshotDocument(pendingDocumentRoundTrip);
+        var restoredWorldDocument = documentWorldRestoreRuntime.CreateSaveSnapshotDocumentData();
+        var documentFullRestoreRuntime = FortressRuntimeSessionFactory.Create(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var documentFullRestoreResult = documentFullRestoreRuntime.RestoreFullFromSaveSnapshotDocument(pendingDocumentRoundTrip);
+        var documentFullRestoredDocument = documentFullRestoreRuntime.CreateSaveSnapshotDocumentData();
+        restoreRuntime.QueueHaulOrder(new RuntimeRect(2, 2, 1, 1), z: 0, priority: 6);
+        var restoredRuntimeDocument = restoreRuntime.CreateSaveSnapshotDocumentData();
+        var restoredSequences = restoredRuntimeDocument.PendingCommandRecords
+            .Select(record => record.CommandIdentitySequence)
+            .ToArray();
+
+        RegressionAssert.True(
+            validDocumentResult.Success
+            && !tamperedDocumentResult.Success
+            && tamperedDocumentResult.Issues.Any(issue => issue.Section == "commands.pending")
+            && !tamperedRngDocumentResult.Success
+            && tamperedRngDocumentResult.Issues.Any(issue => issue.Section == "rng")
+            && restoreResult.Success
+            && restoreResult.Validation.Success
+            && restoreResult.PendingRecordCount == 1
+            && restoreResult.RestoredCommandCount == 1
+            && restoreResult.MaxCommandIdentitySequence == 1
+            && directoryRestoreResult.Success
+            && directoryRestoreResult.Validation.Success
+            && directoryRestoreResult.RestoredCommandCount == 1
+            && directoryWorldRestoreResult.Success
+            && directoryWorldRestoreResult.Validation.Success
+            && directoryWorldRestoreResult.SavedWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryWorldRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryFullRestoreResult.Success
+            && directoryFullRestoreResult.Validation.Success
+            && directoryFullRestoreResult.SavedWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryFullRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryFullRestoreResult.RestoredRngStreamCount == pendingDocumentRoundTrip.RngStreams.Length
+            && directoryFullRestoreResult.PendingRecordCount == 1
+            && directoryFullRestoreResult.RestoredCommandCount == 1
+            && directoryFullRestoredDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryFullRestoredDocument.PendingCommandRecords.Length == 1
+            && !missingDirectoryValidationResult.Success
+            && missingDirectoryValidationResult.Issues.Any(issue => issue.Section == "snapshot.document")
+            && !missingDirectoryWorldRestoreResult.Success
+            && missingDirectoryWorldRestoreResult.Validation.Issues.Any(issue => issue.Section == "snapshot.document")
+            && !missingDirectoryFullRestoreResult.Success
+            && missingDirectoryFullRestoreResult.Validation.Issues.Any(issue => issue.Section == "snapshot.document")
+            && documentWorldRestoreResult.Success
+            && documentWorldRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && restoredWorldDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && documentFullRestoreResult.Success
+            && documentFullRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && documentFullRestoreResult.RestoredRngStreamCount == pendingDocumentRoundTrip.RngStreams.Length
+            && documentFullRestoreResult.RestoredCommandCount == 1
+            && documentFullRestoredDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && documentFullRestoredDocument.Manifest.Checkpoint.RngHash == pendingDocumentRoundTrip.Manifest.Checkpoint.RngHash
+            && documentFullRestoredDocument.PendingCommandRecords.Length == 1
+            && restoredRuntimeDocument.PendingCommandRecords.Length == 2
+            && restoredSequences.SequenceEqual(new long?[] { 1, 2 }),
+            "Runtime save snapshot document validation/restore did not restore pending commands or advance command identity.");
+
+        var rejectedInvalidDocument = false;
+        try
+        {
+            _ = RuntimeSaveSnapshotDocumentCodec.Serialize(new RuntimeSaveSnapshotDocumentData(
+                pendingDocument.Manifest,
+                pendingDocument.WorldPayload,
+                pendingDocument.RngStreams,
+                Array.Empty<RuntimeSaveCommandRecordData>(),
+                new[]
+                {
+                    pendingCommand with { PayloadBase64 = "not base64" }
+                }));
+        }
+        catch (InvalidDataException)
+        {
+            rejectedInvalidDocument = true;
+        }
+
+        RegressionAssert.True(
+            rejectedInvalidDocument,
+            "Runtime save snapshot document codec did not reject malformed command payloads.");
+
+        Console.WriteLine("[PASS] Runtime replay checkpoint hash");
+    }
+
     private static void TestDiffLog()
     {
         var diffLog = new DiffLog();
@@ -339,6 +1582,59 @@ internal static class CoreRuntimeSmokeTests
             "Typed command diff ordering policy regressed.");
 
         Console.WriteLine("[PASS] Typed command diff ordering policy");
+    }
+
+    private static void TestStockpileMessageDrainSortKeyIsStable()
+    {
+        var sourceA = new ChunkKey(1, 2, 3);
+        var sourceACopy = new ChunkKey(1, 2, 3);
+        var sourceB = new ChunkKey(2, 2, 3);
+        var dest = new ChunkKey(4, 5, 3);
+
+        var first = StockpileMessage.HaulJobAssigned(
+            jobId: 10,
+            zoneId: 20,
+            itemHandle: 30,
+            quantity: 1,
+            sourceChunk: sourceA,
+            destChunk: dest,
+            cellIndex: 40,
+            localSeq: 1);
+        var repeat = StockpileMessage.HaulJobAssigned(
+            jobId: 10,
+            zoneId: 20,
+            itemHandle: 30,
+            quantity: 1,
+            sourceChunk: sourceACopy,
+            destChunk: dest,
+            cellIndex: 40,
+            localSeq: 1);
+        var differentSource = StockpileMessage.HaulJobAssigned(
+            jobId: 10,
+            zoneId: 20,
+            itemHandle: 30,
+            quantity: 1,
+            sourceChunk: sourceB,
+            destChunk: dest,
+            cellIndex: 40,
+            localSeq: 1);
+        var laterLocalSequence = StockpileMessage.HaulJobAssigned(
+            jobId: 10,
+            zoneId: 20,
+            itemHandle: 30,
+            quantity: 1,
+            sourceChunk: sourceA,
+            destChunk: dest,
+            cellIndex: 40,
+            localSeq: 2);
+
+        RegressionAssert.True(
+            first.GetDrainSortKey(tick: 123) == repeat.GetDrainSortKey(tick: 123)
+            && first.GetDrainSortKey(tick: 123) != differentSource.GetDrainSortKey(tick: 123)
+            && first.GetDrainSortKey(tick: 123) < laterLocalSequence.GetDrainSortKey(tick: 123),
+            "Stockpile mailbox drain sort key is not stable by tick/source chunk/local sequence.");
+
+        Console.WriteLine("[PASS] Stockpile mailbox drain sort key");
     }
 
     private static void TestMiningRectanglesIncludeSingleCellMaxExtent()
@@ -761,6 +2057,49 @@ internal static class CoreRuntimeSmokeTests
         queue.ExecuteCommands(0, context);
         RegressionAssert.True(testCommand.Executed, "CommandQueue did not execute due command.");
 
+        var replayRecordQueue = new CommandQueue();
+        var replayCommandId = Guid.Parse("12121212-3434-5656-7878-909090909090");
+        var replayCommand = new TestCommand(
+            5,
+            "replay.record",
+            commandId: replayCommandId,
+            payload: new byte[] { 1, 2, 3 });
+        replayRecordQueue.Enqueue(replayCommand);
+        replayRecordQueue.ExecuteCommands(5, context);
+        var replayRecord = replayRecordQueue.GetExecutedCommandRecords().SingleOrDefault();
+        var replayPayload = replayRecord?.ToPayloadArray() ?? Array.Empty<byte>();
+        replayPayload[0] = 9;
+
+        RegressionAssert.True(
+            replayRecord != null
+            && replayRecord.Tick == 5
+            && replayRecord.CommandId == replayCommandId
+            && replayRecord.CommandType == "replay.record"
+            && replayRecord.PayloadLength == 3
+            && replayRecord.ToPayloadArray().SequenceEqual(new byte[] { 1, 2, 3 }),
+            "CommandQueue replay records did not preserve immutable tick/id/type/payload data.");
+
+        replayRecordQueue.ClearExecutedCommands();
+        RegressionAssert.True(
+            replayRecordQueue.GetExecutedCommandRecords().Count == 0,
+            "CommandQueue did not clear executed replay records.");
+
+        var pendingRecordQueue = new CommandQueue();
+        var pendingLater = new TestCommand(10, "pending.later", payload: new byte[] { 10 });
+        var pendingFirst = new TestCommand(5, "pending.first", payload: new byte[] { 5 });
+        var pendingSecond = new TestCommand(5, "pending.second", payload: new byte[] { 6 });
+        pendingRecordQueue.Enqueue(pendingLater);
+        pendingRecordQueue.Enqueue(pendingFirst);
+        pendingRecordQueue.Enqueue(pendingSecond);
+        var pendingRecords = pendingRecordQueue.GetPendingCommandRecords();
+        var pendingReplaySnapshot = pendingRecordQueue.GetReplaySnapshot();
+
+        RegressionAssert.True(
+            pendingRecords.Select(record => record.CommandType).SequenceEqual(new[] { "pending.first", "pending.second", "pending.later" })
+            && pendingReplaySnapshot.PendingRecords.Select(record => record.CommandType).SequenceEqual(pendingRecords.Select(record => record.CommandType))
+            && pendingReplaySnapshot.ExecutedRecords.Count == 0,
+            "CommandQueue pending replay records were not exposed in deterministic future execution order.");
+
         var outOfOrderQueue = new CommandQueue();
         var futureCommand = new TestCommand(10, "future");
         var dueCommand = new TestCommand(0, "due");
@@ -790,6 +2129,46 @@ internal static class CoreRuntimeSmokeTests
         RegressionAssert.True(
             !staleFutureCommand.Executed && clearedQueue.GetExecutedCommands().Count == 0,
             "CommandQueue clear left stale pending or executed commands behind.");
+
+        var restoredQueue = new CommandQueue();
+        var restoredFuture = new TestCommand(3, "restored-future");
+        var restoredDue = new TestCommand(1, "restored-due");
+        restoredQueue.RestoreCommands(new ICommand[] { restoredFuture, restoredDue });
+
+        RegressionAssert.True(
+            restoredQueue.GetExecutedCommands().Count == 0,
+            "CommandQueue restore marked pending replay commands as already executed.");
+
+        restoredQueue.ExecuteCommands(1, context);
+        RegressionAssert.True(
+            restoredDue.Executed
+            && !restoredFuture.Executed
+            && restoredQueue.GetExecutedCommands().SequenceEqual(new ICommand[] { restoredDue }),
+            "CommandQueue restore did not replay only due commands into executed history.");
+
+        restoredQueue.ExecuteCommands(3, context);
+        RegressionAssert.True(
+            restoredFuture.Executed
+            && restoredQueue.GetExecutedCommands().SequenceEqual(new ICommand[] { restoredDue, restoredFuture }),
+            "CommandQueue restore did not preserve pending future commands for later replay.");
+
+        var atomicRestoreQueue = new CommandQueue();
+        var preservedCommand = new TestCommand(0, "preserved");
+        bool rejectedInvalidRestore = false;
+        atomicRestoreQueue.Enqueue(preservedCommand);
+        try
+        {
+            atomicRestoreQueue.RestoreCommands(new[] { (ICommand)null! });
+        }
+        catch (ArgumentNullException)
+        {
+            rejectedInvalidRestore = true;
+        }
+
+        atomicRestoreQueue.ExecuteCommands(0, context);
+        RegressionAssert.True(
+            rejectedInvalidRestore && preservedCommand.Executed,
+            "CommandQueue invalid restore cleared existing pending commands before validation.");
 
         var diagnostics = new RecordingDiagnosticSink();
         var previousSink = DiagnosticHub.Sink;
@@ -2030,13 +3409,37 @@ internal static class CoreRuntimeSmokeTests
             includeWorkDrawer: false,
             includeDebugMenu: false,
             stockpileDetailZoneId: null,
-            zoneDetailId: null,
-            tick: 0);
+            zoneDetailId: null);
 
         RegressionAssert.True(
             frame.StockpilePresets.Options.Any(option => option.Id == "weapons" && option.Name == "Weapon Storage")
             && frame.StockpilePresets.Options.FirstOrDefault().Id == "all",
             "Runtime stockpile preset menu did not use content-backed preset definitions.");
+
+        RegressionAssert.True(
+            frame.Metadata.SchemaVersion == SimulationSnapshotSchema.CurrentVersion
+            && frame.Metadata.RuntimeTick == runtime.SimulationStatus.CurrentTick,
+            "Runtime overlay snapshot metadata was not authored by the Runtime session.");
+
+        var renderFrame = runtime.GetFrameRenderData(
+            includeMapViewport: true,
+            fortressSize: 2 * 32,
+            cameraPosition: new RuntimePoint(0, 0),
+            cursorPosition: new RuntimePoint(0, 0),
+            currentZ: 0,
+            zoomLevel: 1,
+            viewWidth: 10,
+            viewHeight: 10,
+            cursorGlyph: 'X',
+            navigationMode: SimulationNavigationOverlayMode.None,
+            selectedNavigationTarget: null,
+            tileInspectionWorldPosition: new RuntimePoint(0, 0),
+            tileInspectionZ: 0);
+
+        RegressionAssert.True(
+            renderFrame.Metadata.SchemaVersion == SimulationSnapshotSchema.CurrentVersion
+            && renderFrame.Metadata.RuntimeTick == runtime.SimulationStatus.CurrentTick,
+            "Runtime frame-render snapshot metadata was not authored by the Runtime session.");
 
         Console.WriteLine("[PASS] Runtime stockpile preset menu uses content catalog");
     }
@@ -2258,19 +3661,22 @@ internal static class CoreRuntimeSmokeTests
     {
         private readonly List<string>? _executionLog;
         private readonly bool _throwOnExecute;
+        private readonly byte[] _payload;
 
         public TestCommand(
             ulong tick,
             string type,
             List<string>? executionLog = null,
             Guid? commandId = null,
-            bool throwOnExecute = false)
+            bool throwOnExecute = false,
+            byte[]? payload = null)
         {
             Tick = tick;
             CommandId = commandId ?? Guid.NewGuid();
             CommandType = type;
             _executionLog = executionLog;
             _throwOnExecute = throwOnExecute;
+            _payload = payload?.ToArray() ?? Array.Empty<byte>();
         }
 
         public ulong Tick { get; }
@@ -2291,7 +3697,7 @@ internal static class CoreRuntimeSmokeTests
 
         public byte[] Serialize()
         {
-            return Array.Empty<byte>();
+            return _payload.ToArray();
         }
     }
 

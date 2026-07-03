@@ -15,6 +15,7 @@ internal sealed partial class FortressRuntimeAccess : IFortressRuntimeSessionAcc
     private readonly IFortressRuntimeSessionSimulationControlPort _simulationControl;
     private readonly IFortressRuntimeSessionProfessionCommandPort _professionCommands;
     private readonly IFortressRuntimeSessionWorkshopCommandPort _workshopCommands;
+    private readonly IFortressRuntimeSessionSaveSnapshotPort _saveSnapshots;
 
     internal FortressRuntimeAccess(IFortressRuntimeSessionPorts runtimeSession)
     {
@@ -28,5 +29,6 @@ internal sealed partial class FortressRuntimeAccess : IFortressRuntimeSessionAcc
         _simulationControl = runtimeSession;
         _professionCommands = runtimeSession;
         _workshopCommands = runtimeSession;
+        _saveSnapshots = runtimeSession;
     }
 }

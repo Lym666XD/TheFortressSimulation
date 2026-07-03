@@ -24,7 +24,8 @@ internal static partial class FortressRuntimeSnapshotBuilder
         SimulationNavigationOverlayMode navigationMode,
         Point? selectedNavigationTarget,
         Point tileInspectionWorldPosition,
-        int tileInspectionZ)
+        int tileInspectionZ,
+        SimulationSnapshotMetadata metadata)
     {
         var viewport = new Rectangle(cameraPosition.X, cameraPosition.Y, viewWidth, viewHeight);
         return new SimulationFrameRenderData(
@@ -52,6 +53,7 @@ internal static partial class FortressRuntimeSnapshotBuilder
                 world,
                 geologyCatalog,
                 tileInspectionWorldPosition,
-                tileInspectionZ));
+                tileInspectionZ),
+            metadata);
     }
 }

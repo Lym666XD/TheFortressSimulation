@@ -11,4 +11,5 @@ public readonly record struct SimulationUiOverlayFrameData(
     SimulationZoneDetailData? ZoneDetail,
     SimulationManagementDrawerData? ManagementDrawer,
     SimulationWorkDrawerData? WorkDrawer,
-    SimulationDebugMenuData? DebugMenu);
+    SimulationDebugMenuData? DebugMenu,
+    SimulationSnapshotMetadata Metadata = default);

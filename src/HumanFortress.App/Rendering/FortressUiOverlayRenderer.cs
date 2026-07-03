@@ -21,8 +21,7 @@ internal static class FortressUiOverlayRenderer
             includeWorkDrawer: ui.OpenDrawer == DrawerId.Work,
             includeDebugMenu: ui.DebugOpen,
             stockpileDetailZoneId: context.UiServices?.StockpileUI?.EditingZoneId,
-            zoneDetailId: context.UiServices?.ZonesUI?.DetailPopupZoneId,
-            tick: context.UiTick);
+            zoneDetailId: context.UiServices?.ZonesUI?.DetailPopupZoneId);
         context.UiServices?.StockpileUI?.ApplyPresetMenu(overlayData.StockpilePresets);
 
         ClearOverlaySurface(uiSurface);

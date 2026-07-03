@@ -1,4 +1,6 @@
 using HumanFortress.Contracts.Runtime;
+using HumanFortress.Contracts.Runtime.Replay;
+using HumanFortress.Contracts.Runtime.Save;
 using HumanFortress.Contracts.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;
@@ -8,6 +10,9 @@ public interface IFortressRuntimeSessionPorts :
     IFortressRuntimeSessionBootstrapPort,
     IFortressRuntimeSessionReadPort,
     IFortressRuntimeSessionSnapshotPort,
+    IFortressRuntimeSessionReplayCheckpointPort,
+    IFortressRuntimeSessionSaveManifestPort,
+    IFortressRuntimeSessionSaveSnapshotPort,
     IFortressRuntimeSessionPlacementCommandPort,
     IFortressRuntimeSessionDebugCommandPort,
     IFortressRuntimeSessionSimulationControlPort,
@@ -42,8 +47,7 @@ public interface IFortressRuntimeSessionReadPort
         bool includeWorkDrawer,
         bool includeDebugMenu,
         int? stockpileDetailZoneId,
-        int? zoneDetailId,
-        ulong tick);
+        int? zoneDetailId);
 
     SimulationFrameRenderData GetFrameRenderData(
         bool includeMapViewport,
@@ -87,6 +91,39 @@ public interface IFortressRuntimeSessionSnapshotPort
     SimulationWorkshopDebugData GetWorkshopDebugData();
     WorkshopSummaryView? GetWorkshopPanelData(Guid workshopId);
     string? GetDefaultRecipeForWorkshop(string? workshopId);
+}
+
+public interface IFortressRuntimeSessionReplayCheckpointPort
+{
+    RuntimeReplayCheckpointData GetReplayCheckpointData();
+    string GetReplayCheckpointHash();
+}
+
+public interface IFortressRuntimeSessionSaveManifestPort
+{
+    RuntimeSaveManifestData GetSaveManifestData();
+}
+
+public interface IFortressRuntimeSessionSaveSnapshotPort
+{
+    RuntimeSaveSnapshotDocumentData CreateSaveSnapshotDocumentData();
+    void WriteSaveSnapshotDocument(string directory);
+    RuntimeSaveSnapshotDocumentData ReadSaveSnapshotDocument(string directory);
+    RuntimeSaveSnapshotDocumentValidationResultData ValidateSaveSnapshotDirectory(string directory);
+    RuntimeSaveSnapshotDocumentValidationResultData ValidateSaveSnapshotDocument(
+        RuntimeSaveSnapshotDocumentData document);
+    RuntimeSaveSnapshotRestoreResultData RestorePendingCommandsFromSaveSnapshotDocument(
+        RuntimeSaveSnapshotDocumentData document);
+    RuntimeSaveSnapshotRestoreResultData RestorePendingCommandsFromSaveSnapshotDirectory(
+        string directory);
+    RuntimeSaveWorldSnapshotRestoreResultData RestoreWorldFromSaveSnapshotDocument(
+        RuntimeSaveSnapshotDocumentData document);
+    RuntimeSaveWorldSnapshotRestoreResultData RestoreWorldFromSaveSnapshotDirectory(
+        string directory);
+    RuntimeSaveFullSnapshotRestoreResultData RestoreFullFromSaveSnapshotDocument(
+        RuntimeSaveSnapshotDocumentData document);
+    RuntimeSaveFullSnapshotRestoreResultData RestoreFullFromSaveSnapshotDirectory(
+        string directory);
 }
 
 public interface IFortressRuntimeSessionPlacementCommandPort
