@@ -1,13 +1,14 @@
 using HumanFortress.Contracts.Navigation;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Profession;
 
 internal sealed class TransportProfessionCandidateSource : ITransportWorkerCandidateSource
 {

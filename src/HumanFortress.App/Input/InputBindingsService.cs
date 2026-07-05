@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using HumanFortress.Content.Loading;
+using HumanFortress.App.Content;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
@@ -22,7 +22,7 @@ internal sealed class InputBindingsService
 
     internal void Load(string baseDir)
     {
-        var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "input.bindings.json");
+        var registryFile = AppContentFileLocator.ResolveRegistryFile(baseDir, "input.bindings.json");
         if (registryFile.ResolvedPath == null) return;
 
         var json = File.ReadAllText(registryFile.ResolvedPath);

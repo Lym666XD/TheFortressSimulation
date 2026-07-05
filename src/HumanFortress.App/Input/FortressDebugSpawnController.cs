@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using SadRogue.Primitives;
 
@@ -6,7 +5,7 @@ namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressDebugSpawnContext(
     UiStore Ui,
-    IFortressRuntimeDebugSpawnAccess Runtime,
+    FortressDebugSpawnRuntimePorts Runtime,
     int CurrentZ,
     ulong UiTick,
     Action Redraw);

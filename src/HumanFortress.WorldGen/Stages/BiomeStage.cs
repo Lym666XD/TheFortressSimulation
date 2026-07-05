@@ -1,6 +1,6 @@
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen.Stages
+namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class BiomeStage : IWorldGenStage
     {

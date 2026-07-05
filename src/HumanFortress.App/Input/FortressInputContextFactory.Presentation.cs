@@ -7,10 +7,7 @@ internal sealed partial class FortressInputContextFactory
     public FortressKeyboardInputRouterContext CreateKeyboard()
     {
         return new FortressKeyboardInputRouterContext(
-            _buildCatalogRuntime,
-            _workshopPanelRuntime,
-            _navigationDebugRuntime,
-            _simulationControlRuntime,
+            _keyboardRuntime,
             _ui,
             _uiTickProvider(),
             _viewport.Capture(),

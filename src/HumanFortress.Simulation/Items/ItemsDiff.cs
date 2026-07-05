@@ -1,4 +1,5 @@
 using System;
+using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Items;
@@ -53,14 +54,12 @@ internal readonly struct ItemsDiff
 
     internal long GetSortKey()
     {
-        // [chunkZ:10][chunkX:10][chunkY:10][localIndex:16][priority:8][localSeq:10]
-        long key = 0;
-        key |= ((long)(Chunk.Z & 0x3FF)) << 54;
-        key |= ((long)(Chunk.ChunkX & 0x3FF)) << 44;
-        key |= ((long)(Chunk.ChunkY & 0x3FF)) << 34;
-        key |= ((long)(LocalIndex & 0xFFFF)) << 18;
-        key |= ((long)(255 - (Priority & 0xFF))) << 10; // invert for desc priority
-        key |= (long)(LocalSeq & 0x3FF);
-        return key;
+        return SimulationDiffSortKeys.ByChunkCellPriorityDescending(
+            Chunk.Z,
+            Chunk.ChunkX,
+            Chunk.ChunkY,
+            LocalIndex,
+            Priority,
+            LocalSeq);
     }
 }

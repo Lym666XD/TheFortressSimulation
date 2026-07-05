@@ -6,7 +6,7 @@ using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 using WorldModel = HumanFortress.Simulation.World.World;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Diff;
 
 internal sealed class CraftDiffEmitter : ICraftDiffEmitter
 {

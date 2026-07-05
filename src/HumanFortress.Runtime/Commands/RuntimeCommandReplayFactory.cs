@@ -1,11 +1,10 @@
 using System.IO;
 using HumanFortress.Core.Commands;
-using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime.Commands;
 
-internal sealed class RuntimeCommandReplayFactory : ICommandReplayFactory
+internal sealed partial class RuntimeCommandReplayFactory : ICommandReplayFactory
 {
     private const int MaxDecodedStringArrayLength = 1024;
 
@@ -112,152 +111,6 @@ internal sealed class RuntimeCommandReplayFactory : ICommandReplayFactory
             or "debug.spawn.creature" => true,
             _ => false
         };
-    }
-
-    private static ICommand DecodeMiningOrder(ulong tick, BinaryReader reader)
-    {
-        var rect = ReadRectangle(reader);
-        var z = reader.ReadInt32();
-        var priority = reader.ReadInt32();
-        return new CreateMiningOrderCommand(tick, rect, z, priority);
-    }
-
-    private static ICommand DecodeAdvancedMiningOrder(ulong tick, BinaryReader reader)
-    {
-        var rect = ReadRectangle(reader);
-        var zMin = reader.ReadInt32();
-        var zMax = reader.ReadInt32();
-        var action = ReadByteEnum<MiningAction>(reader, "mining action");
-        var priority = reader.ReadInt32();
-        return new CreateAdvancedMiningOrderCommand(tick, rect, zMin, zMax, action, priority);
-    }
-
-    private static ICommand DecodeHaulOrder(ulong tick, BinaryReader reader)
-    {
-        var rect = ReadRectangle(reader);
-        var z = reader.ReadInt32();
-        var priority = reader.ReadInt32();
-        return new CreateHaulOrderCommand(tick, rect, z, priority);
-    }
-
-    private static ICommand DecodeConstructionOrder(ulong tick, BinaryReader reader)
-    {
-        var rect = ReadRectangle(reader);
-        var zMin = reader.ReadInt32();
-        var zMax = reader.ReadInt32();
-        var shape = ReadByteEnum<ConstructionShape>(reader, "construction shape");
-        var preferredMaterialId = reader.ReadString();
-        var categoryKey = reader.ReadString();
-        var tags = ReadStringArray(reader, "construction material tags");
-        var priority = reader.ReadInt32();
-
-        return new CreateConstructionOrderCommand(
-            tick,
-            rect,
-            zMin,
-            zMax,
-            shape,
-            new MaterialFilterSpec
-            {
-                PreferredMaterialId = string.IsNullOrEmpty(preferredMaterialId) ? null : preferredMaterialId,
-                CategoryKey = categoryKey,
-                Tags = tags
-            },
-            priority);
-    }
-
-    private static ICommand DecodeBuildableConstructionOrder(ulong tick, BinaryReader reader)
-    {
-        var constructionId = reader.ReadString();
-        var anchor = new Point(reader.ReadInt32(), reader.ReadInt32());
-        var z = reader.ReadInt32();
-        var priority = reader.ReadInt32();
-        return new CreateBuildableConstructionOrderCommand(tick, constructionId, anchor, z, priority);
-    }
-
-    private static ICommand DecodeCreateZone(ulong tick, BinaryReader reader)
-    {
-        var definitionId = reader.ReadString();
-        var name = reader.ReadString();
-        var rect = ReadRectangle(reader);
-        var z = reader.ReadInt32();
-        return new CreateZoneCommand(tick, definitionId, name, rect, z);
-    }
-
-    private static ICommand DecodeUpdateZoneCells(ulong tick, BinaryReader reader)
-    {
-        var zoneId = reader.ReadInt32();
-        var rect = ReadRectangle(reader);
-        var z = reader.ReadInt32();
-        var isAdding = reader.ReadBoolean();
-        return new UpdateZoneCellsCommand(tick, zoneId, rect, z, isAdding);
-    }
-
-    private static ICommand DecodeDeleteZone(ulong tick, BinaryReader reader)
-    {
-        var zoneId = reader.ReadInt32();
-        return new DeleteZoneCommand(tick, zoneId);
-    }
-
-    private static ICommand DecodeCreateStockpile(ulong tick, BinaryReader reader)
-    {
-        var rect = ReadRectangle(reader);
-        var z = reader.ReadInt32();
-        var presetId = reader.ReadString();
-        return new CreateStockpileCommand(tick, rect, z, presetId);
-    }
-
-    private static ICommand DecodeDeleteStockpile(ulong tick, BinaryReader reader)
-    {
-        var zoneId = reader.ReadInt32();
-        return new DeleteStockpileCommand(tick, zoneId);
-    }
-
-    private static ICommand DecodeSetProfessionWeight(ulong tick, BinaryReader reader)
-    {
-        var workerId = ReadGuid(reader, "worker id");
-        var professionId = reader.ReadString();
-        var weight = reader.ReadInt32();
-        return new SetProfessionWeightCommand(tick, workerId, professionId, weight);
-    }
-
-    private static ICommand DecodeUpdateWorkshopQueue(ulong tick, BinaryReader reader)
-    {
-        var workshopGuid = ReadGuid(reader, "workshop id");
-        var operation = ReadByteEnum<WorkshopQueueOperation>(reader, "workshop queue operation");
-        var recipeId = reader.ReadString();
-        var entryId = ReadOptionalGuid(reader, "workshop queue entry id");
-        var intValue = ReadOptionalInt32(reader);
-        var moveOffset = ReadOptionalInt32(reader);
-        var boolValue = ReadOptionalBoolean(reader);
-
-        return new UpdateWorkshopQueueCommand(
-            tick,
-            workshopGuid,
-            operation,
-            recipeId: string.IsNullOrEmpty(recipeId) ? null : recipeId,
-            entryId: entryId,
-            intValue: intValue,
-            moveOffset: moveOffset,
-            boolValue: boolValue);
-    }
-
-    private static ICommand DecodeSpawnItem(ulong tick, BinaryReader reader)
-    {
-        var itemId = reader.ReadString();
-        var position = new Point(reader.ReadInt32(), reader.ReadInt32());
-        var z = reader.ReadInt32();
-        var quantity = reader.ReadInt32();
-        return new SpawnItemCommand(tick, itemId, position, z, quantity);
-    }
-
-    private static ICommand DecodeSpawnCreature(ulong tick, BinaryReader reader)
-    {
-        var creatureId = reader.ReadString();
-        var position = new Point(reader.ReadInt32(), reader.ReadInt32());
-        var z = reader.ReadInt32();
-        var factionId = reader.ReadString();
-        return new SpawnCreatureCommand(tick, creatureId, position, z, factionId);
     }
 
     private static Rectangle ReadRectangle(BinaryReader reader)

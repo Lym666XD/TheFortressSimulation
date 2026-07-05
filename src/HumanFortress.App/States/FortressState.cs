@@ -2,7 +2,6 @@ using System;
 using SadConsole;
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Input;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Rendering;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
@@ -26,11 +25,10 @@ namespace HumanFortress.App.States
 
         private int FortressSize => FortressSessionSizeRules.Normalize(_session.FortressSize);
 
-        internal FortressState(IFortressRuntimeSessionAccess runtime, FortressSessionContext session)
+        internal FortressState(FortressStateRuntimePorts runtimePorts, FortressSessionContext session)
         {
-            ArgumentNullException.ThrowIfNull(runtime);
+            ArgumentNullException.ThrowIfNull(runtimePorts);
             _session = session ?? throw new ArgumentNullException(nameof(session));
-            var runtimePorts = FortressStateRuntimePorts.From(runtime);
 
             var composition = FortressStateCompositionFactory.Create(
                 this,

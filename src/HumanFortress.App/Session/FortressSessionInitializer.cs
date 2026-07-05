@@ -1,14 +1,13 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.Contracts.Runtime;
 
 namespace HumanFortress.App.Session;
 
 internal sealed partial class FortressSessionInitializer
 {
-    private readonly IFortressRuntimeBootstrapAccess _runtime;
+    private readonly FortressSessionRuntimePorts _runtime;
     private readonly FortressSessionContext _session;
 
-    internal FortressSessionInitializer(IFortressRuntimeBootstrapAccess runtime, FortressSessionContext session)
+    internal FortressSessionInitializer(FortressSessionRuntimePorts runtime, FortressSessionContext session)
     {
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
         _session = session ?? throw new ArgumentNullException(nameof(session));

@@ -1,4 +1,4 @@
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Binary min-heap for A* open set.

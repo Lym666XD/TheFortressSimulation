@@ -1,4 +1,4 @@
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Configuration;
 
 internal enum WorkerSelectionStrategy
 {

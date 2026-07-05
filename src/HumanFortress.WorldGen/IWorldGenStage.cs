@@ -1,6 +1,6 @@
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
     internal interface IWorldGenStage
     {

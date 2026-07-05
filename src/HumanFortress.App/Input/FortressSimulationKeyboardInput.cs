@@ -1,12 +1,11 @@
 using HumanFortress.App.UI;
-using HumanFortress.App.Runtime;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
 
 internal static class FortressSimulationKeyboardInput
 {
-    public static bool Handle(Keyboard keyboard, IFortressRuntimeSimulationControlAccess runtime, UiStore ui, ulong uiTick)
+    public static bool Handle(Keyboard keyboard, FortressSimulationControlRuntimePorts runtime, UiStore ui, ulong uiTick)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
         ArgumentNullException.ThrowIfNull(runtime);

@@ -32,21 +32,21 @@ internal sealed partial class FortressRuntimeAccess
         _workshopCommands.QueueToggleWorkshopAutoStockpile(workshopId);
     }
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueAddWorkshopRecipe(Guid workshopId, string recipeId) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueAddWorkshopRecipe(Guid workshopId, string recipeId) =>
         QueueAddWorkshopRecipe(workshopId, recipeId);
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueRemoveWorkshopQueueEntry(Guid workshopId, Guid entryId) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueRemoveWorkshopQueueEntry(Guid workshopId, Guid entryId) =>
         QueueRemoveWorkshopQueueEntry(workshopId, entryId);
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueMoveWorkshopQueueEntry(Guid workshopId, Guid entryId, int moveOffset) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueMoveWorkshopQueueEntry(Guid workshopId, Guid entryId, int moveOffset) =>
         QueueMoveWorkshopQueueEntry(workshopId, entryId, moveOffset);
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueSetWorkshopWorkerSlots(Guid workshopId, int workerSlots) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueSetWorkshopWorkerSlots(Guid workshopId, int workerSlots) =>
         QueueSetWorkshopWorkerSlots(workshopId, workerSlots);
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueToggleWorkshopAutoSupply(Guid workshopId) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueToggleWorkshopAutoSupply(Guid workshopId) =>
         QueueToggleWorkshopAutoSupply(workshopId);
 
-    void IFortressRuntimeWorkshopPanelAccess.QueueToggleWorkshopAutoStockpile(Guid workshopId) =>
+    void IFortressRuntimeWorkshopPanelCommandAccess.QueueToggleWorkshopAutoStockpile(Guid workshopId) =>
         QueueToggleWorkshopAutoStockpile(workshopId);
 }

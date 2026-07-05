@@ -8,7 +8,7 @@ internal sealed partial class FortressViewContextFactory
             _view.MapSurface,
             _view.UiSurface,
             _ui,
-            _readRuntime,
+            _runtime,
             _diagnostics,
             _loadedSession.Capture(),
             _viewport.Capture(),

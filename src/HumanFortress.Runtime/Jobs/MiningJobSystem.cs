@@ -1,11 +1,15 @@
 using System;
-using HumanFortress.Jobs;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Configuration;
+using HumanFortress.Jobs.Diff;
+using HumanFortress.Jobs.Logging;
 using HumanFortress.Jobs.Mining;
-using HumanFortress.Navigation;
-using HumanFortress.Runtime;
+using HumanFortress.Jobs.Orchestration;
+using HumanFortress.Jobs.Profession;
+using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
 

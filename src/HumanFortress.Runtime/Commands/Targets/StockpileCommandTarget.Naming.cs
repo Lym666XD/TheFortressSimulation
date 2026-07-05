@@ -1,0 +1,19 @@
+namespace HumanFortress.Runtime.Commands;
+
+internal sealed partial class StockpileCommandTarget
+{
+    private string BuildZoneName(string presetId, int pendingCreateCount)
+    {
+        int number = _world.Stockpiles.GetAllZones().Count() + pendingCreateCount + 1;
+        return presetId.Equals("all", StringComparison.OrdinalIgnoreCase)
+            ? $"Stockpile {number}"
+            : $"{ToTitle(presetId)} Stockpile {number}";
+    }
+
+    private static string ToTitle(string value)
+    {
+        return value.Length == 0
+            ? "Stockpile"
+            : char.ToUpperInvariant(value[0]) + value[1..];
+    }
+}

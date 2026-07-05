@@ -1,5 +1,6 @@
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
+using HumanFortress.Runtime.Geometry;
 using HumanFortress.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;

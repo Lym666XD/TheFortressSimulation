@@ -1,7 +1,6 @@
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Input;
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 using SadConsole;
@@ -49,7 +48,7 @@ internal static partial class FortressStateCompositionFactory
 
         var inputCallbacks = new FortressInputCallbackHub();
         var inputController = CreateInputController(
-            runtime,
+            runtime.Input,
             ui,
             view,
             viewport,
@@ -64,7 +63,7 @@ internal static partial class FortressStateCompositionFactory
         inputCallbacks.Bind(inputController);
 
         var viewContexts = CreateViewContexts(
-            runtime,
+            runtime.View,
             diagnostics,
             ui,
             view,
@@ -77,7 +76,7 @@ internal static partial class FortressStateCompositionFactory
             drawUi);
 
         var sessionLoadCoordinator = CreateSessionLoadCoordinator(
-            runtime.Bootstrap,
+            runtime.Session,
             session,
             loadedSession,
             ui,

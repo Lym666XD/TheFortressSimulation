@@ -11,9 +11,10 @@ using HumanFortress.Core.World;
 using HumanFortress.Content.Loading;
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
+using HumanFortress.Contracts.WorldGen;
 using HumanFortress.Runtime;
 using HumanFortress.Simulation.World;
-using HumanFortress.WorldGen;
+using HumanFortress.WorldGen.Implementation;
 
 namespace HumanFortress.App
 {
@@ -280,6 +281,36 @@ namespace HumanFortress.App
                     throw new Exception($"Not enough biome variety: {biomes.Count}");
                 
                 Console.WriteLine($"✅ PASS ({biomes.Count} biomes)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 4: Embark Query
+            Console.Write("[TEST] Nearest embarkable world query... ");
+            try
+            {
+                var generator = new WorldGenerator();
+                var worldParams = new WorldParams
+                {
+                    Seed = 12345,
+                    Width = 64,
+                    Height = 64,
+                    Name = "EmbarkQueryTest"
+                };
+
+                var result = generator.Generate(worldParams);
+                var worldData = GeneratedWorldData.FromWorldGenResult(result);
+
+                if (!worldData.TryFindNearestEmbarkableTile(new WorldMapTilePosition(10, 10), out var embarkTile))
+                    throw new Exception("No embarkable tile found.");
+
+                if (!worldData.TryGetTileView(embarkTile, out var tileView) || !tileView.IsEmbarkable)
+                    throw new Exception($"Nearest embark query returned non-embarkable tile {embarkTile.X},{embarkTile.Y}.");
+
+                Console.WriteLine($"✅ PASS ({embarkTile.X},{embarkTile.Y})");
             }
             catch (Exception ex)
             {
@@ -564,9 +595,9 @@ namespace HumanFortress.App
             Console.Write("[TEST] Navigation mask generation... ");
             try
             {
-                var tuning = HumanFortress.Navigation.NavigationTuning.Default;
+                var tuning = HumanFortress.Navigation.Implementation.NavigationTuning.Default;
                 var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(0, 0, 0);
-                var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+                var navData = new HumanFortress.Navigation.Implementation.ChunkNavData(chunkKey);
 
                 // Create test tile data with walkable floor
                 var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor);
@@ -590,11 +621,11 @@ namespace HumanFortress.App
             try
             {
                 var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(0, 0, 0);
-                var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+                var navData = new HumanFortress.Navigation.Implementation.ChunkNavData(chunkKey);
                 var initialVersion = navData.ConnectivityVersion;
 
                 var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.SolidWall);
-                navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
+                navData.RebuildFromTiles(tiles, HumanFortress.Navigation.Implementation.NavigationTuning.Default);
 
                 if (navData.ConnectivityVersion <= initialVersion)
                     throw new Exception("ConnectivityVersion should increment after rebuild");
@@ -611,7 +642,7 @@ namespace HumanFortress.App
             Console.Write("[TEST] Deterministic A* pathfinding... ");
             try
             {
-                var pathService = new HumanFortress.Navigation.PathService();
+                var pathService = new HumanFortress.Navigation.Implementation.PathService();
                 var world = new TestNavigationWorld();
 
                 var request1 = new HumanFortress.Contracts.Navigation.PathRequest(
@@ -649,7 +680,7 @@ namespace HumanFortress.App
             Console.Write("[TEST] Path caching... ");
             try
             {
-                var pathService = new HumanFortress.Navigation.PathService(new HumanFortress.Navigation.NavigationTuning
+                var pathService = new HumanFortress.Navigation.Implementation.PathService(new HumanFortress.Navigation.Implementation.NavigationTuning
                 {
                     MaxMsPerTickPathing = 100
                 });
@@ -685,7 +716,7 @@ namespace HumanFortress.App
             Console.Write("[TEST] 10 concurrent pathfinders... ");
             try
             {
-                var pathService = new HumanFortress.Navigation.PathService();
+                var pathService = new HumanFortress.Navigation.Implementation.PathService();
                 var world = new TestNavigationWorld();
                 var tasks = new System.Threading.Tasks.Task<HumanFortress.Contracts.Navigation.Path>[10];
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -779,11 +810,11 @@ namespace HumanFortress.App
         // Helper test navigation world
         private class TestNavigationWorld : HumanFortress.Contracts.Navigation.IWorldNavigationView
         {
-            private readonly Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData> _chunks;
+            private readonly Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.Implementation.ChunkNavData> _chunks;
 
             public TestNavigationWorld()
             {
-                _chunks = new Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.ChunkNavData>();
+                _chunks = new Dictionary<HumanFortress.Contracts.Navigation.ChunkKey, HumanFortress.Navigation.Implementation.ChunkNavData>();
 
                 // Create a simple walkable world (3x3 chunks)
                 for (int cx = -1; cx <= 1; cx++)
@@ -791,12 +822,12 @@ namespace HumanFortress.App
                     for (int cy = -1; cy <= 1; cy++)
                     {
                         var chunkKey = new HumanFortress.Contracts.Navigation.ChunkKey(cx, cy, 0);
-                        var navData = new HumanFortress.Navigation.ChunkNavData(chunkKey);
+                        var navData = new HumanFortress.Navigation.Implementation.ChunkNavData(chunkKey);
 
                         // Fill with walkable floor tiles
                         var tiles = CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind.OpenWithFloor);
 
-                        navData.RebuildFromTiles(tiles, HumanFortress.Navigation.NavigationTuning.Default);
+                        navData.RebuildFromTiles(tiles, HumanFortress.Navigation.Implementation.NavigationTuning.Default);
                         _chunks[chunkKey] = navData;
                     }
                 }
@@ -890,7 +921,7 @@ namespace HumanFortress.App
 
         private static HumanFortress.Contracts.Navigation.NavigationTile[] CreateNavigationTiles(HumanFortress.Contracts.Navigation.NavigationTileKind kind)
         {
-            var tiles = new HumanFortress.Contracts.Navigation.NavigationTile[HumanFortress.Navigation.ChunkNavData.TilesPerChunk];
+            var tiles = new HumanFortress.Contracts.Navigation.NavigationTile[HumanFortress.Navigation.Implementation.ChunkNavData.TilesPerChunk];
             for (int i = 0; i < tiles.Length; i++)
                 tiles[i] = CreateNavigationTile(kind);
             return tiles;

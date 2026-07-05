@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Jobs;
-using HumanFortress.Jobs;
 using HumanFortress.App;
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Content.Loading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Determinism;
 using HumanFortress.Contracts.Content.Registry;
@@ -12,19 +12,29 @@ using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Save;
 using HumanFortress.Contracts.Simulation.Save;
 using HumanFortress.Core.Events;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Core.World;
 using HumanFortress.Contracts.Runtime.Snapshots;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Diff;
 using HumanFortress.Jobs.Mining;
+using HumanFortress.Jobs.Orchestration;
+using HumanFortress.Jobs.Profession;
 using HumanFortress.Jobs.Replay;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime;
+using HumanFortress.Runtime.Composition;
+using HumanFortress.Runtime.Host;
 using HumanFortress.Runtime.Replay;
 using HumanFortress.Runtime.Save;
+using HumanFortress.Runtime.Content;
+using HumanFortress.Runtime.Diff;
+using HumanFortress.Runtime.Session;
+using HumanFortress.Runtime.Startup;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.Items;
@@ -1234,7 +1244,7 @@ internal static class CoreRuntimeSmokeTests
             && RngReplayHashBuilder.Build(rngRestoreServices.RngStreams) == rngDocumentCheckpoint.RngHash,
             "Runtime save snapshot document did not preserve and restore RNG stream payload rows.");
 
-        var runtime = FortressRuntimeSessionFactory.Create(
+        var runtime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
@@ -1313,7 +1323,7 @@ internal static class CoreRuntimeSmokeTests
             && saveSnapshot.Manifest.Checkpoint.PendingCommandLogHash == worldData.PendingCommandLogHash,
             "Runtime save snapshot document did not bind the manifest to the command replay journal snapshot.");
 
-        var pendingRuntime = FortressRuntimeSessionFactory.Create(
+        var pendingRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
@@ -1387,24 +1397,24 @@ internal static class CoreRuntimeSmokeTests
         };
         var tamperedRngDocumentResult = pendingRuntime.ValidateSaveSnapshotDocument(tamperedRngDocument);
 
-        var restoreRuntime = FortressRuntimeSessionFactory.Create(
+        var restoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
         restoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
         var restoreResult = restoreRuntime.RestorePendingCommandsFromSaveSnapshotDocument(pendingDocumentRoundTrip);
-        var directoryRestoreRuntime = FortressRuntimeSessionFactory.Create(
+        var directoryRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
         directoryRestoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
         var directoryRestoreResult = directoryRestoreRuntime.RestorePendingCommandsFromSaveSnapshotDirectory(documentStoreDirectory);
-        var directoryWorldRestoreRuntime = FortressRuntimeSessionFactory.Create(
+        var directoryWorldRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
         var directoryWorldRestoreResult = directoryWorldRestoreRuntime.RestoreWorldFromSaveSnapshotDirectory(documentStoreDirectory);
-        var directoryFullRestoreRuntime = FortressRuntimeSessionFactory.Create(
+        var directoryFullRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
@@ -1414,13 +1424,13 @@ internal static class CoreRuntimeSmokeTests
         var missingDirectoryValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
         var missingDirectoryWorldRestoreResult = pendingRuntime.RestoreWorldFromSaveSnapshotDirectory(documentStoreDirectory);
         var missingDirectoryFullRestoreResult = pendingRuntime.RestoreFullFromSaveSnapshotDirectory(documentStoreDirectory);
-        var documentWorldRestoreRuntime = FortressRuntimeSessionFactory.Create(
+        var documentWorldRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
         var documentWorldRestoreResult = documentWorldRestoreRuntime.RestoreWorldFromSaveSnapshotDocument(pendingDocumentRoundTrip);
         var restoredWorldDocument = documentWorldRestoreRuntime.CreateSaveSnapshotDocumentData();
-        var documentFullRestoreRuntime = FortressRuntimeSessionFactory.Create(
+        var documentFullRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
@@ -2361,7 +2371,7 @@ internal static class CoreRuntimeSmokeTests
 
         World? contentWorld = null;
         World? hostWorld = null;
-        HumanFortress.Navigation.NavigationManager? hostNavigation = null;
+        HumanFortress.Navigation.Implementation.NavigationManager? hostNavigation = null;
         var hostObject = new object();
         var factory = new SimulationRuntimeSessionFactory<object>(
             services,
@@ -2439,8 +2449,8 @@ internal static class CoreRuntimeSmokeTests
         }
         """;
 
-        var tuning = HumanFortress.Navigation.NavigationTuning.LoadFromJson(json);
-        var invalidNumericTuning = HumanFortress.Navigation.NavigationTuning.LoadFromJson("""
+        var tuning = HumanFortress.Navigation.Implementation.NavigationTuning.LoadFromJson(json);
+        var invalidNumericTuning = HumanFortress.Navigation.Implementation.NavigationTuning.LoadFromJson("""
         {
           "cost": {
             "base": 70000
@@ -2473,8 +2483,8 @@ internal static class CoreRuntimeSmokeTests
             && tuning.DoorOpenCost == 6
             && tuning.MaxNodesPerSearch == 1200
             && tuning.MaxMsPerTickPathing == 4
-            && invalidNumericTuning.BaseCost == HumanFortress.Navigation.NavigationTuning.Default.BaseCost
-            && invalidNumericTuning.FluidShallowThreshold == HumanFortress.Navigation.NavigationTuning.Default.FluidShallowThreshold,
+            && invalidNumericTuning.BaseCost == HumanFortress.Navigation.Implementation.NavigationTuning.Default.BaseCost
+            && invalidNumericTuning.FluidShallowThreshold == HumanFortress.Navigation.Implementation.NavigationTuning.Default.FluidShallowThreshold,
             "NavigationTuning JSON parser did not apply supported fields or preserve defaults for invalid numeric ranges.");
 
         Console.WriteLine("[PASS] Navigation tuning JSON");
@@ -3503,11 +3513,13 @@ internal static class CoreRuntimeSmokeTests
     private static void TestEmbarkabilityDiagnostics()
     {
         var valid = new WorldTile { Elevation = 0.5f, RiverClass = 0 };
+        var lowGrassland = new WorldTile { Elevation = 0.29f, RiverClass = 0 };
         var low = new WorldTile { Elevation = 0.2f, RiverClass = 0 };
         var high = new WorldTile { Elevation = 0.9f, RiverClass = 0 };
         var river = new WorldTile { Elevation = 0.5f, RiverClass = 3 };
 
         RegressionAssert.True(valid.IsEmbarkable && valid.GetEmbarkabilityFailures().Count == 0, "Valid embark tile reported failures.");
+        RegressionAssert.True(lowGrassland.IsEmbarkable && lowGrassland.GetEmbarkabilityFailures().Count == 0, "Low grassland embark tile reported failures.");
         RegressionAssert.True(!low.IsEmbarkable && low.GetEmbarkabilityFailures().Any(reason => reason.Contains("Elevation", StringComparison.Ordinal)), "Low embark tile did not explain elevation failure.");
         RegressionAssert.True(!high.IsEmbarkable && high.GetEmbarkabilityFailures().Any(reason => reason.Contains("Elevation", StringComparison.Ordinal)), "High embark tile did not explain elevation failure.");
         RegressionAssert.True(!river.IsEmbarkable && river.GetEmbarkabilityFailures().Any(reason => reason.Contains("River class", StringComparison.Ordinal)), "River embark tile did not explain river failure.");

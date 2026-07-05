@@ -13,7 +13,8 @@ internal static class FortressUiOverlayRenderer
         var uiSurface = context.UiSurface;
         var ui = context.Ui;
         var viewport = CreateViewport(context);
-        var overlayData = context.Runtime.GetUiOverlayFrameData(
+        var runtime = context.Runtime.Read;
+        var overlayData = runtime.GetUiOverlayFrameData(
             context.CurrentZ,
             viewport,
             showZoneOverlay: ui.QuickMenu == QuickMenuKind.Zones,
@@ -25,7 +26,7 @@ internal static class FortressUiOverlayRenderer
         context.UiServices?.StockpileUI?.ApplyPresetMenu(overlayData.StockpilePresets);
 
         ClearOverlaySurface(uiSurface);
-        UiChromeRenderer.DrawTopBar(uiSurface, context.Runtime.SimulationStatus);
+        UiChromeRenderer.DrawTopBar(uiSurface, runtime.SimulationStatus);
         UiChromeRenderer.DrawDock(uiSurface, ui);
         UiChromeRenderer.DrawQuickIcons(uiSurface, ui);
         UiManagementDrawerRenderer.DrawDrawer(

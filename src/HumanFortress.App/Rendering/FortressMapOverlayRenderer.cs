@@ -23,7 +23,7 @@ internal static class FortressMapOverlayRenderer
                 context.CameraPosition,
                 context.CurrentZ,
                 context.UiTick,
-                (first, second, mode) => context.Runtime.GetPlacementPreviewData(
+                (first, second, mode) => context.Runtime.Read.GetPlacementPreviewData(
                     first,
                     second,
                     context.CurrentZ,

@@ -4,6 +4,9 @@ using HumanFortress.Core.Random;
 using HumanFortress.Contracts.Runtime.Replay;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using HumanFortress.Jobs.Replay;
+using HumanFortress.Runtime.Composition;
+using HumanFortress.Runtime.Host;
+using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.Replay;
 
 namespace HumanFortress.Runtime.Replay;

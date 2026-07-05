@@ -1,7 +1,7 @@
 using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Manages navigation data for all chunks.

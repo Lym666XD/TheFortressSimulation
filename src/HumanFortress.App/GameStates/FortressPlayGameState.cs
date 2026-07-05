@@ -33,6 +33,6 @@ internal sealed class FortressPlayGameState : ScreenGameState<FortressState>
         }
 
         _runtimeHost.InitializeWorld(fortressSize, 50);
-        return new FortressState(_runtimeHost.CreateRuntimeAccess(), _session);
+        return new FortressState(_runtimeHost.CreateRuntimePorts(), _session);
     }
 }

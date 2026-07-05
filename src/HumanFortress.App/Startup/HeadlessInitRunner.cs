@@ -9,8 +9,9 @@ internal static class HeadlessInitRunner
         try
         {
             var runtime = new GameStateRuntimeCoordinator(
-                options.StrictContent,
-                options.ContentWarningsAsErrors);
+                GameStateRuntimeConfiguration.CreateDefault(
+                    options.StrictContent,
+                    options.ContentWarningsAsErrors));
             runtime.InitializeWorld(sizeInChunks: 2, maxZ: 50);
             runtime.StopIfRunning();
             Logger.Log("[HEADLESS] Init-only completed");

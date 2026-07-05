@@ -19,8 +19,17 @@ internal sealed partial class WorldMapState
         int moveSpeed = shift ? 10 : 1;
 
         var navigation = ApplyWorldMapNavigation(keyboard, worldWidth, worldHeight, moveSpeed);
+        bool mapNeedsRender = navigation.Moved || navigation.CursorMoved;
 
-        if (navigation.Moved || navigation.CursorMoved)
+        if (keyboard.IsKeyPressed(Keys.E) &&
+            _session.TryFindNearestEmbarkableTile(_cursorPos, out var embarkableTile))
+        {
+            _cursorPos = embarkableTile;
+            CenterCameraOnCursor(worldWidth, worldHeight);
+            mapNeedsRender = true;
+        }
+
+        if (mapNeedsRender)
         {
             RenderMap();
         }

@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Tunable navigation parameters from tuning.navigation.json.

@@ -2,7 +2,7 @@ using System;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen.Stages
+namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class ElevationStage : IWorldGenStage
     {

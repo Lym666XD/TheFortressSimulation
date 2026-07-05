@@ -1,5 +1,4 @@
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using SadConsole.Input;
 using SadRogue.Primitives;
@@ -13,7 +12,7 @@ internal sealed class FortressNavigationDebugController
 
     public bool HandleKeyboard(
         Keyboard keyboard,
-        IFortressRuntimeNavigationDebugAccess runtime,
+        FortressNavigationDebugRuntimePorts runtime,
         NavigationOverlay? navigationOverlay,
         Point cursorPosition,
         int currentZ,
@@ -62,7 +61,7 @@ internal sealed class FortressNavigationDebugController
     }
 
     private void HandlePathTool(
-        IFortressRuntimeNavigationDebugAccess runtime,
+        FortressNavigationDebugRuntimePorts runtime,
         NavigationOverlay? navigationOverlay,
         Point cursorPosition,
         int currentZ,

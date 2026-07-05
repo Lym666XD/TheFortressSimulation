@@ -1,5 +1,5 @@
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Navigation;
+using HumanFortress.Navigation.Implementation;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 

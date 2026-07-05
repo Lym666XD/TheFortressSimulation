@@ -1,12 +1,11 @@
 using HumanFortress.App.Input;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 
 namespace HumanFortress.App.Session;
 
 internal sealed class FortressSessionLoader
 {
-    private readonly IFortressRuntimeBootstrapAccess _runtime;
+    private readonly FortressSessionRuntimePorts _runtime;
     private readonly FortressSessionContext _session;
     private readonly UiStore _ui;
     private readonly Func<ulong> _uiTickProvider;
@@ -15,7 +14,7 @@ internal sealed class FortressSessionLoader
     private readonly string _baseDir;
 
     internal FortressSessionLoader(
-        IFortressRuntimeBootstrapAccess runtime,
+        FortressSessionRuntimePorts runtime,
         FortressSessionContext session,
         UiStore ui,
         Func<ulong> uiTickProvider,

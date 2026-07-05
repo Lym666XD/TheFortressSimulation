@@ -1,5 +1,5 @@
 using HumanFortress.App.Diagnostics;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.App;
 

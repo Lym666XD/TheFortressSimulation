@@ -5,7 +5,7 @@ using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Stockpile;
 using WorldModel = HumanFortress.Simulation.World.World;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Diff;
 
 internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexEmitter
 {

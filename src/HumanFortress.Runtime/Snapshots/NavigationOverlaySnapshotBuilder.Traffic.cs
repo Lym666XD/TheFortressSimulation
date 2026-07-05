@@ -1,5 +1,5 @@
 using HumanFortress.Contracts.Navigation;
-using HumanFortress.Navigation;
+using HumanFortress.Navigation.Implementation;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime.Snapshots;

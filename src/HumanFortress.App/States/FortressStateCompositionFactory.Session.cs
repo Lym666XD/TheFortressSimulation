@@ -1,5 +1,4 @@
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 using SadConsole;
@@ -9,7 +8,7 @@ namespace HumanFortress.App.States;
 internal static partial class FortressStateCompositionFactory
 {
     private static FortressSessionLoadCoordinator CreateSessionLoadCoordinator(
-        IFortressRuntimeBootstrapAccess bootstrapRuntime,
+        FortressSessionRuntimePorts runtime,
         FortressSessionContext session,
         FortressLoadedSessionState loadedSession,
         UiStore ui,
@@ -17,7 +16,7 @@ internal static partial class FortressStateCompositionFactory
         string baseDirectory)
     {
         return new FortressSessionLoadCoordinator(
-            bootstrapRuntime,
+            runtime,
             session,
             loadedSession,
             ui,

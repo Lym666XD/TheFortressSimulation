@@ -1,4 +1,5 @@
 using SadRogue.Primitives;
+using HumanFortress.Simulation.Diff;
 
 namespace HumanFortress.Simulation.Zones;
 
@@ -25,6 +26,6 @@ internal readonly record struct ZoneDiff
 
     internal long GetSortKey()
     {
-        return LocalSeq;
+        return SimulationDiffSortKeys.ByLocalSequence(LocalSeq);
     }
 }

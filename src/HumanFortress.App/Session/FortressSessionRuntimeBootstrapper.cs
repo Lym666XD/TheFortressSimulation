@@ -1,6 +1,5 @@
 using HumanFortress.App.Input;
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 
 namespace HumanFortress.App.Session;
@@ -8,7 +7,7 @@ namespace HumanFortress.App.Session;
 internal static class FortressSessionRuntimeBootstrapper
 {
     internal static FortressSessionRuntimeBindings Configure(
-        IFortressRuntimeBootstrapAccess runtime,
+        FortressSessionRuntimePorts runtime,
         UiStore ui,
         Func<ulong> uiTickProvider,
         bool autoDig,
@@ -45,14 +44,14 @@ internal static class FortressSessionRuntimeBootstrapper
     }
 
     private static void BindWorkshopCompletionNotifications(
-        IFortressRuntimeBootstrapAccess runtime,
+        FortressSessionRuntimePorts runtime,
         UiStore ui,
         Func<ulong> uiTickProvider)
     {
         ArgumentNullException.ThrowIfNull(runtime);
 
         // This handler is App/UI-owned, but the notifier and job-system sink are Runtime-owned.
-        void Handler(FortressWorkshopCompletionNotification notification)
+        runtime.SetWorkshopCompletionHandler(notification =>
         {
             try
             {
@@ -71,8 +70,6 @@ internal static class FortressSessionRuntimeBootstrapper
             catch
             {
             }
-        }
-
-        runtime.SetWorkshopCompletionHandler(Handler);
+        });
     }
 }

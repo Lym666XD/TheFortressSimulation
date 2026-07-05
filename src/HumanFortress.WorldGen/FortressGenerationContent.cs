@@ -2,7 +2,7 @@ using System;
 using HumanFortress.Contracts.Content.Registry;
 using System.Text.Json.Nodes;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
     internal sealed class FortressGenerationContent
     {

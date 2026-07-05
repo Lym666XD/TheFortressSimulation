@@ -1,4 +1,3 @@
-using HumanFortress.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Runtime.Jobs;

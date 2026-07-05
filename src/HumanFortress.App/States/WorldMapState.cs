@@ -59,6 +59,12 @@ namespace HumanFortress.App.States
                 _cursorPos = new Point(
                     Math.Min(MAP_WIDTH / 2, Math.Max(0, worldWidth - 1)),
                     Math.Min(MAP_HEIGHT / 2, Math.Max(0, worldHeight - 1)));
+
+                if (_session.TryFindNearestEmbarkableTile(_cursorPos, out var embarkableTile))
+                {
+                    _cursorPos = embarkableTile;
+                    CenterCameraOnCursor(worldWidth, worldHeight);
+                }
             }
 
             DrawControls();
@@ -69,8 +75,8 @@ namespace HumanFortress.App.States
         {
             _controlsPanel.Clear();
             _controlsPanel.Print(0, 0, "=== WORLD MAP ===", Color.Yellow);
-            _controlsPanel.Print(0, 1, "WASD/Arrows - Move Camera | Enter - Embark | ESC - Menu", Color.Gray);
-            _controlsPanel.Print(0, 2, "Shift - Fast movement | Tab - Toggle info", Color.Gray);
+            _controlsPanel.Print(0, 1, "WASD/Arrows - Move Cursor | Enter - Embark | ESC - Menu", Color.Gray);
+            _controlsPanel.Print(0, 2, "Shift - Fast movement | Ctrl+Move - Camera | E - Find embark", Color.Gray);
         }
         
     }

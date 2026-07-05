@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.Contracts.Runtime.Snapshots;
 
@@ -7,7 +6,7 @@ namespace HumanFortress.App.Input;
 internal static partial class FortressWorkshopPanelKeyboardInput
 {
     private static bool QueueDefaultRecipe(
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         UiStore ui,
         Guid workshopGuid,
         string definitionId,
@@ -23,7 +22,7 @@ internal static partial class FortressWorkshopPanelKeyboardInput
     }
 
     private static bool MoveSelectedQueueEntry(
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         UiStore ui,
         Guid workshopGuid,
         WorkshopSummaryView state,

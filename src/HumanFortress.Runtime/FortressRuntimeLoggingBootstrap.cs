@@ -1,3 +1,5 @@
+using HumanFortress.Runtime.Composition;
+
 namespace HumanFortress.Runtime;
 
 /// <summary>

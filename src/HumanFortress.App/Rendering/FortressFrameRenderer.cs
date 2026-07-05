@@ -1,5 +1,4 @@
 using HumanFortress.App.Diagnostics;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 using HumanFortress.Contracts.Runtime.Snapshots;
@@ -10,7 +9,7 @@ internal sealed record FortressFrameRenderContext(
     MapScreenSurface? MapSurface,
     UiOverlaySurface? UiSurface,
     UiStore Ui,
-    IFortressRuntimeReadAccess Runtime,
+    FortressViewRuntimePorts Runtime,
     IFortressDiagnosticsAccess Diagnostics,
     FortressLoadedSessionSnapshot LoadedSession,
     FortressViewportSnapshot Viewport,
@@ -26,8 +25,9 @@ internal static class FortressFrameRenderer
         if (context.UiSurface == null || context.MapSurface == null)
             return;
 
+        var runtime = context.Runtime.Read;
         int cursorGlyph = context.Ui.Context == UiContext.Global ? 'X' : '.';
-        var frameData = context.Runtime.GetFrameRenderData(
+        var frameData = runtime.GetFrameRenderData(
             context.LoadedSession.HasFortressMap,
             context.FortressSize,
             context.Viewport.CameraPosition,

@@ -5,7 +5,20 @@ namespace HumanFortress.App.Runtime;
 /// <summary>
 /// Narrow App-owned port adapter over the Runtime session core.
 /// </summary>
-internal sealed partial class FortressRuntimeAccess : IFortressRuntimeSessionAccess
+internal sealed partial class FortressRuntimeAccess :
+    IFortressRuntimeReadAccess,
+    IFortressRuntimeMapInspectionAccess,
+    IFortressRuntimeDebugSpawnQueryAccess,
+    IFortressRuntimeDebugSpawnCommandAccess,
+    IFortressRuntimeBuildCatalogAccess,
+    IFortressRuntimeWorkshopPanelQueryAccess,
+    IFortressRuntimeWorkshopPanelCommandAccess,
+    IFortressRuntimeNavigationDebugAccess,
+    IFortressRuntimeSimulationControlAccess,
+    IFortressRuntimeUiInputAccess,
+    IFortressRuntimePlacementQueryAccess,
+    IFortressRuntimePlacementCommandAccess,
+    IFortressRuntimeBootstrapAccess
 {
     private readonly IFortressRuntimeSessionBootstrapPort _bootstrap;
     private readonly IFortressRuntimeSessionReadPort _read;
@@ -15,9 +28,8 @@ internal sealed partial class FortressRuntimeAccess : IFortressRuntimeSessionAcc
     private readonly IFortressRuntimeSessionSimulationControlPort _simulationControl;
     private readonly IFortressRuntimeSessionProfessionCommandPort _professionCommands;
     private readonly IFortressRuntimeSessionWorkshopCommandPort _workshopCommands;
-    private readonly IFortressRuntimeSessionSaveSnapshotPort _saveSnapshots;
 
-    internal FortressRuntimeAccess(IFortressRuntimeSessionPorts runtimeSession)
+    internal FortressRuntimeAccess(IFortressRuntimeAppSessionPorts runtimeSession)
     {
         ArgumentNullException.ThrowIfNull(runtimeSession);
 
@@ -29,6 +41,5 @@ internal sealed partial class FortressRuntimeAccess : IFortressRuntimeSessionAcc
         _simulationControl = runtimeSession;
         _professionCommands = runtimeSession;
         _workshopCommands = runtimeSession;
-        _saveSnapshots = runtimeSession;
     }
 }

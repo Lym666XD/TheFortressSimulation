@@ -1,6 +1,6 @@
 using HumanFortress.Contracts.WorldGen;
 
-namespace HumanFortress.WorldGen;
+namespace HumanFortress.WorldGen.Implementation;
 
 internal static class WorldGenerationServiceFactory
 {

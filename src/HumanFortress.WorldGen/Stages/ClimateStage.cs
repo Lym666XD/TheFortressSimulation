@@ -1,7 +1,7 @@
 using System;
 using HumanFortress.Core.Random;
 
-namespace HumanFortress.WorldGen.Stages
+namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class ClimateStage : IWorldGenStage
     {

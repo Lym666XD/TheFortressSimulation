@@ -31,4 +31,10 @@ internal sealed class EmptyGeneratedWorldData : IGeneratedWorldData
         snapshot = default;
         return false;
     }
+
+    public bool TryFindNearestEmbarkableTile(WorldMapTilePosition origin, out WorldMapTilePosition tilePosition)
+    {
+        tilePosition = default;
+        return false;
+    }
 }

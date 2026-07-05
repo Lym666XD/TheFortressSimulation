@@ -1,5 +1,6 @@
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Runtime.Commands;
+using HumanFortress.Runtime.Geometry;
 
 namespace HumanFortress.Runtime;
 

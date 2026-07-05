@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Simulation.World;
 using HumanFortress.Simulation.Tiles;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
     using TerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
     /// <summary>

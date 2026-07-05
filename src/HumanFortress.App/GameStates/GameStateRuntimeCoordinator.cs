@@ -1,30 +1,51 @@
-using HumanFortress.App.Diagnostics;
+using HumanFortress.App.Input;
+using HumanFortress.App.Rendering;
 using HumanFortress.App.Runtime;
+using HumanFortress.App.Session;
+using HumanFortress.App.States;
 using HumanFortress.Runtime;
 
 namespace HumanFortress.App.GameStates;
 
 internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost
 {
-    private readonly IFortressRuntimeSessionPorts _runtimeSession;
+    private readonly IFortressRuntimeAppSessionPorts _runtimeSession;
 
-    internal GameStateRuntimeCoordinator(
-        bool strictContent,
-        bool contentWarningsAsErrors)
+    internal GameStateRuntimeCoordinator(GameStateRuntimeConfiguration configuration)
     {
-        var baseDir = AppContext.BaseDirectory;
+        ArgumentNullException.ThrowIfNull(configuration);
+
         _runtimeSession = FortressRuntimeSessionFactory.Create(
-            baseDir,
-            strictContent,
-            contentWarningsAsErrors,
-            Logger.Log,
-            category => Logger.CreateCallback(category),
-            FortressContentIssueLogger.LogIssues);
+            configuration.BaseDirectory,
+            configuration.StrictContent,
+            configuration.ContentWarningsAsErrors,
+            configuration.Log,
+            configuration.CreateLogCallback,
+            configuration.LogContentIssues);
     }
 
-    internal IFortressRuntimeSessionAccess CreateRuntimeAccess()
+    internal FortressStateRuntimePorts CreateRuntimePorts()
     {
-        return new FortressRuntimeAccess(_runtimeSession);
+        var runtime = new FortressRuntimeAccess(_runtimeSession);
+        return new FortressStateRuntimePorts(
+            new FortressViewRuntimePorts(runtime, runtime),
+            new FortressInputRuntimePorts(CreateInputDependencies(runtime)),
+            new FortressSessionRuntimePorts(runtime));
+    }
+
+    private static FortressInputRuntimePortDependencies CreateInputDependencies(FortressRuntimeAccess runtime)
+    {
+        return new FortressInputRuntimePortDependencies(
+            BuildCatalog: runtime,
+            WorkshopQueries: runtime,
+            WorkshopCommands: runtime,
+            NavigationDebug: runtime,
+            SimulationControl: runtime,
+            PlacementQueries: runtime,
+            PlacementCommands: runtime,
+            DebugSpawnQueries: runtime,
+            DebugSpawnCommands: runtime,
+            MapInspection: runtime);
     }
 
     internal void InitializeWorld(int sizeInChunks, int maxZ)
@@ -42,7 +63,7 @@ internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost
         return _runtimeSession.StopIfRunning();
     }
 
-    IFortressRuntimeSessionAccess IFortressPlayRuntimeHost.CreateRuntimeAccess() => CreateRuntimeAccess();
+    FortressStateRuntimePorts IFortressPlayRuntimeHost.CreateRuntimePorts() => CreateRuntimePorts();
 
     void IFortressPlayRuntimeHost.InitializeWorld(int sizeInChunks, int maxZ) => InitializeWorld(sizeInChunks, maxZ);
 }

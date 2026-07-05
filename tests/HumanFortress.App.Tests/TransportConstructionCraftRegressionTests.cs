@@ -1,8 +1,8 @@
 using HumanFortress.Contracts.Navigation;
-using HumanFortress.Jobs;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Diff;
 using HumanFortress.Jobs.Replay;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime.Jobs;

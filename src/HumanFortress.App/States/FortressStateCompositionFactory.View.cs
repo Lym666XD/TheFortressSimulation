@@ -1,7 +1,6 @@
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.Input;
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 
@@ -10,7 +9,7 @@ namespace HumanFortress.App.States;
 internal static partial class FortressStateCompositionFactory
 {
     private static FortressViewContextFactory CreateViewContexts(
-        FortressStateRuntimePorts runtime,
+        FortressViewRuntimePorts runtime,
         IFortressDiagnosticsAccess diagnostics,
         UiStore ui,
         FortressViewState view,
@@ -23,8 +22,7 @@ internal static partial class FortressStateCompositionFactory
         Action drawUi)
     {
         return new FortressViewContextFactory(
-            runtime.Read,
-            runtime.UiInput,
+            runtime,
             diagnostics,
             ui,
             view,

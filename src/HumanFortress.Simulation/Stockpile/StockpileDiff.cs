@@ -1,3 +1,4 @@
+using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
@@ -106,14 +107,11 @@ internal readonly struct StockpileDiff
     /// </summary>
     internal long GetSortKey()
     {
-        // Pack into a long for efficient sorting
-        // Format: [cellIndex:16][priority:8][op:8][zoneId:16][localSeq:16]
-        long key = 0;
-        key |= ((long)(CellIndex & 0xFFFF)) << 48;
-        key |= ((long)(255 - Priority) & 0xFF) << 40; // Invert for descending
-        key |= ((long)Op & 0xFF) << 32;
-        key |= ((long)(ZoneId & 0xFFFF)) << 16;
-        key |= ((long)(LocalSeq & 0xFFFF));
-        return key;
+        return SimulationDiffSortKeys.ByStockpileCellPriorityDescending(
+            CellIndex,
+            Priority,
+            (int)Op,
+            ZoneId,
+            LocalSeq);
     }
 }

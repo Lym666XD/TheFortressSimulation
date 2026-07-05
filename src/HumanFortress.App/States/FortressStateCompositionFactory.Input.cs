@@ -1,6 +1,5 @@
 using HumanFortress.App.Input;
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 
@@ -9,7 +8,7 @@ namespace HumanFortress.App.States;
 internal static partial class FortressStateCompositionFactory
 {
     private static FortressStateInputController CreateInputController(
-        FortressStateRuntimePorts runtime,
+        FortressInputRuntimePorts runtime,
         UiStore ui,
         FortressViewState view,
         FortressViewportState viewport,
@@ -23,13 +22,7 @@ internal static partial class FortressStateCompositionFactory
         FortressInputCallbackHub inputCallbacks)
     {
         var inputContexts = new FortressInputContextFactory(
-            runtime.BuildCatalog,
-            runtime.WorkshopPanel,
-            runtime.NavigationDebug,
-            runtime.SimulationControl,
-            runtime.Placement,
-            runtime.DebugSpawn,
-            runtime.MapInspection,
+            runtime,
             ui,
             view,
             viewport,

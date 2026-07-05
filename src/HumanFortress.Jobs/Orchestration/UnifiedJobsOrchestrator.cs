@@ -1,7 +1,8 @@
 using System.Diagnostics;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Configuration;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Orchestration;
 
 /// <summary>
 /// Unified orchestrator for the Jobs stage.

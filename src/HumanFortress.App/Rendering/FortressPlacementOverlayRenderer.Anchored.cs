@@ -23,7 +23,7 @@ internal static partial class FortressPlacementOverlayRenderer
         }
         else if (ui.PlaceMode == PlacementMode.HaulSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            var preview = context.Runtime.GetPlacementPreviewData(
+            var preview = context.Runtime.Read.GetPlacementPreviewData(
                 firstCorner,
                 mouseWorld,
                 context.CurrentZ,
@@ -33,7 +33,7 @@ internal static partial class FortressPlacementOverlayRenderer
         else if (ui.PlaceMode == PlacementMode.MiningSecondCorner && context.UiServices?.OrdersUI != null)
         {
             var previewMode = ToPlacementPreviewMode(ui.SelectedMiningAction);
-            var preview = context.Runtime.GetPlacementPreviewData(
+            var preview = context.Runtime.Read.GetPlacementPreviewData(
                 firstCorner,
                 mouseWorld,
                 context.CurrentZ,
@@ -68,7 +68,7 @@ internal static partial class FortressPlacementOverlayRenderer
     {
         var ui = context.Ui;
         var previewMode = ToPlacementPreviewMode(ui.SelectedConstructionShape);
-        var preview = context.Runtime.GetPlacementPreviewData(
+        var preview = context.Runtime.Read.GetPlacementPreviewData(
             firstCorner,
             mouseWorld,
             context.CurrentZ,

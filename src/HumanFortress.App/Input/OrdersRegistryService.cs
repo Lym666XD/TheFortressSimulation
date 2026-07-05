@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using HumanFortress.Content.Loading;
+using HumanFortress.App.Content;
 
 namespace HumanFortress.App.Input;
 
@@ -21,7 +21,7 @@ internal sealed class OrdersRegistryService
 
     internal void Load(string baseDir)
     {
-        var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "orders.registry.json");
+        var registryFile = AppContentFileLocator.ResolveRegistryFile(baseDir, "orders.registry.json");
         if (registryFile.ResolvedPath == null) return;
 
         var json = File.ReadAllText(registryFile.ResolvedPath);

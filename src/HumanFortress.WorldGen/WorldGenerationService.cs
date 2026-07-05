@@ -2,7 +2,7 @@ using System;
 using HumanFortress.Contracts.WorldGen;
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen;
+namespace HumanFortress.WorldGen.Implementation;
 
 internal sealed class WorldGenerationService : IWorldGenerationService
 {

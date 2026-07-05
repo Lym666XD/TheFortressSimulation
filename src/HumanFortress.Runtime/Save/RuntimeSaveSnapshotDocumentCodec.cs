@@ -3,7 +3,7 @@ using HumanFortress.Contracts.Runtime.Save;
 
 namespace HumanFortress.Runtime.Save;
 
-public static class RuntimeSaveSnapshotDocumentCodec
+internal static class RuntimeSaveSnapshotDocumentCodec
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {

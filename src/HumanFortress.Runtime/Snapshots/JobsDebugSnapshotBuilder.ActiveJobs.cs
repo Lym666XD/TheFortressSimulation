@@ -1,5 +1,5 @@
 using HumanFortress.Jobs.Mining;
-using HumanFortress.Runtime;
+using HumanFortress.Runtime.Composition;
 
 namespace HumanFortress.Runtime.Snapshots;
 

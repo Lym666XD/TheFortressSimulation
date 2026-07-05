@@ -1,5 +1,4 @@
 using HumanFortress.App.UI;
-using HumanFortress.App.Runtime;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
@@ -8,7 +7,7 @@ internal static partial class FortressWorkshopPanelKeyboardInput
 {
     public static bool Handle(
         Keyboard keyboard,
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         UiStore ui,
         ulong uiTick)
     {

@@ -1,5 +1,4 @@
 using HumanFortress.App.Diagnostics;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 using SadRogue.Primitives;
@@ -8,8 +7,7 @@ namespace HumanFortress.App.Rendering;
 
 internal sealed partial class FortressViewContextFactory
 {
-    private readonly IFortressRuntimeReadAccess _readRuntime;
-    private readonly IFortressRuntimeUiInputAccess _uiInputRuntime;
+    private readonly FortressViewRuntimePorts _runtime;
     private readonly IFortressDiagnosticsAccess _diagnostics;
     private readonly UiStore _ui;
     private readonly FortressViewState _view;
@@ -26,8 +24,7 @@ internal sealed partial class FortressViewContextFactory
     private readonly Action _redraw;
 
     public FortressViewContextFactory(
-        IFortressRuntimeReadAccess readRuntime,
-        IFortressRuntimeUiInputAccess uiInputRuntime,
+        FortressViewRuntimePorts runtime,
         IFortressDiagnosticsAccess diagnostics,
         UiStore ui,
         FortressViewState view,
@@ -43,8 +40,8 @@ internal sealed partial class FortressViewContextFactory
         Action<Point> onOverlayMouseMoved,
         Action redraw)
     {
-        _readRuntime = readRuntime ?? throw new ArgumentNullException(nameof(readRuntime));
-        _uiInputRuntime = uiInputRuntime ?? throw new ArgumentNullException(nameof(uiInputRuntime));
+        ArgumentNullException.ThrowIfNull(runtime);
+        _runtime = runtime;
         _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
         _ui = ui ?? throw new ArgumentNullException(nameof(ui));
         _view = view ?? throw new ArgumentNullException(nameof(view));

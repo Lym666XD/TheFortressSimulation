@@ -1,3 +1,5 @@
+using HumanFortress.Simulation.Diff;
+
 namespace HumanFortress.Simulation.Placeables;
 
 internal enum WorkshopDiffOp
@@ -28,6 +30,6 @@ internal readonly record struct WorkshopDiff
 
     internal long GetSortKey()
     {
-        return LocalSeq;
+        return SimulationDiffSortKeys.ByLocalSequence(LocalSeq);
     }
 }

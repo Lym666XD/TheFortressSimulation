@@ -8,9 +8,9 @@ internal sealed partial class FortressViewContextFactory
     {
         return new FortressViewBootstrapContext(
             new FortressUiInteractionDataSource(
-                _uiInputRuntime.GetDebugMenuData,
-                _uiInputRuntime.GetWorkforceInputData,
-                _uiInputRuntime.SetProfessionWeight),
+                _runtime.UiInput.GetDebugMenuData,
+                _runtime.UiInput.GetWorkforceInputData,
+                _runtime.UiInput.SetProfessionWeight),
             _ui,
             _fortressSizeProvider() * 32,
             _uiTickProvider,

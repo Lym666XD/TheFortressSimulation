@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
@@ -7,7 +6,7 @@ internal static partial class FortressWorkshopPanelKeyboardInput
 {
     private static bool HandleWorkerSlots(
         Keyboard keyboard,
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         Guid workshopGuid,
         int allowedWorkers)
     {
@@ -28,7 +27,7 @@ internal static partial class FortressWorkshopPanelKeyboardInput
 
     private static bool HandleAutomationToggles(
         Keyboard keyboard,
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         Guid workshopGuid)
     {
         if (keyboard.IsKeyPressed(Keys.S))

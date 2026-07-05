@@ -1,4 +1,4 @@
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.App.Diagnostics;
 

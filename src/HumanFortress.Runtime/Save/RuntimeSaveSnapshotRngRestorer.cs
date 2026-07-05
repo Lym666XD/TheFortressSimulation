@@ -1,6 +1,7 @@
 using HumanFortress.Contracts.Runtime.Save;
 using HumanFortress.Core.Determinism;
 using HumanFortress.Core.Random;
+using HumanFortress.Runtime.Session;
 
 namespace HumanFortress.Runtime.Save;
 

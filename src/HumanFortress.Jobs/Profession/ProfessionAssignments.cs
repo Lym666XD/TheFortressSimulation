@@ -1,10 +1,11 @@
 using HumanFortress.Contracts.Navigation;
 using HumanFortress.Contracts.Jobs;
 using HumanFortress.Contracts.Simulation.Creatures;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Profession;
 
 internal sealed class ProfessionAssignments
 {

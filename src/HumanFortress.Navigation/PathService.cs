@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Pathfinding service per NAVIGATION_SPEC.md section 5.

@@ -1,5 +1,5 @@
 using HumanFortress.Contracts.WorldGen;
-using HumanFortress.WorldGen;
+using HumanFortress.WorldGen.Implementation;
 
 namespace HumanFortress.Runtime;
 

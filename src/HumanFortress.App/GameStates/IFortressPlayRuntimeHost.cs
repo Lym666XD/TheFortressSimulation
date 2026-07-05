@@ -1,10 +1,10 @@
-using HumanFortress.App.Runtime;
+using HumanFortress.App.States;
 
 namespace HumanFortress.App.GameStates;
 
 internal interface IFortressPlayRuntimeHost
 {
-    IFortressRuntimeSessionAccess CreateRuntimeAccess();
+    FortressStateRuntimePorts CreateRuntimePorts();
 
     void InitializeWorld(int sizeInChunks, int maxZ);
 }

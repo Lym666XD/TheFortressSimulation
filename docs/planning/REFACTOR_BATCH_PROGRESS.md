@@ -2,8 +2,279 @@
 
 This document tracks the current multi-step refactor batches so progress is visible without relying on chat history.
 
-## Current Status Snapshot - 2026-07-03
+## Current Status Snapshot - 2026-07-05
 
+- Latest source-only/no-build boundary hardening split Runtime command replay
+  decoding by command domain. `RuntimeCommandReplayFactory.cs` now keeps the
+  replay dispatch, payload version validation, and primitive binary readers,
+  while orders, zones/stockpiles, profession/workshop, and debug spawn decoders
+  live in focused `RuntimeCommandReplayFactory.*.cs` partials under
+  `HumanFortress.Runtime.Commands`. Architecture smoke coverage now locks those
+  replay factory files to the focused Runtime command namespace.
+- The same source-only/no-build batch split the structured
+  `ContentRegistry` God Object into responsibility-focused Content partials:
+  the main file keeps load orchestration, registry state, catalog queries,
+  schema loading, and save snapshot compatibility; material/terrain parsing,
+  biome/geology parsing plus deterministic geology indexing, and
+  tuning/zones/alias/validation/hash behavior live in separate
+  `ContentRegistry.*.cs` files under `HumanFortress.Content.Registry`.
+  Architecture smoke coverage now also locks these Content partials so the
+  structured registry does not drift back into one large implementation file.
+- Follow-up source-only/no-build Content definition hardening split
+  `CoreDataRegistryLoader` by catalog family. The main loader now only owns
+  core-data directory orchestration and shared JSON document options, while
+  construction/workshop parsing, recipe parsing, and common JSON helper methods
+  live in focused `CoreDataRegistryLoader.*.cs` partials under
+  `HumanFortress.Content.Definitions`. Architecture smoke coverage now locks
+  those partials separately from `ContentRegistry`, preserving legacy workshop
+  and recipe compatibility without concentrating every data/core parser in one
+  Content implementation file.
+- The same source-only/no-build hardening split the concrete
+  `FortressGenerator` by generation phase while keeping generation authority in
+  `HumanFortress.WorldGen.Implementation`. The main file now keeps constructor
+  state and the ordered fortress generation pipeline; cavern carving,
+  strata/surface filling, ore placement, and tuning JSON helper behavior live
+  in focused `FortressGenerator.*.cs` partials. Architecture smoke coverage now
+  locks those files so future world-generation tuning changes do not grow a new
+  monolithic generator or move terrain-generation policy into Runtime/App.
+- Follow-up source-only/no-build Content definition hardening split
+  `ItemDefinitionCatalogLoader` by responsibility. The main loader now keeps
+  load result/options and deterministic file traversal; legacy furniture/items
+  JSON parsing plus stack/placeable/effects mapping lives in
+  `ItemDefinitionCatalogLoader.Furniture.cs`, and item normalization/name
+  enrichment/validation lives in `ItemDefinitionCatalogLoader.Validation.cs`.
+  Architecture smoke coverage now locks the item definition loader split so
+  static item catalog compatibility does not grow another mixed Content parser.
+- Follow-up source-only/no-build Simulation save hardening split
+  `WorldSavePayloadBuilder` and `WorldSavePayloadRestorer` by authoritative
+  payload section. The builder main file now only orchestrates snapshot and
+  section assembly, with metadata/terrain, entities, stockpiles, placeables,
+  orders, and common conversion helpers in focused partials. The restorer main
+  file now only owns the restore flow, terrain reconstruction, supported-section
+  restore order, and final replay-hash check, with payload validation,
+  placeable restore/validation, and conversion/failure helpers in focused
+  partials. Architecture smoke coverage now locks these files under
+  `HumanFortress.Simulation.Save` so world save authority stays in Simulation
+  and does not collapse back into a single save/load God Object.
+- Follow-up source-only/no-build Simulation manager hardening split two
+  authoritative managers that were still acting as God Objects.
+  `ItemManager` now keeps only state, dependency binding, deterministic item
+  GUID allocation, counts, and logging in the main file; catalog access,
+  position indexing, queries, stack/move/remove mutations, spawn behavior, and
+  save/restore validation/conversion live in focused partials under
+  `HumanFortress.Simulation.Items`. `OrdersManager` now keeps only queue state
+  and logging in the main file; haul, mining, construction/buildable, and
+  save/restore validation/conversion behavior live in focused partials under
+  `HumanFortress.Simulation.Orders`. Architecture smoke coverage now locks both
+  managers as partials so these authoritative Simulation state owners do not
+  regress into single-file service locators.
+- Latest source-only/no-build hardening centralized typed mutation diff sort-key
+  packing in `SimulationDiffSortKeys`, keeping enqueue-ordered command-edit
+  diffs distinct from spatial/priority item/stockpile-style diffs without
+  changing existing ordering semantics. The same batch moved App runtime session
+  composition settings/callbacks into `GameStateRuntimeConfiguration`, so
+  `GameStateRuntimeCoordinator` is responsible for binding Runtime ports while
+  App startup/headless callers pass one explicit configuration object instead of
+  duplicating logger/content callback wiring.
+- The latest no-build batch also added executable architecture guardrails to the
+  formal test runner: `ArchitectureBoundarySmokeTests` scans active App source
+  for forbidden lower implementation module imports and old mixed runtime facade
+  names, enforces that ordinary App.Runtime imports only appear in adapter/port
+  composition files, and verifies the approved production project-reference
+  graph. `DeterministicAuthoritySmokeTests` scans save/replay/hash authority
+  paths for object `GetHashCode()`, dictionary `Keys`/`Values` view iteration,
+  and production `Guid.NewGuid()` use, turning recurring manual `rg` checks into
+  regression coverage.
+- Follow-up source-only/no-build diagnostics boundary hardening moved
+  diagnostic event/sink/level contracts and the transitional process-wide
+  `DiagnosticHub` from `HumanFortress.Core.Diagnostics` to
+  `HumanFortress.Contracts.Diagnostics`. App and Content now depend on the
+  diagnostics contract surface without referencing `HumanFortress.Core`; Content
+  now references only Contracts, and the follow-up App/Content boundary hardening
+  below removes App's remaining Content project reference as well.
+- Follow-up source-only/no-build App/Content boundary hardening moved the
+  App-facing content load issue/path/report DTOs into
+  `HumanFortress.Contracts.Content.Loading` and added
+  `FortressRuntimeContentLoader` as the Runtime-owned content startup/file
+  location facade. App startup now validates content through Runtime and UI
+  registry-file lookup enters through an App-owned `AppContentFileLocator`
+  wrapper instead of importing `HumanFortress.Content.Loading`. The App project
+  reference graph is now Contracts + Runtime only; the architecture smoke test
+  forbids App source/project references to Content as well as Core, Simulation,
+  Jobs, Navigation, and WorldGen, and it allowlists direct `HumanFortress.Runtime`
+  imports to startup/adapter/content-location boundaries. The Content-owned
+  `FortressContentLoader` and its full load package are now internal/friend
+  implementation surfaces for Runtime/tests; external callers use Runtime's
+  facade and Contracts-owned load reports.
+- The same no-build hardening made `RuntimeSaveSnapshotDocumentCodec` an
+  internal/friend Runtime implementation detail and extended architecture smoke
+  coverage so the codec cannot become App-facing API again. Save document DTOs
+  remain Contracts-owned, while JSON codec/store/restore behavior stays behind
+  Runtime ports.
+- Follow-up source-only/no-build Runtime session port hardening split the
+  public App-facing session aggregate from the full internal Runtime session
+  aggregate. `FortressRuntimeSessionFactory.Create(...)` now returns
+  `IFortressRuntimeAppSessionPorts`, which excludes save/replay checkpoint
+  ports; full save/replay ports remain internal/friend-only through
+  `CreateFull(...)` for Runtime tests. `FortressRuntimeAccess` and
+  `GameStateRuntimeCoordinator` consume only the App-facing aggregate, so App no
+  longer receives save/load/replay methods just because the session core
+  implements them internally.
+- The architecture smoke test now also locks public surface: Content, Jobs,
+  Navigation, Simulation, and WorldGen must expose no public implementation
+  types; App may expose only `Program`; Runtime's public surface is restricted
+  to the approved factories/bootstrap helpers plus App-facing session port
+  interfaces; and Core's public foundation surface is restricted to approved
+  command, event, tick, deterministic RNG, replay hash, diff, and world
+  primitive types. Contracts is also locked as a
+  dependency-free project with no package, framework, or project references.
+  Contracts source plus Runtime's public session port/factory files are also
+  scanned for presentation primitive leaks such as SadRogue, SadConsole,
+  MonoGame, and XNA names.
+  This turns the current "internal/friend by default unless explicitly
+  foundational or contractual" rule into executable coverage.
+- Follow-up source-only/no-build architecture hardening extended the smoke
+  runner with an explicit source-import direction matrix for every production
+  project and an exact `InternalsVisibleTo` friend-assembly matrix. Project
+  references alone no longer define the boundary: the test now also fails if,
+  for example, Contracts imports implementation namespaces, lower
+  implementation projects import App/Runtime, App imports lower implementation
+  namespaces, or a new friend assembly is added without changing the approved
+  access model. The same cleanup moved `FixedPoint.cs` into the physical
+  `Contracts/Content/Registry` folder to match its
+  `HumanFortress.Contracts.Content.Registry` namespace.
+- Follow-up source-only/no-build Navigation namespace cleanup moved concrete
+  pathfinding/cache/navigation-manager implementation sources under
+  `HumanFortress.Navigation.Implementation`. Public navigation DTOs and
+  interfaces remain in `HumanFortress.Contracts.Navigation`; Runtime is the
+  only production composition boundary importing the concrete implementation
+  namespace. The architecture smoke test now fails if concrete Navigation
+  implementation files drift back to the compatibility root namespace.
+- Follow-up source-only/no-build WorldGen namespace cleanup moved concrete
+  generated-world service/data/factory, world generator, fortress generator/map,
+  and stage implementation sources under
+  `HumanFortress.WorldGen.Implementation`. Public world-generation DTOs and
+  service contracts remain in `HumanFortress.Contracts.WorldGen`; Runtime is
+  still the ordinary production composition boundary, with architecture smoke
+  coverage preventing concrete WorldGen sources from drifting back to the root
+  namespace and limiting Runtime imports of the concrete implementation to the
+  world-generation composition files.
+- Follow-up source-only/no-build Jobs namespace alignment moved Jobs
+  implementation sources out of the root `HumanFortress.Jobs` namespace and
+  into module-directory namespaces: `HumanFortress.Jobs.Configuration`,
+  `.Diff`, `.Logging`, `.Orchestration`, `.Profession`, `.Safety`, plus the
+  existing `.Mining`, `.Construction`, `.Craft`, `.Transport`, and `.Replay`
+  slices. Runtime job wrappers/composition and friend tests now import the
+  focused Jobs implementation namespaces explicitly. The architecture smoke
+  runner now fails if any active Jobs implementation source drifts back to the
+  root Jobs namespace or if source files import the root Jobs namespace instead
+  of focused Jobs module namespaces.
+- Follow-up source-only/no-build Runtime namespace and physical module
+  alignment split internal Runtime helpers out of the root Runtime namespace
+  and root folder. Runtime composition helpers now live under
+  `HumanFortress.Runtime.Composition` and `Runtime/Composition`, active-session
+  content bootstrap adapters under `HumanFortress.Runtime.Content` and
+  `Runtime/Content`, Simulation-backed navigation adapters under
+  `HumanFortress.Runtime.Navigation` and `Runtime/Navigation`, startup/autodig
+  helpers under `HumanFortress.Runtime.Startup` and `Runtime/Startup`, and
+  command execution/target interfaces and implementations under
+  `HumanFortress.Runtime.Commands` in `Runtime/Commands/Execution` and
+  `Runtime/Commands/Targets`. A follow-up in the same no-build line moved the
+  host/tick pipeline into `HumanFortress.Runtime.Host`, runtime session handles
+  and services into `HumanFortress.Runtime.Session`, mutation log bundles into
+  `HumanFortress.Runtime.Diff`, Runtime geometry adapters into
+  `HumanFortress.Runtime.Geometry`, fortress-generation runner glue into
+  `HumanFortress.Runtime.WorldGeneration`, and stockpile preset mapping into
+  `HumanFortress.Runtime.Content`. The Runtime root namespace is now closer to
+  the public session factories/ports plus `FortressRuntimeSessionCore` facade
+  partials, while architecture smoke coverage locks the new helper paths and
+  namespaces.
+- Source-only verification for the latest namespace hardening passed:
+  `git diff --check`; active App source still has no lower implementation
+  imports; implementation projects still expose no public implementation types;
+  Contracts remains dependency-free; Contracts plus Runtime public session
+  port/factory files still have no presentation primitive tokens; WorldGen root
+  namespace/project-name replacement side effects were not present; Runtime
+  imports concrete WorldGen implementation only from the approved composition
+  files; active source/test files no longer import the root Jobs namespace; and
+  the new Runtime composition/content/navigation/startup/command/host/session/
+  diff/geometry/world-generation helper files no longer use the root Runtime
+  namespace. Build/test were intentionally not run in this batch.
+- Latest source-only/no-build hardening moved nearest-embark lookup behind the
+  `IGeneratedWorldData` contract instead of letting `WorldMapState` scan
+  generated-world tile views directly. `GeneratedWorldData` now owns the
+  nearest embarkable tile query, `FortressSessionContext` exposes it as a
+  session query, and the generated-world payload remains hidden behind
+  session-owned methods; `CurrentWorld` is no longer exposed to session
+  initializer code. The same batch lowered the current low-elevation embark
+  threshold from `0.30` to `0.25`, preserving lake/ocean exclusion while allowing
+  low grassland sites, and added Phase B/core smoke coverage for the query and
+  threshold.
+- The same source-only/no-build hardening split
+  `RuntimeSaveSnapshotDocumentVerifier` into partial validators for root
+  orchestration, world payload validation, command journal validation, and RNG
+  section validation. This keeps Runtime save document validation in Runtime
+  while reducing a large mixed verifier without changing the save document
+  contract or validation behavior. The world payload validator is further split
+  between payload identity, row/count integrity, and manifest-section hash/count
+  checks so future save slices do not enlarge a single mixed world verifier file.
+- Follow-up source-only/no-build Runtime boundary hardening split
+  `FortressRuntimeSessionCore.Replay.cs` so replay checkpointing, save document
+  port methods, save snapshot document/manifest building, and world/full restore
+  sequencing now live in focused Runtime partials. It also split
+  `FortressRuntimeSessionPorts.cs` into lifecycle/bootstrap, read, snapshot,
+  replay, save, and command port files while keeping the aggregate
+  `IFortressRuntimeSessionPorts` composition unchanged. Directory-based save
+  snapshot validation/restore now share one Runtime helper for read-failure
+  conversion, so each port method maps the same validation failure DTO instead
+  of carrying duplicate file-read exception handling.
+- Follow-up App runtime facade hardening removed the old broad fortress-play
+  runtime aggregate from the screen boundary. `IFortressPlayRuntimeHost` now
+  creates `FortressStateRuntimePorts` directly, `FortressState` receives only
+  that role-grouped port package, and the package is split into
+  input/view/bootstrap runtime roles. The unused App-level save facade was
+  removed from `FortressRuntimeAccess`; Runtime still owns save snapshot ports
+  internally, but App no longer exposes save/load operations to fortress-play UI
+  until a real save UI boundary exists.
+- Follow-up source-only/no-build App composition hardening moved the concrete
+  view/input/session runtime-port group shapes out of `States` and into the
+  modules that consume them: `App.Rendering` owns `FortressViewRuntimePorts`,
+  `App.Input` owns keyboard/map input runtime port groups, and `App.Session`
+  owns `FortressSessionRuntimePorts`. `FortressStateRuntimePorts` is now only a
+  state-level bundle of those module-owned port groups, while
+  `GameStateRuntimeCoordinator` remains the single creation point that binds the
+  concrete `FortressRuntimeAccess` adapter to each role.
+- Latest source-only/no-build App facade hardening split mixed placement,
+  debug-spawn, and workshop-panel runtime interfaces into separate query and
+  command roles. `App.Input` now wraps those roles behind module-owned
+  keyboard/map/placement runtime ports, named by
+  `FortressInputRuntimePortDependencies`; placement, debug-spawn,
+  map-click/tile-inspection, workshop-panel, navigation-debug, simulation
+  control, and build-catalog input controllers consume Input-owned ports rather
+  than `App.Runtime` interfaces directly. `App.Rendering` also wraps read and
+  UI-input runtime roles behind view-owned runtime ports, so ordinary renderers
+  no longer receive raw runtime facade interfaces. Startup logging callback
+  binding now lives in `App.Startup` instead of `App.Runtime`, so `Program`
+  no longer imports the runtime facade namespace.
+- Follow-up source-only/no-build session boundary hardening made
+  `FortressSessionRuntimePorts` the only `App.Session` type that directly wraps
+  the bootstrap runtime facade. `FortressSessionLoader`,
+  `FortressSessionInitializer`, and `FortressSessionRuntimeBootstrapper` now use
+  session-owned semantic methods/DTOs for generation, world availability,
+  startup auto-dig, and workshop completion notifications instead of importing
+  `App.Runtime` role interfaces directly.
+- Follow-up source-only/no-build App.Runtime adapter cleanup split
+  `FortressRuntimeAccess.Queries.cs` into role-specific query partials for
+  build catalog, debug spawn, map inspection, navigation debug, UI-input,
+  workshop panel, and world availability. The concrete adapter still delegates
+  to Runtime session ports, but query methods now sit beside the App role that
+  consumes them instead of one mixed facade file.
+- Follow-up source-only/no-build Runtime command-context hardening split
+  `SimulationCommandExecutionContext` into focused partials for clock updates,
+  read-only `ISimulationContext` forwarding, and command-target role exposure.
+  The command-stage model is unchanged, but the transitional all-target runtime
+  command context is now physically organized around its actual roles instead of
+  one mixed implementation file.
 - Latest build/test-verified Runtime/world restore batch extends the Runtime
   save document from hash-only RNG summary to primitive RNG stream payload rows,
   binds the `rng` manifest section to checkpoint hash/count validation, and adds
@@ -37,7 +308,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - Verification passed: `git diff --check`; App/Contracts boundary scan found no App use of Simulation save builder/restorer or world payload DTO types; replay/save scan found no `GetHashCode()` or dictionary enumeration hazards in active save/replay builders; `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` passed with `0 Warning(s), 0 Error(s)`; `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll` passed, including supported-section world payload hash restore; and strict headless init with `/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors` passed.
 - The latest previously verified world payload/restore batch added the `Contracts.Simulation.Save.WorldSavePayloadData` DTO family, Simulation-owned `WorldSavePayloadBuilder` and first-pass `WorldSavePayloadRestorer`, and Runtime save document integration. Runtime save documents now carry manifest + world payload + command replay records; document validation checks world payload hash/counts against manifest sections; Runtime can restore the world payload from a document or save directory by composing a fresh Runtime session from the restored `World`.
 - Verification passed: `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` with `0 Warning(s), 0 Error(s)`; and `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll` passed, including terrain world payload hash round-trip, unsupported non-terrain restore rejection, Runtime document/directory world restore, and existing transport/construction/craft, mining/items/diff, core runtime smoke, and Phase A-D coverage.
-- Latest verified save-slot boundary follow-up extends the Runtime save snapshot port with directory-level validation, App-facing save access, and structured directory restore failures. `RuntimeSaveSnapshotDocumentStore` is now Runtime-internal; App can pass a save slot directory through `IFortressRuntimeSaveAccess` but does not see the Runtime file store, document mapper, replay restorer, Runtime command helpers, or Core command replay records.
+- Latest verified save-slot boundary follow-up extended the Runtime save snapshot port with directory-level validation, App-facing save access, and structured directory restore failures. `RuntimeSaveSnapshotDocumentStore` became Runtime-internal; App could pass a save slot directory through a narrow save facade without seeing the Runtime file store, document mapper, replay restorer, Runtime command helpers, or Core command replay records. Later App composition hardening removed that unused fortress-play save facade again; Runtime still owns the save ports internally until a real save UI boundary is introduced.
 - The same verified batch removes a stockpile mailbox determinism hazard by replacing `SourceChunk.GetHashCode()` in the drain sort key with a stable primitive hash over explicit chunk coordinates, updates `STOCKPILE_SPEC.md` to avoid `GetHashCode()` as an ordering rule, and adds smoke coverage for stable stockpile message drain keys.
 - Verification passed: `git diff --check`; App/Contracts boundary scan found no `HumanFortress.Runtime.Save`, `HumanFortress.Runtime.Commands`, `HumanFortress.Runtime.Replay`, `HumanFortress.Core.Commands`, `RuntimeSaveSnapshotDocumentStore`, or `RuntimeSaveSnapshotDocumentCodec` usage in active App/Contracts source; deterministic-order scan found no production `GetHashCode()` uses except the ordinary `ChunkKey` value-type override; `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` passed with `0 Warning(s), 0 Error(s)`; `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll` passed; and strict headless init with `/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors` passed.
 - Latest save snapshot hardening is build/test verified. It added Core-owned command replay journal hashing plus a `CommandQueueReplaySnapshot` that captures pending and executed command records without exposing live `ICommand` objects. Runtime replay checkpoints now include both `commands.executed` and `commands.pending` hashes/counts, and the Runtime save manifest exposes those command sections without App touching `CommandQueue`.
@@ -118,7 +389,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - The same no-build cleanup tightened generated-world presentation DTOs: `WorldMapTileView` and `EmbarkSiteSummary` no longer expose `BiomeType` directly, World-map biome glyph/color mapping moved to `HumanFortress.App.Rendering.WorldMapTileDisplayMapper`, and WorldGen screen state no longer stores the last `WorldGenResult` after generation.
 - Earlier source-only/no-build module-boundary cleanup moved generated-world UI-facing service/data types out of App.Session into `HumanFortress.WorldGen`; the latest follow-up moved the stable generated-world DTO/settings contracts into `HumanFortress.Contracts.WorldGen` and hid concrete generated-world data behind an App-owned adapter. App.Session now stores/query-wraps the generated-world port and maps a contract `WorldTileSnapshot` into `RuntimeFortressGenerationRequest`; active App source no longer references raw `WorldTile`, `BiomeType`, `WorldParams`, `WorldGenerator`, `DifficultyPreset`, or `WorldGenResult`.
 - The same no-build cleanup reduced Runtime public surface: Runtime-only composition helpers (`FortressRuntimeStartup`, host/system factories, dependency/catalog/tuning/workforce/planning/job-system groups, navigation factories), Runtime snapshot builder/facade helpers, and Runtime command factory helpers are now internal. Public DTOs and session semantic command entrypoints remain the external boundary.
-- Latest source-only/no-build Navigation boundary cleanup moved navigation DTO/interface contracts into `HumanFortress.Contracts.Navigation`, while concrete pathfinding/cache implementations remain in `HumanFortress.Navigation` as internal implementation types. Jobs now consumes movement through `IMovementExecutor`, Runtime job-system wrappers create concrete `MovementExecutor` instances, and `HumanFortress.Jobs` no longer references the `HumanFortress.Navigation` project.
+- Latest source-only/no-build Navigation boundary cleanup moved navigation DTO/interface contracts into `HumanFortress.Contracts.Navigation`, while concrete pathfinding/cache implementations now live in `HumanFortress.Navigation.Implementation` as internal implementation types. Jobs now consumes movement through `IMovementExecutor`, Runtime job-system wrappers create concrete `MovementExecutor` instances, and `HumanFortress.Jobs` no longer references the `HumanFortress.Navigation` project.
 - Latest source-only/no-build API hardening made concrete Navigation implementation types, Jobs implementation/orchestration/tuning/debug types, Runtime concrete command classes/factories, Runtime command-target interfaces/aggregation, and additional Runtime composition/logging helper members internal. `HumanFortress.Jobs` no longer exposes internals to App, and active App source still has no direct Jobs/Simulation/Navigation/Runtime.Commands references.
 - Latest source-only/no-build boundary hardening continued without running a build: Content single-purpose loaders/parsers and concrete registries are now internal implementation details where possible, `ContentRegistry.Materials`/`TerrainKinds` expose Contracts read-only catalog interfaces, profession JSON loading is an internal Content facade returning `IProfessionRegistry`, Runtime session core options are internal construction helpers, `FortressState` composes App runtime access through named runtime ports, keyboard input no longer receives one broad runtime interface for workshop/navigation/simulation/build-catalog operations, and App UI consumes the Contracts `SimulationStatus` DTO directly.
 - Latest source-only/no-build Runtime API hardening made internal command targets, concrete Runtime commands, job-system wrappers, the Simulation-to-Navigation adapter, Runtime helper loaders, auto-dig seeding, command factories, and snapshot builder/facade methods use internal or explicit-interface surfaces. The same pass normalized low-risk Jobs configuration/profession/orchestrator helper surfaces. Public Runtime shape is now concentrated on `FortressRuntimeSessionFactory`, Runtime session port interfaces, Runtime request/status types, and logging bootstrap rather than concrete implementation helpers; public snapshot DTOs live in Contracts.
@@ -168,7 +439,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - Loaded-session state/load results no longer carry live `World` or `FortressMap` objects into frame/input code; they expose only readiness flags plus render/UI/navigation presentation state.
 - `FortressRuntimeAccess` no longer exposes public `HasWorld`, a live `World` property, the old bootstrap-world getter, or a two-step fortress-map generation/fill operation; UI readiness goes through `SimulationWorldAvailabilityData`, and session initialization requests a Runtime-owned fortress generation/fill operation through `RuntimeFortressGenerationRequest`.
 - `GameStateManager` no longer owns the active `SimulationRuntimeSession`, tick scheduler, command queue, event bus, diff logs, runtime content snapshot, generation content, live `World` helper, render snapshot builder creation, navigation rebuild calls, or concrete runtime session controller directly; runtime lifetime is delegated through `GameStateRuntimeCoordinator`, which now creates the Runtime session through `FortressRuntimeSessionFactory`, stores `IFortressRuntimeSessionPorts`, and hands App code only narrow `FortressRuntimeAccess` role adapters.
-- Rendering, input, placement, map-click, debug-spawn, workshop-panel, build-catalog, navigation-debug, simulation-control, UI-input, and session-bootstrap paths now see progressively narrower runtime access interfaces: `IFortressRuntimeReadAccess`, `IFortressRuntimeBuildCatalogAccess`, `IFortressRuntimeUiInputAccess`, `IFortressRuntimePlacementAccess`, `IFortressRuntimeMapInspectionAccess`, `IFortressRuntimeDebugSpawnAccess`, `IFortressRuntimeWorkshopPanelAccess`, `IFortressRuntimeNavigationDebugAccess`, `IFortressRuntimeSimulationControlAccess`, `IFortressRuntimeBootstrapAccess`, and the composed `IFortressRuntimeSessionAccess` marker. `FortressStateRuntimePorts` is the composition-time bundle; ordinary helpers receive named role ports instead of the full aggregate. The concrete `FortressRuntimeAccess` remains only as the App facade created by the fortress play state.
+- Rendering, input, placement, map-click, debug-spawn, workshop-panel, build-catalog, navigation-debug, simulation-control, UI-input, and session-bootstrap paths now sit behind progressively narrower module-owned ports. Runtime role interfaces are split by read/query/command where useful: placement, debug-spawn, and workshop-panel no longer use mixed query+command facades. `FortressStateRuntimePorts` is now only the state-level bundle of module-owned view/input/session port groups; ordinary helpers receive view/input/session ports instead of raw App.Runtime role interfaces. The concrete `FortressRuntimeAccess` remains only as the App facade created by the fortress play state.
 - `FortressRuntimeAccess` and Runtime session ports are split by role/capability partial files. The Access layer now delegates semantic App role methods to Runtime port interfaces, while the internal Runtime core owns command construction, snapshot/query methods, lifecycle, and content/host composition in separate partials.
 - `FortressState` no longer owns input-context construction or fortress load orchestration; `FortressInputContextFactory` and `FortressSessionLoadCoordinator` keep those App concerns out of the state object.
 - Game-state SadConsole screen presentation is centralized behind `IGameScreenPresenter` / `ScreenGameState<TScreen>`; individual state wrappers now create their screen and no longer write `GameHost.Instance.Screen` directly.
@@ -210,12 +481,12 @@ This document tracks the current multi-step refactor batches so progress is visi
 - `SimulationRuntimeHostCore` lifecycle methods are split from system/pipeline configuration, and generic `SimulationRuntimeHost<TSystems>` accessors/start-stop lifecycle are split from constructor composition so host startup/shutdown policy is not mixed with Runtime tick-pipeline attachment.
 - App diagnostics logging has a smaller root facade: the legacy log category resolver is split out of `Logger`, keeping the public App logger surface separate from compatibility message-classification policy.
 - App diagnostics logging now also splits Logger initialization/close lifecycle and level-specific helper methods from the core diagnostic write path.
-- App no longer has direct project references to `HumanFortress.Jobs`, `HumanFortress.Simulation`, `HumanFortress.Navigation`, or `HumanFortress.WorldGen`; those modules are reached through Runtime, Content, Contracts, or DTO/query boundaries.
+- App no longer has direct project references to `HumanFortress.Core`, `HumanFortress.Content`, `HumanFortress.Jobs`, `HumanFortress.Simulation`, `HumanFortress.Navigation`, or `HumanFortress.WorldGen`; those modules are reached through Runtime, Contracts, or DTO/query boundaries.
 - UI placement command creation now maps App UI intents to Runtime request DTOs; command construction and Simulation order enum/material DTO conversion are inside Runtime rather than App input code.
 - Runtime command dispatch now uses narrow target-context roles backed by `SimulationRuntimeCommandTargets`; `SimulationRuntimeContext` no longer directly implements the individual profession/item/creature/order/zone/workshop/stockpile command target interfaces, and commands no longer receive an all-target aggregate.
 - Runtime command target handler binding now goes through profession-specific `IRuntimeProfessionCommandBindings`; `SimulationRuntimeContext` no longer exposes a broad all-target binding or a direct profession-specific handler setter.
 - Non-registry runtime content DTOs such as `GeologyData` and `ZoneDefinitionData` now compile from `HumanFortress.Contracts.Content`; active source/test scans no longer find the historical `HumanFortress.Core.Content` namespaces.
-- Current build/test-verified static scans found no active App references to `HumanFortress.Core.Commands`, `HumanFortress.Runtime.Commands`, App command factories, direct Jobs/Simulation/Navigation project namespaces, the old `HumanFortress.Runtime.Requests` namespace, the old `HumanFortress.Core.Content` namespace, or the old navigation contract namespace. Remaining direct `HumanFortress.Runtime` App usings are limited to App.Runtime adapter/facade implementation files; remaining direct `HumanFortress.Navigation` references outside Runtime are concrete Navigation implementation tests.
+- Current source-only static scans found no active App references to `HumanFortress.Core`, `HumanFortress.Content`, direct Jobs/Simulation/Navigation/WorldGen project namespaces, `HumanFortress.Runtime.Commands`, `HumanFortress.Runtime.Save`, `HumanFortress.Runtime.Replay`, App command factories, the old `HumanFortress.Runtime.Requests` namespace, the old `HumanFortress.Core.Content` namespace, or the old navigation contract namespace. Remaining direct `HumanFortress.Runtime` App usings are allowlisted to startup, adapter, world-generation provider, and App content-file-location wrapper boundaries; direct `HumanFortress.Navigation.Implementation` references outside Runtime are limited to friend tests for concrete Navigation internals.
 - Remaining high-priority architecture work is reducing transitional internal bootstrap bridges and friend-access scaffolding, richer long-horizon stockpile reservation/maintenance policy, normalizing diff priority/replay semantics, broadening versioned Runtime/Contracts snapshot metadata beyond the aggregate frame DTOs where useful, and keeping session/bootstrap glue from growing new gameplay/domain logic.
 
 ## Verified Batch: UI/Debug Snapshot Facades
@@ -283,7 +554,7 @@ Status: build verified after latest UI presentation/session-controller/runtime-a
 - Added `FortressRuntimeSessionSnapshotFacade` in Runtime so App.Runtime session glue passes the active runtime session to Runtime-owned read-model builders instead of unpacking live `World`, navigation, geology, construction, or recipe catalog objects for each UI/debug query.
 - Removed `Geology`, `GenerationContent`, construction catalog, recipe catalog, live bootstrap-world, render snapshot builder creation, and navigation rebuild exposure from `FortressRuntimeAccess`; session initialization now sends a `RuntimeFortressGenerationRequest` and Runtime generates/fills the fortress world internally.
 - Added `FortressRuntimeSessionController` in App.Runtime as an intermediate session-controller adapter over Runtime core, Runtime snapshot facade calls, bootstrap request forwarding, and fortress-play startup. Later hardening removed that passthrough and then hid the concrete core; `GameStateRuntimeCoordinator` now creates Runtime session ports through `FortressRuntimeSessionFactory` and `FortressRuntimeAccess` remains the App role adapter.
-- Added App runtime access interfaces for the remaining facade boundary: render contexts depend on `IFortressRuntimeReadAccess`, while input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, and session-bootstrap paths use narrower role interfaces. `IFortressRuntimeSessionAccess` only composes those roles at creation time, and the old broad play facade has been removed.
+- Added App runtime access interfaces for the remaining facade boundary: render contexts depend on `IFortressRuntimeReadAccess`, while input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, and session-bootstrap paths use narrower role interfaces. Later hardening removed the temporary aggregate interface entirely; creation now flows through module-owned view/input/session port groups, and the old broad play facade has been removed.
 - Changed `FortressState` composition so ordinary frame/input calls receive only the role interfaces they need while `IFortressRuntimeBootstrapAccess` is reserved for the session loader/initializer path.
 - Moved active world content application from App to Runtime's `SimulationWorldContentLoader`; App now injects logging and content issue callbacks instead of owning the loader.
 - Moved optional startup/after-fill auto-dig mining command construction into Runtime's `RuntimeAutoDigSeeder`.
@@ -1119,7 +1390,7 @@ Status: completed
 
 ### Completed
 
-- Added `HumanFortress.Core.Diagnostics` primitives:
+- Added `HumanFortress.Contracts.Diagnostics` primitives:
   - `DiagnosticLevel`
   - `DiagnosticEvent`
   - `IDiagnosticSink`
@@ -1139,7 +1410,7 @@ Status: completed
   - `logs/simulation.log`
   - `logs/ui.log`
 - Added an in-memory ring-buffer sink for a later UI/debug diagnostics panel.
-- Added a Simulation-local `SimulationDiagnostics` helper so Simulation systems can use `Core.Diagnostics` without depending on App.
+- Added a Simulation-local `SimulationDiagnostics` helper so Simulation systems can use the Contracts diagnostics bridge without depending on App.
 - Routed startup `ContentRegistry` diagnostics through `IDiagnosticSink` while preserving its console summary for command-line visibility.
 - Routed the secondary `HumanFortress.Content.Registry.ContentRegistry` and its material/terrain/geology/biome/alias helper registries through a shared content diagnostics helper with console fallback when App logging is not initialized.
 - Bridged existing static lower-level callbacks into categorized diagnostics:
@@ -1168,8 +1439,8 @@ Status: completed
 ### Important Notes
 
 - This is a first-pass logging architecture, not a total cleanup of every direct console write in the repository.
-- `Contracts` should remain log-free. It defines DTOs/interfaces and should not emit diagnostics.
-- `Core.Diagnostics.DiagnosticHub` is transitional. Prefer constructor-injected `IDiagnosticSink` for new long-lived systems once composition boundaries are stable.
+- `Contracts` should remain gameplay-free and should not own file sinks or UI presentation. Its diagnostics namespace defines event/sink contracts plus the transitional hub used by modules that are not yet fully constructor-injected.
+- `HumanFortress.Contracts.Diagnostics.DiagnosticHub` is transitional. Prefer constructor-injected `IDiagnosticSink` for new long-lived systems once composition boundaries are stable.
 - Existing test runs still print manager diagnostics when no App logger is initialized; that fallback is intentional for headless/local test visibility.
 - Remaining direct console output is mostly command-line compatibility messages, diagnostic fallbacks when no App logger is initialized, startup content summary, and test output.
 

@@ -1,5 +1,9 @@
+using HumanFortress.Contracts.Content.Loading;
 using HumanFortress.Content.Loading;
-using HumanFortress.Navigation;
+using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Composition;
+using HumanFortress.Runtime.Host;
+using HumanFortress.Runtime.Session;
 
 namespace HumanFortress.Runtime;
 
@@ -11,7 +15,7 @@ internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessi
     private readonly bool _contentWarningsAsErrors;
     private readonly Action<string> _log;
     private readonly Func<string, Action<string>> _createLogCallback;
-    private readonly Action<FortressContentLoadResult> _logContentIssues;
+    private readonly Action<FortressContentLoadReport> _logContentIssues;
     private readonly FortressRuntimeWorkshopCompletionNotifier _workshopCompletionNotifier = new();
     private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory;
 
@@ -43,7 +47,7 @@ internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessi
         bool contentWarningsAsErrors,
         Action<string>? log = null,
         Func<string, Action<string>>? createLogCallback = null,
-        Action<FortressContentLoadResult>? logContentIssues = null)
+        Action<FortressContentLoadReport>? logContentIssues = null)
         : this(new FortressRuntimeSessionCoreOptions(
             baseDir,
             strictContent,

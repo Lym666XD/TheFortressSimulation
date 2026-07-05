@@ -1,7 +1,7 @@
 using HumanFortress.Contracts.Navigation;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Handles movement execution along paths with stuck detection.

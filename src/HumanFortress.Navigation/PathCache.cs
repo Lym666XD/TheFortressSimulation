@@ -2,7 +2,7 @@ using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// LRU cache for computed paths.

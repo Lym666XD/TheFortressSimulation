@@ -22,9 +22,9 @@ internal sealed partial class FortressRuntimeAccess
             quantity);
     }
 
-    void IFortressRuntimeDebugSpawnAccess.QueueCreatureSpawn(string creatureId, Point position, int z, string factionId) =>
+    void IFortressRuntimeDebugSpawnCommandAccess.QueueCreatureSpawn(string creatureId, Point position, int z, string factionId) =>
         QueueCreatureSpawn(creatureId, position, z, factionId);
 
-    void IFortressRuntimeDebugSpawnAccess.QueueItemSpawn(string itemId, Point position, int z, int quantity) =>
+    void IFortressRuntimeDebugSpawnCommandAccess.QueueItemSpawn(string itemId, Point position, int z, int quantity) =>
         QueueItemSpawn(itemId, position, z, quantity);
 }

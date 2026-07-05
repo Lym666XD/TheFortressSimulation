@@ -1,4 +1,5 @@
 using SadRogue.Primitives;
+using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Creatures;
@@ -47,14 +48,13 @@ internal readonly struct CreaturesDiff
         int localY = WorldPos.Y >= 0 ? WorldPos.Y % Chunk.SIZE_XY : 0;
         int localIndex = Chunk.LocalIndex(localX, localY);
 
-        long key = 0;
-        key |= ((long)(Z & 0xFF)) << 56;
-        key |= ((long)(chunkX & 0xFF)) << 48;
-        key |= ((long)(chunkY & 0xFF)) << 40;
-        key |= ((long)(localIndex & 0xFFFF)) << 24;
-        key |= ((long)(Priority & 0xFF)) << 16;
-        key |= (ushort)LocalSeq;
-        return key;
+        return SimulationDiffSortKeys.ByChunkCellPriorityAscending(
+            Z,
+            chunkX,
+            chunkY,
+            localIndex,
+            Priority,
+            LocalSeq);
     }
 }
 

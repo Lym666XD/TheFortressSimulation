@@ -29,7 +29,7 @@ internal sealed partial class FortressInputContextFactory
     {
         return new FortressPlacementRouterContext(
             _ui,
-            _placementRuntime,
+            _mapRuntime.Placement,
             _loadedSession.UiServices,
             _view.SelectionTool,
             _fortressSizeProvider(),
@@ -42,7 +42,7 @@ internal sealed partial class FortressInputContextFactory
     {
         return new FortressDebugSpawnContext(
             _ui,
-            _debugSpawnRuntime,
+            _mapRuntime.DebugSpawn,
             _viewport.CurrentZ,
             _uiTickProvider(),
             _drawUi);
@@ -52,11 +52,11 @@ internal sealed partial class FortressInputContextFactory
     {
         return new FortressMapClickControllerContext(
             _ui,
-            _mapInspectionRuntime,
+            _mapRuntime.MapInspection,
             _loadedSession.UiServices,
             _viewport.CurrentZ,
             _uiTickProvider(),
-            _mapInspectionRuntime.GetWorkshopDebugData(),
+            _mapRuntime.MapInspection.GetWorkshopDebugData(),
             _tileInspection.Open,
             _drawUi);
     }

@@ -1,4 +1,5 @@
 using SadRogue.Primitives;
+using HumanFortress.Simulation.Diff;
 
 namespace HumanFortress.Simulation.Orders;
 
@@ -30,6 +31,6 @@ internal readonly record struct OrderDiff
 
     internal long GetSortKey()
     {
-        return LocalSeq;
+        return SimulationDiffSortKeys.ByLocalSequence(LocalSeq);
     }
 }

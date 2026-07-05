@@ -7,15 +7,14 @@ internal sealed partial class FortressSessionInitializer
 {
     private bool TryGetEmbarkTileSnapshot(Point embarkLocation, out WorldTileSnapshot worldTile)
     {
-        var currentWorld = _session.CurrentWorld;
-        if (!currentWorld.Success)
+        if (!_session.HasGeneratedWorld)
         {
-            Logger.Log("[GenerateFortressMap] ERROR: CurrentWorld is null");
+            Logger.Log("[GenerateFortressMap] ERROR: Generated world is unavailable");
             worldTile = default;
             return false;
         }
 
-        if (!currentWorld.TryGetSize(out int width, out int height))
+        if (!_session.TryGetWorldSize(out int width, out int height))
         {
             Logger.Log("[GenerateFortressMap] WARNING: World tiles are null, using fallback");
             worldTile = default;
@@ -34,7 +33,7 @@ internal sealed partial class FortressSessionInitializer
             return false;
         }
 
-        if (!currentWorld.TryGetTileSnapshot(new WorldMapTilePosition(embarkLocation.X, embarkLocation.Y), out worldTile))
+        if (!_session.TryGetWorldTileSnapshot(embarkLocation, out worldTile))
         {
             Logger.Log($"[GenerateFortressMap] ERROR: EmbarkLocation {embarkLocation} unavailable");
             return false;

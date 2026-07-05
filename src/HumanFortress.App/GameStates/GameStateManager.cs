@@ -20,8 +20,9 @@ internal sealed partial class GameStateManager
     {
         _states = new GameStateRegistry();
         _runtimeCoordinator = new GameStateRuntimeCoordinator(
-            strictContent,
-            contentWarningsAsErrors);
+            GameStateRuntimeConfiguration.CreateDefault(
+                strictContent,
+                contentWarningsAsErrors));
         _runtimeLifecycle = new GameStateRuntimeLifecycle(_runtimeCoordinator, enqueueAutoDig);
     }
 

@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
 using HumanFortress.App.UI.Selection;
@@ -8,7 +7,7 @@ namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressMiningPlacementContext(
     UiStore Ui,
-    IFortressRuntimePlacementAccess Runtime,
+    FortressPlacementRuntimePorts Runtime,
     ISelectionTool? SelectionTool,
     int FortressSize,
     int CurrentZ,

@@ -1,10 +1,10 @@
-using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Content.Loading;
 
 namespace HumanFortress.App.Diagnostics;
 
 internal static class FortressContentIssueLogger
 {
-    public static void LogIssues(FortressContentLoadResult result)
+    public static void LogIssues(FortressContentLoadReport result)
     {
         ArgumentNullException.ThrowIfNull(result);
 

@@ -1,5 +1,6 @@
 using HumanFortress.App.Diagnostics;
-using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Content.Loading;
+using HumanFortress.Runtime;
 
 namespace HumanFortress.App.Startup;
 
@@ -8,16 +9,16 @@ internal static class StartupContentGate
     internal static bool TryLoadAndValidate(
         string baseDir,
         AppStartupOptions options,
-        out FortressContentLoadResult contentLoad)
+        out FortressContentLoadReport contentLoad)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        contentLoad = FortressContentLoader.Load(baseDir, includeCoreCatalogs: false);
+        contentLoad = FortressRuntimeContentLoader.LoadStartupContent(baseDir);
         FortressContentIssueLogger.LogIssues(contentLoad);
         return !options.StrictContent || TryEnforceStrictContent(contentLoad, options.ContentWarningsAsErrors);
     }
 
-    internal static void LogResolvedPath(FortressContentLoadResult contentLoad)
+    internal static void LogResolvedPath(FortressContentLoadReport contentLoad)
     {
         ArgumentNullException.ThrowIfNull(contentLoad);
 
@@ -32,7 +33,7 @@ internal static class StartupContentGate
         Logger.Log($"  - {contentLoad.ContentPath.DevelopmentPath}");
     }
 
-    private static bool TryEnforceStrictContent(FortressContentLoadResult contentLoad, bool contentWarningsAsErrors)
+    private static bool TryEnforceStrictContent(FortressContentLoadReport contentLoad, bool contentWarningsAsErrors)
     {
         try
         {

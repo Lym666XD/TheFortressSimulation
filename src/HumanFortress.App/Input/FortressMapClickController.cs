@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
@@ -7,7 +6,7 @@ namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressMapClickControllerContext(
     UiStore Ui,
-    IFortressRuntimeMapInspectionAccess Runtime,
+    FortressMapInspectionRuntimePorts Runtime,
     FortressUiServices? UiServices,
     int CurrentZ,
     ulong UiTick,

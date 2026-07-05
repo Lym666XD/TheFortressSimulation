@@ -2,7 +2,7 @@ using HumanFortress.Contracts.Navigation;
 using System.Diagnostics;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Deterministic A* pathfinder per NAVIGATION_SPEC.md section 5.

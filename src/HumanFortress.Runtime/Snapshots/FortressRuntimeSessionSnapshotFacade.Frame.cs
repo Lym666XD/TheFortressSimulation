@@ -1,12 +1,11 @@
 using SadRogue.Primitives;
-using Session = HumanFortress.Runtime.SimulationRuntimeSession<HumanFortress.Runtime.SimulationRuntimeHost<HumanFortress.Runtime.SimulationRuntimeSystems>>;
 
 namespace HumanFortress.Runtime.Snapshots;
 
 internal static partial class FortressRuntimeSessionSnapshotFacade
 {
     internal static SimulationUiOverlayFrameData BuildUiOverlayFrameSnapshot(
-        Session? session,
+        HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session,
         int currentZ,
         Rectangle viewport,
         bool showZoneOverlay,
@@ -33,7 +32,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
     }
 
     internal static SimulationFrameRenderData BuildFrameRenderSnapshot(
-        Session? session,
+        HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session,
         bool includeMapViewport,
         int fortressSize,
         Point cameraPosition,

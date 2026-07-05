@@ -1,5 +1,4 @@
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.Session;
 using HumanFortress.App.UI;
 using SadRogue.Primitives;
@@ -8,13 +7,8 @@ namespace HumanFortress.App.Input;
 
 internal sealed partial class FortressInputContextFactory
 {
-    private readonly IFortressRuntimeBuildCatalogAccess _buildCatalogRuntime;
-    private readonly IFortressRuntimeWorkshopPanelAccess _workshopPanelRuntime;
-    private readonly IFortressRuntimeNavigationDebugAccess _navigationDebugRuntime;
-    private readonly IFortressRuntimeSimulationControlAccess _simulationControlRuntime;
-    private readonly IFortressRuntimePlacementAccess _placementRuntime;
-    private readonly IFortressRuntimeDebugSpawnAccess _debugSpawnRuntime;
-    private readonly IFortressRuntimeMapInspectionAccess _mapInspectionRuntime;
+    private readonly FortressKeyboardRuntimePorts _keyboardRuntime;
+    private readonly FortressMapRuntimePorts _mapRuntime;
     private readonly UiStore _ui;
     private readonly FortressViewState _view;
     private readonly FortressViewportState _viewport;
@@ -31,13 +25,7 @@ internal sealed partial class FortressInputContextFactory
     private readonly Action<Point> _mapLeftClick;
 
     public FortressInputContextFactory(
-        IFortressRuntimeBuildCatalogAccess buildCatalogRuntime,
-        IFortressRuntimeWorkshopPanelAccess workshopPanelRuntime,
-        IFortressRuntimeNavigationDebugAccess navigationDebugRuntime,
-        IFortressRuntimeSimulationControlAccess simulationControlRuntime,
-        IFortressRuntimePlacementAccess placementRuntime,
-        IFortressRuntimeDebugSpawnAccess debugSpawnRuntime,
-        IFortressRuntimeMapInspectionAccess mapInspectionRuntime,
+        FortressInputRuntimePorts runtime,
         UiStore ui,
         FortressViewState view,
         FortressViewportState viewport,
@@ -53,13 +41,9 @@ internal sealed partial class FortressInputContextFactory
         Action drawUi,
         Action<Point> mapLeftClick)
     {
-        _buildCatalogRuntime = buildCatalogRuntime ?? throw new ArgumentNullException(nameof(buildCatalogRuntime));
-        _workshopPanelRuntime = workshopPanelRuntime ?? throw new ArgumentNullException(nameof(workshopPanelRuntime));
-        _navigationDebugRuntime = navigationDebugRuntime ?? throw new ArgumentNullException(nameof(navigationDebugRuntime));
-        _simulationControlRuntime = simulationControlRuntime ?? throw new ArgumentNullException(nameof(simulationControlRuntime));
-        _placementRuntime = placementRuntime ?? throw new ArgumentNullException(nameof(placementRuntime));
-        _debugSpawnRuntime = debugSpawnRuntime ?? throw new ArgumentNullException(nameof(debugSpawnRuntime));
-        _mapInspectionRuntime = mapInspectionRuntime ?? throw new ArgumentNullException(nameof(mapInspectionRuntime));
+        ArgumentNullException.ThrowIfNull(runtime);
+        _keyboardRuntime = runtime.Keyboard;
+        _mapRuntime = runtime.Map;
         _ui = ui ?? throw new ArgumentNullException(nameof(ui));
         _view = view ?? throw new ArgumentNullException(nameof(view));
         _viewport = viewport ?? throw new ArgumentNullException(nameof(viewport));

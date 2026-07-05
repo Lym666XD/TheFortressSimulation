@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
 using SadRogue.Primitives;
@@ -7,7 +6,7 @@ namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressConstructionPlacementContext(
     UiStore Ui,
-    IFortressRuntimePlacementAccess Runtime,
+    FortressPlacementRuntimePorts Runtime,
     int FortressSize,
     int CurrentZ,
     ulong UiTick,

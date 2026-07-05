@@ -1,5 +1,4 @@
 using HumanFortress.App.Rendering;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Selection;
 using SadRogue.Primitives;
@@ -7,10 +6,7 @@ using SadRogue.Primitives;
 namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressKeyboardInputRouterContext(
-    IFortressRuntimeBuildCatalogAccess BuildCatalogRuntime,
-    IFortressRuntimeWorkshopPanelAccess WorkshopPanelRuntime,
-    IFortressRuntimeNavigationDebugAccess NavigationDebugRuntime,
-    IFortressRuntimeSimulationControlAccess SimulationControlRuntime,
+    FortressKeyboardRuntimePorts Runtime,
     UiStore Ui,
     ulong UiTick,
     FortressViewportSnapshot Viewport,

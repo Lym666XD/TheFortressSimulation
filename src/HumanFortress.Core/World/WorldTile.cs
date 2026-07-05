@@ -5,6 +5,10 @@ namespace HumanFortress.Core.World
 {
     public struct WorldTile
     {
+        private const float MinEmbarkElevation = 0.25f;
+        private const float MaxEmbarkElevation = 0.80f;
+        private const byte MaxEmbarkRiverClass = 3;
+
         public ushort BiomeId { get; set; }
         public float Elevation { get; set; }
         public float Temperature { get; set; }
@@ -21,12 +25,12 @@ namespace HumanFortress.Core.World
         {
             var failures = new List<string>();
 
-            if (Elevation <= 0.3f)
-                failures.Add($"Elevation {Elevation:F2} <= 0.30");
-            if (Elevation >= 0.8f)
-                failures.Add($"Elevation {Elevation:F2} >= 0.80");
-            if (RiverClass >= 3)
-                failures.Add($"River class {RiverClass} >= 3");
+            if (Elevation <= MinEmbarkElevation)
+                failures.Add($"Elevation {Elevation:F2} <= {MinEmbarkElevation:F2}");
+            if (Elevation >= MaxEmbarkElevation)
+                failures.Add($"Elevation {Elevation:F2} >= {MaxEmbarkElevation:F2}");
+            if (RiverClass >= MaxEmbarkRiverClass)
+                failures.Add($"River class {RiverClass} >= {MaxEmbarkRiverClass}");
 
             return failures;
         }

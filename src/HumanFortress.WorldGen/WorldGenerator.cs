@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.World;
-using HumanFortress.WorldGen.Stages;
+using HumanFortress.WorldGen.Implementation.Stages;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
     internal sealed class WorldGenerator
     {

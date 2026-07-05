@@ -16,10 +16,10 @@ internal sealed partial class FortressSessionContext
     }
 
     internal bool AutoDig { get; }
-    internal IGeneratedWorldData CurrentWorld { get; private set; } = EmptyGeneratedWorldData.Instance;
     internal Point SelectedTile { get; private set; }
     internal Point EmbarkLocation { get; private set; }
     internal int FortressSize { get; private set; }
+    private IGeneratedWorldData CurrentWorld { get; set; } = EmptyGeneratedWorldData.Instance;
 
     internal void SetGeneratedWorld(IGeneratedWorldData? result)
     {

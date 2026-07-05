@@ -1,5 +1,6 @@
 using HumanFortress.Contracts.Content.Registry;
-using HumanFortress.Runtime;
+using HumanFortress.Runtime.Composition;
+using HumanFortress.Runtime.Host;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Snapshots;

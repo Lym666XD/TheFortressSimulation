@@ -4,7 +4,7 @@ using HumanFortress.Core.Random;
 using HumanFortress.Jobs.Mining;
 using SimTerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Mining;
 
 internal sealed class MiningDropResolver : IMiningDropResolver
 {

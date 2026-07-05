@@ -1,4 +1,3 @@
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole.Input;
@@ -26,7 +25,7 @@ internal static partial class FortressWorkshopPanelKeyboardInput
 
     private static bool HandleQueueMutation(
         Keyboard keyboard,
-        IFortressRuntimeWorkshopPanelAccess runtime,
+        FortressWorkshopPanelRuntimePorts runtime,
         UiStore ui,
         Guid workshopGuid,
         WorkshopSummaryView state,

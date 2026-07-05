@@ -1,5 +1,5 @@
 using System.Text.Json;
-using HumanFortress.Content.Loading;
+using HumanFortress.App.Content;
 
 namespace HumanFortress.App.UI;
 
@@ -14,7 +14,7 @@ internal static partial class WorkshopCategoryMapper
             try
             {
                 string baseDir = AppContext.BaseDirectory;
-                var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "ui.workshop_categories.json");
+                var registryFile = AppContentFileLocator.ResolveRegistryFile(baseDir, "ui.workshop_categories.json");
                 _map = registryFile.ResolvedPath == null
                     ? GetFallback()
                     : LoadMapping(registryFile.ResolvedPath);

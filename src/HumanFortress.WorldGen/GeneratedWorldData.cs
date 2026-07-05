@@ -3,7 +3,7 @@ using System.Linq;
 using HumanFortress.Contracts.WorldGen;
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen;
+namespace HumanFortress.WorldGen.Implementation;
 
 internal sealed class GeneratedWorldData : IGeneratedWorldData
 {
@@ -71,6 +71,45 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
             tile.StoneSet?.ToArray() ?? Array.Empty<ushort>(),
             tile.LandmarkIds?.ToArray() ?? Array.Empty<int>());
         return true;
+    }
+
+    public bool TryFindNearestEmbarkableTile(WorldMapTilePosition origin, out WorldMapTilePosition tilePosition)
+    {
+        tilePosition = default;
+        if (_tiles == null)
+            return false;
+
+        int width = _tiles.GetLength(0);
+        int height = _tiles.GetLength(1);
+        if (width <= 0 || height <= 0)
+            return false;
+
+        bool found = false;
+        long bestDistanceSquared = long.MaxValue;
+
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                if (!_tiles[x, y].IsEmbarkable)
+                    continue;
+
+                long dx = x - origin.X;
+                long dy = y - origin.Y;
+                long distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared >= bestDistanceSquared)
+                    continue;
+
+                tilePosition = new WorldMapTilePosition(x, y);
+                bestDistanceSquared = distanceSquared;
+                found = true;
+
+                if (distanceSquared == 0)
+                    return true;
+            }
+        }
+
+        return found;
     }
 
     internal static GeneratedWorldData FromWorldGenResult(WorldGenResult result)

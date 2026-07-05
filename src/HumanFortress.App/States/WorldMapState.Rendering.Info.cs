@@ -41,6 +41,8 @@ internal sealed partial class WorldMapState
                         _infoPanel.Print(0, 12 + i, $"- {failures[i]}", Color.Gray);
                     }
                 }
+
+                _infoPanel.Print(0, 16, "Press E to find nearest embark", Color.Gray);
             }
         }
     }

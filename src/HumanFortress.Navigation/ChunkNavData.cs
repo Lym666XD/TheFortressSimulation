@@ -1,6 +1,6 @@
 using HumanFortress.Contracts.Navigation;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Per-chunk navigation data per NAVIGATION_SPEC.md section 2.

@@ -1,12 +1,11 @@
 using HumanFortress.App.Input;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 
 namespace HumanFortress.App.Session;
 
 internal sealed class FortressSessionLoadCoordinator
 {
-    private readonly IFortressRuntimeBootstrapAccess _runtime;
+    private readonly FortressSessionRuntimePorts _runtime;
     private readonly FortressSessionContext _session;
     private readonly FortressLoadedSessionState _loadedSession;
     private readonly UiStore _ui;
@@ -14,14 +13,15 @@ internal sealed class FortressSessionLoadCoordinator
     private readonly string _baseDir;
 
     internal FortressSessionLoadCoordinator(
-        IFortressRuntimeBootstrapAccess runtime,
+        FortressSessionRuntimePorts runtime,
         FortressSessionContext session,
         FortressLoadedSessionState loadedSession,
         UiStore ui,
         Func<ulong> uiTickProvider,
         string baseDir)
     {
-        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+        ArgumentNullException.ThrowIfNull(runtime);
+        _runtime = runtime;
         _session = session ?? throw new ArgumentNullException(nameof(session));
         _loadedSession = loadedSession ?? throw new ArgumentNullException(nameof(loadedSession));
         _ui = ui ?? throw new ArgumentNullException(nameof(ui));

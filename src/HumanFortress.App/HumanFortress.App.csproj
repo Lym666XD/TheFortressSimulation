@@ -15,9 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HumanFortress.Content\HumanFortress.Content.csproj" />
     <ProjectReference Include="..\HumanFortress.Contracts\HumanFortress.Contracts.csproj" />
-    <ProjectReference Include="..\HumanFortress.Core\HumanFortress.Core.csproj" />
     <ProjectReference Include="..\HumanFortress.Runtime\HumanFortress.Runtime.csproj" />
   </ItemGroup>
 

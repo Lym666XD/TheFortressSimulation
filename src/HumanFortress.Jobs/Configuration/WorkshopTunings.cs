@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Configuration;
 
 /// <summary>
 /// Tunings for workshops and crafting.

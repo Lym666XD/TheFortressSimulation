@@ -1,9 +1,11 @@
 using System;
-using HumanFortress.Jobs;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Construction;
+using HumanFortress.Jobs.Diff;
+using HumanFortress.Jobs.Logging;
+using HumanFortress.Jobs.Orchestration;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Stockpile;

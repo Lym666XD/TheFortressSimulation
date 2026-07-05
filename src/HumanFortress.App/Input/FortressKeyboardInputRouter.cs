@@ -6,17 +6,14 @@ internal static partial class FortressKeyboardInputRouter
 {
     public static FortressKeyboardInputResult Process(FortressKeyboardInputRouterContext context, Keyboard keyboard)
     {
-        ArgumentNullException.ThrowIfNull(context.BuildCatalogRuntime);
-        ArgumentNullException.ThrowIfNull(context.WorkshopPanelRuntime);
-        ArgumentNullException.ThrowIfNull(context.NavigationDebugRuntime);
-        ArgumentNullException.ThrowIfNull(context.SimulationControlRuntime);
+        ArgumentNullException.ThrowIfNull(context.Runtime);
         ArgumentNullException.ThrowIfNull(context.Ui);
         ArgumentNullException.ThrowIfNull(context.NavigationDebug);
         ArgumentNullException.ThrowIfNull(context.HideTilePanel);
         ArgumentNullException.ThrowIfNull(context.CreateStockpile);
         ArgumentNullException.ThrowIfNull(keyboard);
 
-        if (FortressWorkshopPanelKeyboardInput.Handle(keyboard, context.WorkshopPanelRuntime, context.Ui, context.UiTick))
+        if (FortressWorkshopPanelKeyboardInput.Handle(keyboard, context.Runtime.WorkshopPanel, context.Ui, context.UiTick))
             return Redraw(context);
 
         if (context.Ui.ConstructionMaterialDialogOpen)
@@ -30,7 +27,7 @@ internal static partial class FortressKeyboardInputRouter
         var currentZ = context.Viewport.CurrentZ;
 
         changed |= ApplyNavigation(context, keyboard, ref cameraPosition, ref currentZ);
-        changed |= FortressSimulationKeyboardInput.Handle(keyboard, context.SimulationControlRuntime, context.Ui, context.UiTick);
+        changed |= FortressSimulationKeyboardInput.Handle(keyboard, context.Runtime.SimulationControl, context.Ui, context.UiTick);
         changed |= FortressGlobalUiKeyboardInput.HandleHelpAndDebug(keyboard, context.Ui);
 
         if (FortressGlobalUiKeyboardInput.TryHandleDrawerShortcut(keyboard, context.Ui, context.HideTilePanel))
@@ -41,7 +38,7 @@ internal static partial class FortressKeyboardInputRouter
         {
             changed |= context.NavigationDebug.HandleKeyboard(
                 keyboard,
-                context.NavigationDebugRuntime,
+                context.Runtime.NavigationDebug,
                 context.NavigationOverlay,
                 context.Viewport.CursorPosition,
                 currentZ,
@@ -56,7 +53,7 @@ internal static partial class FortressKeyboardInputRouter
             context.UiServices?.StockpileUI,
             currentZ,
             context.UiTick,
-            context.BuildCatalogRuntime.GetBuildCatalogData(),
+            context.Runtime.BuildCatalog.GetBuildCatalogData(),
             context.TileInspectionOpen,
             context.HideTilePanel,
             context.CreateStockpile));

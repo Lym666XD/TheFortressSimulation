@@ -2,7 +2,7 @@ using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
 
-namespace HumanFortress.Jobs;
+namespace HumanFortress.Jobs.Orchestration;
 
 internal interface IUnifiedJobExecutor : ITick
 {

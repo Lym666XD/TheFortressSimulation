@@ -1,4 +1,4 @@
-using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Content.Loading;
 
 namespace HumanFortress.Runtime;
 
@@ -10,7 +10,7 @@ internal sealed class FortressRuntimeSessionCoreOptions
         bool contentWarningsAsErrors,
         Action<string>? log = null,
         Func<string, Action<string>>? createLogCallback = null,
-        Action<FortressContentLoadResult>? logContentIssues = null)
+        Action<FortressContentLoadReport>? logContentIssues = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
@@ -32,5 +32,5 @@ internal sealed class FortressRuntimeSessionCoreOptions
 
     internal Func<string, Action<string>>? CreateLogCallback { get; }
 
-    internal Action<FortressContentLoadResult>? LogContentIssues { get; }
+    internal Action<FortressContentLoadReport>? LogContentIssues { get; }
 }

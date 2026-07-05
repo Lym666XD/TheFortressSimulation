@@ -1,5 +1,4 @@
 using HumanFortress.App.Diagnostics;
-using HumanFortress.App.Runtime;
 using HumanFortress.App.UI;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
@@ -10,7 +9,7 @@ internal sealed record FortressUiOverlayRenderContext(
     UiOverlaySurface UiSurface,
     MapScreenSurface MapSurface,
     UiStore Ui,
-    IFortressRuntimeReadAccess Runtime,
+    FortressViewRuntimePorts Runtime,
     IFortressDiagnosticsAccess Diagnostics,
     FortressUiServices? UiServices,
     SimulationMapViewportData MapViewport,

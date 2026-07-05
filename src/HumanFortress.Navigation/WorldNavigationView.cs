@@ -1,5 +1,5 @@
 using HumanFortress.Contracts.Navigation;
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Concrete IWorldNavigationView over a NavigationManager cache and a navigation world source.

@@ -1,48 +1,13 @@
 using HumanFortress.Content.Definitions;
+using HumanFortress.Contracts.Content.Loading;
 using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
 
 /// <summary>
-/// Resolved content directory candidates for either published output or a source checkout.
-/// </summary>
-public sealed class ContentPathResolution
-{
-    public ContentPathResolution(string publishedPath, string developmentPath, string? resolvedPath)
-    {
-        PublishedPath = publishedPath ?? throw new ArgumentNullException(nameof(publishedPath));
-        DevelopmentPath = developmentPath ?? throw new ArgumentNullException(nameof(developmentPath));
-        ResolvedPath = resolvedPath;
-    }
-
-    public string PublishedPath { get; }
-    public string DevelopmentPath { get; }
-    public string? ResolvedPath { get; }
-    public bool Found => ResolvedPath != null;
-}
-
-/// <summary>
-/// Resolved content file candidates for either published output or a source checkout.
-/// </summary>
-public sealed class ContentFileResolution
-{
-    public ContentFileResolution(string publishedPath, string developmentPath, string? resolvedPath)
-    {
-        PublishedPath = publishedPath ?? throw new ArgumentNullException(nameof(publishedPath));
-        DevelopmentPath = developmentPath ?? throw new ArgumentNullException(nameof(developmentPath));
-        ResolvedPath = resolvedPath;
-    }
-
-    public string PublishedPath { get; }
-    public string DevelopmentPath { get; }
-    public string? ResolvedPath { get; }
-    public bool Found => ResolvedPath != null;
-}
-
-/// <summary>
 /// Aggregated runtime content bootstrap result for a fortress session.
 /// </summary>
-public sealed class FortressContentLoadResult
+internal sealed class FortressContentLoadResult
 {
     internal FortressContentLoadResult(
         ContentPathResolution contentPath,
@@ -125,12 +90,34 @@ public sealed class FortressContentLoadResult
             throw new FortressContentLoadException(blockingIssues);
         }
     }
+
+    public FortressContentLoadReport ToReport()
+    {
+        return new FortressContentLoadReport(
+            ContentPath,
+            CoreDataPath,
+            RegistriesAlreadyLoaded,
+            StructuredRegistriesLoaded,
+            StructuredRegistryWarningCount,
+            StructuredRegistryErrorCount,
+            StructuredRegistryFailureMessage,
+            CoreCatalogsLoaded,
+            ItemDefinitionLoadedCount,
+            ItemDefinitionErrorCount,
+            CreatureDefinitionLoadedCount,
+            CreatureDefinitionErrorCount,
+            ConstructionDefinitionLoadedCount,
+            ConstructionDefinitionErrorCount,
+            RecipeDefinitionLoadedCount,
+            RecipeDefinitionErrorCount,
+            Issues);
+    }
 }
 
 /// <summary>
 /// Single Content-owned entry point for locating and loading runtime content.
 /// </summary>
-public static class FortressContentLoader
+internal static class FortressContentLoader
 {
     public static FortressContentLoadResult Load(
         string baseDir,
