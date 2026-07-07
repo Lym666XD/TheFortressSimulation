@@ -108,6 +108,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["Content/FortressRuntimeStockpilePresetCatalog.cs"] = "namespace HumanFortress.Runtime.Content;",
         ["Diff/RuntimeMutationDiffLogs.cs"] = "namespace HumanFortress.Runtime.Diff;",
         ["Diff/ProfessionAssignmentDiffLog.cs"] = "namespace HumanFortress.Runtime.Diff;",
+        ["Session/FortressRuntimeSession.cs"] = "namespace HumanFortress.Runtime.Session;",
         ["Session/RuntimeSessionServices.cs"] = "namespace HumanFortress.Runtime.Session;",
         ["Session/SimulationRuntimeSession.cs"] = "namespace HumanFortress.Runtime.Session;",
         ["Session/SimulationRuntimeSessionFactory.cs"] = "namespace HumanFortress.Runtime.Session;",
@@ -200,6 +201,12 @@ internal static class ArchitectureBoundarySmokeTests
         ["Definitions/ItemDefinitionCatalogLoader.Validation.cs"] = "namespace HumanFortress.Content.Definitions;"
     };
 
+    private static readonly IReadOnlyDictionary<string, string> ContentCreatureDefinitionFocusedHelperNamespaces = new Dictionary<string, string>
+    {
+        ["Definitions/CreatureDefinitionCatalogLoader.cs"] = "namespace HumanFortress.Content.Definitions;",
+        ["Definitions/CreatureDefinitionCatalogLoader.Validation.cs"] = "namespace HumanFortress.Content.Definitions;"
+    };
+
     private static readonly IReadOnlyDictionary<string, string> WorldGenFocusedHelperNamespaces = new Dictionary<string, string>
     {
         ["FortressGenerator.cs"] = "namespace HumanFortress.WorldGen.Implementation",
@@ -233,6 +240,33 @@ internal static class ArchitectureBoundarySmokeTests
         ["Items/ItemManager.Queries.cs"] = "namespace HumanFortress.Simulation.Items;",
         ["Items/ItemManager.SaveRestore.cs"] = "namespace HumanFortress.Simulation.Items;",
         ["Items/ItemManager.Spawning.cs"] = "namespace HumanFortress.Simulation.Items;"
+    };
+
+    private static readonly IReadOnlyDictionary<string, string> SimulationCreaturesFocusedHelperNamespaces = new Dictionary<string, string>
+    {
+        ["Creatures/CreatureManager.cs"] = "namespace HumanFortress.Simulation.Creatures;",
+        ["Creatures/CreatureManager.Catalog.cs"] = "namespace HumanFortress.Simulation.Creatures;",
+        ["Creatures/CreatureManager.Queries.cs"] = "namespace HumanFortress.Simulation.Creatures;",
+        ["Creatures/CreatureManager.SaveRestore.cs"] = "namespace HumanFortress.Simulation.Creatures;",
+        ["Creatures/CreatureManager.Spawning.cs"] = "namespace HumanFortress.Simulation.Creatures;"
+    };
+
+    private static readonly IReadOnlyDictionary<string, string> SimulationPlaceablesFocusedHelperNamespaces = new Dictionary<string, string>
+    {
+        ["Placeables/ChunkPlaceableData.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/ChunkPlaceableData.FurnitureSync.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableInstance.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableInstance.ConstructionFactory.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableInstance.ItemFactory.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableKind.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/DoorState.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/ConstructionSiteState.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.AffectedChunks.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.Collision.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.Placement.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.Removal.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/CollisionResult.cs"] = "namespace HumanFortress.Simulation.Placeables;"
     };
 
     private static readonly IReadOnlyDictionary<string, string> SimulationOrdersFocusedHelperNamespaces = new Dictionary<string, string>
@@ -381,8 +415,11 @@ internal static class ArchitectureBoundarySmokeTests
         TestContentFocusedHelpersUseDirectoryNamespaces(root);
         TestContentDefinitionFocusedHelpersUseDirectoryNamespaces(root);
         TestContentItemDefinitionFocusedHelpersUseDirectoryNamespaces(root);
+        TestContentCreatureDefinitionFocusedHelpersUseDirectoryNamespaces(root);
         TestSimulationSaveFocusedHelpersUseDirectoryNamespaces(root);
         TestSimulationItemsFocusedHelpersUseDirectoryNamespaces(root);
+        TestSimulationCreaturesFocusedHelpersUseDirectoryNamespaces(root);
+        TestSimulationPlaceablesFocusedHelpersUseDirectoryNamespaces(root);
         TestSimulationOrdersFocusedHelpersUseDirectoryNamespaces(root);
         TestRuntimeFocusedHelpersUseDirectoryNamespaces(root);
         TestRuntimeSaveCodecStaysInternal(root);
@@ -728,6 +765,38 @@ internal static class ArchitectureBoundarySmokeTests
         Console.WriteLine("[PASS] Focused Content item definition helpers keep ItemDefinitionCatalogLoader split by responsibility");
     }
 
+    private static void TestContentCreatureDefinitionFocusedHelpersUseDirectoryNamespaces(string root)
+    {
+        string contentRoot = Path.Combine(root, "src", "HumanFortress.Content");
+        var violations = new List<string>();
+        foreach (var rule in ContentCreatureDefinitionFocusedHelperNamespaces)
+        {
+            string file = Path.Combine(contentRoot, rule.Key);
+            if (!File.Exists(file))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} is missing");
+                continue;
+            }
+
+            string text = File.ReadAllText(file);
+            if (!text.Contains(rule.Value, StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} missing {rule.Value}");
+            }
+
+            if (!text.Contains("partial class CreatureDefinitionCatalogLoader", StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} should keep CreatureDefinitionCatalogLoader split as partials");
+            }
+        }
+
+        RegressionAssert.True(
+            violations.Count == 0,
+            "Focused Content creature definition helpers should keep CreatureDefinitionCatalogLoader split by responsibility:\n"
+            + string.Join('\n', violations));
+        Console.WriteLine("[PASS] Focused Content creature definition helpers keep CreatureDefinitionCatalogLoader split by responsibility");
+    }
+
     private static void TestSimulationSaveFocusedHelpersUseDirectoryNamespaces(string root)
     {
         string simulationRoot = Path.Combine(root, "src", "HumanFortress.Simulation");
@@ -797,6 +866,84 @@ internal static class ArchitectureBoundarySmokeTests
             "Focused Simulation item helpers should keep ItemManager split by responsibility:\n"
             + string.Join('\n', violations));
         Console.WriteLine("[PASS] Focused Simulation item helpers keep ItemManager split by responsibility");
+    }
+
+    private static void TestSimulationCreaturesFocusedHelpersUseDirectoryNamespaces(string root)
+    {
+        string simulationRoot = Path.Combine(root, "src", "HumanFortress.Simulation");
+        var violations = new List<string>();
+        foreach (var rule in SimulationCreaturesFocusedHelperNamespaces)
+        {
+            string file = Path.Combine(simulationRoot, rule.Key);
+            if (!File.Exists(file))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} is missing");
+                continue;
+            }
+
+            string text = File.ReadAllText(file);
+            if (!text.Contains(rule.Value, StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} missing {rule.Value}");
+            }
+
+            if (!text.Contains("partial class CreatureManager", StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} should keep CreatureManager split as partials");
+            }
+        }
+
+        RegressionAssert.True(
+            violations.Count == 0,
+            "Focused Simulation creature helpers should keep CreatureManager split by responsibility:\n"
+            + string.Join('\n', violations));
+        Console.WriteLine("[PASS] Focused Simulation creature helpers keep CreatureManager split by responsibility");
+    }
+
+    private static void TestSimulationPlaceablesFocusedHelpersUseDirectoryNamespaces(string root)
+    {
+        string simulationRoot = Path.Combine(root, "src", "HumanFortress.Simulation");
+        var violations = new List<string>();
+        foreach (var rule in SimulationPlaceablesFocusedHelperNamespaces)
+        {
+            string file = Path.Combine(simulationRoot, rule.Key);
+            if (!File.Exists(file))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} is missing");
+                continue;
+            }
+
+            string text = File.ReadAllText(file);
+            if (!text.Contains(rule.Value, StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} missing {rule.Value}");
+            }
+
+            string fileName = Path.GetFileName(file);
+            if (fileName.StartsWith("PlaceableInstance", StringComparison.Ordinal)
+                && !text.Contains("partial class PlaceableInstance", StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} should keep PlaceableInstance split as partials");
+            }
+
+            if (fileName.StartsWith("PlaceableManager", StringComparison.Ordinal)
+                && !text.Contains("partial class PlaceableManager", StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} should keep PlaceableManager split as partials");
+            }
+
+            if (fileName.StartsWith("ChunkPlaceableData", StringComparison.Ordinal)
+                && !text.Contains("partial class ChunkPlaceableData", StringComparison.Ordinal))
+            {
+                violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} should keep ChunkPlaceableData split as partials");
+            }
+        }
+
+        RegressionAssert.True(
+            violations.Count == 0,
+            "Focused Simulation placeable helpers should keep placeable state/factory/world/cache operations split by responsibility:\n"
+            + string.Join('\n', violations));
+        Console.WriteLine("[PASS] Focused Simulation placeable helpers keep placeable state/factory/world/cache operations split by responsibility");
     }
 
     private static void TestSimulationOrdersFocusedHelpersUseDirectoryNamespaces(string root)

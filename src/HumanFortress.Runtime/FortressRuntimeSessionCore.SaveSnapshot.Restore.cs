@@ -1,6 +1,7 @@
 using System.Text.Json;
 using HumanFortress.Contracts.Runtime.Save;
 using HumanFortress.Runtime.Save;
+using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.Save;
 
 namespace HumanFortress.Runtime;
@@ -51,7 +52,7 @@ internal sealed partial class FortressRuntimeSessionCore
         {
             StopIfRunningCore();
             _workshopCompletionNotifier.SetHandler(null);
-            _runtimeSession = _runtimeSessionFactory.CreateFromWorld(restore.World, rebuildNavigation: true);
+            _runtimeSession = new FortressRuntimeSession(_runtimeSessionFactory.CreateFromWorld(restore.World, rebuildNavigation: true));
         }
 
         return new RuntimeSaveWorldSnapshotRestoreResultData(

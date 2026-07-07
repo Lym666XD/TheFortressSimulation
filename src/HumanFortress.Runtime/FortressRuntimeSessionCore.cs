@@ -19,7 +19,7 @@ internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessi
     private readonly FortressRuntimeWorkshopCompletionNotifier _workshopCompletionNotifier = new();
     private readonly SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory;
 
-    private SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>? _runtimeSession;
+    private FortressRuntimeSession? _runtimeSession;
     private FortressRuntimeContentSnapshot? _runtimeContentSnapshot;
 
     internal FortressRuntimeSessionCore(FortressRuntimeSessionCoreOptions options)

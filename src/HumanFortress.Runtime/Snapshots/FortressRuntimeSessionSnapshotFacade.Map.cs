@@ -1,21 +1,22 @@
 using SadRogue.Primitives;
+using HumanFortress.Runtime.Session;
 
 namespace HumanFortress.Runtime.Snapshots;
 
 internal static partial class FortressRuntimeSessionSnapshotFacade
 {
-    internal static ZoneHitData FindZoneAt(HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session, Point worldPosition, int z)
+    internal static ZoneHitData FindZoneAt(FortressRuntimeSession? session, Point worldPosition, int z)
     {
         return FortressRuntimeSnapshotBuilder.FindZoneAt(World(session), worldPosition, z);
     }
 
-    internal static StockpileHitData FindStockpileAt(HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session, Point worldPosition, int z)
+    internal static StockpileHitData FindStockpileAt(FortressRuntimeSession? session, Point worldPosition, int z)
     {
         return FortressRuntimeSnapshotBuilder.FindStockpileAt(World(session), worldPosition, z);
     }
 
     internal static SimulationNavigationPathData FindNavigationDebugPath(
-        HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session,
+        FortressRuntimeSession? session,
         Point start,
         int startZ,
         Point destination,
@@ -30,7 +31,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
             destinationZ);
     }
 
-    internal static SimulationTileInspectionData BuildTileInspectionSnapshot(HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session, Point tileWorldPosition, int tileZ)
+    internal static SimulationTileInspectionData BuildTileInspectionSnapshot(FortressRuntimeSession? session, Point tileWorldPosition, int tileZ)
     {
         return FortressRuntimeSnapshotBuilder.BuildTileInspectionSnapshot(
             World(session),
@@ -40,7 +41,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
     }
 
     internal static SimulationPlacementPreviewData BuildPlacementPreviewSnapshot(
-        HumanFortress.Runtime.Session.SimulationRuntimeSession<HumanFortress.Runtime.Host.SimulationRuntimeHost<HumanFortress.Runtime.Composition.SimulationRuntimeSystems>>? session,
+        FortressRuntimeSession? session,
         Point first,
         Point second,
         int z,

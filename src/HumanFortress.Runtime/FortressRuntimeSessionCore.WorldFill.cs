@@ -29,6 +29,6 @@ internal sealed partial class FortressRuntimeSessionCore
 
     private void RebuildNavigation()
     {
-        SimulationRuntimeSessionNavigation.RebuildAll(_runtimeSession);
+        SimulationRuntimeSessionNavigation.RebuildAll(_runtimeSession?.Inner);
     }
 }

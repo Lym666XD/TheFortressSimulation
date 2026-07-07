@@ -45,6 +45,11 @@ This document tracks the current multi-step refactor batches so progress is visi
   enrichment/validation lives in `ItemDefinitionCatalogLoader.Validation.cs`.
   Architecture smoke coverage now locks the item definition loader split so
   static item catalog compatibility does not grow another mixed Content parser.
+- The same Content definition hardening split
+  `CreatureDefinitionCatalogLoader` so file traversal/load result handling
+  stays separate from creature stat validation. Architecture smoke coverage now
+  locks both static item and creature definition loaders as Content-owned
+  partials.
 - Follow-up source-only/no-build Simulation save hardening split
   `WorldSavePayloadBuilder` and `WorldSavePayloadRestorer` by authoritative
   payload section. The builder main file now only orchestrates snapshot and
@@ -62,12 +67,37 @@ This document tracks the current multi-step refactor batches so progress is visi
   GUID allocation, counts, and logging in the main file; catalog access,
   position indexing, queries, stack/move/remove mutations, spawn behavior, and
   save/restore validation/conversion live in focused partials under
-  `HumanFortress.Simulation.Items`. `OrdersManager` now keeps only queue state
-  and logging in the main file; haul, mining, construction/buildable, and
+  `HumanFortress.Simulation.Items`. `CreatureManager` now keeps only
+  definition snapshot state, runtime instance state, deterministic creature
+  GUID allocation, world binding, counts, and logging in the main file;
+  creature catalog access, runtime instance queries, spawn behavior, and
+  save/restore validation/conversion live in focused partials under
+  `HumanFortress.Simulation.Creatures`. `OrdersManager` now keeps only queue
+  state and logging in the main file; haul, mining, construction/buildable, and
   save/restore validation/conversion behavior live in focused partials under
-  `HumanFortress.Simulation.Orders`. Architecture smoke coverage now locks both
-  managers as partials so these authoritative Simulation state owners do not
+  `HumanFortress.Simulation.Orders`. Architecture smoke coverage now locks
+  these managers as partials so authoritative Simulation state owners do not
   regress into single-file service locators.
+- Follow-up source-only/no-build Simulation placeable hardening split
+  `PlaceableInstance` into state plus item-install/uninstall and construction
+  factory partials, with `PlaceableKind`, `DoorState`, and
+  `ConstructionSiteState` in focused type files under
+  `HumanFortress.Simulation.Placeables`. `PlaceableManager` now separates
+  collision checks, cross-chunk placement, removal, and affected-chunk queries
+  into focused partials. `ChunkPlaceableData` now keeps authoritative
+  owned/external-ref storage separate from derived `FurnitureCell` sync/
+  unsync behavior. Architecture smoke coverage locks these files so placeable
+  authority, derived cache rebuild policy, and cross-chunk world mutation stay
+  in Simulation instead of drifting into Runtime/App or collapsing back into one
+  mixed placeable file.
+- Follow-up source-only/no-build Runtime session cleanup introduced an
+  internal `FortressRuntimeSession` handle under `HumanFortress.Runtime.Session`
+  for the active fortress-specific `SimulationRuntimeSession` generic
+  composition. `FortressRuntimeSessionCore`, replay checkpoint hashing, and the
+  Runtime snapshot facade now pass that named internal handle instead of
+  repeating the long constructed generic type or relying on a fragile
+  namespace-colliding `Session` alias. Architecture smoke coverage locks the
+  handle to the focused Runtime session namespace.
 - Latest source-only/no-build hardening centralized typed mutation diff sort-key
   packing in `SimulationDiffSortKeys`, keeping enqueue-ordered command-edit
   diffs distinct from spatial/priority item/stockpile-style diffs without

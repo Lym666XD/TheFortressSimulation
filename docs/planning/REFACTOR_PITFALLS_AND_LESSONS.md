@@ -74,13 +74,18 @@ growing a new save/load God Object or moving mapping into Runtime/App.
 Simulation state managers are not a dumping ground for every behavior that
 touches a subsystem. Keep `ItemManager` split by catalog access, position
 indexing, read queries, stack/move/remove mutations, spawn behavior, and
-save/restore mapping. Keep `OrdersManager` split by haul, mining,
-construction/buildable, and save/restore mapping. The ownership stays in
-Simulation because these managers own authoritative runtime state, but the
-files should still show which responsibility is being changed. Do not move
-these helpers into Runtime/App to avoid touching Simulation, and do not merge
-them back into single manager files just because all partials share the same
-private dictionaries/queues.
+save/restore mapping. Keep `CreatureManager` split by catalog access, runtime
+instance queries, spawn behavior, and save/restore mapping. Keep
+`OrdersManager` split by haul, mining, construction/buildable, and save/restore
+mapping. Keep `PlaceableInstance` split between runtime state and item/
+construction factory behavior, keep `PlaceableManager` split by collision,
+placement, removal, and affected-chunk queries, and keep
+`ChunkPlaceableData` authoritative storage separate from derived furniture sync
+behavior. The ownership stays in Simulation because these managers own
+authoritative runtime state, but the files should still show which
+responsibility is being changed. Do not move these helpers into Runtime/App to
+avoid touching Simulation, and do not merge them back into single manager files
+just because all partials share the same private dictionaries/queues.
 
 ### Replay hashes need canonical primitive encoding
 
@@ -967,10 +972,12 @@ Keep static item definition loading split by responsibility while preserving
 that idempotence. `ItemDefinitionCatalogLoader` should keep deterministic file
 enumeration and JSON options in the main partial, legacy `{ "items": [...] }`
 furniture parsing plus stack/placeable/effects mapping in the parsing partial,
-and normalization/name enrichment/validation in the validation partial. Do not
-move parsing helpers into `ItemManager` just because Simulation stores item
-instances, and do not add Runtime startup shortcuts that parse item JSON
-outside the Content loader.
+and normalization/name enrichment/validation in the validation partial.
+`CreatureDefinitionCatalogLoader` should follow the same pattern by keeping
+file traversal/options separate from creature stat validation. Do not move
+parsing helpers into `ItemManager` or `CreatureManager` just because Simulation
+stores runtime instances, and do not add Runtime startup shortcuts that parse
+static definition JSON outside the Content loader.
 
 Do not append to existing indexes during reload. This creates hidden duplication bugs where:
 

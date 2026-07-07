@@ -15,14 +15,14 @@ internal static class RuntimeReplayCheckpointHashBuilder
 {
     internal static string Build(
         RuntimeSessionServices services,
-        SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>? session)
+        FortressRuntimeSession? session)
     {
         return BuildData(services, session).AggregateHash;
     }
 
     internal static RuntimeReplayCheckpointData BuildData(
         RuntimeSessionServices services,
-        SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>? session,
+        FortressRuntimeSession? session,
         CommandQueueReplaySnapshot? commandQueueSnapshot = null,
         IReadOnlyList<RngStreamStateSnapshot>? rngStreamSnapshot = null)
     {

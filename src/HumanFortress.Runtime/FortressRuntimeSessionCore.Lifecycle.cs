@@ -1,5 +1,6 @@
 using HumanFortress.Runtime.Composition;
 using HumanFortress.Runtime.Host;
+using HumanFortress.Runtime.Session;
 using HumanFortress.Runtime.Startup;
 using HumanFortress.Simulation.World;
 
@@ -26,7 +27,7 @@ internal sealed partial class FortressRuntimeSessionCore
     {
         StopIfRunningCore();
         _workshopCompletionNotifier.SetHandler(null);
-        _runtimeSession = _runtimeSessionFactory.CreateNew(sizeInChunks, maxZ);
+        _runtimeSession = new FortressRuntimeSession(_runtimeSessionFactory.CreateNew(sizeInChunks, maxZ));
     }
 
     private bool StopIfRunningCore()
