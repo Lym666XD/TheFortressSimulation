@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.World;
-using HumanFortress.WorldGen.Stages;
+using HumanFortress.WorldGen.Implementation.Stages;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
-    public class WorldGenerator
+    internal sealed class WorldGenerator
     {
         private readonly List<IWorldGenStage> _stages;
         public event Action<string, float>? ProgressChanged;
@@ -59,7 +59,7 @@ namespace HumanFortress.WorldGen
         }
     }
     
-    public struct WorldGenResult
+    internal struct WorldGenResult
     {
         public bool Success { get; set; }
         public WorldTile[,] Tiles { get; set; }

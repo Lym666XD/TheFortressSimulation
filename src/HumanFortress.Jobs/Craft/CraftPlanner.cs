@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Simulation.Jobs;
@@ -11,7 +11,7 @@ namespace HumanFortress.Jobs.Craft;
 /// <summary>
 /// Planner that inspects workshop queues, requests materials, and produces planned craft jobs.
 /// </summary>
-public sealed class CraftPlanner : ITick, ICraftJobPlanner
+internal sealed class CraftPlanner : ITick, ICraftJobPlanner
 {
     private const int RequestRetryTicks = 80;
 
@@ -21,7 +21,7 @@ public sealed class CraftPlanner : ITick, ICraftJobPlanner
     private readonly ConcurrentQueue<PlannedCraftJob> _outbox = new();
     private readonly int _scanBudgetPerTick;
 
-    public CraftPlanner(
+    internal CraftPlanner(
         WorldModel world,
         ITransportIntake transport,
         ICraftRecipeCatalog recipes,
@@ -38,11 +38,11 @@ public sealed class CraftPlanner : ITick, ICraftJobPlanner
         _scanBudgetPerTick = Math.Max(1, scanBudgetPerTick);
     }
 
-    public int Priority => UpdateOrder.Priority.Items;
+    internal int Priority => UpdateOrder.Priority.Items;
 
-    public string SystemId => "Jobs.CraftPlanner";
+    internal string SystemId => "Jobs.CraftPlanner";
 
-    public void ReadTick(ulong tick)
+    internal void ReadTick(ulong tick)
     {
         int scanned = 0;
         foreach (var (placeable, _) in _workshops.EnumerateWorkshops())
@@ -80,12 +80,12 @@ public sealed class CraftPlanner : ITick, ICraftJobPlanner
         }
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         // Planner is read-only.
     }
 
-    public int DequeuePlannedJobs(int max, IList<PlannedCraftJob> into)
+    internal int DequeuePlannedJobs(int max, IList<PlannedCraftJob> into)
     {
         int n = 0;
         while (n < max && _outbox.TryDequeue(out var job))
@@ -96,4 +96,14 @@ public sealed class CraftPlanner : ITick, ICraftJobPlanner
 
         return n;
     }
+
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+
+    int ICraftJobPlanner.DequeuePlannedJobs(int max, IList<PlannedCraftJob> into) => DequeuePlannedJobs(max, into);
 }

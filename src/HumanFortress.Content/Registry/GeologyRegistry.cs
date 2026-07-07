@@ -1,24 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Registry for geology definitions and tile prototypes.
 /// </summary>
-public class GeologyRegistry
+internal sealed class GeologyRegistry
 {
     private readonly Dictionary<string, GeologyDefinition> _prototypesById = new();
     private readonly Dictionary<(string terrainKind, string material), GeologyDefinition> _prototypesByCombo = new();
     private readonly List<GeologyDefinition> _allPrototypes = new();
 
-    public ContentVersion Version { get; private set; }
+    internal ContentVersion Version { get; private set; }
 
     /// <summary>
     /// Load geology prototypes from definitions
     /// </summary>
-    public void LoadPrototypes(IEnumerable<GeologyDefinition> prototypes, ContentVersion version)
+    internal void LoadPrototypes(IEnumerable<GeologyDefinition> prototypes, ContentVersion version)
     {
         Version = version;
         Clear();
@@ -54,7 +55,7 @@ public class GeologyRegistry
     /// <summary>
     /// Get prototype by ID
     /// </summary>
-    public GeologyDefinition? GetPrototype(string id)
+    internal GeologyDefinition? GetPrototype(string id)
     {
         return _prototypesById.GetValueOrDefault(id);
     }
@@ -62,7 +63,7 @@ public class GeologyRegistry
     /// <summary>
     /// Get prototype by terrain kind and material combination
     /// </summary>
-    public GeologyDefinition? GetPrototype(string terrainKind, string material)
+    internal GeologyDefinition? GetPrototype(string terrainKind, string material)
     {
         return _prototypesByCombo.GetValueOrDefault((terrainKind, material));
     }
@@ -70,7 +71,7 @@ public class GeologyRegistry
     /// <summary>
     /// Find or create a prototype for a terrain/material combination
     /// </summary>
-    public GeologyDefinition GetOrCreatePrototype(string terrainKind, string material,
+    internal GeologyDefinition GetOrCreatePrototype(string terrainKind, string material,
         TerrainKindDefinition? terrainDef = null, MaterialDefinition? materialDef = null)
     {
         // Check if we have an explicit prototype
@@ -102,7 +103,7 @@ public class GeologyRegistry
     /// <summary>
     /// Get all prototypes for a specific terrain kind
     /// </summary>
-    public IEnumerable<GeologyDefinition> GetPrototypesForTerrainKind(string terrainKind)
+    internal IEnumerable<GeologyDefinition> GetPrototypesForTerrainKind(string terrainKind)
     {
         return _allPrototypes.Where(p => p.TerrainKind == terrainKind);
     }
@@ -110,7 +111,7 @@ public class GeologyRegistry
     /// <summary>
     /// Get all prototypes for a specific material
     /// </summary>
-    public IEnumerable<GeologyDefinition> GetPrototypesForMaterial(string material)
+    internal IEnumerable<GeologyDefinition> GetPrototypesForMaterial(string material)
     {
         return _allPrototypes.Where(p => p.Material == material);
     }
@@ -128,5 +129,5 @@ public class GeologyRegistry
     /// <summary>
     /// Get all prototypes
     /// </summary>
-    public IEnumerable<GeologyDefinition> GetAllPrototypes() => _allPrototypes;
+    internal IEnumerable<GeologyDefinition> GetAllPrototypes() => _allPrototypes;
 }

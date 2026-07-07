@@ -8,12 +8,12 @@ internal sealed class ConstructionFootprintCells
 {
     private readonly WorldModel _world;
 
-    public ConstructionFootprintCells(WorldModel world)
+    internal ConstructionFootprintCells(WorldModel world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    public IEnumerable<Point> EnumerateFootprintAndRing(PlaceableInstance site)
+    internal IEnumerable<Point> EnumerateFootprintAndRing(PlaceableInstance site)
     {
         var seen = new HashSet<(int X, int Y)>();
         var footprint = site.Footprint;

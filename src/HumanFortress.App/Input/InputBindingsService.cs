@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using HumanFortress.Content.Loading;
+using HumanFortress.App.Content;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
@@ -11,18 +11,18 @@ namespace HumanFortress.App.Input;
 /// Loads and provides access to input bindings from content/registries/input.bindings.json.
 /// Minimal v1 used by Orders quick menu rendering and key handling.
 /// </summary>
-public sealed class InputBindingsService
+internal sealed class InputBindingsService
 {
     private static InputBindingsService? _instance;
-    public static InputBindingsService Instance => _instance ??= new InputBindingsService();
+    internal static InputBindingsService Instance => _instance ??= new InputBindingsService();
 
     private readonly Dictionary<string, Dictionary<string, string>> _contexts = new(StringComparer.OrdinalIgnoreCase);
 
     private InputBindingsService() { }
 
-    public void Load(string baseDir)
+    internal void Load(string baseDir)
     {
-        var registryFile = FortressContentLoader.ResolveRegistryFile(baseDir, "input.bindings.json");
+        var registryFile = AppContentFileLocator.ResolveRegistryFile(baseDir, "input.bindings.json");
         if (registryFile.ResolvedPath == null) return;
 
         var json = File.ReadAllText(registryFile.ResolvedPath);
@@ -43,17 +43,17 @@ public sealed class InputBindingsService
         }
     }
 
-    public IReadOnlyDictionary<string, string> GetContext(string name)
+    internal IReadOnlyDictionary<string, string> GetContext(string name)
     {
         return _contexts.TryGetValue(name, out var map) ? map : new Dictionary<string, string>();
     }
 
-    public bool IsActionForKey(string context, string keyName, string actionId)
+    internal bool IsActionForKey(string context, string keyName, string actionId)
     {
         return _contexts.TryGetValue(context, out var map) && map.TryGetValue(keyName, out var act) && string.Equals(act, actionId, StringComparison.OrdinalIgnoreCase);
     }
 
-    public bool TryResolveKey(Keys key, out string name)
+    internal bool TryResolveKey(Keys key, out string name)
     {
         name = key switch
         {

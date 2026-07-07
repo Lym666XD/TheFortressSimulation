@@ -5,7 +5,7 @@ namespace HumanFortress.Jobs.Mining;
 
 internal static class MiningPathSeed
 {
-    public static uint From(Guid workerId, Point target)
+    internal static uint From(Guid workerId, Point target)
     {
         unchecked
         {

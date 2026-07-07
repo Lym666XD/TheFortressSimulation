@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Material definition per MATERIALS_SPEC v4-min (Fixed-Point Edition).

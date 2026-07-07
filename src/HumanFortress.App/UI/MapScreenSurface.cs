@@ -9,7 +9,7 @@ namespace HumanFortress.App.UI
     /// ScreenSurface specialized for the map area that exposes reliable mouse events
     /// for hover and left-click in local cell coordinates.
     /// </summary>
-    public sealed class MapScreenSurface : ScreenSurface
+    internal sealed class MapScreenSurface : ScreenSurface
     {
         public event Action<Point>? MouseMovedLocal;        // local cell coords
         public event Action<Point>? LeftClickedLocal;       // local cell coords

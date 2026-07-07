@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Tuning for L0 construction material costs per tile. Values are counts of items required.

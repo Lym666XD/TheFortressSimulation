@@ -7,13 +7,13 @@ namespace HumanFortress.Simulation.Items;
 /// <summary>
 /// Thread-safe log for ItemsDiff operations per tick.
 /// </summary>
-public sealed class ItemsDiffLog
+internal sealed class ItemsDiffLog
 {
     private readonly List<ItemsDiff> _ops = new();
     private int _localSeq = 0;
     private readonly object _lock = new();
 
-    public void Add(ItemsDiffOp op, ChunkKey chunk, int localIndex, string itemId, int quantity, int priority, string systemId)
+    internal void Add(ItemsDiffOp op, ChunkKey chunk, int localIndex, string itemId, int quantity, int priority, string systemId)
     {
         lock (_lock)
         {
@@ -22,12 +22,12 @@ public sealed class ItemsDiffLog
         }
     }
 
-    public void Add(ItemsDiffOp op, WorldCellTarget target, string itemId, int quantity, int priority, string systemId)
+    internal void Add(ItemsDiffOp op, WorldCellTarget target, string itemId, int quantity, int priority, string systemId)
     {
         Add(op, target.ChunkKey, target.LocalIndex, itemId, quantity, priority, systemId);
     }
 
-    public void AddRemoveItem(Guid itemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
+    internal void AddRemoveItem(Guid itemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
     {
         lock (_lock)
         {
@@ -36,12 +36,12 @@ public sealed class ItemsDiffLog
         }
     }
 
-    public void AddRemoveItem(Guid itemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
+    internal void AddRemoveItem(Guid itemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
     {
         AddRemoveItem(itemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
     }
 
-    public void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
+    internal void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
     {
         lock (_lock)
         {
@@ -50,12 +50,12 @@ public sealed class ItemsDiffLog
         }
     }
 
-    public void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
+    internal void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
     {
         AddSplitStack(sourceItemGuid, newItemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
     }
 
-    public IReadOnlyList<ItemsDiff> MergeAndSort()
+    internal IReadOnlyList<ItemsDiff> MergeAndSort()
     {
         lock (_lock)
         {
@@ -64,7 +64,7 @@ public sealed class ItemsDiffLog
         }
     }
 
-    public void Clear()
+    internal void Clear()
     {
         lock (_lock)
         {

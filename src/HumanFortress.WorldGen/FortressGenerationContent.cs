@@ -1,10 +1,10 @@
 using System;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using System.Text.Json.Nodes;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
-    public sealed class FortressGenerationContent
+    internal sealed class FortressGenerationContent
     {
         public FortressGenerationContent(
             IRuntimeGeologyCatalog geology,

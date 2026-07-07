@@ -1,12 +1,13 @@
+using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Manages navigation data for all chunks.
 /// Creates and updates ChunkNavData during RebuildDerived phase.
 /// </summary>
-public sealed class NavigationManager
+internal sealed class NavigationManager
 {
     private readonly ConcurrentDictionary<ChunkKey, ChunkNavData> _navData;
     private readonly INavigationWorldSource _source;
@@ -15,21 +16,21 @@ public sealed class NavigationManager
     /// <summary>
     /// Optional logging callback (set by App layer to write to fortress_debug.log)
     /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public NavigationManager(INavigationWorldSource source, NavigationTuning? tuning = null)
+    internal NavigationManager(INavigationWorldSource source, NavigationTuning? tuning = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
         _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
         _tuning = tuning ?? NavigationTuning.Default;
     }
 
-    public INavigationWorldSource Source => _source;
+    internal INavigationWorldSource Source => _source;
 
     /// <summary>
     /// Get or create navigation data for a chunk.
     /// </summary>
-    public ChunkNavData GetOrCreateNavData(ChunkKey key)
+    internal ChunkNavData GetOrCreateNavData(ChunkKey key)
     {
         return _navData.GetOrAdd(key, k => new ChunkNavData(k));
     }
@@ -37,7 +38,7 @@ public sealed class NavigationManager
     /// <summary>
     /// Get navigation data for a chunk if it exists.
     /// </summary>
-    public ChunkNavData? GetNavData(ChunkKey key)
+    internal ChunkNavData? GetNavData(ChunkKey key)
     {
         return _navData.GetValueOrDefault(key);
     }
@@ -45,7 +46,7 @@ public sealed class NavigationManager
     /// <summary>
     /// Get navigation data at world coordinates.
     /// </summary>
-    public ChunkNavData? GetNavDataAt(int worldX, int worldY, int z)
+    internal ChunkNavData? GetNavDataAt(int worldX, int worldY, int z)
     {
         var chunkX = worldX / ChunkNavData.ChunkSize;
         var chunkY = worldY / ChunkNavData.ChunkSize;
@@ -56,7 +57,7 @@ public sealed class NavigationManager
     /// <summary>
     /// Rebuild navigation data for a chunk (during RebuildDerived phase).
     /// </summary>
-    public void RebuildChunkNavData(ChunkKey key)
+    internal void RebuildChunkNavData(ChunkKey key)
     {
         if (_source.TryGetChunk(key, out var chunk))
         {
@@ -67,7 +68,7 @@ public sealed class NavigationManager
     /// <summary>
     /// Rebuild navigation data for a source chunk snapshot.
     /// </summary>
-    public void RebuildChunkNavData(NavigationChunkSnapshot chunk)
+    internal void RebuildChunkNavData(NavigationChunkSnapshot chunk)
     {
         var navData = GetOrCreateNavData(chunk.Key);
         var tiles = chunk.Tiles;
@@ -157,7 +158,7 @@ public sealed class NavigationManager
     /// <summary>
     /// Rebuild all navigation data.
     /// </summary>
-    public void RebuildAll()
+    internal void RebuildAll()
     {
         foreach (var chunk in _source.GetAllChunks())
         {

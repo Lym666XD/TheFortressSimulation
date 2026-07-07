@@ -1,4 +1,4 @@
-namespace HumanFortress.Simulation.Items;
+namespace HumanFortress.Contracts.Simulation.Items;
 
 /// <summary>
 /// Immutable read-only item definition catalog snapshot.

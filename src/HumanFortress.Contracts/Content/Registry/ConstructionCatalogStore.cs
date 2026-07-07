@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Read-only construction definition catalog exposed to runtime/gameplay systems.

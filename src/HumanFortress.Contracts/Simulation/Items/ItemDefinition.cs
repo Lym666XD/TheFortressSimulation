@@ -1,8 +1,8 @@
 using System;
 using System.Text.Json.Serialization;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Simulation.Items;
+namespace HumanFortress.Contracts.Simulation.Items;
 
 /// <summary>
 /// Static definition of an item type loaded from data/core/items/*.json.

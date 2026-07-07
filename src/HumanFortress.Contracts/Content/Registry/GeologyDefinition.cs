@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Defines a tile prototype (combination of TerrainKind + Material).

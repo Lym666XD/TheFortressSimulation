@@ -15,7 +15,7 @@ The current hauling path is a transport pipeline:
 Orders / gameplay producers
   -> HaulingSystem and other planners
   -> TransportRequestQueue
-  -> App TransportJobSystem wrapper
+  -> Runtime TransportJobSystem wrapper
   -> HumanFortress.Jobs.Transport.TransportJobExecutor
   -> DiffLog / ItemsDiffLog
   -> post-tick diff applicators
@@ -25,15 +25,15 @@ Current important classes:
 
 - `HumanFortress.Simulation.Orders.HaulingSystem`
 - `HumanFortress.Simulation.Jobs.TransportRequestQueue`
-- `HumanFortress.App.Jobs.TransportJobSystem`
+- `HumanFortress.Runtime.Jobs.TransportJobSystem`
 - `HumanFortress.Jobs.Transport.TransportJobExecutor`
 - `HumanFortress.Jobs.Transport.TransportAssignmentHandler`
 - `HumanFortress.Jobs.Transport.TransportPickupHandler`
 - `HumanFortress.Jobs.Transport.TransportDeliveryHandler`
 - `HumanFortress.Jobs.Transport.TransportReplanHandler`
-- `HumanFortress.App.Jobs.TransportDiffEmitter`
+- `HumanFortress.Jobs.TransportDiffEmitter`
 
-`HumanFortress.App.Jobs.TransportJobSystem` is now a composition shell. Most transport execution behavior lives in `HumanFortress.Jobs.Transport`.
+`HumanFortress.Runtime.Jobs.TransportJobSystem` is now a composition shell. Most transport execution behavior lives in `HumanFortress.Jobs.Transport`.
 
 ## Producers
 
@@ -118,19 +118,19 @@ Transport and scheduler limits are loaded through the structured content registr
 - `content/registries/tuning.hauling.json`
 - `content/registries/tuning.navigation.json`
 
-`SchedulerTunings` currently lives in App and is passed into runtime system composition.
+`SchedulerTunings` currently lives in Jobs and is loaded through Runtime dependency composition.
 
 ## Current Boundaries And Gaps
 
 Current:
 
 - Transport executor core is Jobs-owned.
-- App owns concrete diff emitters, logger/profession adapters, and `TransportJobSystem` wrapper.
-- Runtime composition wires transport through `FortressRuntimeSystemsFactory` and `FortressRuntimeSystemGroups`, then exposes it through `SimulationRuntimeSystems`.
+- Jobs owns concrete diff emitters, logger/profession adapters, and executor cores.
+- Runtime owns the `TransportJobSystem` wrapper plus `FortressRuntimeSystemsFactory` / system groups, then exposes transport through `SimulationRuntimeSystems`.
 
 Still pending:
 
-- move remaining App-owned job wrappers/composition pieces to Runtime or Jobs;
+- remove compatibility namespaces and transitional internal bridges;
 - make movement/path ownership more centralized;
 - add a runtime-wide movement/reservation service when boundaries stabilize;
 - consider per-chunk request sharding and chunk-parallel MergeApply after deterministic behavior is fully covered.

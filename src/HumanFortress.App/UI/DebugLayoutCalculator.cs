@@ -1,20 +1,23 @@
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI
 {
     /// <summary>
     /// Centralized geometry + hit-test for the Debug overlay (Items tab).
-    /// Mirrors UiRenderer.DrawDebug layout so drawing and interaction stay in sync.
+    /// Mirrors UiDebugMenuRenderer layout so drawing and interaction stay in sync.
     /// </summary>
-    public static class DebugLayoutCalculator
+    internal static partial class DebugLayoutCalculator
     {
-        public readonly struct Hit
+        internal readonly struct Hit
         {
             public readonly Rectangle Bounds;
             public readonly int Index;
             public Hit(Rectangle bounds, int index) { Bounds = bounds; Index = index; }
             public bool Contains(Point p) => Bounds.Contains(p);
         }
+
+        internal readonly record struct CategoryOption(DebugItemCategory Category, string Label);
 
         /// <summary>
         /// Compute the debug window rectangle (70% width, 60% height, centered).
@@ -29,7 +32,7 @@ namespace HumanFortress.App.UI
         }
 
         /// <summary>
-        /// Calculate hit rectangles for the six category pills (row at y0+3 starting from x0+2).
+        /// Calculate hit rectangles for the item category pills (row at y0+3 starting from x0+2).
         /// </summary>
         public static Hit[] CalculateCategoryPills(Rectangle window, string[] labels)
         {
@@ -63,7 +66,7 @@ namespace HumanFortress.App.UI
 
         /// <summary>
         /// Calculate hit rectangles for the three tab labels shown in the header.
-        /// Layout matches UiRenderer.DrawDebug: "Status | Creatures | Items" starting at x0+22.
+        /// Layout matches UiDebugMenuRenderer: "Status | Creatures | Items" starting at x0+22.
         /// </summary>
         public static Hit[] CalculateTabs(Rectangle window)
         {
@@ -78,26 +81,6 @@ namespace HumanFortress.App.UI
                 x += w + 3; // add spacing for " | "
             }
             return hits;
-        }
-
-        /// <summary>
-        /// Category display labels in order. Shared by renderer and hit-testing to avoid drift.
-        /// </summary>
-        public static string[] GetCategoryLabels() => new[] { "Boulders", "Blocks", "Logs", "Planks", "Tools", "Weapons", "Ammo", "Siege" };
-
-        /// <summary>
-        /// Calculate page navigation buttons (Prev/Next) near Page indicator line.
-        /// </summary>
-        public static Hit[] CalculatePageButtons(Rectangle window)
-        {
-            int y = window.Y + 4;
-            int xPrev = window.X + 2;
-            int xNext = window.X + window.Width - 10;
-            return new[]
-            {
-                new Hit(new Rectangle(xPrev, y, 6, 1), 0),  // "< Prev"
-                new Hit(new Rectangle(xNext, y, 8, 1), 1)   // "Next >"
-            };
         }
     }
 }

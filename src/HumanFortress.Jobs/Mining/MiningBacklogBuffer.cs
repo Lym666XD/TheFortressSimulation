@@ -7,9 +7,9 @@ internal sealed class MiningBacklogBuffer
 {
     private readonly ConcurrentQueue<BacklogEntry> _queue = new();
 
-    public int Count => _queue.Count;
+    internal int Count => _queue.Count;
 
-    public void DrainInto(int intakeBudget, IList<MiningSystem.PlannedDig> into)
+    internal void DrainInto(int intakeBudget, IList<MiningSystem.PlannedDig> into)
     {
         while (into.Count < intakeBudget && _queue.TryDequeue(out var retry))
         {
@@ -17,12 +17,12 @@ internal sealed class MiningBacklogBuffer
         }
     }
 
-    public void Enqueue(in MiningSystem.PlannedDig dig, ulong tick)
+    internal void Enqueue(in MiningSystem.PlannedDig dig, ulong tick)
     {
         _queue.Enqueue(new BacklogEntry(dig, tick));
     }
 
-    public int CountOlderThan(ulong tick, int maxAgeTicks)
+    internal int CountOlderThan(ulong tick, int maxAgeTicks)
     {
         int count = 0;
         foreach (var entry in _queue.ToArray())
@@ -36,5 +36,22 @@ internal sealed class MiningBacklogBuffer
         return count;
     }
 
+    internal IReadOnlyList<MiningBacklogEntrySnapshot> GetStateSnapshot()
+    {
+        var entries = _queue.ToArray();
+        var snapshot = new MiningBacklogEntrySnapshot[entries.Length];
+        for (var i = 0; i < entries.Length; i++)
+        {
+            snapshot[i] = new MiningBacklogEntrySnapshot(i, entries[i].Dig, entries[i].EnqueueTick);
+        }
+
+        return snapshot;
+    }
+
     private readonly record struct BacklogEntry(MiningSystem.PlannedDig Dig, ulong EnqueueTick);
 }
+
+internal readonly record struct MiningBacklogEntrySnapshot(
+    int Order,
+    MiningSystem.PlannedDig Dig,
+    ulong EnqueuedTick);

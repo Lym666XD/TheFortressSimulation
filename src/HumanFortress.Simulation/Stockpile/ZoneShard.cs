@@ -9,44 +9,44 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Per-chunk fragment of a stockpile zone.
 /// Maintains local member cells and capacity tracking per STOCKPILE_SPEC.md.
 /// </summary>
-public sealed class ZoneShard
+internal sealed class ZoneShard
 {
     /// <summary>
     /// Zone ID this shard belongs to.
     /// </summary>
-    public int ZoneId { get; }
+    internal int ZoneId { get; }
 
     /// <summary>
     /// Chunk this shard is in.
     /// </summary>
-    public ChunkKey ChunkKey { get; }
+    internal ChunkKey ChunkKey { get; }
 
     /// <summary>
     /// Member cells in this chunk (bitset for 32x32=1024 cells).
     /// </summary>
-    public BitArray MemberCells { get; }
+    internal BitArray MemberCells { get; }
 
     /// <summary>
     /// Number of cells that can hold items.
     /// </summary>
-    public int Capacity { get; private set; }
+    internal int Capacity { get; private set; }
 
     /// <summary>
     /// Number of cells currently occupied.
     /// </summary>
-    public int UsedSlots { get; private set; }
+    internal int UsedSlots { get; private set; }
 
     /// <summary>
     /// Number of cells reserved for incoming items.
     /// </summary>
-    public int ReservedSlots { get; private set; }
+    internal int ReservedSlots { get; private set; }
 
     /// <summary>
     /// Number of items in transit to this shard.
     /// </summary>
-    public int IncomingCount { get; private set; }
+    internal int IncomingCount { get; private set; }
 
-    public ZoneShard(int zoneId, ChunkKey chunkKey)
+    internal ZoneShard(int zoneId, ChunkKey chunkKey)
     {
         ZoneId = zoneId;
         ChunkKey = chunkKey;
@@ -60,7 +60,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Add cells to this shard.
     /// </summary>
-    public void AddCells(IEnumerable<int> cellIndices)
+    internal void AddCells(IEnumerable<int> cellIndices)
     {
         foreach (var idx in cellIndices)
         {
@@ -75,7 +75,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Remove cells from this shard.
     /// </summary>
-    public void RemoveCells(IEnumerable<int> cellIndices)
+    internal void RemoveCells(IEnumerable<int> cellIndices)
     {
         foreach (var idx in cellIndices)
         {
@@ -90,7 +90,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Check if a cell is part of this shard.
     /// </summary>
-    public bool ContainsCell(int cellIndex)
+    internal bool ContainsCell(int cellIndex)
     {
         return cellIndex >= 0 && cellIndex < Chunk.CELLS_PER_LAYER && MemberCells[cellIndex];
     }
@@ -98,7 +98,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Reserve a slot for an incoming item.
     /// </summary>
-    public bool TryReserveSlot()
+    internal bool TryReserveSlot()
     {
         if (UsedSlots + ReservedSlots < Capacity)
         {
@@ -111,7 +111,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Release a reserved slot.
     /// </summary>
-    public void ReleaseSlot()
+    internal void ReleaseSlot()
     {
         if (ReservedSlots > 0)
             ReservedSlots--;
@@ -120,7 +120,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Mark a slot as occupied.
     /// </summary>
-    public void OccupySlot()
+    internal void OccupySlot()
     {
         UsedSlots++;
         if (ReservedSlots > 0)
@@ -130,7 +130,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Mark a slot as free.
     /// </summary>
-    public void FreeSlot()
+    internal void FreeSlot()
     {
         if (UsedSlots > 0)
             UsedSlots--;
@@ -139,7 +139,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Update incoming count.
     /// </summary>
-    public void UpdateIncoming(int delta)
+    internal void UpdateIncoming(int delta)
     {
         IncomingCount = Math.Max(0, IncomingCount + delta);
     }
@@ -147,7 +147,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Get fill ratio for this shard.
     /// </summary>
-    public float GetFillRatio()
+    internal float GetFillRatio()
     {
         if (Capacity == 0)
             return 0f;
@@ -157,7 +157,7 @@ public sealed class ZoneShard
     /// <summary>
     /// Get available capacity.
     /// </summary>
-    public int GetAvailableCapacity()
+    internal int GetAvailableCapacity()
     {
         return Math.Max(0, Capacity - UsedSlots - ReservedSlots);
     }

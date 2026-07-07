@@ -1,6 +1,6 @@
-using HumanFortress.App.Jobs;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Mining;
+using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Orders;

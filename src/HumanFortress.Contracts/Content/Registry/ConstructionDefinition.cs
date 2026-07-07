@@ -1,6 +1,6 @@
 using System;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Construction definition for on-site built structures (walls, floors, workshops, etc.).

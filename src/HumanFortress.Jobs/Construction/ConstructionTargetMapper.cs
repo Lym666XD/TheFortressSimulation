@@ -4,12 +4,12 @@ namespace HumanFortress.Jobs.Construction;
 
 internal static class ConstructionTargetMapper
 {
-    public static bool IsTerrainTarget(string targetId)
+    internal static bool IsTerrainTarget(string targetId)
     {
         return targetId.StartsWith("l0:", StringComparison.OrdinalIgnoreCase);
     }
 
-    public static TerrainKind ToTerrainKind(string targetId)
+    internal static TerrainKind ToTerrainKind(string targetId)
     {
         string shape = targetId;
         int idx = targetId.IndexOf(':');

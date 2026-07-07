@@ -1,7 +1,7 @@
+using HumanFortress.Contracts.Navigation;
 using System;
 using System.Collections.Generic;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Transport;
@@ -10,9 +10,10 @@ internal sealed class TransportActiveJobRunner
 {
     private readonly WorldModel _world;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ITransportMovementDiffEmitter _movementDiffEmitter;
     private readonly ITransportItemDiffEmitter _itemDiffEmitter;
+    private readonly ITransportStockpileIndexEmitter _stockpileIndexEmitter;
     private readonly TransportReplanHandler _replanHandler;
     private readonly TransportJobFinalizer _jobFinalizer;
     private readonly TransportPickupHandler _pickupHandler;
@@ -20,12 +21,13 @@ internal sealed class TransportActiveJobRunner
     private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
 
-    public TransportActiveJobRunner(
+    internal TransportActiveJobRunner(
         WorldModel world,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ITransportMovementDiffEmitter movementDiffEmitter,
         ITransportItemDiffEmitter itemDiffEmitter,
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         TransportReplanHandler replanHandler,
         TransportJobFinalizer jobFinalizer,
         TransportPickupHandler pickupHandler,
@@ -38,6 +40,7 @@ internal sealed class TransportActiveJobRunner
         _move = move ?? throw new ArgumentNullException(nameof(move));
         _movementDiffEmitter = movementDiffEmitter ?? throw new ArgumentNullException(nameof(movementDiffEmitter));
         _itemDiffEmitter = itemDiffEmitter ?? throw new ArgumentNullException(nameof(itemDiffEmitter));
+        _stockpileIndexEmitter = stockpileIndexEmitter ?? NullTransportStockpileIndexEmitter.Instance;
         _replanHandler = replanHandler ?? throw new ArgumentNullException(nameof(replanHandler));
         _jobFinalizer = jobFinalizer ?? throw new ArgumentNullException(nameof(jobFinalizer));
         _pickupHandler = pickupHandler ?? throw new ArgumentNullException(nameof(pickupHandler));
@@ -46,7 +49,7 @@ internal sealed class TransportActiveJobRunner
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
-    public void RunWriteTick(IEnumerable<ActiveJob> activeJobs, ulong tick, ICollection<ActiveJob> finished)
+    internal void RunWriteTick(IEnumerable<ActiveJob> activeJobs, ulong tick, ICollection<ActiveJob> finished)
     {
         foreach (var job in activeJobs)
         {
@@ -62,6 +65,7 @@ internal sealed class TransportActiveJobRunner
                     }
                 }
 
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
                 _jobFinalizer.Finish(job, finished);
                 continue;
             }

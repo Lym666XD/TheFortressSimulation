@@ -7,12 +7,12 @@ internal sealed class TransportIntakeFilter
 {
     private readonly WorldModel _world;
 
-    public TransportIntakeFilter(WorldModel world)
+    internal TransportIntakeFilter(WorldModel world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    public List<TransportRequest> FilterReadyRequests(IEnumerable<TransportRequest> requests, ulong tick)
+    internal List<TransportRequest> FilterReadyRequests(IEnumerable<TransportRequest> requests, ulong tick)
     {
         var seen = new HashSet<Guid>();
         return requests

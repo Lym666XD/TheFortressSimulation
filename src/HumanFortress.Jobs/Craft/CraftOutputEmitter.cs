@@ -5,13 +5,13 @@ internal sealed class CraftOutputEmitter
     private readonly ICraftRecipeCatalog _recipes;
     private readonly ICraftDiffEmitter _diffEmitter;
 
-    public CraftOutputEmitter(ICraftRecipeCatalog recipes, ICraftDiffEmitter diffEmitter)
+    internal CraftOutputEmitter(ICraftRecipeCatalog recipes, ICraftDiffEmitter diffEmitter)
     {
         _recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
     }
 
-    public void EmitOutputs(ActiveCraftJob job)
+    internal void EmitOutputs(ActiveCraftJob job)
     {
         var recipe = _recipes.GetRecipe(job.RecipeId);
         if (recipe == null)

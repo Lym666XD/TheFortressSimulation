@@ -1,35 +1,35 @@
 using System.Text.Json;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Configuration;
 
-public sealed class SchedulerTunings
+internal sealed class SchedulerTunings
 {
-    public int Threads { get; init; } = 1; // v1 default
-    public string QueuePolicy { get; init; } = "single"; // v2: work_stealing
+    internal int Threads { get; init; } = 1; // v1 default
+    internal string QueuePolicy { get; init; } = "single"; // v2: work_stealing
 
-    public Budget Hauling { get; init; } = new(128, 2);
-    public Budget Mining { get; init; } = new(128, 2);
-    public Budget Construction { get; init; } = new(256, 3);
+    internal Budget Hauling { get; init; } = new(128, 2);
+    internal Budget Mining { get; init; } = new(128, 2);
+    internal Budget Construction { get; init; } = new(256, 3);
 
-    public bool PerJobStatsLogging { get; init; } = true;
-    public string LogLevel { get; init; } = "info";
-    public int BackpressureMaxCarryoverTicks { get; init; } = 8;
-    public bool DebugPanel { get; init; }
-    public HaulingLimitSettings HaulingLimits { get; init; } = new();
-    public WorkerSelectionStrategy WorkerSelection { get; init; } = WorkerSelectionStrategy.Closest;
+    internal bool PerJobStatsLogging { get; init; } = true;
+    internal string LogLevel { get; init; } = "info";
+    internal int BackpressureMaxCarryoverTicks { get; init; } = 8;
+    internal bool DebugPanel { get; init; }
+    internal HaulingLimitSettings HaulingLimits { get; init; } = new();
+    internal WorkerSelectionStrategy WorkerSelection { get; init; } = WorkerSelectionStrategy.Closest;
 
-    public readonly record struct Budget(int PlanPerTick, int Ms);
+    internal readonly record struct Budget(int PlanPerTick, int Ms);
 
-    public sealed class HaulingLimitSettings
+    internal sealed class HaulingLimitSettings
     {
-        public int MaxActive { get; init; }
-        public int ReserveForMining { get; init; }
-        public int ReserveBacklogThreshold { get; init; } = 1;
-        public int BacklogIntakeCap { get; init; }
-        public int BacklogIntakeThreshold { get; init; } = 1;
+        internal int MaxActive { get; init; }
+        internal int ReserveForMining { get; init; }
+        internal int ReserveBacklogThreshold { get; init; } = 1;
+        internal int BacklogIntakeCap { get; init; }
+        internal int BacklogIntakeThreshold { get; init; } = 1;
     }
 
-    public static SchedulerTunings LoadFromJson(string? json, string source, Action<string>? log = null)
+    internal static SchedulerTunings LoadFromJson(string? json, string source, Action<string>? log = null)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

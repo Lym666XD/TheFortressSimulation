@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Zones;
@@ -10,7 +11,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Maintains zone definitions and runtime instances.
 /// Thread-safe for reads during Read phase.
 /// </summary>
-public sealed class ZoneManager
+internal sealed class ZoneManager
 {
     private readonly Dictionary<int, ZoneInstance> _zones = new();
     private readonly Dictionary<string, ZoneDefinition> _definitions = new();
@@ -20,7 +21,7 @@ public sealed class ZoneManager
     /// <summary>
     /// Register a zone definition from content data.
     /// </summary>
-    public void RegisterDefinition(HumanFortress.Core.Content.ZoneDefinitionData data)
+    public void RegisterDefinition(ZoneDefinitionData data)
     {
         if (data == null)
             throw new ArgumentNullException(nameof(data));

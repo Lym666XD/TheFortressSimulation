@@ -10,14 +10,14 @@ internal sealed class MiningStairwellGate
     private readonly MiningDeferredStairwellBuffer _deferredStairwells;
     private readonly IMiningJobLogger _logger;
 
-    public MiningStairwellGate(WorldModel world, MiningDeferredStairwellBuffer deferredStairwells, IMiningJobLogger? logger)
+    internal MiningStairwellGate(WorldModel world, MiningDeferredStairwellBuffer deferredStairwells, IMiningJobLogger? logger)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _deferredStairwells = deferredStairwells ?? throw new ArgumentNullException(nameof(deferredStairwells));
         _logger = logger ?? NullMiningJobLogger.Instance;
     }
 
-    public bool ShouldProcess(in MiningSystem.PlannedDig dig, ulong tick, out bool middleAlreadySatisfied)
+    internal bool ShouldProcess(in MiningSystem.PlannedDig dig, ulong tick, out bool middleAlreadySatisfied)
     {
         middleAlreadySatisfied = false;
         if (dig.Action != MiningAction.DigStairwell)

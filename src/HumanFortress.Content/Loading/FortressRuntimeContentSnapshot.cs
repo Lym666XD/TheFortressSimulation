@@ -1,19 +1,23 @@
-using HumanFortress.Core.Content;
-using HumanFortress.Core.Content.Registry;
-using StructuredContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using HumanFortress.Contracts.Content.Registry;
+using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
 
 /// <summary>
 /// Content-owned snapshot of runtime catalogs and tuning JSON used by App composition.
 /// </summary>
-public sealed class FortressRuntimeContentSnapshot
+internal sealed class FortressRuntimeContentSnapshot
 {
-    public FortressRuntimeContentSnapshot(
+    internal FortressRuntimeContentSnapshot(
+        ContentVersion contentVersion,
+        string contentHash,
+        IRuntimeMaterialCatalog materials,
+        IRuntimeTerrainKindCatalog terrainKinds,
         IConstructionCatalog constructions,
         IRecipeCatalog recipes,
         IRuntimeGeologyCatalog geology,
-        IReadOnlyList<ZoneDefinitionData> zoneDefinitions,
+        IReadOnlyDictionary<string, GeologyData> geologyEntries,
+        IReadOnlyDictionary<string, ZoneDefinitionData> zonesById,
         string? constructionTuningJson,
         string? mapgenTuningJson,
         string? miningTuningJson,
@@ -24,10 +28,18 @@ public sealed class FortressRuntimeContentSnapshot
         string? schedulerTuningJson,
         string? workshopTuningJson)
     {
+        ContentVersion = contentVersion;
+        ContentHash = contentHash ?? string.Empty;
+        Materials = materials ?? throw new ArgumentNullException(nameof(materials));
+        TerrainKinds = terrainKinds ?? throw new ArgumentNullException(nameof(terrainKinds));
         Constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         Recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
         Geology = geology ?? throw new ArgumentNullException(nameof(geology));
-        ZoneDefinitions = zoneDefinitions?.ToArray() ?? throw new ArgumentNullException(nameof(zoneDefinitions));
+        GeologyEntries = geologyEntries?.ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.OrdinalIgnoreCase)
+            ?? throw new ArgumentNullException(nameof(geologyEntries));
+        ZonesById = zonesById?.ToDictionary(zone => zone.Key, zone => zone.Value, StringComparer.OrdinalIgnoreCase)
+            ?? throw new ArgumentNullException(nameof(zonesById));
+        ZoneDefinitions = ZonesById.Values.ToArray();
         ConstructionTuningJson = constructionTuningJson;
         MapgenTuningJson = mapgenTuningJson;
         MiningTuningJson = miningTuningJson;
@@ -39,24 +51,30 @@ public sealed class FortressRuntimeContentSnapshot
         WorkshopTuningJson = workshopTuningJson;
     }
 
-    public IConstructionCatalog Constructions { get; }
-    public IRecipeCatalog Recipes { get; }
-    public IRuntimeGeologyCatalog Geology { get; }
-    public IReadOnlyList<ZoneDefinitionData> ZoneDefinitions { get; }
-    public string? ConstructionTuningJson { get; }
-    public string? MapgenTuningJson { get; }
-    public string? MiningTuningJson { get; }
-    public string? OreTuningJson { get; }
-    public string? CavernTuningJson { get; }
-    public string? NavigationTuningJson { get; }
-    public string? PlaceableTuningJson { get; }
-    public string? SchedulerTuningJson { get; }
-    public string? WorkshopTuningJson { get; }
+    internal ContentVersion ContentVersion { get; }
+    internal string ContentHash { get; }
+    internal IRuntimeMaterialCatalog Materials { get; }
+    internal IRuntimeTerrainKindCatalog TerrainKinds { get; }
+    internal IConstructionCatalog Constructions { get; }
+    internal IRecipeCatalog Recipes { get; }
+    internal IRuntimeGeologyCatalog Geology { get; }
+    internal IReadOnlyDictionary<string, GeologyData> GeologyEntries { get; }
+    internal IReadOnlyDictionary<string, ZoneDefinitionData> ZonesById { get; }
+    internal IReadOnlyList<ZoneDefinitionData> ZoneDefinitions { get; }
+    internal string? ConstructionTuningJson { get; }
+    internal string? MapgenTuningJson { get; }
+    internal string? MiningTuningJson { get; }
+    internal string? OreTuningJson { get; }
+    internal string? CavernTuningJson { get; }
+    internal string? NavigationTuningJson { get; }
+    internal string? PlaceableTuningJson { get; }
+    internal string? SchedulerTuningJson { get; }
+    internal string? WorkshopTuningJson { get; }
 }
 
-public static class FortressRuntimeContentSnapshotLoader
+internal static class FortressRuntimeContentSnapshotLoader
 {
-    public static FortressRuntimeContentSnapshot ApplyCoreData(CoreDataLoadResult coreData)
+    internal static FortressRuntimeContentSnapshot ApplyCoreData(CoreDataLoadResult coreData)
     {
         ArgumentNullException.ThrowIfNull(coreData);
 
@@ -64,15 +82,20 @@ public static class FortressRuntimeContentSnapshotLoader
         return CaptureLoaded();
     }
 
-    public static FortressRuntimeContentSnapshot CaptureLoaded()
+    internal static FortressRuntimeContentSnapshot CaptureLoaded()
     {
         var registry = StructuredContentRegistry.Instance;
 
         return new FortressRuntimeContentSnapshot(
+            registry.Version,
+            registry.ContentHash,
+            registry.Materials,
+            registry.TerrainKinds,
             registry.Constructions,
             registry.Recipes,
             registry,
-            registry.Zones.Values.ToArray(),
+            registry.GeologyEntries,
+            registry.Zones,
             registry.GetTuningJson("tuning.construction", "$"),
             registry.GetTuningJson("tuning.mapgen", "$"),
             registry.GetTuningJson("tuning.mining", "$"),

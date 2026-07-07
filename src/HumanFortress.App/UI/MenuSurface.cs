@@ -8,7 +8,7 @@ namespace HumanFortress.App.UI
     /// <summary>
     /// ScreenSurface specialized for menu that exposes mouse events.
     /// </summary>
-    public sealed class MenuSurface : ScreenSurface
+    internal sealed class MenuSurface : ScreenSurface
     {
         public event Action<Point>? MouseMovedLocal;
         public event Action<Point>? LeftClickedLocal;

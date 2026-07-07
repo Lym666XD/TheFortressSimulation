@@ -12,10 +12,10 @@ namespace HumanFortress.Simulation.Orders;
 /// <summary>
 /// Planner for L0 structural construction. Reads ConstructionDesignation and produces PlannedBuilds.
 /// - Multi-Z prism support: top layer -> StairsDown, bottom -> StairsUp, middle -> StairsUD when Shape=Stairs.
-/// - Material resolution: queries ContentRegistry for (material, kind) → geology handle, with last-used preference cache.
+/// - Material resolution: delegates material/kind to geology-handle mapping to an injected runtime resolver.
 /// - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
 /// </summary>
-public sealed class ConstructionSystem : ITick
+internal sealed class ConstructionSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
@@ -24,13 +24,13 @@ public sealed class ConstructionSystem : ITick
 
     private readonly List<PlannedBuild> _planned = new();
     private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedBuild> _outbox = new();
-    private readonly HumanFortress.Core.Content.Registry.ConstructionTuning _tuning;
+    private readonly HumanFortress.Contracts.Content.Registry.ConstructionTuning _tuning;
 
     public ConstructionSystem(
         World.World world,
         OrdersManager orders,
         IConstructionTerrainMaterialResolver terrainMaterials,
-        HumanFortress.Core.Content.Registry.ConstructionTuning tuning,
+        HumanFortress.Contracts.Content.Registry.ConstructionTuning tuning,
         int maxPerTick = 256)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
@@ -185,7 +185,7 @@ public sealed class ConstructionSystem : ITick
                     p.Z,
                     tick,
                     targetId: $"l0:{p.Shape}",
-                    fp: new HumanFortress.Core.Content.Registry.Footprint(1,1,1),
+                    fp: new HumanFortress.Contracts.Content.Registry.Footprint(1,1,1),
                     materialsRequired: req,
                     totalBuildTicks: p.Shape switch {
                         ConstructionShape.Wall => tuning.BuildTicksWall,
@@ -204,7 +204,7 @@ public sealed class ConstructionSystem : ITick
         _planned.Clear();
     }
 
-    public int DequeuePlannedBuilds(int max, IList<PlannedBuild> into)
+    internal int DequeuePlannedBuilds(int max, IList<PlannedBuild> into)
     {
         int n = 0;
         while (n < max && _outbox.TryDequeue(out var m))
@@ -218,7 +218,7 @@ public sealed class ConstructionSystem : ITick
     /// <summary>
     /// Helper to pack SetTerrain args with optional geology override (plan A: existing opcode).
     /// </summary>
-    public static ulong PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind kind, ushort geologyHandle)
+    internal static ulong PackSetTerrainArgs(HumanFortress.Simulation.Tiles.TerrainKind kind, ushort geologyHandle)
     {
         return ((ulong)kind & 0xFFUL) | (((ulong)geologyHandle & 0xFFFFUL) << 8);
     }

@@ -11,7 +11,7 @@ namespace HumanFortress.Simulation.Jobs
     /// Classification of transport intents. Used for priority policies, destination validation, and diagnostics.
     /// The executor uses this to determine which validation logic to apply at the destination.
     /// </summary>
-    public enum TransportReason
+    internal enum TransportReason
     {
         // === Stockpile Operations ===
         /// <summary>Hauling loose items to a stockpile zone. Validates destination is a stockpile cell.</summary>
@@ -58,7 +58,7 @@ namespace HumanFortress.Simulation.Jobs
     /// A single transport request: move an item from (From,FromZ) to (To,ToZ).
     /// This is a read-only planning artifact; executors must revalidate state on pickup.
     /// </summary>
-    public readonly record struct TransportRequest(
+    internal readonly record struct TransportRequest(
         Guid ItemGuid,
         Point From,
         int FromZ,
@@ -74,23 +74,32 @@ namespace HumanFortress.Simulation.Jobs
     /// <summary>
     /// Intake interface for producers (construction/workshop/install/stockpile planners).
     /// </summary>
-    public interface ITransportIntake
+    internal interface ITransportIntake
     {
-        void Enqueue(in TransportRequest request);
+        /// <summary>
+        /// Enqueue a request if it is not already represented by a pending request for the same item.
+        /// Returns true only when a new pending queue entry was added.
+        /// </summary>
+        bool Enqueue(in TransportRequest request);
     }
 
     /// <summary>
     /// Drainable queue interface for the executor. Thread-safe.
     /// </summary>
-    public interface ITransportRequestQueue : ITransportIntake
+    internal interface ITransportRequestQueue : ITransportIntake
     {
         int Drain(int max, IList<TransportRequest> into);
         /// <summary>Peek up to max pending requests in stable order without dequeuing.</summary>
         IReadOnlyList<TransportRequest> Peek(int max);
+        /// <summary>Get all pending requests in stable order without dequeuing.</summary>
+        TransportRequestQueueStateSnapshot GetStateSnapshot();
         /// <summary>Get current shard counts keyed by encoded chunk id.</summary>
         IReadOnlyDictionary<int, int> GetShardCountsSnapshot();
         int Count { get; }
     }
+
+    internal readonly record struct TransportRequestQueueStateSnapshot(
+        IReadOnlyList<TransportRequest> PendingRequests);
 
     internal sealed class TransportRequestComparer : IComparer<TransportRequest>
     {
@@ -112,7 +121,7 @@ namespace HumanFortress.Simulation.Jobs
     /// Design: multi-producer/single-consumer typical pattern. We keep an internal list guarded by a lock
     /// and sort upon drain to ensure stable ordering across platforms/threads.
     /// </summary>
-    public sealed class TransportRequestQueue : ITransportRequestQueue
+    internal sealed class TransportRequestQueue : ITransportRequestQueue
     {
         private readonly object _lock = new();
         private readonly List<TransportRequest> _pending = new();
@@ -128,15 +137,19 @@ namespace HumanFortress.Simulation.Jobs
             get { lock (_lock) return _pending.Count; }
         }
 
-        public void Enqueue(in TransportRequest request)
+        public bool Enqueue(in TransportRequest request)
         {
             lock (_lock)
             {
-                // Optional: simple de-dup/merge by (ItemGuid,To,ToZ) to avoid thrash
+                // Keep one pending transport intent per item. Same-destination requests can merge
+                // quantities; competing destinations preserve the earlier deterministic request.
                 for (int i = 0; i < _pending.Count; i++)
                 {
                     var r = _pending[i];
-                    if (r.ItemGuid == request.ItemGuid && r.To == request.To && r.ToZ == request.ToZ)
+                    if (r.ItemGuid != request.ItemGuid)
+                        continue;
+
+                    if (r.To == request.To && r.ToZ == request.ToZ)
                     {
                         // Merge quantities to a single request, keep earlier CreatedTick
                         var merged = new TransportRequest(
@@ -151,10 +164,14 @@ namespace HumanFortress.Simulation.Jobs
                             r.RequestorId,
                             r.CreatedTick,
                             r.Seed);
+                        ReplaceShardRequest(r, merged);
                         _pending[i] = merged;
                         _droppedTotal++;
-                        return;
+                        return false;
                     }
+
+                    _droppedTotal++;
+                    return false;
                 }
                 _pending.Add(request);
                 // Shard by destination chunk (derive chunk id from To/ToZ)
@@ -166,6 +183,7 @@ namespace HumanFortress.Simulation.Jobs
                 }
                 list.Add(request);
                 Interlocked.Increment(ref _enqueuedTotal);
+                return true;
             }
         }
 
@@ -208,6 +226,19 @@ namespace HumanFortress.Simulation.Jobs
                 snapshot.Sort(_cmp);
                 if (snapshot.Count > max) snapshot.RemoveRange(max, snapshot.Count - max);
                 return snapshot;
+            }
+        }
+
+        public TransportRequestQueueStateSnapshot GetStateSnapshot()
+        {
+            lock (_lock)
+            {
+                if (_pending.Count == 0)
+                    return new TransportRequestQueueStateSnapshot(Array.Empty<TransportRequest>());
+
+                var snapshot = new List<TransportRequest>(_pending);
+                snapshot.Sort(_cmp);
+                return new TransportRequestQueueStateSnapshot(snapshot.ToArray());
             }
         }
 
@@ -270,6 +301,22 @@ namespace HumanFortress.Simulation.Jobs
             int chunkX = worldX / DiffTargetEncoding.ChunkSizeXY;
             int chunkY = worldY / DiffTargetEncoding.ChunkSizeXY;
             return DiffTargetEncoding.EncodeChunkId(chunkX, chunkY, z);
+        }
+
+        private void ReplaceShardRequest(TransportRequest existing, TransportRequest replacement)
+        {
+            int shardId = EncodeChunkIdFromTo(existing.To.X, existing.To.Y, existing.ToZ);
+            if (!_shards.TryGetValue(shardId, out var list))
+                return;
+
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i].Equals(existing))
+                {
+                    list[i] = replacement;
+                    return;
+                }
+            }
         }
     }
 }

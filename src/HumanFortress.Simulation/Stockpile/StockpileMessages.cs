@@ -6,7 +6,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Message types for cross-chunk stockpile coordination.
 /// Per STOCKPILE_SPEC.md section 6.
 /// </summary>
-public enum StockpileMessageType
+internal enum StockpileMessageType
 {
     HaulJobAssigned = 1,   // Notify destination chunk
     HaulJobComplete = 2,   // Update source/dest
@@ -18,57 +18,57 @@ public enum StockpileMessageType
 /// Cross-chunk message for stockpile operations.
 /// Sent via Actor mailbox per CONCURRENCY_MODEL.md.
 /// </summary>
-public readonly struct StockpileMessage
+internal readonly struct StockpileMessage
 {
     /// <summary>
     /// Message type.
     /// </summary>
-    public StockpileMessageType Type { get; init; }
+    internal StockpileMessageType Type { get; init; }
 
     /// <summary>
     /// Zone ID this message relates to.
     /// </summary>
-    public int ZoneId { get; init; }
+    internal int ZoneId { get; init; }
 
     /// <summary>
     /// Item handle for haul operations.
     /// </summary>
-    public int ItemHandle { get; init; }
+    internal int ItemHandle { get; init; }
 
     /// <summary>
     /// Quantity being hauled.
     /// </summary>
-    public int Quantity { get; init; }
+    internal int Quantity { get; init; }
 
     /// <summary>
     /// Source chunk for the operation.
     /// </summary>
-    public ChunkKey SourceChunk { get; init; }
+    internal ChunkKey SourceChunk { get; init; }
 
     /// <summary>
     /// Destination chunk for the operation.
     /// </summary>
-    public ChunkKey DestChunk { get; init; }
+    internal ChunkKey DestChunk { get; init; }
 
     /// <summary>
     /// Cell index at destination.
     /// </summary>
-    public int CellIndex { get; init; }
+    internal int CellIndex { get; init; }
 
     /// <summary>
     /// Job ID for tracking.
     /// </summary>
-    public int JobId { get; init; }
+    internal int JobId { get; init; }
 
     /// <summary>
     /// Local sequence for deterministic ordering.
     /// </summary>
-    public int LocalSeq { get; init; }
+    internal int LocalSeq { get; init; }
 
     /// <summary>
     /// Create a haul job assigned message.
     /// </summary>
-    public static StockpileMessage HaulJobAssigned(
+    internal static StockpileMessage HaulJobAssigned(
         int jobId,
         int zoneId,
         int itemHandle,
@@ -95,7 +95,7 @@ public readonly struct StockpileMessage
     /// <summary>
     /// Create a haul job complete message.
     /// </summary>
-    public static StockpileMessage HaulJobComplete(
+    internal static StockpileMessage HaulJobComplete(
         int jobId,
         int zoneId,
         int itemHandle,
@@ -118,7 +118,7 @@ public readonly struct StockpileMessage
     /// <summary>
     /// Create a haul job cancelled message.
     /// </summary>
-    public static StockpileMessage HaulJobCancelled(
+    internal static StockpileMessage HaulJobCancelled(
         int jobId,
         int zoneId,
         ChunkKey sourceChunk,
@@ -140,13 +140,38 @@ public readonly struct StockpileMessage
     /// Get deterministic sort key for mailbox draining.
     /// Per CONCURRENCY_MODEL: tick → sourceChunk.Hash → localSeq
     /// </summary>
-    public long GetDrainSortKey(ulong tick)
+    internal long GetDrainSortKey(ulong tick)
     {
         // Pack: [tick:32][chunkHash:16][localSeq:16]
         long key = 0;
         key |= ((long)(tick & 0xFFFFFFFF)) << 32;
-        key |= ((long)(SourceChunk.GetHashCode() & 0xFFFF)) << 16;
+        key |= ((long)StableChunkSortHash(SourceChunk)) << 16;
         key |= ((long)(LocalSeq & 0xFFFF));
         return key;
+    }
+
+    private static int StableChunkSortHash(ChunkKey chunk)
+    {
+        unchecked
+        {
+            uint hash = 2166136261;
+            hash = AddInt32(hash, chunk.ChunkX);
+            hash = AddInt32(hash, chunk.ChunkY);
+            hash = AddInt32(hash, chunk.Z);
+            return (int)(hash & 0xFFFF);
+        }
+    }
+
+    private static uint AddInt32(uint hash, int value)
+    {
+        unchecked
+        {
+            var bits = (uint)value;
+            hash = (hash ^ (bits & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 8) & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 16) & 0xFF)) * 16777619;
+            hash = (hash ^ ((bits >> 24) & 0xFF)) * 16777619;
+            return hash;
+        }
     }
 }

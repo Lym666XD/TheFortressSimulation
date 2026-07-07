@@ -1,9 +1,10 @@
 using System.Text.Json.Nodes;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Core.Random;
 using HumanFortress.Jobs.Mining;
 using SimTerrainKind = HumanFortress.Simulation.Tiles.TerrainKind;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Mining;
 
 internal sealed class MiningDropResolver : IMiningDropResolver
 {
@@ -14,14 +15,14 @@ internal sealed class MiningDropResolver : IMiningDropResolver
     private readonly Action<string>? _log;
     private bool _dropsCacheBuilt;
 
-    public MiningDropResolver(IRuntimeGeologyCatalog? geology, string? miningTuningJson, Action<string>? log = null)
+    internal MiningDropResolver(IRuntimeGeologyCatalog? geology, string? miningTuningJson, Action<string>? log = null)
     {
         _geology = geology;
         _miningTuning = ParseMiningTuning(miningTuningJson);
         _log = log;
     }
 
-    public int CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind)
+    internal int CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind)
     {
         try
         {
@@ -38,7 +39,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         }
     }
 
-    public ushort ResolveAirGeologyHandle()
+    internal ushort ResolveAirGeologyHandle()
     {
         try
         {
@@ -55,7 +56,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
         return 0;
     }
 
-    public List<(string itemId, int qty)> ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind)
+    internal List<(string itemId, int qty)> ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind)
     {
         var result = new List<(string, int)>();
         try
@@ -102,11 +103,10 @@ internal sealed class MiningDropResolver : IMiningDropResolver
                 var list = terrainKind == SimTerrainKind.Ramp ? cacheTable.Ramp : cacheTable.Wall;
                 if (list.Count > 0)
                 {
-                    var seed = (uint)geologyHandle ^ (uint)terrainKind;
-                    var rng = new Random((int)seed);
+                    var rng = new DeterministicRng(CreateDropSeed(geologyHandle, terrainKind));
                     foreach (var drop in list)
                     {
-                        int quantity = rng.Next(drop.Min, drop.Max + 1);
+                        int quantity = NextInclusive(rng, drop.Min, drop.Max);
                         if (quantity > 0)
                         {
                             result.Add((drop.Id, quantity));
@@ -152,6 +152,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
                 return result;
             }
 
+            var rawDropRng = new DeterministicRng(CreateDropSeed(geologyHandle, terrainKind));
             foreach (var dropEntry in dropsList)
             {
                 if (dropEntry is not JsonObject dropObject) continue;
@@ -161,10 +162,7 @@ internal sealed class MiningDropResolver : IMiningDropResolver
 
                 var min = ReadInt(dropObject["min"], 1);
                 var max = ReadInt(dropObject["max"], min);
-
-                var seed = (uint)geologyHandle ^ (uint)terrainKind;
-                var rng = new Random((int)seed);
-                var qty = rng.Next(min, max + 1);
+                var qty = NextInclusive(rawDropRng, min, max);
 
                 result.Add((itemId, qty));
             }
@@ -176,6 +174,27 @@ internal sealed class MiningDropResolver : IMiningDropResolver
             _log?.Invoke($"[MINING] Failed to load drops: {ex.Message}");
             return new List<(string, int)> { ("core_item_boulder_granite", 1) };
         }
+    }
+
+    int IMiningWorkCostResolver.CalculateRequiredTicks(ushort geologyHandle, SimTerrainKind terrainKind) =>
+        CalculateRequiredTicks(geologyHandle, terrainKind);
+
+    ushort IMiningDropResolver.ResolveAirGeologyHandle() => ResolveAirGeologyHandle();
+
+    List<(string itemId, int qty)> IMiningDropResolver.ChooseDropsFor(ushort geologyHandle, SimTerrainKind terrainKind) =>
+        ChooseDropsFor(geologyHandle, terrainKind);
+
+    private static ulong CreateDropSeed(ushort geologyHandle, SimTerrainKind terrainKind)
+    {
+        return 0x4D494E4544524F50UL ^ ((ulong)geologyHandle << 32) ^ (uint)terrainKind;
+    }
+
+    private static int NextInclusive(DeterministicRng rng, int min, int max)
+    {
+        if (max < min)
+            max = min;
+
+        return rng.NextInt(min, max + 1);
     }
 
     private void EnsureDropsCache()
@@ -263,15 +282,15 @@ internal sealed class MiningDropResolver : IMiningDropResolver
 
     private struct DropDef
     {
-        public string Id;
-        public int Min;
-        public int Max;
-        public double Weight;
+        internal string Id;
+        internal int Min;
+        internal int Max;
+        internal double Weight;
     }
 
     private sealed class DropTable
     {
-        public List<DropDef> Wall { get; } = new();
-        public List<DropDef> Ramp { get; } = new();
+        internal List<DropDef> Wall { get; } = new();
+        internal List<DropDef> Ramp { get; } = new();
     }
 }

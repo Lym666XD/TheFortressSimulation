@@ -8,7 +8,7 @@ namespace HumanFortress.App.UI
     /// <summary>
     /// Full-screen UI overlay surface that captures mouse in overlay coordinates.
     /// </summary>
-    public sealed class UiOverlaySurface : ScreenSurface
+    internal sealed class UiOverlaySurface : ScreenSurface
     {
         public event Action<Point>? MouseMovedLocal;   // local cell coords
         public event Action<Point>? LeftClickedLocal;  // local cell coords

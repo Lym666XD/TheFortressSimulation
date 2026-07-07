@@ -197,11 +197,11 @@ public void RebuildDerived()
         var terrainBits = tile.TerrainBits;
         var kind = TerrainBitOps.GetKind(terrainBits);
 
-        // Get geology prototype
-        var geology = GeologyRegistry.Get(tile.GeoMatId);
+        // Get geology prototype through the active runtime catalog.
+        var geology = runtimeGeologyCatalog.GetGeologyByHandle(tile.GeoMatId);
 
-        // Get material modifiers
-        var material = MaterialRegistry.Get(geology.MaterialId);
+        // Get material modifiers through a Contracts catalog, not a concrete registry.
+        var material = materialCatalog.GetMaterial(geology.Material);
 
         // Build NavMask based on TerrainKind
         NavMask[idx] = BuildNavMask(kind);

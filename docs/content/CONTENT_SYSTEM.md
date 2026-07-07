@@ -70,15 +70,15 @@ FortressContentLoadResult
   Issues
 ```
 
-`Issues` contains structured `FortressContentIssue` values with severity, code, and message. App logs them through `FortressContentIssueLogger`. `FortressContentLoadResult.ThrowIfInvalid(...)` and `FortressContentLoader.LoadStrict(...)` provide the Content-owned fail-fast path for CI/headless checks.
+`Issues` contains structured `FortressContentIssue` values with severity, code, and message. App logs them through App.Diagnostics `FortressContentIssueLogger`, and runtime session glue receives that as an injected callback. `FortressContentLoadResult.ThrowIfInvalid(...)` and `FortressContentLoader.LoadStrict(...)` provide the Content-owned fail-fast path for CI/headless checks.
 
 ## Runtime Registry Loading
 
-`RuntimeContentRegistryLoader` loads the structured runtime registry:
+`FortressContentLoader` is the public bootstrap facade. Internally, `RuntimeContentRegistryLoader` loads the structured runtime registry:
 
-- `HumanFortress.Core.Content.Registry.ContentRegistry`
+- `HumanFortress.Content.Registry.ContentRegistry`
 
-The concrete implementation now compiles from `HumanFortress.Content/Registry`; the historical `HumanFortress.Core.Content.Registry` namespace is preserved as a source-compatibility bridge while callers migrate to injected snapshots and catalog interfaces.
+The concrete implementation now compiles from `HumanFortress.Content.Registry`; registry contracts compile from `HumanFortress.Contracts.Content.Registry`. Concrete registry helper classes are internal implementation details.
 
 Current behavior:
 
@@ -86,7 +86,7 @@ Current behavior:
 2. Optionally continue when the structured registry fails, depending on `continueOnStructuredRegistryError`.
 3. Return warnings, errors, and structured failure text.
 
-The old `HumanFortress.Core.Content.ContentRegistry` source has been deleted. Runtime bootstrap now loads the structured registry only. Runtime geology and zone JSON DTOs now compile from `HumanFortress.Contracts` while preserving their old `HumanFortress.Core.Content` namespace for compatibility.
+The old `HumanFortress.Core.Content.ContentRegistry` source has been deleted. Runtime bootstrap now loads the structured registry only. Runtime geology and zone JSON DTOs now compile from `HumanFortress.Contracts.Content`.
 
 ## Core Catalog Loading
 
@@ -101,7 +101,7 @@ CoreContentCatalogLoadResult
   Recipes
 ```
 
-Loaders:
+Internal loader implementations:
 
 - `ItemDefinitionCatalogLoader`
 - `CreatureDefinitionCatalogLoader`
@@ -115,7 +115,9 @@ Loaders:
 
 It returns immutable construction and recipe catalog snapshots. `FortressRuntimeContentSnapshotLoader.ApplyCoreData(...)` applies those snapshots to the structured registry and returns the active runtime snapshot used by App composition.
 
-Cross-module runtime content contracts such as `IRuntimeGeologyCatalog`, `ConstructionTuning`, `PlaceableTuning`, `ContentVersion`, material/terrain/geology/biome definition DTOs, terrain bit-layout DTOs, alias/migration DTOs, and fixed-point material primitives compile from `HumanFortress.Contracts` while preserving their historical namespaces. Tuning JSON parsing uses `System.Text.Json` so Simulation/Jobs/Runtime can consume tuning objects without depending on the concrete content registry implementation.
+Cross-module runtime content contracts such as `IRuntimeMaterialCatalog`, `IRuntimeTerrainKindCatalog`, `IRuntimeGeologyCatalog`, `ConstructionTuning`, `PlaceableTuning`, `ContentVersion`, material/terrain/geology/biome definition DTOs, terrain bit-layout DTOs, alias/migration DTOs, and fixed-point material primitives compile from `HumanFortress.Contracts` while preserving their historical namespaces. Tuning JSON parsing uses `System.Text.Json` so Simulation/Jobs/Runtime can consume tuning objects without depending on the concrete content registry implementation.
+
+Profession definitions follow the same boundary: public callers use `ProfessionRegistryLoader.Load(...)` and receive `IProfessionRegistry`; the concrete profession registry implementation remains internal to Content.
 
 The old hard-coded `MaterialIdRegistry` display table has been removed; runtime terrain display should use loaded geology/material content and active-session geology handles instead of fixed numeric material ids.
 
@@ -126,9 +128,9 @@ The old Core-owned `MaterialSelectionService` global preference cache has also b
 Fortress session content flow:
 
 ```text
-SimulationWorldContentLoader.LoadCoreContent(world, baseDir)
+Runtime.SimulationWorldContentLoader.LoadCoreContent(world, baseDir)
   -> FortressContentLoader.Load(baseDir)
-  -> FortressContentIssueLogger.LogIssues(...)
+  -> injected App content issue logger
   -> world.Creatures.SetDefinitionCatalog(...)
   -> world.Items.SetDependencies(world)
   -> world.Items.SetDefinitionCatalog(...)
@@ -146,6 +148,8 @@ IItemDefinitionCatalog
 ICreatureDefinitionCatalog
 IConstructionCatalog
 IRecipeCatalog
+IRuntimeMaterialCatalog
+IRuntimeTerrainKindCatalog
 IRuntimeGeologyCatalog
 ```
 
@@ -157,7 +161,7 @@ ContentRegistry.Instance
 
 Content-owned bootstrap, registry implementation, and snapshot code may still read `ContentRegistry.Instance` while capturing the active runtime snapshot. Runtime, Jobs, Simulation, Navigation, WorldGen, App UI, and App job adapters should receive the resulting snapshot/catalog interfaces instead of reaching back into the singleton.
 
-The old `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. Construction/recipe definitions, read-only catalog interfaces, and immutable catalog stores now compile from `HumanFortress.Contracts` while preserving the old `HumanFortress.Core.Content.Registry` namespace.
+The old `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted. Construction/recipe definitions, read-only catalog interfaces, and immutable catalog stores now compile from `HumanFortress.Contracts.Content.Registry`.
 
 ## App Convenience Registries
 

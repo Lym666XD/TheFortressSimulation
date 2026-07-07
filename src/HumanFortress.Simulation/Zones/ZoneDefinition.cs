@@ -6,7 +6,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Content-driven zone definition loaded from zones.json per ZONE_SPEC.md §4.1.
 /// Immutable template for creating zone instances.
 /// </summary>
-public sealed class ZoneDefinition
+internal sealed class ZoneDefinition
 {
     /// <summary>
     /// Unique identifier (e.g., "bedroom", "assembly", "lumbering").
@@ -42,7 +42,7 @@ public sealed class ZoneDefinition
 /// <summary>
 /// UI hints for zone visualization.
 /// </summary>
-public sealed class ZoneUiHints
+internal sealed class ZoneUiHints
 {
     /// <summary>
     /// Glyph character for display.
@@ -63,7 +63,7 @@ public sealed class ZoneUiHints
 /// <summary>
 /// Zone policies (defaults from definition, can be overridden per instance).
 /// </summary>
-public sealed class ZonePolicies
+internal sealed class ZonePolicies
 {
     /// <summary>
     /// Navigation cost mode: "none" or "restricted".

@@ -1,10 +1,10 @@
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.Simulation.Diagnostics;
 
 internal static class SimulationDiagnostics
 {
-    public static void Information(
+    internal static void Information(
         Action<string>? callback,
         string category,
         string message,
@@ -13,7 +13,7 @@ internal static class SimulationDiagnostics
         Emit(callback, DiagnosticLevel.Information, category, message, exception: null, tick);
     }
 
-    public static void Error(
+    internal static void Error(
         Action<string>? callback,
         string category,
         string message,

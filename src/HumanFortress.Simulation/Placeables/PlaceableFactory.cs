@@ -1,5 +1,5 @@
 using System;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -9,13 +9,13 @@ namespace HumanFortress.Simulation.Placeables;
 /// <summary>
 /// Factory helpers for placeable instances.
 /// </summary>
-public static class PlaceableFactory
+internal static class PlaceableFactory
 {
     /// <summary>
     /// Create a non-blocking construction ghost (1x1) at position for a planned L0 build.
     /// Deterministic GUID by position + tickSeed.
     /// </summary>
-    public static PlaceableInstance CreateConstructionGhost(Point worldPos, int z, ulong tickSeed, string purpose)
+    internal static PlaceableInstance CreateConstructionGhost(Point worldPos, int z, ulong tickSeed, string purpose)
     {
         var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z);
         var fp = new Footprint(1, 1, 1);
@@ -37,7 +37,7 @@ public static class PlaceableFactory
     /// <summary>
     /// Create a construction site placeable (non-blocking footprint by default) with site state.
     /// </summary>
-    public static PlaceableInstance CreateConstructionSite(Point worldPos, int z, ulong tickSeed, string targetId, Core.Content.Registry.Footprint fp,
+    internal static PlaceableInstance CreateConstructionSite(Point worldPos, int z, ulong tickSeed, string targetId, Footprint fp,
         IReadOnlyDictionary<string, int> materialsRequired, int totalBuildTicks)
     {
         var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z);

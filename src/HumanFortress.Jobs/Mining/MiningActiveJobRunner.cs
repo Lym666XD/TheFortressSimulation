@@ -1,5 +1,5 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Tiles;
 using SadRogue.Primitives;
@@ -13,7 +13,7 @@ internal sealed class MiningActiveJobRunner
     private readonly MiningSystem _planner;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly MiningBacklogBuffer _backlog;
     private readonly IMiningDiffEmitter _diffEmitter;
     private readonly IMiningDropResolver _dropResolver;
@@ -25,12 +25,12 @@ internal sealed class MiningActiveJobRunner
     private readonly int _creatureReserveTtlTicks;
     private readonly int _maxFailedReplans;
 
-    public MiningActiveJobRunner(
+    internal MiningActiveJobRunner(
         WorldModel world,
         MiningSystem planner,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         MiningBacklogBuffer backlog,
         IMiningDiffEmitter diffEmitter,
         IMiningDropResolver dropResolver,
@@ -59,7 +59,7 @@ internal sealed class MiningActiveJobRunner
         _maxFailedReplans = maxFailedReplans;
     }
 
-    public void RunWriteTick(List<ActiveMiningJob> active, ulong tick)
+    internal void RunWriteTick(List<ActiveMiningJob> active, ulong tick)
     {
         var finished = new List<ActiveMiningJob>();
         foreach (var job in active)

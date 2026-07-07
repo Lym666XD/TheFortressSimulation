@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Placeables;
 using HumanFortress.Simulation.World;
@@ -13,20 +13,20 @@ internal sealed class ConstructionSiteSafety
     private readonly IConstructionDiffEmitter _diffEmitter;
     private readonly IConstructionJobLogger _logger;
 
-    public ConstructionSiteSafety(WorldModel world, IConstructionDiffEmitter diffEmitter, IConstructionJobLogger? logger)
+    internal ConstructionSiteSafety(WorldModel world, IConstructionDiffEmitter diffEmitter, IConstructionJobLogger? logger)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    public bool IsAnchorOccupied(PlaceableInstance site)
+    internal bool IsAnchorOccupied(PlaceableInstance site)
     {
         return _world.Creatures.GetAllInstances()
             .Any(creature => creature.Z == site.Z && creature.Position.X == site.Position.X && creature.Position.Y == site.Position.Y);
     }
 
-    public bool TryRelocateAnchorOccupants(PlaceableInstance site)
+    internal bool TryRelocateAnchorOccupants(PlaceableInstance site)
     {
         var occupants = _world.Creatures.GetAllInstances()
             .Where(creature => creature.Z == site.Z && creature.Position.X == site.Position.X && creature.Position.Y == site.Position.Y)
@@ -50,7 +50,7 @@ internal sealed class ConstructionSiteSafety
         return true;
     }
 
-    public void RelocateWallFootprintCreatures(PlaceableInstance site, ulong tick)
+    internal void RelocateWallFootprintCreatures(PlaceableInstance site, ulong tick)
     {
         var creaturesOnFootprint = GetCreaturesOnFootprint(site);
         if (creaturesOnFootprint.Count == 0)
@@ -74,7 +74,7 @@ internal sealed class ConstructionSiteSafety
         }
     }
 
-    public void MoveResidualItemsOffAnchor(PlaceableInstance site)
+    internal void MoveResidualItemsOffAnchor(PlaceableInstance site)
     {
         var items = _world.Items.GetGroundItemsAt(site.Position, site.Z)
             .OrderBy(item => item.Guid)

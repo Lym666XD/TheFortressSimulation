@@ -7,13 +7,13 @@ internal interface IConstructionJobLogger
 
 internal sealed class NullConstructionJobLogger : IConstructionJobLogger
 {
-    public static readonly NullConstructionJobLogger Instance = new();
+    internal static readonly NullConstructionJobLogger Instance = new();
 
     private NullConstructionJobLogger()
     {
     }
 
-    public void Log(string message)
+    void IConstructionJobLogger.Log(string message)
     {
     }
 }

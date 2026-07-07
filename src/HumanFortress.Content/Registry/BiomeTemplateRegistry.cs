@@ -1,24 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Contracts.Content.Registry;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Content.Registry;
 
 /// <summary>
 /// Registry for biome generation templates.
 /// </summary>
-public class BiomeTemplateRegistry
+internal sealed class BiomeTemplateRegistry
 {
     private readonly Dictionary<string, BiomeTemplateDefinition> _templatesById = new();
     private readonly List<BiomeTemplateDefinition> _allTemplates = new();
     private readonly List<BiomeTemplateDefinition> _sortedTemplates = new();
 
-    public ContentVersion Version { get; private set; }
+    internal ContentVersion Version { get; private set; }
 
     /// <summary>
     /// Load templates from definitions
     /// </summary>
-    public void LoadTemplates(IEnumerable<BiomeTemplateDefinition> templates, ContentVersion version)
+    internal void LoadTemplates(IEnumerable<BiomeTemplateDefinition> templates, ContentVersion version)
     {
         Version = version;
         Clear();
@@ -57,7 +58,7 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Get template by ID
     /// </summary>
-    public BiomeTemplateDefinition? GetTemplate(string id)
+    internal BiomeTemplateDefinition? GetTemplate(string id)
     {
         return _templatesById.GetValueOrDefault(id);
     }
@@ -65,7 +66,7 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Select best matching template for given parameters
     /// </summary>
-    public BiomeTemplateDefinition? SelectTemplate(BiomeParameters parameters)
+    internal BiomeTemplateDefinition? SelectTemplate(BiomeParameters parameters)
     {
         // Find all matching templates
         var matches = _sortedTemplates
@@ -85,7 +86,7 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Select template by explicit ID with fallback
     /// </summary>
-    public BiomeTemplateDefinition SelectTemplateById(string id)
+    internal BiomeTemplateDefinition SelectTemplateById(string id)
     {
         if (_templatesById.TryGetValue(id, out var template))
         {
@@ -99,7 +100,7 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Get templates for a specific climate
     /// </summary>
-    public IEnumerable<BiomeTemplateDefinition> GetTemplatesForClimate(float temperature, float rainfall)
+    internal IEnumerable<BiomeTemplateDefinition> GetTemplatesForClimate(float temperature, float rainfall)
     {
         return _allTemplates.Where(t =>
             (t.Conditions.Temperature == null || t.Conditions.Temperature.Value.Contains(temperature)) &&
@@ -123,7 +124,7 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Get all template IDs for save snapshot
     /// </summary>
-    public List<string> GetTemplateIds()
+    internal List<string> GetTemplateIds()
     {
         return _templatesById.Keys.ToList();
     }
@@ -131,12 +132,12 @@ public class BiomeTemplateRegistry
     /// <summary>
     /// Get template count
     /// </summary>
-    public int GetTemplateCount() => _templatesById.Count;
+    internal int GetTemplateCount() => _templatesById.Count;
 
     /// <summary>
     /// Get all templates
     /// </summary>
-    public IEnumerable<BiomeTemplateDefinition> GetAllTemplates() => _allTemplates;
+    internal IEnumerable<BiomeTemplateDefinition> GetAllTemplates() => _allTemplates;
 
     /// <summary>
     /// Clear the registry

@@ -10,7 +10,7 @@ namespace HumanFortress.Simulation.World;
 /// World manager handling chunks and LOD per SIM_LOD_POLICY.md.
 /// Fortress size: N×N chunks, N ∈ [2..8]; chunk = 32×32×Z tiles.
 /// </summary>
-public sealed class World : IWorldReader
+internal sealed class World : IWorldReader
 {
     private readonly ConcurrentDictionary<ChunkKey, Chunk> _chunks;
     private readonly int _sizeInChunks;
@@ -162,7 +162,7 @@ public sealed class World : IWorldReader
     /// <summary>
     /// Get and clear all dirty chunks for navigation rebuild.
     /// </summary>
-    public List<ChunkKey> GetAndClearDirtyChunks()
+    internal List<ChunkKey> GetAndClearDirtyChunks()
     {
         lock (_dirtyLock)
         {
@@ -239,7 +239,7 @@ public sealed class World : IWorldReader
 /// <summary>
 /// Edge band directions for incident spawning.
 /// </summary>
-public enum EdgeBand
+internal enum EdgeBand
 {
     North,
     East,

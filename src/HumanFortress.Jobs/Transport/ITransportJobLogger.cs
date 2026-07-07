@@ -7,13 +7,13 @@ internal interface ITransportJobLogger
 
 internal sealed class NullTransportJobLogger : ITransportJobLogger
 {
-    public static readonly NullTransportJobLogger Instance = new();
+    internal static readonly NullTransportJobLogger Instance = new();
 
     private NullTransportJobLogger()
     {
     }
 
-    public void Log(string message)
+    void ITransportJobLogger.Log(string message)
     {
     }
 }

@@ -1,11 +1,11 @@
 using System.Text.Json;
-using HumanFortress.Simulation.Creatures;
+using HumanFortress.Contracts.Simulation.Creatures;
 
 namespace HumanFortress.Content.Definitions;
 
-public sealed class CreatureDefinitionCatalogLoadResult
+internal sealed class CreatureDefinitionCatalogLoadResult
 {
-    public CreatureDefinitionCatalogLoadResult(
+    internal CreatureDefinitionCatalogLoadResult(
         CreatureDefinitionCatalogStore catalog,
         int loadedCount,
         int fileCount,
@@ -19,14 +19,14 @@ public sealed class CreatureDefinitionCatalogLoadResult
         Messages = messages;
     }
 
-    public CreatureDefinitionCatalogStore Catalog { get; }
-    public int LoadedCount { get; }
-    public int FileCount { get; }
-    public int ErrorCount { get; }
-    public IReadOnlyList<string> Messages { get; }
+    internal CreatureDefinitionCatalogStore Catalog { get; }
+    internal int LoadedCount { get; }
+    internal int FileCount { get; }
+    internal int ErrorCount { get; }
+    internal IReadOnlyList<string> Messages { get; }
 }
 
-public static class CreatureDefinitionCatalogLoader
+internal static partial class CreatureDefinitionCatalogLoader
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -34,7 +34,7 @@ public static class CreatureDefinitionCatalogLoader
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    public static CreatureDefinitionCatalogLoadResult Load(string dataPath)
+    internal static CreatureDefinitionCatalogLoadResult Load(string dataPath)
     {
         var creaturesPath = Path.Combine(dataPath, "creatures");
         var messages = new List<string>();
@@ -92,26 +92,4 @@ public static class CreatureDefinitionCatalogLoader
             messages);
     }
 
-    private static void ValidateDefinition(CreatureDefinition def)
-    {
-        if (string.IsNullOrWhiteSpace(def.Id))
-        {
-            throw new ArgumentException("Creature ID cannot be empty");
-        }
-
-        if (string.IsNullOrWhiteSpace(def.Name))
-        {
-            throw new ArgumentException($"Creature '{def.Id}' has no name");
-        }
-
-        if (def.BaseSpeed <= 0)
-        {
-            throw new ArgumentException($"Creature '{def.Id}' has invalid speed: {def.BaseSpeed}");
-        }
-
-        if (def.BaseStrength < 1 || def.BaseStrength > 100)
-        {
-            throw new ArgumentException($"Creature '{def.Id}' has invalid strength: {def.BaseStrength}");
-        }
-    }
 }

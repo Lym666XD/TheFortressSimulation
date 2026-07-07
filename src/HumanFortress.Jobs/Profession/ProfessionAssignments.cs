@@ -1,16 +1,20 @@
+using HumanFortress.Contracts.Navigation;
+using HumanFortress.Contracts.Jobs;
+using HumanFortress.Contracts.Simulation.Creatures;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Profession;
 
-public sealed class ProfessionAssignments
+internal sealed class ProfessionAssignments
 {
     private readonly IProfessionRegistry _registry;
     private readonly ICreatureDefinitionCatalog? _creatureDefinitions;
     private readonly Dictionary<Guid, Dictionary<string, int>> _weights = new();
     private readonly Dictionary<Guid, Dictionary<string, int>> _skillLevels = new();
 
-    public ProfessionAssignments(
+    internal ProfessionAssignments(
         IProfessionRegistry registry,
         ICreatureDefinitionCatalog? creatureDefinitions = null)
     {
@@ -18,9 +22,9 @@ public sealed class ProfessionAssignments
         _creatureDefinitions = creatureDefinitions;
     }
 
-    public IProfessionRegistry Registry => _registry;
+    internal IProfessionRegistry Registry => _registry;
 
-    public void Initialize(IEnumerable<CreatureInstance> creatures)
+    internal void Initialize(IEnumerable<CreatureInstance> creatures)
     {
         foreach (var creature in creatures)
         {
@@ -28,7 +32,7 @@ public sealed class ProfessionAssignments
         }
     }
 
-    public void RecordJobCompletion(Guid worker, string jobTag)
+    internal void RecordJobCompletion(Guid worker, string jobTag)
     {
         if (!_skillLevels.TryGetValue(worker, out var dict))
         {
@@ -40,19 +44,19 @@ public sealed class ProfessionAssignments
         dict[jobTag] = current + 1;
     }
 
-    public void SetWeight(Guid workerId, string professionId, int weight)
+    internal void SetWeight(Guid workerId, string professionId, int weight)
     {
         var profile = EnsureProfile(workerId);
         profile[professionId] = Math.Clamp(weight, 0, 9);
     }
 
-    public int GetWeight(Guid workerId, string professionId)
+    internal int GetWeight(Guid workerId, string professionId)
     {
         var profile = EnsureProfile(workerId);
         return profile.TryGetValue(professionId, out var weight) ? weight : 5;
     }
 
-    public IReadOnlyList<ProfessionRosterEntry> GetRosterSnapshot(HumanFortress.Simulation.World.World? world)
+    internal IReadOnlyList<ProfessionRosterEntry> GetRosterSnapshot(HumanFortress.Simulation.World.World? world)
     {
         var list = new List<ProfessionRosterEntry>();
         if (world == null) return list;
@@ -70,14 +74,14 @@ public sealed class ProfessionAssignments
         return list;
     }
 
-    public IEnumerable<CreatureInstance> SelectCandidates(
+    internal IEnumerable<CreatureInstance> SelectCandidates(
         HumanFortress.Simulation.World.World world,
         string jobTag,
         WorkerSelectionStrategy strategy,
         HashSet<Guid> busy,
         ReservationManager reservations,
         ulong currentTick,
-        HumanFortress.Navigation.Point3? referencePoint)
+        HumanFortress.Contracts.Navigation.Point3? referencePoint)
     {
         var profDefs = _registry.GetProfessionsForJob(jobTag);
         if (profDefs.Count == 0) profDefs = _registry.Definitions;
@@ -129,7 +133,7 @@ public sealed class ProfessionAssignments
         return 0;
     }
 
-    private static int DistanceSq(HumanFortress.Navigation.Point3? reference, CreatureInstance creature)
+    private static int DistanceSq(HumanFortress.Contracts.Navigation.Point3? reference, CreatureInstance creature)
     {
         if (reference == null) return 0;
         int dx = reference.Value.X - creature.Position.X;
@@ -177,5 +181,5 @@ public sealed class ProfessionAssignments
         return best;
     }
 
-    public readonly record struct ProfessionRosterEntry(Guid WorkerId, string Name, IReadOnlyDictionary<string, int> Weights);
+    internal readonly record struct ProfessionRosterEntry(Guid WorkerId, string Name, IReadOnlyDictionary<string, int> Weights);
 }

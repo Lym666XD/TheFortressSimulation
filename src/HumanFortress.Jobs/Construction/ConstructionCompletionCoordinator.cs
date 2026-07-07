@@ -10,7 +10,7 @@ internal sealed class ConstructionCompletionCoordinator
     private readonly ConstructionCompletionApplier _completion;
     private readonly IConstructionJobLogger _logger;
 
-    public ConstructionCompletionCoordinator(
+    internal ConstructionCompletionCoordinator(
         ConstructionMaterialTracker materials,
         ConstructionSiteSafety siteSafety,
         ConstructionCompletionApplier completion,
@@ -22,7 +22,7 @@ internal sealed class ConstructionCompletionCoordinator
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    public bool TryComplete(PlaceableInstance site, ulong tick)
+    internal bool TryComplete(PlaceableInstance site, ulong tick)
     {
         var construction = site.ConstructionSite;
         if (construction == null)

@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.Core.Commands;
 
@@ -77,20 +77,56 @@ public sealed class CommandQueue
                 }
                 catch (Exception ex)
                 {
-                    HandleCommandError(command, ex);
+                    HandleCommandError(queued, ex);
                 }
             }
         }
     }
 
     /// <summary>
-    /// Get all executed commands for replay/save.
+    /// Get all executed command objects for in-memory diagnostics and compatibility.
+    /// Use GetExecutedCommandRecords for replay/save persistence.
     /// </summary>
     public IReadOnlyList<ICommand> GetExecutedCommands()
     {
         lock (_executeLock)
         {
             return _executedCommands.ToList();
+        }
+    }
+
+    /// <summary>
+    /// Get immutable command replay records for save/replay persistence.
+    /// </summary>
+    public IReadOnlyList<CommandReplayRecord> GetExecutedCommandRecords()
+    {
+        lock (_executeLock)
+        {
+            return CaptureExecutedCommandRecordsNoLock();
+        }
+    }
+
+    /// <summary>
+    /// Get immutable pending command replay records in their future execution order.
+    /// </summary>
+    public IReadOnlyList<CommandReplayRecord> GetPendingCommandRecords()
+    {
+        lock (_executeLock)
+        {
+            return CapturePendingCommandRecordsNoLock();
+        }
+    }
+
+    /// <summary>
+    /// Get a single replay/save snapshot of both pending and executed command records.
+    /// </summary>
+    public CommandQueueReplaySnapshot GetReplaySnapshot()
+    {
+        lock (_executeLock)
+        {
+            return new CommandQueueReplaySnapshot(
+                CapturePendingCommandRecordsNoLock(),
+                CaptureExecutedCommandRecordsNoLock());
         }
     }
 
@@ -122,11 +158,16 @@ public sealed class CommandQueue
     }
 
     /// <summary>
-    /// Restore commands from save/replay.
+    /// Restore pending commands from save/replay without marking them executed.
     /// </summary>
     public void RestoreCommands(IEnumerable<ICommand> commands)
     {
         ArgumentNullException.ThrowIfNull(commands);
+        var restoredCommands = commands.ToList();
+        foreach (var command in restoredCommands)
+        {
+            ArgumentNullException.ThrowIfNull(command);
+        }
 
         lock (_executeLock)
         {
@@ -136,11 +177,8 @@ public sealed class CommandQueue
             }
 
             _nextSequence = 0;
-            foreach (var cmd in commands)
+            foreach (var cmd in restoredCommands)
             {
-                ArgumentNullException.ThrowIfNull(cmd);
-
-                _executedCommands.Add(cmd);
                 var sequence = ++_nextSequence;
                 _pendingCommands.Enqueue(new QueuedCommand(cmd, sequence));
             }
@@ -153,12 +191,30 @@ public sealed class CommandQueue
         return tickCompare != 0 ? tickCompare : a.Sequence.CompareTo(b.Sequence);
     }
 
-    private void HandleCommandError(ICommand command, Exception ex)
+    private IReadOnlyList<CommandReplayRecord> CapturePendingCommandRecordsNoLock()
+    {
+        return _pendingCommands
+            .ToArray()
+            .OrderBy(queued => queued.Command.Tick)
+            .ThenBy(queued => queued.Sequence)
+            .Select(queued => CommandReplayRecord.FromCommand(queued.Command))
+            .ToList();
+    }
+
+    private IReadOnlyList<CommandReplayRecord> CaptureExecutedCommandRecordsNoLock()
+    {
+        return _executedCommands
+            .Select(CommandReplayRecord.FromCommand)
+            .ToList();
+    }
+
+    private void HandleCommandError(QueuedCommand queued, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: log and continue
+        var command = queued.Command;
         DiagnosticHub.Error(
             "Core.CommandQueue",
-            $"[ERROR] Command {command.CommandType} ({command.CommandId}) failed: {ex.Message}",
+            $"[ERROR] Command {command.CommandType} ({command.CommandId}, seq={queued.Sequence}) failed: {ex.Message}",
             ex,
             command.Tick);
     }

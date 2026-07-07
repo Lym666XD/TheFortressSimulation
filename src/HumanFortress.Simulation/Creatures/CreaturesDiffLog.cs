@@ -1,16 +1,17 @@
 using SadRogue.Primitives;
+using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Creatures;
 
-public enum CreaturesDiffOp
+internal enum CreaturesDiffOp
 {
     SpawnCreature
 }
 
-public readonly struct CreaturesDiff
+internal readonly struct CreaturesDiff
 {
-    public CreaturesDiff(
+    internal CreaturesDiff(
         CreaturesDiffOp op,
         string creatureId,
         Point worldPos,
@@ -30,16 +31,16 @@ public readonly struct CreaturesDiff
         LocalSeq = localSeq;
     }
 
-    public CreaturesDiffOp Op { get; }
-    public string CreatureId { get; }
-    public Point WorldPos { get; }
-    public int Z { get; }
-    public string FactionId { get; }
-    public int Priority { get; }
-    public string SystemId { get; }
-    public int LocalSeq { get; }
+    internal CreaturesDiffOp Op { get; }
+    internal string CreatureId { get; }
+    internal Point WorldPos { get; }
+    internal int Z { get; }
+    internal string FactionId { get; }
+    internal int Priority { get; }
+    internal string SystemId { get; }
+    internal int LocalSeq { get; }
 
-    public long GetSortKey()
+    internal long GetSortKey()
     {
         int chunkX = WorldPos.X >= 0 ? WorldPos.X / Chunk.SIZE_XY : 0;
         int chunkY = WorldPos.Y >= 0 ? WorldPos.Y / Chunk.SIZE_XY : 0;
@@ -47,24 +48,23 @@ public readonly struct CreaturesDiff
         int localY = WorldPos.Y >= 0 ? WorldPos.Y % Chunk.SIZE_XY : 0;
         int localIndex = Chunk.LocalIndex(localX, localY);
 
-        long key = 0;
-        key |= ((long)(Z & 0xFF)) << 56;
-        key |= ((long)(chunkX & 0xFF)) << 48;
-        key |= ((long)(chunkY & 0xFF)) << 40;
-        key |= ((long)(localIndex & 0xFFFF)) << 24;
-        key |= ((long)(Priority & 0xFF)) << 16;
-        key |= (ushort)LocalSeq;
-        return key;
+        return SimulationDiffSortKeys.ByChunkCellPriorityAscending(
+            Z,
+            chunkX,
+            chunkY,
+            localIndex,
+            Priority,
+            LocalSeq);
     }
 }
 
-public sealed class CreaturesDiffLog
+internal sealed class CreaturesDiffLog
 {
     private readonly List<CreaturesDiff> _ops = new();
     private readonly object _lock = new();
     private int _localSeq;
 
-    public void AddSpawnCreature(string creatureId, Point worldPos, int z, string factionId, int priority, string systemId)
+    internal void AddSpawnCreature(string creatureId, Point worldPos, int z, string factionId, int priority, string systemId)
     {
         lock (_lock)
         {
@@ -80,7 +80,7 @@ public sealed class CreaturesDiffLog
         }
     }
 
-    public IReadOnlyList<CreaturesDiff> MergeAndSort()
+    internal IReadOnlyList<CreaturesDiff> MergeAndSort()
     {
         lock (_lock)
         {
@@ -89,7 +89,7 @@ public sealed class CreaturesDiffLog
         }
     }
 
-    public void Clear()
+    internal void Clear()
     {
         lock (_lock)
         {

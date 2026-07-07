@@ -1,6 +1,6 @@
 # Work And Jobs System
 
-Updated: 2026-06-12
+Updated: 2026-06-18
 Status: current implementation notes plus target scheduler constraints
 
 This document is the active entry point for fortress work planning, job execution,
@@ -11,11 +11,13 @@ Use [TRANSPORT_SYSTEM.md](TRANSPORT_SYSTEM.md) for transport-specific behavior.
 
 ## Current Runtime Shape
 
-Current fortress work is composed by App runtime factories and executed through
-the normal runtime tick scheduler:
+Current fortress work is composed by Runtime factories with App-provided logging
+and optional command delegates, then executed through the normal runtime tick
+scheduler:
 
 ```text
-GameStateManager.InitializeWorld
+FortressPlayGameState
+  -> IFortressPlayRuntimeHost.InitializeWorld
   -> SimulationRuntimeSessionFactory.CreateNew
   -> SimulationRuntimeHost<SimulationRuntimeSystems>
   -> SimulationRuntimeSystems.RegisterWith(TickScheduler)
@@ -25,16 +27,20 @@ GameStateManager.InitializeWorld
 ```
 
 `HumanFortress.Runtime` owns the generic session host, command stage, pre/post
-tick pipeline, and navigation rebuild barrier. `HumanFortress.App.Runtime` still
-owns concrete fortress system composition.
+tick pipeline, navigation rebuild barrier, concrete fortress system collection,
+runtime dependency groups, system factories, host factory, and startup
+orchestration.
 
-The current App composition split is:
+The current Runtime composition split is:
 
 - `FortressRuntimeDependencies` loads catalogs, tunings, and workforce state.
 - `FortressRuntimePlanningSystems` builds planners and the shared transport queue.
-- `FortressRuntimeJobSystems` builds App job shells over Jobs-owned executor cores.
+- `FortressRuntimeJobSystems` builds Runtime job shells over Jobs-owned executor cores.
 - `FortressRuntimeSystemsFactory` assembles the concrete system collection.
 - `SimulationRuntimeSystems` exposes the systems and registers the tick systems.
+
+App still supplies logging callbacks, the active content snapshot, and optional
+App command delegates such as auto-dig.
 
 ## Current Planners
 
@@ -66,19 +72,21 @@ Most executor cores live in `HumanFortress.Jobs`:
 - `ConstructionJobExecutor`
 - `CraftJobExecutor`
 
-`HumanFortress.App.Jobs` still owns composition shells and concrete adapters:
+`HumanFortress.Runtime.Jobs` owns the tick-facing composition shells:
 
 - `TransportJobSystem`
 - `MiningJobSystem`
 - `ConstructionJobSystem`
 - `CraftJobSystem`
-- concrete diff emitters;
-- profession/workforce adapters;
-- logger and UI notification adapters;
-- scheduler/workshop tuning adapters.
 
-This is intentional during the boundary migration. Do not add new domain logic to
-the App shells unless a seam is missing and the change is part of a migration.
+`HumanFortress.Jobs` owns executor cores, diff emitters, callback loggers,
+profession assignment state, scheduler/workshop tuning types, worker selection,
+and concrete adapters. Profession contracts compile from
+`HumanFortress.Contracts.Jobs`, and profession registry JSON loading compiles
+from `HumanFortress.Content.Definitions`.
+
+Do not add new domain logic to the Runtime shells unless a seam is missing and the
+change is part of a migration.
 
 ## Current Tick Fit
 
@@ -126,7 +134,7 @@ Transport is the current shared movement/material-delivery path:
 ```text
 producers
   -> ITransportRequestQueue
-  -> App TransportJobSystem
+  -> Runtime TransportJobSystem
   -> Jobs TransportJobExecutor
   -> DiffLog / ItemsDiffLog
 ```
@@ -188,7 +196,7 @@ Current:
 
 Still pending:
 
-- move more concrete App job shells/adapters down once clean seams exist;
+- remove compatibility namespaces once clean seams exist;
 - centralize movement and reservation ownership;
 - convert remaining direct world writes to command targets or diff applicators;
 - add a formal runtime/debug snapshot facade for UI job panels;

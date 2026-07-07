@@ -1,6 +1,6 @@
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Configuration;
 
-public enum WorkerSelectionStrategy
+internal enum WorkerSelectionStrategy
 {
     Closest,
     IdleFirst,

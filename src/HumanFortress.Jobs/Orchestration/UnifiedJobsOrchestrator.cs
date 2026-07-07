@@ -1,12 +1,13 @@
 using System.Diagnostics;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Configuration;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Orchestration;
 
 /// <summary>
 /// Unified orchestrator for the Jobs stage.
 /// </summary>
-public sealed class UnifiedJobsOrchestrator : ITick
+internal sealed class UnifiedJobsOrchestrator : ITick
 {
     private readonly ITick _haulPlanner;
     private readonly ITick? _constructionMaterialsPlanner;
@@ -23,7 +24,7 @@ public sealed class UnifiedJobsOrchestrator : ITick
     private readonly Action<string>? _log;
     private readonly Stopwatch _sw = new();
 
-    public record struct LastStats(
+    internal record struct LastStats(
         ulong Tick,
         long PlanMsTotal,
         long ApplyMsTotal,
@@ -42,7 +43,7 @@ public sealed class UnifiedJobsOrchestrator : ITick
 
     private LastStats _last;
 
-    public UnifiedJobsOrchestrator(
+    internal UnifiedJobsOrchestrator(
         ITick haulPlanner,
         ITick? constructionMaterialsPlanner,
         ITick miningPlanner,
@@ -68,13 +69,21 @@ public sealed class UnifiedJobsOrchestrator : ITick
         _log = log;
     }
 
-    public int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items;
+    internal int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items;
 
-    public string SystemId => "Jobs.UnifiedOrchestrator";
+    internal string SystemId => "Jobs.UnifiedOrchestrator";
 
-    public LastStats GetLastStats() => _last;
+    internal LastStats GetLastStats() => _last;
 
-    public void ReadTick(ulong tick)
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+
+    internal void ReadTick(ulong tick)
     {
         _sw.Restart();
         var t0 = _sw.ElapsedMilliseconds;
@@ -102,7 +111,7 @@ public sealed class UnifiedJobsOrchestrator : ITick
         };
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         _miningPlanner.WriteTick(tick);
         _haulPlanner.WriteTick(tick);

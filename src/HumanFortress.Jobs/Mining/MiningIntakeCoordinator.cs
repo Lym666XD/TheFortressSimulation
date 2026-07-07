@@ -10,7 +10,7 @@ internal sealed class MiningIntakeCoordinator
     private readonly IMiningJobLogger _logger;
     private readonly int _intakeBudget;
 
-    public MiningIntakeCoordinator(
+    internal MiningIntakeCoordinator(
         MiningSystem planner,
         MiningBacklogBuffer backlog,
         MiningDeferredStairwellBuffer deferredStairwells,
@@ -24,7 +24,7 @@ internal sealed class MiningIntakeCoordinator
         _intakeBudget = Math.Max(1, intakeBudget);
     }
 
-    public int Fill(ulong tick, IList<MiningSystem.PlannedDig> inbox)
+    internal int Fill(ulong tick, IList<MiningSystem.PlannedDig> inbox)
     {
         inbox.Clear();
         _planner.DequeuePlannedDigs(_intakeBudget, inbox);

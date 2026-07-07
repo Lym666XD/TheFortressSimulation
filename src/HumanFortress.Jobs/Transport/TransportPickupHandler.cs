@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -12,20 +12,22 @@ internal sealed class TransportPickupHandler
     private readonly TransportDestinationValidator _destinationValidator;
     private readonly IPathService _paths;
     private readonly IWorldNavigationView _navView;
-    private readonly MovementExecutor _move;
+    private readonly IMovementExecutor _move;
     private readonly ITransportItemDiffEmitter _diffEmitter;
+    private readonly ITransportStockpileIndexEmitter _stockpileIndexEmitter;
     private readonly TransportJobFinalizer _jobFinalizer;
     private readonly ITransportJobLogger _logger;
     private readonly int _creatureReserveTtlTicks;
     private readonly Func<Guid, Guid, uint> _seedFrom;
 
-    public TransportPickupHandler(
+    internal TransportPickupHandler(
         WorldModel world,
         TransportDestinationValidator destinationValidator,
         IPathService paths,
         IWorldNavigationView navView,
-        MovementExecutor move,
+        IMovementExecutor move,
         ITransportItemDiffEmitter diffEmitter,
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         TransportJobFinalizer jobFinalizer,
         ITransportJobLogger? logger,
         int creatureReserveTtlTicks,
@@ -37,17 +39,19 @@ internal sealed class TransportPickupHandler
         _navView = navView ?? throw new ArgumentNullException(nameof(navView));
         _move = move ?? throw new ArgumentNullException(nameof(move));
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
+        _stockpileIndexEmitter = stockpileIndexEmitter ?? NullTransportStockpileIndexEmitter.Instance;
         _jobFinalizer = jobFinalizer ?? throw new ArgumentNullException(nameof(jobFinalizer));
         _logger = logger ?? NullTransportJobLogger.Instance;
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
 
-    public void HandleArrivedAtItem(ActiveJob job, ulong tick, uint entityId, Point3 workerPosition, ICollection<ActiveJob> finished)
+    internal void HandleArrivedAtItem(ActiveJob job, ulong tick, uint entityId, Point3 workerPosition, ICollection<ActiveJob> finished)
     {
-        if (_destinationValidator.IsItemInStockpile(job.ItemId))
+        if (job.Reason == TransportReason.ToStockpile && _destinationValidator.IsItemInStockpile(job.ItemId))
         {
             _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} because already in stockpile ({DropReasonInStockpile})");
+            _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
             _jobFinalizer.Finish(job, finished);
             return;
         }
@@ -56,6 +60,7 @@ internal sealed class TransportPickupHandler
         if (inst == null || !inst.IsOnGround)
         {
             _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} source missing or not on ground at pickup");
+            _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
             _jobFinalizer.Finish(job, finished);
             return;
         }
@@ -74,6 +79,7 @@ internal sealed class TransportPickupHandler
             }
 
             _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} moved to unreachable pickup=({currentItemPos.X},{currentItemPos.Y},{currentItemPos.Z}) kind={retryPath.Kind}");
+            _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
             _jobFinalizer.Finish(job, finished);
             JobStats.NoPath++;
             return;
@@ -86,6 +92,7 @@ internal sealed class TransportPickupHandler
             if (_world.Items.GetInstance(newId) != null)
             {
                 _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={sourceItemId} split-id collision new={newId}");
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
                 _jobFinalizer.Finish(job, finished);
                 return;
             }
@@ -93,6 +100,7 @@ internal sealed class TransportPickupHandler
             if (!_world.Reservations.TryReserveItem(newId, job.CreatureId, tick, tick + (ulong)_creatureReserveTtlTicks))
             {
                 _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={sourceItemId} split reservation failed new={newId}");
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
                 _jobFinalizer.Finish(job, finished);
                 return;
             }
@@ -101,6 +109,7 @@ internal sealed class TransportPickupHandler
             {
                 _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={sourceItemId} split emit failed take={job.Quantity}");
                 _world.Reservations.ReleaseItem(newId);
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
                 _jobFinalizer.Finish(job, finished);
                 return;
             }
@@ -110,6 +119,7 @@ internal sealed class TransportPickupHandler
             job.ItemId = newId;
         }
 
+        _stockpileIndexEmitter.RecordPickup(job.ItemId, currentItemPos);
         _diffEmitter.MarkCarried(job.ItemId, job.CreatureId, workerPosition);
         var toDest = new PathRequest(workerPosition, job.Dest, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
         IWorldNavigationView view = _navView;
@@ -124,6 +134,7 @@ internal sealed class TransportPickupHandler
 
         _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} no path to dest=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}), unmarking carried");
         _diffEmitter.UnmarkCarried(job.ItemId, workerPosition);
+        _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
         _jobFinalizer.Finish(job, finished);
         JobStats.NoPath++;
     }

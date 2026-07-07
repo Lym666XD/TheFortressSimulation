@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 /// <summary>
 /// Complete definition of a biome generation template.

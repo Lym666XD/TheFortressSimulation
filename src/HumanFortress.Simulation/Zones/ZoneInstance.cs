@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Runtime zone instance per ZONE_SPEC.md §4.2.
 /// Represents a placed zone that can span multiple chunks.
 /// </summary>
-public sealed class ZoneInstance
+internal sealed class ZoneInstance
 {
     /// <summary>
     /// Unique zone instance identifier.

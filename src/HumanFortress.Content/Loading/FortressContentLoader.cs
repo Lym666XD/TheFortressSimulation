@@ -1,50 +1,31 @@
 using HumanFortress.Content.Definitions;
-using StructuredContentRegistry = HumanFortress.Core.Content.Registry.ContentRegistry;
+using HumanFortress.Contracts.Content.Loading;
+using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
 
 /// <summary>
-/// Resolved content directory candidates for either published output or a source checkout.
-/// </summary>
-public sealed class ContentPathResolution
-{
-    public ContentPathResolution(string publishedPath, string developmentPath, string? resolvedPath)
-    {
-        PublishedPath = publishedPath ?? throw new ArgumentNullException(nameof(publishedPath));
-        DevelopmentPath = developmentPath ?? throw new ArgumentNullException(nameof(developmentPath));
-        ResolvedPath = resolvedPath;
-    }
-
-    public string PublishedPath { get; }
-    public string DevelopmentPath { get; }
-    public string? ResolvedPath { get; }
-    public bool Found => ResolvedPath != null;
-}
-
-/// <summary>
-/// Resolved content file candidates for either published output or a source checkout.
-/// </summary>
-public sealed class ContentFileResolution
-{
-    public ContentFileResolution(string publishedPath, string developmentPath, string? resolvedPath)
-    {
-        PublishedPath = publishedPath ?? throw new ArgumentNullException(nameof(publishedPath));
-        DevelopmentPath = developmentPath ?? throw new ArgumentNullException(nameof(developmentPath));
-        ResolvedPath = resolvedPath;
-    }
-
-    public string PublishedPath { get; }
-    public string DevelopmentPath { get; }
-    public string? ResolvedPath { get; }
-    public bool Found => ResolvedPath != null;
-}
-
-/// <summary>
 /// Aggregated runtime content bootstrap result for a fortress session.
 /// </summary>
-public sealed class FortressContentLoadResult
+internal sealed class FortressContentLoadResult
 {
-    public FortressContentLoadResult(
+    internal FortressContentLoadResult(
+        ContentPathResolution contentPath,
+        ContentPathResolution coreDataPath,
+        CoreContentCatalogLoadResult? coreCatalogs,
+        bool registriesAlreadyLoaded,
+        IReadOnlyList<FortressContentIssue> issues)
+        : this(
+            contentPath,
+            coreDataPath,
+            registries: null,
+            coreCatalogs,
+            registriesAlreadyLoaded,
+            issues)
+    {
+    }
+
+    internal FortressContentLoadResult(
         ContentPathResolution contentPath,
         ContentPathResolution coreDataPath,
         RuntimeContentRegistryLoadResult? registries,
@@ -62,10 +43,23 @@ public sealed class FortressContentLoadResult
 
     public ContentPathResolution ContentPath { get; }
     public ContentPathResolution CoreDataPath { get; }
-    public RuntimeContentRegistryLoadResult? Registries { get; }
-    public CoreContentCatalogLoadResult? CoreCatalogs { get; }
+    internal RuntimeContentRegistryLoadResult? Registries { get; }
+    internal CoreContentCatalogLoadResult? CoreCatalogs { get; }
     public bool RegistriesAlreadyLoaded { get; }
     public IReadOnlyList<FortressContentIssue> Issues { get; }
+    public bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
+    public int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
+    public int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
+    public string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
+    public bool CoreCatalogsLoaded => CoreCatalogs != null;
+    public int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
+    public int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
+    public int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
+    public int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
+    public int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
+    public int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
+    public int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
+    public int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
     public bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
     public bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
 
@@ -96,12 +90,34 @@ public sealed class FortressContentLoadResult
             throw new FortressContentLoadException(blockingIssues);
         }
     }
+
+    public FortressContentLoadReport ToReport()
+    {
+        return new FortressContentLoadReport(
+            ContentPath,
+            CoreDataPath,
+            RegistriesAlreadyLoaded,
+            StructuredRegistriesLoaded,
+            StructuredRegistryWarningCount,
+            StructuredRegistryErrorCount,
+            StructuredRegistryFailureMessage,
+            CoreCatalogsLoaded,
+            ItemDefinitionLoadedCount,
+            ItemDefinitionErrorCount,
+            CreatureDefinitionLoadedCount,
+            CreatureDefinitionErrorCount,
+            ConstructionDefinitionLoadedCount,
+            ConstructionDefinitionErrorCount,
+            RecipeDefinitionLoadedCount,
+            RecipeDefinitionErrorCount,
+            Issues);
+    }
 }
 
 /// <summary>
 /// Single Content-owned entry point for locating and loading runtime content.
 /// </summary>
-public static class FortressContentLoader
+internal static class FortressContentLoader
 {
     public static FortressContentLoadResult Load(
         string baseDir,

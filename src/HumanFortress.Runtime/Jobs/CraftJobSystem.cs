@@ -1,22 +1,28 @@
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Navigation;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Jobs.Craft;
-using HumanFortress.Navigation;
-using HumanFortress.Runtime;
+using HumanFortress.Jobs.Diff;
+using HumanFortress.Jobs.Orchestration;
+using HumanFortress.Jobs.Profession;
+using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Runtime.Jobs;
 
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned craft executor.
 /// </summary>
-public sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
+internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
 {
     private readonly CraftJobExecutor _executor;
 
-    public CraftJobSystem(
+    internal CraftJobSystem(
         World world,
         CraftPlanner planner,
         ICraftRecipeCatalog recipes,
@@ -25,14 +31,16 @@ public sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         NavigationManager? sharedNav,
         ProfessionAssignments? professions,
         WorkerSelectionStrategy workerStrategy,
-        NavigationTuning? navigationTuning = null)
+        NavigationTuning? navigationTuning = null,
+        StockpileDiffLog? stockpileDiffLog = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = new PathService(tuning);
         var navView = new WorldNavigationView(navigation);
         IWorldNavigationView navViewInterface = navView;
-        var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId);
+        var move = new MovementExecutor(paths);
+        var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId, world, stockpileDiffLog);
         ICraftWorkerCandidateSource? workerCandidates = professions == null
             ? null
             : new CraftProfessionCandidateSource(professions, workerStrategy);
@@ -43,21 +51,34 @@ public sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
             constructions,
             paths,
             navViewInterface,
+            move,
             diffEmitter,
             workerCandidates);
     }
 
-    public int LastIntakeCount => _executor.LastIntakeCount;
+    internal int LastIntakeCount => _executor.LastIntakeCount;
 
-    public int Priority => UpdateOrder.Priority.Jobs;
+    internal int Priority => UpdateOrder.Priority.Jobs;
 
-    public string SystemId => CraftJobExecutor.SystemId;
+    internal string SystemId => CraftJobExecutor.SystemId;
 
-    public void ReadTick(ulong tick) => _executor.ReadTick(tick);
+    int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    public void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    int ITick.Priority => Priority;
 
-    public IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+    string ITick.SystemId => SystemId;
 
-    public CraftJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+
+    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
+
+    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+
+    internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+
+    internal CraftJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
 }

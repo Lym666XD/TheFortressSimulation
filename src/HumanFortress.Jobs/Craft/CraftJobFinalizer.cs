@@ -8,13 +8,13 @@ internal sealed class CraftJobFinalizer
     private readonly WorldModel _world;
     private readonly CraftWorkshopLocator _workshops;
 
-    public CraftJobFinalizer(WorldModel world, CraftWorkshopLocator workshops)
+    internal CraftJobFinalizer(WorldModel world, CraftWorkshopLocator workshops)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _workshops = workshops ?? throw new ArgumentNullException(nameof(workshops));
     }
 
-    public void Finish(ActiveCraftJob job, CraftJobFinishReason reason)
+    internal void Finish(ActiveCraftJob job, CraftJobFinishReason reason)
     {
         _world.Reservations.ReleaseCreature(job.WorkerId);
 

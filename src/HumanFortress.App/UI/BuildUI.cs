@@ -6,7 +6,7 @@ namespace HumanFortress.App.UI;
 /// <summary>
 /// Renders the Build quick menu with L2 submenus (no L3 for now).
 /// </summary>
-public sealed class BuildUI
+internal sealed partial class BuildUI
 {
     public void DrawBuildRootPopup(ScreenSurface surface, int x, int y)
     {
@@ -58,117 +58,5 @@ public sealed class BuildUI
         {
             DrawWorkshopMenu(surface, l2X + l2Width + 2, l2Y);
         }
-    }
-
-    public void DrawConstructionMaterialDialog(ScreenSurface surface, HumanFortress.App.UI.UiStore ui)
-    {
-        if (!ui.ConstructionMaterialDialogOpen) return;
-        var surf = surface.Surface;
-        int w = 36, h = 8;
-        int x0 = (surf.Width - w) / 2;
-        int y0 = (surf.Height - h) / 2;
-        var bg = new Color(0, 0, 0, 220);
-        var fg = Color.White;
-        // Fill background
-        for (int yy = y0; yy < y0 + h; yy++)
-            for (int xx = x0; xx < x0 + w; xx++)
-                surf.SetGlyph(xx, yy, ' ', fg, bg);
-        // Border
-        for (int xx = x0; xx < x0 + w; xx++) { surf.SetGlyph(xx, y0, '-'); surf.SetGlyph(xx, y0 + h - 1, '-'); }
-        for (int yy = y0; yy < y0 + h; yy++) { surf.SetGlyph(x0, yy, '|'); surf.SetGlyph(x0 + w - 1, yy, '|'); }
-        surf.SetGlyph(x0, y0, '+'); surf.SetGlyph(x0 + w - 1, y0, '+'); surf.SetGlyph(x0, y0 + h - 1, '+'); surf.SetGlyph(x0 + w - 1, y0 + h - 1, '+');
-
-        surf.Print(x0 + 2, y0, " MATERIALS ", Color.Yellow);
-        var shape = ui.SelectedConstructionShape;
-        switch (shape)
-        {
-            case HumanFortress.Simulation.Orders.ConstructionShape.Wall:
-                surf.Print(x0 + 2, y0 + 2, "[Z] Stone Block", fg);
-                surf.Print(x0 + 2, y0 + 3, "[X] Wood Log", fg);
-                break;
-            case HumanFortress.Simulation.Orders.ConstructionShape.Floor:
-                surf.Print(x0 + 2, y0 + 2, "[Z] Stone Block", fg);
-                surf.Print(x0 + 2, y0 + 3, "[X] Wood Plank", fg);
-                break;
-            case HumanFortress.Simulation.Orders.ConstructionShape.Ramp:
-                surf.Print(x0 + 2, y0 + 2, "Ramp requires both:", fg);
-                surf.Print(x0 + 2, y0 + 3, "[ENTER] Confirm Stone+Plank", fg);
-                break;
-            default:
-                surf.Print(x0 + 2, y0 + 2, "(No options)", Color.Gray);
-                break;
-        }
-        surf.Print(x0 + 2, y0 + h - 2, "ESC: Cancel", Color.Gray);
-    }
-
-    private void DrawStructuralL3(ScreenSurface surface, int x, int y)
-    {
-        var bg = new Color(0, 0, 0, 200);
-        var fg = Color.White;
-        var highlight = Color.Yellow;
-        DrawBox(surface, x, y, 26, 8, fg, bg);
-        surface.Print(x + 1, y, " STRUCTURAL ", highlight);
-        surface.Print(x + 2, y + 1, "[Z] Wall", fg);
-        surface.Print(x + 2, y + 2, "[X] Floor", fg);
-        surface.Print(x + 2, y + 3, "[C] Ramp", fg);
-        surface.Print(x + 2, y + 4, "[V] Stairs", fg);
-        surface.Print(x + 2, y + 6, "[,] Cancel", Color.Gray);
-    }
-
-    private void DrawWorkshopMenu(ScreenSurface surface, int x, int y)
-    {
-        var bg = new Color(0, 0, 0, 200);
-        var fg = Color.White;
-        var highlight = Color.Yellow;
-        DrawBox(surface, x, y, 46, 12, fg, bg);
-        surface.Print(x + 1, y, " WORKSHOPS ", highlight);
-
-        // Draw L3: categories on the left, and L4: items on the right if a category is selected (state lives in UiStore via FortressState)
-        // Categories mapping per INPUT_SPEC.md 282-329
-        surface.Print(x + 2, y + 2, "[Z] Mining", fg);
-        surface.Print(x + 2, y + 3, "[X] Industry", fg);
-        surface.Print(x + 2, y + 4, "[C] Farming", fg);
-        surface.Print(x + 2, y + 5, "[V] Lumbering", fg);
-        surface.Print(x + 2, y + 6, "[F] Crafts", fg);
-        surface.Print(x + 2, y + 8, "[,] Back   ESC Cancel", Color.Gray);
-
-        // The items list is rendered in FortressState using UiRenderer preview and final selection; no static draw here to avoid duplicated state.
-        // We keep this simple to honor the project’s UI layering.
-    }
-
-    private void DrawMenuOption(ScreenSurface surface, int x, int y, string text, bool active, Color fg, Color activeBg)
-    {
-        if (active)
-        {
-            for (int i = 0; i < 26; i++)
-                surface.SetGlyph(x + i, y, ' ', fg, activeBg);
-            surface.Print(x, y, text, Color.Yellow);
-        }
-        else
-        {
-            surface.Print(x, y, text, fg);
-        }
-    }
-
-    private void DrawBox(ScreenSurface surface, int x, int y, int width, int height, Color fg, Color bg)
-    {
-        for (int i = 0; i < width; i++)
-            for (int j = 0; j < height; j++)
-                surface.SetGlyph(x + i, y + j, ' ', fg, bg);
-
-        for (int i = 1; i < width - 1; i++)
-        {
-            surface.SetGlyph(x + i, y, '-', fg, bg);
-            surface.SetGlyph(x + i, y + height - 1, '-', fg, bg);
-        }
-        for (int j = 1; j < height - 1; j++)
-        {
-            surface.SetGlyph(x, y + j, '|', fg, bg);
-            surface.SetGlyph(x + width - 1, y + j, '|', fg, bg);
-        }
-        surface.SetGlyph(x, y, '+', fg, bg);
-        surface.SetGlyph(x + width - 1, y, '+', fg, bg);
-        surface.SetGlyph(x, y + height - 1, '+', fg, bg);
-        surface.SetGlyph(x + width - 1, y + height - 1, '+', fg, bg);
     }
 }

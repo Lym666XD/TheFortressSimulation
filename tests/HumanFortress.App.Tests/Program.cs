@@ -13,6 +13,8 @@ try
     TransportConstructionCraftRegressionTests.RunAll();
     MiningItemsDiffRegressionTests.RunAll();
     CoreRuntimeSmokeTests.RunAll();
+    ArchitectureBoundarySmokeTests.RunAll();
+    DeterministicAuthoritySmokeTests.RunAll();
     HumanFortress.App.PhaseTests.RunAllPhaseTests();
 }
 finally

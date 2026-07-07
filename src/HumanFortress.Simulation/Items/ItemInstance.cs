@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Items;
 /// Runtime instance of an item in the world
 /// Based on ITEMS_SPEC v4-int §17
 /// </summary>
-public sealed class ItemInstance
+internal sealed class ItemInstance
 {
     // === IDENTITY ===
     public Guid Guid { get; }
@@ -111,14 +111,14 @@ public sealed class ItemInstance
 
 // === SUPPORT TYPES ===
 
-public enum UsePolicy
+internal enum UsePolicy
 {
     Public,    // Anyone can use
     Faction,   // Only faction members
     Private    // Only owner
 }
 
-public class ReservationToken
+internal class ReservationToken
 {
     public Guid JobGuid { get; set; }
     public Guid? ClaimantCreatureGuid { get; set; }
@@ -127,7 +127,7 @@ public class ReservationToken
     public string ReservationType { get; set; } = "haul";  // haul/craft/consume
 }
 
-public class PlacementData
+internal class PlacementData
 {
     public Point AnchorWorld { get; set; }
     public int Z { get; set; }
@@ -135,7 +135,7 @@ public class PlacementData
     public string? StateId { get; set; }  // for multi-state placeables (doors)
 }
 
-public class Improvement
+internal class Improvement
 {
     public string Type { get; set; } = "";  // "engraving", "enchantment", "gem_inlay"
     public string? MaterialId { get; set; }
@@ -144,7 +144,7 @@ public class Improvement
     public string? Description { get; set; }
 }
 
-public class PerishableState
+internal class PerishableState
 {
     public ulong CreatedAtTick { get; set; }
     public int FreshDurationTicks { get; set; }

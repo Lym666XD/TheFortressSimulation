@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.World
     /// <summary>
     /// Manages chunk lifecycle and LOD transitions per SIM_LOD_POLICY.md.
     /// </summary>
-    public sealed class ChunkLifecycleManager
+    internal sealed class ChunkLifecycleManager
     {
         private readonly World _world;
         private readonly Dictionary<ChunkKey, ChunkState> _chunkStates = new();
@@ -306,7 +306,7 @@ namespace HumanFortress.Simulation.World
     /// <summary>
     /// LOD levels per SIM_LOD_POLICY.md section 0.
     /// </summary>
-    public enum LODLevel
+    internal enum LODLevel
     {
         L0_Active = 0,   // Full simulation
         L1_Near = 1,     // Reduced frequency
@@ -318,7 +318,7 @@ namespace HumanFortress.Simulation.World
     /// <summary>
     /// Reasons to pin a chunk at higher LOD.
     /// </summary>
-    public enum PinReason
+    internal enum PinReason
     {
         UIFocus,
         StockpileEditor,

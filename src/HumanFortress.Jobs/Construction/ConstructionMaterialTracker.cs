@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Simulation.Items;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Placeables;
 using SadRogue.Primitives;
@@ -13,7 +14,7 @@ internal sealed class ConstructionMaterialTracker
     private readonly IConstructionDiffEmitter _diffEmitter;
     private readonly IConstructionJobLogger _logger;
 
-    public ConstructionMaterialTracker(
+    internal ConstructionMaterialTracker(
         WorldModel world,
         ConstructionFootprintCells cells,
         IItemDefinitionCatalog itemDefinitions,
@@ -27,7 +28,7 @@ internal sealed class ConstructionMaterialTracker
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    public Dictionary<string, int> CountDelivered(PlaceableInstance site)
+    internal Dictionary<string, int> CountDelivered(PlaceableInstance site)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var cell in _cells.EnumerateFootprintAndRing(site))
@@ -54,7 +55,7 @@ internal sealed class ConstructionMaterialTracker
         return delivered;
     }
 
-    public bool TryConsume(PlaceableInstance site, Dictionary<string, int> toConsume)
+    internal bool TryConsume(PlaceableInstance site, Dictionary<string, int> toConsume)
     {
         var removals = new List<PlannedItemRemoval>();
         var plannedByItem = new Dictionary<Guid, int>();
@@ -131,7 +132,7 @@ internal sealed class ConstructionMaterialTracker
         return true;
     }
 
-    public List<(ItemInstance item, int dist, string tags)> GetItemsNearSite(PlaceableInstance site, int radius)
+    internal List<(ItemInstance item, int dist, string tags)> GetItemsNearSite(PlaceableInstance site, int radius)
     {
         var result = new List<(ItemInstance, int, string)>();
         foreach (var item in _world.Items.GetGroundInstances())

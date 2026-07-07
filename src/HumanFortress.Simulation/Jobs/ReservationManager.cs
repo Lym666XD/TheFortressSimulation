@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using HumanFortress.Contracts.Simulation.Save;
 
 namespace HumanFortress.Simulation.Jobs;
 
@@ -9,7 +10,7 @@ namespace HumanFortress.Simulation.Jobs;
 /// v1.1.1 minimal: item-level reservations with TTL and holder.
 /// Read-safe; writes happen in Write phase only.
 /// </summary>
-public sealed class ReservationManager
+internal sealed class ReservationManager
 {
     private sealed class ItemReservation
     {
@@ -135,5 +136,102 @@ public sealed class ReservationManager
             list.Add((kv.Key, kv.Value.HolderSystem, kv.Value.JobId, kv.Value.ExpireTick));
         }
         return list;
+    }
+
+    internal IReadOnlyList<string> RestoreSnapshot(
+        IReadOnlyList<WorldSaveItemReservationPayloadData>? itemReservations,
+        IReadOnlyList<WorldSaveCreatureReservationPayloadData>? creatureReservations)
+    {
+        var issues = new List<string>();
+        if (itemReservations == null)
+        {
+            issues.Add("World item reservation payload is missing.");
+        }
+
+        if (creatureReservations == null)
+        {
+            issues.Add("World creature reservation payload is missing.");
+        }
+
+        if (issues.Count > 0)
+            return issues;
+
+        ValidateItemReservations(itemReservations!, issues);
+        ValidateCreatureReservations(creatureReservations!, issues);
+        if (issues.Count > 0)
+            return issues;
+
+        _itemRes.Clear();
+        foreach (var reservation in itemReservations!)
+        {
+            _itemRes[reservation.ItemId] = new ItemReservation
+            {
+                ItemId = reservation.ItemId,
+                HolderId = reservation.HolderId,
+                ExpireTick = reservation.ExpireTick
+            };
+        }
+
+        _creatureRes.Clear();
+        foreach (var reservation in creatureReservations!)
+        {
+            _creatureRes[reservation.WorkerId] = new CreatureReservation
+            {
+                WorkerId = reservation.WorkerId,
+                HolderSystem = reservation.HolderSystem,
+                JobId = reservation.JobId,
+                ExpireTick = reservation.ExpireTick
+            };
+        }
+
+        return Array.Empty<string>();
+    }
+
+    private static void ValidateItemReservations(
+        IReadOnlyList<WorldSaveItemReservationPayloadData> reservations,
+        ICollection<string> issues)
+    {
+        var seen = new HashSet<Guid>();
+        for (var i = 0; i < reservations.Count; i++)
+        {
+            var reservation = reservations[i];
+            if (reservation.ItemId == Guid.Empty)
+            {
+                issues.Add($"World item reservation payload[{i}] has an empty item id.");
+            }
+            else if (!seen.Add(reservation.ItemId))
+            {
+                issues.Add($"World item reservation payload[{i}] duplicates item id {reservation.ItemId}.");
+            }
+
+            if (reservation.HolderId == Guid.Empty)
+            {
+                issues.Add($"World item reservation payload[{i}] has an empty holder id.");
+            }
+        }
+    }
+
+    private static void ValidateCreatureReservations(
+        IReadOnlyList<WorldSaveCreatureReservationPayloadData> reservations,
+        ICollection<string> issues)
+    {
+        var seen = new HashSet<Guid>();
+        for (var i = 0; i < reservations.Count; i++)
+        {
+            var reservation = reservations[i];
+            if (reservation.WorkerId == Guid.Empty)
+            {
+                issues.Add($"World creature reservation payload[{i}] has an empty worker id.");
+            }
+            else if (!seen.Add(reservation.WorkerId))
+            {
+                issues.Add($"World creature reservation payload[{i}] duplicates worker id {reservation.WorkerId}.");
+            }
+
+            if (string.IsNullOrWhiteSpace(reservation.HolderSystem))
+            {
+                issues.Add($"World creature reservation payload[{i}] has a blank holder system.");
+            }
+        }
     }
 }

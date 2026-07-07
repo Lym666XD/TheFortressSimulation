@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HumanFortress.Core.Content.Registry;
+namespace HumanFortress.Contracts.Content.Registry;
 
 public sealed class CoreDataLoadResult
 {

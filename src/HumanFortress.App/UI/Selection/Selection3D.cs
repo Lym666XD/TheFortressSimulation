@@ -5,7 +5,7 @@ namespace HumanFortress.App.UI.Selection;
 /// <summary>
 /// Immutable 3D selection (XY rectangle + Z range). Inclusive bounds.
 /// </summary>
-public readonly record struct Selection3D(Rectangle XY, int ZMin, int ZMax)
+internal readonly record struct Selection3D(Rectangle XY, int ZMin, int ZMax)
 {
     public bool IsEmpty => XY.Width <= 0 || XY.Height <= 0 || ZMin > ZMax;
     public int Width => XY.Width;

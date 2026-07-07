@@ -59,7 +59,7 @@ src/
     Creatures/                 # CreatureManager, definitions, instances
     Items/                     # ItemManager, ItemsDiffLog
     Orders/                    # MiningSystem, HaulingSystem, ConstructionSystem
-    Stockpile/                 # StockpileManager, filters, hauling broker
+    Stockpile/                 # StockpileManager, filters, item projection, diff applicator
     World/                     # Chunk, World, ChunkLifecycleManager
     Zones/                     # ZoneManager, ZoneCoordinator
   HumanFortress.Navigation/    # Pathfinding
@@ -212,7 +212,7 @@ public void WriteTick(ulong tick)
 
 - Owns app state transitions and shared scheduler/control primitives: TickScheduler, CommandQueue, EventBus, RngStreamManager, DiffLog.
 - Holds one `SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>>` for active fortress play instead of separate World/Navigation/RuntimeHost fields.
-- Delegates world reset, navigation creation, queue/diff cleanup, content-loading callback invocation, and host creation to Runtime's `SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>>`.
+- Delegates world reset, navigation creation, queue/diff cleanup, content-loading callback invocation, host creation, and generic startup orchestration to Runtime-owned factories/helpers.
 - Starts/stops the runtime host when entering/leaving FortressPlay.
 
 ### 6. `src/HumanFortress.Runtime/SimulationRuntimeSessionFactory.cs`
@@ -221,7 +221,7 @@ public void WriteTick(ulong tick)
 - Creates the authoritative `World` for a new fortress session.
 - Resets scheduler/session queues and diff logs for a clean run.
 - Creates the `NavigationManager` bound to that world.
-- Calls App-supplied callbacks for core creature/item/zone/workshop/recipe content loading and concrete `SimulationRuntimeHost<SimulationRuntimeSystems>` creation. The generic host delegates scheduler/pipeline lifecycle to Runtime-owned `SimulationRuntimeHostCore`.
+- Calls App-supplied callbacks for core creature/item/zone/workshop/recipe content loading and Runtime-owned `SimulationRuntimeHost<SimulationRuntimeSystems>` creation. The generic host delegates scheduler/pipeline lifecycle to Runtime-owned `SimulationRuntimeHostCore`; App supplies logging/content inputs rather than owning the host factory source.
 
 ### 7. `src/HumanFortress.Runtime/SimulationCommandStage.cs`
 **Why:** The simulation command boundary.
@@ -229,15 +229,15 @@ public void WriteTick(ulong tick)
 - Runs queued `ICommand` instances from the tick pipeline's pre-read boundary.
 - Sets the runtime command context's current tick before command execution.
 - Keeps UI/App input paths enqueue-only: commands are applied by the simulation thread before systems read.
-- Profession allocation changes now use `SetProfessionWeightCommand` instead of directly mutating `ProfessionAssignments` from UI/game-state code.
+- Profession allocation changes now use `SetProfessionWeightCommand` and `ProfessionAssignmentDiffLog` instead of directly mutating `ProfessionAssignments` from UI/game-state code or command execution.
 - Debug item spawning now emits `ItemsDiffLog.AddItem` through `IItemSpawnCommandTarget`, then the post-tick item applicator creates the item.
 - Debug creature spawning now emits a spawn-only `CreaturesDiffLog` operation through `ICreatureSpawnCommandTarget`, then the post-tick creature applicator creates the creature.
-- Mining, haul, structural construction, and buildable construction order commands now enqueue through `IOrderCommandTarget`, so command implementations no longer cast `context.World` to the concrete Simulation world.
-- Runtime command-target behavior now lives in focused helpers for item spawning, creature spawning, order enqueueing, zone mutation, workshop queue edits, and stockpile creation. `SimulationRuntimeContext` is Runtime-owned and remains the transitional adapter that implements the interfaces and delegates to those helpers.
+- Mining, haul, structural construction, and buildable construction order commands now enqueue through `IOrderCommandTarget` into `OrderDiffLog`, so command implementations no longer cast `context.World` to the concrete Simulation world and order manager mutation happens post-tick.
+- Runtime command-target behavior now lives in focused helpers for item spawning, creature spawning, order diffs, workshop queue/settings diffs, zone mutation diffs, and stockpile create/delete commands. `SimulationRuntimeContext` is Runtime-owned and remains the transitional adapter that implements the interfaces and delegates to those helpers.
 - Profession assignment is bridged through an injected Runtime callback, so Runtime does not reference App `ProfessionAssignments`.
-- Zone create/update/delete commands now route through `IZoneCommandTarget`, preserving `ZoneCoordinator` cell-shard updates while keeping command implementations away from concrete `World`.
-- Workshop queue update commands now route through `IWorkshopQueueCommandTarget`, keeping recipe lookup, placeable lookup, worker-slot initialization, and queue mutation inside runtime.
-- Stockpile creation commands now route through `IStockpileCommandTarget`, keeping stockpile cell validation, overlap checks, zone naming, and shard writes inside runtime.
+- Zone create/update/delete commands now route through `IZoneCommandTarget` into `ZoneDiffLog`, preserving `ZoneCoordinator` cell-shard behavior while moving authoritative mutation to the post-tick zone applicator.
+- Workshop queue update commands now route through `IWorkshopQueueCommandTarget` into `WorkshopDiffLog`, keeping recipe validation in Runtime while moving placeable lookup, worker-slot initialization, and queue/settings mutation to the post-tick workshop applicator.
+- Stockpile create/delete commands now route through `IStockpileCommandTarget`, with authoritative global-zone/shard mutation applied by the post-tick `StockpileDiffApplicator`.
 
 ---
 
@@ -251,7 +251,7 @@ public void WriteTick(ulong tick)
 
 4. **Created the UnifiedJobsOrchestrator** — coordinates four job subsystems (mining, hauling, construction, crafting) in a single deterministic pipeline with adaptive scheduling hints (reserves workers for high-priority backlogs).
 
-5. **Implemented a data-driven content loading path** — `FortressContentLoader` and `SimulationWorldContentLoader` load JSON-backed creature, item, recipe, construction, tuning, geology, and zone data, then expose runtime catalogs to world managers and runtime composition.
+5. **Implemented a data-driven content loading path** — `FortressContentLoader` loads/validates JSON-backed creature, item, recipe, construction, tuning, geology, and zone data; Runtime's `SimulationWorldContentLoader` applies those snapshots to the active world managers and runtime composition.
 
 6. **Built a multi-stage procedural world generator** — `WorldGen/Stages/` pipeline (Elevation -> Climate -> Biome) produces the overworld map; `FortressGenerator` carves the detailed local map with geology and ore placement.
 
@@ -279,12 +279,11 @@ public void WriteTick(ulong tick)
 - **Creature spawning is only partially diff-backed** — `SpawnCreatureCommand` now uses a spawn-only creature diff, but `CreatureManager.SpawnCreature` remains the low-level applicator write and this is not yet a full creature mutation pipeline.
 - **Order commands use a runtime seam, not an order diff log** — mining/haul/construction commands no longer touch concrete `World` directly, but they still enqueue into `OrdersManager` rather than emitting a formal order diff.
 - **SimulationRuntimeContext still exposes transitional target interfaces** — concrete behavior now lives in Runtime helper classes, but the next architecture step is reducing the context's broad interface surface.
-- **Stockpile creation uses a runtime seam, not stockpile diffs** — intentionally chosen because stockpile diffs are not yet authoritative and the current `StockpileDiffApplicator` has unresolved item/job TODO paths.
-- **StockpileDiffApplicator** has many stub methods (TODO comments for actual item placement/removal). Don't steer the interviewer toward stockpiles.
+- **Stockpile is mid-refactor, not finished gameplay** — create/delete, preset filters, item projection, item-index updates, and planner reservations now use typed diffs through Runtime/Jobs/Simulation seams. Remaining work is richer long-horizon reservation and stockpile maintenance behavior, not App-owned mutation.
 - **Test suite is early**: focused regression/smoke coverage and former Phase A-D validation now live in `tests/HumanFortress.App.Tests`, but it is still a lightweight runner rather than mature module-level CI. Don't claim full TDD yet.
-- **Content compatibility naming remains**: startup now uses `FortressContentLoader` and `RuntimeContentRegistryLoader` to load the structured registry only, and the structured registry implementation now compiles from `HumanFortress.Content`. Many content types still preserve historical `HumanFortress.Core.Content.*` namespaces while callers migrate to injected snapshots/catalog interfaces.
+- **Content compatibility naming is mostly outside Content now**: startup uses `FortressContentLoader` and `RuntimeContentRegistryLoader` to load the structured registry only. The structured registry implementation compiles from `HumanFortress.Content.Registry`; registry contracts compile from `HumanFortress.Contracts.Content.Registry`; runtime geology/zone DTOs compile from `HumanFortress.Contracts.Content`. Navigation contracts still use a transitional namespace even though they compile from `HumanFortress.Contracts`.
 - **Diagnostics migration is partial**: the App logger is now async and category-routed, while content registries, WorldGen, stockpile diff errors, and key Simulation orders/jobs paths use diagnostic bridges. Test/CLI output and no-logger fallbacks still print to console. Don't claim logging is fully production-grade yet.
-- **UI is not snapshot-only yet**: `RenderSnapshotBuilder` exists and some workshop overlays can render from snapshots, but the main map, drawers, debug pages, and placement previews still read live `World` or runtime facades.
+- **UI is not fully presentation-pure yet**: active map/drawer/debug/placement/workshop paths now read Runtime-owned snapshot DTOs instead of live `World`, concrete job systems, or the legacy App `RenderSnapshotBuilder` bridge. The remaining caution is that App still owns sizeable UI state/input orchestration and calls runtime facades for read/query and command enqueue operations.
 
 **Things that are solid and safe to highlight:**
 - The tick scheduler / read-write phase separation is clean and well-structured.

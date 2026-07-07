@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.World;
@@ -12,14 +12,14 @@ namespace HumanFortress.Simulation.Diff;
 /// Handles MoveCreature, MoveItem, MarkCarried, UnmarkCarried.
 /// This runs after systems' Write phase per UPDATE_ORDER.
 /// </summary>
-public static class SimulationDiffApplicator
+internal static class SimulationDiffApplicator
 {
     /// <summary>
-    /// Optional logging callback (set by App layer to write to fortress_debug.log)
+    /// Optional logging callback supplied by Runtime composition.
     /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
+    internal static void ApplyAll(World.World world, System.Collections.Generic.IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
     {
         if (ops.Count == 0) return;
 

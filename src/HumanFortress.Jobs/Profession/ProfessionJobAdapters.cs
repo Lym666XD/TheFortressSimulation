@@ -1,20 +1,21 @@
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Navigation;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Jobs.Craft;
+using HumanFortress.Jobs.Configuration;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Profession;
 
 internal sealed class TransportProfessionCandidateSource : ITransportWorkerCandidateSource
 {
     private readonly ProfessionAssignments _professions;
     private readonly WorkerSelectionStrategy _workerStrategy;
 
-    public TransportProfessionCandidateSource(
+    internal TransportProfessionCandidateSource(
         ProfessionAssignments professions,
         WorkerSelectionStrategy workerStrategy)
     {
@@ -22,7 +23,7 @@ internal sealed class TransportProfessionCandidateSource : ITransportWorkerCandi
         _workerStrategy = workerStrategy;
     }
 
-    public IEnumerable<CreatureInstance> SelectCandidates(
+    IEnumerable<CreatureInstance> ITransportWorkerCandidateSource.SelectCandidates(
         WorldModel world,
         string jobTag,
         HashSet<Guid> busy,
@@ -46,13 +47,13 @@ internal sealed class TransportProfessionCompletionSink : ITransportJobCompletio
     private readonly ProfessionAssignments _professions;
     private readonly string _jobTag;
 
-    public TransportProfessionCompletionSink(ProfessionAssignments professions, string jobTag)
+    internal TransportProfessionCompletionSink(ProfessionAssignments professions, string jobTag)
     {
         _professions = professions;
         _jobTag = jobTag;
     }
 
-    public void RecordJobCompletion(Guid workerId, string jobTag)
+    void ITransportJobCompletionSink.RecordJobCompletion(Guid workerId, string jobTag)
     {
         _professions.RecordJobCompletion(workerId, string.IsNullOrWhiteSpace(jobTag) ? _jobTag : jobTag);
     }
@@ -63,7 +64,7 @@ internal sealed class MiningProfessionCandidateSource : IMiningWorkerCandidateSo
     private readonly ProfessionAssignments _professions;
     private readonly WorkerSelectionStrategy _workerStrategy;
 
-    public MiningProfessionCandidateSource(
+    internal MiningProfessionCandidateSource(
         ProfessionAssignments professions,
         WorkerSelectionStrategy workerStrategy)
     {
@@ -71,7 +72,7 @@ internal sealed class MiningProfessionCandidateSource : IMiningWorkerCandidateSo
         _workerStrategy = workerStrategy;
     }
 
-    public IEnumerable<CreatureInstance> SelectCandidates(
+    IEnumerable<CreatureInstance> IMiningWorkerCandidateSource.SelectCandidates(
         WorldModel world,
         string jobTag,
         HashSet<Guid> busy,
@@ -95,13 +96,13 @@ internal sealed class MiningProfessionCompletionSink : IMiningJobCompletionSink
     private readonly ProfessionAssignments _professions;
     private readonly string _jobTag;
 
-    public MiningProfessionCompletionSink(ProfessionAssignments professions, string jobTag)
+    internal MiningProfessionCompletionSink(ProfessionAssignments professions, string jobTag)
     {
         _professions = professions;
         _jobTag = jobTag;
     }
 
-    public void RecordJobCompletion(Guid workerId, string jobTag)
+    void IMiningJobCompletionSink.RecordJobCompletion(Guid workerId, string jobTag)
     {
         _professions.RecordJobCompletion(workerId, string.IsNullOrWhiteSpace(jobTag) ? _jobTag : jobTag);
     }
@@ -111,12 +112,12 @@ internal sealed class CraftRecipeCatalogAdapter : ICraftRecipeCatalog
 {
     private readonly IRecipeCatalog _recipes;
 
-    public CraftRecipeCatalogAdapter(IRecipeCatalog recipes)
+    internal CraftRecipeCatalogAdapter(IRecipeCatalog recipes)
     {
         _recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
     }
 
-    public RecipeDefinition? GetRecipe(string recipeId)
+    RecipeDefinition? ICraftRecipeCatalog.GetRecipe(string recipeId)
     {
         return _recipes.GetRecipe(recipeId);
     }
@@ -127,7 +128,7 @@ internal sealed class CraftProfessionCandidateSource : ICraftWorkerCandidateSour
     private readonly ProfessionAssignments _professions;
     private readonly WorkerSelectionStrategy _workerStrategy;
 
-    public CraftProfessionCandidateSource(
+    internal CraftProfessionCandidateSource(
         ProfessionAssignments professions,
         WorkerSelectionStrategy workerStrategy)
     {
@@ -135,7 +136,7 @@ internal sealed class CraftProfessionCandidateSource : ICraftWorkerCandidateSour
         _workerStrategy = workerStrategy;
     }
 
-    public IEnumerable<CreatureInstance> SelectCandidates(
+    IEnumerable<CreatureInstance> ICraftWorkerCandidateSource.SelectCandidates(
         WorldModel world,
         string jobTag,
         HashSet<Guid> busy,

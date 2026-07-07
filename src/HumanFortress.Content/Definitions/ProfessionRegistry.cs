@@ -1,9 +1,18 @@
 using System.Text.Json;
+using HumanFortress.Contracts.Jobs;
 using HumanFortress.Content.Loading;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Content.Definitions;
 
-public sealed class ProfessionRegistry : IProfessionRegistry
+internal static class ProfessionRegistryLoader
+{
+    internal static IProfessionRegistry Load(string baseDir, Action<string>? log = null)
+    {
+        return ProfessionRegistry.Load(baseDir, log);
+    }
+}
+
+internal sealed class ProfessionRegistry : IProfessionRegistry
 {
     public IReadOnlyList<ProfessionDefinition> Definitions { get; }
     public ProfessionDefinition DefaultProfession { get; }
@@ -14,7 +23,7 @@ public sealed class ProfessionRegistry : IProfessionRegistry
         DefaultProfession = definitions.FirstOrDefault(d => d.IsDefault) ?? definitions.First();
     }
 
-    public static ProfessionRegistry Load(string baseDir, Action<string>? log = null)
+    internal static ProfessionRegistry Load(string baseDir, Action<string>? log = null)
     {
         try
         {

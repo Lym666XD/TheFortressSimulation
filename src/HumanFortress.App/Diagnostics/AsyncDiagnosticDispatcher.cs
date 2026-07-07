@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.App.Diagnostics;
 
-internal sealed class AsyncDiagnosticDispatcher : IDiagnosticSink, IDisposable
+internal sealed partial class AsyncDiagnosticDispatcher : IDiagnosticSink, IDisposable
 {
     private readonly BlockingCollection<DiagnosticEvent> _queue;
     private readonly IDiagnosticSink _target;
@@ -58,51 +58,4 @@ internal sealed class AsyncDiagnosticDispatcher : IDiagnosticSink, IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _disposed = true;
-        _queue.CompleteAdding();
-        _worker.Join(millisecondsTimeout: 2000);
-
-        if (Interlocked.Read(ref _dropped) > 0)
-        {
-            try
-            {
-                _target.Write(DiagnosticEvent.Create(
-                    DiagnosticLevel.Warning,
-                    "Diagnostics",
-                    $"Dropped {DroppedCount} diagnostic events because the queue was full.")
-                    .WithSequence(Interlocked.Increment(ref _sequence)));
-            }
-            catch (InvalidOperationException)
-            {
-            }
-        }
-
-        if (_target is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
-
-        _queue.Dispose();
-    }
-
-    private void ProcessQueue()
-    {
-        try
-        {
-            foreach (var diagnosticEvent in _queue.GetConsumingEnumerable())
-            {
-                _target.Write(diagnosticEvent);
-            }
-        }
-        catch (InvalidOperationException)
-        {
-        }
-    }
 }

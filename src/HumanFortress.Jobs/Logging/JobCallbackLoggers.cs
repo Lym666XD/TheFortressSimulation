@@ -2,18 +2,18 @@ using HumanFortress.Jobs.Construction;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Logging;
 
 internal sealed class TransportCallbackJobLogger : ITransportJobLogger
 {
     private readonly Action<string>? _log;
 
-    public TransportCallbackJobLogger(Action<string>? log)
+    internal TransportCallbackJobLogger(Action<string>? log)
     {
         _log = log;
     }
 
-    public void Log(string message)
+    void ITransportJobLogger.Log(string message)
     {
         _log?.Invoke(message);
     }
@@ -23,12 +23,12 @@ internal sealed class MiningCallbackJobLogger : IMiningJobLogger
 {
     private readonly Action<string>? _log;
 
-    public MiningCallbackJobLogger(Action<string>? log)
+    internal MiningCallbackJobLogger(Action<string>? log)
     {
         _log = log;
     }
 
-    public void Log(string message)
+    void IMiningJobLogger.Log(string message)
     {
         _log?.Invoke(message);
     }
@@ -38,12 +38,12 @@ internal sealed class ConstructionCallbackJobLogger : IConstructionJobLogger
 {
     private readonly Action<string>? _log;
 
-    public ConstructionCallbackJobLogger(Action<string>? log)
+    internal ConstructionCallbackJobLogger(Action<string>? log)
     {
         _log = log;
     }
 
-    public void Log(string message)
+    void IConstructionJobLogger.Log(string message)
     {
         _log?.Invoke(message);
     }

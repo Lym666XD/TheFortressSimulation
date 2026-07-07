@@ -1,28 +1,36 @@
+using HumanFortress.Contracts.Navigation;
 using System;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Configuration;
+using HumanFortress.Jobs.Diff;
+using HumanFortress.Jobs.Logging;
+using HumanFortress.Jobs.Orchestration;
+using HumanFortress.Jobs.Profession;
 using HumanFortress.Jobs.Transport;
-using HumanFortress.Navigation;
-using HumanFortress.Runtime;
+using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
+using HumanFortress.Simulation.Stockpile;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Runtime.Jobs;
 
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned transport executor.
 /// </summary>
-public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
+internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly TransportJobExecutor _executor;
 
-    public TransportJobSystem(
+    internal TransportJobSystem(
         HumanFortress.Simulation.World.World world,
         ITransportRequestQueue requestQueue,
         DiffLog? diffLog = null,
         NavigationManager? sharedNav = null,
         ItemsDiffLog? itemsDiffLog = null,
+        StockpileDiffLog? stockpileDiffLog = null,
         int intakeBudget = 16,
         int carryoverMaxTicks = 8,
         int maxActiveJobs = 0,
@@ -36,6 +44,7 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = pathService ?? new PathService(tuning);
         var navView = new WorldNavigationView(_nav);
+        var move = new MovementExecutor(paths);
         var logger = new TransportCallbackJobLogger(log);
         ITransportWorkerCandidateSource? workerCandidates = professions == null
             ? null
@@ -48,14 +57,23 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog), "TransportJobSystem requires ItemsDiffLog for deterministic split-stack hauling."),
             UpdateOrder.Priority.Jobs,
             TransportJobExecutor.SystemId);
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter = stockpileDiffLog == null
+            ? null
+            : new TransportStockpileIndexEmitter(
+                world,
+                stockpileDiffLog,
+                UpdateOrder.Priority.Jobs,
+                TransportJobExecutor.SystemId);
 
         _executor = new TransportJobExecutor(
             world,
             requestQueue,
             paths,
             navView,
+            move,
             diffEmitter,
             diffEmitter,
+            stockpileIndexEmitter,
             workerCandidates,
             completionSink,
             logger,
@@ -64,27 +82,44 @@ public sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             maxActiveJobs);
     }
 
-    public int LastIntakeCount => _executor.LastIntakeCount;
+    internal int LastIntakeCount => _executor.LastIntakeCount;
 
-    public int Priority => UpdateOrder.Priority.Jobs;
+    internal int Priority => UpdateOrder.Priority.Jobs;
 
-    public string SystemId => TransportJobExecutor.SystemId;
+    internal string SystemId => TransportJobExecutor.SystemId;
 
-    public NavigationManager NavigationManager => _nav;
+    internal NavigationManager NavigationManager => _nav;
 
-    public TransportJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+    int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    public int GetBacklogCount() => _executor.GetBacklogCount();
+    int ITick.Priority => Priority;
 
-    public void ReadTick(ulong tick) => _executor.ReadTick(tick);
+    string ITick.SystemId => SystemId;
 
-    public void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ITick.ReadTick(ulong tick) => ReadTick(tick);
 
-    public List<TransportActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+    void ITick.WriteTick(ulong tick) => WriteTick(tick);
 
-    public TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
+    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
+
+    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+
+    internal TransportJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
+
+    TransportJobStatsSnapshot IUnifiedTransportJobExecutor.GetLastStatsSnapshot() => GetLastStatsSnapshot();
+
+    internal int GetBacklogCount() => _executor.GetBacklogCount();
+
+    internal List<TransportActiveJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
+
+    internal TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
         => _executor.GetDebugSnapshot(maxActive, maxRequests, includeSeeds);
 
-    public void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+    internal TransportJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
         => _executor.ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);
+
+    void IUnifiedTransportJobExecutor.ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+        => ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);
 }

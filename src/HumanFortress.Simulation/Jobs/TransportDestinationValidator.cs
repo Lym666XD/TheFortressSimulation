@@ -1,25 +1,26 @@
 using System;
+using HumanFortress.Simulation.Stockpile;
 using HumanFortress.Simulation.World;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Jobs;
 
-public sealed class TransportDestinationValidator
+internal sealed class TransportDestinationValidator
 {
     private readonly WorldModel _world;
 
-    public TransportDestinationValidator(WorldModel world)
+    internal TransportDestinationValidator(WorldModel world)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    public bool IsItemInStockpile(Guid itemId)
+    internal bool IsItemInStockpile(Guid itemId)
     {
         var item = _world.Items.GetInstance(itemId);
         return item != null && IsStockpileDestinationValid(item.Position.X, item.Position.Y, item.Z);
     }
 
-    public bool ValidateDestination(int x, int y, int z, TransportReason reason)
+    internal bool ValidateDestination(int x, int y, int z, TransportReason reason)
     {
         switch (reason)
         {
@@ -55,14 +56,31 @@ public sealed class TransportDestinationValidator
         }
     }
 
-    public bool IsStockpileDestinationValid(int x, int y, int z)
+    internal bool ValidateDestinationForItem(Guid itemId, int x, int y, int z, TransportReason reason)
     {
-        if (!TryGetChunkCell(x, y, z, out var chunk, out int cell)) return false;
-        var stockpile = chunk.GetStockpileData();
-        return stockpile != null && stockpile.GetZoneAtCell(cell) > 0;
+        if (!ValidateDestination(x, y, z, reason))
+            return false;
+
+        if (!IsStockpileIndexedReason(reason))
+            return true;
+
+        if (!TryGetStockpileZone(x, y, z, out var zone))
+            return true;
+
+        var item = _world.Items.GetInstance(itemId);
+        if (item == null)
+            return false;
+
+        var definition = _world.Items.GetDefinition(item.DefinitionId);
+        return zone.Filter.Accepts(StockpileItemProjection.FromItem(item, definition));
     }
 
-    public bool IsConstructionSiteDestinationValid(int x, int y, int z)
+    internal bool IsStockpileDestinationValid(int x, int y, int z)
+    {
+        return StockpileWorldQueries.TryGetStockpileCell(_world, x, y, z, out _);
+    }
+
+    internal bool IsConstructionSiteDestinationValid(int x, int y, int z)
     {
         foreach (var chunk in EnumerateNearbyChunks(x, y, z))
         {
@@ -81,7 +99,7 @@ public sealed class TransportDestinationValidator
         return false;
     }
 
-    public bool IsWorkshopDestinationValid(int x, int y, int z)
+    internal bool IsWorkshopDestinationValid(int x, int y, int z)
     {
         foreach (var chunk in EnumerateNearbyChunks(x, y, z))
         {
@@ -130,6 +148,30 @@ public sealed class TransportDestinationValidator
         chunk = found;
         localIndex = Chunk.LocalIndex(localX, localY);
         return true;
+    }
+
+    private bool TryGetStockpileZone(int x, int y, int z, out StockpileZone zone)
+    {
+        zone = null!;
+
+        if (!StockpileWorldQueries.TryGetStockpileCell(_world, x, y, z, out var cell))
+            return false;
+
+        var found = _world.Stockpiles.GetZone(cell.ZoneId);
+        if (found == null)
+            return false;
+
+        zone = found;
+        return true;
+    }
+
+    private static bool IsStockpileIndexedReason(TransportReason reason)
+    {
+        return reason is TransportReason.ToStockpile
+            or TransportReason.ToWorkshopOutput
+            or TransportReason.FromTradeDepot
+            or TransportReason.ToArmory
+            or TransportReason.ToAmmoCache;
     }
 
     private static bool IsWithinFootprintOrAdjacent(int x, int y, int originX, int originY, int width, int depth)

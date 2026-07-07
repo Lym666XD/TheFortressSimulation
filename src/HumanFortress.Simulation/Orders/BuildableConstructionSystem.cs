@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using HumanFortress.Core.Content.Registry;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Simulation.Placeables;
@@ -13,7 +13,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Planner for L2 buildable constructions (e.g., workshops).
 /// Drains BuildableConstructionDesignation and places construction sites at anchors.
 /// </summary>
-public sealed class BuildableConstructionSystem : ITick
+internal sealed class BuildableConstructionSystem : ITick
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;

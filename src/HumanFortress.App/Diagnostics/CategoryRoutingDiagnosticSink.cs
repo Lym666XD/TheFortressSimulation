@@ -1,8 +1,8 @@
-using HumanFortress.Core.Diagnostics;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.App.Diagnostics;
 
-internal sealed class CategoryRoutingDiagnosticSink : IDiagnosticSink, IDisposable
+internal sealed partial class CategoryRoutingDiagnosticSink : IDiagnosticSink, IDisposable
 {
     private readonly FileDiagnosticSink _mainSink;
     private readonly Dictionary<string, FileDiagnosticSink> _categorySinks;
@@ -47,91 +47,4 @@ internal sealed class CategoryRoutingDiagnosticSink : IDiagnosticSink, IDisposab
         }
     }
 
-    private static string ResolveBucket(string category, string message)
-    {
-        if (StartsWithAny(category, "Content", "Recipe", "Registry", "Material", "Geology", "ConstructionRegistry"))
-        {
-            return "content";
-        }
-
-        if (StartsWithAny(category, "Runtime", "Startup", "Native", "Headless", "Command", "Tick"))
-        {
-            return "runtime";
-        }
-
-        if (StartsWithAny(category, "Navigation", "NAV", "Path"))
-        {
-            return "navigation";
-        }
-
-        if (StartsWithAny(category, "Jobs", "Mining", "Haul", "Transport", "Construction", "Craft", "CM-PLAN", "CM-DIAG"))
-        {
-            return "jobs";
-        }
-
-        if (StartsWithAny(category, "Simulation", "Items", "Item", "Creature", "Creatures", "Diff", "Orders", "Stockpile", "World"))
-        {
-            return "simulation";
-        }
-
-        if (StartsWithAny(category, "UI", "Render", "FortressState", "EmbarkPrep", "BuildSnapshot", "GenerateFortressMap", "Mouse", "Key"))
-        {
-            return "ui";
-        }
-
-        if (StartsWithAny(category, "Core", "EventBus"))
-        {
-            return "core";
-        }
-
-        if (message.Contains("[NAV]", StringComparison.OrdinalIgnoreCase))
-        {
-            return "navigation";
-        }
-
-        if (message.Contains("[RECIPES]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[CONSTR.REG]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[ContentRegistry]", StringComparison.OrdinalIgnoreCase))
-        {
-            return "content";
-        }
-
-        if (message.Contains("[DIFF]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[ItemManager]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[CreatureManager]", StringComparison.OrdinalIgnoreCase))
-        {
-            return "simulation";
-        }
-
-        if (message.Contains("[MINING]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[HAUL]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[BUILD.UI]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[CM-", StringComparison.OrdinalIgnoreCase))
-        {
-            return "jobs";
-        }
-
-        if (message.Contains("[UI]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[MOUSE]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[KEY]", StringComparison.OrdinalIgnoreCase)
-            || message.Contains("[RenderMap]", StringComparison.OrdinalIgnoreCase))
-        {
-            return "ui";
-        }
-
-        return "app";
-    }
-
-    private static bool StartsWithAny(string value, params string[] prefixes)
-    {
-        foreach (var prefix in prefixes)
-        {
-            if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
 }

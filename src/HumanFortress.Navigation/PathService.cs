@@ -1,13 +1,15 @@
+using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Pathfinding service per NAVIGATION_SPEC.md section 5.
 /// Manages path requests, caching, and concurrent pathfinders.
 /// </summary>
-public sealed class PathService : IPathService
+internal sealed class PathService : IPathService
 {
     private readonly NavigationTuning _tuning;
     private readonly PathCache _cache;
@@ -16,7 +18,7 @@ public sealed class PathService : IPathService
     private readonly Stopwatch _frameTimer;
     private int _pathsComputedThisTick;
 
-    public PathService(NavigationTuning? tuning = null)
+    internal PathService(NavigationTuning? tuning = null)
     {
         _tuning = tuning ?? NavigationTuning.Default;
         _cache = new PathCache(1024); // LRU cache with 1024 entries
@@ -29,7 +31,7 @@ public sealed class PathService : IPathService
     /// Solve a path request.
     /// Called during read phase of UPDATE_ORDER.
     /// </summary>
-    public Path Solve(in PathRequest request, in IWorldNavigationView world)
+    internal NavPath Solve(in PathRequest request, in IWorldNavigationView world)
     {
         // Check cache first
         var cacheKey = GenerateCacheKey(request, world);
@@ -43,7 +45,7 @@ public sealed class PathService : IPathService
         {
             // Queue for next tick
             _requestQueue.Enqueue(request);
-            return Path.Invalid;
+            return NavPath.Invalid;
         }
 
         // Compute path
@@ -63,7 +65,7 @@ public sealed class PathService : IPathService
     /// <summary>
     /// Start a new tick - resets counters and processes queued requests.
     /// </summary>
-    public void BeginTick()
+    internal void BeginTick()
     {
         _frameTimer.Restart();
         _pathsComputedThisTick = 0;
@@ -72,7 +74,7 @@ public sealed class PathService : IPathService
     /// <summary>
     /// Process queued path requests up to time budget.
     /// </summary>
-    public void ProcessQueuedRequests(IWorldNavigationView world)
+    internal void ProcessQueuedRequests(IWorldNavigationView world)
     {
         while (_requestQueue.TryDequeue(out var request))
         {
@@ -91,7 +93,7 @@ public sealed class PathService : IPathService
     /// Invalidate cache entries for a specific chunk.
     /// Called when chunk connectivity version changes.
     /// </summary>
-    public void InvalidateChunk(ChunkKey chunk)
+    internal void InvalidateChunk(ChunkKey chunk)
     {
         _cache.InvalidateChunk(chunk);
     }
@@ -99,7 +101,7 @@ public sealed class PathService : IPathService
     /// <summary>
     /// Clear all cached paths.
     /// </summary>
-    public void ClearCache()
+    internal void ClearCache()
     {
         _cache.Clear();
     }
@@ -107,7 +109,7 @@ public sealed class PathService : IPathService
     /// <summary>
     /// Get statistics for debugging.
     /// </summary>
-    public PathServiceStats GetStats()
+    internal PathServiceStats GetStats()
     {
         return new PathServiceStats
         {
@@ -145,20 +147,28 @@ public sealed class PathService : IPathService
             position.Z);
     }
 
-    public void Dispose()
+    internal void Dispose()
     {
         _pathfinders?.Dispose();
     }
+
+    NavPath IPathService.Solve(in PathRequest request, in IWorldNavigationView world) => Solve(in request, in world);
+
+    void IPathService.BeginTick() => BeginTick();
+
+    void IPathService.ProcessQueuedRequests(IWorldNavigationView world) => ProcessQueuedRequests(world);
+
+    void IPathService.InvalidateChunk(ChunkKey chunk) => InvalidateChunk(chunk);
 }
 
 /// <summary>
 /// Statistics for pathfinding service.
 /// </summary>
-public struct PathServiceStats
+internal struct PathServiceStats
 {
-    public int CacheSize;
-    public long CacheHits;
-    public long CacheMisses;
-    public int QueuedRequests;
-    public int PathsComputedThisTick;
+    internal int CacheSize;
+    internal long CacheHits;
+    internal long CacheMisses;
+    internal int QueuedRequests;
+    internal int PathsComputedThisTick;
 }

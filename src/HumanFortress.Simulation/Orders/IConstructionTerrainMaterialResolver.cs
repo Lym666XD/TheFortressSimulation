@@ -2,16 +2,16 @@ using HumanFortress.Simulation.Tiles;
 
 namespace HumanFortress.Simulation.Orders;
 
-public interface IConstructionTerrainMaterialResolver
+internal interface IConstructionTerrainMaterialResolver
 {
     ushort ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind);
 
     ushort TryMatchFromCurrent(TileBase tile, TerrainKind kind);
 }
 
-public sealed class EmptyConstructionTerrainMaterialResolver : IConstructionTerrainMaterialResolver
+internal sealed class EmptyConstructionTerrainMaterialResolver : IConstructionTerrainMaterialResolver
 {
-    public static EmptyConstructionTerrainMaterialResolver Instance { get; } = new();
+    internal static EmptyConstructionTerrainMaterialResolver Instance { get; } = new();
 
     private EmptyConstructionTerrainMaterialResolver()
     {

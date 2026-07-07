@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Orders;
 /// Construction designation for L0 structural builds (wall/floor/ramp/stairs).
 /// Supports multi-Z prisms per DF-style input: top Z places stairs down, bottom Z places stairs up, middle Z places UD.
 /// </summary>
-public sealed class ConstructionDesignation
+internal sealed class ConstructionDesignation
 {
     public readonly Rectangle WorldRect;
     public readonly int ZMin;
@@ -41,7 +41,7 @@ public sealed class ConstructionDesignation
 /// <summary>
 /// Target structural kinds we support in L0 construction.
 /// </summary>
-public enum ConstructionShape : byte
+internal enum ConstructionShape : byte
 {
     Wall,
     Floor,
@@ -53,7 +53,7 @@ public enum ConstructionShape : byte
 /// Planned build DTO emitted by ConstructionSystem.ReadTick.
 /// Carries final target kind and optional geology handle selected by material resolver.
 /// </summary>
-public readonly record struct PlannedBuild(
+internal readonly record struct PlannedBuild(
     Point Cell,
     int Z,
     TerrainKind TargetKind,
@@ -67,7 +67,7 @@ public readonly record struct PlannedBuild(
 /// Filter specification for selecting materials/items for construction.
 /// Can be reused by L2 furniture and future workshop recipes.
 /// </summary>
-public sealed class MaterialFilterSpec
+internal sealed class MaterialFilterSpec
 {
     /// <summary>
     /// Optional concrete material ID (e.g., "core_mat_stone_granite"). If set, takes precedence.

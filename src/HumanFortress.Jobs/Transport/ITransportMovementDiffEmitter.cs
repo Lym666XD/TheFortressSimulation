@@ -1,4 +1,4 @@
-using HumanFortress.Navigation;
+using HumanFortress.Contracts.Navigation;
 
 namespace HumanFortress.Jobs.Transport;
 

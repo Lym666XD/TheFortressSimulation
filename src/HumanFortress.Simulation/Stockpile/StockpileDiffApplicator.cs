@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HumanFortress.Simulation.Diagnostics;
+using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
+using SimulationWorld = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Stockpile;
 
@@ -10,41 +12,36 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Applies stockpile diffs during Write phase.
 /// Per STOCKPILE_SPEC.md section 7: deterministic merge and atomic application.
 /// </summary>
-public sealed class StockpileDiffApplicator
+internal sealed class StockpileDiffApplicator
 {
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
+    private readonly SimulationWorld _world;
     private readonly StockpileManager _zoneManager;
 
-    public StockpileDiffApplicator(StockpileManager zoneManager)
+    private StockpileDiffApplicator(SimulationWorld world)
     {
-        _zoneManager = zoneManager ?? throw new ArgumentNullException(nameof(zoneManager));
+        _world = world ?? throw new ArgumentNullException(nameof(world));
+        _zoneManager = world.Stockpiles;
     }
 
-    /// <summary>
-    /// Apply a batch of stockpile diffs to a chunk.
-    /// Called during Write phase only.
-    /// </summary>
-    public void ApplyDiffs(Chunk chunk, List<StockpileDiff> diffs)
+    internal static void ApplyAll(SimulationWorld world, IReadOnlyList<StockpileDiff> diffs)
     {
+        ArgumentNullException.ThrowIfNull(world);
+        ArgumentNullException.ThrowIfNull(diffs);
+
         if (diffs.Count == 0)
             return;
 
-        // Sort diffs by deterministic key
-        // Per STOCKPILE_SPEC: cellIndex → priority(desc) → op → zoneId → itemHandle → systemId → localSeq
-        var sortedDiffs = diffs.OrderBy(d => d.GetSortKey()).ToList();
-
-        // Apply each diff
-        foreach (var diff in sortedDiffs)
+        var applicator = new StockpileDiffApplicator(world);
+        foreach (var diff in diffs.OrderBy(static d => d.GetSortKey()))
         {
             try
             {
-                ApplyDiff(chunk, diff);
+                applicator.ApplyWorldDiff(world, diff);
             }
             catch (Exception ex)
             {
-                // Log error but continue processing
-                // Per CONCURRENCY_MODEL: failures should not crash the loop
                 SimulationDiagnostics.Error(
                     LogCallback,
                     "Simulation.StockpileDiff",
@@ -55,7 +52,7 @@ public sealed class StockpileDiffApplicator
     }
 
     /// <summary>
-    /// Apply a single diff to a chunk.
+    /// Apply a single chunk-scoped stockpile diff after world-scoped diffs were routed.
     /// </summary>
     private void ApplyDiff(Chunk chunk, StockpileDiff diff)
     {
@@ -70,24 +67,12 @@ public sealed class StockpileDiffApplicator
 
         switch (diff.Op)
         {
-            case StockpileDiffOp.CreateZone:
-                HandleCreateZone(chunk, stockpileData, diff);
-                break;
-
-            case StockpileDiffOp.DeleteZone:
-                HandleDeleteZone(stockpileData, diff);
-                break;
-
             case StockpileDiffOp.AddCells:
                 HandleAddCells(stockpileData, diff);
                 break;
 
             case StockpileDiffOp.RemoveCells:
                 HandleRemoveCells(stockpileData, diff);
-                break;
-
-            case StockpileDiffOp.CreateHaulJob:
-                HandleCreateHaulJob(chunk, stockpileData, diff);
                 break;
 
             case StockpileDiffOp.ReserveSlot:
@@ -112,14 +97,132 @@ public sealed class StockpileDiffApplicator
         }
     }
 
-    private void HandleCreateZone(Chunk chunk, ChunkStockpileData stockpileData, StockpileDiff diff)
+    private void ApplyWorldDiff(SimulationWorld world, StockpileDiff diff)
     {
-        stockpileData.CreateOrUpdateShard(diff.ZoneId, chunk.Key);
+        if (diff.Op == StockpileDiffOp.CreateZone && diff.Data is StockpileCreateZoneData request)
+        {
+            HandleCreateZone(world, request);
+            return;
+        }
+
+        if (diff.Op == StockpileDiffOp.DeleteZone)
+        {
+            HandleDeleteZone(world, diff);
+            return;
+        }
+
+        var chunk = world.GetChunk(diff.TargetChunk);
+        if (chunk == null)
+            return;
+
+        ApplyDiff(chunk, diff);
     }
 
-    private void HandleDeleteZone(ChunkStockpileData stockpileData, StockpileDiff diff)
+    private void HandleCreateZone(SimulationWorld world, StockpileCreateZoneData request)
     {
-        stockpileData.DeleteShard(diff.ZoneId);
+        var acceptedCells = new Dictionary<ChunkKey, List<int>>();
+
+        foreach (var (chunkKey, requestedCells) in request.CellsByChunk
+            .OrderBy(static entry => entry.Key.Z)
+            .ThenBy(static entry => entry.Key.ChunkY)
+            .ThenBy(static entry => entry.Key.ChunkX))
+        {
+            var chunk = world.GetChunk(chunkKey);
+            if (chunk == null)
+                continue;
+
+            chunk.EnsureStockpileData();
+            var stockpileData = chunk.GetStockpileData();
+            if (stockpileData == null)
+                continue;
+
+            foreach (int cellIndex in requestedCells.Distinct().OrderBy(static cell => cell))
+            {
+                if (!IsAcceptableStockpileCell(chunk, cellIndex))
+                    continue;
+
+                if (stockpileData.GetZoneAtCell(cellIndex) != 0)
+                    continue;
+
+                if (!acceptedCells.TryGetValue(chunkKey, out var cells))
+                {
+                    cells = new List<int>();
+                    acceptedCells.Add(chunkKey, cells);
+                }
+
+                cells.Add(cellIndex);
+            }
+        }
+
+        int acceptedCount = acceptedCells.Values.Sum(static cells => cells.Count);
+        if (acceptedCount == 0)
+            return;
+
+        var homeChunk = acceptedCells.ContainsKey(request.HomeChunk)
+            ? request.HomeChunk
+            : acceptedCells.Keys
+                .OrderBy(static key => key.Z)
+                .ThenBy(static key => key.ChunkY)
+                .ThenBy(static key => key.ChunkX)
+                .First();
+        int zoneId = _zoneManager.CreateZone(request.Name, homeChunk, request.CreatedTick);
+
+        foreach (var (chunkKey, cells) in acceptedCells)
+        {
+            var chunk = world.GetChunk(chunkKey);
+            if (chunk == null)
+                continue;
+
+            chunk.EnsureStockpileData();
+            var stockpileData = chunk.GetStockpileData();
+            stockpileData?.CreateOrUpdateShard(zoneId, chunkKey);
+            stockpileData?.AddCellsToZone(zoneId, cells);
+        }
+
+        var zone = _zoneManager.GetZone(zoneId);
+        if (zone != null)
+        {
+            zone.Filter = request.Filter;
+            zone.Priority = request.ZonePriority;
+            zone.UpdateMemberChunks(acceptedCells.Keys);
+        }
+
+        SimulationDiagnostics.Information(
+            LogCallback,
+            "Simulation.StockpileDiff",
+            $"[STOCKPILE] Applied zone {zoneId} name={request.Name} cells={acceptedCount}");
+    }
+
+    private static bool IsAcceptableStockpileCell(Chunk chunk, int cellIndex)
+    {
+        if (cellIndex < 0 || cellIndex >= Chunk.CELLS_PER_LAYER)
+            return false;
+
+        var (localX, localY) = Chunk.IndexToLocal(cellIndex);
+        return chunk.GetTile(localX, localY).Kind == TerrainKind.OpenWithFloor;
+    }
+
+    private void HandleDeleteZone(SimulationWorld world, StockpileDiff diff)
+    {
+        var zone = _zoneManager.GetZone(diff.ZoneId);
+        if (zone == null)
+            return;
+
+        foreach (var chunkKey in zone.MemberChunks
+            .Distinct()
+            .OrderBy(static key => key.Z)
+            .ThenBy(static key => key.ChunkY)
+            .ThenBy(static key => key.ChunkX))
+        {
+            var chunk = world.GetChunk(chunkKey);
+            chunk?.GetStockpileData()?.DeleteShard(diff.ZoneId);
+        }
+
+        _zoneManager.DeleteZone(diff.ZoneId);
+        SimulationDiagnostics.Information(
+            LogCallback,
+            "Simulation.StockpileDiff",
+            $"[STOCKPILE] Deleted zone {diff.ZoneId}");
     }
 
     private void HandleAddCells(ChunkStockpileData stockpileData, StockpileDiff diff)
@@ -136,29 +239,6 @@ public sealed class StockpileDiffApplicator
         {
             stockpileData.RemoveCellsFromZone(diff.ZoneId, cells);
         }
-    }
-
-    private void HandleCreateHaulJob(Chunk chunk, ChunkStockpileData stockpileData, StockpileDiff diff)
-    {
-        // CreateHaulJob is atomic with reservation
-        // Validate item still available
-        if (!ValidateItemStillAvailable(diff.ItemHandle))
-        {
-            // Silent discard per STOCKPILE_SPEC
-            return;
-        }
-
-        // Reserve slot atomically
-        if (!stockpileData.TryReserveSlot(diff.ZoneId))
-        {
-            // No capacity, discard
-            return;
-        }
-
-        // Mark item as reserved (TODO: integrate with item system)
-        // ReserveItem(diff.ItemHandle, diff.JobId);
-
-        // TODO: Actually create the haul job in job system
     }
 
     private void HandleReserveSlot(ChunkStockpileData stockpileData, StockpileDiff diff)
@@ -179,8 +259,7 @@ public sealed class StockpileDiffApplicator
             return;
         }
 
-        // Get item tags (TODO: from item system)
-        var tags = GetItemTags(diff.ItemHandle);
+        var tags = GetItemTags(diff);
 
         // Update stockpile data
         stockpileData.OnItemPlaced(
@@ -190,13 +269,12 @@ public sealed class StockpileDiffApplicator
             tags
         );
 
-        // TODO: Actually place item in L5 overlay
+        // Item position movement is owned by the Items/Transport pipeline.
     }
 
     private void HandleRemoveItem(Chunk chunk, ChunkStockpileData stockpileData, StockpileDiff diff)
     {
-        // Get item tags (TODO: from item system)
-        var tags = GetItemTags(diff.ItemHandle);
+        var tags = GetItemTags(diff);
 
         // Update stockpile data
         stockpileData.OnItemRemoved(
@@ -206,7 +284,7 @@ public sealed class StockpileDiffApplicator
             tags
         );
 
-        // TODO: Actually remove item from L5 overlay
+        // Item position movement is owned by the Items/Transport pipeline.
     }
 
     private void HandleUpdateFilter(StockpileDiff diff)
@@ -222,23 +300,45 @@ public sealed class StockpileDiffApplicator
 
     #region Validation Helpers
 
-    private bool ValidateItemStillAvailable(int itemHandle)
-    {
-        // TODO: Check with item system
-        // For now, assume valid
-        return true;
-    }
-
     private bool ValidateCellAccepts(ChunkStockpileData stockpileData, StockpileDiff diff)
     {
         var zoneId = stockpileData.GetZoneAtCell(diff.CellIndex);
-        return zoneId == diff.ZoneId;
+        if (zoneId != diff.ZoneId)
+            return false;
+
+        var zone = _zoneManager.GetZone(diff.ZoneId);
+        if (zone == null)
+            return false;
+
+        return TryProjectItem(diff.ItemHandle, out var stack) && zone.Filter.Accepts(stack);
     }
 
-    private List<string> GetItemTags(int itemHandle)
+    private List<string> GetItemTags(StockpileDiff diff)
     {
-        // TODO: Get from item system
-        return new List<string>();
+        if (diff.Data is StockpileItemIndexData itemData)
+        {
+            return itemData.Stack.Tags
+                .OrderBy(static tag => tag, StringComparer.Ordinal)
+                .ToList();
+        }
+
+        return TryProjectItem(diff.ItemHandle, out var stack)
+            ? stack.Tags.OrderBy(static tag => tag, StringComparer.Ordinal).ToList()
+            : new List<string>();
+    }
+
+    private bool TryProjectItem(int itemHandle, out ItemStackRef stack)
+    {
+        var item = _world.Items.GetInstanceByEntityId(unchecked((uint)itemHandle));
+        if (item == null)
+        {
+            stack = new ItemStackRef(itemHandle);
+            return false;
+        }
+
+        var definition = _world.Items.GetDefinition(item.DefinitionId);
+        stack = StockpileItemProjection.FromItem(item, definition);
+        return true;
     }
 
     #endregion

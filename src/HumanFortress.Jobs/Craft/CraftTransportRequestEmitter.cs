@@ -11,14 +11,14 @@ internal sealed class CraftTransportRequestEmitter
     private readonly ITransportIntake _transport;
     private readonly string _systemId;
 
-    public CraftTransportRequestEmitter(WorldModel world, ITransportIntake transport, string systemId)
+    internal CraftTransportRequestEmitter(WorldModel world, ITransportIntake transport, string systemId)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _transport = transport ?? throw new ArgumentNullException(nameof(transport));
         _systemId = systemId ?? throw new ArgumentNullException(nameof(systemId));
     }
 
-    public int RequestMaterials(PlaceableInstance workshop, string defId, int amountNeeded, ulong tick)
+    internal int RequestMaterials(PlaceableInstance workshop, string defId, int amountNeeded, ulong tick)
     {
         int requested = 0;
         foreach (var item in _world.Items.GetGroundInstances().OrderBy(i => i.Guid))

@@ -2,9 +2,9 @@ using System;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen.Stages
+namespace HumanFortress.WorldGen.Implementation.Stages
 {
-    public class ElevationStage : IWorldGenStage
+    internal sealed class ElevationStage : IWorldGenStage
     {
         public string Name => "Elevation";
         

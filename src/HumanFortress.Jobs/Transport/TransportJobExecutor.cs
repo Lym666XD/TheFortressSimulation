@@ -1,7 +1,7 @@
+using HumanFortress.Contracts.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Jobs;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -9,7 +9,7 @@ namespace HumanFortress.Jobs.Transport;
 
 internal sealed class TransportJobExecutor
 {
-    public const string SystemId = "Jobs.Transport";
+    internal const string SystemId = "Jobs.Transport";
 
     private const int CreatureReserveTtlTicks = 200;
     private const string JobTag = "hauling";
@@ -34,13 +34,15 @@ internal sealed class TransportJobExecutor
     private int? _hintMaxActive;
     private int _hintReserveSlots;
 
-    public TransportJobExecutor(
+    internal TransportJobExecutor(
         WorldModel world,
         ITransportRequestQueue requestQueue,
         IPathService paths,
         IWorldNavigationView navView,
+        IMovementExecutor move,
         ITransportMovementDiffEmitter movementDiffEmitter,
         ITransportItemDiffEmitter itemDiffEmitter,
+        ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         ITransportWorkerCandidateSource? workerCandidates,
         ITransportJobCompletionSink? completionSink,
         ITransportJobLogger? logger,
@@ -51,10 +53,11 @@ internal sealed class TransportJobExecutor
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _requests = requestQueue ?? throw new ArgumentNullException(nameof(requestQueue));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
+        move = move ?? throw new ArgumentNullException(nameof(move));
         _logger = logger ?? NullTransportJobLogger.Instance;
         _intakeFilter = new TransportIntakeFilter(world);
+        stockpileIndexEmitter ??= NullTransportStockpileIndexEmitter.Instance;
 
-        var move = new MovementExecutor(paths);
         var destinationValidator = new TransportDestinationValidator(world);
         var jobFinalizer = new TransportJobFinalizer(world.Reservations);
         var replanHandler = new TransportReplanHandler(world, paths, navView, move, movementDiffEmitter, _logger, SeedFrom);
@@ -76,6 +79,7 @@ internal sealed class TransportJobExecutor
             navView,
             move,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             jobFinalizer,
             _logger,
             CreatureReserveTtlTicks,
@@ -83,6 +87,7 @@ internal sealed class TransportJobExecutor
         var deliveryHandler = new TransportDeliveryHandler(
             destinationValidator,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             jobFinalizer,
             completionSink,
             _logger,
@@ -93,6 +98,7 @@ internal sealed class TransportJobExecutor
             move,
             movementDiffEmitter,
             itemDiffEmitter,
+            stockpileIndexEmitter,
             replanHandler,
             jobFinalizer,
             pickupHandler,
@@ -105,13 +111,13 @@ internal sealed class TransportJobExecutor
         _carryoverMaxTicks = Math.Max(1, carryoverMaxTicks);
     }
 
-    public int LastIntakeCount { get; private set; }
+    internal int LastIntakeCount { get; private set; }
 
-    public TransportJobStatsSnapshot GetLastStatsSnapshot() => _statsTracker.LastStats;
+    internal TransportJobStatsSnapshot GetLastStatsSnapshot() => _statsTracker.LastStats;
 
-    public int GetBacklogCount() => _backlog.Count;
+    internal int GetBacklogCount() => _backlog.Count;
 
-    public void ReadTick(ulong tick)
+    internal void ReadTick(ulong tick)
     {
         _paths.BeginTick();
         int intakeBudget = GetEffectiveIntakeBudget();
@@ -176,7 +182,7 @@ internal sealed class TransportJobExecutor
         _statsTracker.RecordRead(LastIntakeCount, _active.Count, _backlog.Count, carryoverOld);
     }
 
-    public void WriteTick(ulong tick)
+    internal void WriteTick(ulong tick)
     {
         if (_active.Count == 0)
         {
@@ -196,7 +202,7 @@ internal sealed class TransportJobExecutor
         }
     }
 
-    public List<TransportActiveJobView> GetActiveJobsSnapshot()
+    internal List<TransportActiveJobView> GetActiveJobsSnapshot()
     {
         var list = new List<TransportActiveJobView>(_active.Count);
         foreach (var j in _active)
@@ -208,7 +214,7 @@ internal sealed class TransportJobExecutor
         return list;
     }
 
-    public TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
+    internal TransportDebugSnapshot GetDebugSnapshot(int maxActive = 8, int maxRequests = 8, bool includeSeeds = false)
     {
         var stats = GetLastStatsSnapshot();
         var active = new List<TransportActiveJobDebugView>(Math.Min(maxActive, _active.Count));
@@ -238,7 +244,32 @@ internal sealed class TransportJobExecutor
             SeedsIncluded: includeSeeds);
     }
 
-    public void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
+    internal TransportJobReplaySnapshot GetReplaySnapshot()
+    {
+        var active = new TransportActiveJobStateSnapshot[_active.Count];
+        for (var i = 0; i < _active.Count; i++)
+        {
+            var job = _active[i];
+            active[i] = new TransportActiveJobStateSnapshot(
+                i,
+                job.CreatureId,
+                job.ItemId,
+                job.Dest,
+                job.Stage,
+                job.Quantity,
+                job.InvalidReplanCount,
+                job.Reason);
+        }
+
+        return new TransportJobReplaySnapshot(
+            _hintIntakeCap,
+            _hintMaxActive,
+            _hintReserveSlots,
+            active,
+            _backlog.GetStateSnapshot());
+    }
+
+    internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
     {
         _hintIntakeCap = intakeCap;
         _hintMaxActive = maxActiveCap;

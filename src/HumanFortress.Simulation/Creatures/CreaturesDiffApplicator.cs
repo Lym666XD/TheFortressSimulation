@@ -2,11 +2,11 @@ namespace HumanFortress.Simulation.Creatures;
 
 using HumanFortress.Simulation.Diagnostics;
 
-public static class CreaturesDiffApplicator
+internal static class CreaturesDiffApplicator
 {
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public static void ApplyAll(World.World world, IReadOnlyList<CreaturesDiff> diffs, ulong tick)
+    internal static void ApplyAll(World.World world, IReadOnlyList<CreaturesDiff> diffs, ulong tick)
     {
         if (diffs.Count == 0) return;
 

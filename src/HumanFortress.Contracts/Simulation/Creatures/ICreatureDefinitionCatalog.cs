@@ -1,4 +1,4 @@
-namespace HumanFortress.Simulation.Creatures;
+namespace HumanFortress.Contracts.Simulation.Creatures;
 
 /// <summary>
 /// Read-only creature definition catalog. Runtime systems should prefer this over the full creature manager

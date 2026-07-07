@@ -86,7 +86,7 @@ Defines the data-driven model for player Orders (designations/tools), how the UI
 5) Execution Coupling (Read/Write stages)
 
 - Read: `HaulingSystem` drains bounded number of Haul designations, enumerates items in rect (same Z), selects destination stockpile cells (v1 simplified), and produces `PlannedMove` DTOs.
-- Write: `HaulingSystem` feeds transport requests to the job layer. Current App `TransportJobSystem` consumes requests, assigns a worker, and uses Navigation pathing through Jobs-owned transport executor logic.
+- Write: `HaulingSystem` feeds transport requests to the job layer. The Runtime `TransportJobSystem` wrapper consumes requests, assigns a worker, and uses Navigation pathing through Jobs-owned transport executor logic.
 
 6) Determinism
 

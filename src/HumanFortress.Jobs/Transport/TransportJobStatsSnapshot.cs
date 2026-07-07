@@ -1,6 +1,6 @@
 namespace HumanFortress.Jobs.Transport;
 
-public readonly record struct TransportJobStatsSnapshot(
+internal readonly record struct TransportJobStatsSnapshot(
     int Intake,
     int Active,
     int Backlog,

@@ -64,6 +64,25 @@ public sealed class RngStreamManager
     }
 
     /// <summary>
+    /// Get a canonical stream state snapshot sorted by stream name.
+    /// </summary>
+    public IReadOnlyList<RngStreamStateSnapshot> GetStateSnapshot()
+    {
+        return _streams
+            .Select(static kvp => new RngStreamStateSnapshot(kvp.Key, kvp.Value.GetState()))
+            .OrderBy(static snapshot => snapshot.StreamName, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Clear all materialized streams while keeping the manager's master seed.
+    /// </summary>
+    public void ClearStreams()
+    {
+        _streams.Clear();
+    }
+
+    /// <summary>
     /// Restore stream states from save.
     /// </summary>
     public void RestoreStates(Dictionary<string, RngState> states)
@@ -74,4 +93,29 @@ public sealed class RngStreamManager
             stream.SetState(kvp.Value);
         }
     }
+
+    /// <summary>
+    /// Restore stream states from a canonical stream state snapshot.
+    /// </summary>
+    public void RestoreStates(IEnumerable<RngStreamStateSnapshot> states)
+    {
+        ArgumentNullException.ThrowIfNull(states);
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var state in states)
+        {
+            if (string.IsNullOrWhiteSpace(state.StreamName))
+                throw new ArgumentException("RNG stream snapshot contains an empty stream name.", nameof(states));
+            if (!seen.Add(state.StreamName))
+                throw new ArgumentException($"RNG stream snapshot contains duplicate stream '{state.StreamName}'.", nameof(states));
+
+            var stream = GetStream(state.StreamName);
+            stream.SetState(state.State);
+        }
+    }
 }
+
+/// <summary>
+/// Canonical RNG stream state row for deterministic replay/save snapshots.
+/// </summary>
+public readonly record struct RngStreamStateSnapshot(string StreamName, RngState State);

@@ -1,6 +1,8 @@
+using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
+using NavPath = HumanFortress.Contracts.Navigation.Path;
 
-namespace HumanFortress.Navigation;
+namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// LRU cache for computed paths.
@@ -16,18 +18,18 @@ internal sealed class PathCache
     private long _misses;
     private ulong _timestamp;
 
-    public PathCache(int maxSize)
+    internal PathCache(int maxSize)
     {
         _maxSize = maxSize;
         _cache = new ConcurrentDictionary<ulong, CacheEntry>();
         _chunkIndex = new ConcurrentDictionary<ChunkKey, HashSet<ulong>>();
     }
 
-    public int Count => _cache.Count;
-    public long Hits => _hits;
-    public long Misses => _misses;
+    internal int Count => _cache.Count;
+    internal long Hits => _hits;
+    internal long Misses => _misses;
 
-    public bool TryGet(ulong key, out Path path)
+    internal bool TryGet(ulong key, out NavPath path)
     {
         if (_cache.TryGetValue(key, out var entry))
         {
@@ -47,7 +49,7 @@ internal sealed class PathCache
         return false;
     }
 
-    public void Add(ulong key, Path path)
+    internal void Add(ulong key, NavPath path)
     {
         lock (_lockObj)
         {
@@ -71,7 +73,7 @@ internal sealed class PathCache
         }
     }
 
-    public void InvalidateChunk(ChunkKey chunk)
+    internal void InvalidateChunk(ChunkKey chunk)
     {
         lock (_lockObj)
         {
@@ -85,7 +87,7 @@ internal sealed class PathCache
         }
     }
 
-    public void Clear()
+    internal void Clear()
     {
         lock (_lockObj)
         {
@@ -120,7 +122,7 @@ internal sealed class PathCache
         }
     }
 
-    private void IndexPath(ulong key, Path path)
+    private void IndexPath(ulong key, NavPath path)
     {
         if (path.Steps.Length == 0)
             return;
@@ -185,7 +187,7 @@ internal sealed class PathCache
 
     private class CacheEntry
     {
-        public Path Path { get; set; }
-        public ulong LastAccess { get; set; }
+        internal NavPath Path { get; set; }
+        internal ulong LastAccess { get; set; }
     }
 }

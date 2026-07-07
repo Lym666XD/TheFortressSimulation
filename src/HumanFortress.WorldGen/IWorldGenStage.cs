@@ -1,14 +1,14 @@
 using HumanFortress.Core.World;
 
-namespace HumanFortress.WorldGen
+namespace HumanFortress.WorldGen.Implementation
 {
-    public interface IWorldGenStage
+    internal interface IWorldGenStage
     {
         string Name { get; }
         void Execute(WorldGenContext context);
     }
     
-    public class WorldGenContext
+    internal sealed class WorldGenContext
     {
         public WorldParams Params { get; set; }
         public WorldTile[,] Tiles { get; set; }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HumanFortress.Contracts.Simulation.Save;
 using HumanFortress.Core.Random;
 
 namespace HumanFortress.Simulation.Placeables;
@@ -8,7 +9,7 @@ namespace HumanFortress.Simulation.Placeables;
 /// <summary>
 /// Runtime state for a workshop placeable. Tracks queue, worker slots, and automation toggles.
 /// </summary>
-public sealed class WorkshopState
+internal sealed class WorkshopState
 {
     private const ulong WorkshopQueueEntryGuidScope = 0x574F524B51454E54UL;
 
@@ -27,6 +28,38 @@ public sealed class WorkshopState
     public int AllowedWorkers { get; private set; }
     public int MaxWorkers { get; private set; }
     public int ActiveJobs { get; private set; }
+    internal ulong NextEntrySequence => _nextEntrySequence;
+
+    internal static WorkshopState RestoreSnapshot(WorldSaveWorkshopPayloadData payload)
+    {
+        var state = new WorkshopState
+        {
+            AutoRequestMaterials = payload.AutoRequestMaterials,
+            AutoStockpileOutputs = payload.AutoStockpileOutputs,
+            AllowedWorkers = payload.AllowedWorkers,
+            MaxWorkers = payload.MaxWorkers,
+            ActiveJobs = payload.ActiveJobs,
+            _nextEntrySequence = payload.NextEntrySequence
+        };
+
+        foreach (var entryPayload in payload.Queue ?? Array.Empty<WorldSaveWorkshopQueueEntryPayloadData>())
+        {
+            state._queue.Add(new CraftQueueEntry(
+                entryPayload.EntryId,
+                entryPayload.RecipeId,
+                entryPayload.DisplayName)
+            {
+                Status = (CraftQueueStatus)entryPayload.Status,
+                HasPendingRequests = entryPayload.HasPendingRequests,
+                LastRequestTick = entryPayload.LastRequestTick,
+                ActiveWorkerId = entryPayload.ActiveWorkerId,
+                IsScheduled = entryPayload.IsScheduled,
+                BlockingReason = entryPayload.BlockingReason
+            });
+        }
+
+        return state;
+    }
 
     public void ConfigureWorkers(int defaultAllowed, int maxWorkers)
     {
@@ -91,7 +124,7 @@ public sealed class WorkshopState
     public CraftQueueEntry? GetEntry(Guid entryId) => _queue.FirstOrDefault(e => e.EntryId == entryId);
 }
 
-public enum CraftQueueStatus
+internal enum CraftQueueStatus
 {
     Pending,
     AwaitingMaterials,
@@ -99,7 +132,7 @@ public enum CraftQueueStatus
     InProgress
 }
 
-public sealed class CraftQueueEntry
+internal sealed class CraftQueueEntry
 {
     public CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
     {

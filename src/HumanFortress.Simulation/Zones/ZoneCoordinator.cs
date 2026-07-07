@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Coordinator for zone operations at the World level.
 /// Provides high-level methods for zone creation, deletion, and cell management.
 /// </summary>
-public sealed class ZoneCoordinator
+internal sealed class ZoneCoordinator
 {
     private readonly World.World _world;
     private readonly ZoneManager _manager;

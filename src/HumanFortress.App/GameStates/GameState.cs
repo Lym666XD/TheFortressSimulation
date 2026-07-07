@@ -3,7 +3,7 @@ namespace HumanFortress.App.GameStates;
 /// <summary>
 /// Game states per GAME_STATE_FLOW.md.
 /// </summary>
-public enum GameStateType
+internal enum GameStateType
 {
     Boot,
     MainMenu,
@@ -18,32 +18,18 @@ public enum GameStateType
 /// <summary>
 /// Base class for game states.
 /// </summary>
-public abstract class GameState
+internal abstract class GameState
 {
-    public abstract GameStateType Type { get; }
+    internal abstract GameStateType Type { get; }
 
     /// <summary>
     /// Called when entering this state.
     /// </summary>
-    public virtual void Enter() { }
+    internal virtual void Enter() { }
 
     /// <summary>
     /// Called when exiting this state.
     /// </summary>
-    public virtual void Exit() { }
+    internal virtual void Exit() { }
 
-    /// <summary>
-    /// Update the state (called each frame).
-    /// </summary>
-    public virtual void Update(double deltaTime) { }
-
-    /// <summary>
-    /// Render the state.
-    /// </summary>
-    public virtual void Render() { }
-
-    /// <summary>
-    /// Handle input for this state.
-    /// </summary>
-    public virtual void HandleInput() { }
 }

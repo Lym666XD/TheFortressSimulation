@@ -2,7 +2,7 @@ using SadRogue.Primitives;
 
 namespace HumanFortress.Jobs.Craft;
 
-public readonly record struct PlannedCraftJob(
+internal readonly record struct PlannedCraftJob(
     Guid WorkshopGuid,
     Guid QueueEntryId,
     string RecipeId,
@@ -10,20 +10,20 @@ public readonly record struct PlannedCraftJob(
     Point Anchor,
     int Z);
 
-public readonly record struct CraftJobStatsSnapshot(int Intake, int Active, int Backlog, int CompletedDelta);
+internal readonly record struct CraftJobStatsSnapshot(int Intake, int Active, int Backlog, int CompletedDelta);
 
-public readonly record struct ActiveCraftJobView(Guid WorkerId, Guid WorkshopGuid, string RecipeId, string Stage, int RemainingTicks);
+internal readonly record struct ActiveCraftJobView(Guid WorkerId, Guid WorkshopGuid, string RecipeId, string Stage, int RemainingTicks);
 
 internal sealed class ActiveCraftJob
 {
-    public Guid WorkerId { get; set; }
-    public Guid WorkshopGuid { get; set; }
-    public Guid QueueEntryId { get; set; }
-    public string RecipeId { get; set; } = string.Empty;
-    public CraftJobStage Stage { get; set; }
-    public int WorkTicksRemaining { get; set; }
-    public Point Anchor { get; set; }
-    public int Z { get; set; }
+    internal Guid WorkerId { get; set; }
+    internal Guid WorkshopGuid { get; set; }
+    internal Guid QueueEntryId { get; set; }
+    internal string RecipeId { get; set; } = string.Empty;
+    internal CraftJobStage Stage { get; set; }
+    internal int WorkTicksRemaining { get; set; }
+    internal Point Anchor { get; set; }
+    internal int Z { get; set; }
 }
 
 internal enum CraftJobStage

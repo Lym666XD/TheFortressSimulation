@@ -1,12 +1,12 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Jobs.Mining;
-using HumanFortress.Navigation;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
-namespace HumanFortress.App.Jobs;
+namespace HumanFortress.Jobs.Diff;
 
 internal sealed class MiningDiffEmitter : IMiningDiffEmitter
 {
@@ -15,7 +15,7 @@ internal sealed class MiningDiffEmitter : IMiningDiffEmitter
     private readonly string _systemId;
     private readonly int _priority;
 
-    public MiningDiffEmitter(DiffLog? diff, ItemsDiffLog? itemsDiff, string systemId, int priority)
+    internal MiningDiffEmitter(DiffLog? diff, ItemsDiffLog? itemsDiff, string systemId, int priority)
     {
         _diff = diff;
         _itemsDiff = itemsDiff;
@@ -23,7 +23,7 @@ internal sealed class MiningDiffEmitter : IMiningDiffEmitter
         _priority = priority;
     }
 
-    public void SetTerrainOpen(Point cell, int z)
+    internal void SetTerrainOpen(Point cell, int z)
     {
         if (_diff == null) return;
         var target = DiffTargetEncoding.ForWorldCell(cell.X, cell.Y, z);
@@ -31,7 +31,7 @@ internal sealed class MiningDiffEmitter : IMiningDiffEmitter
         _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, _systemId, _priority, args));
     }
 
-    public void SetTerrainKind(Point cell, int z, TerrainKind kind)
+    internal void SetTerrainKind(Point cell, int z, TerrainKind kind)
     {
         if (_diff == null) return;
         var target = DiffTargetEncoding.ForWorldCell(cell.X, cell.Y, z);
@@ -39,7 +39,7 @@ internal sealed class MiningDiffEmitter : IMiningDiffEmitter
         _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, _systemId, _priority, args));
     }
 
-    public void SetTerrain(Point cell, int z, TerrainKind kind, ushort overrideGeology)
+    internal void SetTerrain(Point cell, int z, TerrainKind kind, ushort overrideGeology)
     {
         if (_diff == null) return;
         var target = DiffTargetEncoding.ForWorldCell(cell.X, cell.Y, z);
@@ -47,17 +47,24 @@ internal sealed class MiningDiffEmitter : IMiningDiffEmitter
         _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target, _systemId, _priority, args));
     }
 
-    public void AddItem(Point cell, int z, string itemId, int quantity)
+    internal void AddItem(Point cell, int z, string itemId, int quantity)
     {
         if (_itemsDiff == null) return;
         if (!WorldCellTargetEncoding.TryEncode(cell, z, out var target)) return;
         _itemsDiff.Add(ItemsDiffOp.AddItem, target, itemId, quantity, _priority, _systemId);
     }
 
-    public void MoveCreature(uint entityId, Point3 position)
+    internal void MoveCreature(uint entityId, Point3 position)
     {
         if (_diff == null) return;
         var target = DiffTargetEncoding.ForWorldCell(position.X, position.Y, position.Z, unchecked((int)entityId));
         _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, _systemId, _priority));
     }
+
+    void IMiningDiffEmitter.MoveCreature(uint entityId, Point3 position) => MoveCreature(entityId, position);
+
+    void IMiningDiffEmitter.SetTerrain(Point cell, int z, TerrainKind kind, ushort overrideGeology) =>
+        SetTerrain(cell, z, kind, overrideGeology);
+
+    void IMiningDiffEmitter.AddItem(Point cell, int z, string itemId, int quantity) => AddItem(cell, z, itemId, quantity);
 }
