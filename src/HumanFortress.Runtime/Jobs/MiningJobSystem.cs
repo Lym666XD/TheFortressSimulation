@@ -1,5 +1,6 @@
 using System;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Configuration;
@@ -22,6 +23,7 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly MiningJobExecutor _executor;
+    private readonly IPathService _paths;
 
     internal MiningJobSystem(
         HumanFortress.Simulation.World.World world,
@@ -41,6 +43,7 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = new PathService(tuning);
+        _paths = paths;
         var navView = new WorldNavigationView(_nav);
         var move = new MovementExecutor(paths);
         var logger = new MiningCallbackJobLogger(log);
@@ -75,6 +78,8 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
     internal string SystemId => MiningJobExecutor.SystemId;
 
     internal NavigationManager NavigationManager => _nav;
+
+    internal IPathService PathService => _paths;
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 

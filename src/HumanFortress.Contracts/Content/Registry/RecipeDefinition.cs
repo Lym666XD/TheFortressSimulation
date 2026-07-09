@@ -83,7 +83,7 @@ public sealed class RecipeCatalogStore : IRecipeCatalog
         var recipes = new Dictionary<string, RecipeDefinition>(StringComparer.OrdinalIgnoreCase);
         var byWorkshop = new Dictionary<string, List<RecipeDefinition>>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             if (string.IsNullOrWhiteSpace(definition.Id))
             {
@@ -104,9 +104,13 @@ public sealed class RecipeCatalogStore : IRecipeCatalog
         }
 
         var frozenByWorkshop = new Dictionary<string, RecipeDefinition[]>(byWorkshop.Count, StringComparer.OrdinalIgnoreCase);
-        foreach (var (workshopId, recipesForWorkshop) in byWorkshop)
+        foreach (var (workshopId, recipesForWorkshop) in byWorkshop.OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase))
         {
-            recipesForWorkshop.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+            recipesForWorkshop.Sort((a, b) =>
+            {
+                int cmp = string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+                return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
+            });
             frozenByWorkshop[workshopId] = recipesForWorkshop.ToArray();
         }
 
@@ -137,6 +141,7 @@ public sealed class RecipeCatalogStore : IRecipeCatalog
 
     public IEnumerable<RecipeDefinition> GetAllRecipes()
     {
-        return _recipes.Values;
+        return _recipes.Values
+            .OrderBy(static recipe => recipe.Id, StringComparer.Ordinal);
     }
 }

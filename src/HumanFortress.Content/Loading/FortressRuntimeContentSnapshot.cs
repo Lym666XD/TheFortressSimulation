@@ -39,7 +39,10 @@ internal sealed class FortressRuntimeContentSnapshot
             ?? throw new ArgumentNullException(nameof(geologyEntries));
         ZonesById = zonesById?.ToDictionary(zone => zone.Key, zone => zone.Value, StringComparer.OrdinalIgnoreCase)
             ?? throw new ArgumentNullException(nameof(zonesById));
-        ZoneDefinitions = ZonesById.Values.ToArray();
+        ZoneDefinitions = ZonesById
+            .OrderBy(zone => zone.Key, StringComparer.Ordinal)
+            .Select(zone => zone.Value)
+            .ToArray();
         ConstructionTuningJson = constructionTuningJson;
         MapgenTuningJson = mapgenTuningJson;
         MiningTuningJson = miningTuningJson;

@@ -587,6 +587,7 @@ namespace HumanFortress.App
             Console.WriteLine("- ConnectivityVersion invalidation");
             Console.WriteLine("- Deterministic A* pathfinding");
             Console.WriteLine("- Path caching & traffic costs");
+            Console.WriteLine("- Movement entity-key isolation");
             Console.WriteLine("- 10 concurrent pathfinders\n");
 
             bool allPass = true;
@@ -712,7 +713,70 @@ namespace HumanFortress.App
                 allPass = false;
             }
 
-            // Test 5: Concurrent pathfinders
+            // Test 5: Movement executor entity key isolation
+            Console.Write("[TEST] Movement executor entity key isolation... ");
+            try
+            {
+                var movement = new HumanFortress.Navigation.Implementation.MovementExecutor(
+                    new HumanFortress.Navigation.Implementation.PathService());
+                var entityA = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001");
+                var entityB = Guid.Parse("aaaaaaaa-0001-0000-0000-000000000002");
+                ulong keyA = DiffTargetEncoding.EntityKey(entityA);
+                ulong keyB = DiffTargetEncoding.EntityKey(entityB);
+
+                if (DiffTargetEncoding.EntityId(entityA) != DiffTargetEncoding.EntityId(entityB) || keyA == keyB)
+                    throw new Exception("Movement entity key collision setup failed");
+
+                var requestA = new HumanFortress.Contracts.Navigation.PathRequest(
+                    new HumanFortress.Contracts.Navigation.Point3(0, 0, 0),
+                    new HumanFortress.Contracts.Navigation.Point3(1, 0, 0),
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                    HumanFortress.Contracts.Navigation.PathFlags.None,
+                    1);
+                var requestB = new HumanFortress.Contracts.Navigation.PathRequest(
+                    new HumanFortress.Contracts.Navigation.Point3(5, 5, 0),
+                    new HumanFortress.Contracts.Navigation.Point3(6, 5, 0),
+                    HumanFortress.Contracts.Navigation.MoveMode.Walk,
+                    HumanFortress.Contracts.Navigation.PathFlags.None,
+                    2);
+                var pathA = new HumanFortress.Contracts.Navigation.Path(
+                    HumanFortress.Contracts.Navigation.PathResultKind.Found,
+                    1,
+                    1,
+                    11,
+                    new[]
+                    {
+                        new HumanFortress.Contracts.Navigation.PathNode(
+                            new HumanFortress.Contracts.Navigation.Point3(1, 0, 0),
+                            1)
+                    });
+                var pathB = new HumanFortress.Contracts.Navigation.Path(
+                    HumanFortress.Contracts.Navigation.PathResultKind.Found,
+                    1,
+                    1,
+                    22,
+                    new[]
+                    {
+                        new HumanFortress.Contracts.Navigation.PathNode(
+                            new HumanFortress.Contracts.Navigation.Point3(6, 5, 0),
+                            1)
+                    });
+
+                movement.BeginMovement(keyA, requestA, pathA);
+                movement.BeginMovement(keyB, requestB, pathB);
+
+                if (!movement.HasMovement(keyA) || !movement.HasMovement(keyB))
+                    throw new Exception("Movement state for colliding legacy ids was overwritten");
+
+                Console.WriteLine("✅ PASS");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ FAIL: {ex.Message}");
+                allPass = false;
+            }
+
+            // Test 6: Concurrent pathfinders
             Console.Write("[TEST] 10 concurrent pathfinders... ");
             try
             {

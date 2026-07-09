@@ -1,5 +1,4 @@
 using HumanFortress.Contracts.Navigation;
-using System.Diagnostics;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation.Implementation;
@@ -15,7 +14,6 @@ internal sealed class DeterministicAStar
     private readonly Dictionary<ulong, AStarNode> _nodeMap;
     private readonly HashSet<ulong> _closedSet;
     private int _nodesExpanded;
-    private readonly Stopwatch _timer;
 
     internal DeterministicAStar(NavigationTuning tuning)
     {
@@ -23,7 +21,6 @@ internal sealed class DeterministicAStar
         _openSet = new BinaryHeap(1024);
         _nodeMap = new Dictionary<ulong, AStarNode>(1024);
         _closedSet = new HashSet<ulong>(1024);
-        _timer = new Stopwatch();
     }
 
     /// <summary>
@@ -36,7 +33,6 @@ internal sealed class DeterministicAStar
         _nodeMap.Clear();
         _closedSet.Clear();
         _nodesExpanded = 0;
-        _timer.Restart();
 
         // Validate request
         if (!world.IsValid(request.Source) || !world.IsValid(request.Destination))
@@ -73,11 +69,6 @@ internal sealed class DeterministicAStar
         {
             // Check limits
             if (_nodesExpanded >= _tuning.MaxNodesPerSearch)
-            {
-                return BuildPartialPath(request, world);
-            }
-
-            if (_timer.ElapsedMilliseconds > _tuning.MaxMsPerTickPathing)
             {
                 return BuildPartialPath(request, world);
             }

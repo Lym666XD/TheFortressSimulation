@@ -104,6 +104,7 @@ internal sealed partial class ItemManager
                 var instance = new ItemInstance(guid, itemId, worldPos, z, quantity, currentTick);
                 instance.MaterialId = def.FixedMaterial;
                 _instances[guid] = instance;
+                EntityKeyIndexAdd(guid);
                 IndexAdd(guid, worldPos, z);
 
                 string spawnMsg = $"[ItemManager] SUCCESS: Spawned '{def.Name}' (id={itemId}, guid={guid}, qty={quantity}) at ({worldPos.X},{worldPos.Y},{z})";

@@ -227,7 +227,10 @@ internal sealed class TransportJobExecutor
         }
 
         var pendingPeek = _requests.Peek(maxRequests).ToList();
-        var shards = _requests.GetShardCountsSnapshot().ToDictionary(kv => kv.Key, kv => kv.Value);
+        var shards = _requests.GetShardCountsSnapshot()
+            .OrderBy(static kv => kv.Key)
+            .Select(static kv => new TransportShardCountDebugView(kv.Key, kv.Value))
+            .ToArray();
         int workers = _world.Creatures.GetAllInstances().Count();
         int allowedActive = GetAllowedActiveCount(workers);
         int reserved = Math.Min(workers, Math.Max(0, _hintReserveSlots));

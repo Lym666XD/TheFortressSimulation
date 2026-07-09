@@ -40,7 +40,8 @@ internal sealed class Chunk
     }
 
     /// <summary>
-    /// Get tile at local coordinates. Thread-safe for reads.
+    /// Get tile at local coordinates. Synchronized with write-phase tile replacement
+    /// so readers never observe a torn multi-field TileBase value.
     /// </summary>
     public TileBase GetTile(int x, int y)
     {
@@ -48,7 +49,10 @@ internal sealed class Chunk
             throw new ArgumentOutOfRangeException();
 
         int index = y * SIZE_XY + x;
-        return _tiles[index];
+        lock (_writeLock)
+        {
+            return _tiles[index];
+        }
     }
 
     /// <summary>
@@ -122,7 +126,10 @@ internal sealed class Chunk
     public TileBase[] GetTilesCopy()
     {
         var copy = new TileBase[CELLS_PER_LAYER];
-        Array.Copy(_tiles, copy, CELLS_PER_LAYER);
+        lock (_writeLock)
+        {
+            Array.Copy(_tiles, copy, CELLS_PER_LAYER);
+        }
         return copy;
     }
 

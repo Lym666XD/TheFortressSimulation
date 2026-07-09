@@ -10,7 +10,7 @@ Deterministic & replayable across OS/CPU: same seed + inputs ⇒ same world/snap
 
 UPDATE_ORDER
 
-Safe parallelism: exploit multi-core via read-parallel work, intra-chunk merges, and inter-chunk messages; one commit barrier per tick. 
+Safe parallelism target: exploit multi-core through deterministic chunk-partitioned read work, intra-chunk merges, and inter-chunk messages; one commit barrier per tick. The current coarse scheduler executes registered systems in stable order during read phase until chunk-level scheduling is implemented.
 
 UPDATE_ORDER
 

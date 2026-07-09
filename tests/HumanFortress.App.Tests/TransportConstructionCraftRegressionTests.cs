@@ -145,6 +145,49 @@ internal static class TransportConstructionCraftRegressionTests
         RegressionAssert.True(secondRoundAccepted && !competingAccepted, "Transport queue did not reject competing destinations for one pending item.");
         RegressionAssert.True(drained.Count == 1 && drained[0].To == dest, "Transport queue did not preserve the earlier destination for a pending item.");
 
+        queue.Enqueue(new TransportRequest(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0003"),
+            source,
+            FromZ: 0,
+            new Point(65, 1),
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 4,
+            Seed: 0));
+        queue.Enqueue(new TransportRequest(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0001"),
+            source,
+            FromZ: 0,
+            new Point(1, 1),
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 5,
+            Seed: 0));
+        queue.Enqueue(new TransportRequest(
+            Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaa0002"),
+            source,
+            FromZ: 0,
+            new Point(33, 1),
+            ToZ: 0,
+            Quantity: 1,
+            TransportReason.Misc,
+            Priority: 0,
+            RequestorId: "test",
+            CreatedTick: 6,
+            Seed: 0));
+        int[] activeShardIds = queue.GetActiveShardIds();
+        int[] shardCountIds = queue.GetShardCountsSnapshot().Keys.ToArray();
+        RegressionAssert.True(
+            activeShardIds.SequenceEqual(activeShardIds.OrderBy(static shardId => shardId))
+            && shardCountIds.SequenceEqual(shardCountIds.OrderBy(static shardId => shardId)),
+            "Transport queue shard snapshots did not return stable shard-id order.");
+
         Console.WriteLine("[PASS] Transport request queue item dedupe");
     }
 
@@ -278,7 +321,7 @@ internal static class TransportConstructionCraftRegressionTests
         stockpileData.CreateOrUpdateShard(zoneId, chunkKey);
         stockpileData.AddCellsToZone(zoneId, new[] { sourceCell });
         stockpileData.OnItemPlaced(
-            DiffTargetEncoding.SignedEntityId(item),
+            DiffTargetEncoding.EntityKey(item),
             sourceCell,
             zoneId,
             new List<string> { "wood" });

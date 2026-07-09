@@ -26,6 +26,8 @@ internal sealed partial class CreatureManager
         lock (_instanceLock)
         {
             _instances.Clear();
+            _entityKeyIndex.Clear();
+            _legacyEntityIdIndex.Clear();
             foreach (var payload in creatures.OrderBy(creature => creature.Guid))
             {
                 var instance = new CreatureInstance(
@@ -41,6 +43,7 @@ internal sealed partial class CreatureManager
                     MaxHP = payload.MaxHP
                 };
                 _instances[instance.Guid] = instance;
+                EntityKeyIndexAdd(instance.Guid);
             }
 
             _nextInstanceSequence = (ulong)_instances.Count;

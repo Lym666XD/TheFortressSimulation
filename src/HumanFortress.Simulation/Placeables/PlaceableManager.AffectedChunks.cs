@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
@@ -29,6 +30,10 @@ internal sealed partial class PlaceableManager
             }
         }
 
-        return chunks;
+        return chunks
+            .OrderBy(static chunk => chunk.Z)
+            .ThenBy(static chunk => chunk.ChunkY)
+            .ThenBy(static chunk => chunk.ChunkX)
+            .ToArray();
     }
 }

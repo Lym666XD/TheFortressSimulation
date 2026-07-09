@@ -60,7 +60,7 @@ internal static partial class UiWorkDrawerRenderer
 
             if (tdbg.ShardCounts.Count > 0)
             {
-                var shardLine = string.Join(" ", tdbg.ShardCounts.Take(3).Select(kv => $"{kv.Key}:{kv.Value}"));
+                var shardLine = string.Join(" ", tdbg.ShardCounts.Take(3).Select(shard => $"{shard.ShardId}:{shard.Count}"));
                 surf.Print(area.X + 1, line++, $"Shards: {shardLine}", Color.DarkGray);
             }
         }

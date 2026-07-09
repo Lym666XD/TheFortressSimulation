@@ -44,7 +44,7 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
         if (!WorldCellTargetEncoding.TryEncode(cell, z, out var target)) return;
 
         ulong args = ConstructionSystem.PackSetTerrainArgs(kind, 0);
-        _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target.ToDiffTarget(), _systemId, _priority, args));
+        _diff.AddOp(new DiffOp(DiffOpType.SetTerrain, target.ToDiffTarget(), _systemId, _priority, args, JobDiffSystemOrder.Construction));
     }
 
     internal void RemoveItem(Guid itemGuid, Point cell, int z, int quantity)
@@ -60,7 +60,12 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
         if (_diff == null || itemId == Guid.Empty) return;
         if (!WorldCellTargetEncoding.TryEncode(dest, z, out var target)) return;
 
-        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target.ToDiffTarget(DiffTargetEncoding.SignedEntityId(itemId)), _systemId, _priority));
+        _diff.AddOp(new DiffOp(
+            DiffOpType.MoveItem,
+            target.ToDiffTarget(itemId),
+            _systemId,
+            _priority,
+            systemOrder: JobDiffSystemOrder.Construction));
     }
 
     internal void MoveCreature(Guid creatureId, Point3 dest)
@@ -68,7 +73,12 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
         if (_diff == null) return;
         if (!WorldCellTargetEncoding.TryEncode(dest.X, dest.Y, dest.Z, out var target)) return;
 
-        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target.ToDiffTarget(DiffTargetEncoding.SignedEntityId(creatureId)), _systemId, _priority));
+        _diff.AddOp(new DiffOp(
+            DiffOpType.MoveCreature,
+            target.ToDiffTarget(creatureId),
+            _systemId,
+            _priority,
+            systemOrder: JobDiffSystemOrder.Construction));
     }
 
     bool IConstructionDiffEmitter.CanEmitWorldDiffs => CanEmitWorldDiffs;
@@ -94,7 +104,7 @@ internal sealed class ConstructionDiffEmitter : IConstructionDiffEmitter
             return;
 
         _stockpileDiffs.AddRemoveItem(
-            DiffTargetEncoding.SignedEntityId(itemGuid),
+            DiffTargetEncoding.EntityKey(itemGuid),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,

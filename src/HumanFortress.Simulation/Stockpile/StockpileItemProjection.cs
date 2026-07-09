@@ -28,10 +28,10 @@ internal static class StockpileItemProjection
             item.ReservationTokens.Count > 0);
     }
 
-    internal static int HandleFor(ItemInstance item)
+    internal static ulong HandleFor(ItemInstance item)
     {
         ArgumentNullException.ThrowIfNull(item);
 
-        return DiffTargetEncoding.SignedEntityId(item.Guid);
+        return DiffTargetEncoding.EntityKey(item.Guid);
     }
 }

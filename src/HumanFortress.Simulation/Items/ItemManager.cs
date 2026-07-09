@@ -18,6 +18,8 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
 
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, ItemInstance> _instances = new();
+    private readonly Dictionary<ulong, Guid> _entityKeyIndex = new();
+    private readonly Dictionary<uint, List<Guid>> _legacyEntityIdIndex = new();
     private readonly object _instanceLock = new();
     private ulong _nextInstanceSequence;
 

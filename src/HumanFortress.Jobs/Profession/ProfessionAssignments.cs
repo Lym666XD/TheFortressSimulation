@@ -26,7 +26,7 @@ internal sealed class ProfessionAssignments
 
     internal void Initialize(IEnumerable<CreatureInstance> creatures)
     {
-        foreach (var creature in creatures)
+        foreach (var creature in creatures.OrderBy(static creature => creature.Guid))
         {
             EnsureProfile(creature.Guid);
         }
@@ -62,7 +62,7 @@ internal sealed class ProfessionAssignments
         if (world == null) return list;
 
         var definitions = _creatureDefinitions ?? world.Creatures;
-        foreach (var creature in world.Creatures.GetAllInstances())
+        foreach (var creature in world.Creatures.GetAllInstances().OrderBy(static creature => creature.Guid))
         {
             var def = definitions.GetDefinition(creature.DefinitionId);
             string name = def?.Name ?? creature.DefinitionId;
@@ -70,7 +70,11 @@ internal sealed class ProfessionAssignments
             list.Add(new ProfessionRosterEntry(creature.Guid, name, weights));
         }
 
-        list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+        list.Sort((a, b) =>
+        {
+            int result = string.Compare(a.Name, b.Name, StringComparison.Ordinal);
+            return result != 0 ? result : a.WorkerId.CompareTo(b.WorkerId);
+        });
         return list;
     }
 
@@ -120,7 +124,10 @@ internal sealed class ProfessionAssignments
             _ => ordered.ThenBy(pair => DistanceSq(referencePoint, pair.Worker))
         };
 
-        return ordered.Select(pair => pair.Worker).ToList();
+        return ordered
+            .ThenBy(pair => pair.Worker.Guid)
+            .Select(pair => pair.Worker)
+            .ToList();
     }
 
     private int GetSkill(Guid worker, string jobTag)

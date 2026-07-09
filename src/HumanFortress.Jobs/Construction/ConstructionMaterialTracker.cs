@@ -41,7 +41,7 @@ internal sealed class ConstructionMaterialTracker
                     continue;
                 }
 
-                foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
+                foreach (var req in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
                 {
                     if (ConstructionRequirementMatcher.Matches(def.Tags, req))
                     {
@@ -82,7 +82,10 @@ internal sealed class ConstructionMaterialTracker
                     continue;
                 }
 
-                foreach (var requirement in toConsume.Keys.OrderBy(k => k).ToList())
+                foreach (var requirement in toConsume.Keys
+                    .OrderBy(static key => key, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static key => key, StringComparer.Ordinal)
+                    .ToList())
                 {
                     if (toConsume[requirement] <= 0)
                     {
@@ -147,7 +150,9 @@ internal sealed class ConstructionMaterialTracker
             }
 
             var def = _itemDefinitions.GetDefinition(item.DefinitionId);
-            string tags = def?.Tags != null ? string.Join(",", def.Tags) : "none";
+            string tags = def?.Tags != null
+                ? string.Join(",", def.Tags.OrderBy(static tag => tag, StringComparer.Ordinal))
+                : "none";
             result.Add((item, dist, tags));
         }
 
@@ -156,7 +161,10 @@ internal sealed class ConstructionMaterialTracker
 
     private static string FormatDict(Dictionary<string, int> values)
     {
-        return "{" + string.Join(", ", values.Select(kv => $"{kv.Key}:{kv.Value}")) + "}";
+        return "{" + string.Join(", ", values
+            .OrderBy(static kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static kv => kv.Key, StringComparer.Ordinal)
+            .Select(static kv => $"{kv.Key}:{kv.Value}")) + "}";
     }
 
     private readonly record struct PlannedItemRemoval(Guid ItemGuid, Point Position, int Z, int Quantity);

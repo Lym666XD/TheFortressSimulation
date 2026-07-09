@@ -11,9 +11,9 @@ internal static partial class StockpileSnapshotBuilder
             return SimulationStockpileOverlayData.Empty;
 
         var cells = new List<StockpileOverlayCellView>();
-        foreach (var zone in world.Stockpiles.GetAllZones().OrderBy(zone => zone.ZoneId))
+        foreach (var zone in world.Stockpiles.GetAllZones())
         {
-            foreach (var chunkKey in zone.MemberChunks)
+            foreach (var chunkKey in zone.GetMemberChunksSnapshot())
             {
                 if (chunkKey.Z != currentZ || !IntersectsViewport(chunkKey, viewport))
                     continue;

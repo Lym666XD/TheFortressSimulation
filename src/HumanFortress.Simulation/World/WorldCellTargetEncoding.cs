@@ -17,10 +17,18 @@ internal readonly struct WorldCellTarget
 
     public DiffTarget ToDiffTarget(int entityId = -1)
     {
-        return new DiffTarget(
+        return DiffTargetEncoding.ForEncodedTarget(
             DiffTargetEncoding.EncodeChunkId(ChunkKey.ChunkX, ChunkKey.ChunkY, ChunkKey.Z),
             LocalIndex,
             entityId);
+    }
+
+    public DiffTarget ToDiffTarget(Guid entityGuid)
+    {
+        return DiffTargetEncoding.ForEncodedTarget(
+            DiffTargetEncoding.EncodeChunkId(ChunkKey.ChunkX, ChunkKey.ChunkY, ChunkKey.Z),
+            LocalIndex,
+            entityGuid);
     }
 }
 

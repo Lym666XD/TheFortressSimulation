@@ -31,7 +31,9 @@ internal sealed class BiomeTemplateRegistry
         }
 
         // Sort by priority (higher priority first)
-        _sortedTemplates.AddRange(_allTemplates.OrderByDescending(t => t.Priority));
+        _sortedTemplates.AddRange(_allTemplates
+            .OrderByDescending(static template => template.Priority)
+            .ThenBy(static template => template.Id, StringComparer.Ordinal));
 
         ContentRegistryDiagnostics.Emit($"[BiomeTemplateRegistry] Loaded {_templatesById.Count} biome templates, version {version}");
     }
@@ -104,7 +106,9 @@ internal sealed class BiomeTemplateRegistry
     {
         return _allTemplates.Where(t =>
             (t.Conditions.Temperature == null || t.Conditions.Temperature.Value.Contains(temperature)) &&
-            (t.Conditions.Rainfall == null || t.Conditions.Rainfall.Value.Contains(rainfall)));
+            (t.Conditions.Rainfall == null || t.Conditions.Rainfall.Value.Contains(rainfall)))
+            .OrderByDescending(static template => template.Priority)
+            .ThenBy(static template => template.Id, StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -126,7 +130,9 @@ internal sealed class BiomeTemplateRegistry
     /// </summary>
     internal List<string> GetTemplateIds()
     {
-        return _templatesById.Keys.ToList();
+        return _templatesById.Keys
+            .OrderBy(static id => id, StringComparer.Ordinal)
+            .ToList();
     }
 
     /// <summary>
@@ -137,7 +143,8 @@ internal sealed class BiomeTemplateRegistry
     /// <summary>
     /// Get all templates
     /// </summary>
-    internal IEnumerable<BiomeTemplateDefinition> GetAllTemplates() => _allTemplates;
+    internal IEnumerable<BiomeTemplateDefinition> GetAllTemplates() => _allTemplates
+        .OrderBy(static template => template.Id, StringComparer.Ordinal);
 
     /// <summary>
     /// Clear the registry

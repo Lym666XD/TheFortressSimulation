@@ -80,12 +80,12 @@ internal sealed class MiningActiveJobRunner
                 continue;
             }
 
-            uint entityId = DiffTargetEncoding.EntityId(worker.Guid);
+            ulong entityKey = DiffTargetEncoding.EntityKey(worker.Guid);
             _world.Reservations.TryReserveCreature(job.WorkerId, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"mine:{job.DesignationId}");
 
             if (job.Stage == MiningStage.ToAdj)
             {
-                HandleMoveToAdj(job, entityId, tick, finished);
+                HandleMoveToAdj(job, entityKey, tick, finished);
                 continue;
             }
 
@@ -104,16 +104,16 @@ internal sealed class MiningActiveJobRunner
         }
     }
 
-    private void HandleMoveToAdj(ActiveMiningJob job, uint entityId, ulong tick, List<ActiveMiningJob> finished)
+    private void HandleMoveToAdj(ActiveMiningJob job, ulong entityKey, ulong tick, List<ActiveMiningJob> finished)
     {
-        var update = _move.UpdateMovement(entityId, _navView);
+        var update = _move.UpdateMovement(entityKey, _navView);
         if (update.NeedsReplan)
         {
             var req = new PathRequest(update.Position, new Point3(job.Adjacent.X, job.Adjacent.Y, job.Z), MoveMode.Walk, PathFlags.AllowDiagonal, MiningPathSeed.From(job.WorkerId, job.Target));
             var path = _paths.Solve(in req, in _navView);
             if (path.Kind == PathResultKind.Found)
             {
-                _move.BeginMovement(entityId, req, path);
+                _move.BeginMovement(entityKey, req, path);
                 _logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind} id={job.DesignationId}");
             }
             else
@@ -135,7 +135,7 @@ internal sealed class MiningActiveJobRunner
             return;
         }
 
-        _diffEmitter.MoveCreature(entityId, update.Position);
+        _diffEmitter.MoveCreature(job.WorkerId, update.Position);
 
         if (update.Status == MovementStatus.Arrived || update.Status == MovementStatus.PathComplete)
         {

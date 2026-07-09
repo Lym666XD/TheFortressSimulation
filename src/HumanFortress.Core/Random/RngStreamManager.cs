@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace HumanFortress.Core.Random;
 
@@ -56,7 +59,7 @@ public sealed class RngStreamManager
     public Dictionary<string, RngState> SaveStates()
     {
         var states = new Dictionary<string, RngState>();
-        foreach (var kvp in _streams)
+        foreach (var kvp in _streams.OrderBy(static kvp => kvp.Key, StringComparer.Ordinal))
         {
             states[kvp.Key] = kvp.Value.GetState();
         }
@@ -87,7 +90,7 @@ public sealed class RngStreamManager
     /// </summary>
     public void RestoreStates(Dictionary<string, RngState> states)
     {
-        foreach (var kvp in states)
+        foreach (var kvp in states.OrderBy(static kvp => kvp.Key, StringComparer.Ordinal))
         {
             var stream = GetStream(kvp.Key);
             stream.SetState(kvp.Value);

@@ -70,24 +70,24 @@ internal sealed class TransportActiveJobRunner
                 continue;
             }
 
-            uint entityId = DiffTargetEncoding.EntityId(cr.Guid);
+            ulong entityKey = DiffTargetEncoding.EntityKey(cr.Guid);
             _world.Reservations.TryReserveCreature(job.CreatureId, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"haul:{job.ItemId}");
 
-            var update = _move.UpdateMovement(entityId, _navView);
+            var update = _move.UpdateMovement(entityKey, _navView);
             if (update.NeedsReplan)
             {
                 Point3 goal = job.Stage == JobStage.ToItem ? GetItemPos(job) : job.Dest;
-                _replanHandler.HandleReplan(job, tick, entityId, update, goal);
+                _replanHandler.HandleReplan(job, tick, entityKey, update, goal);
                 continue;
             }
 
-            _movementDiffEmitter.MoveCreature(entityId, update.Position);
+            _movementDiffEmitter.MoveCreature(job.CreatureId, update.Position);
 
             if (update.Status == MovementStatus.Arrived || update.Status == MovementStatus.PathComplete)
             {
                 if (job.Stage == JobStage.ToItem)
                 {
-                    _pickupHandler.HandleArrivedAtItem(job, tick, entityId, update.Position, finished);
+                    _pickupHandler.HandleArrivedAtItem(job, tick, entityKey, update.Position, finished);
                 }
                 else if (job.Stage == JobStage.ToDest)
                 {

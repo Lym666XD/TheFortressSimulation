@@ -9,7 +9,7 @@ applies_to:
 goals:
   - Deterministic, budgeted, low-cost environmental effects.
   - Data-driven prototypes (no hard-coded field types).
-  - Clear write boundaries (read-parallel / write-serialized).
+  - Clear deterministic read/write boundaries; future chunk-partitioned read parallelism must preserve stable diff ordering.
 non_goals:
   - Full CFD or temperature continuum (v1 stays discrete & local).
   - Multi-map propagation.

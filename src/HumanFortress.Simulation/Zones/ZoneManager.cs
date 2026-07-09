@@ -70,7 +70,9 @@ internal sealed class ZoneManager
     {
         lock (_lock)
         {
-            return _definitions.Values.ToList();
+            return _definitions.Values
+                .OrderBy(static definition => definition.Id, StringComparer.Ordinal)
+                .ToList();
         }
     }
 
@@ -106,7 +108,9 @@ internal sealed class ZoneManager
     {
         lock (_lock)
         {
-            return _zones.Values.ToList();
+            return _zones.Values
+                .OrderBy(static zone => zone.ZoneId)
+                .ToList();
         }
     }
 
@@ -119,6 +123,7 @@ internal sealed class ZoneManager
         {
             return _zones.Values
                 .Where(z => _definitions.TryGetValue(z.DefId, out var def) && def.Category == category)
+                .OrderBy(static zone => zone.ZoneId)
                 .ToList();
         }
     }

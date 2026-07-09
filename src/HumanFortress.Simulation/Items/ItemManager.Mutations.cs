@@ -35,7 +35,7 @@ internal sealed partial class ItemManager
                 return 0;
 
             var byDef = new Dictionary<string, List<Guid>>();
-            foreach (var gid in ids)
+            foreach (var gid in ids.OrderBy(static id => id))
             {
                 if (!_instances.TryGetValue(gid, out var inst)) continue;
                 if (!inst.IsOnGround) continue;
@@ -49,10 +49,11 @@ internal sealed partial class ItemManager
             }
 
             var removed = 0;
-            foreach (var kv in byDef)
+            foreach (var kv in byDef.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
             {
                 var list = kv.Value;
                 if (list.Count <= 1) continue;
+                list.Sort();
                 var targetId = list[0];
                 if (!_instances.TryGetValue(targetId, out var target)) continue;
                 var sum = target.StackCount;
@@ -62,6 +63,7 @@ internal sealed partial class ItemManager
                     if (_instances.TryGetValue(gid, out var other))
                     {
                         sum += other.StackCount;
+                        EntityKeyIndexRemove(gid);
                         _instances.Remove(gid);
                         removed++;
                     }
@@ -120,6 +122,7 @@ internal sealed partial class ItemManager
             Forbidden = inst.Forbidden
         };
         _instances[newGuid] = clone;
+        EntityKeyIndexAdd(newGuid);
         IndexAdd(newGuid, clone.Position, clone.Z);
         string msg = $"[ItemManager] SPLIT: {sourceId} -> new={newGuid} take={takeCount} remain={inst.StackCount} at ({clone.Position.X},{clone.Position.Y},{clone.Z})";
         Emit(msg);
@@ -136,6 +139,7 @@ internal sealed partial class ItemManager
         {
             if (!_instances.TryGetValue(guid, out var inst)) return false;
             IndexRemove(guid, inst.Position, inst.Z);
+            EntityKeyIndexRemove(guid);
             _instances.Remove(guid);
             string msg = $"[ItemManager] REMOVE: Removed item guid={guid} id={inst.DefinitionId} at ({inst.Position.X},{inst.Position.Y},{inst.Z})";
             Emit(msg);

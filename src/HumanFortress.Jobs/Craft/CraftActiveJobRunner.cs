@@ -46,12 +46,12 @@ internal sealed class CraftActiveJobRunner
             return true;
         }
 
-        uint entityId = DiffTargetEncoding.EntityId(job.WorkerId);
+        ulong entityKey = DiffTargetEncoding.EntityKey(job.WorkerId);
         _world.Reservations.TryReserveCreature(job.WorkerId, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}");
 
         if (job.Stage == CraftJobStage.ToWorkshop)
         {
-            var update = _move.UpdateMovement(entityId, _navView);
+            var update = _move.UpdateMovement(entityKey, _navView);
             if (update.Status == MovementStatus.Arrived)
             {
                 if (!_materialConsumer.TryConsumeInputs(job))
@@ -64,7 +64,7 @@ internal sealed class CraftActiveJobRunner
             }
             else if (update.NeedsReplan)
             {
-                Replan(job, entityId, update.Position);
+                Replan(job, entityKey, update.Position);
             }
 
             return false;
@@ -84,7 +84,7 @@ internal sealed class CraftActiveJobRunner
         return false;
     }
 
-    private void Replan(ActiveCraftJob job, uint entityId, Point3 currentPosition)
+    private void Replan(ActiveCraftJob job, ulong entityKey, Point3 currentPosition)
     {
         var request = new PathRequest(
             currentPosition,
@@ -95,7 +95,7 @@ internal sealed class CraftActiveJobRunner
         var path = _paths.Solve(in request, in _navView);
         if (path.Kind == PathResultKind.Found)
         {
-            _move.BeginMovement(entityId, request, path);
+            _move.BeginMovement(entityKey, request, path);
         }
     }
 }

@@ -37,9 +37,13 @@ public readonly record struct TransportRequestDebugView(
     string Reason,
     JobPoint3 To);
 
+public readonly record struct TransportShardCountView(
+    int ShardId,
+    int Count);
+
 public readonly record struct TransportDebugView(
     IReadOnlyList<TransportRequestDebugView> PendingPeek,
-    IReadOnlyDictionary<int, int> ShardCounts);
+    IReadOnlyList<TransportShardCountView> ShardCounts);
 
 public readonly record struct SimulationJobsDebugData(
     ulong Tick,

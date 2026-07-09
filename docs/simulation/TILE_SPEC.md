@@ -1,6 +1,6 @@
 # Tile Specification (v2)
 
-Authoritative tile spec aligned with a fortress-only, deterministic, multithreaded architecture. Tiles live in chunks (default 32x32 cells per Z). The simulation runs read-parallel / write-serialized; the renderer consumes an immutable snapshot. This document locks down types, bit layouts, APIs, invariants, and update rules.
+Authoritative tile spec aligned with a fortress-only, deterministic architecture. Tiles live in chunks (default 32x32 cells per Z). The current simulation runs deterministic registered-system reads plus serialized writes, and future chunk-partitioned read parallelism must preserve replay-stable ordering. The renderer consumes an immutable snapshot target. This document locks down types, bit layouts, APIs, invariants, and update rules.
 
 ## 0) Terminology & Constants
 
@@ -120,4 +120,3 @@ Read phase (thread-safe): query-only (no writes). Write phase: single writer per
 
 - Slope is kept as a reserved visual value for legacy tilesets only; gameplay geometry no longer relies on it
 - Ramp directions at runtime come solely from `UpRampMask` (no L0 direction bits)
-

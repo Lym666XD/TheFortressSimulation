@@ -33,10 +33,13 @@ internal sealed partial class ItemManager
         lock (_instanceLock)
         {
             _instances.Clear();
+            _entityKeyIndex.Clear();
+            _legacyEntityIdIndex.Clear();
             _posIndex.Clear();
             foreach (var instance in restored.Values.OrderBy(item => item.Guid))
             {
                 _instances[instance.Guid] = instance;
+                EntityKeyIndexAdd(instance.Guid);
                 IndexAdd(instance.Guid, instance.Position, instance.Z);
             }
 

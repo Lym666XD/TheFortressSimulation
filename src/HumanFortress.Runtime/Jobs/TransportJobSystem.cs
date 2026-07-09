@@ -23,6 +23,7 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly TransportJobExecutor _executor;
+    private readonly IPathService _paths;
 
     internal TransportJobSystem(
         HumanFortress.Simulation.World.World world,
@@ -43,6 +44,7 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = pathService ?? new PathService(tuning);
+        _paths = paths;
         var navView = new WorldNavigationView(_nav);
         var move = new MovementExecutor(paths);
         var logger = new TransportCallbackJobLogger(log);
@@ -89,6 +91,8 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
     internal string SystemId => TransportJobExecutor.SystemId;
 
     internal NavigationManager NavigationManager => _nav;
+
+    internal IPathService PathService => _paths;
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 

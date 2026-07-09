@@ -17,7 +17,7 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
         }
         catch (InvalidDataException ex)
         {
-            issues.Add(new RuntimeSaveSnapshotDocumentIssueData("rng", null, ex.Message));
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(RuntimeSaveManifestSections.Rng, null, ex.Message));
             return;
         }
 
@@ -25,7 +25,7 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
             streams,
             document.Manifest.Checkpoint.RngHash,
             document.Manifest.Checkpoint.RngStreamCount,
-            FindSection(document, "rng"),
+            FindSection(document, RuntimeSaveManifestSections.Rng),
             issues);
     }
 
@@ -36,7 +36,7 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
         RuntimeSaveManifestSectionData? manifestSection,
         ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
     {
-        const string sectionName = "rng";
+        const string sectionName = RuntimeSaveManifestSections.Rng;
 
         if (string.IsNullOrWhiteSpace(expectedHash))
         {

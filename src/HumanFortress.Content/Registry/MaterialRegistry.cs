@@ -257,7 +257,9 @@ internal sealed class MaterialRegistry : IRuntimeMaterialCatalog
     /// </summary>
     internal IEnumerable<MaterialDefinition> GetMaterialsByCategory(string category)
     {
-        return _allMaterials.Where(m => m.Category == category);
+        return _allMaterials
+            .Where(m => m.Category == category)
+            .OrderBy(static material => material.StringId, StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -265,7 +267,9 @@ internal sealed class MaterialRegistry : IRuntimeMaterialCatalog
     /// </summary>
     internal IEnumerable<MaterialDefinition> GetMaterialsByTag(string tag)
     {
-        return _allMaterials.Where(m => m.Tags.Contains(tag));
+        return _allMaterials
+            .Where(m => m.Tags.Contains(tag))
+            .OrderBy(static material => material.StringId, StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -279,7 +283,9 @@ internal sealed class MaterialRegistry : IRuntimeMaterialCatalog
     /// </summary>
     internal Dictionary<string, ushort> GetNameToIdSnapshot()
     {
-        return new Dictionary<string, ushort>(_materialsByName);
+        return _materialsByName
+            .OrderBy(static entry => entry.Key, StringComparer.Ordinal)
+            .ToDictionary(static entry => entry.Key, static entry => entry.Value, StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

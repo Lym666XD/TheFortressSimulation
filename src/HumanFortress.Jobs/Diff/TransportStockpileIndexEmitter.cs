@@ -32,7 +32,7 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
             return;
 
         _stockpileDiffs.AddRemoveItem(
-            DiffTargetEncoding.SignedEntityId(itemId),
+            DiffTargetEncoding.EntityKey(itemId),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,
@@ -51,7 +51,7 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
             return;
 
         _stockpileDiffs.AddPlaceItem(
-            DiffTargetEncoding.SignedEntityId(itemId),
+            DiffTargetEncoding.EntityKey(itemId),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,

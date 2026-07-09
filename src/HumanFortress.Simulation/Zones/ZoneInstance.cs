@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Zones;
@@ -100,6 +101,18 @@ internal sealed class ZoneInstance
     {
         MemberChunks = chunks.ToImmutableHashSet();
         Generation++;
+    }
+
+    /// <summary>
+    /// Get member chunks in stable spatial order.
+    /// </summary>
+    public IReadOnlyList<ChunkKey> GetMemberChunksSnapshot()
+    {
+        return MemberChunks
+            .OrderBy(static chunk => chunk.Z)
+            .ThenBy(static chunk => chunk.ChunkY)
+            .ThenBy(static chunk => chunk.ChunkX)
+            .ToArray();
     }
 
     /// <summary>

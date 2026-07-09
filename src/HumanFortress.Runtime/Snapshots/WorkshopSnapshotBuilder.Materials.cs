@@ -9,15 +9,27 @@ internal static partial class WorkshopSnapshotBuilder
     private static string FormatMaterialProgress(World world, PlaceableInstance site)
     {
         var delivered = CountDeliveredOnFootprintOrRing(world, site);
-        var required = site.ConstructionSite?.MaterialsRequired;
-        if (required == null)
+        var construction = site.ConstructionSite;
+        if (construction == null)
             return string.Empty;
 
+        var required = construction.GetRequiredMaterialsSnapshot();
         int deliveredBlocks = delivered.TryGetValue("block", out var blockDelivered) ? blockDelivered : 0;
         int deliveredPlanks = delivered.TryGetValue("plank", out var plankDelivered) ? plankDelivered : 0;
-        int requiredBlocks = required.TryGetValue("block", out var blockRequired) ? blockRequired : 0;
-        int requiredPlanks = required.TryGetValue("plank", out var plankRequired) ? plankRequired : 0;
+        int requiredBlocks = GetRequiredCount(required, "block");
+        int requiredPlanks = GetRequiredCount(required, "plank");
         return $"B {deliveredBlocks}/{requiredBlocks} | P {deliveredPlanks}/{requiredPlanks}";
+    }
+
+    private static int GetRequiredCount(IEnumerable<KeyValuePair<string, int>> required, string materialId)
+    {
+        foreach (var requirement in required)
+        {
+            if (string.Equals(requirement.Key, materialId, StringComparison.OrdinalIgnoreCase))
+                return requirement.Value;
+        }
+
+        return 0;
     }
 
     private static Dictionary<string, int> CountDeliveredOnFootprintOrRing(World world, PlaceableInstance site)
@@ -68,7 +80,7 @@ internal static partial class WorkshopSnapshotBuilder
             if (definition == null || definition.Tags == null)
                 continue;
 
-            foreach (var requirement in site.ConstructionSite!.MaterialsRequired.Keys)
+            foreach (var requirement in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
             {
                 if (WorkshopSnapshotRules.MaterialMatchesRequirement(definition.Tags, requirement))
                 {

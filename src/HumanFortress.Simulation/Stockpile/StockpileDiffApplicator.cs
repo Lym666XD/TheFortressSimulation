@@ -33,8 +33,11 @@ internal sealed class StockpileDiffApplicator
         if (diffs.Count == 0)
             return;
 
+        var sortedDiffs = diffs.ToList();
+        sortedDiffs.Sort(StockpileDiff.CompareDeterministic);
+
         var applicator = new StockpileDiffApplicator(world);
-        foreach (var diff in diffs.OrderBy(static d => d.GetSortKey()))
+        foreach (var diff in sortedDiffs)
         {
             try
             {
@@ -167,7 +170,11 @@ internal sealed class StockpileDiffApplicator
                 .First();
         int zoneId = _zoneManager.CreateZone(request.Name, homeChunk, request.CreatedTick);
 
-        foreach (var (chunkKey, cells) in acceptedCells)
+        foreach (var (chunkKey, cells) in acceptedCells
+            .OrderBy(static entry => entry.Key.Z)
+            .ThenBy(static entry => entry.Key.ChunkY)
+            .ThenBy(static entry => entry.Key.ChunkX)
+            .Select(static entry => (entry.Key, entry.Value)))
         {
             var chunk = world.GetChunk(chunkKey);
             if (chunk == null)
@@ -208,11 +215,7 @@ internal sealed class StockpileDiffApplicator
         if (zone == null)
             return;
 
-        foreach (var chunkKey in zone.MemberChunks
-            .Distinct()
-            .OrderBy(static key => key.Z)
-            .ThenBy(static key => key.ChunkY)
-            .ThenBy(static key => key.ChunkX))
+        foreach (var chunkKey in zone.GetMemberChunksSnapshot())
         {
             var chunk = world.GetChunk(chunkKey);
             chunk?.GetStockpileData()?.DeleteShard(diff.ZoneId);
@@ -327,9 +330,9 @@ internal sealed class StockpileDiffApplicator
             : new List<string>();
     }
 
-    private bool TryProjectItem(int itemHandle, out ItemStackRef stack)
+    private bool TryProjectItem(ulong itemHandle, out ItemStackRef stack)
     {
-        var item = _world.Items.GetInstanceByEntityId(unchecked((uint)itemHandle));
+        var item = _world.Items.GetInstanceByEntityKey(itemHandle);
         if (item == null)
         {
             stack = new ItemStackRef(itemHandle);

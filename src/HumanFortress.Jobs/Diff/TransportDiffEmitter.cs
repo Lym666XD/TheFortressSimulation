@@ -24,18 +24,26 @@ internal sealed class TransportDiffEmitter : ITransportMovementDiffEmitter, ITra
         _systemId = systemId;
     }
 
-    internal void MoveCreature(uint entityId, Point3 position)
+    internal void MoveCreature(Guid creatureId, Point3 position)
     {
         if (_diff == null) return;
-        var target = DiffTargetEncoding.ForWorldCell(position.X, position.Y, position.Z, unchecked((int)entityId));
-        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, _systemId, _priority));
+        var target = DiffTargetEncoding.ForWorldCell(
+            position.X,
+            position.Y,
+            position.Z,
+            creatureId);
+        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target, _systemId, _priority, systemOrder: JobDiffSystemOrder.Transport));
     }
 
     internal void MoveItem(Guid itemId, Point3 dest)
     {
         if (_diff == null) return;
-        var target = DiffTargetEncoding.ForWorldCell(dest.X, dest.Y, dest.Z, DiffTargetEncoding.SignedEntityId(itemId));
-        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, _systemId, _priority));
+        var target = DiffTargetEncoding.ForWorldCell(
+            dest.X,
+            dest.Y,
+            dest.Z,
+            itemId);
+        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target, _systemId, _priority, systemOrder: JobDiffSystemOrder.Transport));
     }
 
     internal bool SplitStack(Guid sourceItemId, Guid newItemId, SadRogue.Primitives.Point sourcePosition, int sourceZ, int quantity)
@@ -53,26 +61,34 @@ internal sealed class TransportDiffEmitter : ITransportMovementDiffEmitter, ITra
 
     internal Guid GenerateSplitStackItemGuid(Guid sourceItemId, Guid creatureId, ulong tick, int quantity)
     {
-        ulong salt = tick ^ ((ulong)(uint)quantity << 32) ^ DiffTargetEncoding.EntityId(creatureId);
+        ulong salt = tick ^ ((ulong)(uint)quantity << 32) ^ DiffTargetEncoding.EntityKey(creatureId);
         return DeterministicGuidGenerator.GenerateFromGuid(SplitStackGuidScope, sourceItemId, salt);
     }
 
     internal void MarkCarried(Guid itemId, Guid carrierId, Point3 at)
     {
         if (_diff == null) return;
-        uint carrierEntityId = DiffTargetEncoding.EntityId(carrierId);
-        var target = DiffTargetEncoding.ForWorldCell(at.X, at.Y, at.Z, DiffTargetEncoding.SignedEntityId(itemId));
-        _diff.AddOp(new DiffOp(DiffOpType.MarkCarried, target, _systemId, _priority, carrierEntityId));
+        ulong carrierEntityKey = DiffTargetEncoding.EntityKey(carrierId);
+        var target = DiffTargetEncoding.ForWorldCell(
+            at.X,
+            at.Y,
+            at.Z,
+            itemId);
+        _diff.AddOp(new DiffOp(DiffOpType.MarkCarried, target, _systemId, _priority, carrierEntityKey, JobDiffSystemOrder.Transport));
     }
 
     internal void UnmarkCarried(Guid itemId, Point3 at)
     {
         if (_diff == null) return;
-        var target = DiffTargetEncoding.ForWorldCell(at.X, at.Y, at.Z, DiffTargetEncoding.SignedEntityId(itemId));
-        _diff.AddOp(new DiffOp(DiffOpType.UnmarkCarried, target, _systemId, _priority));
+        var target = DiffTargetEncoding.ForWorldCell(
+            at.X,
+            at.Y,
+            at.Z,
+            itemId);
+        _diff.AddOp(new DiffOp(DiffOpType.UnmarkCarried, target, _systemId, _priority, systemOrder: JobDiffSystemOrder.Transport));
     }
 
-    void ITransportMovementDiffEmitter.MoveCreature(uint entityId, Point3 position) => MoveCreature(entityId, position);
+    void ITransportMovementDiffEmitter.MoveCreature(Guid creatureId, Point3 position) => MoveCreature(creatureId, position);
 
     Guid ITransportItemDiffEmitter.GenerateSplitStackItemGuid(Guid sourceItemId, Guid creatureId, ulong tick, int quantity) =>
         GenerateSplitStackItemGuid(sourceItemId, creatureId, tick, quantity);

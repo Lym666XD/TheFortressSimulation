@@ -1,6 +1,7 @@
 using HumanFortress.Content.Loading;
 using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Host;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.World;
 
@@ -24,6 +25,7 @@ internal static class FortressRuntimeHostFactory
         logging ??= FortressRuntimeLogging.None;
 
         var dependencies = FortressRuntimeDependencies.Load(world, baseDir, content, logging.Log);
+        var pathServices = new RuntimePathServiceRegistry();
 
         return new SimulationRuntimeHost<SimulationRuntimeSystems>(
             world,
@@ -35,6 +37,7 @@ internal static class FortressRuntimeHostFactory
                 services.ItemsDiffLog,
                 services.MutationDiffs.Stockpiles,
                 navigation,
+                pathServices,
                 dependencies,
                 logging),
             (bindings, systems) => bindings.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
@@ -43,7 +46,8 @@ internal static class FortressRuntimeHostFactory
             dependencies.Constructions,
             dependencies.Geology,
             dependencies.NavigationTuning,
-            dependencies.StockpilePresets);
+            dependencies.StockpilePresets,
+            pathServices);
     }
 
 }

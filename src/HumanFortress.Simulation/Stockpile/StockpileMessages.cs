@@ -31,9 +31,9 @@ internal readonly struct StockpileMessage
     internal int ZoneId { get; init; }
 
     /// <summary>
-    /// Item handle for haul operations.
+    /// Item entity key for haul operations.
     /// </summary>
-    internal int ItemHandle { get; init; }
+    internal ulong ItemHandle { get; init; }
 
     /// <summary>
     /// Quantity being hauled.
@@ -71,7 +71,7 @@ internal readonly struct StockpileMessage
     internal static StockpileMessage HaulJobAssigned(
         int jobId,
         int zoneId,
-        int itemHandle,
+        ulong itemHandle,
         int quantity,
         ChunkKey sourceChunk,
         ChunkKey destChunk,
@@ -98,7 +98,7 @@ internal readonly struct StockpileMessage
     internal static StockpileMessage HaulJobComplete(
         int jobId,
         int zoneId,
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey sourceChunk,
         ChunkKey destChunk,
         int localSeq)

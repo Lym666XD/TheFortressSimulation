@@ -232,12 +232,8 @@ internal static class WorldReplayHashBuilder
             hash.AddInt32(zone.HysteresisHigh);
             hash.AddInt32((int)zone.Generation);
             hash.AddUInt64(zone.CreatedTick);
-            var memberChunks = zone.MemberChunks
-                .OrderBy(chunk => chunk.Z)
-                .ThenBy(chunk => chunk.ChunkY)
-                .ThenBy(chunk => chunk.ChunkX)
-                .ToArray();
-            hash.AddInt32(memberChunks.Length);
+            var memberChunks = zone.GetMemberChunksSnapshot();
+            hash.AddInt32(memberChunks.Count);
             foreach (var chunk in memberChunks)
             {
                 AddChunkKeyHash(hash, chunk);

@@ -1,3 +1,5 @@
+using HumanFortress.Core.Simulation;
+
 namespace HumanFortress.Simulation.Creatures;
 
 internal sealed partial class CreatureManager
@@ -14,13 +16,43 @@ internal sealed partial class CreatureManager
     }
 
     /// <summary>
+    /// Find a creature by the compact legacy entity id used in older DiffTarget operations.
+    /// </summary>
+    public CreatureInstance? GetInstanceByEntityId(uint entityId)
+    {
+        lock (_instanceLock)
+        {
+            return _legacyEntityIdIndex.TryGetValue(entityId, out var ids)
+                && ids.Count > 0
+                && _instances.TryGetValue(ids[0], out var instance)
+                ? instance
+                : null;
+        }
+    }
+
+    /// <summary>
+    /// Find a creature by the wider stable entity key used by entity-scoped DiffTarget operations.
+    /// </summary>
+    public CreatureInstance? GetInstanceByEntityKey(ulong entityKey)
+    {
+        lock (_instanceLock)
+        {
+            return _entityKeyIndex.TryGetValue(entityKey, out var guid)
+                ? _instances.GetValueOrDefault(guid)
+                : null;
+        }
+    }
+
+    /// <summary>
     /// Get all instances (creates a snapshot for thread safety)
     /// </summary>
     public IEnumerable<CreatureInstance> GetAllInstances()
     {
         lock (_instanceLock)
         {
-            return _instances.Values.ToList();
+            return _instances.Values
+                .OrderBy(static inst => inst.Guid)
+                .ToList();
         }
     }
 }

@@ -7,11 +7,13 @@ internal readonly record struct TransportActiveJobView(Guid CreatureId, Guid Ite
 
 internal readonly record struct TransportActiveJobDebugView(Guid CreatureId, Guid ItemId, Point3 FromOrCurrent, Point3 Dest, string Stage, uint Seed);
 
+internal readonly record struct TransportShardCountDebugView(int ShardId, int Count);
+
 internal readonly record struct TransportDebugSnapshot(
     TransportJobStatsSnapshot Stats,
     List<TransportActiveJobDebugView> Active,
     List<TransportRequest> PendingPeek,
-    Dictionary<int, int> ShardCounts,
+    IReadOnlyList<TransportShardCountDebugView> ShardCounts,
     int BacklogCount,
     int IntakeBudget,
     int AllowedActive,

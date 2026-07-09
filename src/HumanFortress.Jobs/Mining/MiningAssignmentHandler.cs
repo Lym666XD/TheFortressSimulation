@@ -115,7 +115,7 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
                 DesignationId = dig.DesignationId
             };
 
-            _move.BeginMovement(DiffTargetEncoding.EntityId(worker.Guid), request, path);
+            _move.BeginMovement(DiffTargetEncoding.EntityKey(worker.Guid), request, path);
             busy.Add(worker.Guid);
             _reservedTiles.Reserve(dig);
             _logger.Log($"[MINING][{tick}] Assign worker={worker.Guid} target=({dig.Cell.X},{dig.Cell.Y},{dig.Z}) id={dig.DesignationId} adj=({adjacent.X},{adjacent.Y},{dig.Z}) terrain={job.TerrainKind} ticks={requiredTicks}");

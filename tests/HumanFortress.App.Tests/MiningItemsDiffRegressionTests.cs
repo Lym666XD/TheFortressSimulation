@@ -19,6 +19,8 @@ internal static class MiningItemsDiffRegressionTests
         TestItemsDiffSplitStack();
         TestMoveItemDiffRelocation();
         TestCarryDiffMergeRetainsMultipleItems();
+        TestEntityScopedDiffMergeUsesWiderEntityKeys();
+        TestEntityScopedDiffSortUsesWiderEntityKeys();
 
         Console.WriteLine("=== Mining/Items/Diff Regression Tests Completed ===\n");
     }
@@ -193,6 +195,56 @@ internal static class MiningItemsDiffRegressionTests
         Console.WriteLine("[PASS] Carry diff merge retains multiple items");
     }
 
+    private static void TestEntityScopedDiffMergeUsesWiderEntityKeys()
+    {
+        var log = new DiffLog();
+        var tile = new Point(4, 4);
+        var itemA = Guid.Parse("aaaaaaaa-0000-0000-0000-000000000001");
+        var itemB = Guid.Parse("aaaaaaaa-0001-0000-0000-000000000002");
+
+        RegressionAssert.True(
+            DiffTargetEncoding.EntityId(itemA) == DiffTargetEncoding.EntityId(itemB)
+            && DiffTargetEncoding.EntityKey(itemA) != DiffTargetEncoding.EntityKey(itemB),
+            "Entity key collision regression setup failed.");
+
+        log.AddOp(BuildMoveItemDiff(itemA, tile, 0));
+        log.AddOp(BuildMoveItemDiff(itemB, tile, 0));
+
+        var merged = log.MergeAndSort();
+        RegressionAssert.True(
+            merged.Count(op => op.Op == DiffOpType.MoveItem) == 2,
+            "Entity-scoped diff merge collapsed distinct items that share the legacy 32-bit entity id.");
+
+        Console.WriteLine("[PASS] Entity-scoped diff merge uses wider entity keys");
+    }
+
+    private static void TestEntityScopedDiffSortUsesWiderEntityKeys()
+    {
+        var log = new DiffLog();
+        var tile = new Point(4, 4);
+        var lowerLegacyIdHigherEntityKey = Guid.Parse("00000001-ffff-ffff-0000-000000000000");
+        var higherLegacyIdLowerEntityKey = Guid.Parse("ffffffff-0000-0000-0000-000000000000");
+
+        RegressionAssert.True(
+            DiffTargetEncoding.EntityId(lowerLegacyIdHigherEntityKey) < DiffTargetEncoding.EntityId(higherLegacyIdLowerEntityKey)
+            && DiffTargetEncoding.EntityKey(lowerLegacyIdHigherEntityKey) > DiffTargetEncoding.EntityKey(higherLegacyIdLowerEntityKey),
+            "Entity-key sort regression setup failed.");
+
+        log.AddOp(BuildMoveItemDiff(lowerLegacyIdHigherEntityKey, tile, 0));
+        log.AddOp(BuildMoveItemDiff(higherLegacyIdLowerEntityKey, tile, 0));
+
+        var moveKeys = log.MergeAndSort()
+            .Where(op => op.Op == DiffOpType.MoveItem)
+            .Select(op => op.Target.EntityKey)
+            .ToArray();
+
+        RegressionAssert.True(
+            moveKeys.SequenceEqual(moveKeys.OrderBy(static key => key)),
+            "Entity-scoped diff sort used legacy 32-bit entity ids before wider entity keys.");
+
+        Console.WriteLine("[PASS] Entity-scoped diff sort uses wider entity keys");
+    }
+
     private static World CreateWorldWithItems()
     {
         var world = new World(2, 2);
@@ -207,20 +259,32 @@ internal static class MiningItemsDiffRegressionTests
 
     private static DiffOp BuildMoveItemDiff(Guid itemId, Point dest, int z)
     {
-        var target = DiffTargetEncoding.ForWorldCell(dest.X, dest.Y, z, DiffTargetEncoding.SignedEntityId(itemId));
+        var target = DiffTargetEncoding.ForWorldCell(
+            dest.X,
+            dest.Y,
+            z,
+            itemId);
         return new DiffOp(DiffOpType.MoveItem, target, "test", 100);
     }
 
     private static DiffOp BuildMarkCarriedDiff(Guid itemId, Point at, int z, Guid carrierId)
     {
-        var target = DiffTargetEncoding.ForWorldCell(at.X, at.Y, z, DiffTargetEncoding.SignedEntityId(itemId));
-        ulong args = DiffTargetEncoding.EntityId(carrierId);
+        var target = DiffTargetEncoding.ForWorldCell(
+            at.X,
+            at.Y,
+            z,
+            itemId);
+        ulong args = DiffTargetEncoding.EntityKey(carrierId);
         return new DiffOp(DiffOpType.MarkCarried, target, "test", 100, args);
     }
 
     private static DiffOp BuildUnmarkCarriedDiff(Guid itemId, Point at, int z)
     {
-        var target = DiffTargetEncoding.ForWorldCell(at.X, at.Y, z, DiffTargetEncoding.SignedEntityId(itemId));
+        var target = DiffTargetEncoding.ForWorldCell(
+            at.X,
+            at.Y,
+            z,
+            itemId);
         return new DiffOp(DiffOpType.UnmarkCarried, target, "test", 100);
     }
 }

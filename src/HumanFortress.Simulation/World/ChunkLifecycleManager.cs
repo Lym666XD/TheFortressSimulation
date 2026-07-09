@@ -212,7 +212,7 @@ namespace HumanFortress.Simulation.World
         private void DecayHeatScores()
         {
             // Decay heat scores per tick
-            var keys = _heatScores.Keys.ToList();
+            var keys = OrderChunkKeys(_heatScores.Keys).ToArray();
             foreach (var key in keys)
             {
                 var heat = _heatScores[key];
@@ -293,6 +293,14 @@ namespace HumanFortress.Simulation.World
             }
             
             return chunks;
+        }
+
+        private static IOrderedEnumerable<ChunkKey> OrderChunkKeys(IEnumerable<ChunkKey> keys)
+        {
+            return keys
+                .OrderBy(static key => key.Z)
+                .ThenBy(static key => key.ChunkY)
+                .ThenBy(static key => key.ChunkX);
         }
         
         private class ChunkState

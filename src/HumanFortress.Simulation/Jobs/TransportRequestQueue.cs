@@ -247,7 +247,7 @@ namespace HumanFortress.Simulation.Jobs
             lock (_lock)
             {
                 var dict = new Dictionary<int, int>(_shards.Count);
-                foreach (var kv in _shards)
+                foreach (var kv in _shards.OrderBy(static kv => kv.Key))
                 {
                     dict[kv.Key] = kv.Value.Count;
                 }
@@ -260,7 +260,9 @@ namespace HumanFortress.Simulation.Jobs
         {
             lock (_lock)
             {
-                return _shards.Keys.ToArray();
+                return _shards.Keys
+                    .OrderBy(static shardId => shardId)
+                    .ToArray();
             }
         }
 

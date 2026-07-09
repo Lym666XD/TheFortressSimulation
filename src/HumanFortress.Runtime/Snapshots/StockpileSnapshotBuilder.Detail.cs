@@ -30,7 +30,7 @@ internal static partial class StockpileSnapshotBuilder
     {
         int totalCells = 0;
         int usedCells = 0;
-        foreach (var chunkKey in zone.MemberChunks)
+        foreach (var chunkKey in zone.GetMemberChunksSnapshot())
         {
             var stockpileData = world.GetChunk(chunkKey)?.GetStockpileData();
             var shard = stockpileData?.GetShard(zone.ZoneId);
@@ -62,14 +62,21 @@ internal static partial class StockpileSnapshotBuilder
             return "All Items";
 
         if (filter.Tags.Count > 0)
-            return string.Join(", ", filter.Tags.Take(3));
+            return string.Join(", ", TakeSorted(filter.Tags));
 
         if (filter.ItemIds.Count > 0)
-            return string.Join(", ", filter.ItemIds.Take(3));
+            return string.Join(", ", TakeSorted(filter.ItemIds));
 
         if (filter.Materials.Count > 0)
-            return string.Join(", ", filter.Materials.Take(3));
+            return string.Join(", ", TakeSorted(filter.Materials));
 
         return "Custom";
+    }
+
+    private static IEnumerable<string> TakeSorted(IEnumerable<string> values)
+    {
+        return values
+            .OrderBy(static value => value, StringComparer.Ordinal)
+            .Take(3);
     }
 }

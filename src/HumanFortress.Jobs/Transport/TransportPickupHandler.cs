@@ -46,7 +46,7 @@ internal sealed class TransportPickupHandler
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
 
-    internal void HandleArrivedAtItem(ActiveJob job, ulong tick, uint entityId, Point3 workerPosition, ICollection<ActiveJob> finished)
+    internal void HandleArrivedAtItem(ActiveJob job, ulong tick, ulong entityKey, Point3 workerPosition, ICollection<ActiveJob> finished)
     {
         if (job.Reason == TransportReason.ToStockpile && _destinationValidator.IsItemInStockpile(job.ItemId))
         {
@@ -73,7 +73,7 @@ internal sealed class TransportPickupHandler
             var retryPath = _paths.Solve(in retry, in retryView);
             if (retryPath.Kind == PathResultKind.Found)
             {
-                _move.BeginMovement(entityId, retry, retryPath);
+                _move.BeginMovement(entityKey, retry, retryPath);
                 _logger.Log($"[TRANS-JOBS][{tick}] Repath to moved item={job.ItemId} from=({workerPosition.X},{workerPosition.Y},{workerPosition.Z}) to=({currentItemPos.X},{currentItemPos.Y},{currentItemPos.Z})");
                 return;
             }
@@ -126,7 +126,7 @@ internal sealed class TransportPickupHandler
         var path = _paths.Solve(in toDest, in view);
         if (path.Kind == PathResultKind.Found)
         {
-            _move.BeginMovement(entityId, toDest, path);
+            _move.BeginMovement(entityKey, toDest, path);
             job.Stage = JobStage.ToDest;
             _logger.Log($"[TRANS-JOBS][{tick}] Picked item={job.ItemId}; now moving to dest=({job.Dest.X},{job.Dest.Y},{job.Dest.Z})");
             return;

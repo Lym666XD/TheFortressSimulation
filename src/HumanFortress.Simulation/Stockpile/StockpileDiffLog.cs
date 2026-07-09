@@ -97,7 +97,7 @@ internal sealed class StockpileDiffLog
     }
 
     internal void AddPlaceItem(
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -119,7 +119,7 @@ internal sealed class StockpileDiffLog
     }
 
     internal void AddRemoveItem(
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -198,7 +198,7 @@ internal sealed class StockpileDiffLog
 
     private void AddItemIndexDiff(
         StockpileDiffOp op,
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -234,7 +234,7 @@ internal sealed class StockpileDiffLog
     {
         lock (_lock)
         {
-            _ops.Sort((a, b) => a.GetSortKey().CompareTo(b.GetSortKey()));
+            _ops.Sort(StockpileDiff.CompareDeterministic);
             return _ops.ToList();
         }
     }

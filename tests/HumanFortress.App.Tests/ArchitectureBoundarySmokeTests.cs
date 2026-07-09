@@ -102,6 +102,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["Navigation/SimulationNavigationSource.Mapping.cs"] = "namespace HumanFortress.Runtime.Navigation;",
         ["Navigation/SimulationNavigationSource.ConstructionSites.cs"] = "namespace HumanFortress.Runtime.Navigation;",
         ["Navigation/SimulationNavigationFactory.cs"] = "namespace HumanFortress.Runtime.Navigation;",
+        ["Navigation/RuntimePathServiceRegistry.cs"] = "namespace HumanFortress.Runtime.Navigation;",
         ["Content/SimulationWorldContentLoader.cs"] = "namespace HumanFortress.Runtime.Content;",
         ["Content/SimulationWorldContentLoader.Logging.cs"] = "namespace HumanFortress.Runtime.Content;",
         ["Content/RuntimeCraftRecipeCatalogAdapter.cs"] = "namespace HumanFortress.Runtime.Content;",
@@ -146,6 +147,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["Composition/FortressRuntimeLogging.cs"] = "namespace HumanFortress.Runtime.Composition;",
         ["Composition/FortressRuntimeLogBindings.cs"] = "namespace HumanFortress.Runtime.Composition;",
         ["Composition/FortressRuntimeWorkshopCompletionNotifier.cs"] = "namespace HumanFortress.Runtime.Composition;",
+        ["Save/RuntimeSaveManifestSections.cs"] = "namespace HumanFortress.Runtime.Save;",
         ["Commands/RuntimeCommandReplayFactory.cs"] = "namespace HumanFortress.Runtime.Commands;",
         ["Commands/RuntimeCommandReplayFactory.Debug.cs"] = "namespace HumanFortress.Runtime.Commands;",
         ["Commands/RuntimeCommandReplayFactory.Orders.cs"] = "namespace HumanFortress.Runtime.Commands;",
@@ -246,6 +248,7 @@ internal static class ArchitectureBoundarySmokeTests
     {
         ["Creatures/CreatureManager.cs"] = "namespace HumanFortress.Simulation.Creatures;",
         ["Creatures/CreatureManager.Catalog.cs"] = "namespace HumanFortress.Simulation.Creatures;",
+        ["Creatures/CreatureManager.Indexing.cs"] = "namespace HumanFortress.Simulation.Creatures;",
         ["Creatures/CreatureManager.Queries.cs"] = "namespace HumanFortress.Simulation.Creatures;",
         ["Creatures/CreatureManager.SaveRestore.cs"] = "namespace HumanFortress.Simulation.Creatures;",
         ["Creatures/CreatureManager.Spawning.cs"] = "namespace HumanFortress.Simulation.Creatures;"

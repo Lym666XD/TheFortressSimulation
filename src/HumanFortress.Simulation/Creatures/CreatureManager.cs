@@ -17,6 +17,8 @@ internal sealed partial class CreatureManager : ICreatureDefinitionCatalog
     private CreatureDefinitionCatalogStore _definitionCatalog = CreatureDefinitionCatalogStore.Empty;
 
     private readonly Dictionary<Guid, CreatureInstance> _instances = new();
+    private readonly Dictionary<ulong, Guid> _entityKeyIndex = new();
+    private readonly Dictionary<uint, List<Guid>> _legacyEntityIdIndex = new();
     private readonly object _instanceLock = new();
     private ulong _nextInstanceSequence;
 

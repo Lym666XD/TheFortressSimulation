@@ -99,7 +99,7 @@ internal sealed class CraftAssignmentHandler
                 continue;
             }
 
-            _move.BeginMovement(DiffTargetEncoding.EntityId(worker.Guid), request, path);
+            _move.BeginMovement(DiffTargetEncoding.EntityKey(worker.Guid), request, path);
 
             activeJob = new ActiveCraftJob
             {

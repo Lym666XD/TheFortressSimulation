@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Save;
 
 internal static partial class WorldSavePayloadRestorer
 {
-    private static IReadOnlyList<string> RestorePlaceablesSnapshot(
+    private static IReadOnlyList<string> ValidatePlaceablesSnapshot(
         SimulationWorld world,
         WorldSavePlaceablePayloadData[]? placeables)
     {
@@ -20,9 +20,13 @@ internal static partial class WorldSavePayloadRestorer
         }
 
         ValidatePlaceableRows(world, placeables, issues);
-        if (issues.Count > 0)
-            return issues;
+        return issues;
+    }
 
+    private static void RestoreValidatedPlaceablesSnapshot(
+        SimulationWorld world,
+        IReadOnlyList<WorldSavePlaceablePayloadData> placeables)
+    {
         foreach (var payload in placeables
                      .OrderBy(placeable => placeable.Guid)
                      .ThenBy(placeable => placeable.OwnerChunk.Z)
@@ -35,8 +39,6 @@ internal static partial class WorldSavePayloadRestorer
                 ToPlaceableInstance(payload),
                 tick: 0);
         }
-
-        return issues;
     }
 
     private static void ValidatePlaceableRows(

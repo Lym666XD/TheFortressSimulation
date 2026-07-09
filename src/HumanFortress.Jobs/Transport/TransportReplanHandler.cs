@@ -32,7 +32,7 @@ internal sealed class TransportReplanHandler
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
 
-    internal void HandleReplan(ActiveJob job, ulong tick, uint entityId, MovementUpdate update, Point3 goal)
+    internal void HandleReplan(ActiveJob job, ulong tick, ulong entityKey, MovementUpdate update, Point3 goal)
     {
         var source = update.Position;
         var request = new PathRequest(source, goal, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
@@ -40,17 +40,17 @@ internal sealed class TransportReplanHandler
         var path = _paths.Solve(in request, in view);
         if (path.Kind == PathResultKind.Found)
         {
-            _move.BeginMovement(entityId, request, path);
+            _move.BeginMovement(entityKey, request, path);
         }
         else if (path.Kind == PathResultKind.Invalid)
         {
-            TryUnstuckAfterInvalidReplan(job, tick, entityId, source, goal, view);
+            TryUnstuckAfterInvalidReplan(job, tick, entityKey, source, goal, view);
         }
 
         _logger.Log($"[TRANS-JOBS][{tick}] Replan worker={job.CreatureId} stage={job.Stage} from=({source.X},{source.Y},{source.Z}) goal=({goal.X},{goal.Y},{goal.Z}) kind={path.Kind}");
     }
 
-    private void TryUnstuckAfterInvalidReplan(ActiveJob job, ulong tick, uint entityId, Point3 source, Point3 goal, IWorldNavigationView view)
+    private void TryUnstuckAfterInvalidReplan(ActiveJob job, ulong tick, ulong entityKey, Point3 source, Point3 goal, IWorldNavigationView view)
     {
         job.InvalidReplanCount++;
         if (!IsBadSourceCell(source)) return;
@@ -60,14 +60,14 @@ internal sealed class TransportReplanHandler
         if (safe == null) return;
 
         var safePoint = new Point3(safe.Value.X, safe.Value.Y, safe.Value.Z);
-        _diffEmitter.MoveCreature(entityId, safePoint);
+        _diffEmitter.MoveCreature(job.CreatureId, safePoint);
         job.InvalidReplanCount = 0;
 
         var request = new PathRequest(safePoint, goal, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
         var path = _paths.Solve(in request, in view);
         if (path.Kind == PathResultKind.Found)
         {
-            _move.BeginMovement(entityId, request, path);
+            _move.BeginMovement(entityKey, request, path);
         }
 
         _logger.Log($"[TRANS-JOBS][{tick}] UNSTUCK worker={job.CreatureId} from=({source.X},{source.Y},{source.Z}) to=({safePoint.X},{safePoint.Y},{safePoint.Z}) kind={path.Kind}");

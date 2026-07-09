@@ -7,15 +7,15 @@ namespace HumanFortress.Contracts.Navigation;
 /// </summary>
 public interface IMovementExecutor
 {
-    void BeginMovement(uint entityId, PathRequest request, Path path);
+    void BeginMovement(ulong entityKey, PathRequest request, Path path);
 
-    MovementUpdate UpdateMovement(uint entityId, IWorldNavigationView world);
+    MovementUpdate UpdateMovement(ulong entityKey, IWorldNavigationView world);
 
-    void CancelMovement(uint entityId);
+    void CancelMovement(ulong entityKey);
 
-    bool HasMovement(uint entityId);
+    bool HasMovement(ulong entityKey);
 
-    float GetProgress(uint entityId);
+    float GetProgress(ulong entityKey);
 }
 
 /// <summary>

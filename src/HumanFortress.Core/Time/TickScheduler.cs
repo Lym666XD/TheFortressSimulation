@@ -5,7 +5,7 @@ namespace HumanFortress.Core.Time;
 
 /// <summary>
 /// Fixed-step tick scheduler implementing the authoritative UPDATE_ORDER.
-/// Runs at 50 TPS (20ms per tick) with read-parallel/write-serialized execution.
+/// Runs at 50 TPS (20ms per tick) with deterministic read and serialized write phases.
 /// </summary>
 public sealed class TickScheduler
 {
@@ -183,7 +183,7 @@ public sealed class TickScheduler
                 throw new InvalidOperationException("Cannot register systems while running");
 
             _systems.Add(system);
-            _systems.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            _systems.Sort(CompareSystems);
         }
     }
 
@@ -343,7 +343,7 @@ public sealed class TickScheduler
 
         PreTick?.Invoke(tick);
 
-        // Phase 1: Read (parallel allowed)
+        // Phase 1: Read in deterministic registered-system order.
         ExecuteReadPhase(tick, systems);
 
         // Barrier
@@ -362,8 +362,7 @@ public sealed class TickScheduler
 
     private void ExecuteReadPhase(ulong tick, IReadOnlyList<ITick> systems)
     {
-        // Systems can run in parallel during read phase
-        Parallel.ForEach(systems, system =>
+        foreach (var system in systems)
         {
             try
             {
@@ -373,7 +372,7 @@ public sealed class TickScheduler
             {
                 HandleSystemError(system, "Read", ex);
             }
-        });
+        }
     }
 
     private void ExecuteWritePhase(ulong tick, IReadOnlyList<ITick> systems)
@@ -441,5 +440,13 @@ public sealed class TickScheduler
             ex,
             CurrentTick);
         // TODO: Implement quarantine logic
+    }
+
+    private static int CompareSystems(ITick a, ITick b)
+    {
+        var priority = a.Priority.CompareTo(b.Priority);
+        return priority != 0
+            ? priority
+            : string.CompareOrdinal(a.SystemId, b.SystemId);
     }
 }

@@ -66,6 +66,7 @@ internal sealed partial class CreatureManager
                 guid = CreateNextInstanceGuidLocked();
                 var instance = new CreatureInstance(guid, creatureId, factionId, worldPos, z, maxHP, currentTick);
                 _instances[guid] = instance;
+                EntityKeyIndexAdd(guid);
             }
 
             // TODO: Write to Chunk L6 layer via Diff-Log (currently just tracking in manager)

@@ -75,7 +75,7 @@ internal static partial class WorldSavePayloadRestorer
         if (rows == null)
             return result;
 
-        foreach (var row in rows)
+        foreach (var row in rows.OrderBy(static row => row.Key, StringComparer.Ordinal))
         {
             result[row.Key] = row.Value;
         }
@@ -89,6 +89,11 @@ internal static partial class WorldSavePayloadRestorer
             return null;
 
         return improvements
+            .OrderBy(improvement => improvement.Type, StringComparer.Ordinal)
+            .ThenBy(improvement => improvement.MaterialId, StringComparer.Ordinal)
+            .ThenBy(improvement => improvement.QualityTier)
+            .ThenBy(improvement => improvement.CreatedBy)
+            .ThenBy(improvement => improvement.Description, StringComparer.Ordinal)
             .Select(improvement => new Improvement
             {
                 Type = improvement.Type,

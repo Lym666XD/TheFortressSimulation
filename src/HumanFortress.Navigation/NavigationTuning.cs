@@ -94,7 +94,14 @@ internal sealed class NavigationTuning
     internal int MaxNodesPerSearch { get; set; } = 10000;
 
     /// <summary>
-    /// Maximum milliseconds per tick for pathfinding.
+    /// Maximum paths to compute per tick. This is a deterministic budget; queued
+    /// requests are processed on later ticks in request order.
+    /// </summary>
+    internal int MaxPathsPerTick { get; set; } = 1024;
+
+    /// <summary>
+    /// Deprecated compatibility field from older tuning files. Wall-clock time
+    /// must not influence pathfinding behavior.
     /// </summary>
     internal int MaxMsPerTickPathing { get; set; } = 3;
 
@@ -177,8 +184,12 @@ internal sealed class NavigationTuning
             if (TryGetObject(obj, "budgets", out var budgets))
             {
                 t.MaxNodesPerSearch = ReadInt32(budgets, "max_nodes_per_search") ?? t.MaxNodesPerSearch;
+                t.MaxPathsPerTick = ReadInt32(budgets, "max_paths_per_tick") ?? t.MaxPathsPerTick;
                 t.MaxMsPerTickPathing = ReadInt32(budgets, "max_ms_per_tick_pathing") ?? t.MaxMsPerTickPathing;
             }
+
+            t.MaxNodesPerSearch = Math.Max(1, t.MaxNodesPerSearch);
+            t.MaxPathsPerTick = Math.Max(1, t.MaxPathsPerTick);
         }
         catch (JsonException)
         {

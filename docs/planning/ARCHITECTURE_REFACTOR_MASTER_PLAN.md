@@ -29,6 +29,10 @@ The current codebase is best described as a working prototype with several profe
 - Save/replay architecture has a staged boundary rather than a full save implementation: Core owns immutable pending/executed command replay records, command queue replay snapshots, replay factory contracts, command journal hashing, and canonical replay hash primitives; Runtime owns a strict internal command replay factory, v1 command payload versioning, batch-atomic command replay restore, Runtime replay checkpoints, save manifest construction, and a save snapshot package port; Simulation owns field-specific and aggregate authoritative replay hash builders plus a minimal internal world save summary for section hashes/counts. App remains out of persistence/runtime decoding and does not assemble save authority from live world/job/command objects.
 - Architecture boundary checks have moved from ad-hoc review into the formal smoke runner. Tests now enforce the approved production project-reference graph, the production source-import direction matrix, the dependency-free Contracts project rule, the Contracts/Runtime-public-port presentation-primitive ban, and the exact `InternalsVisibleTo` friend-assembly graph; forbid active App source from importing lower implementation modules or old mixed runtime facade names; keep ordinary App.Runtime usage inside adapter/port composition files; lock implementation public surface plus Core/Runtime/App public API allowlists; and scan save/replay/hash authority paths for unstable object hashes, dictionary `Keys`/`Values` view iteration, and production `Guid.NewGuid()` identity generation.
 - Runtime save JSON codec/store helpers are internal/friend implementation details; App-facing persistence remains Runtime ports plus Contracts DTOs.
+- Runtime save snapshot data now canonicalizes RNG stream rows at the snapshot
+  boundary, world payload restore applies non-semantic payload arrays in
+  Simulation owner order, and Runtime save document validation rejects malformed
+  manifest section names before lookup.
 - Runtime session ports are split by audience: the public factory returns an App-facing aggregate that excludes save/replay checkpoint capabilities, while the full save/replay aggregate is internal/friend-only for Runtime tests and future dedicated save UI boundaries.
 - The App/Core direct dependency has been removed from production code. Diagnostic event/sink/level contracts plus the transitional `DiagnosticHub` now live in `HumanFortress.Contracts.Diagnostics`, so App owns log sinks and UI presentation against Contracts while Core/Content/Simulation/WorldGen emit through the same contract bridge. Content also no longer references Core; its production reference set is Contracts only.
 - The App/Content direct dependency has also been removed from production code. App-facing content load issue/path/report DTOs live in `HumanFortress.Contracts.Content.Loading`; Runtime owns the public content startup/file-location facade over the internal Content loader; App wraps registry-file lookup in `AppContentFileLocator` for UI configuration. Production App references are now Contracts + Runtime only.
@@ -288,6 +292,30 @@ This percentage tracks the foundation/boundary cleanup from prototype structure 
 - Remaining App job/runtime responsibilities are logger callback binding, construction UI completion handler binding through the Runtime notification bridge, fortress session flow, and UI/debug access surfaces.
 - `CraftPlanner` now lives in `HumanFortress.Jobs.Craft`. Jobs-owned craft code no longer directly reads `RecipeRegistry.Instance`; App bridges existing recipe content through `ICraftRecipeCatalog`.
 - Navigation no longer has a project dependency on Simulation or Core, and navigation DTO/interface contracts now compile from `HumanFortress.Contracts.Navigation`.
+- Navigation pathfinding no longer uses wall-clock elapsed milliseconds to
+  decide simulation-visible path results. A* uses the deterministic max-node
+  budget, `PathService` uses a deterministic max-paths-per-tick budget, and
+  Runtime invalidates registered path service caches after dirty navigation
+  chunks rebuild post-tick.
+- Low-frequency job sanitization now derives its write schedule from the
+  authoritative tick rather than a hidden runtime counter. General `DiffLog`
+  operations now carry module-supplied numeric `SystemOrder` plus `LocalSeq`
+  hooks and precompute their coarse sort key; Core no longer hardcodes
+  `Jobs.*` string precedence or relies on an 8-bit system hash for ordering.
+  GUID-to-diff-target projection now uses explicit little-endian encoding, and
+  entity-scoped general `DiffLog` operations carry a 64-bit `EntityKey` while
+  retaining the old 32-bit `EntityId` compatibility field. Remaining work is
+  removing the legacy field and any remaining non-stockpile typed item handles
+  once their callers can migrate safely. Stockpile item-index diffs and shard
+  indexes have migrated to the wider entity key.
+- Navigation movement execution state is now keyed by the same wider `ulong`
+  entity key. Mining, transport, and craft movement paths derive that key from
+  worker GUIDs rather than using the legacy 32-bit projection, while generic
+  movement diffs that have source GUIDs emit the wider entity key into
+  `DiffTarget`.
+- `Chunk` live tile reads and tile-copy snapshots are synchronized with
+  write-phase `TileBase` replacement to avoid torn multi-field struct reads
+  while the long-term immutable frame-snapshot/SoA tile layout remains pending.
 - `HumanFortress.Jobs` now owns transport, mining, construction, and craft executor cores plus their state/helper/stats/debug slices. It also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, and the low-frequency `SanitizeSystem`; job executors consume navigation through contracts rather than referencing the concrete Navigation project.
 - `HumanFortress.Jobs` implementation/orchestration/tuning/debug types are now internal. Runtime and tests retain friend access; App no longer has a Jobs internals bridge or direct Jobs project reference.
 - `HumanFortress.Runtime` now owns the public session factory/ports plus focused internal runtime implementation modules. Runtime composition/system/dependency helpers live in `HumanFortress.Runtime.Composition`, host/tick-pipeline helpers in `HumanFortress.Runtime.Host`, session handles/services in `HumanFortress.Runtime.Session`, mutation log bundles in `HumanFortress.Runtime.Diff`, active-session content bootstrap and stockpile preset mapping in `HumanFortress.Runtime.Content`, geometry adapters in `HumanFortress.Runtime.Geometry`, fortress-generation runner glue in `HumanFortress.Runtime.WorldGeneration`, Simulation-backed navigation adapters in `HumanFortress.Runtime.Navigation`, startup/autodig helpers in `HumanFortress.Runtime.Startup`, and command execution/target helpers in `HumanFortress.Runtime.Commands`. Public Runtime session ports use Contracts runtime geometry/notification DTOs, with SadRogue geometry kept behind App.Runtime/Runtime-internal mappers. `GameStateRuntimeCoordinator` holds Runtime session ports rather than the concrete internal core; App still owns content/logging callback invocation, logger callback binding, construction UI completion handler binding, fortress session flow, and UI/SadConsole lifetime. The catalog/tuning/geology/generation dependency group now consumes a Content-owned runtime snapshot rather than directly reading the structured registry from App composition, Runtime command targets no longer fall back to global construction/recipe registry reads, and navigation/placeable tuning is exposed through active-session runtime dependencies.
@@ -407,7 +435,7 @@ Existing deterministic pieces are good but underused:
 
 Current blockers:
 
-- `DiffLog` now uses a stable FNV-derived system hash instead of `SystemId.GetHashCode()`, but deterministic replay coverage is still thin and the long-term contract should prefer explicit numeric system order over hash-derived ordering;
+- `DiffLog`, movement execution, stockpile item-index diffs, entity lookup indexes, item position-index stack merging, world/chunk/placeable/material owner snapshots, zone/stockpile owner snapshots, Contracts catalog stores, Content runtime zone definition snapshots, Runtime save/RNG payload rows, compatibility RNG/material snapshots, transport shard debug rows, and chunk lifecycle heat decay now use wider/stable ids or explicit stable ordering on migrated paths. Live chunk tile reads are synchronized to avoid `TileBase` tearing. Deterministic replay coverage is still thin, not every producer supplies meaningful local sequence values yet, some non-stockpile typed compatibility handles still use the legacy 32-bit projection, and the long-term frame-snapshot/SoA tile layout is not complete;
 - many authoritative IDs use `Guid.NewGuid()`;
 - command IDs are still random GUIDs, though `CommandQueue` now orders by target tick plus enqueue sequence rather than `CommandId`; the long-term fix is an explicit replay/command sequence id assigned by the queue or replay loader;
 - App world-generation UI randomization no longer uses `Environment.TickCount` or direct `new Random()` calls. Explicit user-randomized seeds now come from `WorldGenerationSettingsDefaults`, while Core defaults use a fixed seed and world generation remains deterministic after the seed is chosen;

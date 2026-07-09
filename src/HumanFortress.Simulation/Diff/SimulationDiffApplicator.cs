@@ -2,7 +2,9 @@ using System;
 using System.Linq;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
+using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diagnostics;
+using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Diff;
@@ -205,7 +207,7 @@ internal static class SimulationDiffApplicator
         int worldY = ck.ChunkY * World.Chunk.SIZE_XY + ly;
         int worldZ = ck.Z;
 
-        var creature = world.Creatures.GetAllInstances().FirstOrDefault(c => DiffTargetEncoding.EntityId(c.Guid) == (uint)op.Target.EntityId);
+        var creature = FindCreatureByTarget(world, op.Target);
         if (creature == null) return;
 
         creature.Position = new SadRogue.Primitives.Point(worldX, worldY);
@@ -219,7 +221,7 @@ internal static class SimulationDiffApplicator
         int worldY = ck.ChunkY * World.Chunk.SIZE_XY + ly;
         int worldZ = ck.Z;
 
-        var item = world.Items.GetInstanceByEntityId((uint)op.Target.EntityId);
+        var item = FindItemByTarget(world, op.Target);
         if (item == null) return;
 
         var oldPos = item.Position;
@@ -249,12 +251,10 @@ internal static class SimulationDiffApplicator
         int worldY = ck.ChunkY * World.Chunk.SIZE_XY + ly;
         int worldZ = ck.Z;
 
-        var item = world.Items.GetInstanceByEntityId((uint)op.Target.EntityId);
+        var item = FindItemByTarget(world, op.Target);
         if (item == null) return;
 
-        // Args low 32 bits carry carrier entity id (uint)
-        uint carrierEid = (uint)(op.Args & 0xFFFFFFFFUL);
-        var carrier = world.Creatures.GetAllInstances().FirstOrDefault(c => DiffTargetEncoding.EntityId(c.Guid) == carrierEid);
+        var carrier = FindCreatureByEntityArgument(world, op);
 
         var oldPos = item.Position;
         int oldZ = item.Z;
@@ -273,7 +273,7 @@ internal static class SimulationDiffApplicator
         int worldY = ck.ChunkY * World.Chunk.SIZE_XY + ly;
         int worldZ = ck.Z;
 
-        var item = world.Items.GetInstanceByEntityId((uint)op.Target.EntityId);
+        var item = FindItemByTarget(world, op.Target);
         if (item == null) return;
 
         var oldPos = item.Position;
@@ -303,6 +303,57 @@ internal static class SimulationDiffApplicator
     private static void Emit(string message)
     {
         SimulationDiagnostics.Information(LogCallback, "Simulation.Diff", message);
+    }
+
+    private static ItemInstance? FindItemByTarget(World.World world, DiffTarget target)
+    {
+        return target.HasEntityKey
+            ? world.Items.GetInstanceByEntityKey(target.EntityKey)
+            : TryLegacyEntityId(target.EntityId, out var entityId)
+                ? world.Items.GetInstanceByEntityId(entityId)
+                : null;
+    }
+
+    private static CreatureInstance? FindCreatureByTarget(World.World world, DiffTarget target)
+    {
+        return target.HasEntityKey
+            ? world.Creatures.GetInstanceByEntityKey(target.EntityKey)
+            : TryLegacyEntityId(target.EntityId, out var entityId)
+                ? world.Creatures.GetInstanceByEntityId(entityId)
+                : null;
+    }
+
+    private static CreatureInstance? FindCreatureByEntityArgument(World.World world, DiffOp op)
+    {
+        return op.Target.HasEntityKey
+            ? world.Creatures.GetInstanceByEntityKey(op.Args)
+            : TryLegacyEntityId(op.Args, out var entityId)
+                ? world.Creatures.GetInstanceByEntityId(entityId)
+                : null;
+    }
+
+    private static bool TryLegacyEntityId(int entityId, out uint legacyEntityId)
+    {
+        if (entityId < 0)
+        {
+            legacyEntityId = 0;
+            return false;
+        }
+
+        legacyEntityId = (uint)entityId;
+        return true;
+    }
+
+    private static bool TryLegacyEntityId(ulong entityId, out uint legacyEntityId)
+    {
+        if (entityId > uint.MaxValue)
+        {
+            legacyEntityId = 0;
+            return false;
+        }
+
+        legacyEntityId = (uint)entityId;
+        return true;
     }
 
     private static void EmitError(string message, Exception exception)

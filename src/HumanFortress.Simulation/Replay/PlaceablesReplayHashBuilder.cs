@@ -97,8 +97,8 @@ internal static class PlaceablesReplayHashBuilder
             return;
 
         hash.AddString(construction.TargetId);
-        AddStringIntMapHash(hash, construction.MaterialsRequired);
-        AddStringIntMapHash(hash, construction.MaterialsDelivered);
+        AddStringIntMapHash(hash, construction.GetRequiredMaterialsSnapshot());
+        AddStringIntMapHash(hash, construction.GetDeliveredMaterialsSnapshot());
         hash.AddInt32(construction.BuildProgressTicks);
         hash.AddInt32(construction.TotalBuildTicks);
     }

@@ -61,6 +61,10 @@ internal sealed partial class SimulationTickPipeline
             return;
 
         foreach (var ck in dirtyChunks)
-            _navigation?.RebuildChunkNavData(new HumanFortress.Contracts.Navigation.ChunkKey(ck.ChunkX, ck.ChunkY, ck.Z));
+        {
+            var navigationChunk = new HumanFortress.Contracts.Navigation.ChunkKey(ck.ChunkX, ck.ChunkY, ck.Z);
+            _navigation?.RebuildChunkNavData(navigationChunk);
+            _pathServices?.InvalidateChunk(navigationChunk);
+        }
     }
 }

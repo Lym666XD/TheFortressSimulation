@@ -60,7 +60,9 @@ internal sealed class ChunkZoneData
     {
         lock (_readLock)
         {
-            return _shards.Values.ToList();
+            return _shards.Values
+                .OrderBy(static shard => shard.ZoneId)
+                .ToList();
         }
     }
 

@@ -88,8 +88,8 @@ internal static partial class WorldSavePayloadBuilder
 
         return new WorldSaveConstructionSitePayloadData(
             construction.TargetId,
-            ToPayloadStringIntMap(construction.MaterialsRequired),
-            ToPayloadStringIntMap(construction.MaterialsDelivered),
+            ToPayloadStringIntMap(construction.GetRequiredMaterialsSnapshot()),
+            ToPayloadStringIntMap(construction.GetDeliveredMaterialsSnapshot()),
             construction.BuildProgressTicks,
             construction.TotalBuildTicks);
     }

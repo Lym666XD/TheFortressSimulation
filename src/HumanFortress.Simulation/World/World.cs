@@ -129,7 +129,7 @@ internal sealed class World : IWorldReader
     /// </summary>
     public IEnumerable<Chunk> GetAllChunks()
     {
-        return _chunks.Values;
+        return OrderChunks(_chunks.Values).ToArray();
     }
 
     /// <summary>
@@ -145,7 +145,7 @@ internal sealed class World : IWorldReader
     /// </summary>
     public IEnumerable<Chunk> GetActiveChunks()
     {
-        return _chunks.Values.Where(c => c.LODLevel <= 1);
+        return OrderChunks(_chunks.Values.Where(c => c.LODLevel <= 1)).ToArray();
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ internal sealed class World : IWorldReader
     {
         lock (_dirtyLock)
         {
-            var list = new List<ChunkKey>(_dirtyChunks);
+            var list = OrderChunkKeys(_dirtyChunks).ToList();
             _dirtyChunks.Clear();
             return list;
         }
@@ -180,7 +180,7 @@ internal sealed class World : IWorldReader
         var focusChunkX = focusX / Chunk.SIZE_XY;
         var focusChunkY = focusY / Chunk.SIZE_XY;
 
-        foreach (var chunk in _chunks.Values)
+        foreach (var chunk in GetAllChunks())
         {
             var distX = Math.Abs(chunk.Key.ChunkX - focusChunkX);
             var distY = Math.Abs(chunk.Key.ChunkY - focusChunkY);
@@ -233,6 +233,22 @@ internal sealed class World : IWorldReader
                 yield return (new ChunkKey(_sizeInChunks - 1, cy, z), EdgeBand.East);
             }
         }
+    }
+
+    private static IOrderedEnumerable<Chunk> OrderChunks(IEnumerable<Chunk> chunks)
+    {
+        return chunks
+            .OrderBy(static chunk => chunk.Key.Z)
+            .ThenBy(static chunk => chunk.Key.ChunkY)
+            .ThenBy(static chunk => chunk.Key.ChunkX);
+    }
+
+    private static IOrderedEnumerable<ChunkKey> OrderChunkKeys(IEnumerable<ChunkKey> keys)
+    {
+        return keys
+            .OrderBy(static key => key.Z)
+            .ThenBy(static key => key.ChunkY)
+            .ThenBy(static key => key.ChunkX);
     }
 }
 

@@ -59,7 +59,7 @@ namespace HumanFortress.Simulation.Jobs
                     // Derive delivered counts by scanning footprint cells for matching items (simple O(N) pass)
                     var delivered = CountDeliveredOnFootprintOrRing(p);
 
-                    foreach (var kv in site.MaterialsRequired)
+                    foreach (var kv in site.GetRequiredMaterialsSnapshot())
                     {
                         string tag = kv.Key;
                         int need = kv.Value - delivered.GetValueOrDefault(tag, 0);
@@ -154,7 +154,7 @@ namespace HumanFortress.Simulation.Jobs
                     {
                         var def = _itemDefinitions.GetDefinition(it.DefinitionId);
                         if (def == null || def.Tags == null) continue;
-                        foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
+                        foreach (var req in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
                         {
                             if (MatchesRequirement(def.Tags, req))
                             {

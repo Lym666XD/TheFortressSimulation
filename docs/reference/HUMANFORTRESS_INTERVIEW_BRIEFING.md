@@ -13,7 +13,7 @@ Use [../architecture/GAME_ARCHITECTURE.md](../architecture/GAME_ARCHITECTURE.md)
 
 **Stack:** C# / .NET 8, SadConsole v10 (ASCII terminal renderer) + MonoGame, data-driven JSON content pipeline.
 
-**Architecture:** Multi-project layered simulation — `Core` (tick scheduler, command queue, DiffLog, RNG), `Contracts` (cross-module DTOs/interfaces), `Content` (JSON loading facade and definition loaders), `Runtime` (command stage, tick pipeline, status DTO, Simulation-backed navigation adapter/factory, session factory/host core), `Simulation` (creatures, items, orders, stockpiles, world/chunk model), `Jobs` (transport, mining, construction, and craft executor cores, plus craft planning), `Navigation` (deterministic A*), `WorldGen` (multi-stage procedural generation), and `App` (UI, job composition shells/adapters, game state machine, SadConsole rendering). Fixed 50 TPS loop uses read-parallel / write-serialized phases for determinism.
+**Architecture:** Multi-project layered simulation — `Core` (tick scheduler, command queue, DiffLog, RNG), `Contracts` (cross-module DTOs/interfaces), `Content` (JSON loading facade and definition loaders), `Runtime` (command stage, tick pipeline, status DTO, Simulation-backed navigation adapter/factory, session factory/host core), `Simulation` (creatures, items, orders, stockpiles, world/chunk model), `Jobs` (transport, mining, construction, and craft executor cores, plus craft planning), `Navigation` (deterministic A*), `WorldGen` (multi-stage procedural generation), and `App` (UI, job composition shells/adapters, game state machine, SadConsole rendering). Fixed 50 TPS loop uses deterministic read and serialized write phases; chunk-partitioned read parallelism remains a future scheduler target.
 
 ---
 
@@ -80,7 +80,7 @@ configs/                       # Map and game config files
 **Why:** The heart of the engine — every system flows through this scheduler.
 
 - Runs a fixed 50 TPS simulation loop on a dedicated background thread.
-- Each tick has two phases: **Read** (systems run in parallel via `Parallel.ForEach`) then **Write** (serialized, one system at a time).
+- Each tick has two phases: **Read** (systems run in deterministic registered-system order) then **Write** (serialized, one system at a time).
 - A barrier between phases guarantees no system writes while others read.
 - Speed multiplier (0.25x–8x) adjusts tick interval; falling 5+ ticks behind resets timing to prevent spiral.
 - Systems register with a `Priority` and are sorted, so update order is deterministic.
@@ -93,7 +93,7 @@ private void ExecuteTick()
 
     PreTick?.Invoke(tick);
 
-    // Phase 1: Read (parallel allowed)
+    // Phase 1: Read in deterministic registered-system order.
     ExecuteReadPhase(tick, systems);
 
     // Barrier
@@ -108,11 +108,11 @@ private void ExecuteTick()
 
 private void ExecuteReadPhase(ulong tick, IReadOnlyList<ITick> systems)
 {
-    Parallel.ForEach(systems, system =>
+    foreach (var system in systems)
     {
         try { system.ReadTick(tick); }
         catch (Exception ex) { HandleSystemError(system, "Read", ex); }
-    });
+    }
 }
 
 private void ExecuteWritePhase(ulong tick, IReadOnlyList<ITick> systems)
@@ -243,7 +243,7 @@ public void WriteTick(ulong tick)
 
 ## D. Things I Actually Did Here
 
-1. **Designed the read-parallel / write-serialized tick loop** — `TickScheduler.cs` runs all systems' ReadTick in parallel, then WriteTick sequentially, enforcing determinism with a barrier.
+1. **Designed the deterministic read / write-serialized tick loop** — `TickScheduler.cs` runs all systems' ReadTick in stable registered-system order, then WriteTick sequentially, enforcing determinism with a barrier. Chunk-partitioned read parallelism is a future scheduler target.
 
 2. **Implemented deterministic A* pathfinding with 3D vertical movement** — `DeterministicAStar.cs` handles stairs, ramps (with directional bitmasks), diagonal corner-cutting prevention, and partial path fallback under time/node budgets.
 

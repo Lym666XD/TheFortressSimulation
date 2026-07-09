@@ -74,7 +74,8 @@ internal static partial class CoreDataRegistryLoader
         var catalog = ConstructionCatalogStore.Empty;
         try
         {
-            catalog = ConstructionCatalogStore.FromDefinitions(definitionsById.Values);
+            catalog = ConstructionCatalogStore.FromDefinitions(definitionsById.Values
+                .OrderBy(static definition => definition.Id, StringComparer.Ordinal));
         }
         catch (Exception ex)
         {

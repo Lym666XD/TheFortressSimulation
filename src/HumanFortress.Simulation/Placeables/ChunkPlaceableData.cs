@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Placeables;
@@ -76,16 +77,18 @@ internal sealed partial class ChunkPlaceableData
     /// </summary>
     public IEnumerable<PlaceableInstance> GetAllOwnedPlaceables()
     {
-        return _ownedPlaceables.Values;
+        return GetOwnedPlaceableSnapshot()
+            .Select(static entry => entry.Placeable)
+            .ToArray();
     }
 
     /// <summary>
     /// Get owned placeables with their authoritative local storage cell.
-    /// Snapshot consumers must sort the result before hashing or persistence.
     /// </summary>
     internal IReadOnlyList<(int LocalIndex, PlaceableInstance Placeable)> GetOwnedPlaceableSnapshot()
     {
         return _ownedPlaceables
+            .OrderBy(static entry => entry.Key)
             .Select(static entry => (entry.Key, entry.Value))
             .ToArray();
     }

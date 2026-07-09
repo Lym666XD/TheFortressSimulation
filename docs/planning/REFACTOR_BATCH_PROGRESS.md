@@ -4,6 +4,54 @@ This document tracks the current multi-step refactor batches so progress is visi
 
 ## Current Status Snapshot - 2026-07-05
 
+- Latest build/test verified determinism hardening added the first full
+  Runtime simulation-loop determinism smoke. `CoreRuntimeSmokeTests` now creates
+  two equivalent Runtime-composed fortress sessions, loads content, fills the
+  same deterministic terrain, attaches the real Runtime systems without
+  starting the background scheduler thread, seeds initial workers plus one
+  startup auto-dig command, advances 200 manual ticks, and compares sampled
+  `WorldReplayHashBuilder` plus `RuntimeReplayCheckpointHashBuilder` hashes.
+  `SimulationRuntimeHost` gained an internal `AttachForManualTicks(...)` seam
+  so deterministic tests can reuse production Runtime composition and pipeline
+  attachment without wall-clock scheduler timing.
+- The same determinism batch changed `TickScheduler` read phase from
+  `Parallel.ForEach` to deterministic system-order iteration and added a
+  `SystemId` tie-break for equal-priority systems. This follows the audit report
+  recommendation to prefer construction-level determinism over the current
+  near-zero read-phase parallelism until the project has real chunk-partitioned
+  scheduling. `DeterministicAuthoritySmokeTests` now locks both the scheduler
+  ordering policy and the manual Runtime tick host seam. Non-archive
+  architecture/spec/reference docs now distinguish the current deterministic
+  coarse system read order from the future chunk-partitioned read parallelism
+  target. The deterministic authority smoke also checks that the default
+  `tests/HumanFortress.App.Tests` runner still executes the full Runtime
+  simulation-loop determinism gate and that the gate compares both world and
+  Runtime checkpoint replay hashes. The sampled checkpoint rows also expose
+  RNG hashes and executed/pending command journal hashes/counts, so the smoke
+  explicitly verifies that the startup auto-dig command entered the executed
+  replay journal and left no pending command drift by each sample point.
+- Verification passed with
+  `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false`
+  and
+  `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll`.
+- The same verified run covered restore hardening that moved more supported world
+  payload validation to the `HumanFortress.Simulation.Save` boundary before a
+  new `World` is created. `WorldSavePayloadRestorer.Validation` now rejects
+  duplicate stockpile zone ids, duplicate stockpile member chunks, missing
+  stockpile filter arrays, duplicate mining order ids, and obvious out-of-bounds
+  chunk/rectangle/Z payloads before manager-level restore runs. Manager restore
+  methods still keep their own atomic validation, but the payload contract now
+  fails closed at the authoritative Simulation save boundary instead of relying
+  on partially restored manager handoff behavior. Placeable restore validation
+  is now split into a terrain-dependent preflight and a validated restore pass,
+  so bad placeable payloads are rejected after terrain reconstruction but before
+  item/creature/reservation/stockpile manager restore work starts.
+  Item/creature/reservation/stockpile restore issues now also stop the flow
+  before validated placeables and active orders are written into the restored
+  world.
+  `CoreRuntimeSmokeTests` covers duplicate stockpile/order/placeable payloads,
+  and the deterministic architecture smoke test locks the new payload-boundary
+  validators and placeable preflight order.
 - Latest source-only/no-build boundary hardening split Runtime command replay
   decoding by command domain. `RuntimeCommandReplayFactory.cs` now keeps the
   replay dispatch, payload version validation, and primitive binary readers,
@@ -98,6 +146,186 @@ This document tracks the current multi-step refactor batches so progress is visi
   repeating the long constructed generic type or relying on a fragile
   namespace-colliding `Session` alias. Architecture smoke coverage locks the
   handle to the focused Runtime session namespace.
+- Follow-up source-only/no-build determinism hardening addressed the audit's
+  Navigation P0s. `DeterministicAStar` and `PathService` no longer use
+  `Stopwatch`/wall-clock milliseconds to decide path results; pathfinding now
+  relies on deterministic node and per-tick path request budgets. Runtime also
+  owns a `RuntimePathServiceRegistry` under `HumanFortress.Runtime.Navigation`
+  and invalidates registered path caches whenever post-tick dirty navigation
+  chunks are rebuilt. Deterministic smoke coverage now fails if pathfinding
+  reintroduces wall-clock budget checks or if the Runtime post-tick rebuild
+  path stops invalidating active path caches.
+- Follow-up source-only/no-build determinism hardening removed the hidden
+  `SanitizeSystem` write counter and derives the low-frequency safety-net
+  schedule from the authoritative tick. `DiffTargetEncoding` now reads GUID
+  projections with explicit little-endian byte order for cross-platform replay
+  stability. General `DiffLog` operations now carry explicit numeric
+  `SystemOrder` and `LocalSeq` fields, precompute their coarse sort key at
+  construction time, and no longer hardcode `Jobs.*` string precedence inside
+  Core. Entity-scoped `DiffTarget` operations now also carry an optional
+  64-bit `EntityKey`; merge/apply paths prefer that wider key while retaining
+  the legacy 32-bit `EntityId` field for compatibility. Jobs-owned diff
+  emitters provide the current job system order and wider entity keys from
+  `HumanFortress.Jobs.Diff`, preserving the old conflict policy without making
+  Core depend on Jobs names. The Navigation movement executor contract and
+  concrete movement state map now also use the wider `ulong` entity key, and
+  mining/transport/craft assignment/active-runner paths derive that key from
+  worker GUIDs instead of truncating to `uint`. Remaining work is to remove the
+  legacy 32-bit handle from old compatibility surfaces and non-stockpile typed
+  item handles once their callers are ready.
+- Follow-up source-only/no-build determinism hardening moved stockpile
+  item-index identity to the same wider entity-key model. `StockpileDiff`,
+  `StockpileMessage`, `ItemStackRef`, and `ChunkStockpileData` now carry
+  `ulong` item handles; transport delivery/pickup, construction consumption,
+  and craft consumption stockpile diffs emit `DiffTargetEncoding.EntityKey(...)`
+  instead of truncated `SignedEntityId(...)`; and `StockpileDiffApplicator`
+  projects items through `ItemManager.GetInstanceByEntityKey(...)`.
+  Stockpile diff merging now uses an explicit comparer over cell, priority,
+  operation, zone, item key, system id, and local sequence rather than treating
+  the old packed sort key as authoritative. Smoke coverage now locks the
+  stockpile item-index entity-key path and a legacy 32-bit collision regression.
+- The same source-only/no-build cleanup added GUID overloads for
+  `DiffTargetEncoding.ForWorldCell(...)`, `DiffTargetEncoding.ForChunkLocal(...)`,
+  and `WorldCellTarget.ToDiffTarget(...)`. Jobs diff producers now pass the
+  source GUID once and let the encoding seam populate both the legacy
+  compatibility `EntityId` and the wider `EntityKey`, reducing the chance of
+  new producers filling only one side of the transition.
+- The same Simulation-owned entity lookup hardening added `ItemManager` and
+  `CreatureManager` entity-key indexes. Item keys are maintained across spawn,
+  split, merge, remove, and world payload restore paths; creature keys are
+  maintained across spawn and world payload restore paths. Stockpile and general
+  diff applicators can now resolve wider item/creature entity keys without
+  scanning every live instance, and smoke coverage locks both behavioral index
+  sync and the indexed lookup source shape. The legacy 32-bit entity-id fallback
+  now also uses manager-owned deterministic indexes that sort GUID collisions
+  instead of depending on dictionary enumeration order; this remains a
+  compatibility path, not new authoritative identity. The manager-level
+  `GetAllInstances()` snapshots for items and creatures now also return
+  GUID-ordered lists, so ordinary read callers do not accidentally inherit
+  dictionary value order.
+- The same deterministic snapshot hardening extended stable owner ordering to
+  zone and stockpile read models. `ZoneManager` now returns zone definitions by
+  content id and zone instances by zone id; chunk zone/stockpile shard snapshots
+  return shard id order; `StockpileManager.GetAllZones()` returns zone id order;
+  and `ChunkStockpileData` returns item entity-key indexes in numeric key order.
+  `ZoneInstance` and `StockpileZone` also expose stable Z/Y/X member-chunk
+  snapshots so delete/apply, save/replay, stockpile destination lookup, and
+  Runtime overlay/detail builders no longer enumerate immutable hash sets
+  directly. A smoke regression now feeds intentionally out-of-order zone, shard,
+  stockpile, member-chunk, and item-index data through these owner APIs, while
+  deterministic authority coverage blocks broad dictionary-value snapshots from
+  returning unordered lists on those paths.
+- Transport request queue shard snapshots now expose shard ids and shard counts
+  in stable shard-id order. This keeps scheduler/debug read models from
+  inheriting `_shards` dictionary order when showing or hashing shard-level
+  transport state.
+- Chunk lifecycle heat-score decay now iterates heat-score chunk keys in stable
+  Z/Y/X order instead of raw dictionary key order, keeping the transitional LOD
+  manager from growing another nondeterministic owner loop as it becomes more
+  behavior-affecting.
+- World and placeable owner snapshots now sort at the source. `World.GetAllChunks()`,
+  `GetActiveChunks()`, dirty-navigation chunk drains, and `UpdateLOD(...)`
+  use stable Z/Y/X chunk order; `ChunkPlaceableData.GetAllOwnedPlaceables()`
+  and `GetOwnedPlaceableSnapshot()` use authoritative local-cell order; and
+  `PlaceableManager.GetAffectedChunks(...)` returns stable Z/Y/X chunk keys.
+  Stockpile create-zone application now applies accepted cells in the same
+  stable chunk order used during validation.
+- Construction material requirement/delivery dictionaries now expose
+  Simulation-owned sorted snapshots through `ConstructionSiteState`. Jobs
+  construction progress, material counting/consumption, the legacy
+  construction-materials planner, and Runtime workshop material progress now use
+  those snapshots instead of enumerating `MaterialsRequired.Keys` directly.
+  Construction nearby-item diagnostics and Runtime stockpile filter summaries
+  now also sort tag/id/material sets before formatting preview text.
+- Follow-up source-only/no-build hardening extended that construction material
+  rule to completion consumption, completion/progress diagnostics, world save
+  payload mapping, and placeable replay hashing. `ConstructionCompletionCoordinator`,
+  `ConstructionSiteProgress`, `ConstructionCompletionApplier`,
+  `WorldSavePayloadBuilder.Placeables`, `PlaceablesReplayHashBuilder`, and the
+  Runtime workshop material progress path now read material requirement/delivery
+  data through `ConstructionSiteState` snapshot rows, leaving direct
+  `MaterialsRequired`/`MaterialsDelivered` access to Simulation owner,
+  restore, and factory initialization paths.
+- Content-owned runtime zone definition snapshots now materialize
+  `ZoneDefinitions` in stable zone-id order before Runtime applies them into the
+  Simulation world. This avoids depending on the structured registry dictionary
+  enumeration order during session content bootstrap. `BiomeTemplateRegistry`
+  also now uses stable template-id tie-breaks for equal-priority templates and
+  stable id ordering for template id/broad template snapshots.
+- Cross-module catalog and compatibility RNG snapshots now also sort at their
+  source boundaries. Item/creature/construction/recipe catalog stores expose
+  broad definition lists and index arrays in content-id/category order;
+  `MaterialRegistry` returns material category/tag/name snapshots in stable
+  material-id/name order; and `RngStreamManager.SaveStates()` /
+  dictionary-restore compatibility paths iterate streams by stream name.
+- Runtime save snapshot packages now also canonicalize RNG stream rows by
+  stream name at the `RuntimeSaveSnapshotData` boundary. World save payload
+  restore applies terrain chunks in stable Z/Y/X order and normalizes
+  string-int material rows plus item/placeable improvement rows during
+  conversion. Runtime save document verification now rejects missing, blank, or
+  duplicate manifest section names before section lookups, so malformed
+  external save documents cannot depend on first-match manifest enumeration.
+- Follow-up source-only/no-build save hardening made Runtime manifest sections
+  schema-strict instead of just structurally present. The save document verifier
+  now owns the recognized section set, validates fortress-mode requirement flags,
+  requires every known section to be present, and rejects unknown section names,
+  negative record counts, present sections with blank hashes, and absent
+  sections that still carry hash/count metadata. Runtime save smoke coverage
+  now tampers those cases explicitly so future save UI work cannot accidentally
+  accept ambiguous external documents through App.
+- The same save hardening extended `RuntimeSaveSnapshotData` construction
+  checks from RNG-only to command replay journals. Executed and pending command
+  record counts and replay hashes now must match the manifest checkpoint before
+  a Runtime save snapshot package can be created, so malformed in-memory
+  snapshot assembly fails before document serialization.
+- Follow-up source-only/no-build cleanup centralized Runtime save manifest
+  section names and fortress-mode requirements in `RuntimeSaveManifestSections`.
+  `RuntimeSaveManifestBuilder` now creates sections through that schema, and the
+  verifier validates external documents against the same definitions instead of
+  maintaining a duplicate known-section table.
+- Follow-up source-only/no-build Simulation save hardening added pre-restore
+  duplicate GUID validation for item and creature payload rows. This keeps
+  ambiguous external world payloads from partially restoring terrain before
+  manager-level entity restore rejects duplicate identities.
+- Transport debug shard data now crosses Jobs -> Runtime -> Contracts as
+  explicit shard-count row DTOs rather than dictionary snapshots. The transport
+  request queue still owns shard-count lookup internally, but Runtime/UI
+  diagnostics consume stable shard-id ordered rows and no longer depend on
+  dictionary enumeration for display previews.
+- Item position indexes now sort GUIDs at insertion, and `MergeStacksAt(...)`
+  groups definitions plus merge targets in stable key/GUID order. This keeps
+  post-move stack consolidation from depending on position-index insertion
+  order when several same-definition stacks exist on a tile.
+- Jobs profession assignment now explicitly sorts creature initialization,
+  roster construction, and candidate-selection ties by worker GUID. This keeps
+  same-weight/same-distance worker choice from inheriting the snapshot order of
+  the Simulation creature manager, and deterministic smoke coverage locks the
+  tie-breaks.
+- The same source-only/no-build batch added a conservative live-tile safety
+  guard while the larger frame-snapshot/SoA work remains pending. `Chunk`
+  now synchronizes `GetTile(...)`, `SetTile(...)`, and `GetTilesCopy()` through
+  the same write lock so readers cannot observe torn multi-field `TileBase`
+  values during live world reads. Deterministic smoke coverage now locks this
+  temporary guard until the tile store is replaced by packed storage,
+  seqlocks, or an immutable frame snapshot pipeline.
+- App world-generation random seed creation now converts random bytes with
+  explicit little-endian encoding instead of `BitConverter.ToUInt32`, keeping
+  the chosen seed portable once the byte stream has been generated.
+- Latest source-only/no-build Movement/EntityKey hardening made entity-scoped
+  generic diff ordering prefer the wider `EffectiveEntityKey` before the legacy
+  32-bit `EntityId` compatibility tie-break. Core now owns the encoded-target
+  GUID helper so production `SignedEntityId(...)` projection stays scoped to
+  `DiffTargetEncoding`; direct `DiffTarget` construction is likewise
+  concentrated behind Core encoding helpers, while Simulation `WorldCellTarget`
+  callers can build GUID-backed diff targets without manually composing legacy
+  ids. The unused mixed `ToDiffTarget(int entityId, ulong entityKey)` helper was
+  removed so new Simulation/Jobs code either creates non-entity cell targets or
+  passes the authoritative GUID. Regression
+  coverage now proves entity-scoped diff sorting follows the 64-bit key when
+  legacy id order conflicts with the wider key, and deterministic smoke tests
+  lock the compatibility boundary. Simulation diff application now also routes
+  item/creature lookup through entity-key-first helper methods and only uses
+  guarded legacy id fallback when a diff target does not carry an entity key.
 - Latest source-only/no-build hardening centralized typed mutation diff sort-key
   packing in `SimulationDiffSortKeys`, keeping enqueue-ordered command-edit
   diffs distinct from spatial/priority item/stockpile-style diffs without

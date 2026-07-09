@@ -53,7 +53,7 @@ internal sealed class ConstructionCompletionApplier
         _diffEmitter.SetTerrain(site.Position, site.Z, kind);
 
         bool removed = RemoveConstructionSite(site, tick);
-        _logger.Log($"[BUILD.COMPLETE] site=({site.Position.X},{site.Position.Y},{site.Z}) kind={kind} consumed={FormatDict(construction.MaterialsRequired)} set-terrain removedSite={removed}");
+        _logger.Log($"[BUILD.COMPLETE] site=({site.Position.X},{site.Position.Y},{site.Z}) kind={kind} consumed={FormatDict(construction.GetRequiredMaterialsSnapshot())} set-terrain removedSite={removed}");
     }
 
     private void CompletePlaceable(PlaceableInstance site, ulong tick)
@@ -89,8 +89,11 @@ internal sealed class ConstructionCompletionApplier
         }
     }
 
-    private static string FormatDict(IReadOnlyDictionary<string, int> values)
+    private static string FormatDict(IEnumerable<KeyValuePair<string, int>> values)
     {
-        return "{" + string.Join(", ", values.Select(kv => $"{kv.Key}:{kv.Value}")) + "}";
+        return "{" + string.Join(", ", values
+            .OrderBy(static kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static kv => kv.Key, StringComparer.Ordinal)
+            .Select(static kv => $"{kv.Key}:{kv.Value}")) + "}";
     }
 }

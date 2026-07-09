@@ -78,10 +78,7 @@ internal static class StockpileWorldQueries
             if (!zone.Filter.Accepts(filterItem))
                 continue;
 
-            foreach (var chunkKey in zone.MemberChunks
-                .OrderBy(static key => key.Z)
-                .ThenBy(static key => key.ChunkY)
-                .ThenBy(static key => key.ChunkX))
+            foreach (var chunkKey in zone.GetMemberChunksSnapshot())
             {
                 var chunk = world.GetChunk(chunkKey);
                 var stockpileData = chunk?.GetStockpileData();

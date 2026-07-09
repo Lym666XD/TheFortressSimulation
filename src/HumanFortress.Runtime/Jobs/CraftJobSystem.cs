@@ -21,6 +21,7 @@ namespace HumanFortress.Runtime.Jobs;
 internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
 {
     private readonly CraftJobExecutor _executor;
+    private readonly IPathService _paths;
 
     internal CraftJobSystem(
         World world,
@@ -37,6 +38,7 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         var tuning = navigationTuning ?? NavigationTuning.Default;
         var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var paths = new PathService(tuning);
+        _paths = paths;
         var navView = new WorldNavigationView(navigation);
         IWorldNavigationView navViewInterface = navView;
         var move = new MovementExecutor(paths);
@@ -61,6 +63,8 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
     internal int Priority => UpdateOrder.Priority.Jobs;
 
     internal string SystemId => CraftJobExecutor.SystemId;
+
+    internal IPathService PathService => _paths;
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 

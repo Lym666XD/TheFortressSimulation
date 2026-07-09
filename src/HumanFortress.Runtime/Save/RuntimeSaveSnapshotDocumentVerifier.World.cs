@@ -9,7 +9,7 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
         RuntimeSaveSnapshotDocumentData document,
         ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
     {
-        var worldSection = FindSection(document, "world");
+        var worldSection = FindSection(document, RuntimeSaveManifestSections.World);
         if (worldSection is not { } section || !section.Present)
             return;
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
@@ -114,6 +115,18 @@ internal sealed class StockpileZone
     {
         MemberChunks = chunks.ToImmutableHashSet();
         Generation++;
+    }
+
+    /// <summary>
+    /// Get member chunks in stable spatial order.
+    /// </summary>
+    internal IReadOnlyList<ChunkKey> GetMemberChunksSnapshot()
+    {
+        return MemberChunks
+            .OrderBy(static chunk => chunk.Z)
+            .ThenBy(static chunk => chunk.ChunkY)
+            .ThenBy(static chunk => chunk.ChunkX)
+            .ToArray();
     }
 
     /// <summary>

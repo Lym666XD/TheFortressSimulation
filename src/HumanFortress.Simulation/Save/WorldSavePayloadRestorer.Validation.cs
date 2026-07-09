@@ -51,6 +51,14 @@ internal static partial class WorldSavePayloadRestorer
         {
             issues.Add("World payload item count does not match payload items.");
         }
+        else
+        {
+            ValidateUniquePayloadIds(
+                payload.Items,
+                static item => item.Guid,
+                "item",
+                issues);
+        }
 
         if (payload.Creatures == null)
         {
@@ -59,6 +67,14 @@ internal static partial class WorldSavePayloadRestorer
         else if (payload.Counts.CreatureCount != payload.Creatures.Length)
         {
             issues.Add("World payload creature count does not match payload creatures.");
+        }
+        else
+        {
+            ValidateUniquePayloadIds(
+                payload.Creatures,
+                static creature => creature.Guid,
+                "creature",
+                issues);
         }
 
         if (payload.ItemReservations == null)
@@ -170,6 +186,29 @@ internal static partial class WorldSavePayloadRestorer
         }
     }
 
+    private static void ValidateUniquePayloadIds<T>(
+        IReadOnlyList<T> rows,
+        Func<T, Guid> getGuid,
+        string label,
+        ICollection<string> issues)
+    {
+        var seen = new HashSet<Guid>();
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var guid = getGuid(rows[i]);
+            if (guid == Guid.Empty)
+            {
+                issues.Add($"World payload {label}[{i}] has an empty guid.");
+                continue;
+            }
+
+            if (!seen.Add(guid))
+            {
+                issues.Add($"World payload {label}[{i}] duplicates guid {guid}.");
+            }
+        }
+    }
+
     private static void ValidateSupportedSections(
         WorldSavePayloadData payload,
         bool restoreSupportedState,
@@ -194,6 +233,8 @@ internal static partial class WorldSavePayloadRestorer
         {
             ValidateSupportedItemSlice(payload, issues);
             ValidateReservationReferences(payload, issues);
+            ValidateStockpileZonePayloads(payload, issues);
+            ValidateOrderPayloads(payload, issues);
         }
     }
 
@@ -248,6 +289,295 @@ internal static partial class WorldSavePayloadRestorer
                     issues.Add($"World creature reservation payload[{i}] references missing creature {payload.CreatureReservations[i].WorkerId}.");
                 }
             }
+        }
+    }
+
+    private static void ValidateStockpileZonePayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (payload.StockpileZones == null
+            || payload.Counts.StockpileZoneCount != payload.StockpileZones.Length)
+        {
+            return;
+        }
+
+        var seenZoneIds = new HashSet<int>();
+        for (var i = 0; i < payload.StockpileZones.Length; i++)
+        {
+            var zone = payload.StockpileZones[i];
+            var prefix = $"World stockpile zone payload[{i}]";
+
+            if (zone.ZoneId <= 0)
+            {
+                issues.Add($"{prefix} has non-positive zone id {zone.ZoneId}.");
+            }
+            else if (!seenZoneIds.Add(zone.ZoneId))
+            {
+                issues.Add($"{prefix} duplicates zone id {zone.ZoneId}.");
+            }
+
+            if (string.IsNullOrWhiteSpace(zone.Name))
+            {
+                issues.Add($"{prefix} has a blank name.");
+            }
+
+            ValidateWorldChunkKey(zone.HomeChunk, $"{prefix} home chunk", payload, issues);
+            ValidateStockpileFilterArrays(zone.Filter, prefix, issues);
+
+            if (zone.MemberChunks == null)
+            {
+                issues.Add($"{prefix} member chunks are missing.");
+            }
+            else
+            {
+                var seenMemberChunks = new HashSet<ChunkKey>();
+                for (var j = 0; j < zone.MemberChunks.Length; j++)
+                {
+                    var memberKey = zone.MemberChunks[j];
+                    ValidateWorldChunkKey(memberKey, $"{prefix} member chunk[{j}]", payload, issues);
+                    if (!seenMemberChunks.Add(new ChunkKey(memberKey.ChunkX, memberKey.ChunkY, memberKey.Z)))
+                    {
+                        issues.Add($"{prefix} member chunk[{j}] duplicates chunk {memberKey.ChunkX},{memberKey.ChunkY},{memberKey.Z}.");
+                    }
+                }
+            }
+        }
+    }
+
+    private static void ValidateStockpileFilterArrays(
+        WorldSaveStockpileFilterPayloadData filter,
+        string prefix,
+        ICollection<string> issues)
+    {
+        ValidateStringArray(filter.Tags, $"{prefix} filter tags", issues);
+        ValidateStringArray(filter.ItemIds, $"{prefix} filter item ids", issues);
+        ValidateStringArray(filter.Materials, $"{prefix} filter materials", issues);
+    }
+
+    private static void ValidateStringArray(
+        string[]? values,
+        string label,
+        ICollection<string> issues)
+    {
+        if (values == null)
+        {
+            issues.Add($"{label} are missing.");
+            return;
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (string.IsNullOrWhiteSpace(values[i]))
+            {
+                issues.Add($"{label}[{i}] is blank.");
+            }
+            else if (!seen.Add(values[i]))
+            {
+                issues.Add($"{label}[{i}] duplicates '{values[i]}'.");
+            }
+        }
+    }
+
+    private static void ValidateOrderPayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        ValidateMiningOrderPayloads(payload, issues);
+        ValidateHaulOrderPayloads(payload, issues);
+        ValidateConstructionOrderPayloads(payload, issues);
+        ValidateBuildableOrderPayloads(payload, issues);
+    }
+
+    private static void ValidateMiningOrderPayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (payload.MiningOrders == null
+            || payload.Counts.MiningOrderCount != payload.MiningOrders.Length)
+        {
+            return;
+        }
+
+        var seen = new HashSet<int>();
+        for (var i = 0; i < payload.MiningOrders.Length; i++)
+        {
+            var order = payload.MiningOrders[i];
+            var prefix = $"World mining order payload[{i}]";
+
+            if (order.Id <= 0)
+            {
+                issues.Add($"{prefix} has non-positive id {order.Id}.");
+            }
+            else if (!seen.Add(order.Id))
+            {
+                issues.Add($"{prefix} duplicates mining id {order.Id}.");
+            }
+
+            ValidateWorldRectangle(order.Rect, prefix, payload, issues);
+            ValidateWorldZRange(order.ZMin, order.ZMax, prefix, payload, issues);
+        }
+    }
+
+    private static void ValidateHaulOrderPayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (payload.HaulOrders == null
+            || payload.Counts.HaulOrderCount != payload.HaulOrders.Length)
+        {
+            return;
+        }
+
+        for (var i = 0; i < payload.HaulOrders.Length; i++)
+        {
+            var order = payload.HaulOrders[i];
+            var prefix = $"World haul order payload[{i}]";
+            ValidateWorldRectangle(order.WorldRect, prefix, payload, issues);
+            ValidateWorldZ(order.Z, prefix, payload, issues);
+        }
+    }
+
+    private static void ValidateConstructionOrderPayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (payload.ConstructionOrders == null
+            || payload.Counts.ConstructionOrderCount != payload.ConstructionOrders.Length)
+        {
+            return;
+        }
+
+        for (var i = 0; i < payload.ConstructionOrders.Length; i++)
+        {
+            var order = payload.ConstructionOrders[i];
+            var prefix = $"World construction order payload[{i}]";
+            ValidateWorldRectangle(order.WorldRect, prefix, payload, issues);
+            ValidateWorldZRange(order.ZMin, order.ZMax, prefix, payload, issues);
+            ValidateMaterialFilter(order.Filter, prefix, issues);
+        }
+    }
+
+    private static void ValidateBuildableOrderPayloads(
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (payload.BuildableOrders == null
+            || payload.Counts.BuildableOrderCount != payload.BuildableOrders.Length)
+        {
+            return;
+        }
+
+        for (var i = 0; i < payload.BuildableOrders.Length; i++)
+        {
+            var order = payload.BuildableOrders[i];
+            var prefix = $"World buildable order payload[{i}]";
+
+            if (string.IsNullOrWhiteSpace(order.ConstructionId))
+            {
+                issues.Add($"{prefix} has a blank construction id.");
+            }
+
+            ValidateWorldPoint(order.Anchor, $"{prefix} anchor", payload, issues);
+            ValidateWorldZ(order.Z, prefix, payload, issues);
+        }
+    }
+
+    private static void ValidateMaterialFilter(
+        WorldSaveMaterialFilterPayloadData filter,
+        string prefix,
+        ICollection<string> issues)
+    {
+        if (string.IsNullOrWhiteSpace(filter.CategoryKey))
+        {
+            issues.Add($"{prefix} has a blank material filter category key.");
+        }
+
+        ValidateStringArray(filter.Tags, $"{prefix} material filter tags", issues);
+    }
+
+    private static void ValidateWorldRectangle(
+        WorldSaveRectangleData rectangle,
+        string prefix,
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (rectangle.Width <= 0 || rectangle.Height <= 0)
+        {
+            issues.Add($"{prefix} has non-positive rectangle dimensions.");
+            return;
+        }
+
+        var right = (long)rectangle.X + rectangle.Width;
+        var bottom = (long)rectangle.Y + rectangle.Height;
+        if (rectangle.X < 0
+            || rectangle.Y < 0
+            || right > payload.SizeInTiles
+            || bottom > payload.SizeInTiles)
+        {
+            issues.Add($"{prefix} rectangle is outside world bounds.");
+        }
+    }
+
+    private static void ValidateWorldPoint(
+        WorldSavePointData point,
+        string prefix,
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (point.X < 0
+            || point.Y < 0
+            || point.X >= payload.SizeInTiles
+            || point.Y >= payload.SizeInTiles)
+        {
+            issues.Add($"{prefix} is outside world bounds.");
+        }
+    }
+
+    private static void ValidateWorldChunkKey(
+        WorldSaveChunkKeyData chunk,
+        string prefix,
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (chunk.ChunkX < 0
+            || chunk.ChunkY < 0
+            || chunk.Z < 0
+            || chunk.ChunkX >= payload.SizeInChunks
+            || chunk.ChunkY >= payload.SizeInChunks
+            || chunk.Z >= payload.MaxZ)
+        {
+            issues.Add($"{prefix} is outside world bounds.");
+        }
+    }
+
+    private static void ValidateWorldZRange(
+        int zMin,
+        int zMax,
+        string prefix,
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (zMin > zMax)
+        {
+            issues.Add($"{prefix} has zMin greater than zMax.");
+            return;
+        }
+
+        ValidateWorldZ(zMin, $"{prefix} zMin", payload, issues);
+        ValidateWorldZ(zMax, $"{prefix} zMax", payload, issues);
+    }
+
+    private static void ValidateWorldZ(
+        int z,
+        string prefix,
+        WorldSavePayloadData payload,
+        ICollection<string> issues)
+    {
+        if (z < 0 || z >= payload.MaxZ)
+        {
+            issues.Add($"{prefix} is outside world z bounds.");
         }
     }
 }

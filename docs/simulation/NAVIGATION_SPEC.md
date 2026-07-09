@@ -7,7 +7,7 @@ last_updated: 2026-05-24
 
 This specification defines the fortress navigation model: data layout, ramp/stairs semantics, cost model, pathfinding API, and tuning. It is UTF-8 encoded and supersedes older non-UTF8 drafts.
 
-The implementation is deterministic across OS/thread counts and cooperates with the fixed UPDATE_ORDER (read-parallel, write-serialized).
+The implementation is deterministic across OS/thread counts and cooperates with the fixed UPDATE_ORDER. The current coarse scheduler uses deterministic registered-system read order plus serialized writes; future chunk-partitioned read parallelism must preserve the same replay hashes.
 
 Current implementation note (2026-06-12):
 

@@ -1,6 +1,5 @@
 using HumanFortress.Contracts.Navigation;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation.Implementation;
@@ -15,8 +14,7 @@ internal sealed class PathService : IPathService
     private readonly PathCache _cache;
     private readonly ConcurrentQueue<PathRequest> _requestQueue;
     private readonly ThreadLocal<DeterministicAStar> _pathfinders;
-    private readonly Stopwatch _frameTimer;
-    private int _pathsComputedThisTick;
+    private int _pathRequestsServedThisTick;
 
     internal PathService(NavigationTuning? tuning = null)
     {
@@ -24,7 +22,6 @@ internal sealed class PathService : IPathService
         _cache = new PathCache(1024); // LRU cache with 1024 entries
         _requestQueue = new ConcurrentQueue<PathRequest>();
         _pathfinders = new ThreadLocal<DeterministicAStar>(() => new DeterministicAStar(_tuning));
-        _frameTimer = new Stopwatch();
     }
 
     /// <summary>
@@ -33,19 +30,23 @@ internal sealed class PathService : IPathService
     /// </summary>
     internal NavPath Solve(in PathRequest request, in IWorldNavigationView world)
     {
-        // Check cache first
-        var cacheKey = GenerateCacheKey(request, world);
-        if (_cache.TryGet(cacheKey, out var cachedPath))
-        {
-            return cachedPath;
-        }
-
-        // Check if we've exceeded time budget
-        if (_frameTimer.ElapsedMilliseconds > _tuning.MaxMsPerTickPathing)
+        // Check deterministic per-tick request budget before cache lookup.
+        // Cache state must not let warm-cache sessions serve more simulation-
+        // visible path requests than cold-cache sessions.
+        if (_pathRequestsServedThisTick >= _tuning.MaxPathsPerTick)
         {
             // Queue for next tick
             _requestQueue.Enqueue(request);
             return NavPath.Invalid;
+        }
+
+        _pathRequestsServedThisTick++;
+
+        // Check cache after consuming request budget.
+        var cacheKey = GenerateCacheKey(request, world);
+        if (_cache.TryGet(cacheKey, out var cachedPath))
+        {
+            return cachedPath;
         }
 
         // Compute path
@@ -57,8 +58,6 @@ internal sealed class PathService : IPathService
         {
             _cache.Add(cacheKey, path);
         }
-
-        _pathsComputedThisTick++;
         return path;
     }
 
@@ -67,8 +66,7 @@ internal sealed class PathService : IPathService
     /// </summary>
     internal void BeginTick()
     {
-        _frameTimer.Restart();
-        _pathsComputedThisTick = 0;
+        _pathRequestsServedThisTick = 0;
     }
 
     /// <summary>
@@ -78,7 +76,7 @@ internal sealed class PathService : IPathService
     {
         while (_requestQueue.TryDequeue(out var request))
         {
-            if (_frameTimer.ElapsedMilliseconds > _tuning.MaxMsPerTickPathing)
+            if (_pathRequestsServedThisTick >= _tuning.MaxPathsPerTick)
             {
                 // Re-queue for next tick
                 _requestQueue.Enqueue(request);
@@ -117,7 +115,7 @@ internal sealed class PathService : IPathService
             CacheHits = _cache.Hits,
             CacheMisses = _cache.Misses,
             QueuedRequests = _requestQueue.Count,
-            PathsComputedThisTick = _pathsComputedThisTick,
+            PathsComputedThisTick = _pathRequestsServedThisTick,
         };
     }
 

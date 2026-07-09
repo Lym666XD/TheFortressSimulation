@@ -34,7 +34,7 @@ internal sealed class ConstructionSiteProgress
         var delivered = _materials.CountDelivered(site);
         construction.MaterialsDelivered = delivered;
 
-        _logger.Log($"[BUILD.EXEC] site=({site.Position.X},{site.Position.Y},{site.Z}) delivered={FormatDict(delivered)} req={FormatDict(construction.MaterialsRequired)} progress={construction.BuildProgressTicks}/{construction.TotalBuildTicks}");
+        _logger.Log($"[BUILD.EXEC] site=({site.Position.X},{site.Position.Y},{site.Z}) delivered={FormatDict(delivered)} req={FormatDict(construction.GetRequiredMaterialsSnapshot())} progress={construction.BuildProgressTicks}/{construction.TotalBuildTicks}");
         LogNearbyItems(site, tick);
 
         if (!HasRequiredMaterials(site, construction, delivered))
@@ -73,7 +73,7 @@ internal sealed class ConstructionSiteProgress
         ConstructionSiteState construction,
         Dictionary<string, int> delivered)
     {
-        foreach (var requirement in construction.MaterialsRequired)
+        foreach (var requirement in construction.GetRequiredMaterialsSnapshot())
         {
             var tag = requirement.Key;
             var need = requirement.Value;
@@ -90,8 +90,11 @@ internal sealed class ConstructionSiteProgress
         return true;
     }
 
-    private static string FormatDict(IReadOnlyDictionary<string, int> values)
+    private static string FormatDict(IEnumerable<KeyValuePair<string, int>> values)
     {
-        return "{" + string.Join(", ", values.Select(kv => $"{kv.Key}:{kv.Value}")) + "}";
+        return "{" + string.Join(", ", values
+            .OrderBy(static kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static kv => kv.Key, StringComparer.Ordinal)
+            .Select(static kv => $"{kv.Key}:{kv.Value}")) + "}";
     }
 }

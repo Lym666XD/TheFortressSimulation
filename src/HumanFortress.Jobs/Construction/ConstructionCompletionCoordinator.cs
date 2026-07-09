@@ -46,7 +46,8 @@ internal sealed class ConstructionCompletionCoordinator
             _siteSafety.RelocateWallFootprintCreatures(site, tick);
         }
 
-        var toConsume = new Dictionary<string, int>(construction.MaterialsRequired, StringComparer.OrdinalIgnoreCase);
+        var toConsume = construction.GetRequiredMaterialsSnapshot()
+            .ToDictionary(static requirement => requirement.Key, static requirement => requirement.Value, StringComparer.OrdinalIgnoreCase);
         if (!_materials.TryConsume(site, toConsume))
         {
             return false;

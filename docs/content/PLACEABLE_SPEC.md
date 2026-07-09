@@ -525,7 +525,9 @@ No free footprint cell for output (crafter waits or tries adjacent cells).
 
 Per-chunk indices → O(1) occupancy, O(k) by tag.
 
-All heavy scans happen in read phase, fully parallel.
+All heavy scans happen in read phase. The current coarse scheduler runs systems
+in deterministic registered-system order; future chunk-partitioned read
+parallelism must preserve stable scan/diff ordering.
 
 Write phase is bounded by number of diffs; stable sort keys ensure determinism.
 
@@ -709,7 +711,7 @@ PLACEABLES SPEC — v1.2 (English, updated)
 
 Status: Ready for implementation
 Last Updated: 2025-10-03 (Australia/Sydney)
-Fits: Fortress-style deterministic pipeline (read-parallel / write-serialized), per-chunk indices & mailbox
+Fits: Fortress-style deterministic read/write pipeline, per-chunk indices & mailbox; chunk-partitioned read parallelism remains a future scheduler target.
 Upgrades: Replaces v1.1; removes obsolete fields, adds state machines, destruction rules, trap layering, and cache invalidation contracts
 
 0) Purpose & Scope

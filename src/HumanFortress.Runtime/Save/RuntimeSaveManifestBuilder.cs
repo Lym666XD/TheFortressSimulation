@@ -21,20 +21,20 @@ internal static class RuntimeSaveManifestBuilder
         var worldCounts = worldSnapshot?.Counts;
         var sections = new[]
         {
-            CreateSection("world", checkpoint.WorldHash, requiredForFortressMode: true, worldCounts?.ChunkCount),
-            CreateSection("world.terrain", worldSectionHashes?.TerrainHash, requiredForFortressMode: true, worldCounts?.TileCount),
-            CreateSection("world.items", worldSectionHashes?.ItemsHash, requiredForFortressMode: true, worldCounts?.ItemCount),
-            CreateSection("world.creatures", worldSectionHashes?.CreaturesHash, requiredForFortressMode: true, worldCounts?.CreatureCount),
-            CreateSection("world.reservations", worldSectionHashes?.ReservationsHash, requiredForFortressMode: true, CountReservations(worldCounts)),
-            CreateSection("world.stockpiles", worldSectionHashes?.StockpileZonesHash, requiredForFortressMode: true, worldCounts?.StockpileZoneCount),
-            CreateSection("world.placeables", worldSectionHashes?.PlaceablesHash, requiredForFortressMode: true, worldCounts?.OwnedPlaceableCount),
-            CreateSection("world.orders", worldSectionHashes?.OrdersHash, requiredForFortressMode: true, CountOrders(worldCounts)),
-            CreateSection("rng", checkpoint.RngHash, requiredForFortressMode: true, checkpoint.RngStreamCount),
-            CreateSection("commands.executed", checkpoint.CommandLogHash, requiredForFortressMode: false, checkpoint.CommandLogRecordCount),
-            CreateSection("commands.pending", checkpoint.PendingCommandLogHash, requiredForFortressMode: false, checkpoint.PendingCommandLogRecordCount),
-            CreateSection("jobs.transport", checkpoint.TransportHash, requiredForFortressMode: false),
-            CreateSection("jobs.mining", checkpoint.MiningHash, requiredForFortressMode: false),
-            CreateSection("jobs.craft", checkpoint.CraftHash, requiredForFortressMode: false)
+            CreateSection(RuntimeSaveManifestSections.World, checkpoint.WorldHash, worldCounts?.ChunkCount),
+            CreateSection(RuntimeSaveManifestSections.WorldTerrain, worldSectionHashes?.TerrainHash, worldCounts?.TileCount),
+            CreateSection(RuntimeSaveManifestSections.WorldItems, worldSectionHashes?.ItemsHash, worldCounts?.ItemCount),
+            CreateSection(RuntimeSaveManifestSections.WorldCreatures, worldSectionHashes?.CreaturesHash, worldCounts?.CreatureCount),
+            CreateSection(RuntimeSaveManifestSections.WorldReservations, worldSectionHashes?.ReservationsHash, CountReservations(worldCounts)),
+            CreateSection(RuntimeSaveManifestSections.WorldStockpiles, worldSectionHashes?.StockpileZonesHash, worldCounts?.StockpileZoneCount),
+            CreateSection(RuntimeSaveManifestSections.WorldPlaceables, worldSectionHashes?.PlaceablesHash, worldCounts?.OwnedPlaceableCount),
+            CreateSection(RuntimeSaveManifestSections.WorldOrders, worldSectionHashes?.OrdersHash, CountOrders(worldCounts)),
+            CreateSection(RuntimeSaveManifestSections.Rng, checkpoint.RngHash, checkpoint.RngStreamCount),
+            CreateSection(RuntimeSaveManifestSections.CommandsExecuted, checkpoint.CommandLogHash, checkpoint.CommandLogRecordCount),
+            CreateSection(RuntimeSaveManifestSections.CommandsPending, checkpoint.PendingCommandLogHash, checkpoint.PendingCommandLogRecordCount),
+            CreateSection(RuntimeSaveManifestSections.JobsTransport, checkpoint.TransportHash),
+            CreateSection(RuntimeSaveManifestSections.JobsMining, checkpoint.MiningHash),
+            CreateSection(RuntimeSaveManifestSections.JobsCraft, checkpoint.CraftHash)
         };
 
         return new RuntimeSaveManifestData(
@@ -49,9 +49,11 @@ internal static class RuntimeSaveManifestBuilder
     private static RuntimeSaveManifestSectionData CreateSection(
         string name,
         string? hash,
-        bool requiredForFortressMode,
         long? recordCount = null)
     {
+        if (!RuntimeSaveManifestSections.TryGetRequirement(name, out var requiredForFortressMode))
+            throw new InvalidOperationException($"Runtime save manifest section '{name}' is not defined.");
+
         return new RuntimeSaveManifestSectionData(
             name,
             hash != null,

@@ -9,14 +9,14 @@ namespace HumanFortress.Navigation.Implementation;
 /// </summary>
 internal sealed class MovementExecutor : IMovementExecutor
 {
-    private readonly Dictionary<uint, MovementState> _movementStates;
+    private readonly Dictionary<ulong, MovementState> _movementStates;
     private readonly IPathService _pathService;
     private readonly NavigationTuning _tuning;
     private readonly int _stepDelay;
 
     internal MovementExecutor(IPathService pathService, NavigationTuning? tuning = null)
     {
-        _movementStates = new Dictionary<uint, MovementState>();
+        _movementStates = new Dictionary<ulong, MovementState>();
         _pathService = pathService;
         _tuning = tuning ?? NavigationTuning.Default;
         _stepDelay = 2; // simple slowdown so movement is visible (ticks per step)
@@ -25,9 +25,9 @@ internal sealed class MovementExecutor : IMovementExecutor
     /// <summary>
     /// Start or update movement for an entity.
     /// </summary>
-    internal void BeginMovement(uint entityId, PathRequest request, NavPath path)
+    internal void BeginMovement(ulong entityKey, PathRequest request, NavPath path)
     {
-        _movementStates[entityId] = new MovementState
+        _movementStates[entityKey] = new MovementState
         {
             Request = request,
             Path = path,
@@ -43,9 +43,9 @@ internal sealed class MovementExecutor : IMovementExecutor
     /// Update movement for all entities.
     /// Called during movement system update.
     /// </summary>
-    internal MovementUpdate UpdateMovement(uint entityId, IWorldNavigationView world)
+    internal MovementUpdate UpdateMovement(ulong entityKey, IWorldNavigationView world)
     {
-        if (!_movementStates.TryGetValue(entityId, out var state))
+        if (!_movementStates.TryGetValue(entityKey, out var state))
         {
             return new MovementUpdate(MovementStatus.NoPath, Point3.Zero, false, null);
         }
@@ -53,7 +53,7 @@ internal sealed class MovementExecutor : IMovementExecutor
         // Check if we've reached destination
         if (state.Position == state.Request.Destination)
         {
-            _movementStates.Remove(entityId);
+            _movementStates.Remove(entityKey);
             return new MovementUpdate(MovementStatus.Arrived, state.Position, false, null);
         }
 
@@ -79,7 +79,7 @@ internal sealed class MovementExecutor : IMovementExecutor
         if (state.StepWait < _stepDelay)
         {
             state.StepWait++;
-            _movementStates[entityId] = state;
+            _movementStates[entityKey] = state;
             return new MovementUpdate(MovementStatus.Moving, state.Position, false, null);
         }
         state.StepWait = 0;
@@ -134,7 +134,7 @@ internal sealed class MovementExecutor : IMovementExecutor
             lookAhead = state.Path.Steps.Span[state.CurrentStep + 1].Position;
         }
 
-        _movementStates[entityId] = state;
+        _movementStates[entityKey] = state;
 
         return new MovementUpdate(MovementStatus.Moving, nextPos, false, lookAhead);
     }
@@ -142,25 +142,25 @@ internal sealed class MovementExecutor : IMovementExecutor
     /// <summary>
     /// Cancel movement for an entity.
     /// </summary>
-    internal void CancelMovement(uint entityId)
+    internal void CancelMovement(ulong entityKey)
     {
-        _movementStates.Remove(entityId);
+        _movementStates.Remove(entityKey);
     }
 
     /// <summary>
     /// Check if entity has active movement.
     /// </summary>
-    internal bool HasMovement(uint entityId)
+    internal bool HasMovement(ulong entityKey)
     {
-        return _movementStates.ContainsKey(entityId);
+        return _movementStates.ContainsKey(entityKey);
     }
 
     /// <summary>
     /// Get movement progress for an entity.
     /// </summary>
-    internal float GetProgress(uint entityId)
+    internal float GetProgress(ulong entityKey)
     {
-        if (!_movementStates.TryGetValue(entityId, out var state))
+        if (!_movementStates.TryGetValue(entityKey, out var state))
             return 0f;
 
         if (state.Path.Steps.Length == 0)
@@ -193,15 +193,15 @@ internal sealed class MovementExecutor : IMovementExecutor
         internal int StepWait;
     }
 
-    void IMovementExecutor.BeginMovement(uint entityId, PathRequest request, NavPath path) =>
-        BeginMovement(entityId, request, path);
+    void IMovementExecutor.BeginMovement(ulong entityKey, PathRequest request, NavPath path) =>
+        BeginMovement(entityKey, request, path);
 
-    MovementUpdate IMovementExecutor.UpdateMovement(uint entityId, IWorldNavigationView world) =>
-        UpdateMovement(entityId, world);
+    MovementUpdate IMovementExecutor.UpdateMovement(ulong entityKey, IWorldNavigationView world) =>
+        UpdateMovement(entityKey, world);
 
-    void IMovementExecutor.CancelMovement(uint entityId) => CancelMovement(entityId);
+    void IMovementExecutor.CancelMovement(ulong entityKey) => CancelMovement(entityKey);
 
-    bool IMovementExecutor.HasMovement(uint entityId) => HasMovement(entityId);
+    bool IMovementExecutor.HasMovement(ulong entityKey) => HasMovement(entityKey);
 
-    float IMovementExecutor.GetProgress(uint entityId) => GetProgress(entityId);
+    float IMovementExecutor.GetProgress(ulong entityKey) => GetProgress(entityKey);
 }

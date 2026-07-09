@@ -23,13 +23,24 @@ internal sealed partial class ItemManager
     {
         lock (_instanceLock)
         {
-            foreach (var inst in _instances.Values)
-            {
-                if (ToEntityId(inst.Guid) == entityId)
-                    return inst;
-            }
+            return _legacyEntityIdIndex.TryGetValue(entityId, out var ids)
+                && ids.Count > 0
+                && _instances.TryGetValue(ids[0], out var instance)
+                ? instance
+                : null;
+        }
+    }
 
-            return null;
+    /// <summary>
+    /// Find an item by the wider stable entity key used by entity-scoped DiffTarget operations.
+    /// </summary>
+    public ItemInstance? GetInstanceByEntityKey(ulong entityKey)
+    {
+        lock (_instanceLock)
+        {
+            return _entityKeyIndex.TryGetValue(entityKey, out var guid)
+                ? _instances.GetValueOrDefault(guid)
+                : null;
         }
     }
 
@@ -40,7 +51,9 @@ internal sealed partial class ItemManager
     {
         lock (_instanceLock)
         {
-            return _instances.Values.ToList();
+            return _instances.Values
+                .OrderBy(static inst => inst.Guid)
+                .ToList();
         }
     }
 
@@ -51,9 +64,9 @@ internal sealed partial class ItemManager
     {
         lock (_instanceLock)
         {
-            return _instances.Values
+            return OrderItemsSpatially(_instances.Values
                 .Where(inst => inst.IsOnGround)
-                .ToList();
+            ).ToList();
         }
     }
 
@@ -64,9 +77,9 @@ internal sealed partial class ItemManager
     {
         lock (_instanceLock)
         {
-            return _instances.Values
+            return OrderItemsSpatially(_instances.Values
                 .Where(inst => inst.IsOnGround && inst.Z == z)
-                .ToList();
+            ).ToList();
         }
     }
 
@@ -91,7 +104,9 @@ internal sealed partial class ItemManager
                 }
             }
 
-            return list;
+            return list
+                .OrderBy(static item => item.Guid)
+                .ToList();
         }
     }
 
@@ -127,12 +142,26 @@ internal sealed partial class ItemManager
                 }
             }
 
-            return list;
+            return OrderItemsSpatially(list).ToList();
         }
+    }
+
+    private static IOrderedEnumerable<ItemInstance> OrderItemsSpatially(IEnumerable<ItemInstance> items)
+    {
+        return items
+            .OrderBy(static item => item.Z)
+            .ThenBy(static item => item.Position.Y)
+            .ThenBy(static item => item.Position.X)
+            .ThenBy(static item => item.Guid);
     }
 
     private static uint ToEntityId(Guid guid)
     {
         return DiffTargetEncoding.EntityId(guid);
+    }
+
+    private static ulong ToEntityKey(Guid guid)
+    {
+        return DiffTargetEncoding.EntityKey(guid);
     }
 }

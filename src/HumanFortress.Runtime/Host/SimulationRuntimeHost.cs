@@ -7,6 +7,7 @@ using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Content;
 using HumanFortress.Runtime.Diff;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.World;
 
@@ -43,7 +44,8 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         IConstructionCatalog? constructions = null,
         IRuntimeGeologyCatalog? geology = null,
         NavigationTuning? navigationTuning = null,
-        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null)
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
+        RuntimePathServiceRegistry? pathServices = null)
         : this(
             world,
             services.TickScheduler,
@@ -59,7 +61,8 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
             constructions,
             geology,
             navigationTuning,
-            stockpilePresets)
+            stockpilePresets,
+            pathServices)
     {
     }
 
@@ -78,7 +81,8 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         IConstructionCatalog? constructions = null,
         IRuntimeGeologyCatalog? geology = null,
         NavigationTuning? navigationTuning = null,
-        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null)
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
+        RuntimePathServiceRegistry? pathServices = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         ArgumentNullException.ThrowIfNull(tickScheduler);
@@ -116,7 +120,8 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
             mutationDiffs,
             _constructions,
             navigation,
-            _geology);
+            _geology,
+            pathServices);
     }
 
 }

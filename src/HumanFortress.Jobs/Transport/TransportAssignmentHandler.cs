@@ -74,7 +74,7 @@ internal sealed class TransportAssignmentHandler
                 continue;
             }
 
-            _move.BeginMovement(DiffTargetEncoding.EntityId(worker.Guid), pathRequest, path);
+            _move.BeginMovement(DiffTargetEncoding.EntityKey(worker.Guid), pathRequest, path);
             int quantity = request.Quantity > 0
                 ? request.Quantity
                 : (_world.Items.GetInstance(request.ItemGuid)?.StackCount ?? 1);

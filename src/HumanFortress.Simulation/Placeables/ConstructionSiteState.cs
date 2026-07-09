@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace HumanFortress.Simulation.Placeables;
 
@@ -28,4 +30,30 @@ internal sealed class ConstructionSiteState
     public int BuildProgressTicks { get; set; }
 
     public int TotalBuildTicks { get; set; }
+
+    internal IReadOnlyList<KeyValuePair<string, int>> GetRequiredMaterialsSnapshot()
+    {
+        return OrderMaterials(MaterialsRequired).ToArray();
+    }
+
+    internal IReadOnlyList<string> GetRequiredMaterialIdsSnapshot()
+    {
+        return MaterialsRequired.Keys
+            .OrderBy(static materialId => materialId, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static materialId => materialId, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    internal IReadOnlyList<KeyValuePair<string, int>> GetDeliveredMaterialsSnapshot()
+    {
+        return OrderMaterials(MaterialsDelivered).ToArray();
+    }
+
+    private static IOrderedEnumerable<KeyValuePair<string, int>> OrderMaterials(
+        IEnumerable<KeyValuePair<string, int>> materials)
+    {
+        return materials
+            .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static entry => entry.Key, StringComparer.Ordinal);
+    }
 }

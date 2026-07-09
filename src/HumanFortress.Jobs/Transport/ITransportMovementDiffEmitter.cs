@@ -4,5 +4,5 @@ namespace HumanFortress.Jobs.Transport;
 
 internal interface ITransportMovementDiffEmitter
 {
-    void MoveCreature(uint entityId, Point3 position);
+    void MoveCreature(Guid creatureId, Point3 position);
 }

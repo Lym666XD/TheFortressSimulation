@@ -24,7 +24,9 @@ internal sealed class RuntimeSaveSnapshotData
         ArgumentNullException.ThrowIfNull(commandReplayRecords);
         ArgumentNullException.ThrowIfNull(pendingCommandReplayRecords);
 
-        var rngRows = rngStreams.ToArray();
+        var rngRows = rngStreams
+            .OrderBy(static stream => stream.StreamName, StringComparer.Ordinal)
+            .ToArray();
         var records = commandReplayRecords.ToArray();
         var pendingRecords = pendingCommandReplayRecords.ToArray();
         var seenStreams = new HashSet<string>(StringComparer.Ordinal);
@@ -51,6 +53,18 @@ internal sealed class RuntimeSaveSnapshotData
         {
             ArgumentNullException.ThrowIfNull(record);
         }
+
+        if (manifest.Checkpoint.CommandLogRecordCount != records.Length)
+            throw new InvalidOperationException("Runtime save snapshot executed command count does not match the manifest checkpoint.");
+
+        if (!string.Equals(CommandReplayJournalHashBuilder.Build(records), manifest.Checkpoint.CommandLogHash, StringComparison.Ordinal))
+            throw new InvalidOperationException("Runtime save snapshot executed command hash does not match the manifest checkpoint.");
+
+        if (manifest.Checkpoint.PendingCommandLogRecordCount != pendingRecords.Length)
+            throw new InvalidOperationException("Runtime save snapshot pending command count does not match the manifest checkpoint.");
+
+        if (!string.Equals(CommandReplayJournalHashBuilder.Build(pendingRecords), manifest.Checkpoint.PendingCommandLogHash, StringComparison.Ordinal))
+            throw new InvalidOperationException("Runtime save snapshot pending command hash does not match the manifest checkpoint.");
 
         Manifest = manifest;
         WorldPayload = worldPayload;

@@ -162,7 +162,7 @@ internal sealed class ZoneCoordinator
             return;
 
         // Remove from all member chunks
-        foreach (var chunkKey in zone.MemberChunks)
+        foreach (var chunkKey in zone.GetMemberChunksSnapshot())
         {
             var chunk = _world.GetChunk(chunkKey);
             var zoneData = chunk?.GetZoneData();

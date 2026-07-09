@@ -15,6 +15,20 @@ Runtime command identity sequence in `CommandReplayRecord`; otherwise a decoder
 can rebuild the inner command payload but cannot reproduce the original wrapper
 `CommandId`.
 
+### Determinism tests must avoid scheduler wall-clock behavior
+
+A full simulation-loop determinism check should use production Runtime
+composition and the same tick pipeline, but advance it through manual
+`ExecuteSingleTick()` calls. Starting the background tick thread turns the test
+into a scheduler timing test and makes failures harder to diagnose. Keep the
+Runtime manual-tick host seam internal, and compare both world replay hashes and
+Runtime checkpoint hashes so jobs/commands/RNG state are covered.
+
+The current Runtime registers only a coarse system list, not chunk-partitioned
+read jobs with enforced non-overlap. Read-phase `Parallel.ForEach` added thread
+scheduling noise without meaningful throughput, so the scheduler now runs read
+systems in deterministic system order until real chunk-level scheduling exists.
+
 ### Runtime command payloads need explicit versions
 
 Binary payloads are compact but fragile. Runtime command `Serialize()` methods
@@ -71,6 +85,22 @@ When adding a new world payload section, add the export/import/hash fields in
 the section-owned partials and update the architecture smoke guard instead of
 growing a new save/load God Object or moving mapping into Runtime/App.
 
+Do not rely only on manager-level restore validation for externally supplied
+world payloads. Managers should still keep atomic "validate then replace"
+semantics for their owned state, but `WorldSavePayloadRestorer.Validation`
+should reject cross-section and payload-shape problems before constructing or
+mutating a restored world. Duplicate entity ids, stockpile zone/member
+identities, order ids, and out-of-bounds coordinates belong at this Simulation
+save boundary so Runtime/App can treat the world payload contract as one
+auditable restore gate.
+
+Some payload validation depends on reconstructed terrain. Keep those checks as
+explicit preflight phases, not as late failures inside the restore pass.
+Placeable owner storage, anchors, footprints, construction state, and workshop
+queue payloads need terrain/chunk context, but they should be validated right
+after terrain reconstruction and before item/creature/reservation/stockpile
+manager restore work starts.
+
 Simulation state managers are not a dumping ground for every behavior that
 touches a subsystem. Keep `ItemManager` split by catalog access, position
 indexing, read queries, stack/move/remove mutations, spawn behavior, and
@@ -113,6 +143,71 @@ spatial/priority diffs should call the explicit chunk/cell/priority or
 stockpile/cell/priority helpers. This keeps ordering policy visible and prevents
 small bit-packing differences from becoming replay-only bugs.
 
+Do not let compatibility entity ids leak back into typed stockpile item indexes.
+The stockpile item-index pipeline now uses the wider `ulong` item entity key
+from diff emitters through `StockpileDiff`, `StockpileMessage`,
+`ItemStackRef`, `ChunkStockpileData`, and item projection lookup. Legacy `int`
+stockpile handle overloads are temporary shims for old callers/tests only; new
+stockpile placement/removal diffs should use `DiffTargetEncoding.EntityKey(...)`
+and item projection should resolve by entity key rather than by the truncated
+32-bit id.
+
+When a diff producer has the source GUID, do not duplicate the transition logic
+at every call site. Use GUID-aware target helpers so the legacy 32-bit
+compatibility `EntityId` and the wider `EntityKey` are always filled together.
+Hand-written `SignedEntityId(...)` plus `EntityKey(...)` pairs are easy to
+partially apply during refactors.
+
+Legacy entity-id fallback is still behavior-affecting for old diffs. Even
+though new producers should emit `EntityKey`, the fallback must not enumerate
+live dictionaries and accidentally choose a colliding entity by runtime
+insertion/hash behavior. Keep fallback lookup behind manager-owned deterministic
+indexes and prefer fail-closed or documented stable tie-breakers if the legacy
+id cannot uniquely identify an entity.
+
+Broad read snapshots are part of deterministic behavior when they feed save,
+replay hashes, jobs, or Runtime UI read models. Do not return raw dictionary
+values from managers and expect every caller to remember an `OrderBy`.
+Zone/stockpile owners now sort definitions, zones, shards, member chunks, and
+stockpile item handles before exposing snapshots; keep future owner APIs
+responsible for their own stable order.
+
+World and placeable owner APIs are the same kind of boundary. `World.GetAllChunks()`,
+dirty chunk drains, affected-chunk queries, and chunk-owned placeable snapshots
+now sort at the owner by spatial/local-cell keys. Do not make every save,
+Runtime snapshot, and job scanner rediscover the same ordering rule.
+
+Construction material dictionaries look small, but requirement iteration affects
+shortfall planning, item matching, consumption order, and diagnostic text.
+`ConstructionSiteState` now exposes sorted requirement/delivery snapshots; new
+construction, workshop, and Runtime readers should use those helpers instead of
+enumerating raw material dictionaries.
+
+Debug-looking shard snapshots can still become behavior-affecting when they
+feed scheduling, replay diagnostics, or UI summaries that take the first N
+entries. Transport request queue shard ids/counts now sort by shard id at the
+queue boundary; keep shard owner APIs responsible for deterministic ordering
+instead of relying on dictionary insertion order.
+
+Transitional managers often start as "not important yet" and later become
+behavior-affecting. `ChunkLifecycleManager` already owns heat/LOD transitions,
+so heat-score decay now sorts chunk keys spatially before mutating scores. Apply
+the same rule before adding unload queues, catch-up integration, or lifecycle
+save/hash state.
+
+Content bootstrap snapshots and selection lists are also ordering boundaries. If
+a Content registry dictionary becomes a Runtime-applied list, sort by content id
+while materializing the snapshot. If multiple content entries have the same
+domain priority, add an explicit id tie-break. Runtime should not apply zones,
+definitions, or tuning-derived rows in whatever order a dictionary or file
+happened to enumerate them.
+
+Contracts catalog stores are boundaries too. `GetAll*()` and tag/category index
+arrays should be sorted when the store is built or read, not at every Runtime or
+Jobs call site. Keep compatibility dictionary snapshots, such as material name
+maps and RNG stream state maps, sorted by key even when a newer canonical row
+snapshot exists.
+
 Replay hash builders must be read-only. Do not use queue-drain APIs such as
 order designation drains while hashing; use stable snapshot/read APIs instead.
 Hashing should never advance simulation queues, clear pending work, mutate cache
@@ -124,6 +219,12 @@ the hash/save snapshot must include that counter even when the current visible
 collection can be reconstructed. Workshop queue entry ids depend on the
 workshop queue sequence, so the placeable replay hash covers the counter in
 addition to the current queue entries.
+
+If a private counter only exists to schedule periodic work, prefer deriving the
+schedule from the authoritative tick instead of persisting another replay field.
+`SanitizeSystem` now uses `(tick + 1) % interval` rather than an internal
+counter so the low-frequency safety net resumes deterministically after
+restore/replay without adding hidden scheduler state.
 
 Compatibility save helpers that return dictionaries are not canonical replay
 streams. Use sorted snapshot rows for replay/save hashing. `RngStreamManager`
@@ -1206,21 +1307,29 @@ Final migrated batches:
 - runtime command stage execution before system `ReadTick`.
 - Phase A-D validation coverage for platform, world generation, fortress bootstrap, and navigation.
 
-### Do not let timing budgets make deterministic tests flaky
+### Do not let wall-clock budgets drive pathfinding
 
-The legacy Phase D concurrent pathfinder test originally used the production `NavigationTuning.Default` budget:
+The legacy Phase D concurrent pathfinder test originally used the production
+wall-clock navigation budget:
 
 ```text
 MaxMsPerTickPathing = 3
 ```
 
-`PathService.Solve` is allowed to return `Path.Invalid` and queue work for a later tick when that per-tick budget is exceeded. Under slower thread scheduling, the concurrent test could report:
+That made `PathService.Solve` allowed to return `Path.Invalid` and queue work
+for a later tick based on CPU speed, GC pauses, debugger state, or thread
+scheduling. Under slower thread scheduling, the concurrent test could report:
 
 ```text
 Only 8/10 paths were found
 ```
 
-That was not proof of an unreachable path; it was normal budget deferral being treated as a failure. Tests that assert pathfinding correctness should use a test-specific tuning budget large enough to avoid scheduler noise. Separate tests should cover production budget/queue behavior explicitly.
+That was not proof of an unreachable path; it was wall-clock budget deferral
+being treated as a failure. Pathfinding now uses deterministic budgets
+(`MaxNodesPerSearch` and `MaxPathsPerTick`) and active path caches are
+invalidated by Runtime after dirty navigation chunks rebuild. Do not reintroduce
+`Stopwatch`, elapsed milliseconds, or frame timers into simulation-visible path
+results.
 
 ## Runtime and Diagnostics Pitfalls
 
@@ -1746,6 +1855,31 @@ localIndex = Chunk.LocalIndex(localX, localY)
 
 Use `WorldCellTargetEncoding` instead, then pass the resulting `WorldCellTarget` directly to `ItemsDiffLog` where possible. The older `ChunkKey + localIndex` item-diff overloads remain for compatibility, while general `DiffLog` still uses `DiffTarget`.
 
+General `DiffLog` ordering should not recover module precedence from string
+prefix checks in Core. Use the `SystemOrder` field supplied by the producing
+module and `LocalSeq` when same-system ordering matters. Core can sort and
+merge by those numeric fields, but it should not know that `Jobs.Mining` beats
+`Jobs.Transport`, and it should not use small hash fragments as the effective
+system-order contract.
+
+Entity-scoped general `DiffLog` operations must not merge solely by a truncated
+32-bit GUID projection. `DiffTarget.EntityKey` is the wider compatibility
+bridge for producers that still identify entities by GUID. Keep `EntityId`
+only for old callers until they migrate, and add collision regression coverage
+when touching move/carry diff paths.
+
+Movement executor state has the same collision risk as diff merge state. If
+two workers share a legacy 32-bit GUID projection, a `Dictionary<uint, ...>`
+movement map lets one worker overwrite another worker's path state. Navigation
+contracts and Jobs movement paths should use the wider `ulong` entity key; only
+explicit compatibility bridges should still read the old 32-bit handle.
+
+`TileBase` is a multi-field value type. Until the world renderer/runtime reads
+an immutable frame snapshot or chunks move to packed/seqlock tile storage, live
+chunk tile reads and tile-copy snapshots must synchronize with write-phase
+replacement. Otherwise a render/debug/read path can observe a mixture of old
+and new tile fields that never existed as authoritative Simulation state.
+
 ### Planner and executor must share domain rules
 
 Craft exposed a real bug:
@@ -1883,3 +2017,31 @@ git diff --check
 ```
 
 If a command produces no output for too long, investigate instead of waiting indefinitely.
+
+### Stable snapshots must include write-side indexes
+
+It is not enough for broad read APIs to sort dictionary values on return. If a
+manager-owned index later drives an authoritative mutation, the index itself
+must have stable semantics. `ItemManager` position indexes now keep GUIDs sorted
+on insert, and stack consolidation picks definition groups plus merge targets by
+stable keys. Do not reintroduce "first item in list wins" behavior unless the
+list order is itself explicit authoritative state and is saved/hashed.
+
+### Ordered debug previews should not be dictionaries
+
+`IReadOnlyDictionary` is fine for lookup-style DTOs, but it is a poor contract
+for ordered debug/UI previews. The transport shard debug path now emits shard
+count row DTOs from Jobs through Runtime/Contracts so App rendering can
+`Take(3)` from a stable sequence. When UI wants top-N, first-N, or table order,
+use row lists with a declared sort key instead of relying on dictionary
+insertion/enumeration behavior.
+
+### Restore must canonicalize external save payload order
+
+Save builders can produce canonical arrays, but restore code must not assume an
+external JSON document kept that order. Terrain chunks restore in Z/Y/X order,
+material string-int rows and improvement rows normalize during conversion, and
+Runtime save manifest verification rejects blank/duplicate section names before
+lookup. If a future restore path accepts arrays for authoritative state, sort by
+the owner key before mutating live state unless the array order is itself part
+of the saved authority.
