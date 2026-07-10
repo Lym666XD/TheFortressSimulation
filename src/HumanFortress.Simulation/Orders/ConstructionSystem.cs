@@ -23,10 +23,9 @@ internal sealed class ConstructionSystem : ITick
     private readonly int _maxPerTick;
 
     private readonly List<PlannedBuild> _planned = new();
-    private readonly System.Collections.Concurrent.ConcurrentQueue<PlannedBuild> _outbox = new();
     private readonly HumanFortress.Contracts.Content.Registry.ConstructionTuning _tuning;
 
-    public ConstructionSystem(
+    internal ConstructionSystem(
         World.World world,
         OrdersManager orders,
         IConstructionTerrainMaterialResolver terrainMaterials,
@@ -40,10 +39,14 @@ internal sealed class ConstructionSystem : ITick
         _maxPerTick = Math.Max(1, maxPerTick);
     }
 
-    public int Priority => UpdateOrder.Priority.Furniture; // ghost placement touches L2
-    public string SystemId => "Orders.Construction";
+    internal int Priority => UpdateOrder.Priority.Furniture; // ghost placement touches L2
+    internal string SystemId => "Orders.Construction";
 
-    public void ReadTick(ulong tick)
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    internal void ReadTick(ulong tick)
     {
         _planned.Clear();
         var desigs = new List<ConstructionDesignation>();
@@ -113,7 +116,12 @@ internal sealed class ConstructionSystem : ITick
         }
     }
 
-    public void WriteTick(ulong tick)
+    void ITick.ReadTick(ulong tick)
+    {
+        ReadTick(tick);
+    }
+
+    internal void WriteTick(ulong tick)
     {
         if (_planned.Count == 0) return;
 
@@ -204,15 +212,9 @@ internal sealed class ConstructionSystem : ITick
         _planned.Clear();
     }
 
-    internal int DequeuePlannedBuilds(int max, IList<PlannedBuild> into)
+    void ITick.WriteTick(ulong tick)
     {
-        int n = 0;
-        while (n < max && _outbox.TryDequeue(out var m))
-        {
-            into.Add(m);
-            n++;
-        }
-        return n;
+        WriteTick(tick);
     }
 
     /// <summary>

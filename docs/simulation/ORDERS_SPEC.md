@@ -8,6 +8,10 @@ Current implementation note (2026-06-12):
 
 - Command execution now goes through the Runtime pre-read command stage.
 - Order commands should route through Runtime command target interfaces instead of direct concrete world mutation.
+- `OrdersManager` owns ingress queues/recent previews/active designations behind
+  deterministic owner-state guards. Active order snapshots are sorted at the
+  source and are safe for save/replay/UI debug consumers; concurrent collection
+  enumeration is not an ordering contract.
 - Hauling/transport details are now in [TRANSPORT_SYSTEM.md](TRANSPORT_SYSTEM.md). References below to `HAULING_POLICY` or `HaulJobSystem` are legacy wording.
 
 0) Scope
@@ -81,7 +85,8 @@ Defines the data-driven model for player Orders (designations/tools), how the UI
 
 - ICommand: `CreateHaulOrderCommand`
   - Execute(ISimulationContext): `World.Orders.EnqueueHaul(rect,z,priority,tick)`.
-  - No world mutation here; OrdersManager is a thread-safe queue.
+  - No direct terrain/entity mutation here; OrdersManager records deterministic
+    owner-state designations for the bounded planner drains.
 
 5) Execution Coupling (Read/Write stages)
 
@@ -90,7 +95,9 @@ Defines the data-driven model for player Orders (designations/tools), how the UI
 
 6) Determinism
 
-- UI commands: sorted by CommandId within a tick in CommandQueue.
+- UI commands: `CommandQueue` records lock-owned enqueue sequence and sorts by
+  command tick, then sequence. `CommandId` is stable correlation/debug identity,
+  not execution-order authority.
 - Planner: iterates chunks/items by stable keys; emits moves deterministically.
 - Job execution: tie-breakers by GUID; path seeds derived from GUID pairs; pathfinding uses deterministic A*.
 

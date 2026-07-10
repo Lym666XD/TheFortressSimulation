@@ -18,9 +18,13 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
                 $"Unsupported save format version {document.Manifest.FormatVersion}."));
         }
 
+        ValidateContentCatalog(document.Manifest.Content, document.Manifest.ContentCatalog, issues);
         ValidateManifestSections(document, issues);
         ValidateWorldPayload(document, issues);
         ValidateRngStreams(document, issues);
+        ValidateMiningJobs(document, issues);
+        ValidateTransportJobs(document, issues);
+        ValidateCraftJobs(document, issues);
 
         var executedRecords = MapRecords(
             document,
@@ -58,6 +62,68 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
         return issues.Count == 0
             ? RuntimeSaveSnapshotDocumentValidationResultData.Valid
             : new RuntimeSaveSnapshotDocumentValidationResultData(false, issues.ToArray());
+    }
+
+    private static void ValidateContentCatalog(
+        RuntimeSaveContentSignatureData signature,
+        RuntimeSaveContentCatalogSummaryData catalog,
+        ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
+    {
+        if (!catalog.HasCatalog)
+            return;
+
+        ValidateContentCatalogKeys("material names", catalog.MaterialNames, signature.MaterialCount, issues);
+        ValidateContentCatalogKeys("terrain kind names", catalog.TerrainKindNames, signature.TerrainKindCount, issues);
+        ValidateContentCatalogKeys("construction ids", catalog.ConstructionIds, signature.ConstructionCount, issues);
+        ValidateContentCatalogKeys("recipe ids", catalog.RecipeIds, signature.RecipeCount, issues);
+        ValidateContentCatalogKeys("geology ids", catalog.GeologyIds, signature.GeologyCount, issues);
+        ValidateContentCatalogKeys("zone ids", catalog.ZoneIds, signature.ZoneCount, issues);
+    }
+
+    private static void ValidateContentCatalogKeys(
+        string label,
+        string[]? keys,
+        int expectedCount,
+        ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
+    {
+        if (keys == null)
+        {
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                "manifest.content_catalog",
+                null,
+                $"Content catalog {label} are missing."));
+            return;
+        }
+
+        if (keys.Length != expectedCount)
+        {
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                "manifest.content_catalog",
+                null,
+                $"Content catalog {label} count {keys.Length} does not match manifest signature count {expectedCount}."));
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var key = keys[i];
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.content_catalog",
+                    i,
+                    $"Content catalog {label} contains a blank key."));
+                continue;
+            }
+
+            if (!seen.Add(key))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.content_catalog",
+                    i,
+                    $"Content catalog {label} duplicate key '{key}'."));
+            }
+        }
     }
 
     private static void ValidateManifestSections(

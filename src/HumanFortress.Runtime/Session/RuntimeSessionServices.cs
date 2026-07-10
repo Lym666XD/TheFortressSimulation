@@ -1,9 +1,9 @@
-using System.Threading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Events;
 using HumanFortress.Core.Random;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Runtime.Diff;
 using HumanFortress.Simulation.Items;
 
@@ -14,12 +14,13 @@ internal sealed class RuntimeSessionServices
     private const ulong DefaultRngSeed = 0x4855464f52545245UL;
 
     private long _nextCommandIdentitySequence;
+    private readonly object _identitySequenceLock = new();
 
     internal RuntimeSessionServices()
         : this(
-            new TickScheduler(),
-            new CommandQueue(),
-            new EventBus(),
+            new TickScheduler(DiagnosticHub.Sink),
+            new CommandQueue(DiagnosticHub.Sink),
+            new EventBus(DiagnosticHub.Sink),
             new DiffLog(),
             new ItemsDiffLog())
     {
@@ -33,7 +34,7 @@ internal sealed class RuntimeSessionServices
         : this(
             tickScheduler,
             commandQueue,
-            new EventBus(),
+            new EventBus(DiagnosticHub.Sink),
             diffLog,
             itemsDiffLog)
     {
@@ -66,7 +67,11 @@ internal sealed class RuntimeSessionServices
 
     internal long NextCommandIdentitySequence()
     {
-        return Interlocked.Increment(ref _nextCommandIdentitySequence);
+        lock (_identitySequenceLock)
+        {
+            _nextCommandIdentitySequence++;
+            return _nextCommandIdentitySequence;
+        }
     }
 
     internal void AdvanceCommandIdentitySequenceTo(long sequence)
@@ -74,14 +79,10 @@ internal sealed class RuntimeSessionServices
         if (sequence <= 0)
             return;
 
-        while (true)
+        lock (_identitySequenceLock)
         {
-            var current = Interlocked.Read(ref _nextCommandIdentitySequence);
-            if (current >= sequence)
-                return;
-
-            if (Interlocked.CompareExchange(ref _nextCommandIdentitySequence, sequence, current) == current)
-                return;
+            if (_nextCommandIdentitySequence < sequence)
+                _nextCommandIdentitySequence = sequence;
         }
     }
 
@@ -92,6 +93,9 @@ internal sealed class RuntimeSessionServices
         DiffLog.Clear();
         MutationDiffs.Clear();
         RngStreams.ClearStreams();
-        _nextCommandIdentitySequence = 0;
+        lock (_identitySequenceLock)
+        {
+            _nextCommandIdentitySequence = 0;
+        }
     }
 }

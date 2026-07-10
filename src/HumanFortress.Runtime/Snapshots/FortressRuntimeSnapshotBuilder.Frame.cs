@@ -44,7 +44,8 @@ internal static partial class FortressRuntimeSnapshotBuilder
             includeDebugMenu
                 ? BuildDebugMenuSnapshot(world)
                 : null,
-            metadata);
+            Metadata: metadata,
+            Delta: SimulationUiOverlayFrameDeltaData.Unavailable);
     }
 
 }

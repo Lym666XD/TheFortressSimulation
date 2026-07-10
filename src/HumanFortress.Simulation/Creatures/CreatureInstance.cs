@@ -8,20 +8,20 @@ namespace HumanFortress.Simulation.Creatures;
 /// </summary>
 internal sealed class CreatureInstance
 {
-    public Guid Guid { get; }
-    public string DefinitionId { get; }
-    public string FactionId { get; set; }
+    internal Guid Guid { get; }
+    internal string DefinitionId { get; }
+    internal string FactionId { get; set; }
 
     // Position
-    public Point Position { get; set; }
-    public int Z { get; set; }
+    internal Point Position { get; set; }
+    internal int Z { get; set; }
 
     // Runtime state
-    public int HP { get; set; }
-    public int MaxHP { get; set; }
-    public ulong SpawnedAtTick { get; }
+    internal int HP { get; set; }
+    internal int MaxHP { get; set; }
+    internal ulong SpawnedAtTick { get; }
 
-    public CreatureInstance(Guid guid, string definitionId, string factionId, Point position, int z, int maxHP, ulong spawnTick)
+    internal CreatureInstance(Guid guid, string definitionId, string factionId, Point position, int z, int maxHP, ulong spawnTick)
     {
         Guid = guid;
         DefinitionId = definitionId;

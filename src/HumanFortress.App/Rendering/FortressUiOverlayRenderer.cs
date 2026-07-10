@@ -23,7 +23,8 @@ internal static class FortressUiOverlayRenderer
             includeDebugMenu: ui.DebugOpen,
             stockpileDetailZoneId: context.UiServices?.StockpileUI?.EditingZoneId,
             zoneDetailId: context.UiServices?.ZonesUI?.DetailPopupZoneId);
-        context.UiServices?.StockpileUI?.ApplyPresetMenu(overlayData.StockpilePresets);
+        var presentedOverlayData = context.UiOverlayPresenter.Present(overlayData);
+        context.UiServices?.StockpileUI?.ApplyPresetMenu(presentedOverlayData.StockpilePresets);
 
         ClearOverlaySurface(uiSurface);
         UiChromeRenderer.DrawTopBar(uiSurface, runtime.SimulationStatus);
@@ -33,8 +34,8 @@ internal static class FortressUiOverlayRenderer
             uiSurface,
             ui,
             context.UiTick,
-            overlayData.ManagementDrawer,
-            overlayData.WorkDrawer);
+            presentedOverlayData.ManagementDrawer,
+            presentedOverlayData.WorkDrawer);
         UiQuickMenuRenderer.Draw(
             uiSurface,
             ui,
@@ -42,11 +43,11 @@ internal static class FortressUiOverlayRenderer
             context.UiServices?.ZonesUI,
             context.UiServices?.BuildUI,
             context.UiServices?.StockpileQuickUI,
-            buildCatalog: overlayData.BuildCatalog);
+            buildCatalog: presentedOverlayData.BuildCatalog);
 
-        FortressMapOverlayRenderer.Render(context, overlayData, viewport);
-        FortressToolOverlayRenderer.Render(context, overlayData);
-        FortressUiModalRenderer.Render(context, overlayData);
+        FortressMapOverlayRenderer.Render(context, presentedOverlayData, viewport);
+        FortressToolOverlayRenderer.Render(context, presentedOverlayData);
+        FortressUiModalRenderer.Render(context, presentedOverlayData);
     }
 
     private static Rectangle CreateViewport(FortressUiOverlayRenderContext context)

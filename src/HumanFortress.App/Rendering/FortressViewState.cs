@@ -9,6 +9,8 @@ internal sealed class FortressViewState
     public MapScreenSurface? MapSurface { get; private set; }
     public UiOverlaySurface? UiSurface { get; private set; }
     public ISelectionTool? SelectionTool { get; private set; }
+    public FortressMapViewportPresenterCache MapViewportPresenter { get; } = new();
+    public FortressUiOverlayPresenterCache UiOverlayPresenter { get; } = new();
 
     public bool HasMapSurface => MapSurface != null;
 
@@ -17,6 +19,8 @@ internal sealed class FortressViewState
         MapSurface = mapSurface ?? throw new ArgumentNullException(nameof(mapSurface));
         UiSurface = uiSurface ?? throw new ArgumentNullException(nameof(uiSurface));
         SelectionTool = selectionTool ?? throw new ArgumentNullException(nameof(selectionTool));
+        MapViewportPresenter.Reset();
+        UiOverlayPresenter.Reset();
     }
 
     public int MapWidthOr(int fallback)

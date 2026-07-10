@@ -7,15 +7,15 @@ namespace HumanFortress.Simulation.Tiles;
 /// </summary>
 internal readonly struct TileBase
 {
-    public readonly ushort GeoMatId;     // L0: geology/terrain material (IdMap index)
-    public readonly ushort TerrainBits;  // L0: kind/flags (bit layout below)
-    public readonly byte SurfaceBits;    // L1: small flags (mud, grass, fertility)
-    public readonly byte FluidKind;      // L3: fluid IdMap index (0 = none)
-    public readonly byte FluidDepth;     // L3: 0..7
-    public readonly byte MetaBits;       // L7: revealed/traffic/etc.
-    public readonly ushort TrafficCost;  // Cached nav cost
+    internal readonly ushort GeoMatId;     // L0: geology/terrain material (IdMap index)
+    internal readonly ushort TerrainBits;  // L0: kind/flags (bit layout below)
+    internal readonly byte SurfaceBits;    // L1: small flags (mud, grass, fertility)
+    internal readonly byte FluidKind;      // L3: fluid IdMap index (0 = none)
+    internal readonly byte FluidDepth;     // L3: 0..7
+    internal readonly byte MetaBits;       // L7: revealed/traffic/etc.
+    internal readonly ushort TrafficCost;  // Cached nav cost
 
-    public TileBase(
+    internal TileBase(
         ushort geoMatId,
         ushort terrainBits,
         byte surfaceBits,
@@ -38,26 +38,26 @@ internal readonly struct TileBase
     // bit 5: Natural (1=natural, 0=constructed)
     // bit 6: Modifiable (1=player tools allowed; 0=forbidden)
     // other bits reserved (must be 0)
-    public TerrainKind Kind => (TerrainKind)(TerrainBits & 0xF);
-    public bool IsNatural => (TerrainBits & (1 << 5)) != 0;
-    public bool IsModifiable => (TerrainBits & (1 << 6)) != 0;
+    internal TerrainKind Kind => (TerrainKind)(TerrainBits & 0xF);
+    internal bool IsNatural => (TerrainBits & (1 << 5)) != 0;
+    internal bool IsModifiable => (TerrainBits & (1 << 6)) != 0;
 
     // Surface bit accessors
     // bit0: Mud, bit1: Grass, bit2: Snow, bit3: Moss (cavern), bits4..7 Fertility
-    public bool HasMud => (SurfaceBits & 1) != 0;
-    public bool HasGrass => (SurfaceBits & 2) != 0;
-    public bool HasSnow => (SurfaceBits & 4) != 0;
-    public bool HasMoss => (SurfaceBits & 8) != 0;
-    public byte Fertility => (byte)(SurfaceBits >> 4);
+    internal bool HasMud => (SurfaceBits & 1) != 0;
+    internal bool HasGrass => (SurfaceBits & 2) != 0;
+    internal bool HasSnow => (SurfaceBits & 4) != 0;
+    internal bool HasMoss => (SurfaceBits & 8) != 0;
+    internal byte Fertility => (byte)(SurfaceBits >> 4);
 
     // Meta bit accessors
-    public bool IsRevealed => (MetaBits & 1) != 0;
-    public bool IsForbidden => (MetaBits & 2) != 0;
-    public byte TrafficLevel => (byte)((MetaBits >> 2) & 0x3);
-    public bool HasBlood => (MetaBits & 16) != 0;
+    internal bool IsRevealed => (MetaBits & 1) != 0;
+    internal bool IsForbidden => (MetaBits & 2) != 0;
+    internal byte TrafficLevel => (byte)((MetaBits >> 2) & 0x3);
+    internal bool HasBlood => (MetaBits & 16) != 0;
 
     // Navigation helpers based on TerrainKind only
-    public bool IsWalkable => Kind switch
+    internal bool IsWalkable => Kind switch
     {
         TerrainKind.OpenWithFloor => true,
         TerrainKind.Ramp => true,
@@ -68,18 +68,18 @@ internal readonly struct TileBase
         _ => false
     };
 
-    public bool IsStandable => Kind == TerrainKind.OpenWithFloor;
+    internal bool IsStandable => Kind == TerrainKind.OpenWithFloor;
 
-    public bool IsFlyable => Kind != TerrainKind.SolidWall;
+    internal bool IsFlyable => Kind != TerrainKind.SolidWall;
 
-    public bool ProvidesSupport => Kind == TerrainKind.SolidWall || Kind == TerrainKind.OpenWithFloor;
+    internal bool ProvidesSupport => Kind == TerrainKind.SolidWall || Kind == TerrainKind.OpenWithFloor;
 
-    public bool BlocksLOS => Kind == TerrainKind.SolidWall;
+    internal bool BlocksLOS => Kind == TerrainKind.SolidWall;
 
     /// <summary>
     /// Create a modified copy with new terrain bits.
     /// </summary>
-    public TileBase WithTerrain(ushort newTerrainBits)
+    internal TileBase WithTerrain(ushort newTerrainBits)
     {
         return new TileBase(GeoMatId, newTerrainBits, SurfaceBits,
             FluidKind, FluidDepth, MetaBits, TrafficCost);
@@ -88,7 +88,7 @@ internal readonly struct TileBase
     /// <summary>
     /// Create a modified copy with new fluid.
     /// </summary>
-    public TileBase WithFluid(byte kind, byte depth)
+    internal TileBase WithFluid(byte kind, byte depth)
     {
         return new TileBase(GeoMatId, TerrainBits, SurfaceBits,
             kind, depth, MetaBits, TrafficCost);

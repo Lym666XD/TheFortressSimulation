@@ -33,7 +33,11 @@ Current important classes:
 - `HumanFortress.Jobs.Transport.TransportReplanHandler`
 - `HumanFortress.Jobs.TransportDiffEmitter`
 
-`HumanFortress.Runtime.Jobs.TransportJobSystem` is now a composition shell. Most transport execution behavior lives in `HumanFortress.Jobs.Transport`.
+`HumanFortress.Runtime.Jobs.TransportJobSystem` is now a composition shell.
+Most transport execution behavior lives in `HumanFortress.Jobs.Transport`.
+`TransportJobExecutor` keeps constructor state/dependency assembly in its main
+file, with read/intake, write tick, debug/replay snapshot, scheduling hint, and
+helper behavior split into focused partials.
 
 ## Producers
 
@@ -130,7 +134,9 @@ Current:
 
 Still pending:
 
-- remove compatibility namespaces and transitional internal bridges;
+- keep compatibility namespaces from returning; active source no longer uses
+  the old root Jobs/Navigation/WorldGen/Core.Content namespaces, and smoke
+  tests guard those names as forbidden compatibility patterns;
 - make movement/path ownership more centralized;
 - add a runtime-wide movement/reservation service when boundaries stabilize;
 - consider per-chunk request sharding and chunk-parallel MergeApply after deterministic behavior is fully covered.

@@ -14,7 +14,7 @@ internal sealed class ZoneCoordinator
     private readonly World.World _world;
     private readonly ZoneManager _manager;
 
-    public ZoneCoordinator(World.World world, ZoneManager manager)
+    internal ZoneCoordinator(World.World world, ZoneManager manager)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
@@ -23,12 +23,12 @@ internal sealed class ZoneCoordinator
     /// <summary>
     /// Access to the underlying ZoneManager.
     /// </summary>
-    public ZoneManager Manager => _manager;
+    internal ZoneManager Manager => _manager;
 
     /// <summary>
     /// Create a zone from a world-space rectangle at a given Z level.
     /// </summary>
-    public int CreateZoneFromRect(string defId, string name, Rectangle worldRect, int z, ulong currentTick)
+    internal int CreateZoneFromRect(string defId, string name, Rectangle worldRect, int z, ulong currentTick)
     {
         // Calculate home chunk from rectangle center
         var centerX = worldRect.X + worldRect.Width / 2;
@@ -47,7 +47,7 @@ internal sealed class ZoneCoordinator
     /// <summary>
     /// Add cells from a rectangle to an existing zone.
     /// </summary>
-    public void AddCellsToZone(int zoneId, Rectangle worldRect, int z)
+    internal void AddCellsToZone(int zoneId, Rectangle worldRect, int z)
     {
         var zone = _manager.GetZone(zoneId);
         if (zone == null)
@@ -97,7 +97,7 @@ internal sealed class ZoneCoordinator
     /// <summary>
     /// Remove cells from a rectangle from an existing zone.
     /// </summary>
-    public void RemoveCellsFromZone(int zoneId, Rectangle worldRect, int z)
+    internal void RemoveCellsFromZone(int zoneId, Rectangle worldRect, int z)
     {
         var zone = _manager.GetZone(zoneId);
         if (zone == null)
@@ -155,7 +155,7 @@ internal sealed class ZoneCoordinator
     /// <summary>
     /// Delete a zone entirely, removing it from all chunks.
     /// </summary>
-    public void DeleteZone(int zoneId)
+    internal void DeleteZone(int zoneId)
     {
         var zone = _manager.GetZone(zoneId);
         if (zone == null)
@@ -176,7 +176,7 @@ internal sealed class ZoneCoordinator
     /// <summary>
     /// Get zone ID at a specific world position.
     /// </summary>
-    public int GetZoneAtPosition(int worldX, int worldY, int z)
+    internal int GetZoneAtPosition(int worldX, int worldY, int z)
     {
         if (!_world.IsValidPosition(worldX, worldY, z))
             return 0;

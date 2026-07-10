@@ -1,6 +1,8 @@
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
+using HumanFortress.Content.Registry;
 using HumanFortress.Contracts.Content.Loading;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Content;
@@ -21,6 +23,7 @@ internal static partial class SimulationWorldContentLoader
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
+        ContentRegistryDiagnostics.DiagnosticSink = DiagnosticHub.Sink;
         var loadedContent = FortressContentLoader.Load(baseDir);
         logContentIssues?.Invoke(loadedContent.ToReport());
         if (strictContent)

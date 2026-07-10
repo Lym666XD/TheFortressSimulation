@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -11,8 +10,12 @@ namespace HumanFortress.Core.Random;
 /// </summary>
 public sealed class RngStreamManager
 {
-    private readonly ConcurrentDictionary<string, DeterministicRng> _streams = new();
+    private const ulong FnvOffsetBasis = 14695981039346656037UL;
+    private const ulong FnvPrime = 1099511628211UL;
+
+    private readonly Dictionary<string, DeterministicRng> _streams = new(StringComparer.Ordinal);
     private readonly ulong _masterSeed;
+    private readonly object _sync = new();
 
     public RngStreamManager(ulong masterSeed)
     {
@@ -24,16 +27,33 @@ public sealed class RngStreamManager
     /// </summary>
     public DeterministicRng GetStream(string streamName)
     {
-        return _streams.GetOrAdd(streamName, name =>
+        if (string.IsNullOrWhiteSpace(streamName))
+            throw new ArgumentException("RNG stream name must be non-empty.", nameof(streamName));
+
+        lock (_sync)
         {
-            // Derive stream seed from master seed and name
-            ulong streamSeed = _masterSeed;
-            foreach (char c in name)
+            if (!_streams.TryGetValue(streamName, out var stream))
             {
-                streamSeed = streamSeed * 31 + c;
+                stream = new DeterministicRng(DeriveStreamSeed(streamName));
+                _streams.Add(streamName, stream);
             }
-            return new DeterministicRng(streamSeed);
-        });
+
+            return stream;
+        }
+    }
+
+    private ulong DeriveStreamSeed(string streamName)
+    {
+        var hash = FnvOffsetBasis;
+        foreach (var c in streamName)
+        {
+            hash ^= (byte)c;
+            hash *= FnvPrime;
+            hash ^= (byte)(c >> 8);
+            hash *= FnvPrime;
+        }
+
+        return DeterministicRng.MixSeed(_masterSeed ^ hash);
     }
 
     /// <summary>
@@ -59,7 +79,7 @@ public sealed class RngStreamManager
     public Dictionary<string, RngState> SaveStates()
     {
         var states = new Dictionary<string, RngState>();
-        foreach (var kvp in _streams.OrderBy(static kvp => kvp.Key, StringComparer.Ordinal))
+        foreach (var kvp in GetOrderedStreams())
         {
             states[kvp.Key] = kvp.Value.GetState();
         }
@@ -71,9 +91,8 @@ public sealed class RngStreamManager
     /// </summary>
     public IReadOnlyList<RngStreamStateSnapshot> GetStateSnapshot()
     {
-        return _streams
+        return GetOrderedStreams()
             .Select(static kvp => new RngStreamStateSnapshot(kvp.Key, kvp.Value.GetState()))
-            .OrderBy(static snapshot => snapshot.StreamName, StringComparer.Ordinal)
             .ToArray();
     }
 
@@ -82,7 +101,10 @@ public sealed class RngStreamManager
     /// </summary>
     public void ClearStreams()
     {
-        _streams.Clear();
+        lock (_sync)
+        {
+            _streams.Clear();
+        }
     }
 
     /// <summary>
@@ -114,6 +136,16 @@ public sealed class RngStreamManager
 
             var stream = GetStream(state.StreamName);
             stream.SetState(state.State);
+        }
+    }
+
+    private KeyValuePair<string, DeterministicRng>[] GetOrderedStreams()
+    {
+        lock (_sync)
+        {
+            return _streams
+                .OrderBy(static kvp => kvp.Key, StringComparer.Ordinal)
+                .ToArray();
         }
     }
 }

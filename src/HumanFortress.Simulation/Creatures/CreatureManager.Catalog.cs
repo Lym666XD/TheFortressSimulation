@@ -7,7 +7,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Replace the static creature definition catalog with an already-loaded immutable snapshot.
     /// </summary>
-    public void SetDefinitionCatalog(CreatureDefinitionCatalogStore catalog)
+    internal void SetDefinitionCatalog(CreatureDefinitionCatalogStore catalog)
     {
         _definitionCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
     }
@@ -15,7 +15,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Get all creature definitions
     /// </summary>
-    public IEnumerable<CreatureDefinition> GetAllDefinitions()
+    internal IEnumerable<CreatureDefinition> GetAllDefinitions()
     {
         return _definitionCatalog.GetAllDefinitions();
     }
@@ -23,7 +23,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Get creature definitions by tag
     /// </summary>
-    public IEnumerable<CreatureDefinition> GetByTag(string tag)
+    internal IEnumerable<CreatureDefinition> GetByTag(string tag)
     {
         return _definitionCatalog.GetByTag(tag);
     }
@@ -31,8 +31,23 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Get definition by ID
     /// </summary>
-    public CreatureDefinition? GetDefinition(string id)
+    internal CreatureDefinition? GetDefinition(string id)
     {
         return _definitionCatalog.GetDefinition(id);
+    }
+
+    IEnumerable<CreatureDefinition> ICreatureDefinitionCatalog.GetAllDefinitions()
+    {
+        return GetAllDefinitions();
+    }
+
+    IEnumerable<CreatureDefinition> ICreatureDefinitionCatalog.GetByTag(string tag)
+    {
+        return GetByTag(tag);
+    }
+
+    CreatureDefinition? ICreatureDefinitionCatalog.GetDefinition(string id)
+    {
+        return GetDefinition(id);
     }
 }

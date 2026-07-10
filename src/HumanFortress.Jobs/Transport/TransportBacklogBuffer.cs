@@ -1,11 +1,10 @@
-using System.Collections.Concurrent;
 using HumanFortress.Simulation.Jobs;
 
 namespace HumanFortress.Jobs.Transport;
 
 internal sealed class TransportBacklogBuffer
 {
-    private readonly ConcurrentQueue<TransportRequest> _queue = new();
+    private readonly Queue<TransportRequest> _queue = new();
     private readonly HashSet<Guid> _ids = new();
     private readonly Dictionary<Guid, ulong> _enqueueTick = new();
 
@@ -30,12 +29,18 @@ internal sealed class TransportBacklogBuffer
         return true;
     }
 
-    internal void EnqueueRange(IReadOnlyList<TransportRequest> requests, int startIndex, ulong tick)
+    internal int EnqueueRange(IReadOnlyList<TransportRequest> requests, int startIndex, ulong tick)
     {
+        var enqueued = 0;
         for (int i = startIndex; i < requests.Count; i++)
         {
-            TryEnqueue(requests[i], tick);
+            if (TryEnqueue(requests[i], tick))
+            {
+                enqueued++;
+            }
         }
+
+        return enqueued;
     }
 
     internal int CountOlderThan(ulong tick, int maxAgeTicks)
@@ -63,6 +68,22 @@ internal sealed class TransportBacklogBuffer
         }
 
         return snapshot;
+    }
+
+    internal void RestoreStateSnapshot(IReadOnlyList<TransportBacklogEntrySnapshot> entries)
+    {
+        _ids.Clear();
+        _enqueueTick.Clear();
+        _queue.Clear();
+
+        foreach (var entry in entries.OrderBy(static entry => entry.Order))
+        {
+            if (!_ids.Add(entry.Request.ItemGuid))
+                continue;
+
+            _queue.Enqueue(entry.Request);
+            _enqueueTick[entry.Request.ItemGuid] = entry.EnqueuedTick;
+        }
     }
 }
 

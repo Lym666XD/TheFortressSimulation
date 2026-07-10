@@ -5,10 +5,10 @@ owner: core/simulation
 last_updated: 2025-09-14
 version_policy: semver
 
-Current implementation note (2026-06-12):
+Current implementation note (2026-07-09):
 
-- Current code implements the essential read/barrier/write shape in `TickScheduler`.
-- Runtime `SimulationTickPipeline` attaches pre/post tick hooks: commands run before read; diff applicators and navigation rebuilds run after write.
+- Current code implements the essential read/barrier/write shape in `TickScheduler`, with read systems executed in deterministic registered-system order until real chunk-partitioned read jobs exist.
+- Runtime `SimulationTickPipeline` attaches pre/post tick hooks: commands run before read; typed diff applicators and navigation dirty-chunk rebuild/cache invalidation run after write.
 - The nine-stage model below is still the target contract. It is not yet a one-to-one list of concrete scheduler stages.
 
 0) Scope

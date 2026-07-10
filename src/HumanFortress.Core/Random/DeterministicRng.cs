@@ -13,11 +13,13 @@ public sealed class DeterministicRng
     /// </summary>
     public DeterministicRng(ulong seed)
     {
-        // Split 64-bit seed into 4x32-bit values
-        _s0 = (uint)(seed & 0xFFFFFFFF);
-        _s1 = (uint)(seed >> 32);
-        _s2 = (uint)(seed ^ 0x9E3779B97F4A7C15UL); // Golden ratio
-        _s3 = (uint)((seed ^ 0x9E3779B97F4A7C15UL) >> 32);
+        var splitState = seed;
+        var first = NextSplitMix64(ref splitState);
+        var second = NextSplitMix64(ref splitState);
+        _s0 = (uint)first;
+        _s1 = (uint)(first >> 32);
+        _s2 = (uint)second;
+        _s3 = (uint)(second >> 32);
 
         // Warm up the generator
         for (int i = 0; i < 8; i++)
@@ -122,6 +124,21 @@ public sealed class DeterministicRng
     private static uint RotateLeft(uint x, int k)
     {
         return (x << k) | (x >> (32 - k));
+    }
+
+    internal static ulong MixSeed(ulong value)
+    {
+        var state = value;
+        return NextSplitMix64(ref state);
+    }
+
+    private static ulong NextSplitMix64(ref ulong state)
+    {
+        state += 0x9E3779B97F4A7C15UL;
+        var z = state;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        return z ^ (z >> 31);
     }
 }
 

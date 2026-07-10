@@ -32,16 +32,26 @@ internal static class RuntimeSaveManifestBuilder
             CreateSection(RuntimeSaveManifestSections.Rng, checkpoint.RngHash, checkpoint.RngStreamCount),
             CreateSection(RuntimeSaveManifestSections.CommandsExecuted, checkpoint.CommandLogHash, checkpoint.CommandLogRecordCount),
             CreateSection(RuntimeSaveManifestSections.CommandsPending, checkpoint.PendingCommandLogHash, checkpoint.PendingCommandLogRecordCount),
-            CreateSection(RuntimeSaveManifestSections.JobsTransport, checkpoint.TransportHash),
-            CreateSection(RuntimeSaveManifestSections.JobsMining, checkpoint.MiningHash),
-            CreateSection(RuntimeSaveManifestSections.JobsCraft, checkpoint.CraftHash)
+            CreateSection(
+                RuntimeSaveManifestSections.JobsTransport,
+                checkpoint.TransportHash,
+                CountSection(checkpoint.TransportHash, checkpoint.TransportRecordCount)),
+            CreateSection(
+                RuntimeSaveManifestSections.JobsMining,
+                checkpoint.MiningHash,
+                CountSection(checkpoint.MiningHash, checkpoint.MiningRecordCount)),
+            CreateSection(
+                RuntimeSaveManifestSections.JobsCraft,
+                checkpoint.CraftHash,
+                CountSection(checkpoint.CraftHash, checkpoint.CraftRecordCount))
         };
 
         return new RuntimeSaveManifestData(
             RuntimeSaveFormat.CurrentVersion,
             EngineBuild,
             checkpoint.Metadata,
-            CreateContentSignature(content),
+            RuntimeSaveContentSignatureFactory.FromRuntimeContent(content),
+            RuntimeSaveContentCatalogSummaryFactory.FromRuntimeContent(content),
             checkpoint,
             sections);
     }
@@ -79,22 +89,11 @@ internal static class RuntimeSaveManifestBuilder
             : null;
     }
 
-    private static RuntimeSaveContentSignatureData CreateContentSignature(
-        FortressRuntimeContentSnapshot? content)
+    private static long? CountSection(string? hash, int recordCount)
     {
-        if (content == null)
-            return RuntimeSaveContentSignatureData.Unavailable;
-
-        return new RuntimeSaveContentSignatureData(
-            HasContent: true,
-            ContentVersion: content.ContentVersion.ToString(),
-            ContentHash: content.ContentHash,
-            MaterialContentHash: content.Materials.ContentHash,
-            MaterialCount: content.Materials.GetNameToIdSnapshot().Count,
-            TerrainKindCount: content.TerrainKinds.GetAllKinds().Count(),
-            ConstructionCount: content.Constructions.Count,
-            RecipeCount: content.Recipes.Count,
-            GeologyCount: content.GeologyEntries.Count,
-            ZoneCount: content.ZonesById.Count);
+        return hash == null
+            ? null
+            : recordCount;
     }
+
 }

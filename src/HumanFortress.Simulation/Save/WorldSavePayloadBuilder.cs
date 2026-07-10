@@ -74,6 +74,9 @@ internal static partial class WorldSavePayloadBuilder
                 .ThenBy(order => order.Priority)
                 .ThenBy(order => order.WorldRect.X)
                 .ThenBy(order => order.WorldRect.Y)
+                .ThenBy(order => order.WorldRect.Width)
+                .ThenBy(order => order.WorldRect.Height)
+                .ThenBy(order => order.CreatedTick)
                 .Select(ToPayloadHaulOrder)
                 .ToArray(),
             world.Orders.GetActiveConstructionSnapshot()
@@ -82,6 +85,13 @@ internal static partial class WorldSavePayloadBuilder
                 .ThenBy(order => order.Priority)
                 .ThenBy(order => order.WorldRect.X)
                 .ThenBy(order => order.WorldRect.Y)
+                .ThenBy(order => order.WorldRect.Width)
+                .ThenBy(order => order.WorldRect.Height)
+                .ThenBy(order => order.Shape)
+                .ThenBy(order => order.Filter.CategoryKey, StringComparer.Ordinal)
+                .ThenBy(order => order.Filter.PreferredMaterialId, StringComparer.Ordinal)
+                .ThenBy(order => BuildMaterialFilterSortKey(order.Filter), StringComparer.Ordinal)
+                .ThenBy(order => order.CreatedTick)
                 .Select(ToPayloadConstructionOrder)
                 .ToArray(),
             world.Orders.GetActiveBuildableSnapshot()
@@ -90,6 +100,7 @@ internal static partial class WorldSavePayloadBuilder
                 .ThenBy(order => order.Anchor.Y)
                 .ThenBy(order => order.Z)
                 .ThenBy(order => order.Priority)
+                .ThenBy(order => order.CreatedTick)
                 .Select(ToPayloadBuildableOrder)
                 .ToArray());
     }

@@ -6,9 +6,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class ElevationStage : IWorldGenStage
     {
-        public string Name => "Elevation";
+        internal string Name => "Elevation";
+
+        string IWorldGenStage.Name => Name;
         
-        public void Execute(WorldGenContext context)
+        internal void Execute(WorldGenContext context)
         {
             var seed = context.GetStageSeed(Name);
             var rng = new DeterministicRng(seed);
@@ -21,6 +23,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
                     context.Tiles[x, y].Elevation = elevation;
                 }
             }
+        }
+
+        void IWorldGenStage.Execute(WorldGenContext context)
+        {
+            Execute(context);
         }
 
         private float GenerateElevation(int x, int y, int width, int height, uint seed)

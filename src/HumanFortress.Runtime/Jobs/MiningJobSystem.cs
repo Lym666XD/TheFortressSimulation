@@ -36,16 +36,15 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         ProfessionAssignments? professions = null,
         WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest,
         NavigationTuning? navigationTuning = null,
+        RuntimeNavigationServices? navigationServices = null,
         string? miningTuningJson = null,
         IRuntimeGeologyCatalog? geology = null,
         Action<string>? log = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
-        var paths = new PathService(tuning);
-        _paths = paths;
-        var navView = new WorldNavigationView(_nav);
-        var move = new MovementExecutor(paths);
+        var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(_nav);
+        _paths = jobNavigation.PathService;
         var logger = new MiningCallbackJobLogger(log);
         var dropResolver = new MiningDropResolver(geology, miningTuningJson, log);
         var diffEmitter = new MiningDiffEmitter(diffLog, itemsDiff, SystemId, Priority);
@@ -59,13 +58,13 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         _executor = new MiningJobExecutor(
             world,
             planner,
-            paths,
-            navView,
+            jobNavigation.PathService,
+            jobNavigation.WorldView,
             diffEmitter,
             dropResolver,
             workerCandidates,
             completionSink,
-            move,
+            jobNavigation.Movement,
             logger,
             intakeBudget,
             carryoverMaxTicks);
@@ -103,6 +102,8 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         => _executor.GetDebugSnapshot(maxActive, includeSeeds);
 
     internal MiningJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal MiningJobRestoreResult RestoreReplaySnapshot(MiningJobReplaySnapshot snapshot) => _executor.RestoreReplaySnapshot(snapshot);
 
     internal int GetBacklogCount() => _executor.GetBacklogCount();
 

@@ -5,9 +5,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class ClimateStage : IWorldGenStage
     {
-        public string Name => "Climate";
+        internal string Name => "Climate";
+
+        string IWorldGenStage.Name => Name;
         
-        public void Execute(WorldGenContext context)
+        internal void Execute(WorldGenContext context)
         {
             var rng = new DeterministicRng(context.GetStageSeed(Name));
             
@@ -31,6 +33,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
                     context.Tiles[x, y].Drainage = Math.Max(0, Math.Min(1, drainage));
                 }
             }
+        }
+
+        void IWorldGenStage.Execute(WorldGenContext context)
+        {
+            Execute(context);
         }
         
         private float CalculateTemperature(float latitude, float elevation)

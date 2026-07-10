@@ -23,6 +23,7 @@ internal sealed partial class FortressRuntimeSessionCore
 
         _log("[GenerateFortressMap] Rebuilding shared navigation cache");
         RebuildNavigation();
+        InvalidateFrameSnapshots();
 
         return true;
     }

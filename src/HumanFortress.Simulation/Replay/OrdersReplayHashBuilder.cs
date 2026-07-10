@@ -89,6 +89,9 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Priority)
             .ThenBy(d => d.WorldRect.X)
             .ThenBy(d => d.WorldRect.Y)
+            .ThenBy(d => d.WorldRect.Width)
+            .ThenBy(d => d.WorldRect.Height)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -108,6 +111,13 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Priority)
             .ThenBy(d => d.WorldRect.X)
             .ThenBy(d => d.WorldRect.Y)
+            .ThenBy(d => d.WorldRect.Width)
+            .ThenBy(d => d.WorldRect.Height)
+            .ThenBy(d => d.Shape)
+            .ThenBy(d => d.Filter.CategoryKey, StringComparer.Ordinal)
+            .ThenBy(d => d.Filter.PreferredMaterialId, StringComparer.Ordinal)
+            .ThenBy(d => BuildMaterialFilterSortKey(d.Filter), StringComparer.Ordinal)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -132,6 +142,7 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Anchor.Y)
             .ThenBy(d => d.Z)
             .ThenBy(d => d.Priority)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -164,5 +175,10 @@ internal static class OrdersReplayHashBuilder
         {
             hash.AddString(value);
         }
+    }
+
+    private static string BuildMaterialFilterSortKey(MaterialFilterSpec filter)
+    {
+        return string.Join('\0', filter.Tags.Order(StringComparer.Ordinal));
     }
 }

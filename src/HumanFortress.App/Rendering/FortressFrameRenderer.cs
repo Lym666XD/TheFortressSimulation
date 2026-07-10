@@ -13,6 +13,8 @@ internal sealed record FortressFrameRenderContext(
     IFortressDiagnosticsAccess Diagnostics,
     FortressLoadedSessionSnapshot LoadedSession,
     FortressViewportSnapshot Viewport,
+    FortressMapViewportPresenterCache MapViewportPresenter,
+    FortressUiOverlayPresenterCache UiOverlayPresenter,
     int FortressSize,
     ulong UiTick,
     FortressTileInspectionController TileInspection);
@@ -42,9 +44,11 @@ internal static class FortressFrameRenderer
             context.TileInspection.WorldPosition,
             context.TileInspection.Z);
 
+        var presentedMapViewport = context.MapViewportPresenter.Present(frameData.MapViewport);
+
         FortressMapRenderer.Render(
             context.MapSurface,
-            frameData.MapViewport,
+            presentedMapViewport,
             context.LoadedSession.NavigationOverlay,
             frameData.NavigationOverlay);
 
@@ -55,7 +59,8 @@ internal static class FortressFrameRenderer
             context.Runtime,
             context.Diagnostics,
             context.LoadedSession.UiServices,
-            frameData.MapViewport,
+            context.UiOverlayPresenter,
+            presentedMapViewport,
             context.Viewport.CameraPosition,
             context.Viewport.CursorPosition,
             context.Viewport.LastMousePosition,

@@ -1,9 +1,14 @@
 # HumanFortress - Interview Briefing
 
-Updated: 2026-06-13
-Status: reference briefing, not the architecture source of truth
+Archived: this June briefing is superseded by the current architecture map,
+master refactor plan, and batch progress log. It contains useful historical
+talking points, but several file paths and ownership notes are stale after the
+Runtime/App/Jobs/Simulation boundary hardening.
 
-Use [../architecture/GAME_ARCHITECTURE.md](../architecture/GAME_ARCHITECTURE.md) for the current architecture map. This briefing is tuned for explaining the project quickly and may omit low-level migration details.
+Updated: 2026-06-13
+Status: archived historical reference, not current implementation guidance
+
+Use [../../architecture/GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md) for the current architecture map. This briefing is tuned for explaining the project quickly and may omit low-level migration details.
 
 ## A. Project Snapshot
 

@@ -36,7 +36,9 @@ internal sealed partial class ItemManager
             _entityKeyIndex.Clear();
             _legacyEntityIdIndex.Clear();
             _posIndex.Clear();
-            foreach (var instance in restored.Values.OrderBy(item => item.Guid))
+            foreach (var instance in restored
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value))
             {
                 _instances[instance.Guid] = instance;
                 EntityKeyIndexAdd(instance.Guid);

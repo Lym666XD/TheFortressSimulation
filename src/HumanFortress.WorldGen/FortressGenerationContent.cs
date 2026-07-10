@@ -6,7 +6,7 @@ namespace HumanFortress.WorldGen.Implementation
 {
     internal sealed class FortressGenerationContent
     {
-        public FortressGenerationContent(
+        internal FortressGenerationContent(
             IRuntimeGeologyCatalog geology,
             string? mapgenTuningJson,
             string? oreTuningJson,
@@ -18,10 +18,10 @@ namespace HumanFortress.WorldGen.Implementation
             CavernTuning = ParseTuning(cavernTuningJson);
         }
 
-        public IRuntimeGeologyCatalog Geology { get; }
-        public JsonObject? MapgenTuning { get; }
-        public JsonObject? OreTuning { get; }
-        public JsonObject? CavernTuning { get; }
+        internal IRuntimeGeologyCatalog Geology { get; }
+        internal JsonObject? MapgenTuning { get; }
+        internal JsonObject? OreTuning { get; }
+        internal JsonObject? CavernTuning { get; }
 
         private static JsonObject? ParseTuning(string? json)
         {

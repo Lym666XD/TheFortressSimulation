@@ -1,6 +1,6 @@
 # Work And Jobs System
 
-Updated: 2026-06-18
+Updated: 2026-07-10
 Status: current implementation notes plus target scheduler constraints
 
 This document is the active entry point for fortress work planning, job execution,
@@ -11,9 +11,8 @@ Use [TRANSPORT_SYSTEM.md](TRANSPORT_SYSTEM.md) for transport-specific behavior.
 
 ## Current Runtime Shape
 
-Current fortress work is composed by Runtime factories with App-provided logging
-and optional command delegates, then executed through the normal runtime tick
-scheduler:
+Current fortress work is composed by Runtime factories with App-provided
+platform/UI callbacks, then executed through the normal runtime tick scheduler:
 
 ```text
 FortressPlayGameState
@@ -39,15 +38,19 @@ The current Runtime composition split is:
 - `FortressRuntimeSystemsFactory` assembles the concrete system collection.
 - `SimulationRuntimeSystems` exposes the systems and registers the tick systems.
 
-App still supplies logging callbacks, the active content snapshot, and optional
-App command delegates such as auto-dig.
+App still supplies logging callbacks, UI completion handlers, session flow, and
+the user setting that enables optional startup auto-dig. Runtime owns the
+content snapshot load/apply path and the auto-dig command seeding logic.
 
 ## Current Planners
 
 Current planners are read-phase systems. They inspect world state and enqueue
 plans or transport requests without directly applying authoritative mutations.
 
-- `MiningSystem`
+- `MiningSystem`: Simulation-owned mining planner. The main file keeps planner
+  state and `PlannedDig` identity; tick/drain/outbox, scan/cursor,
+  cancellation, helper, and active-designation cursor behavior live in focused
+  files.
 - `HaulingSystem`
 - `ConstructionMaterialsPlanner`
 - `ConstructionSystem`
@@ -60,8 +63,8 @@ Important boundaries:
   transport requests into `ITransportRequestQueue`.
 - `BuildableConstructionSystem` is registered as its own tick system before the
   unified jobs orchestrator.
-- `CraftPlanner` now lives in `HumanFortress.Jobs.Craft`, while the concrete
-  runtime composition is still App-owned.
+- `CraftPlanner` now lives in `HumanFortress.Jobs.Craft`, while concrete
+  runtime composition is Runtime-owned through focused composition groups.
 
 ## Current Executors
 
@@ -124,6 +127,16 @@ PostTick
   then rebuilds dirty navigation chunks.
 ```
 
+Planner handoff queues inside this shape are deterministic owner queues rather
+than concurrent collection enumeration contracts. Mining keeps a budgeted
+PlannedDig owner queue between planner write and executor intake; buildable
+construction keeps a short owner queue between read and write placement; the
+older structural construction planned-build outbox has been removed because
+structural construction now creates construction sites directly in its write
+phase. Jobs-owned retry/backlog queues follow the same rule: mining, transport,
+and craft backlog/planner queues are owner FIFO state because their order feeds
+replay snapshots, restore, retry, and worker assignment.
+
 This is compatible with the target update-order model, but it is not a full
 per-chunk MergeApply scheduler yet.
 
@@ -141,6 +154,9 @@ producers
 
 Current producers include hauling, construction material delivery, and craft
 input delivery. Producers should not depend on transport executor internals.
+`TransportJobExecutor` itself is split by read/intake, write tick,
+debug/replay snapshot, scheduling hint, and helper partials so long-horizon
+transport state remains Jobs-owned without regrowing a mixed executor file.
 
 See [TRANSPORT_SYSTEM.md](TRANSPORT_SYSTEM.md) for request semantics,
 assignment, pickup, delivery, reservations, and transport-specific tunings.
@@ -154,9 +170,10 @@ runtime composition:
 - `content/registries/tuning.hauling.json`
 - `content/registries/tuning.navigation.json`
 
-`SchedulerTunings` currently lives in App. `FortressRuntimeDependencies` loads a
-Content-owned runtime snapshot, then creates the tuning objects used by the App
-composition shells and `UnifiedJobsOrchestrator`.
+`SchedulerTunings` and `WorkshopTunings` live in Jobs configuration code.
+`FortressRuntimeDependencies` loads a Content-owned runtime snapshot, then
+creates the tuning objects used by Runtime job wrappers and
+`UnifiedJobsOrchestrator`.
 
 Current honored scheduler concerns include:
 
@@ -190,16 +207,18 @@ Current:
 - Runtime owns the generic host, command stage, and pre/post tick pipeline.
 - Jobs owns the main executor cores for transport, mining, construction, and
   crafting.
-- App owns fortress-specific composition, job shells, adapters, tunings, and UI
-  access to job debug state.
+- Runtime owns fortress-specific composition, tick-facing job wrappers, runtime
+  adapters, and content-derived tuning construction.
+- App owns session flow, SadConsole UI/input, logger callback binding, UI
+  completion binding, and command enqueue requests through Runtime ports.
+- Runtime-authored job/debug snapshot DTOs feed App job panels and scheduler
+  diagnostics; App should not read concrete job executors or live job systems.
 - Transport request intake is the current shared boundary for hauling-like work.
 
 Still pending:
 
-- remove compatibility namespaces once clean seams exist;
 - centralize movement and reservation ownership;
 - convert remaining direct world writes to command targets or diff applicators;
-- add a formal runtime/debug snapshot facade for UI job panels;
 - add broader determinism tests for replay parity, scheduler jitter, and
   backlog/carryover stability;
 - implement per-chunk MergeApply only after current single-threaded behavior is

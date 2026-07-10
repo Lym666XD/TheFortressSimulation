@@ -24,6 +24,15 @@ DATA_LAYOUT
 
 The CPU simulation core owns authoritative state. GPU, UI, renderer, audio, and background workers may consume snapshots, produce derived data, or precompute proposals, but they must not commit authoritative state outside the deterministic simulation pipeline.
 
+Current implementation note: until chunk-partitioned schedulers and declared
+merge contracts exist, behavior-affecting owner state uses ordinary collections
+behind the owning module's lock or tick-stage boundary. This includes world
+chunk storage, command queues, order/job backlogs, RNG stream registries,
+EventBus handler lists, and Navigation path/nav-data caches. Concurrent
+collections are allowed only for future isolated workers with an explicit
+deterministic snapshot/merge contract; they are not an ordering contract for
+save/replay/hash authority.
+
 2) Terminology (Normative)
 
 Chunk: fixed spatial partition (e.g., 16×16×Zc) and scheduling unit. 

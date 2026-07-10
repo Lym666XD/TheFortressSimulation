@@ -325,7 +325,7 @@ namespace HumanFortress.App
         {
             Console.WriteLine("\n==== PHASE C: Embark & Fortress Bootstrap ====");
             Console.WriteLine("Requirements:");
-            Console.WriteLine("- EmbarkPrep: N×N chunks (2-8)");
+            Console.WriteLine("- EmbarkPrep: N×N chunks (2-16)");
             Console.WriteLine("- Fortress terrain generation");
             Console.WriteLine("- Chunk lifecycle (LOD L0-L4)");
             Console.WriteLine("- Runtime frame snapshot system\n");
@@ -469,7 +469,7 @@ namespace HumanFortress.App
             }
 
             // Test 5: Embark Size Range
-            Console.Write("[TEST] Embark size range (2-8 chunks)... ");
+            Console.Write("[TEST] Embark size range (2-16 chunks)... ");
             try
             {
                 var worldTile = new WorldTile { BiomeId = (ushort)BiomeType.Mountain, Elevation = 0.8f, Temperature = 0.3f, Rainfall = 0.5f };
@@ -480,9 +480,9 @@ namespace HumanFortress.App
                 if (map2.Size != 2) throw new Exception("Size 2 failed");
 
                 // Test maximum size
-                var gen8 = new FortressGenerator(8, worldTile, new SadRogue.Primitives.Point(0, 0), 2, CreateFortressGenerationContent());
-                var map8 = gen8.Generate();
-                if (map8.Size != 8) throw new Exception("Size 8 failed");
+                var genMax = new FortressGenerator(FortressSessionSizeLimits.MaxFortressSize, worldTile, new SadRogue.Primitives.Point(0, 0), 2, CreateFortressGenerationContent());
+                var mapMax = genMax.Generate();
+                if (mapMax.Size != FortressSessionSizeLimits.MaxFortressSize) throw new Exception($"Size {FortressSessionSizeLimits.MaxFortressSize} failed");
 
                 Console.WriteLine("✅ PASS");
             }
@@ -683,7 +683,7 @@ namespace HumanFortress.App
             {
                 var pathService = new HumanFortress.Navigation.Implementation.PathService(new HumanFortress.Navigation.Implementation.NavigationTuning
                 {
-                    MaxMsPerTickPathing = 100
+                    MaxPathsPerTick = 100
                 });
                 var world = new TestNavigationWorld();
 

@@ -27,11 +27,13 @@ internal sealed partial class CreatureManager : ICreatureDefinitionCatalog
     /// <summary>
     /// Optional logging callback set by the app diagnostics layer.
     /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public int DefinitionCount => _definitionCatalog.DefinitionCount;
+    internal int DefinitionCount => _definitionCatalog.DefinitionCount;
 
-    public int InstanceCount
+    int ICreatureDefinitionCatalog.DefinitionCount => DefinitionCount;
+
+    internal int InstanceCount
     {
         get
         {
@@ -45,7 +47,7 @@ internal sealed partial class CreatureManager : ICreatureDefinitionCatalog
     /// <summary>
     /// Set world reference (called after World is created)
     /// </summary>
-    public void SetWorld(SimulationWorld world)
+    internal void SetWorld(SimulationWorld world)
     {
         ArgumentNullException.ThrowIfNull(world);
 

@@ -1,5 +1,7 @@
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Navigation.Implementation;
 using HumanFortress.Simulation.Creatures;
+using HumanFortress.Simulation.Diagnostics;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Jobs;
@@ -17,6 +19,7 @@ internal static class FortressRuntimeLogBindings
         ArgumentNullException.ThrowIfNull(callbackFactory);
 
         NavigationManager.LogCallback = callbackFactory("Navigation.Manager");
+        SimulationDiagnostics.DiagnosticSink = DiagnosticHub.Sink;
         CreatureManager.LogCallback = callbackFactory("Simulation.Creatures");
         CreaturesDiffApplicator.LogCallback = callbackFactory("Simulation.CreaturesDiff");
         ItemManager.LogCallback = callbackFactory("Simulation.Items");

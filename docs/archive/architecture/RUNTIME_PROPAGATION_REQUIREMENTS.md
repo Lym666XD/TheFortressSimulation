@@ -1,13 +1,18 @@
 # Runtime System Propagation Requirements
 
+Archived: this migration checklist is superseded for current ownership by
+`docs/architecture/GAME_ARCHITECTURE.md`, with tile/material details in
+`docs/content/TILES_MATERIALS_ARCHITECTURE.md` and
+`docs/simulation/TILE_SPEC.md`.
+
 Updated: 2026-06-13
 Status: target migration checklist, not the current architecture entry point
 
 This document records the propagation checklist for the unified TerrainBits and
-geology contract. Use [TILES_MATERIALS_ARCHITECTURE.md](../content/TILES_MATERIALS_ARCHITECTURE.md)
-and [TILE_SPEC.md](../simulation/TILE_SPEC.md) for the current tile/material
-contract. Use [GAME_ARCHITECTURE.md](GAME_ARCHITECTURE.md) for current runtime
-ownership.
+geology contract. Use [TILES_MATERIALS_ARCHITECTURE.md](../../content/TILES_MATERIALS_ARCHITECTURE.md)
+and [TILE_SPEC.md](../../simulation/TILE_SPEC.md) for the current
+tile/material contract. Use [GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md)
+for current runtime ownership.
 
 ## Overview
 This document defines mandatory changes to propagate the unified TerrainBits/Geology contract to all runtime systems.

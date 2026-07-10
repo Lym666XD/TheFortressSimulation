@@ -34,11 +34,12 @@ internal sealed class FortressRuntimeStockpilePresetCatalog
 
     internal IReadOnlyList<RuntimeStockpilePreset> GetMenuPresets()
     {
-        return _presets.Values
-            .OrderBy(static preset => string.Equals(preset.Id, "all", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-            .ThenBy(static preset => preset.Priority)
-            .ThenBy(static preset => preset.Name, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(static preset => preset.Id, StringComparer.OrdinalIgnoreCase)
+        return _presets
+            .OrderBy(static entry => string.Equals(entry.Key, "all", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(static entry => entry.Value.Priority)
+            .ThenBy(static entry => entry.Value.Name, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(static entry => entry.Value)
             .ToArray();
     }
 

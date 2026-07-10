@@ -16,7 +16,8 @@ Defines the end‑to‑end mining pipeline across Orders → Planner (read) → 
 
 - MiningSystem (Simulation) – Planner, Read‑only
   - Holds persistent ActiveDesignation cursors and a set of cancellation regions.
-  - Scans selection rectangles per Z and produces PlannedDig DTOs into an outbox (budgeted).
+  - Scans selection rectangles per Z and produces PlannedDig DTOs into a
+    deterministic owner queue outbox (budgeted).
   - For stairwells, scans from ZMax down to ZMin (Top → Middle → Bottom) and applies terrain eligibility filters.
 
 - MiningJobSystem (Runtime) – Executor, Write phase
@@ -80,6 +81,16 @@ High‑level flow
 
 - `IsTileCanceled(x,y,z)` returns true if tile lies inside any active MiningCancelRegion. Executors use this to drop/abort work.
 
+5.4 Current implementation split
+
+- `MiningSystem.cs`: planner state, scheduler identity, constructor, and `PlannedDig` DTO.
+- `MiningSystem.Tick.cs`: ReadTick/WriteTick, designation/cancel drain,
+  budgeted production, and deterministic owner-queue outbox dequeue.
+- `MiningSystem.Scanner.cs`: designation cursor scanning, terrain filters, segment assignment, and cursor advancement.
+- `MiningSystem.Cancellation.cs`: cancellation-region lookup and executor-facing cancellation query.
+- `MiningSystem.Helpers.cs`: logging, deterministic target seed, and standable-adjacency helper.
+- `MiningActiveDesignation.cs`: persistent planner cursor state.
+
 6) MiningJobSystem (Executor)
 
 6.1 ReadTick (intake + assignment)
@@ -130,7 +141,8 @@ High‑level flow
 8) Determinism
 
 - Stable enumeration (row‑major) and stable worker order (by GUID).
-- Fixed seeds for RNG (`SeedFrom(x,y,z)`); outbox dequeue and assignment sorts are deterministic.
+- Fixed seeds for RNG (`SeedFrom(x,y,z)`); planner outbox dequeue and
+  assignment sorts are deterministic.
 - Diff application is ordered by layer and stable chunk/indices.
 
 9) Budgets & Backpressure

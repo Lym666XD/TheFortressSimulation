@@ -10,7 +10,7 @@ This spec defines placeable world entities (furniture, workshops, utilities, tra
 
 Design goals:
 
- DF-style furniture: craft as items, then install (and later uninstall → restore the same item GUID, quality, material, decorations, maker mark).
+ DF-style furniture: craft as items, then install; uninstall produces a deterministic new item instance GUID while preserving quality, material, decorations, and maker mark.
 
 Constructions on site: walls/floors/bridges/channels/workshops are built directly from materials (not prebuilt items).
 
@@ -292,7 +292,7 @@ Haul completes → item reaches site;
 
 InstallItem: create PlaceableInstance, write NavMask per passability, update TagIndex, remove the item from world but store its GUID in source_item_guid.
 
-Uninstall: reverse the process; delete placeable, respawn the same item GUID, with same material/quality/decorations.
+Uninstall: reverse the process; delete placeable, respawn a deterministic new item GUID, with same material/quality/decorations.
 
 6.2 Construct on site (including workshops)
 
@@ -722,7 +722,7 @@ PLACEABLE_SPEC
 
 1) Design Principles
 
-DF-style installables: Craft items first, then install them; uninstall restores the same item GUID along with quality, material, decorations, and maker mark. 
+DF-style installables: Craft items first, then install them; uninstall creates a deterministic new item GUID while preserving quality, material, decorations, and maker mark.
 
 PLACEABLE_SPEC
 
@@ -803,7 +803,7 @@ PLACEABLE_SPEC
 4) Data Model
 4.1 Installable items (extends ITEMS_SPEC v4-int)
 
-Installable items provide a placeable_profile on the item. Material/quality/decorations/maker mark come from the item and are preserved on uninstall (same item GUID). Do not define material filters on the placeable; recipes decide materials. 
+Installable items provide a placeable_profile on the item. Material/quality/decorations/maker mark come from the item and are preserved on uninstall, but the uninstalled runtime item receives a deterministic new GUID. Do not define material filters on the placeable; recipes decide materials.
 
 PLACEABLE_SPEC
 
@@ -964,7 +964,7 @@ Note: Room scoring / cleanliness / facility auras are handled by Zones in this p
 
 9) Authoring Registries
 
-Installables live in Items (content/registries/items/*.json with placeable_profile). They inherit material/quality/decor/inscriptions from the item and restore the same item GUID on uninstall. 
+Installables live in Items (content/registries/items/*.json with placeable_profile). They inherit material/quality/decor/inscriptions from the item and create a deterministic new item GUID on uninstall.
 
 PLACEABLE_SPEC
 
@@ -1148,7 +1148,7 @@ Bounded: Cache invalidation & ConnectivityVersion bump rules tied to L0/L2 edits
 
 TILE_SPEC
 
-Affirmed: Install/uninstall preserves same item GUID and all per-item properties (material, quality, decorations). 
+Affirmed: Install/uninstall preserves per-item properties (material, quality, decorations) while uninstall creates a deterministic new item GUID.
 
 PLACEABLE_SPEC
 
@@ -1170,7 +1170,7 @@ PLACEABLE_SPEC
 
 TILE_SPEC
 
- Uninstall restores the same item GUID with material/quality/decor. 
+ Uninstall creates a deterministic new item GUID with preserved material/quality/decor.
 
 PLACEABLE_SPEC
 
@@ -1279,8 +1279,8 @@ Note: Trap design simplified to use generic components instead of weapons (§15.
 
 **Problem**: Uninstalling furniture should restore "the same item" with quality/material/decorations, but original GUID might conflict or content definitions might have changed.
 
-**Resolution - Generate New GUID, Preserve Properties**:
-- **New GUID**: Uninstall always generates a fresh `Guid.NewGuid()` to avoid collisions.
+**Resolution - Generate Deterministic New GUID, Preserve Properties**:
+- **New GUID**: Uninstall generates a deterministic fresh item GUID from the placeable GUID, the uninstall tick, and the item-uninstall scope. Do not use `Guid.NewGuid()` on this replay-facing path.
 - **Preserved properties**: Copy from PlaceableInstance:
   - `material` (string ID, e.g., `"core_mat_metal_iron"`)
   - `quality_tier` (int −3..+3)
@@ -1288,7 +1288,7 @@ Note: Trap design simplified to use generic components instead of weapons (§15.
   - `maker_mark` (string, if saved)
   - `inscriptions` (string, if saved)
 - **Content migration**: Use ItemRegistry.ResolveItem with alias support; if item def is missing/renamed, log warning and use fallback item def.
-- **Player perception**: Players see identical item properties, don't notice GUID change.
+- **Player perception**: Players see identical item properties, but persistence/replay treats the uninstalled item as a new runtime instance.
 
 **PlaceableInstance required save fields**:
 ```json

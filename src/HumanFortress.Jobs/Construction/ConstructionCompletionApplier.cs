@@ -68,7 +68,7 @@ internal sealed class ConstructionCompletionApplier
 
         RemoveConstructionSite(site, tick);
 
-        var instance = PlaceableInstance.CreateFromConstruction(def, site.Position, site.Z, tick, _placeableTuning);
+        var instance = PlaceableInstance.CreateFromConstruction(def, site.Position, site.Z, tick, site.Guid, _placeableTuning);
         PlaceableManager.PlacePlaceable(_world, instance, tick);
         _logger.Log($"[BUILD.COMPLETE] workshop id={def.Id} pos=({site.Position.X},{site.Position.Y},{site.Z}) footprint={def.PlaceableProfile.Footprint.W}x{def.PlaceableProfile.Footprint.D}");
 

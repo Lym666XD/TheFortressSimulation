@@ -49,9 +49,9 @@ internal sealed class RuntimeContentRegistryLoadResult
         StructuredFailureMessage = structuredFailureMessage;
     }
 
-    public bool StructuredLoaded { get; }
-    public int StructuredWarningCount { get; }
-    public int StructuredErrorCount { get; }
-    public string? StructuredFailureMessage { get; }
-    public bool HasErrors => StructuredErrorCount > 0 || StructuredFailureMessage != null;
+    internal bool StructuredLoaded { get; }
+    internal int StructuredWarningCount { get; }
+    internal int StructuredErrorCount { get; }
+    internal string? StructuredFailureMessage { get; }
+    internal bool HasErrors => StructuredErrorCount > 0 || StructuredFailureMessage != null;
 }

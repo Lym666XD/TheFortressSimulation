@@ -49,8 +49,9 @@ internal sealed class StockpileManager
     {
         lock (_lock)
         {
-            return _zones.Values
-                .OrderBy(static zone => zone.ZoneId)
+            return _zones
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
                 .ToList();
         }
     }

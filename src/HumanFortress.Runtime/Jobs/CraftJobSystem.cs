@@ -33,15 +33,13 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         ProfessionAssignments? professions,
         WorkerSelectionStrategy workerStrategy,
         NavigationTuning? navigationTuning = null,
+        RuntimeNavigationServices? navigationServices = null,
         StockpileDiffLog? stockpileDiffLog = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
-        var paths = new PathService(tuning);
-        _paths = paths;
-        var navView = new WorldNavigationView(navigation);
-        IWorldNavigationView navViewInterface = navView;
-        var move = new MovementExecutor(paths);
+        var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(navigation);
+        _paths = jobNavigation.PathService;
         var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId, world, stockpileDiffLog);
         ICraftWorkerCandidateSource? workerCandidates = professions == null
             ? null
@@ -51,9 +49,9 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
             planner,
             recipes,
             constructions,
-            paths,
-            navViewInterface,
-            move,
+            jobNavigation.PathService,
+            jobNavigation.WorldView,
+            jobNavigation.Movement,
             diffEmitter,
             workerCandidates);
     }
@@ -83,6 +81,8 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
     internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
 
     internal CraftJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal CraftJobRestoreResult RestoreReplaySnapshot(CraftJobReplaySnapshot snapshot) => _executor.RestoreReplaySnapshot(snapshot);
 
     internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
 }

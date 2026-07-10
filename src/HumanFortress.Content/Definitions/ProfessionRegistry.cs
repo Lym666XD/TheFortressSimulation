@@ -14,8 +14,12 @@ internal static class ProfessionRegistryLoader
 
 internal sealed class ProfessionRegistry : IProfessionRegistry
 {
-    public IReadOnlyList<ProfessionDefinition> Definitions { get; }
-    public ProfessionDefinition DefaultProfession { get; }
+    internal IReadOnlyList<ProfessionDefinition> Definitions { get; }
+    internal ProfessionDefinition DefaultProfession { get; }
+
+    IReadOnlyList<ProfessionDefinition> IProfessionRegistry.Definitions => Definitions;
+
+    ProfessionDefinition IProfessionRegistry.DefaultProfession => DefaultProfession;
 
     private ProfessionRegistry(IReadOnlyList<ProfessionDefinition> definitions)
     {
@@ -70,13 +74,18 @@ internal sealed class ProfessionRegistry : IProfessionRegistry
         }
     }
 
-    public IReadOnlyList<ProfessionDefinition> GetProfessionsForJob(string jobTag)
+    internal IReadOnlyList<ProfessionDefinition> GetProfessionsForJob(string jobTag)
     {
         if (string.IsNullOrWhiteSpace(jobTag)) return Definitions;
         var matches = Definitions
             .Where(d => d.JobTags.Contains(jobTag, StringComparer.OrdinalIgnoreCase))
             .ToList();
         return matches.Count > 0 ? matches : Definitions;
+    }
+
+    IReadOnlyList<ProfessionDefinition> IProfessionRegistry.GetProfessionsForJob(string jobTag)
+    {
+        return GetProfessionsForJob(jobTag);
     }
 
     private static ProfessionDefinition[] CreateDefaultDefinitions()

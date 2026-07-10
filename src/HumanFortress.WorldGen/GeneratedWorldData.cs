@@ -16,10 +16,14 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
         ErrorMessage = errorMessage;
     }
 
-    public bool Success { get; }
-    public string ErrorMessage { get; }
+    internal bool Success { get; }
+    internal string ErrorMessage { get; }
 
-    public bool TryGetSize(out int width, out int height)
+    bool IGeneratedWorldData.Success => Success;
+
+    string IGeneratedWorldData.ErrorMessage => ErrorMessage;
+
+    internal bool TryGetSize(out int width, out int height)
     {
         if (_tiles == null)
         {
@@ -33,7 +37,12 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
         return width > 0 && height > 0;
     }
 
-    public bool TryGetTileView(WorldMapTilePosition tilePosition, out WorldMapTileView view)
+    bool IGeneratedWorldData.TryGetSize(out int width, out int height)
+    {
+        return TryGetSize(out width, out height);
+    }
+
+    internal bool TryGetTileView(WorldMapTilePosition tilePosition, out WorldMapTileView view)
     {
         view = default;
         if (!TryGetTile(tilePosition, out var tile))
@@ -53,7 +62,12 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
         return true;
     }
 
-    public bool TryGetTileSnapshot(WorldMapTilePosition tilePosition, out WorldTileSnapshot snapshot)
+    bool IGeneratedWorldData.TryGetTileView(WorldMapTilePosition tilePosition, out WorldMapTileView view)
+    {
+        return TryGetTileView(tilePosition, out view);
+    }
+
+    internal bool TryGetTileSnapshot(WorldMapTilePosition tilePosition, out WorldTileSnapshot snapshot)
     {
         snapshot = default;
         if (!TryGetTile(tilePosition, out var tile))
@@ -73,7 +87,12 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
         return true;
     }
 
-    public bool TryFindNearestEmbarkableTile(WorldMapTilePosition origin, out WorldMapTilePosition tilePosition)
+    bool IGeneratedWorldData.TryGetTileSnapshot(WorldMapTilePosition tilePosition, out WorldTileSnapshot snapshot)
+    {
+        return TryGetTileSnapshot(tilePosition, out snapshot);
+    }
+
+    internal bool TryFindNearestEmbarkableTile(WorldMapTilePosition origin, out WorldMapTilePosition tilePosition)
     {
         tilePosition = default;
         if (_tiles == null)
@@ -110,6 +129,11 @@ internal sealed class GeneratedWorldData : IGeneratedWorldData
         }
 
         return found;
+    }
+
+    bool IGeneratedWorldData.TryFindNearestEmbarkableTile(WorldMapTilePosition origin, out WorldMapTilePosition tilePosition)
+    {
+        return TryFindNearestEmbarkableTile(origin, out tilePosition);
     }
 
     internal static GeneratedWorldData FromWorldGenResult(WorldGenResult result)

@@ -37,6 +37,13 @@ internal sealed class MiningDeferredStairwellBuffer
             .Select((dig, index) => new MiningDeferredStairwellSnapshot(index, dig))
             .ToArray();
     }
+
+    internal void RestoreStateSnapshot(IEnumerable<MiningDeferredStairwellSnapshot> entries)
+    {
+        _queue.Clear();
+        foreach (var entry in entries.OrderBy(static entry => entry.Order))
+            _queue.Enqueue(entry.Dig);
+    }
 }
 
 internal readonly record struct MiningDeferredStairwellSnapshot(

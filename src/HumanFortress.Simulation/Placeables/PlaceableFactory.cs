@@ -13,11 +13,11 @@ internal static class PlaceableFactory
 {
     /// <summary>
     /// Create a non-blocking construction ghost (1x1) at position for a planned L0 build.
-    /// Deterministic GUID by position + tickSeed.
+    /// Deterministic GUID by position, tickSeed, and placeable creation scope.
     /// </summary>
     internal static PlaceableInstance CreateConstructionGhost(Point worldPos, int z, ulong tickSeed, string purpose)
     {
-        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z);
+        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z, PlaceableGuidScopes.ConstructionGhost);
         var fp = new Footprint(1, 1, 1);
         var inst = new PlaceableInstance(
             guid,
@@ -40,7 +40,7 @@ internal static class PlaceableFactory
     internal static PlaceableInstance CreateConstructionSite(Point worldPos, int z, ulong tickSeed, string targetId, Footprint fp,
         IReadOnlyDictionary<string, int> materialsRequired, int totalBuildTicks)
     {
-        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z);
+        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, worldPos.X, worldPos.Y, z, PlaceableGuidScopes.ConstructionSite);
         var inst = new PlaceableInstance(
             guid,
             PlaceableKind.Construction,

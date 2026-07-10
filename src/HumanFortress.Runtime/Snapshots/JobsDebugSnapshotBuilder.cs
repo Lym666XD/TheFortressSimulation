@@ -32,8 +32,8 @@ internal static partial class JobsDebugSnapshotBuilder
                 tunings.Construction.PlanPerTick),
             Scheduler: new JobsSchedulerStatsView(
                 scheduler.Tick,
-                scheduler.PlanMsTotal,
-                scheduler.ApplyMsTotal,
+                scheduler.PlanStageCount,
+                scheduler.ApplyStageCount,
                 scheduler.IntakeHaul,
                 scheduler.IntakeMining,
                 scheduler.IntakeConstruction,

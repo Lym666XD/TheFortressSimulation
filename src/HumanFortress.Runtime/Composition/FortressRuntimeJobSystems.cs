@@ -49,15 +49,12 @@ internal sealed partial class FortressRuntimeJobSystems
 
         logging ??= FortressRuntimeLogging.None;
         pathServices.Clear();
+        var navigationServices = new RuntimeNavigationServices(pathServices, dependencies.NavigationTuning);
 
-        var mining = CreateMining(world, diffLog, itemsDiffLog, navigation, dependencies, planners, logging);
-        var transport = CreateTransport(world, diffLog, itemsDiffLog, stockpileDiffLog, navigation, dependencies, planners, logging);
+        var mining = CreateMining(world, diffLog, itemsDiffLog, navigation, navigationServices, dependencies, planners, logging);
+        var transport = CreateTransport(world, diffLog, itemsDiffLog, stockpileDiffLog, navigation, navigationServices, dependencies, planners, logging);
         var construction = CreateConstruction(world, diffLog, itemsDiffLog, stockpileDiffLog, dependencies, planners, logging);
-        var craft = CreateCraft(world, itemsDiffLog, stockpileDiffLog, navigation, dependencies, planners);
-
-        pathServices.Register(mining.PathService);
-        pathServices.Register(transport.PathService);
-        pathServices.Register(craft.PathService);
+        var craft = CreateCraft(world, itemsDiffLog, stockpileDiffLog, navigation, navigationServices, dependencies, planners);
 
         return new FortressRuntimeJobSystems(mining, transport, construction, craft);
     }

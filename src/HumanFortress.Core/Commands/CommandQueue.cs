@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.Core.Commands;
@@ -9,10 +8,16 @@ namespace HumanFortress.Core.Commands;
 /// </summary>
 public sealed class CommandQueue
 {
-    private readonly ConcurrentQueue<QueuedCommand> _pendingCommands = new();
+    private readonly Queue<QueuedCommand> _pendingCommands = new();
     private readonly List<ICommand> _executedCommands = new();
     private readonly object _executeLock = new();
+    private readonly IDiagnosticSink? _diagnostics;
     private long _nextSequence;
+
+    public CommandQueue(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics;
+    }
 
     /// <summary>
     /// Enqueue a command for execution. Thread-safe.
@@ -149,9 +154,7 @@ public sealed class CommandQueue
         lock (_executeLock)
         {
             _executedCommands.Clear();
-            while (_pendingCommands.TryDequeue(out _))
-            {
-            }
+            _pendingCommands.Clear();
 
             _nextSequence = 0;
         }
@@ -172,9 +175,7 @@ public sealed class CommandQueue
         lock (_executeLock)
         {
             _executedCommands.Clear();
-            while (_pendingCommands.TryDequeue(out _))
-            {
-            }
+            _pendingCommands.Clear();
 
             _nextSequence = 0;
             foreach (var cmd in restoredCommands)
@@ -212,12 +213,14 @@ public sealed class CommandQueue
     {
         // Per ERROR_HANDLING_POLICY.md: log and continue
         var command = queued.Command;
-        DiagnosticHub.Error(
+        Diagnostics.Error(
             "Core.CommandQueue",
             $"[ERROR] Command {command.CommandType} ({command.CommandId}, seq={queued.Sequence}) failed: {ex.Message}",
             ex,
             command.Tick);
     }
+
+    private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
 
     private readonly record struct QueuedCommand(ICommand Command, long Sequence);
 }

@@ -17,13 +17,13 @@ namespace HumanFortress.Simulation.Jobs
     /// </summary>
     internal sealed class ConstructionMaterialsPlanner : ITick
     {
-        public static Action<string>? LogCallback { get; set; }
+        internal static Action<string>? LogCallback { get; set; }
         private readonly World.World _world;
         private readonly ITransportIntake _intake;
         private readonly IItemDefinitionCatalog _itemDefinitions;
         private readonly int _scanBudgetPerTick;
 
-        public ConstructionMaterialsPlanner(
+        internal ConstructionMaterialsPlanner(
             World.World world,
             ITransportIntake intake,
             IItemDefinitionCatalog itemDefinitions,
@@ -35,10 +35,14 @@ namespace HumanFortress.Simulation.Jobs
             _scanBudgetPerTick = Math.Max(1, scanBudgetPerTick);
         }
 
-        public int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items; // Read-only planner in Jobs stage
-        public string SystemId => "Jobs.ConstructionMaterialsPlanner";
+        internal int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items; // Read-only planner in Jobs stage
+        internal string SystemId => "Jobs.ConstructionMaterialsPlanner";
 
-        public void ReadTick(ulong tick)
+        int ITick.Priority => Priority;
+
+        string ITick.SystemId => SystemId;
+
+        internal void ReadTick(ulong tick)
         {
             int scannedSites = 0;
             int enqueued = 0;
@@ -70,7 +74,7 @@ namespace HumanFortress.Simulation.Jobs
                         // Enqueue as few requests as possible with explicit Quantity (bounded by per-tick budget)
                         while (need > 0 && enqueued < _scanBudgetPerTick)
                         {
-                            var itemGuid = TryFindNearestItemByTag(tag, p.Position.X, p.Position.Y, p.Z, tick);
+                            var itemGuid = TryFindNearestItemForRequirement(tag, p.Position.X, p.Position.Y, p.Z, tick);
                             if (itemGuid == null)
                             {
                                 Log($"[CM-PLAN][{tick}] no-source site=({p.Position.X},{p.Position.Y},{p.Z}) req={tag} need={need}");
@@ -126,9 +130,19 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        public void WriteTick(ulong tick)
+        void ITick.ReadTick(ulong tick)
+        {
+            ReadTick(tick);
+        }
+
+        internal void WriteTick(ulong tick)
         {
             // No writes in planner
+        }
+
+        void ITick.WriteTick(ulong tick)
+        {
+            WriteTick(tick);
         }
 
         private static uint SeedFrom(Guid a)
@@ -156,7 +170,7 @@ namespace HumanFortress.Simulation.Jobs
                         if (def == null || def.Tags == null) continue;
                         foreach (var req in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
                         {
-                            if (MatchesRequirement(def.Tags, req))
+                            if (ConstructionMaterialRequirement.MatchesItem(def, req))
                             {
                                 delivered[req] = delivered.GetValueOrDefault(req, 0) + it.StackCount;
                                 break;
@@ -168,7 +182,7 @@ namespace HumanFortress.Simulation.Jobs
             return delivered;
         }
 
-        private Guid? TryFindNearestItemByTag(string reqTag, int toX, int toY, int toZ, ulong tick)
+        private Guid? TryFindNearestItemForRequirement(string reqTag, int toX, int toY, int toZ, ulong tick)
         {
             Guid? best = null;
             int bestDist = int.MaxValue;
@@ -177,7 +191,7 @@ namespace HumanFortress.Simulation.Jobs
             // Diagnostic: log total item count every 100 ticks
             if (tick % 100 == 0)
             {
-                Log($"[CM-DIAG][{tick}] TryFindNearestItemByTag: reqTag={reqTag}, groundItems={groundItems.Count}");
+                Log($"[CM-DIAG][{tick}] TryFindNearestItemForRequirement: req={reqTag}, groundItems={groundItems.Count}");
             }
 
             int skippedReserved = 0, skippedNoDef = 0, skippedNoMatch = 0, candidates = 0;
@@ -187,7 +201,7 @@ namespace HumanFortress.Simulation.Jobs
                 if (_world.Reservations.IsItemReserved(it.Guid, tick)) { skippedReserved++; continue; }
                 var def = _itemDefinitions.GetDefinition(it.DefinitionId);
                 if (def == null || def.Tags == null) { skippedNoDef++; continue; }
-                if (!MatchesRequirement(def.Tags, reqTag)) { skippedNoMatch++; continue; }
+                if (!ConstructionMaterialRequirement.MatchesItem(def, reqTag)) { skippedNoMatch++; continue; }
                 candidates++;
                 int d = Math.Abs(it.Position.X - toX) + Math.Abs(it.Position.Y - toY) + Math.Abs(it.Z - toZ);
                 if (d < bestDist)
@@ -204,26 +218,6 @@ namespace HumanFortress.Simulation.Jobs
             }
 
             return best;
-        }
-
-        private static bool MatchesRequirement(IEnumerable<string> itemTags, string requirement)
-        {
-            var set = new HashSet<string>(itemTags, StringComparer.OrdinalIgnoreCase);
-            switch (requirement.ToLowerInvariant())
-            {
-                case "block":
-                    return set.Contains("block") || set.Contains("stone_block") || set.Contains("brick") || (set.Contains("stone") && set.Contains("block"));
-                case "plank":
-                    return set.Contains("plank") || set.Contains("wood_plank") || (set.Contains("wood") && set.Contains("plank"));
-                case "stone_block":
-                    return set.Contains("stone") && set.Contains("block");
-                case "wood_plank":
-                    return set.Contains("wood") && set.Contains("plank");
-                case "wood_log":
-                    return set.Contains("wood") && set.Contains("log");
-                default:
-                    return set.Contains(requirement);
-            }
         }
 
         private IEnumerable<Point> EnumerateFootprintAndRing(PlaceableInstance site)

@@ -2,8 +2,732 @@
 
 This document tracks the current multi-step refactor batches so progress is visible without relying on chat history.
 
-## Current Status Snapshot - 2026-07-05
+## Current Status Snapshot - 2026-07-10
 
+- Follow-up source-only completion audit re-ran the high-signal architecture
+  scans without build/test: active App source has no direct Core, Content,
+  Jobs, Simulation, Navigation, WorldGen, Runtime.Commands, Runtime.Save, or
+  Runtime.Replay imports; legacy Core.Content/root Navigation/root WorldGen/root
+  Jobs namespaces are absent from active source except for architecture smoke
+  forbidden-pattern constants; Simulation/Jobs/WorldGen ordinary public surface
+  is locked down to internal/friend-only implementation members, with only the
+  required `Chunk` object overrides left public; Runtime ordinary public surface
+  is limited to App-facing session ports/factories/content/logging bootstrap;
+  Content ordinary public surface is limited to the approved JSON DTO setter;
+  save/replay authority paths showed no dictionary view iteration, unstable
+  object hash calls, or random command identity generation; concrete
+  Navigation service creation remains centralized behind Runtime seams; and
+  `git diff --check` passed. `WORK_AND_JOBS_SYSTEM.md` was updated to remove
+  stale statements that App owns job shells/tunings/debug-state reads and to
+  mark Runtime-authored job/debug snapshot DTOs as current. Follow-up document
+  sync also changed active architecture/transport/planning guidance from
+  "clean remaining compatibility namespaces" to "keep compatibility namespaces
+  from returning", matching current source scans and smoke-test guards. This
+  audit also removed the stale `HumanFortress.Core.Tests`
+  `InternalsVisibleTo` bridge from `HumanFortress.Core`; no such project exists
+  in the repository, and architecture smoke now expects Core to have no friend
+  assemblies. The same source-only audit closed the remaining Navigation
+  wall-clock budget contract leak: `NavigationTuning` and
+  `content/registries/tuning.navigation.json` no longer expose the old
+  `max_ms_per_tick_pathing` / `MaxMsPerTickPathing` field; active tuning now
+  uses deterministic node/request budgets (`max_nodes_per_search` and
+  `max_paths_per_tick`), and deterministic smoke guards both the execution
+  path and tuning/content contract from reintroducing wall-clock path budgets.
+  `PathService` queued requests now use an explicit deterministic FIFO
+  `Queue<PathRequest>` and drain without rotating the oldest queued request
+  behind newer requests when the per-tick path budget is exhausted.
+  `DeterministicGuidGenerator.Generate(...)` now writes its four RNG words with
+  explicit little-endian `BinaryPrimitives` calls instead of host-endian
+  `BitConverter.GetBytes`, and deterministic smoke guards that portable GUID
+  encoding path beside the existing diff-target endian checks. The same
+  deterministic ID cleanup removed the unscoped position-based GUID overload:
+  position-derived GUIDs now require an explicit scope salt, placeable creation
+  scopes live in `HumanFortress.Simulation.Placeables`, construction completion
+  derives the finished placeable from the construction-site GUID, and installed
+  / uninstalled item placeables derive IDs from the source placeable/item GUID
+  instead of relying on same-tick same-position seeds. Contracts cleanup also
+  removed the unused `MaterialDistribution.SelectMaterial(System.Random)` DTO
+  helper; architecture smoke now forbids Contracts from reintroducing
+  RNG/time/`Guid.NewGuid()` runtime-authority helpers, and
+  `PLACEABLE_SPEC.md` now matches the deterministic new-GUID uninstall rule.
+  Reservation ownership was hardened as well: `ReservationManager` now uses
+  Simulation-owned dictionaries with explicit write-phase reserve/release
+  mutation, pure read checks, and stable GUID-ordered snapshots instead of
+  `ConcurrentDictionary.AddOrUpdate` callbacks that mutate shared reservation
+  objects. Navigation movement pacing also now comes from deterministic
+  `NavigationTuning.MovementStepDelayTicks` and `tuning.navigation.json`
+  (`movement.step_delay_ticks`) instead of a hardcoded MovementExecutor
+  display-pacing delay. Fortress session size limits now live in Contracts as
+  `FortressSessionSizeLimits`; App size rules and Simulation `World` both
+  consume the shared 2..16 chunk range, and world save payload validation uses
+  the same Simulation world limits. This raises the lazy world ceiling to
+  512x512 tiles while keeping one boundary-owned size contract. Scheduler
+  tuning also dropped the unused wall-clock `ms` budget field from code and
+  content; `SchedulerTunings.Budget` now carries only deterministic
+  `PlanPerTick` work counts, with smoke coverage preventing the old field from
+  returning. Orders authority state also no longer relies on unordered
+  concurrent collection enumeration: `OrdersManager` now owns ingress queues,
+  recent previews, and active designation lists as guarded `Queue<T>`/`List<T>`
+  state, exposes stable sorted active snapshots at the source, and has smoke
+  coverage preventing `ConcurrentBag`/`ConcurrentQueue` from returning to the
+  manager. The same cleanup moved Simulation order planner outboxes away from
+  concurrent collection ordering: Mining and buildable construction now use
+  deterministic owner queues for their read/write handoffs, while the dead
+  structural construction planned-build outbox and unused dequeue seam were
+  removed. Jobs-owned retry/backlog queues were then aligned with the same
+  deterministic owner-state rule: mining and transport backlog buffers, craft
+  planner outbox, and craft executor backlog now use ordinary FIFO `Queue<T>`
+  storage with snapshot/restore order preserved, and deterministic smoke locks
+  these queues away from `ConcurrentQueue`. Core command ingress was aligned as
+  well: `CommandQueue` now keeps pending commands as lock-owned FIFO
+  `Queue<QueuedCommand>` state, with explicit sequence tie-breaks for due/future
+  execution and pending replay-record snapshots instead of `ConcurrentQueue`
+  enumeration. Core `EventBus` now follows the same owner-state pattern:
+  handler lists are lock-owned, copied in registration order for publish, and
+  guarded from `ConcurrentDictionary.AddOrUpdate` callback mutation. The
+  remaining concurrent infrastructure cleanup then moved session RNG streams,
+  Simulation world chunk storage, concrete Navigation chunk nav-data storage,
+  and `PathCache` cache/reverse-index state to owner-lock dictionaries with
+  stable stream-name, spatial, or cache-key ordering where snapshots,
+  invalidation, or LRU eviction can affect behavior. Runtime command identity
+  sequence advancement and transport request queue counters were also moved
+  under their owning session/queue guards instead of `Interlocked` authority
+  updates. Deterministic smoke now guards these infra dictionaries and
+  authority counters from regressing to concurrent callback/atomic state. The
+  follow-up diagnostics boundary pass also moved Core infrastructure failures
+  (`CommandQueue`, `EventBus`, and `TickScheduler`) behind optional
+  `IDiagnosticSink` injection, with `DiagnosticHub` kept only as the
+  compatibility fallback for manually constructed Core objects. Runtime
+  session services now pass the active diagnostic sink into their default Core
+  infrastructure, and architecture smoke guards that Core no longer calls
+  `DiagnosticHub.Error(...)` directly from those infrastructure types.
+  Runtime-created WorldGen services and fortress generation/fill maps now
+  follow the same direction: `WorldGenerationService`, `WorldGenerator`,
+  `FortressGenerator`, and `FortressMap` accept `IDiagnosticSink` injection,
+  Runtime composition passes the active sink, and WorldGen implementation code
+  is guarded from direct `DiagnosticHub.Sink.*` emission. Content registry
+  and Simulation diagnostics helpers now also expose module-local injectable
+  sinks, with Runtime content/session composition assigning the active sink
+  before registry load or simulation log-callback binding. Architecture smoke
+  now rejects direct `DiagnosticHub.Sink.*` / `DiagnosticHub.Error(...)`
+  emission in lower implementation modules.
+  Transport debug/scheduler stats were also made session-owned: the old static
+  `JobStats` counter carrier was deleted, pickup/delivery handlers now record
+  no-path/completion totals through the executor-owned `TransportStatsTracker`,
+  backlog retry totals are recorded from the actual requeue path, and
+  deterministic smoke rejects static transport stat counters from returning.
+  Runtime full/world save restore now composes restored worlds through a
+  staging Runtime session/services pair and only commits the active session
+  after content, Jobs, RNG, and pending-command restore slices succeed; smoke
+  coverage includes a validation-passing transport-job restore failure and
+  checks that the current session checkpoint remains unchanged.
+  This audit has not yet been build/test verified.
+- Follow-up source-only Stockpile implementation-surface hardening removed
+  the last ordinary `public` member from the internal
+  `HumanFortress.Simulation.Stockpile` implementation directory.
+  `StockpileWorldQueries` now keeps its destination-candidate comparison
+  private to the Simulation stockpile query seam, and architecture smoke now
+  scans the Stockpile directory beside Zones to reject new misleading public
+  members in internal implementation modules. The same boundary pass narrowed
+  `ItemInstance`, `CreatureInstance`, and item support state carriers
+  (`ReservationToken`, `PlacementData`, `Improvement`, `PerishableState`) so
+  Simulation runtime entity state exposes internal/friend-only members rather
+  than looking like Contracts DTOs. The pass then narrowed the remaining
+  ordinary `public` members under `HumanFortress.Simulation.Items` and
+  `HumanFortress.Simulation.Creatures`: `ItemManager` and `CreatureManager`
+  now keep runtime query/mutation/spawn/setup seams internal/friend-only, while
+  the cross-module catalog view is preserved through explicit
+  `IItemDefinitionCatalog` / `ICreatureDefinitionCatalog` implementations.
+  Architecture smoke now scans the full Items, Creatures, Stockpile, and Zones
+  implementation directories and rejects new ordinary public members there.
+  World/Chunk implementation surfaces were then narrowed as well:
+  `World`, `Chunk`, chunk keys, furniture/field/item-stack refs, lifecycle
+  manager state, and world-cell target helpers now expose ordinary members as
+  internal/friend-only; `World` keeps `IWorldReader` through explicit
+  implementation and `ChunkKey` keeps `IEquatable<ChunkKey>` through an
+  explicit bridge while required `object` overrides remain public. Architecture
+  smoke now scans the World directory and allows only those required public
+  overrides. Placeable and tile runtime implementation surfaces were narrowed
+  in the same direction: `TileBase` and terrain bit accessors, `PlaceableInstance`,
+  chunk placeable storage/sync, construction-site/door/workshop state, and
+  workshop queue entries now expose ordinary members internal/friend-only.
+  Architecture smoke now scans Placeables and Tiles alongside the other
+  Simulation implementation directories. Simulation.Jobs was then brought into
+  the same shape: `ReservationManager` and transport queue state expose
+  internal/friend-only members, `TransportRequestQueue` preserves
+  `ITransportIntake` / `ITransportRequestQueue` through explicit interface
+  implementations, and `ConstructionMaterialsPlanner` preserves `ITick`
+  through explicit read/write/system-id/priority bridges rather than ordinary
+  public implementation methods. Architecture smoke now scans Simulation.Jobs
+  for public-member drift as well. Orders followed the same explicit-interface
+  pattern: buildable construction, structural construction, hauling, and mining
+  tick systems now keep their ordinary members internal/friend-only while
+  preserving `ITick` through explicit bridges, and order designation/value
+  objects plus the construction terrain material resolver no longer expose
+  ordinary public members. Architecture smoke now scans Simulation.Orders too,
+  and a final Simulation-wide guard rejects ordinary public members anywhere in
+  `HumanFortress.Simulation`, allowing only required `object` overrides. The
+  Jobs implementation project was already clean of ordinary public members, so
+  architecture smoke now locks `HumanFortress.Jobs` with a project-wide
+  internal/friend-only member-surface guard too. `HumanFortress.WorldGen` now
+  follows the same rule: world-generation services/data keep Contracts-facing
+  behavior through explicit `IWorldGenerationService` / `IGeneratedWorldData`
+  bridges, stage execution keeps `IWorldGenStage` explicit, and
+  fortress-generation maps/chunks/content expose ordinary members
+  internal/friend-only. Architecture smoke now scans WorldGen for ordinary
+  public-member drift.
+- Follow-up source-only Runtime implementation-surface hardening narrowed the
+  remaining ordinary `public` members from internal Runtime save and command
+  replay helpers. `RuntimeCommandReplayFactory` now keeps its direct
+  `TryCreateCommand(...)` helper internal while preserving
+  `ICommandReplayFactory` through explicit implementation, and Runtime save
+  snapshot data/document codec/document store helpers now expose their ordinary
+  members internal/friend-only. Runtime's public surface is now limited to the
+  approved App-facing ports/factories/content/logging bootstrap files, with
+  architecture smoke rejecting ordinary public members elsewhere in
+  `HumanFortress.Runtime`. This batch has not yet been build/test verified.
+- Follow-up source-only Content implementation-surface hardening narrowed the
+  remaining non-serializer public members from Content-owned profession
+  registry and runtime content loader/result helpers. `ProfessionRegistry`
+  preserves `IProfessionRegistry` through explicit implementation, while
+  Runtime still consumes Content loader helpers through friend access and App
+  continues to see only Contracts/Runtime-facing reports. The only remaining
+  ordinary public member in `HumanFortress.Content` is the approved
+  `System.Text.Json`-bound `RuntimeZoneDefinitionData` list setter, and
+  architecture smoke now rejects any other Content public-member drift. This
+  batch has not yet been build/test verified.
+- Follow-up source-only Simulation implementation-surface hardening narrowed
+  the remaining ordinary `public` members inside the internal
+  `HumanFortress.Simulation.Zones` implementation types. `ZoneInstance`,
+  zone `ZoneShard`, `ChunkZoneData`, `ZoneDefinition`/`ZoneUiHints`/
+  `ZonePolicies`, `ZoneManager`, and `ZoneCoordinator` now expose internal
+  /friend-only members instead of looking like a stable public zone API from
+  inside an internal module. Architecture smoke now scans the Simulation Zones
+  implementation directory and rejects new `public` members there, keeping
+  zone runtime state behind Simulation/Runtime friend seams and Contracts
+  read-model DTOs. This batch has not yet been build/test verified.
+- Follow-up source-only Runtime navigation seam hardening moved debug path
+  overlay path queries behind `RuntimeNavigationServices` as well as job
+  wrappers. `RuntimeNavigationServices` now exposes a reusable path-query
+  bundle that owns `PathService` registration plus `WorldNavigationView`
+  construction, and job services build movement execution from that same
+  query bundle. The active session host now keeps the session-owned
+  `RuntimePathServiceRegistry` visible to Runtime snapshot facades, so debug
+  path overlay queries can create `RuntimeNavigationServices` with the same
+  registry used by job wrappers. `NavigationOverlaySnapshotBuilder.FindPath(...)`
+  now asks that Runtime navigation seam to solve the path instead of directly
+  constructing `DeterministicAStar` and `WorldNavigationView`, and session
+  debug path queries register their path service for the existing dirty-chunk
+  invalidation path. Architecture smoke now scans all Runtime source outside
+  `RuntimeNavigationServices` and rejects direct `PathService`,
+  `MovementExecutor`, `WorldNavigationView`, or `DeterministicAStar`
+  construction so future debug/presenter paths cannot bypass the Runtime-owned
+  navigation creation boundary. This batch has not yet been build/test
+  verified.
+- Follow-up source-only deterministic view hardening removed the remaining
+  broad `Dictionary.Keys`/`Dictionary.Values` snapshot patterns from active
+  Simulation/Jobs/Runtime implementation source. Stockpile/zone managers,
+  chunk stockpile/zone shards, item/creature manager snapshots, mining active
+  designations, world/chunk lifecycle snapshots, stockpile preset menus,
+  Runtime map-viewport presenter delta cells, stockpile command/applicator
+  cell grouping, save-payload contained-item validation, construction material
+  consumption, and stockpile diff quantity calculation now derive stable
+  snapshots from explicitly ordered key/value rows or existing owner-specific
+  ordering helpers instead of dictionary view enumeration. Source-only guard
+  scans now report no `.Keys`/`.Values` hits in active Simulation/Jobs/Runtime
+  implementation code, and the targeted save/replay/hash/command authority
+  scan reports no `.Keys`/`.Values`/`GetHashCode`/`Guid.NewGuid` hits. This
+  batch has not yet been build/test verified.
+- Follow-up source-only determinism hardening removed wall-clock scheduler
+  timing from `UnifiedJobsOrchestrator` and the Runtime/App jobs debug
+  snapshot path. Jobs orchestration still reports deterministic plan/apply
+  stage counts plus intake counts, but no longer stores or displays
+  `Stopwatch`/`ElapsedMilliseconds`-derived `PlanMsTotal`/`ApplyMsTotal`
+  values in Contracts-owned read models. Deterministic smoke now locks that the
+  orchestrator, Runtime jobs snapshot builder, Contracts jobs debug DTO, and
+  App Work drawer scheduler column use stage/intake counters rather than
+  machine-speed-dependent elapsed milliseconds. The same cleanup removed a
+  remaining `_shards.Keys` view from transport shard-id snapshots and derives
+  construction material id snapshots from sorted owner rows rather than
+  dictionary key views.
+- Latest source-only Simulation hardening cleared the remaining active `src`
+  placeholder markers without moving policy into App. `ChunkPlaceableData` now exposes
+  stable external-reference snapshots and GUID lookup hooks, while the
+  Simulation-owned `PlaceableManager` resolves cross-chunk external references
+  through a world-level query seam and removes secondary external refs when the
+  primary owned placeable is removed. Placeable placement now iterates affected
+  chunks through the existing spatially ordered `GetAffectedChunks(...)` helper
+  instead of `HashSet<Chunk>` enumeration. Smoke coverage locks cross-chunk
+  lookup/removal behavior and static coverage prevents the old unresolved
+  external-ref placeholder from returning. Construction site material
+  requirements now preserve content-authored `def_id` costs as explicit
+  `def:<itemId>` requirements rather than silently ignoring them; the
+  Simulation planner, Jobs construction material tracker, and Runtime workshop
+  material-progress snapshot now all share the same
+  `ConstructionMaterialRequirement` matcher, while legacy tag requirements keep
+  their existing unprefixed keys for save/read-model compatibility. The
+  stairwell UI-Z to simulation-Z conversion was moved out of
+  `OrdersManager.Mining` into `MiningZRangeMapper`, with smoke coverage locking
+  the current `MININGSYSTEM_SPEC.md` behavior. Item/creature spawn comments now
+  document the real boundary: gameplay commands emit typed item/creature diffs,
+  and the manager spawn entrypoints are owner mutation seams for diff
+  applicators, bootstrap, restore, and focused Simulation tests.
+- Latest source-only TickScheduler failure-policy hardening replaced the old
+  placeholder quarantine comment with executable Core behavior. A system that
+  throws during read no longer runs its write phase for that tick; repeated
+  system failures are tracked by `SystemId`; and systems are quarantined after
+  three consecutive failures while healthy systems keep ticking. Smoke coverage
+  now locks read-failure write skipping, quarantine behavior, non-empty unique
+  tick `SystemId` registration, and the absence of the old placeholder marker,
+  addressing the archived audit's concern that failed read phases could still
+  commit half-initialized write state or leave ambiguous scheduler failure
+  state. The `ITick` contract comment now matches the current deterministic
+  registered-system read order instead of promising read-phase parallelism.
+  The same source-only hardening removed `ItemManager.SpawnItem`'s
+  same-cell full-table scans: stacking and diagnostic grouping now read the
+  existing `_posIndex` tile list, and deterministic smoke coverage locks the
+  indexed spawn path. `CreatureManager.SpawnCreature` now derives initial
+  `MaxHP` from `CreatureDefinition.BaseToughness` instead of a hardcoded 100,
+  with static smoke coverage preventing the placeholder from returning.
+  Chunk-level dirty tile tracking now uses a deterministic `SortedSet<int>`
+  plus `DrainDirtyTileIndices()`, and placeable placement marks actual footprint
+  cells dirty instead of the old placeholder local index 0. This gives later
+  cache/snapshot delta work a stable local-index seam rather than a comment-only
+  DirtyTileSet placeholder.
+  Simulation diagnostics also no longer fall back to `Console.WriteLine` when
+  no callback or `DiagnosticHub` sink is configured; Content and WorldGen
+  diagnostics likewise rely on `DiagnosticHub` instead of fallback console
+  output. Architecture smoke now forbids direct console output fallbacks in
+  implementation modules while leaving App command-line compatibility messages
+  App-owned. Core deterministic RNG seeding now expands 64-bit seeds through
+  SplitMix64 before xoshiro state initialization, and named RNG streams derive
+  seeds through a stable UTF-16 FNV-1a hash plus SplitMix64 mixing instead of
+  the older `seed * 31 + char` pattern; smoke coverage locks the improved seed
+  diffusion and empty-stream rejection.
+- Latest source-only CI/verification hardening added
+  `.github/workflows/dotnet-ci.yml` as the first repository-level GitHub
+  Actions gate for .NET 8 restore, solution build, smoke-runner build, and the
+  executable architecture/determinism smoke runner on Linux and Windows with
+  tiered compilation disabled for the smoke job.
+  Architecture boundary smoke now also asserts that this workflow remains
+  present and continues to run the solution build plus `HumanFortress.App.Tests`
+  across both OS targets, closing the archived audit's "no CI configuration"
+  gap without moving test logic back into App. The same smoke batch added a
+  source-wide legacy namespace guard so active source cannot reintroduce
+  `HumanFortress.Core.Content`, root Navigation, root WorldGen, or root Jobs
+  using directives after the compatibility cleanup. Runtime full-loop
+  determinism smoke now runs 500 manual ticks and forces a GC boundary between
+  equivalent sessions before comparing world/checkpoint/RNG/command/job hashes.
+  The v6 save content-catalog summary factory also now enumerates catalog
+  dictionaries through key/value rows plus explicit ordinal sorting instead of
+  dictionary `.Keys` views, keeping the new save authority path aligned with
+  deterministic smoke rules.
+- Latest source-only architecture-smoke hardening expanded the executable
+  guardrails around the final save/movement refactor work. Deterministic
+  authority smoke now locks `RuntimeSaveFormat.CurrentVersion = 6`, the
+  Contracts manifest `ContentCatalog` field, the verifier's historical
+  unavailable-catalog path, and adjacent runtime snapshot transform generation.
+  Architecture boundary smoke now scans Runtime job wrappers and composition
+  files so future code cannot recreate concrete `PathService` or
+  `MovementExecutor` instances outside `RuntimeNavigationServices`.
+- Follow-up source-only migration-order hardening changed
+  `RuntimeSaveSlotMigrationTransformRegistry.BuildRequiredTransformIds(...)` to
+  return transform ids in Runtime execution order instead of lexicographic
+  order: adjacent runtime snapshot transforms first, then slot-manifest rebuild
+  when needed. Migration execution now reports the transforms it actually
+  applied in that order, and smoke coverage exercises the combined
+  historical-v5-runtime + old-slot-manifest path.
+- Latest source-only Runtime save content-catalog persistence hardening bumped
+  `RuntimeSaveFormat.CurrentVersion` to `6`. New `runtime_snapshot.json`
+  manifests now persist a saved content catalog summary beside the saved
+  content signature, so Runtime-authored content mismatch rows can include
+  exact saved-only/current-only material, terrain, construction, recipe,
+  geology, and zone keys when both sides have catalogs. The migration registry
+  now covers `runtime_snapshot:4->5` and `runtime_snapshot:5->6`; v4 documents
+  can migrate through both transforms when the final document validates, while
+  historical v5 documents that lack saved catalog payloads migrate by bumping
+  the schema and preserving an unavailable saved catalog instead of inventing
+  remap data. Restore authority remains the exact Runtime content signature
+  gate and continues to fail closed with `slot.content` until a real
+  missing-content/remap policy exists.
+- Latest source-only Runtime navigation ownership hardening added
+  `RuntimeNavigationServices` under `HumanFortress.Runtime.Navigation`.
+  Runtime job-system wrappers for mining, transport, and craft now obtain
+  `IPathService`, `IWorldNavigationView`, and `IMovementExecutor` bundles from
+  that Runtime-owned seam instead of directly constructing concrete
+  `PathService`, `WorldNavigationView`, and `MovementExecutor` instances. The
+  same seam registers path services with `RuntimePathServiceRegistry` at
+  creation time, keeping dirty-navigation-chunk cache invalidation attached to
+  the service creation boundary. This is not yet the future centralized
+  movement-intent/reservation system, but it removes another source of
+  fragmented path/movement ownership from long-horizon Jobs wrappers.
+- Latest source-only Runtime content-compatibility diagnostics hardening added
+  a Runtime-authored current catalog summary to
+  `RuntimeSaveSlotContentCompatibilityData`. `RuntimeSaveContentCatalogSummaryFactory`
+  builds sorted material-name, terrain-kind-name, construction-id, recipe-id,
+  geology-id, and zone-id arrays from the active Runtime content snapshot, and
+  slot inspection exposes that read model beside the saved/current content
+  signatures. A follow-up structured
+  `RuntimeSaveContentCompatibilityDifferenceData` read model now records each
+  content mismatch by field/kind/saved/current value. The later v6 format now
+  persists the saved catalog summary for new saves, while migrated historical
+  v5 saves may still report saved catalog keys as unavailable. This remains
+  deliberately inspection/debug data for future missing-content/remap
+  diagnostics: App may display it, but restore authority still comes from
+  Runtime's exact signature gate and continues to fail closed with
+  `slot.content` until a real remap policy exists.
+- Latest source-only Runtime save-slot migration hardening added the first
+  concrete runtime snapshot schema migration. `RuntimeSaveSlotMigrationTransformRegistry`
+  now registers `slot:0->1`, `runtime_snapshot:4->5`, and
+  `runtime_snapshot:5->6`; runtime snapshot
+  directories that contain a current-format `runtime_snapshot.json` but have no
+  `slot_manifest.json`, and slot-format-0 manifests over a current Runtime
+  snapshot document, can migrate into a current slot directory by rebuilding
+  the manifest through Runtime's existing `WriteAtomic(...)` path. Runtime save
+  format 4 documents can migrate through 4->5 and 5->6 only when the final
+  current-format verifier accepts the migrated document, which covers the safe
+  empty-mining-checkpoint case and keeps non-empty mining checkpoint sections
+  without mining payloads fail-closed. Runtime save format 5 documents can
+  migrate to format 6 while preserving an unavailable saved content catalog for
+  historical documents. App still only passes source/target directories plus
+  displays Contracts result DTOs.
+- Latest source-only Runtime save content-compatibility hardening added the
+  first fail-closed missing-content policy seam without moving load decisions
+  into App. Contracts now expose `RuntimeSaveSlotContentCompatibilityData` on
+  slot inspection, Runtime builds current content signatures through
+  `RuntimeSaveContentSignatureFactory`, and
+  `RuntimeSaveSlotContentCompatibilityPolicy` compares saved/current content
+  version, content hashes, material hash, and catalog shape. Slot inspection and
+  restore-plan read models now report structured `slot.content` blockers when
+  content cannot be bound, while pending-command, world, and full restore ports
+  independently enforce the same gate before replay/RNG/job restore proceeds.
+  The actual placeholder/missing-content remap policy is still future work; the
+  current behavior is intentionally fail-closed.
+- Latest source-only Runtime save-slot migration hardening added the first
+  migration execution seam without moving save/load policy into App. Contracts
+  now expose `RuntimeSaveSlotMigrationResultData`, the full internal Runtime
+  save snapshot port exposes `MigrateSaveSnapshotDirectory(source, target)`,
+  and `RuntimeSaveSlotMigrator` owns the execution preflight through
+  `InspectDirectory(...)`. Compatible current slots return a successful no-op
+  migration result. A later batch registered `slot:0->1` for current-format
+  runtime snapshots missing current slot metadata; older Runtime snapshot
+  document formats still fail closed with Runtime-authored `slot.migration`
+  missing-transform issues. Smoke coverage now locks both behaviors plus the
+  focused Runtime helper namespace.
+- Latest source-only documentation hygiene re-read the active
+  `docs/architecture` and `docs/planning` sets plus the broader non-archive
+  documentation tree. No additional active architecture/planning document was
+  archived: those files are still current implementation maps, normative target
+  contracts, active refactor guidance, rules, lessons, or optimization backlog.
+  The old workshop JSON draft copies formerly under `docs/other` were moved to
+  `docs/archive/other`, and active content docs now point at
+  `data/core/workshops` as the machine-readable workshop source of truth while
+  treating those archived copies as historical until reconciled.
+- Latest source-only App presenter-delta hardening added
+  `FortressMapViewportPresenterCache` and `FortressUiOverlayPresenterCache`
+  under App.Rendering. The map cache consumes Contracts-owned
+  `SimulationMapViewportDeltaData` rows, regions, or changed cells from Runtime,
+  composes them into a complete map-viewport cell list, and hands that full DTO
+  back to the existing SadConsole renderer and overlay paths. The UI overlay
+  cache consumes Runtime-authored section deltas and preserves unchanged
+  build/jobs/workshop/stockpile/zone/drawer/debug sections from the previous
+  overlay frame. This keeps frame diff authority in Runtime while giving App
+  real presenter-side delta consumers instead of always trusting full section
+  payloads. Smoke coverage now proves full row/section snapshots plus later
+  row/cell/section deltas can rebuild complete presenter frames without
+  live-world reads or lower-layer object comparisons. Remaining presenter work
+  is broader packed world-chunk/panel payloads and panel-specific redraw
+  specialization.
+- Latest source-only mining save/replay hardening added the third real
+  job-state payload restore slice. `runtime_snapshot.json` now carries
+  Contracts-owned transport, mining, and craft jobs payloads: transport pending
+  requests, active jobs, backlog entries, and scheduling hints; mining active,
+  backlog, deferred stairwell, reserved-tile, and recent-completion rows; plus
+  craft active and backlog jobs. Runtime maps those payloads through
+  Runtime-owned document mappers/verifiers/restorers; Jobs owns the actual
+  restore seams on `TransportJobExecutor`, `MiningJobExecutor`, and
+  `CraftJobExecutor`, including rehydrating active worker movement paths where
+  needed; and full restore now accepts supported transport/mining/craft
+  payloads. `RuntimeSaveFormat.CurrentVersion` was bumped to `5` in that batch
+  because the runtime snapshot document schema included mining job payload rows;
+  the later content-catalog persistence batch bumped it again to `6`.
+- Latest source-only documentation/progress audit re-read the active
+  `docs/architecture` and `docs/planning` sets, the documentation index, and the
+  archive index after the mining save/restore hardening. No additional active
+  document was moved to archive: the remaining architecture/planning files are
+  current implementation maps, normative target contracts, active refactor
+  guidance, rules, lessons, or optimization backlog. Follow-up wording cleanup
+  aligned the active save/replay docs with the current transport/mining/craft
+  job-state restore support instead of the older "restore seam still missing"
+  phrasing. The strict total refactor-program estimate is now about 97%
+  source-only pending the next build/test verification.
+- Latest source-only Runtime migration-plan hardening added
+  `RuntimeSaveSlotMigrationTransformRegistry`. `RuntimeSaveSlotMigrationPlanBuilder`
+  now delegates required transform-id construction and coverage checks to that
+  Runtime-owned registry instead of hardcoding `CanMigrate: false` locally. The
+  registry was intentionally empty in that pass, so older slots failed closed;
+  the later `slot:0->1` batch registered the first concrete slot-metadata
+  transform while keeping unsupported Runtime snapshot schema paths fail-closed.
+- Latest source-only documentation/progress audit re-read the active
+  `docs/architecture` and `docs/planning` sets, the documentation index, and the
+  archive index after the save/restore hardening. No additional active document
+  was moved to archive: the remaining architecture/planning files are current
+  implementation maps, normative target contracts, active refactor guidance,
+  rules, lessons, or optimization backlog. The strict total refactor-program
+  estimate was about 95% source-only pending build/test verification,
+  and the remaining save/replay wording now names non-empty job-state payload
+  restore and migration transforms instead of already-completed item-location
+  restore slices.
+- Latest source-only Runtime restore-plan hardening made Jobs checkpoint policy
+  record-count aware. Runtime save manifests now write transport/mining/craft
+  job record counts beside the checkpoint hashes, and
+  `RuntimeSaveJobStateRestorePolicy` no longer treats empty counted Jobs
+  checkpoint sections as blockers for full world + RNG + pending-command
+  restore. Later payload slices made `jobs.transport`, `jobs.mining`, and
+  `jobs.craft` restorable when verified payloads are present.
+- Latest source-only Simulation save/restore hardening added installed item
+  placement and item-local reservation-token support to the non-ground
+  item-location slice. `WorldSavePayloadRestorer` now validates installed item
+  anchor/z/rotation plus token claimant/count rows through the Simulation payload
+  boundary and allows restore when those values match the saved world. Smoke
+  coverage now round-trips ground, contained, carried, equipped, installed, and
+  token-reserved items by hash, while malformed installed placement and malformed
+  item-local reservation tokens are rejected with structured world-payload issues.
+- Latest architecture/planning progress audit re-read the active non-archive
+  `docs/architecture` and `docs/planning` sets plus the documentation index and
+  archive index. The active architecture/planning files now fall into current
+  implementation maps, normative target contracts, active refactor guidance,
+  rules, lessons, or optimization backlog. No further active document was moved
+  to archive in this pass; the stale/completed planning, status, audit,
+  reference, concurrency-research, and runtime-propagation documents had already
+  been moved under `docs/archive`. The follow-up cleanup removed the obsolete
+  `ItemInstance.IsReserved`, `ReservedBy`, and `IsCarried` compatibility
+  properties entirely now that active business reads/writes use the newer
+  carried/equipped/reservation-token paths.
+- Latest source-only Runtime save-slot hardening added a Contracts-owned
+  `RuntimeSaveSlotMigrationPlanData` read model plus Runtime-owned
+  `RuntimeSaveSlotMigrationPlanBuilder`. Slot inspection now reports
+  validation, compatibility, migration plan, restore plan, and readable
+  manifest data together. Older slot/runtime snapshot versions still fail
+  closed, but Runtime now reports required transform ids through the
+  Runtime-owned transform registry and a structured `slot.migration` blocking
+  issue instead of leaving save UI/debug surfaces to infer migration state from
+  raw manifest versions.
+- Latest documentation audit re-read the active `docs/architecture` and
+  `docs/planning` sets plus the UI docs they point at. No additional active
+  planning/architecture document was moved to archive: the remaining files are
+  current implementation maps, normative target contracts, rules, or active
+  backlogs. The pass corrected stale UI/optimization current-state wording in
+  `docs/INDEX.md`, `docs/ui/UI_AND_INPUT_MODEL.md`,
+  `docs/ui/UI_SPEC.md`, `docs/ui/UI_SYSTEM.md`, and
+  `docs/planning/OPTIMIZATION_SUGGESTION.md` so their current-state notes now
+  match the Runtime/Contracts snapshot boundary work.
+- Latest source-only Simulation save/restore hardening added the first
+  non-ground item-location restore slice. `WorldSavePayloadRestorer` now allows
+  carried items when `CarriedBy` references a creature present in the same world
+  payload, rejects empty or missing carrier references, and continues to fail
+  closed for installed item locations and item-local reservation tokens.
+  Existing payload round-trip smoke coverage now restores a carried item by
+  hash and proves missing-carrier payloads are rejected at the Simulation save
+  boundary.
+- Latest source-only Runtime presenter-delta hardening extended the
+  Contracts-owned map-viewport delta from changed cells to changed cells,
+  changed rows, and changed screen regions. `SimulationMapViewportDeltaData` is
+  now schema v3 and carries `MapViewportRowDeltaView` rows plus
+  `MapViewportRegionDeltaView` fixed-size screen regions with Runtime-authored
+  canonical payload hashes. `RuntimeFrameSnapshotPublisher.MapDelta` builds
+  rows and regions from final screen-cell values after terrain/entity overlay
+  collapse, publishes all rows/regions for a full snapshot/request change,
+  publishes no rows/regions when a same-request base is unchanged, and compares
+  row/region hashes at the Runtime publication boundary rather than asking App
+  renderers to compare live world or lower-layer objects. Smoke coverage now
+  locks changed-cell, changed-row, and changed-region behavior.
+- Latest documentation hygiene archived the stale June interview briefing at
+  `docs/archive/reference/HUMANFORTRESS_INTERVIEW_BRIEFING.md`. The active
+  documentation index no longer exposes it as current reference material
+  because its App/Jobs/Runtime directory examples and several architecture
+  caveats were superseded by the later Runtime/App/Jobs/Simulation boundary
+  hardening. Current ownership guidance remains in `GAME_ARCHITECTURE.md`, the
+  master plan, rules, and this batch progress log.
+- Latest source-only Simulation diff-applicator hardening split the general
+  `SimulationDiffApplicator` by operation and lookup responsibility. The main
+  file now owns only `ApplyAll` dispatch plus logging; terrain mutation,
+  occupant ejection, and dirty propagation live in
+  `SimulationDiffApplicator.Terrain.cs`; item move/carry/uncarry and stack
+  merge behavior live in `SimulationDiffApplicator.Items.cs`; creature movement
+  lives in `SimulationDiffApplicator.Creatures.cs`; and encoded target,
+  entity-key-first lookup, guarded legacy fallback, and target decoding live in
+  `SimulationDiffApplicator.Targets.cs`. Architecture smoke now locks this
+  split, and deterministic authority smoke reads the target lookup partial
+  directly so manager-owned entity-key lookup cannot drift back into a mixed
+  applicator file.
+- Latest architecture/planning documentation audit re-read the active
+  `docs/architecture` and `docs/planning` sets after the archive cleanup. No
+  additional active architecture/planning file was moved to archive: the
+  remaining files are either current implementation maps, active refactor
+  guidance, target contracts, or optimization backlogs. Stale current-state
+  wording was corrected instead: `GAME_STATE_FLOW.md` now describes the
+  Runtime-owned save/load vertical slice, `DIFF_LOG_AND_MERGE_STRATEGIES.md`
+  now reflects explicit `SystemOrder`/`LocalSeq`/`EntityKey` diff ordering, and
+  the master plan now rates strict total refactor-program progress at about
+  93-94% with remaining work concentrated in Simulation diff applicator
+  hardening, broader Runtime presenter deltas, save/replay migrations and
+  unsupported restore slices, diagnostics/debug polish, movement ownership, and
+  focused test-project extraction.
+- Latest source-only Runtime frame snapshot hardening added
+  `RuntimeFrameSnapshotPublisher` under `HumanFortress.Runtime.Snapshots`.
+  `FortressRuntimeSessionCore.Snapshots.Frame` now creates viewport/UI request
+  keys and delegates frame/overlay publication to that Runtime-owned publisher
+  instead of directly authoring metadata and invoking aggregate snapshot facade
+  builders. The publisher caches the latest matching tick/request frame DTOs,
+  owns `SimulationSnapshotMetadata.Current(...)` for frame/overlay aggregates,
+  and is invalidated on new session creation, fortress world fill, fortress
+  play startup, and supported save-world restore. Architecture smoke tests now
+  lock the publisher boundary and its focused Runtime snapshot namespace. A
+  follow-up source-only hardening added Contracts-owned
+  `SimulationSnapshotPublicationData` to frame/overlay DTOs. The publisher now
+  attaches a Runtime-authored surface id plus stable `ReplayHashBuilder`
+  request hash, and smoke coverage verifies same-request hash stability plus
+  different-request hash changes for overlay and render frame DTOs. Because the
+  current scheduler advances `CurrentTick` only after post-tick, the frame port
+  disables request-cache reuse while the background scheduler is running; paused,
+  stopped, and manual-tick reads can still reuse the latest matching request.
+- Follow-up source-only Runtime frame publisher split keeps
+  `RuntimeFrameSnapshotPublisher.cs` focused on frame publication entrypoints,
+  with cache reads/writes, invalidation, and published-frame identity records
+  in `RuntimeFrameSnapshotPublisher.State.cs`. Presenter frame payload identity
+  now lives in `RuntimeFrameSnapshotPublisher.Presenter.cs`,
+  UI overlay section deltas live in
+  `RuntimeFrameSnapshotPublisher.OverlayDelta.cs`, map viewport changed-cell/
+  row/region deltas live in `RuntimeFrameSnapshotPublisher.MapDelta.cs`, and request hash
+  primitives live in `RuntimeFrameSnapshotPublisher.RequestHash.cs`.
+  Architecture smoke locks the partial namespace split and checks that the main
+  publisher file does not drift back into cache state,
+  changed-cell/row/screen-region/section/payload hashing, or invalidation.
+- Follow-up source-only Runtime presenter-frame hardening added
+  Contracts-owned `SimulationSnapshotPresenterFrameData` to the frame/overlay
+  aggregate DTOs. `RuntimeFrameSnapshotPublisher` now assigns a Runtime-owned
+  publication sequence, computes a stable full-snapshot payload hash, exposes
+  the current transfer mode as `full-snapshot`, and records a delta-base
+  payload hash only when consecutive uncached publications have the same
+  surface/request. Cache hits return the same presenter frame identity, and
+  session/world/restore invalidation clears diff bases so App cannot
+  accidentally compare frames across different runtime worlds. This established
+  the Runtime/Contracts presenter identity boundary before the changed-cell
+  slice below.
+- Follow-up source-only Runtime map-viewport delta hardening added the first
+  real changed-cell presenter slice, and later presenter-delta hardening
+  extended it with changed rows and screen regions. `SimulationMapViewportData` now carries a
+  Contracts-owned `SimulationMapViewportDeltaData` with canonical payload hash,
+  base hash, `CanApplyToBase`, changed final screen cells, and changed final
+  screen rows/regions.
+  `RuntimeFrameSnapshotPublisher` collapses terrain/entity overlay cells to
+  final screen-cell values, computes the canonical viewport payload hash, emits
+  a full changed-cell set when the request/base changes, emits an empty delta
+  for unchanged same-request frames, and clears the map delta base on
+  invalidation. App can keep drawing the full `Cells` list while future
+  presenters consume the Runtime-authored delta; App still does not compute
+  frame hashes or live-world diffs.
+- Follow-up source-only Runtime UI-overlay delta hardening broadened the same
+  presenter boundary to overlay/panel sections. `SimulationUiOverlayFrameData`
+  now carries a Contracts-owned `SimulationUiOverlayFrameDeltaData` with
+  section ids, per-section payload hashes, an aggregate section payload hash,
+  base hash, `CanApplyToBase`, and changed section ids. Runtime hashes the
+  build catalog, jobs, workshop, stockpile, zone, management drawer, work
+  drawer, and debug menu sections inside `RuntimeFrameSnapshotPublisher`, emits
+  all section ids when the request/base changes, emits an empty section delta
+  for unchanged same-request frames, and clears the section base on
+  invalidation. App can continue drawing the full overlay DTOs while future
+  presenters skip unchanged sections without comparing live Runtime objects.
+- Latest source-only Runtime save-slot hardening added a minimal slot manifest
+  layer without moving save/load authority into App. Contracts now define
+  `RuntimeSaveSlotFormat` and `RuntimeSaveSlotManifestData` for the current
+  `slot_manifest.json` + `runtime_snapshot.json` directory shape. Runtime owns
+  the manifest builder/codec/verifier, writes both files through
+  `RuntimeSaveSnapshotDocumentStore.WriteAtomic(...)`, validates both files
+  through `ValidateDirectory(...)`, and routes directory restore preflight
+  through that validation path so tampered or missing slot manifests produce
+  structured `slot.manifest` issues. App still sees save/load as Runtime port
+  directory operations rather than Runtime-internal codec/store/restorer types.
+- Follow-up source-only save-slot compatibility hardening added
+  Contracts-owned `RuntimeSaveSlotCompatibilityData` plus a Runtime-owned
+  `RuntimeSaveSlotCompatibilityPolicy`. Current slot/runtime snapshot versions
+  are classified as readable, older versions are reported as
+  `MigrationRequired` and at that point failed closed until later batches added
+  the Runtime migration transform registry and concrete `slot:0->1`,
+  `runtime_snapshot:4->5`, and `runtime_snapshot:5->6` transforms. Future/
+  unknown slot kinds or unsupported Runtime snapshot document names still fail
+  closed. Directory validation now emits structured `slot.compatibility` issues
+  from Runtime, keeping App out of version/migration policy.
+- Follow-up source-only save-slot inspection hardening added Contracts-owned
+  `RuntimeSaveSlotInspectionData` and Runtime-owned
+  `RuntimeSaveSnapshotDocumentStore.InspectDirectory(...)`. The inspection path
+  reads the slot document/manifest, applies the Runtime compatibility policy,
+  computes Runtime migration and restore plans, and returns validation,
+  compatibility, migration-plan, restore-plan, and manifest data as a read
+  model for future save UI/debug surfaces. `ValidateDirectory(...)` now reuses
+  inspection so validation and inspection cannot drift, and the internal full
+  save session port exposes
+  `InspectSaveSnapshotDirectory(...)` without making Runtime save codec/store
+  helpers public or App-owned.
+- Follow-up source-only restore-plan hardening added Contracts-owned
+  `RuntimeSaveSlotRestorePlanData` plus Runtime-owned
+  `RuntimeSaveSlotRestorePlanBuilder`. A valid compatible slot advertises the
+  current pending-command/world restore modes and a guarded full-restore mode,
+  while malformed,
+  migration-required, future, incomplete, or job-state-payload-incomplete slots
+  return blocked plans with structured issues. This keeps future save UI/debug
+  surfaces from inferring loadability from raw validation fields or manifest
+  sections.
+- Follow-up source-only Runtime save store split kept
+  `RuntimeSaveSnapshotDocumentStore.cs` as the public store entrypoint and moved
+  slot inspection into `RuntimeSaveSnapshotDocumentStore.Inspection.cs` plus
+  unchecked file reads/durable writes/failure helpers into
+  `RuntimeSaveSnapshotDocumentStore.IO.cs`. Architecture smoke now locks the
+  partial namespace split so the store does not become a mixed IO/validation
+  /inspection God helper as save UI/read-model work grows.
+- Latest documentation audit pass archived the dated external audit report at
+  `docs/archive/plans/HumanFortress_审计报告_2026-07-07.md` and updated the
+  current index/archive lists. Keep using the current architecture overview,
+  master plan, rules, and this progress log as the live guidance; the archived
+  audit remains historical evidence for why determinism, snapshot publication,
+  save/replay, tests, and docs honesty are the remaining hardening priorities.
+- Latest documentation hygiene archived three non-current documents:
+  `docs/archive/plans/MILESTONE.md`,
+  `docs/archive/architecture/CONCURRENCY_RESEARCH.md`, and
+  `docs/archive/architecture/RUNTIME_PROPAGATION_REQUIREMENTS.md`.
+  `docs/INDEX.md`, `docs/archive/README.md`, and
+  optimization-source references now point at the archive paths so current
+  architecture/planning directories contain only active status, rules, target
+  contracts, and current backlog documents.
+- Follow-up documentation hygiene moved the non-current status-snapshot pointer
+  out of the active documentation tree to
+  `docs/archive/status/STATUS_SNAPSHOT_POINTER.md`. Current docs now point
+  directly at `docs/archive/status/README.md` for historical phase snapshots;
+  `docs/planning` and `docs/architecture` were re-audited and remain active as
+  the refactor plan, rules, current architecture map, or target contracts.
+- Follow-up architecture/planning documentation audit kept the remaining
+  current docs in place and corrected stale audit-era wording in
+  `ARCHITECTURE_REFACTOR_MASTER_PLAN.md` and `GAME_ARCHITECTURE.md`: save/load
+  is now documented as a Runtime-owned vertical slice rather than "not
+  implemented", replay-facing Runtime command identity is documented as
+  deterministic, and `FortressState` is documented as a mostly split shell with
+  regression risk rather than the original all-owning God screen.
+- Latest source-only Simulation replay hash split kept
+  `WorldReplayHashBuilder.cs` focused on aggregate and section-hash
+  orchestration. Terrain hashing, item/creature entity hashing, reservation
+  hashing, stockpile-zone hashing, and shared primitive helpers now live in
+  focused `WorldReplayHashBuilder.*.cs` partials under
+  `HumanFortress.Simulation.Replay`. Architecture smoke locks the namespace and
+  partial split, and the deterministic stockpile ordering smoke now reads the
+  stockpile replay-hash partial directly.
+- Follow-up source-only Simulation mining planner split kept `MiningSystem.cs`
+  focused on planner state, scheduler identity, constructor, and the
+  `PlannedDig` DTO. Tick/drain/outbox behavior, scanner/cursor advancement,
+  cancellation queries, planner helpers, and active designation cursor state
+  now live in focused `MiningSystem.*.cs` / `MiningActiveDesignation.cs` files.
+  Architecture smoke locks the split so mining designation scans do not drift
+  back into one mixed planner file.
 - Latest build/test verified determinism hardening added the first full
   Runtime simulation-loop determinism smoke. `CoreRuntimeSmokeTests` now creates
   two equivalent Runtime-composed fortress sessions, loads content, fills the
@@ -52,6 +776,20 @@ This document tracks the current multi-step refactor batches so progress is visi
   `CoreRuntimeSmokeTests` covers duplicate stockpile/order/placeable payloads,
   and the deterministic architecture smoke test locks the new payload-boundary
   validators and placeable preflight order.
+- Latest source-only/no-build Simulation save cleanup split the large
+  `WorldSavePayloadRestorer.Validation` partial into focused validation
+  partials for entity/reservation checks, stockpile zone/filter checks, active
+  order checks, and shared world geometry/string helpers. The main validation
+  file now owns payload/count/chunk validation plus supported-section
+  orchestration, and architecture/determinism smoke coverage was updated to
+  lock the new focused file set under `HumanFortress.Simulation.Save`.
+- Follow-up source-only/no-build Jobs transport cleanup split the Jobs-owned
+  `TransportJobExecutor` into focused partials. The main file now keeps
+  constructor state and dependency assembly, while read/intake, write ticks,
+  debug/replay snapshots, scheduling hints, and small helper lookups live in
+  separate `HumanFortress.Jobs.Transport` files. Architecture smoke coverage
+  now locks that split so long-horizon transport state ownership stays in Jobs
+  without turning the executor back into a single mixed file.
 - Latest source-only/no-build boundary hardening split Runtime command replay
   decoding by command domain. `RuntimeCommandReplayFactory.cs` now keeps the
   replay dispatch, payload version validation, and primitive binary readers,
@@ -536,16 +1274,19 @@ This document tracks the current multi-step refactor batches so progress is visi
 - Latest build/test-verified Runtime/world restore batch extends the Runtime
   save document from hash-only RNG summary to primitive RNG stream payload rows,
   binds the `rng` manifest section to checkpoint hash/count validation, and adds
-  a Runtime-owned full restore entrypoint that composes supported world payload
-  restore, RNG stream restore, and pending command replay restore in the correct
-  session-reset order. The same batch extends `Contracts.Simulation.Save` world
+  a Runtime-owned staged restore entrypoint that composes supported world
+  payload restore, RNG stream restore, and pending command replay restore in the
+  correct session-reset order; later job-state policy hardening now blocks
+  full-restore claims when present Jobs checkpoint sections have no payload
+  restorer. The same batch extends `Contracts.Simulation.Save` world
   payloads to owned placeables/workshop state and restores those rows through
   Simulation-owned validation plus `PlaceableManager.PlacePlaceable(...)`, so
   derived furniture cells/cross-chunk refs are rebuilt rather than persisted as
   authority. App still only sees narrow directory-level save access and
   structured Contracts result DTOs; it does not map RNG rows, world payload rows,
-  or Core command replay records. `RuntimeSaveFormat.CurrentVersion` is now `2`
-  because RNG stream rows are a required document payload, and
+  or Core command replay records. `RuntimeSaveFormat.CurrentVersion` was bumped
+  to `2` in that batch because RNG stream rows became a required document
+  payload, and
   `WorldSavePayloadFormat.CurrentVersion` is now `2` because placeable/workshop
   rows are required world payload data.
 - Verification passed: `git diff --check`; App boundary scan found no Runtime
@@ -562,7 +1303,7 @@ This document tracks the current multi-step refactor batches so progress is visi
   exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only
   --strict-content --content-warnings-as-errors` passed.
 - Latest previously verified world payload/restore follow-up extended `Contracts.Simulation.Save.WorldSavePayloadData` beyond terrain chunks and ground item rows to include creature instances, global item/creature reservations, stockpile zone definitions, and active mining/haul/construction/buildable order designations. `WorldSavePayloadBuilder` now exports these slices in stable replay-hash order, and Simulation managers own internal restore entrypoints for rebuilding them from Contracts DTOs without involving App.
-- Runtime world restore now calls the Simulation-owned supported-section restorer. The slice still fails closed with structured `world.payload` issues for carried/contained/equipped/installed items and item-local reservation tokens. This is still a staged vertical slice toward the `SAVE_FORMAT.md` target, not full chunk-sharded persistence.
+- Runtime world restore now calls the Simulation-owned supported-section restorer. The slice supports ground items, contained items with payload-local acyclic item container references, carried/equipped items with payload-local creature owners, installed items with valid placement anchors, item-local reservation tokens with valid claimant/count rows, creatures, reservations, stockpile zones, owned placeables/workshop state, and active orders. This is still a staged vertical slice toward the `SAVE_FORMAT.md` target, not full chunk-sharded persistence.
 - Verification passed: `git diff --check`; App/Contracts boundary scan found no App use of Simulation save builder/restorer or world payload DTO types; replay/save scan found no `GetHashCode()` or dictionary enumeration hazards in active save/replay builders; `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` passed with `0 Warning(s), 0 Error(s)`; `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll` passed, including supported-section world payload hash restore; and strict headless init with `/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors` passed.
 - The latest previously verified world payload/restore batch added the `Contracts.Simulation.Save.WorldSavePayloadData` DTO family, Simulation-owned `WorldSavePayloadBuilder` and first-pass `WorldSavePayloadRestorer`, and Runtime save document integration. Runtime save documents now carry manifest + world payload + command replay records; document validation checks world payload hash/counts against manifest sections; Runtime can restore the world payload from a document or save directory by composing a fresh Runtime session from the restored `World`.
 - Verification passed: `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` with `0 Warning(s), 0 Error(s)`; and `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll` passed, including terrain world payload hash round-trip, unsupported non-terrain restore rejection, Runtime document/directory world restore, and existing transport/construction/craft, mining/items/diff, core runtime smoke, and Phase A-D coverage.
@@ -596,7 +1337,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - Latest source-only/no-build replay/boundary hardening removed production `Guid.NewGuid()` use from Runtime/App/Simulation/Jobs/Content/WorldGen paths. Runtime command ids are now derived deterministically from tick/type/payload, and normal Runtime session enqueue wraps commands in `RuntimeIdentifiedCommand` with a session-owned deterministic command identity sequence reset by `RuntimeSessionServices`. `UpdateWorkshopQueueCommand.Serialize()` now writes its real mutation payload instead of returning an empty byte array.
 - Follow-up replay hardening fixed construction order command identity so material tag filters are serialized into the command payload hash. The smoke suite now proves identical construction filters with different tag order produce the same id, while different material tags produce different ids.
 - Follow-up command-context hardening deleted the remaining internal all-target `IRuntimeCommandExecutionContext` aggregate. `SimulationCommandStage`, `SimulationTickPipeline`, and `SimulationRuntimeHostCore` now depend on `ISimulationContext` plus the separate clock role, while individual Runtime commands request only their precise target role through `RuntimeCommandContext.Require<T>()`.
-- Follow-up diagnostics hardening adds the command queue sequence to command failure logs so deterministic/stable command ids can still be disambiguated when duplicate payload commands fail. The App work/zone UI also no longer renders visible TODO/placeholder gameplay settings when no Runtime snapshot data exists.
+- Follow-up diagnostics hardening adds the command queue sequence to command failure logs so deterministic/stable command ids can still be disambiguated when duplicate payload commands fail. The App work/zone UI also no longer renders visible placeholder gameplay settings when no Runtime snapshot data exists.
 - The same source-only/no-build batch fixed mining rectangle scans to treat SadRogue `Rectangle.MaxExtentX/MaxExtentY` as inclusive in both `MiningOrderRules` and `MiningSystem`, with smoke coverage for one-cell mining rectangles. A follow-up static scan found no remaining active exclusive `MaxExtent*` rectangle loops.
 - The same source-only/no-build batch narrowed additional false-public implementation members inside internal Simulation/App types: order manager enqueue/drain/snapshot helpers, mining/construction planner handoff helpers, terrain/placeable/world safety helpers, App startup runners, and App world-generation factory access now sit behind internal/friend or App-owned provider surfaces. The old dormant `WorkDrawerOverlay` compatibility hook was deleted.
 - Latest stockpile/transport hardening is build verified: `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false` passed with `0 Warning(s), 0 Error(s)`. This batch connected stockpile item indexes to the Jobs/Transport pipeline instead of stockpile-local mutation. Runtime now injects the session-owned `StockpileDiffLog` into transport, construction, and craft diff emitters. Transport delivery/pickup/cancellation queues stockpile place/remove/release diffs, construction/craft full-stack consumption queues stockpile remove diffs, and those item-index diffs carry projected `ItemStackRef` payloads so tag indexes can be cleaned even after `ItemsDiffApplicator` deletes the item. `StockpileWorldQueries` centralizes stockpile cell/destination lookup, and `TransportDestinationValidator` revalidates destination zone filters against item projections.
@@ -606,7 +1347,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - The same verified batch removed the older `HumanFortress.Simulation.Rendering.RenderSnapshot` / `RenderSnapshotBuilder` implementation after active App rendering moved to Runtime/Contracts snapshot DTOs. PhaseTests now validate the Runtime frame snapshot port instead of constructing a second Simulation-owned render snapshot model.
 - The same verified batch fixed inclusive rectangle scans in `ItemManager.GetGroundItemsIn(...)`; SadRogue `Rectangle.MaxExtentX/MaxExtentY` is treated as inclusive, and the hauling reservation smoke now covers one-cell-high haul rectangles.
 - Latest source-only/no-build stockpile/content hardening moved stockpile preset JSON parsing behind `HumanFortress.Content.Definitions.StockpilePresetLoader` and `HumanFortress.Contracts.Content.Registry.StockpilePresetDefinition`. Runtime now maps those contract presets into Simulation `StockpileFilter` instances, and stockpile create-zone diffs carry filter/priority data through `StockpileCreateZoneData` so the post-tick `StockpileDiffApplicator` applies preset rules authoritatively.
-- The same source-only/no-build stockpile item hardening added a Simulation-owned `StockpileItemProjection` seam. Stockpile filters, the active `HaulingSystem` destination selection path, and stockpile item/tag index updates now use projected item definition id/tags/materials instead of local placeholder item definitions or empty tag TODOs; smoke coverage locks filter matching and idempotent stockpile item index updates.
+- The same source-only/no-build stockpile item hardening added a Simulation-owned `StockpileItemProjection` seam. Stockpile filters, the active `HaulingSystem` destination selection path, and stockpile item/tag index updates now use projected item definition id/tags/materials instead of local placeholder item definitions or empty tag placeholders; smoke coverage locks filter matching and idempotent stockpile item index updates.
 - Latest source-only/no-build determinism hardening replaced `System.Random` usage in `MiningDropResolver` with `DeterministicRng`, removed direct `new Random()` calls from world-generation UI actions, and changed `WorldParams.Default` to a fixed seed. App's explicit random world seed/parameter button now uses a centralized `WorldGenerationSettingsDefaults` cryptographic seed source, while simulation/job random branches should continue to use deterministic RNG streams.
 - Latest source-only/no-build module-boundary hardening removed App's direct `HumanFortress.WorldGen` project reference. App world-generation screens now create `IWorldGenerationService` through `FortressRuntimeWorldGenerationFactory`, while the concrete `WorldGenerationServiceFactory` in `HumanFortress.WorldGen` is internal/friend-only and Runtime remains the composition boundary for WorldGen-backed services.
 - The same source-only/no-build diff-pipeline cleanup removed the unused chunk-local `StockpileDiffApplicator.ApplyDiffs(...)` entry and made stockpile application enter through `ApplyAll(world, diffs)` only. `SimulationDiffApplicator` now exposes internal apply/logging members rather than public members on an internal implementation type.
@@ -709,7 +1450,7 @@ This document tracks the current multi-step refactor batches so progress is visi
 - `UiChromeRenderer` now consumes the Contracts-owned `SimulationStatus` snapshot directly; the App-owned `FortressSimulationStatus` wrapper and mapper have been deleted.
 - Fortress view/bootstrap wiring now passes a `FortressUiInteractionDataSource` to UI component setup instead of handing the rendering bootstrapper an `IFortressRuntimeUiInputAccess` facade.
 - Fortress input composition now uses `FortressInputCallbackHub` for controller callback binding instead of `inputController!` null-forgiving closure cycles.
-- Fortress session size validation now lives in `FortressSessionSizeRules`; session storage, embark prep, fortress runtime initialization, and fortress viewport initialization use the same normalized size rule instead of separate hard-coded `2..8` checks.
+- Fortress session size validation now lives behind the shared Contracts/App size rules; session storage, embark prep, fortress runtime initialization, and fortress viewport initialization use the same normalized size rule instead of separate hard-coded range checks.
 - `InputHandlerComponent` has been split so Debug overlay clicks live in `DebugMenuInputHandler` and Work/Job Allocation keyboard/mouse handling lives in `WorkAllocationInputHandler`; the SadConsole component now acts as the top-level UI input dispatcher. `FortressScreenMouseInput` is also split by chrome button hit handling, root quick-menu hit testing, and mining submenu hit handling.
 - `FortressInputContextFactory` is split by context family: constructor/dependency capture, keyboard/mouse/overlay presentation contexts, and map/placement/debug-spawn contexts are separate partial files.
 - `UiStore` is now split by transient UI state domain: navigation/cancel flow, drawer state, quick-menu/submenu state, selection, build/material state, workshop panel state, placement state, Debug menu state, and toast/highlight feedback live in separate partial files instead of one state god object.
@@ -1231,7 +1972,7 @@ Status: completed
 - Added `FortressContentIssue` diagnostics with severity/code/message, plus `FortressContentLoadResult.IsValid(...)`, `GetBlockingIssues(...)`, and `FormatBlockingIssues(...)`.
 - Added App-side content issue logging through `FortressContentIssueLogger`.
 - Added `ResolveRegistryFile(...)` so App-side UI/input/profession convenience registries no longer hard-code `baseDir/content/registries`.
-- Removed unused old-registry parameters from the incomplete stockpile hauling/filter TODO path; future stockpile filtering should depend on item definition catalog seams, not the legacy content registry.
+- Removed unused old-registry parameters from the incomplete stockpile hauling/filter placeholder path; future stockpile filtering should depend on item definition catalog seams, not the legacy content registry.
 - Changed `Program` and `SimulationWorldContentLoader` to enter content loading through `FortressContentLoader` instead of owning their own path discovery and coordinator calls.
 - Changed scheduler/workshop tunings to load from the already-loaded structured registry during runtime composition instead of reading tuning JSON directly from App.
 - Switched input bindings, orders display registry, profession registry, workshop category mapping, and legacy tuning compatibility loaders to use the Content-owned registry-file resolver.
@@ -1254,7 +1995,11 @@ Status: completed
 - `docs/archive/plans/HUMANFORTRESS_MAIN_BRANCH_ARCHITECTURE_AUDIT_FOR_CODEX.md` was read on 2026-06-12.
 - Its `HumanFortress.Content` build concern is no longer a current build blocker; the solution builds successfully.
 - Its larger Content concern is now substantially reduced: item, creature, construction, recipe, runtime registry bootstrap, structured registry implementation, and App registry-file path resolution now enter through `HumanFortress.Content`.
-- Remaining Content work is strict content-mode diagnostics, richer debug surfaces, cleanup of the few remaining non-registry content DTO compatibility namespaces, and future compiled-pack support.
+- Remaining Content work is strict content-mode diagnostics, richer debug
+  surfaces, and future compiled-pack support. Later namespace cleanup moved the
+  formerly non-registry runtime DTO compatibility names into Contracts registry
+  namespaces, and architecture smoke/source scans guard the old compatibility
+  namespaces from returning.
 - The agreed next priority after the remaining Content hygiene is moving concrete runtime composition out of App.
 
 ### Important Notes
@@ -1262,7 +2007,7 @@ Status: completed
 - At that point, the legacy `HumanFortress.Core.Content.ContentRegistry` source still existed, but `RuntimeContentRegistryLoader` loaded only the structured runtime registry. A later sub-batch deleted the old source after splitting `GeologyData` into its own file.
 - The structured `HumanFortress.Content.Registry.ContentRegistry` remains the runtime registry for geology handles, tuning, zones, construction catalogs, and recipe catalogs; its implementation now compiles from `HumanFortress.Content.Registry`.
 - `FortressContentLoader` is a Content-owned facade over the structured registry and catalog snapshot loaders; do not add another App-side bootstrapper.
-- Core no longer owns a legacy/structured registry coordinator, construction/recipe singleton registries, the construction/recipe core-data JSON loader, or the structured registry implementation. The remaining cleanup is policy/diagnostics and compatibility naming, not a second runtime registry source model.
+- Core no longer owns a legacy/structured registry coordinator, construction/recipe singleton registries, the construction/recipe core-data JSON loader, or the structured registry implementation. The remaining cleanup is policy/diagnostics, not a second runtime registry source model or compatibility-namespace migration.
 - Remaining direct references to `HumanFortress.Core.Content.ContentRegistry` are now historical documentation/source-compatibility references, not normal bootstrap requirements.
 - Do not run overlapping .NET project builds in parallel. A parallel Content/App/test build reproduced file-lock failures on `HumanFortress.Content/obj/Debug/net8.0/*.dll`.
 
@@ -1838,7 +2583,7 @@ Status: completed
 - Zone create/update/delete commands now use a runtime seam and `ZoneDiffLog`; zone mutations are applied by the post-tick `ZoneDiffApplicator`.
 - Workshop queue/settings commands now use a runtime seam and `WorkshopDiffLog`; workshop queue and automation mutations are applied by the post-tick `WorkshopDiffApplicator`.
 - Stockpile creation and deletion now use a runtime seam and `StockpileDiffLog`; stockpile create/delete commands are applied by the post-tick `StockpileDiffApplicator`.
-- `StockpileDiffApplicator` is now connected to the tick pipeline for stockpile create/delete diffs. TODO filter/item/job paths remain future stockpile work.
+- `StockpileDiffApplicator` is now connected to the tick pipeline for stockpile create/delete diffs. Filter/item/job paths remained future stockpile work at that point and were later hardened through Simulation-owned stockpile item projections and Jobs/Transport stockpile diff integration.
 - `SimulationRuntimeContext` no longer implements the command target roles directly; `SimulationCommandExecutionContext` composes the narrow target roles for command-stage execution.
 - Spawn/item/job emitters still mix `ChunkKey + localIndex` and `DiffTargetEncoding.DiffTarget` target shapes. The follow-up cleanup introduced `WorldCellTargetEncoding` as a first shared migration point.
 

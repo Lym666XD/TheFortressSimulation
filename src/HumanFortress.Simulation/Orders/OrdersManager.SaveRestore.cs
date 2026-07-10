@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Simulation.Save;
 using SadRogue.Primitives;
 
@@ -27,94 +26,108 @@ internal sealed partial class OrdersManager
         if (issues.Count > 0)
             return issues;
 
-        ClearQueue(_haulQueue);
-        ClearQueue(_recentHauls);
-        ClearBag(_activeHauls);
-        ClearQueue(_recentMining);
-        ClearBag(_activeMining);
-        ClearQueue(_miningAdd);
-        ClearQueue(_miningCancel);
-        ClearQueue(_constructionQueue);
-        ClearQueue(_recentConstruction);
-        ClearBag(_activeConstruction);
-        ClearQueue(_buildableQueue);
-        ClearQueue(_recentBuildable);
-        ClearBag(_activeBuildable);
-
-        var maxMiningId = 0;
-        foreach (var payload in mining!.OrderBy(order => order.Id))
+        lock (_sync)
         {
-            var designation = new MiningDesignation(
-                payload.Id,
-                ToRectangle(payload.Rect),
-                payload.ZMin,
-                payload.ZMax,
-                (MiningAction)payload.Action,
-                payload.Priority,
-                payload.CreatedTick);
-            _miningAdd.Enqueue(designation);
-            _recentMining.Enqueue(designation);
-            _activeMining.Add(designation);
-            maxMiningId = Math.Max(maxMiningId, payload.Id);
+            ClearQueue(_haulQueue);
+            ClearQueue(_recentHauls);
+            ClearList(_activeHauls);
+            ClearQueue(_recentMining);
+            ClearList(_activeMining);
+            ClearQueue(_miningAdd);
+            ClearQueue(_miningCancel);
+            ClearQueue(_constructionQueue);
+            ClearQueue(_recentConstruction);
+            ClearList(_activeConstruction);
+            ClearQueue(_buildableQueue);
+            ClearQueue(_recentBuildable);
+            ClearList(_activeBuildable);
+
+            var maxMiningId = 0;
+            foreach (var payload in mining!.OrderBy(order => order.Id))
+            {
+                var designation = new MiningDesignation(
+                    payload.Id,
+                    ToRectangle(payload.Rect),
+                    payload.ZMin,
+                    payload.ZMax,
+                    (MiningAction)payload.Action,
+                    payload.Priority,
+                    payload.CreatedTick);
+                _miningAdd.Enqueue(designation);
+                _recentMining.Enqueue(designation);
+                _activeMining.Add(designation);
+                maxMiningId = Math.Max(maxMiningId, payload.Id);
+            }
+
+            _nextMiningId = maxMiningId;
+
+            foreach (var payload in hauls!
+                .OrderBy(order => order.Z)
+                .ThenBy(order => order.Priority)
+                .ThenBy(order => order.WorldRect.X)
+                .ThenBy(order => order.WorldRect.Y)
+                .ThenBy(order => order.WorldRect.Width)
+                .ThenBy(order => order.WorldRect.Height)
+                .ThenBy(order => order.CreatedTick))
+            {
+                var designation = new HaulDesignation(
+                    ToRectangle(payload.WorldRect),
+                    payload.Z,
+                    payload.Priority,
+                    payload.CreatedTick);
+                _haulQueue.Enqueue(designation);
+                _recentHauls.Enqueue(designation);
+                _activeHauls.Add(designation);
+            }
+
+            foreach (var payload in construction!
+                .OrderBy(order => order.ZMin)
+                .ThenBy(order => order.ZMax)
+                .ThenBy(order => order.Priority)
+                .ThenBy(order => order.WorldRect.X)
+                .ThenBy(order => order.WorldRect.Y)
+                .ThenBy(order => order.WorldRect.Width)
+                .ThenBy(order => order.WorldRect.Height)
+                .ThenBy(order => order.Shape)
+                .ThenBy(order => order.Filter.CategoryKey, StringComparer.Ordinal)
+                .ThenBy(order => order.Filter.PreferredMaterialId, StringComparer.Ordinal)
+                .ThenBy(order => BuildMaterialFilterSortKey(order.Filter), StringComparer.Ordinal)
+                .ThenBy(order => order.CreatedTick))
+            {
+                var designation = new ConstructionDesignation(
+                    ToRectangle(payload.WorldRect),
+                    payload.ZMin,
+                    payload.ZMax,
+                    (ConstructionShape)payload.Shape,
+                    ToMaterialFilter(payload.Filter),
+                    payload.Priority,
+                    payload.CreatedTick);
+                _constructionQueue.Enqueue(designation);
+                _recentConstruction.Enqueue(designation);
+                _activeConstruction.Add(designation);
+            }
+
+            foreach (var payload in buildable!
+                .OrderBy(order => order.ConstructionId, StringComparer.Ordinal)
+                .ThenBy(order => order.Anchor.X)
+                .ThenBy(order => order.Anchor.Y)
+                .ThenBy(order => order.Z)
+                .ThenBy(order => order.Priority)
+                .ThenBy(order => order.CreatedTick))
+            {
+                var designation = new BuildableConstructionDesignation(
+                    payload.ConstructionId,
+                    new Point(payload.Anchor.X, payload.Anchor.Y),
+                    payload.Z,
+                    payload.Priority,
+                    payload.CreatedTick);
+                _buildableQueue.Enqueue(designation);
+                _recentBuildable.Enqueue(designation);
+                _activeBuildable.Add(designation);
+            }
+
+            TrimRecentQueues();
         }
-
-        _nextMiningId = maxMiningId;
-
-        foreach (var payload in hauls!
-            .OrderBy(order => order.Z)
-            .ThenBy(order => order.Priority)
-            .ThenBy(order => order.WorldRect.X)
-            .ThenBy(order => order.WorldRect.Y))
-        {
-            var designation = new HaulDesignation(
-                ToRectangle(payload.WorldRect),
-                payload.Z,
-                payload.Priority,
-                payload.CreatedTick);
-            _haulQueue.Enqueue(designation);
-            _recentHauls.Enqueue(designation);
-            _activeHauls.Add(designation);
-        }
-
-        foreach (var payload in construction!
-            .OrderBy(order => order.ZMin)
-            .ThenBy(order => order.ZMax)
-            .ThenBy(order => order.Priority)
-            .ThenBy(order => order.WorldRect.X)
-            .ThenBy(order => order.WorldRect.Y))
-        {
-            var designation = new ConstructionDesignation(
-                ToRectangle(payload.WorldRect),
-                payload.ZMin,
-                payload.ZMax,
-                (ConstructionShape)payload.Shape,
-                ToMaterialFilter(payload.Filter),
-                payload.Priority,
-                payload.CreatedTick);
-            _constructionQueue.Enqueue(designation);
-            _recentConstruction.Enqueue(designation);
-            _activeConstruction.Add(designation);
-        }
-
-        foreach (var payload in buildable!
-            .OrderBy(order => order.ConstructionId, StringComparer.Ordinal)
-            .ThenBy(order => order.Anchor.X)
-            .ThenBy(order => order.Anchor.Y)
-            .ThenBy(order => order.Z)
-            .ThenBy(order => order.Priority))
-        {
-            var designation = new BuildableConstructionDesignation(
-                payload.ConstructionId,
-                new Point(payload.Anchor.X, payload.Anchor.Y),
-                payload.Z,
-                payload.Priority,
-                payload.CreatedTick);
-            _buildableQueue.Enqueue(designation);
-            _recentBuildable.Enqueue(designation);
-            _activeBuildable.Add(designation);
-        }
-
-        TrimRecentQueues();
 
         return Array.Empty<string>();
     }
@@ -226,6 +239,15 @@ internal sealed partial class OrdersManager
         };
     }
 
+    private static string BuildMaterialFilterSortKey(WorldSaveMaterialFilterPayloadData payload)
+    {
+        return string.Join(
+            '\0',
+            (payload.Tags ?? Array.Empty<string>())
+                .Where(static tag => !string.IsNullOrWhiteSpace(tag))
+                .Order(StringComparer.Ordinal));
+    }
+
     private static Rectangle ToRectangle(WorldSaveRectangleData rectangle)
     {
         return new Rectangle(rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
@@ -245,19 +267,9 @@ internal sealed partial class OrdersManager
 
     private void TrimRecentQueues()
     {
-        while (_recentHauls.Count > RecentCapacity && _recentHauls.TryDequeue(out _)) { }
-        while (_recentMining.Count > RecentCapacity && _recentMining.TryDequeue(out _)) { }
-        while (_recentConstruction.Count > RecentCapacity && _recentConstruction.TryDequeue(out _)) { }
-        while (_recentBuildable.Count > RecentCapacity && _recentBuildable.TryDequeue(out _)) { }
-    }
-
-    private static void ClearQueue<T>(ConcurrentQueue<T> queue)
-    {
-        while (queue.TryDequeue(out _)) { }
-    }
-
-    private static void ClearBag<T>(ConcurrentBag<T> bag)
-    {
-        while (bag.TryTake(out _)) { }
+        TrimRecentQueue(_recentHauls);
+        TrimRecentQueue(_recentMining);
+        TrimRecentQueue(_recentConstruction);
+        TrimRecentQueue(_recentBuildable);
     }
 }

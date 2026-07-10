@@ -8,10 +8,11 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Spawn an item at the specified world position.
     /// Returns item GUID on success, null on failure.
-    /// TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
-    /// TODO: Implement stack merging when spawning stackable items
+    /// Gameplay commands should enqueue ItemsDiffLog additions; this owner
+    /// mutation entry is used by diff application, bootstrap, save restore,
+    /// and focused Simulation tests.
     /// </summary>
-    public Guid? SpawnItem(string itemId, Point worldPos, int z, int quantity = 1, ulong currentTick = 0)
+    internal Guid? SpawnItem(string itemId, Point worldPos, int z, int quantity = 1, ulong currentTick = 0)
     {
         try
         {
@@ -67,16 +68,10 @@ internal sealed partial class ItemManager
             // Check for existing stacks and merge if stackable (L5 layer)
             lock (_instanceLock)
             {
-                // Find existing items at same position with same itemId
-                var existingAtPos = _instances.Values
-                    .Where(i => i.IsOnGround && i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z && i.DefinitionId == itemId)
-                    .OrderBy(i => i.Guid)
-                    .ToList();
-
-                if (existingAtPos.Count > 0)
+                var existingItem = FindGroundStackAtLocked(worldPos, z, itemId);
+                if (existingItem != null)
                 {
                     // Stack with first existing item
-                    var existingItem = existingAtPos[0];
                     existingItem.StackCount += quantity;
                     string stackMsg = $"[ItemManager] SUCCESS: Stacked '{def.Name}' +{quantity} onto existing stack (guid={existingItem.Guid}, new qty={existingItem.StackCount}) at ({worldPos.X},{worldPos.Y},{z})";
                     Emit(stackMsg);
@@ -84,13 +79,10 @@ internal sealed partial class ItemManager
                 }
 
                 // Extra diagnostics: if no stack match but there are other items here, log what's present
-                var anyAtPos = _instances.Values
-                    .Where(i => i.IsOnGround && i.Position.X == worldPos.X && i.Position.Y == worldPos.Y && i.Z == z)
-                    .OrderBy(i => i.Guid)
-                    .ToList();
-                if (anyAtPos.Count > 0)
+                var groundAtPos = GetGroundItemsAtLocked(worldPos, z);
+                if (groundAtPos.Count > 0)
                 {
-                    var byId = anyAtPos
+                    var byId = groundAtPos
                         .GroupBy(i => i.DefinitionId)
                         .OrderBy(g => g.Key)
                         .Select(g => $"{g.Key}*{g.Sum(it => it.StackCount)}")
@@ -119,5 +111,40 @@ internal sealed partial class ItemManager
             Emit($"[ItemManager] StackTrace: {ex.StackTrace}");
             return null;
         }
+    }
+
+    private ItemInstance? FindGroundStackAtLocked(Point worldPos, int z, string itemId)
+    {
+        var key = KeyFor(worldPos, z);
+        if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+            return null;
+
+        foreach (var guid in ids)
+        {
+            if (_instances.TryGetValue(guid, out var instance)
+                && instance.IsOnGround
+                && instance.DefinitionId == itemId)
+            {
+                return instance;
+            }
+        }
+
+        return null;
+    }
+
+    private List<ItemInstance> GetGroundItemsAtLocked(Point worldPos, int z)
+    {
+        var key = KeyFor(worldPos, z);
+        if (!_posIndex.TryGetValue(key, out var ids) || ids.Count == 0)
+            return new List<ItemInstance>();
+
+        var items = new List<ItemInstance>(ids.Count);
+        foreach (var guid in ids)
+        {
+            if (_instances.TryGetValue(guid, out var instance) && instance.IsOnGround)
+                items.Add(instance);
+        }
+
+        return items;
     }
 }

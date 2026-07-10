@@ -3,11 +3,12 @@ status: normative
 owner: app/ui
 last_updated: 2025-09-15
 
-Current implementation note (2026-06-12):
+Current implementation note (2026-07-09):
 
 - This document describes the target UI/input architecture.
 - Current SadConsole UI has `UiStore`, input services, drawers, quick menus, overlays, and placement tools.
-- Current UI still reads live `World`, concrete job systems, and `ContentRegistry` in some rendering/panel paths. The "snapshot-only" rule below is the direction, not yet complete implementation.
+- Active fortress map rendering, overlays, drawers, debug pages, workshop/stockpile/zone panels, tile inspection, and placement previews now consume Runtime/Contracts snapshot or query DTOs instead of live `World`, concrete job systems, or direct `ContentRegistry` reads.
+- The "snapshot-only" rule below is now the normal active fortress read path, and App.Rendering now consumes Runtime-authored map-viewport and UI-overlay section deltas through presenter caches. The broader MVU model, virtualized large lists, packed presenter deltas beyond the current map/overlay slices, panel-specific redraw skipping, and richer reducer/effect structure remain target work.
 
 applies_to:
   - SadConsole UI (panels, overlays, tooltips)

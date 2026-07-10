@@ -53,7 +53,7 @@ internal sealed class StockpileDiffLog
                 ZoneId = 0,
                 CellIndex = -1,
                 ItemHandle = 0,
-                Quantity = copiedCells.Values.Sum(static cells => cells.Count),
+                Quantity = copiedCells.Sum(static entry => entry.Value.Count),
                 Priority = priority,
                 SystemId = systemId,
                 LocalSeq = _localSeq++,

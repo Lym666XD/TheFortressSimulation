@@ -1,6 +1,6 @@
 # HumanFortress Content System
 
-Updated: 2026-06-16
+Updated: 2026-07-10
 Status: current implementation notes plus future direction
 
 This document replaces the old split between `CONTENT_REGISTRY_OVERVIEW.md` and the early `.cpack` build-pipeline plan. The current game loads JSON directly at runtime. Compiled content packs remain a future goal, not the current implementation.
@@ -220,5 +220,5 @@ That future design should not be cited as current implementation until a real bu
 
 - JSON files under `data/core` and `content/registries` are the machine-readable truth.
 - Markdown under `docs/workshops` is human-readable reference only.
-- `docs/other/core_workshop_*.json` contains old workshop JSON copies and should be treated as historical until reconciled.
+- `docs/archive/other/core_workshop_*.json` contains old workshop JSON copies and should be treated as historical until reconciled.
 - Any future content doc should state whether it describes current runtime loading or future compiled packs.

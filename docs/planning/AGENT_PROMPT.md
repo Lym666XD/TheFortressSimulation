@@ -14,7 +14,7 @@ Current ownership:
 - Simulation: authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
 - Navigation: pathfinding/cache algorithms through adapter interfaces, no Simulation dependency.
 - Jobs: job executor cores, diff emitters, log adapters, profession assignment, scheduler/workshop tunings, unified orchestration.
-- Runtime: generic host, tick pipeline, command stage, command targets, typed mutation-log bundle ownership, Simulation navigation adapter, startup helpers, tick-facing job wrappers, public session/world-generation factories.
+- Runtime: generic host, tick pipeline, command stage, command targets, typed mutation-log bundle ownership, Simulation navigation adapter, startup helpers, tick-facing job wrappers, snapshot/read-model facades, save/replay document ports, public session/world-generation factories.
 - WorldGen: internal/friend concrete generation service/data/factory; consumes explicit generation content; no direct global registry reads.
 - App: SadConsole/MonoGame UI, logger callback binding, UI completion binding, session/bootstrap flow, and UI/debug surfaces through Runtime/Contracts snapshots.
 
@@ -45,8 +45,8 @@ Documentation:
 - Keep GAME_ARCHITECTURE.md and ARCHITECTURE_REFACTOR_MASTER_PLAN.md aligned with source ownership.
 
 Current next priorities:
-1. Keep hardening typed diff/applicator coverage for remaining direct mutation paths.
-2. Clean compatibility namespaces and temporary internal bridges without widening public surfaces.
-3. Harden deterministic replay, explicit system order, save/migration, and diagnostics.
-4. Continue stockpile broker/maintenance hardening through Jobs/Transport seams; preset/filter catalog, item-projection matching, planner reserve-slot diffs, and transport/construction/craft stockpile item-index diffs are already in place.
+1. Broaden Runtime/Contracts presenter deltas beyond the current App map-viewport and UI-overlay section caches into panel-specific redraw paths and future packed world-chunk payloads.
+2. Harden deterministic replay, explicit system order, save-slot/migration policy, and diagnostics/debug UI.
+3. Keep compatibility namespaces from returning and reduce temporary internal bridges without widening public surfaces.
+4. Continue movement ownership and long-horizon job/save restore hardening through Runtime/Jobs seams; stockpile preset/filter catalog, item-projection matching, planner reserve-slot diffs, and transport/construction/craft stockpile item-index diffs are already in place.
 ```

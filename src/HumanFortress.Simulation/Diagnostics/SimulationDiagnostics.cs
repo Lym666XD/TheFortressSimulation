@@ -4,6 +4,8 @@ namespace HumanFortress.Simulation.Diagnostics;
 
 internal static class SimulationDiagnostics
 {
+    internal static IDiagnosticSink? DiagnosticSink { get; set; }
+
     internal static void Information(
         Action<string>? callback,
         string category,
@@ -37,12 +39,7 @@ internal static class SimulationDiagnostics
             return;
         }
 
-        if (DiagnosticHub.IsConfigured)
-        {
-            DiagnosticHub.Sink.Write(DiagnosticEvent.Create(level, category, message, exception, tick));
-            return;
-        }
-
-        Console.WriteLine(message);
+        var sink = DiagnosticSink ?? (DiagnosticHub.IsConfigured ? DiagnosticHub.Sink : null);
+        sink?.Write(DiagnosticEvent.Create(level, category, message, exception, tick));
     }
 }

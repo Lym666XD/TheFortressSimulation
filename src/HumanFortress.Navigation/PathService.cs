@@ -1,18 +1,18 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// Pathfinding service per NAVIGATION_SPEC.md section 5.
-/// Manages path requests, caching, and concurrent pathfinders.
+/// Manages path requests, caching, and deterministic pathfinders.
 /// </summary>
 internal sealed class PathService : IPathService
 {
     private readonly NavigationTuning _tuning;
     private readonly PathCache _cache;
-    private readonly ConcurrentQueue<PathRequest> _requestQueue;
+    private readonly Queue<PathRequest> _requestQueue;
     private readonly ThreadLocal<DeterministicAStar> _pathfinders;
     private int _pathRequestsServedThisTick;
 
@@ -20,7 +20,7 @@ internal sealed class PathService : IPathService
     {
         _tuning = tuning ?? NavigationTuning.Default;
         _cache = new PathCache(1024); // LRU cache with 1024 entries
-        _requestQueue = new ConcurrentQueue<PathRequest>();
+        _requestQueue = new Queue<PathRequest>();
         _pathfinders = new ThreadLocal<DeterministicAStar>(() => new DeterministicAStar(_tuning));
     }
 
@@ -70,19 +70,13 @@ internal sealed class PathService : IPathService
     }
 
     /// <summary>
-    /// Process queued path requests up to time budget.
+    /// Process queued path requests up to the deterministic request budget.
     /// </summary>
     internal void ProcessQueuedRequests(IWorldNavigationView world)
     {
-        while (_requestQueue.TryDequeue(out var request))
+        while (_requestQueue.Count > 0 && _pathRequestsServedThisTick < _tuning.MaxPathsPerTick)
         {
-            if (_pathRequestsServedThisTick >= _tuning.MaxPathsPerTick)
-            {
-                // Re-queue for next tick
-                _requestQueue.Enqueue(request);
-                break;
-            }
-
+            var request = _requestQueue.Dequeue();
             Solve(in request, in world);
         }
     }

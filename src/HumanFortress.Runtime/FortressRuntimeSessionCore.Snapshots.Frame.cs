@@ -1,6 +1,5 @@
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
-using HumanFortress.Runtime.Geometry;
 using HumanFortress.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;
@@ -17,18 +16,19 @@ internal sealed partial class FortressRuntimeSessionCore
         int? stockpileDetailZoneId,
         int? zoneDetailId)
     {
-        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
-        return FortressRuntimeSessionSnapshotFacade.BuildUiOverlayFrameSnapshot(
+        return _frameSnapshots.PublishUiOverlayFrame(
             _runtimeSession,
-            currentZ,
-            viewport.ToSadRogueRectangle(),
-            showZoneOverlay,
-            includeManagementDrawer,
-            includeWorkDrawer,
-            includeDebugMenu,
-            stockpileDetailZoneId,
-            zoneDetailId,
-            metadata);
+            _services.TickScheduler.CurrentTick,
+            allowCache: !_services.TickScheduler.IsRunning,
+            new RuntimeUiOverlayFrameRequest(
+                currentZ,
+                viewport,
+                showZoneOverlay,
+                includeManagementDrawer,
+                includeWorkDrawer,
+                includeDebugMenu,
+                stockpileDetailZoneId,
+                zoneDetailId));
     }
 
     SimulationFrameRenderData IFortressRuntimeSessionReadPort.GetFrameRenderData(
@@ -46,22 +46,23 @@ internal sealed partial class FortressRuntimeSessionCore
         RuntimePoint tileInspectionWorldPosition,
         int tileInspectionZ)
     {
-        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
-        return FortressRuntimeSessionSnapshotFacade.BuildFrameRenderSnapshot(
+        return _frameSnapshots.PublishFrameRender(
             _runtimeSession,
-            includeMapViewport,
-            fortressSize,
-            cameraPosition.ToSadRoguePoint(),
-            cursorPosition.ToSadRoguePoint(),
-            currentZ,
-            zoomLevel,
-            viewWidth,
-            viewHeight,
-            cursorGlyph,
-            navigationMode,
-            selectedNavigationTarget.ToSadRoguePoint(),
-            tileInspectionWorldPosition.ToSadRoguePoint(),
-            tileInspectionZ,
-            metadata);
+            _services.TickScheduler.CurrentTick,
+            allowCache: !_services.TickScheduler.IsRunning,
+            new RuntimeFrameRenderRequest(
+                includeMapViewport,
+                fortressSize,
+                cameraPosition,
+                cursorPosition,
+                currentZ,
+                zoomLevel,
+                viewWidth,
+                viewHeight,
+                cursorGlyph,
+                navigationMode,
+                selectedNavigationTarget,
+                tileInspectionWorldPosition,
+                tileInspectionZ));
     }
 }

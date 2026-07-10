@@ -28,6 +28,7 @@ internal sealed partial class FortressRuntimeSessionCore
         StopIfRunningCore();
         _workshopCompletionNotifier.SetHandler(null);
         _runtimeSession = new FortressRuntimeSession(_runtimeSessionFactory.CreateNew(sizeInChunks, maxZ));
+        InvalidateFrameSnapshots();
     }
 
     private bool StopIfRunningCore()
@@ -54,9 +55,15 @@ internal sealed partial class FortressRuntimeSessionCore
             _services.TickScheduler,
             (world, queue, tick) => RuntimeAutoDigSeeder.EnqueueIfPossible(world, queue, tick, _log),
             _log);
+        InvalidateFrameSnapshots();
     }
 
     private World? World => _runtimeSession?.World;
+
+    private void InvalidateFrameSnapshots()
+    {
+        _frameSnapshots.Invalidate();
+    }
 
     private SimulationRuntimeHost<SimulationRuntimeSystems>? RuntimeHost => _runtimeSession?.Host;
 

@@ -132,9 +132,9 @@ internal static class StockpileWorldQueries
         int ZoneId,
         ChunkKey ChunkKey,
         int CellIndex,
-        int Distance) : IComparable<StockpileDestinationCandidate>
+        int Distance)
     {
-        public int CompareTo(StockpileDestinationCandidate other)
+        internal int CompareTo(StockpileDestinationCandidate other)
         {
             int cmp = Distance.CompareTo(other.Distance);
             if (cmp != 0) return cmp;

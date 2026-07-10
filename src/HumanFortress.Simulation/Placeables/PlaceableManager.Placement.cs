@@ -1,5 +1,6 @@
 using System;
-using System.Collections.Generic;
+using System.Linq;
+using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Simulation.World;
 using WorldClass = HumanFortress.Simulation.World.World;
 
@@ -20,23 +21,12 @@ internal sealed partial class PlaceableManager
         var position = placeable.Position;
         int z = placeable.Z;
 
-        // Collect all affected chunks
-        var affectedChunks = new HashSet<Chunk>();
-        for (int dy = 0; dy < footprint.D; dy++)
-        {
-            for (int dx = 0; dx < footprint.W; dx++)
-            {
-                int worldX = position.X + dx;
-                int worldY = position.Y + dy;
-                int chunkX = worldX / Chunk.SIZE_XY;
-                int chunkY = worldY / Chunk.SIZE_XY;
-                var chunk = world.GetChunk(new ChunkKey(chunkX, chunkY, z));
-                if (chunk != null)
-                {
-                    affectedChunks.Add(chunk);
-                }
-            }
-        }
+        // Collect all affected chunks in stable spatial order.
+        var affectedChunks = GetAffectedChunks(position, z, footprint)
+            .Select(world.GetChunk)
+            .Where(static chunk => chunk != null)
+            .Select(static chunk => chunk!)
+            .ToArray();
 
         // Determine primary chunk (owns the placeable instance)
         int primaryChunkX = position.X / Chunk.SIZE_XY;
@@ -90,7 +80,32 @@ internal sealed partial class PlaceableManager
 
             // Bump connectivity version for all affected chunks
             chunk.BumpConnectivityVersion();
-            chunk.MarkTileDirty(0, tick); // Mark chunk dirty (index 0 is placeholder)
+            MarkFootprintCellsDirtyForChunk(chunk, position, z, footprint, tick);
+        }
+    }
+
+    private static void MarkFootprintCellsDirtyForChunk(
+        Chunk chunk,
+        SadRogue.Primitives.Point position,
+        int z,
+        Footprint footprint,
+        ulong tick)
+    {
+        for (int dy = 0; dy < footprint.D; dy++)
+        {
+            for (int dx = 0; dx < footprint.W; dx++)
+            {
+                int worldX = position.X + dx;
+                int worldY = position.Y + dy;
+                int chunkX = worldX / Chunk.SIZE_XY;
+                int chunkY = worldY / Chunk.SIZE_XY;
+                if (chunk.Key.ChunkX != chunkX || chunk.Key.ChunkY != chunkY || chunk.Key.Z != z)
+                    continue;
+
+                int localX = worldX % Chunk.SIZE_XY;
+                int localY = worldY % Chunk.SIZE_XY;
+                chunk.MarkTileDirty(Chunk.LocalIndex(localX, localY), tick);
+            }
         }
     }
 }

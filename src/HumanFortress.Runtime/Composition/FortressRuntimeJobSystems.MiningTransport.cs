@@ -1,5 +1,6 @@
 using HumanFortress.Core.Simulation;
 using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Stockpile;
@@ -14,6 +15,7 @@ internal sealed partial class FortressRuntimeJobSystems
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
         NavigationManager navigation,
+        RuntimeNavigationServices navigationServices,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
         FortressRuntimeLogging logging)
@@ -31,6 +33,7 @@ internal sealed partial class FortressRuntimeJobSystems
             professions: dependencies.ProfessionAssignments,
             workerStrategy: schedulerTunings.WorkerSelection,
             navigationTuning: dependencies.NavigationTuning,
+            navigationServices: navigationServices,
             miningTuningJson: dependencies.MiningTuningJson,
             geology: dependencies.Geology,
             log: logging.Log);
@@ -42,6 +45,7 @@ internal sealed partial class FortressRuntimeJobSystems
         ItemsDiffLog itemsDiffLog,
         StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
+        RuntimeNavigationServices navigationServices,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
         FortressRuntimeLogging logging)
@@ -61,6 +65,7 @@ internal sealed partial class FortressRuntimeJobSystems
             professions: dependencies.ProfessionAssignments,
             workerStrategy: schedulerTunings.WorkerSelection,
             navigationTuning: dependencies.NavigationTuning,
+            navigationServices: navigationServices,
             log: logging.Log);
     }
 }

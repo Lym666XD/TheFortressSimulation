@@ -1,3 +1,8 @@
+# Milestone Plan
+
+Archived: superseded by `docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md`
+and `docs/planning/REFACTOR_BATCH_PROGRESS.md` for current status.
+
 Current implementation note (2026-06-12):
 
 - This is a historical/strategic milestone plan, not a precise status report.

@@ -1,5 +1,4 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Concurrent;
 
 namespace HumanFortress.Navigation.Implementation;
 
@@ -9,9 +8,10 @@ namespace HumanFortress.Navigation.Implementation;
 /// </summary>
 internal sealed class NavigationManager
 {
-    private readonly ConcurrentDictionary<ChunkKey, ChunkNavData> _navData;
+    private readonly Dictionary<ChunkKey, ChunkNavData> _navData;
     private readonly INavigationWorldSource _source;
     private readonly NavigationTuning _tuning;
+    private readonly object _sync = new();
 
     /// <summary>
     /// Optional logging callback (set by App layer to write to fortress_debug.log)
@@ -21,7 +21,7 @@ internal sealed class NavigationManager
     internal NavigationManager(INavigationWorldSource source, NavigationTuning? tuning = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
-        _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
+        _navData = new Dictionary<ChunkKey, ChunkNavData>();
         _tuning = tuning ?? NavigationTuning.Default;
     }
 
@@ -32,7 +32,16 @@ internal sealed class NavigationManager
     /// </summary>
     internal ChunkNavData GetOrCreateNavData(ChunkKey key)
     {
-        return _navData.GetOrAdd(key, k => new ChunkNavData(k));
+        lock (_sync)
+        {
+            if (!_navData.TryGetValue(key, out var navData))
+            {
+                navData = new ChunkNavData(key);
+                _navData.Add(key, navData);
+            }
+
+            return navData;
+        }
     }
 
     /// <summary>
@@ -40,7 +49,10 @@ internal sealed class NavigationManager
     /// </summary>
     internal ChunkNavData? GetNavData(ChunkKey key)
     {
-        return _navData.GetValueOrDefault(key);
+        lock (_sync)
+        {
+            return _navData.GetValueOrDefault(key);
+        }
     }
 
     /// <summary>

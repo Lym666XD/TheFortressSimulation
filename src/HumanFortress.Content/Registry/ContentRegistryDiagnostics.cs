@@ -4,6 +4,8 @@ namespace HumanFortress.Content.Registry;
 
 internal static class ContentRegistryDiagnostics
 {
+    internal static IDiagnosticSink? DiagnosticSink { get; set; }
+
     internal static void Emit(string message)
     {
         Emit(message, ResolveLevel(message));
@@ -11,23 +13,15 @@ internal static class ContentRegistryDiagnostics
 
     internal static void Emit(string message, DiagnosticLevel level)
     {
-        DiagnosticHub.Sink.Write(DiagnosticEvent.Create(level, "Content.Registry", message));
-
-        if (!DiagnosticHub.IsConfigured)
-        {
-            Console.WriteLine(message);
-        }
+        Diagnostics.Write(DiagnosticEvent.Create(level, "Content.Registry", message));
     }
 
     internal static void Emit(string message, Exception exception)
     {
-        DiagnosticHub.Sink.Write(DiagnosticEvent.Create(DiagnosticLevel.Error, "Content.Registry", message, exception));
-
-        if (!DiagnosticHub.IsConfigured)
-        {
-            Console.WriteLine(message);
-        }
+        Diagnostics.Write(DiagnosticEvent.Create(DiagnosticLevel.Error, "Content.Registry", message, exception));
     }
+
+    private static IDiagnosticSink Diagnostics => DiagnosticSink ?? DiagnosticHub.Sink;
 
     private static DiagnosticLevel ResolveLevel(string message)
     {

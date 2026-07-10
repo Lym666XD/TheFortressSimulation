@@ -20,8 +20,8 @@ public readonly record struct ConstructionJobStatusView(
 
 public readonly record struct JobsSchedulerStatsView(
     ulong Tick,
-    long PlanMsTotal,
-    long ApplyMsTotal,
+    int PlanStageCount,
+    int ApplyStageCount,
     int IntakeHaul,
     int IntakeMining,
     int IntakeConstruction,

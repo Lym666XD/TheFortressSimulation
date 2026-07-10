@@ -44,8 +44,9 @@ Current files:
 - `content/schemas/materials.registry.schema.json`
 - `content/schemas/geology.schema.json`
 
-Current code still has transitional legacy and structured content registries.
-Use [CONTENT_SYSTEM.md](CONTENT_SYSTEM.md) for loader ownership.
+Normal runtime bootstrap now loads the structured content registry only. Use
+[CONTENT_SYSTEM.md](CONTENT_SYSTEM.md) for loader ownership and compatibility
+notes around legacy data-file parsing.
 
 ## Bit Layout Detail (Canonical v2)
 

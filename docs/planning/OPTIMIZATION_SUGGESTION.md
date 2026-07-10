@@ -1,6 +1,6 @@
 # Architecture-Safe Optimization Backlog
 
-Updated: 2026-06-26
+Updated: 2026-07-10
 Status: current performance and architecture-safe optimization backlog, merged from English and Chinese sources
 
 This document is the active optimization backlog. It merges the older performance
@@ -27,7 +27,7 @@ Primary sources:
 
 - `docs/archive/plans/OPTIMIZATION_SUGGESTION_SOURCE_2025.md`
 - `docs/planning/RULES.md`
-- `docs/planning/MILESTONE.md`
+- `docs/archive/plans/MILESTONE.md`
 - `docs/planning/REFACTOR_PITFALLS_AND_LESSONS.md`
 - `docs/simulation/WORK_AND_JOBS_SYSTEM.md`
 - `docs/simulation/TRANSPORT_SYSTEM.md`
@@ -41,6 +41,7 @@ Historical/reference sources:
 - `docs/archive/ui/UI_REFACTOR_PLAN.md`
 - `docs/archive/plans/ARCHITECTURE_ISSUE_CHATGPT_SOURCE.md`
 - `docs/archive/plans/HUMANFORTRESS_MAIN_BRANCH_ARCHITECTURE_AUDIT_FOR_CODEX.md`
+- `docs/archive/plans/HumanFortress_审计报告_2026-07-07.md`
 - `docs/archive/plans/TODO_CONSTRUCTION_AND_HAULING_STABILITY.md`
 
 ## Current Code Baseline
@@ -48,14 +49,44 @@ Historical/reference sources:
 Current facts checked against code:
 
 - `ItemManager` has `_posIndex`, `GetItemsAt(...)`, and `GetGroundItemsIn(...)`.
-- `ItemManager.SpawnItem(...)` still merges existing stacks by scanning `_instances.Values` with LINQ.
+- `ItemManager.SpawnItem(...)` now resolves same-tile stack merging through
+  `_posIndex`, selecting the first matching ground stack from the stable
+  GUID-sorted tile list and only building a same-tile list for mismatch
+  diagnostics.
 - `HaulingSystem` now uses `GetGroundItemsIn(...)`, but still allocates with LINQ/`ToList()` and then enqueues into the transport pipeline.
 - `PathCache` indexes traversed chunks, but LRU eviction still scans the whole cache and reverse index removal scans chunk indexes.
 - `PathService` already exposes basic cache/path stats.
 - `UnifiedJobsOrchestrator`, transport, mining, and craft systems expose some stats, but there is no unified perf counter surface or stress harness.
 - `NavigationManager.GetNavDataAt(...)` is read-only; navigation rebuilds belong to explicit runtime/session rebuild points.
 - Active UI/rendering code now consumes Runtime-owned snapshot DTOs for the main map, overlays, drawers, debug pages, and placement previews instead of live `World` reads.
-- Full delta/versioned presenter behavior is still target, not complete current code.
+- Runtime frame/overlay DTOs now carry Runtime-authored snapshot metadata, publication surface/request-hash metadata, and presenter-frame metadata with full-snapshot transfer mode, publication sequence, stable payload hash, and optional same-request delta-base hash. Frame render DTOs carry map-viewport changed-cell, changed-row, and changed screen-region deltas over final screen-cell values with per-row/region hashes; UI overlay DTOs carry section-level deltas over build/jobs/workshop/stockpile/zone/drawer/debug sections. App.Rendering now consumes both the map-viewport deltas and UI-overlay section deltas through presenter caches. The project still needs broader packed world-chunk/panel delta payloads and panel-specific redraw skipping before optimizing high-frequency UI redraw paths aggressively.
+- Runtime owns the first save/replay directory vertical slice:
+  `slot_manifest.json`, `runtime_snapshot.json`, command replay rows, primitive
+  RNG rows, and a Simulation-owned world payload for supported
+  terrain/entity/reservation/stockpile/placeable/order slices, including
+  contained items with payload-local acyclic item container references,
+  carried/equipped items whose owning creatures are present in the same payload,
+  installed items with valid placement anchors, and item-local reservation
+  tokens whose claimant/count rows validate against the item payload. Slot
+  inspection now includes Runtime-authored compatibility, migration-plan, and
+  restore-plan read models; migration transform ids are generated through a
+  Runtime registry seam, and migration execution attempts now enter through a
+  Runtime-owned migrator/result DTO that currently no-ops compatible slots and
+  applies `slot:0->1` for legacy/current snapshot-only slot metadata while
+  `runtime_snapshot:4->5` and `runtime_snapshot:5->6` handle safe older
+  documents whose migrated current payload validates.
+  Slot inspection and restore execution also share a Runtime-owned content
+  signature compatibility gate with saved/current catalog diagnostic summaries
+  and structured mismatch rows; it fails closed with `slot.content` until a
+  real missing-content placeholder/remap policy exists. Transport, mining, and
+  craft are the supported job payload/restore slices. The first concrete
+  migration transforms, `slot:0->1`, `runtime_snapshot:4->5`, and
+  `runtime_snapshot:5->6`, cover current slot metadata rebuilds, safe v4
+  Runtime documents, and historical v5 documents without saved catalog payloads.
+  Full save slots,
+  additional runtime snapshot schema migration transforms, concrete
+  missing-content remap policy, and broader deterministic replay scenarios
+  remain target work.
 - `HumanFortress.Runtime` owns the core tick pipeline, tick-facing job wrappers, runtime host/session core, command target graph, concrete system composition, and Runtime snapshot/query builders; App owns SadConsole/session UI adapters and logging/bootstrap callbacks.
 - `HumanFortress.Jobs` contains real job executors, tunings, orchestration, diff emitters, adapters, job loggers, and profession assignment state; profession registry file loading now lives in `HumanFortress.Content`.
 - `HumanFortress.Content` owns content definition loading, runtime registry bootstrap, the structured registry implementation, runtime content snapshot capture, and the first strict content failure policy; final compatibility naming is still transitional.
@@ -184,7 +215,10 @@ Current issue:
 
 Build:
 
-- Keep any remaining startup/session glue behind Runtime/Content contracts. Treat compatibility namespace cleanup and temporary internal assembly bridges as separate build-hygiene tasks, not performance work.
+- Keep any remaining startup/session glue behind Runtime/Content contracts.
+  Treat compatibility-namespace regression guards and temporary internal
+  assembly bridge cleanup as separate build-hygiene tasks, not performance
+  work.
 - Keep only job UI/debug panels and input bindings in App.
 
 Acceptance:
@@ -196,18 +230,18 @@ Acceptance:
 
 Current issue:
 
-- `FortressRuntimeAccess` still exposes live `World`, `NavigationManager`, and concrete job systems.
+- `FortressRuntimeAccess` has been narrowed into App role adapters over Runtime session ports. Main UI/read paths now use Contracts snapshot DTOs rather than live `World`, navigation, or concrete job systems, and aggregate frame/overlay data now flows through a Runtime publisher/cache with Runtime-authored presenter-frame identity, map-viewport changed-cell/row/screen-region deltas, and UI overlay section deltas. The remaining risk is regression and the lack of broader packed world-chunk/panel delta payloads plus presenter-side consumption for high-frequency rendering and UI panels.
 
 Build:
 
-- Introduce focused runtime query/debug DTOs.
+- Keep focused runtime query/debug DTOs as the only UI data path.
 - Keep command submission through a command sink.
-- Keep rendering through Runtime/Contracts snapshot DTOs or the future versioned presenter data.
-- Gradually remove broad live-world access from UI components.
+- Keep rendering through Runtime/Contracts snapshot DTOs and the future versioned presenter data.
+- Avoid adding bootstrap-only live-world seams to normal render/input/panel paths.
 
 Acceptance:
 
-- High-traffic UI panels can render common rows without scanning live world managers.
+- High-traffic UI panels can render common rows without scanning live world managers from App.
 - UI reads stable snapshots or query DTOs, not concrete mutable managers.
 - Debug panels have deterministic, stable sort keys.
 
@@ -279,21 +313,14 @@ Acceptance:
 
 ### 2. Item Stack Merge Uses Position Index
 
-Current issue:
+Status: implemented in the source-only final hardening batch.
 
-- `ItemManager.SpawnItem(...)` still does:
+Implemented:
 
-```text
-_instances.Values -> Where(...) -> OrderBy(...) -> ToList()
-```
-
-even though `_posIndex` already exists.
-
-Build:
-
-- Use `_posIndex` for same-tile lookup.
-- Keep deterministic stack choice by sorting or selecting the lowest GUID only among items already found at that tile.
-- Avoid allocating `List<>` on the hot path unless a snapshot API explicitly needs one.
+- Same-tile lookup uses `_posIndex`.
+- Deterministic stack choice comes from the stable GUID-sorted tile list.
+- The stack-match path does not allocate a broad `_instances.Values` LINQ list;
+  a same-tile list is only built for mismatch diagnostics.
 
 Acceptance:
 
@@ -325,19 +352,33 @@ Acceptance:
 
 Current issue:
 
-- UI target docs say snapshot-only, but current panels still read live `World`, concrete job systems, and runtime facades.
-- This is both an architecture gap and a performance problem when large lists/panels redraw frequently.
+- The broad active fortress UI live-read problem has been reduced: common map,
+  overlay, drawer, debug, workshop, stockpile/zone, tile-inspection, and
+  placement-preview paths consume Runtime/Contracts snapshot/query DTOs rather
+  than live `World`, concrete job systems, or direct content catalog reads.
+- The remaining optimization problem is presenter-side scale:
+  App now consumes Runtime-authored map-viewport and UI-overlay section deltas
+  through presenter caches, but broad packed world-chunk/panel deltas,
+  panel-specific redraw skipping, virtualized large lists, and measured redraw
+  budgets are still needed so high-frequency UI paths do less work without
+  moving diff computation into App.
 
 Build:
 
-- Add small query/debug DTOs for high-traffic panels: work overview, stock/items, jobs, zones, and debug pages.
-- Keep UI local state in `UiStore`; use runtime/query facades for read-only snapshots.
-- Virtualize large item/creature/alert lists.
+- Keep adding small query/debug DTOs only where a UI surface still needs a
+  stable read model.
+- Keep UI local state in `UiStore`; use Runtime/Contracts snapshot/query DTOs
+  for simulation facts.
+- Extend presenter-side redraw specialization beyond the current
+  changed-cell/row/region map cache and overlay-section cache into panel deltas
+  before optimizing with App-side comparisons.
+- Virtualize large item/creature/alert lists and measure redraw work.
 
 Acceptance:
 
 - Large stock/item list scroll stays within UI budget.
-- Panels no longer need broad live-world scans for common display rows.
+- Panels do not need broad live-world scans for common display rows, and
+  regression scans keep it that way.
 - UI queries use stable sort keys.
 - No new broad `World` access is added to UI render code.
 
@@ -367,13 +408,19 @@ Acceptance:
 Current issue:
 
 - Runtime map/frame snapshot builders currently compute terrain/entity cell views during snapshot build.
-- The target snapshot docs call for dirty chunks, changed rows, and presenter deltas, but active Runtime/Contracts DTO implementation is not fully there.
+- Active Runtime/Contracts DTOs now carry presenter-frame identity,
+  map-viewport changed cells, changed rows, fixed-size screen regions, and UI
+  overlay section deltas. The remaining gap is broader packed
+  world-chunk/panel payloads, presenter-side delta application, and autotile or
+  terrain view caching.
 
 Build:
 
 - Cache terrain/autotile/connect-mask view data by chunk/Z version.
-- Emit changed chunks/Z/row spans instead of treating all visible data as fresh.
-- Avoid full presenter clears when only row spans changed.
+- Extend deltas toward changed chunks/Z/row spans and panel payloads where they
+  reduce measured redraw/build cost.
+- Avoid full presenter clears when Runtime-authored deltas prove only row spans,
+  screen regions, or panel sections changed.
 
 Acceptance:
 
@@ -386,11 +433,17 @@ Acceptance:
 Current issue:
 
 - Historical audits warned against fragmented path budgets, caches, movement state, and movement statistics.
-- Current code is better, but movement execution still lives in job-specific shells/executors.
+- Current code is better: Runtime-owned `RuntimeNavigationServices` creates
+  per-job `PathService`, `WorldNavigationView`, and `MovementExecutor`
+  contract bundles and registers path services for dirty-chunk cache
+  invalidation. Movement execution still lives in job-specific
+  shells/executors, so the future consolidation target remains a runtime-wide
+  movement intent service.
 
 Build:
 
-- Keep `PathService`/path budget ownership centralized.
+- Keep `PathService`/path budget creation and cache registration centralized in
+  Runtime.Navigation.
 - Move toward a runtime `MovementSystem` that receives move intents, owns active movement state, resolves reservations/conflicts, and emits movement diffs.
 - Job systems request movement; they should not each become independent movement authorities.
 
@@ -506,14 +559,14 @@ Do:
 
 | Area | Test |
 | --- | --- |
-| Runtime | Headless simulation starts without `HumanFortress.App` reference once runtime migration is complete. |
-| Jobs | Job systems can run in tests without SadConsole/MonoGame once wrappers move out of App. |
+| Runtime | Headless/manual-tick Runtime smoke runs production composition without starting SadConsole or the background scheduler. |
+| Jobs | Job executor cores and replay hashes can run in tests without SadConsole/MonoGame; tick wrappers remain Runtime-owned. |
 | Content | `HumanFortress.Content` builds cleanly; structured content load can fail CI in strict mode. |
 | Items | Spawn/merge 1,000 stackable items on a populated map under budget; existing split/move tests pass. |
 | Path cache | Fill cache beyond capacity; eviction count and time stay bounded; dirty chunk invalidates traversed paths. |
 | Transport | Dense construction/stockpile stress run shows bounded request churn and continuous progress. |
 | UI | 10k item rows grouped/virtualized; scroll update stays under documented budget; no broad live-world scan for common rows. |
-| Snapshot | Delta snapshot equals full rebuild; autotile cache invalidates on topology edits. |
+| Snapshot | Request-keyed Runtime frame publication plus full-snapshot presenter identity is covered; map viewport changed-cell/row/screen-region deltas and UI overlay section deltas equal full rebuild; future packed world-chunk/panel deltas, presenter-side consumption, and autotile cache invalidation remain target work. |
 | Diff | Same-tick conflicts resolve through documented stable priority and system order rules. |
 | Movement | One movement resolver owns active movement state and reports movement/path stats. |
 | Determinism | Replay hashes unchanged before/after optimization with the same seed/input stream. |

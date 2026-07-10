@@ -13,6 +13,9 @@ internal static class RuntimeSaveSnapshotDocumentBuilder
         return new RuntimeSaveSnapshotDocumentData(
             snapshot.Manifest,
             snapshot.WorldPayload,
+            snapshot.MiningJobs,
+            snapshot.TransportJobs,
+            snapshot.CraftJobs,
             snapshot.RngStreams.Select(ToDocumentRecord).ToArray(),
             snapshot.CommandReplayRecords.Select(ToDocumentRecord).ToArray(),
             snapshot.PendingCommandReplayRecords.Select(ToDocumentRecord).ToArray());

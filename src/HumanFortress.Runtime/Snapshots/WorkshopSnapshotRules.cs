@@ -1,4 +1,6 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Simulation.Items;
+using HumanFortress.Simulation.Placeables;
 
 namespace HumanFortress.Runtime.Snapshots;
 
@@ -25,22 +27,8 @@ internal static class WorkshopSnapshotRules
             definition.PlaceableProfile.Tags?.ToArray() ?? Array.Empty<string>());
     }
 
-    internal static bool MaterialMatchesRequirement(IEnumerable<string> itemTags, string requirement)
+    internal static bool MaterialMatchesRequirement(ItemDefinition definition, string requirement)
     {
-        var set = new HashSet<string>(itemTags, StringComparer.OrdinalIgnoreCase);
-        return requirement.ToLowerInvariant() switch
-        {
-            "block" => set.Contains("block")
-                || set.Contains("stone_block")
-                || set.Contains("brick")
-                || (set.Contains("stone") && set.Contains("block")),
-            "plank" => set.Contains("plank")
-                || set.Contains("wood_plank")
-                || (set.Contains("wood") && set.Contains("plank")),
-            "stone_block" => set.Contains("stone") && set.Contains("block"),
-            "wood_plank" => set.Contains("wood") && set.Contains("plank"),
-            "wood_log" => set.Contains("wood") && set.Contains("log"),
-            _ => set.Contains(requirement)
-        };
+        return ConstructionMaterialRequirement.MatchesItem(definition, requirement);
     }
 }

@@ -82,7 +82,7 @@ internal static partial class WorkshopSnapshotBuilder
 
             foreach (var requirement in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
             {
-                if (WorkshopSnapshotRules.MaterialMatchesRequirement(definition.Tags, requirement))
+                if (WorkshopSnapshotRules.MaterialMatchesRequirement(definition, requirement))
                 {
                     delivered[requirement] = delivered.GetValueOrDefault(requirement) + item.StackCount;
                     break;

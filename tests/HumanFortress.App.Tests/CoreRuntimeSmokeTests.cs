@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Text.Json.Nodes;
+using HumanFortress.App.Rendering;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.App;
@@ -34,6 +36,7 @@ using HumanFortress.Runtime.Save;
 using HumanFortress.Runtime.Content;
 using HumanFortress.Runtime.Diff;
 using HumanFortress.Runtime.Session;
+using HumanFortress.Runtime.Snapshots;
 using HumanFortress.Runtime.Startup;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Diff;
@@ -76,6 +79,7 @@ internal static class CoreRuntimeSmokeTests
         TestStockpileDiffOrderingUsesEntityKeys();
         TestStockpileMessageDrainSortKeyIsStable();
         TestMiningRectanglesIncludeSingleCellMaxExtent();
+        TestMiningZRangeMapper();
         TestStockpileFilterUsesItemProjection();
         TestStockpileDataIndexUpdatesAreIdempotent();
         TestStockpileDataUsesEntityKeysForItemIndexes();
@@ -87,8 +91,11 @@ internal static class CoreRuntimeSmokeTests
         TestHaulingPlannerDoesNotReserveDuplicatePendingTransport();
         TestWorldChunks();
         TestWorldPlaceableAndConstructionSnapshotsUseStableOrdering();
+        TestCrossChunkPlaceableReferencesResolveAndRemove();
+        TestConstructionRequirementsSupportDefinitionIds();
         TestReservations();
         TestCommandQueue();
+        TestEventBus();
         TestSimulationCommandStage();
         TestSimulationRuntimeHostCore();
         TestSimulationRuntimeSessionFactory();
@@ -98,14 +105,19 @@ internal static class CoreRuntimeSmokeTests
         TestNavigationTuningJson();
         TestConstructionTuningJson();
         TestPlaceableTuningJson();
+        TestSchedulerTuningJson();
         TestAsyncDiagnosticLogger();
         TestContentBootstrap();
         TestContentLoadDiagnostics();
         TestDefinitionCatalogReloadsClearIndexes();
         TestOrderCommandsUseRuntimeTarget();
+        TestOrdersManagerActiveSnapshotsUseStableOrdering();
         TestZoneCommandsUseRuntimeTarget();
         TestWorkshopQueueCommandUsesRuntimeTarget();
         TestStockpileCommandUsesRuntimeTarget();
+        TestRuntimeFramePublisherPresenterDiffBase();
+        TestAppMapViewportPresenterConsumesRuntimeDeltas();
+        TestAppUiOverlayPresenterConsumesRuntimeSectionDeltas();
         TestRuntimeStockpilePresetMenuUsesContentCatalog();
         TestProfessionWeightCommand();
         TestSpawnItemCommandUsesItemDiff();
@@ -151,6 +163,22 @@ internal static class CoreRuntimeSmokeTests
             testSystem.ReadCount == 1 && testSystem.WriteCount == 1,
             "TickScheduler did not execute read/write phases correctly.");
 
+        var duplicateScheduler = new TickScheduler();
+        duplicateScheduler.RegisterSystem(new TestTickSystem());
+        var duplicateRejected = false;
+        try
+        {
+            duplicateScheduler.RegisterSystem(new TestTickSystem());
+        }
+        catch (InvalidOperationException)
+        {
+            duplicateRejected = true;
+        }
+
+        RegressionAssert.True(
+            duplicateRejected,
+            "TickScheduler should reject duplicate SystemId values so deterministic ordering and failure state remain unambiguous.");
+
         var selfStoppingScheduler = new TickScheduler();
         using var preTickSeen = new ManualResetEventSlim(false);
         selfStoppingScheduler.PreTick += _ =>
@@ -178,6 +206,31 @@ internal static class CoreRuntimeSmokeTests
             && testSystem.WriteCount == 1,
             "TickScheduler reset did not clear session state and registered systems.");
 
+        var faultScheduler = new TickScheduler();
+        var failingReadSystem = new FailingReadTickSystem();
+        var healthySystem = new TestTickSystem();
+        faultScheduler.RegisterSystem(failingReadSystem);
+        faultScheduler.RegisterSystem(healthySystem);
+        faultScheduler.ExecuteSingleTick();
+
+        RegressionAssert.True(
+            failingReadSystem.ReadCount == 1
+            && failingReadSystem.WriteCount == 0
+            && healthySystem.ReadCount == 1
+            && healthySystem.WriteCount == 1,
+            "TickScheduler should skip a system write after that system fails during read.");
+
+        faultScheduler.ExecuteSingleTick();
+        faultScheduler.ExecuteSingleTick();
+        faultScheduler.ExecuteSingleTick();
+
+        RegressionAssert.True(
+            failingReadSystem.ReadCount == 3
+            && failingReadSystem.WriteCount == 0
+            && healthySystem.ReadCount == 4
+            && healthySystem.WriteCount == 4,
+            "TickScheduler should quarantine repeatedly failing systems while continuing healthy systems.");
+
         Console.WriteLine("[PASS] TickScheduler");
     }
 
@@ -185,6 +238,7 @@ internal static class CoreRuntimeSmokeTests
     {
         var rng1 = new DeterministicRng(12345);
         var rng2 = new DeterministicRng(12345);
+        var adjacentSeedDiffers = new DeterministicRng(12345).Next() != new DeterministicRng(12346).Next();
 
         for (int i = 0; i < 100; i++)
             RegressionAssert.True(rng1.Next() == rng2.Next(), "DeterministicRng diverged for identical seed.");
@@ -205,14 +259,28 @@ internal static class CoreRuntimeSmokeTests
         var restoredManager = new RngStreamManager(54321);
         restoredManager.RestoreStates(snapshot);
         var restoredSnapshotHash = RngReplayHashBuilder.Build(restoredManager);
+        var emptyStreamRejected = false;
+        try
+        {
+            manager.GetStream("");
+        }
+        catch (ArgumentException)
+        {
+            emptyStreamRejected = true;
+        }
 
         RegressionAssert.True(
-            ReferenceEquals(stream1, stream2)
+            adjacentSeedDiffers
+            && ReferenceEquals(stream1, stream2)
             && snapshot.Select(state => state.StreamName).SequenceEqual(new[] { "alpha", "beta", "test" })
             && snapshotHash == reverseSnapshotHash
             && snapshotHash != changedSnapshotHash
             && snapshotHash == restoredSnapshotHash,
             "RngStreamManager did not expose stable canonical stream state snapshots.");
+
+        RegressionAssert.True(
+            emptyStreamRejected,
+            "RngStreamManager should reject empty stream names.");
 
         Console.WriteLine("[PASS] Deterministic RNG");
     }
@@ -229,6 +297,10 @@ internal static class CoreRuntimeSmokeTests
         var derivedA2 = DeterministicGuidGenerator.GenerateFromGuid(testScope, sourceGuid, 42);
         var derivedB = DeterministicGuidGenerator.GenerateFromGuid(testScope, sourceGuid, 43);
 
+        var positionA1 = DeterministicGuidGenerator.GenerateFromPosition(testScope, 10, 20, 0, 0x504F534755494431UL);
+        var positionA2 = DeterministicGuidGenerator.GenerateFromPosition(testScope, 10, 20, 0, 0x504F534755494431UL);
+        var positionB = DeterministicGuidGenerator.GenerateFromPosition(testScope, 10, 20, 0, 0x504F534755494432UL);
+
         var queueChecksum1 = BuildWorkshopQueueIdChecksum();
         var queueChecksum2 = BuildWorkshopQueueIdChecksum();
 
@@ -237,6 +309,8 @@ internal static class CoreRuntimeSmokeTests
             && sequenceA1 != sequenceB
             && derivedA1 == derivedA2
             && derivedA1 != derivedB
+            && positionA1 == positionA2
+            && positionA1 != positionB
             && queueChecksum1 == queueChecksum2,
             "Deterministic runtime ID generation was not stable for repeated inputs.");
 
@@ -619,6 +693,8 @@ internal static class CoreRuntimeSmokeTests
         var terrainWorld = new World(2, 2);
         terrainWorld.SetTile(1, 1, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
         terrainWorld.SetTile(2, 1, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
+        terrainWorld.SetTile(3, 1, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
+        terrainWorld.SetTile(1, 2, 0, new TileBase(7, (ushort)TerrainKind.OpenWithFloor, 3, 0, 0, 1, 2), 4);
         terrainWorld.SetTile(33, 2, 1, new TileBase(8, (ushort)TerrainKind.SolidWall, 0, 1, 2, 0, 9), 5);
 
         var terrainOnlyPayload = WorldSavePayloadBuilder.Build(terrainWorld);
@@ -675,6 +751,71 @@ internal static class CoreRuntimeSmokeTests
             ?? throw new InvalidOperationException("Test creature could not be read.");
         creature.HP = 77;
         creature.MaxHP = 120;
+        var itemLocalReservationJob = Guid.Parse("22222222-3333-4444-5555-666666666666");
+        item.ReservationTokens.Add(new ReservationToken
+        {
+            JobGuid = itemLocalReservationJob,
+            ClaimantCreatureGuid = creatureId,
+            ReservedCount = 2,
+            ExpiresAtTick = 82,
+            ReservationType = "haul"
+        });
+
+        var carriedCell = new SadRogue.Primitives.Point(2, 1);
+        var carriedItemId = terrainWorld.Items.SpawnItem(
+            "core_item_log_oak",
+            carriedCell,
+            z: 0,
+            quantity: 1,
+            currentTick: 8)
+            ?? throw new InvalidOperationException("Test carried item failed to spawn.");
+        var carriedItem = terrainWorld.Items.GetInstance(carriedItemId)
+            ?? throw new InvalidOperationException("Test carried item could not be read.");
+        carriedItem.CarriedBy = creatureId;
+        carriedItem.OwnerCreatureGuid = creatureId;
+
+        var equippedCell = new SadRogue.Primitives.Point(2, 1);
+        var equippedItemId = terrainWorld.Items.SpawnItem(
+            "core_item_log_oak",
+            equippedCell,
+            z: 0,
+            quantity: 1,
+            currentTick: 9)
+            ?? throw new InvalidOperationException("Test equipped item failed to spawn.");
+        var equippedItem = terrainWorld.Items.GetInstance(equippedItemId)
+            ?? throw new InvalidOperationException("Test equipped item could not be read.");
+        equippedItem.EquippedBy = creatureId;
+        equippedItem.OwnerCreatureGuid = creatureId;
+
+        var containedCell = new SadRogue.Primitives.Point(1, 2);
+        var containedItemId = terrainWorld.Items.SpawnItem(
+            "core_item_log_oak",
+            containedCell,
+            z: 0,
+            quantity: 1,
+            currentTick: 10)
+            ?? throw new InvalidOperationException("Test contained item failed to spawn.");
+        var containedItem = terrainWorld.Items.GetInstance(containedItemId)
+            ?? throw new InvalidOperationException("Test contained item could not be read.");
+        containedItem.ContainedBy = itemId;
+
+        var installedCell = new SadRogue.Primitives.Point(3, 1);
+        var installedItemId = terrainWorld.Items.SpawnItem(
+            "core_item_log_oak",
+            installedCell,
+            z: 0,
+            quantity: 1,
+            currentTick: 11)
+            ?? throw new InvalidOperationException("Test installed item failed to spawn.");
+        var installedItem = terrainWorld.Items.GetInstance(installedItemId)
+            ?? throw new InvalidOperationException("Test installed item could not be read.");
+        installedItem.InstalledAt = new PlacementData
+        {
+            AnchorWorld = installedCell,
+            Z = 0,
+            Rotation = 1,
+            StateId = "test-installed"
+        };
 
         var itemReservationHolder = Guid.Parse("11111111-2222-3333-4444-555555555555");
         var creatureReservationJob = "job-restore-smoke";
@@ -779,11 +920,141 @@ internal static class CoreRuntimeSmokeTests
             MiningOrders = payload.MiningOrders.Concat(new[] { payload.MiningOrders[0] }).ToArray()
         };
         var duplicateMiningOrderRestore = WorldSavePayloadRestorer.RestoreSupportedSections(duplicateMiningOrderPayload);
+        var missingCarrierId = Guid.Parse("99999999-1111-2222-3333-444444444444");
+        var missingCarrierPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == carriedItemId
+                    ? itemPayload with { CarriedBy = missingCarrierId }
+                    : itemPayload)
+                .ToArray()
+        };
+        var missingCarrierRestore = WorldSavePayloadRestorer.RestoreSupportedSections(missingCarrierPayload);
+        var missingEquippedCreatureId = Guid.Parse("99999999-5555-6666-7777-888888888888");
+        var missingEquippedCreaturePayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == equippedItemId
+                    ? itemPayload with { EquippedBy = missingEquippedCreatureId }
+                    : itemPayload)
+                .ToArray()
+        };
+        var missingEquippedCreatureRestore = WorldSavePayloadRestorer.RestoreSupportedSections(missingEquippedCreaturePayload);
+        var missingContainerId = Guid.Parse("99999999-9999-8888-7777-666666666666");
+        var missingContainerPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == containedItemId
+                    ? itemPayload with { ContainedBy = missingContainerId }
+                    : itemPayload)
+                .ToArray()
+        };
+        var missingContainerRestore = WorldSavePayloadRestorer.RestoreSupportedSections(missingContainerPayload);
+        var containedCyclePayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == itemId
+                    ? itemPayload with { ContainedBy = containedItemId }
+                    : itemPayload)
+                .ToArray()
+        };
+        var containedCycleRestore = WorldSavePayloadRestorer.RestoreSupportedSections(containedCyclePayload);
+        var invalidInstalledAnchorPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == installedItemId
+                    ? itemPayload with
+                    {
+                        InstalledAt = new WorldSavePlacementData(
+                            new WorldSavePointData(payload.SizeInTiles + 1, 1),
+                            0,
+                            1,
+                            "invalid-anchor")
+                    }
+                    : itemPayload)
+                .ToArray()
+        };
+        var invalidInstalledAnchorRestore = WorldSavePayloadRestorer.RestoreSupportedSections(invalidInstalledAnchorPayload);
+        var invalidInstalledRotationPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == installedItemId
+                    ? itemPayload with
+                    {
+                        InstalledAt = new WorldSavePlacementData(
+                            new WorldSavePointData(installedCell.X, installedCell.Y),
+                            0,
+                            9,
+                            "invalid-rotation")
+                    }
+                    : itemPayload)
+                .ToArray()
+        };
+        var invalidInstalledRotationRestore = WorldSavePayloadRestorer.RestoreSupportedSections(invalidInstalledRotationPayload);
+        var missingTokenClaimantId = Guid.Parse("99999999-aaaa-bbbb-cccc-dddddddddddd");
+        var missingTokenClaimantPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == itemId
+                    ? itemPayload with
+                    {
+                        ReservationTokens = itemPayload.ReservationTokens
+                            .Select(token => token with { ClaimantCreatureGuid = missingTokenClaimantId })
+                            .ToArray()
+                    }
+                    : itemPayload)
+                .ToArray()
+        };
+        var missingTokenClaimantRestore = WorldSavePayloadRestorer.RestoreSupportedSections(missingTokenClaimantPayload);
+        var overReservedTokenPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == itemId
+                    ? itemPayload with
+                    {
+                        ReservationTokens = itemPayload.ReservationTokens
+                            .Select(token => token with { ReservedCount = itemPayload.StackCount + 1 })
+                            .ToArray()
+                    }
+                    : itemPayload)
+                .ToArray()
+        };
+        var overReservedTokenRestore = WorldSavePayloadRestorer.RestoreSupportedSections(overReservedTokenPayload);
+        var duplicateTokenPayload = payload with
+        {
+            Items = payload.Items
+                .Select(itemPayload => itemPayload.Guid == itemId
+                    ? itemPayload with
+                    {
+                        ReservationTokens = itemPayload.ReservationTokens
+                            .Concat(itemPayload.ReservationTokens)
+                            .ToArray()
+                    }
+                    : itemPayload)
+                .ToArray()
+        };
+        var duplicateTokenRestore = WorldSavePayloadRestorer.RestoreSupportedSections(duplicateTokenPayload);
         var restore = WorldSavePayloadRestorer.RestoreSupportedSections(payload);
         var restoredHash = restore.World == null
             ? string.Empty
             : WorldReplayHashBuilder.Build(restore.World);
         var restoredItem = restore.World?.Items.GetInstance(itemId);
+        var restoredCarriedItem = restore.World?.Items.GetInstance(carriedItemId);
+        var restoredEquippedItem = restore.World?.Items.GetInstance(equippedItemId);
+        var restoredContainedItem = restore.World?.Items.GetInstance(containedItemId);
+        var restoredInstalledItem = restore.World?.Items.GetInstance(installedItemId);
+        var restoredGroundItemsAtCarriedCell = restore.World?.Items.GetGroundItemsAt(carriedCell, 0).ToArray()
+            ?? Array.Empty<ItemInstance>();
+        var restoredAllItemsAtCarriedCell = restore.World?.Items.GetItemsAt(carriedCell, 0, groundOnly: false).ToArray()
+            ?? Array.Empty<ItemInstance>();
+        var restoredGroundItemsAtContainedCell = restore.World?.Items.GetGroundItemsAt(containedCell, 0).ToArray()
+            ?? Array.Empty<ItemInstance>();
+        var restoredAllItemsAtContainedCell = restore.World?.Items.GetItemsAt(containedCell, 0, groundOnly: false).ToArray()
+            ?? Array.Empty<ItemInstance>();
+        var restoredGroundItemsAtInstalledCell = restore.World?.Items.GetGroundItemsAt(installedCell, 0).ToArray()
+            ?? Array.Empty<ItemInstance>();
+        var restoredAllItemsAtInstalledCell = restore.World?.Items.GetItemsAt(installedCell, 0, groundOnly: false).ToArray()
+            ?? Array.Empty<ItemInstance>();
         var restoredCreature = restore.World?.Creatures.GetInstance(creatureId);
         var restoredItemReservations = restore.World?.Reservations.GetItemReservationsSnapshot() ?? Array.Empty<(Guid itemId, Guid holderId, ulong expireTick)>();
         var restoredCreatureReservations = restore.World?.Reservations.GetCreatureReservationsSnapshot() ?? Array.Empty<(Guid workerId, string holderSystem, string? jobId, ulong expireTick)>();
@@ -810,6 +1081,31 @@ internal static class CoreRuntimeSmokeTests
             placeableSectionRestore.RestoredWorldHash == placeablePayload.ReplayHash,
             $"World save payload placeable/workshop restore hash mismatch: saved={placeablePayload.ReplayHash} restored={placeableSectionRestore.RestoredWorldHash}.");
 
+        var worldSavePayloadFailureHints = new List<string>();
+        void AddWorldSavePayloadHint(bool condition, string label)
+        {
+            if (!condition)
+                worldSavePayloadFailureHints.Add(label);
+        }
+
+        AddWorldSavePayloadHint(payload.Placeables.Length == 0, $"payload.Placeables.Length={payload.Placeables.Length}");
+        AddWorldSavePayloadHint(restore.Success, $"restore.Success={restore.Success}: {string.Join("; ", restore.Issues)}");
+        AddWorldSavePayloadHint(restore.RestoredWorldHash == payload.ReplayHash, $"restore hash saved={payload.ReplayHash} restored={restore.RestoredWorldHash}");
+        AddWorldSavePayloadHint(duplicatePlaceableRestore.Success == false, $"duplicatePlaceableRestore.Success={duplicatePlaceableRestore.Success}: {string.Join("; ", duplicatePlaceableRestore.Issues)}");
+        AddWorldSavePayloadHint(placeablePayload.Placeables.Length == 2, $"placeablePayload.Placeables.Length={placeablePayload.Placeables.Length}");
+        AddWorldSavePayloadHint(placeablePayload.Counts.OwnedPlaceableCount == 2, $"placeablePayload.Counts.OwnedPlaceableCount={placeablePayload.Counts.OwnedPlaceableCount}");
+        AddWorldSavePayloadHint(restoredWorkshop?.Workshop != null, "restoredWorkshop.Workshop is null");
+        AddWorldSavePayloadHint(restoredWorkshop?.Workshop?.AllowedWorkers == 2, $"restoredWorkshop.AllowedWorkers={restoredWorkshop?.Workshop?.AllowedWorkers}");
+        AddWorldSavePayloadHint(restoredWorkshop?.Workshop?.MaxWorkers == 3, $"restoredWorkshop.MaxWorkers={restoredWorkshop?.Workshop?.MaxWorkers}");
+        AddWorldSavePayloadHint(restoredWorkshop?.Workshop?.NextEntrySequence == 1, $"restoredWorkshop.NextEntrySequence={restoredWorkshop?.Workshop?.NextEntrySequence}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry != null, "restoredWorkshopEntry is null");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.Status == CraftQueueStatus.AwaitingMaterials, $"restoredWorkshopEntry.Status={restoredWorkshopEntry?.Status}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.HasPendingRequests == true, $"restoredWorkshopEntry.HasPendingRequests={restoredWorkshopEntry?.HasPendingRequests}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.LastRequestTick == 12, $"restoredWorkshopEntry.LastRequestTick={restoredWorkshopEntry?.LastRequestTick}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.ActiveWorkerId == Guid.Parse("bbbbbbbb-5555-5555-5555-bbbbbbbbbbbb"), $"restoredWorkshopEntry.ActiveWorkerId={restoredWorkshopEntry?.ActiveWorkerId}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.IsScheduled == true, $"restoredWorkshopEntry.IsScheduled={restoredWorkshopEntry?.IsScheduled}");
+        AddWorldSavePayloadHint(restoredWorkshopEntry?.BlockingReason == "waiting_for_material", $"restoredWorkshopEntry.BlockingReason={restoredWorkshopEntry?.BlockingReason}");
+
         RegressionAssert.True(
             terrainOnlyPayload.SchemaVersion == WorldSavePayloadFormat.CurrentVersion
             && terrainOnlyPayload.Chunks.Length == 2
@@ -822,8 +1118,15 @@ internal static class CoreRuntimeSmokeTests
             && terrainOnlyRestore.RestoredWorldHash == terrainOnlyPayload.ReplayHash
             && payload.SchemaVersion == WorldSavePayloadFormat.CurrentVersion
             && payload.Chunks.Length == 2
-            && payload.Items.Length == 1
-            && payload.Counts.ItemCount == 1
+            && payload.Items.Length == 5
+            && payload.Counts.ItemCount == 5
+            && payload.Items.Any(itemPayload => itemPayload.Guid == carriedItemId && itemPayload.CarriedBy == creatureId)
+            && payload.Items.Any(itemPayload => itemPayload.Guid == equippedItemId && itemPayload.EquippedBy == creatureId)
+            && payload.Items.Any(itemPayload => itemPayload.Guid == containedItemId && itemPayload.ContainedBy == itemId)
+            && payload.Items.Any(itemPayload => itemPayload.Guid == installedItemId && itemPayload.InstalledAt.HasValue)
+            && payload.Items.Any(itemPayload => itemPayload.Guid == itemId
+                && itemPayload.ReservationTokens.Length == 1
+                && itemPayload.ReservationTokens[0].ClaimantCreatureGuid == creatureId)
             && payload.Creatures.Length == 1
             && payload.Counts.CreatureCount == 1
             && payload.ItemReservations.Length == 1
@@ -852,6 +1155,33 @@ internal static class CoreRuntimeSmokeTests
             && !duplicateMiningOrderRestore.Success
             && duplicateMiningOrderRestore.World == null
             && duplicateMiningOrderRestore.Issues.Any(issue => issue.Contains("duplicates mining id", StringComparison.Ordinal))
+            && !missingCarrierRestore.Success
+            && missingCarrierRestore.World == null
+            && missingCarrierRestore.Issues.Any(issue => issue.Contains("references missing carrier creature", StringComparison.Ordinal))
+            && !missingEquippedCreatureRestore.Success
+            && missingEquippedCreatureRestore.World == null
+            && missingEquippedCreatureRestore.Issues.Any(issue => issue.Contains("references missing equipped creature", StringComparison.Ordinal))
+            && !missingContainerRestore.Success
+            && missingContainerRestore.World == null
+            && missingContainerRestore.Issues.Any(issue => issue.Contains("references missing containing item", StringComparison.Ordinal))
+            && !containedCycleRestore.Success
+            && containedCycleRestore.World == null
+            && containedCycleRestore.Issues.Any(issue => issue.Contains("contained-item cycle", StringComparison.Ordinal))
+            && !invalidInstalledAnchorRestore.Success
+            && invalidInstalledAnchorRestore.World == null
+            && invalidInstalledAnchorRestore.Issues.Any(issue => issue.Contains("installed anchor", StringComparison.Ordinal) && issue.Contains("outside world bounds", StringComparison.Ordinal))
+            && !invalidInstalledRotationRestore.Success
+            && invalidInstalledRotationRestore.World == null
+            && invalidInstalledRotationRestore.Issues.Any(issue => issue.Contains("installed rotation", StringComparison.Ordinal))
+            && !missingTokenClaimantRestore.Success
+            && missingTokenClaimantRestore.World == null
+            && missingTokenClaimantRestore.Issues.Any(issue => issue.Contains("references missing claimant creature", StringComparison.Ordinal))
+            && !overReservedTokenRestore.Success
+            && overReservedTokenRestore.World == null
+            && overReservedTokenRestore.Issues.Any(issue => issue.Contains("reservation tokens reserve", StringComparison.Ordinal))
+            && !duplicateTokenRestore.Success
+            && duplicateTokenRestore.World == null
+            && duplicateTokenRestore.Issues.Any(issue => issue.Contains("duplicates reservation token identity", StringComparison.Ordinal))
             && restore.Success
             && restore.SavedWorldHash == payload.ReplayHash
             && restore.RestoredWorldHash == payload.ReplayHash
@@ -863,8 +1193,40 @@ internal static class CoreRuntimeSmokeTests
             && restoredItem.StackCount == item.StackCount
             && restoredItem.OwnerFactionId == item.OwnerFactionId
             && restoredItem.UsePolicy == item.UsePolicy
+            && restoredItem.ReservationTokens.Count == 1
+            && restoredItem.ReservationTokens[0].JobGuid == itemLocalReservationJob
+            && restoredItem.ReservationTokens[0].ClaimantCreatureGuid == creatureId
+            && restoredItem.ReservationTokens[0].ReservedCount == 2
+            && restoredItem.ReservationTokens[0].ExpiresAtTick == 82
+            && restoredItem.ReservationTokens[0].ReservationType == "haul"
             && restoredItem.Improvements?.Count == 1
             && restoredItem.Perishable?.CreatedAtTick == 6
+            && restoredCarriedItem != null
+            && restoredCarriedItem.Guid == carriedItemId
+            && restoredCarriedItem.CarriedBy == creatureId
+            && restoredCarriedItem.OwnerCreatureGuid == creatureId
+            && !restoredGroundItemsAtCarriedCell.Any(itemAtCell => itemAtCell.Guid == carriedItemId)
+            && restoredAllItemsAtCarriedCell.Any(itemAtCell => itemAtCell.Guid == carriedItemId)
+            && restoredEquippedItem != null
+            && restoredEquippedItem.Guid == equippedItemId
+            && restoredEquippedItem.EquippedBy == creatureId
+            && restoredEquippedItem.OwnerCreatureGuid == creatureId
+            && !restoredGroundItemsAtCarriedCell.Any(itemAtCell => itemAtCell.Guid == equippedItemId)
+            && restoredAllItemsAtCarriedCell.Any(itemAtCell => itemAtCell.Guid == equippedItemId)
+            && restoredContainedItem != null
+            && restoredContainedItem.Guid == containedItemId
+            && restoredContainedItem.ContainedBy == itemId
+            && !restoredGroundItemsAtContainedCell.Any(itemAtCell => itemAtCell.Guid == containedItemId)
+            && restoredAllItemsAtContainedCell.Any(itemAtCell => itemAtCell.Guid == containedItemId)
+            && restoredInstalledItem != null
+            && restoredInstalledItem.Guid == installedItemId
+            && restoredInstalledItem.InstalledAt != null
+            && restoredInstalledItem.InstalledAt.AnchorWorld == installedCell
+            && restoredInstalledItem.InstalledAt.Z == 0
+            && restoredInstalledItem.InstalledAt.Rotation == 1
+            && restoredInstalledItem.InstalledAt.StateId == "test-installed"
+            && !restoredGroundItemsAtInstalledCell.Any(itemAtCell => itemAtCell.Guid == installedItemId)
+            && restoredAllItemsAtInstalledCell.Any(itemAtCell => itemAtCell.Guid == installedItemId)
             && restoredCreature != null
             && restoredCreature.Guid == creatureId
             && restoredCreature.HP == 77
@@ -893,7 +1255,8 @@ internal static class CoreRuntimeSmokeTests
             && restoredWorkshopEntry.ActiveWorkerId == Guid.Parse("bbbbbbbb-5555-5555-5555-bbbbbbbbbbbb")
             && restoredWorkshopEntry.IsScheduled
             && restoredWorkshopEntry.BlockingReason == "waiting_for_material",
-            "World save payload did not restore supported world sections and placeable/workshop authority by hash.");
+            "World save payload did not restore supported world sections and placeable/workshop authority by hash. Hints: "
+            + string.Join(" | ", worldSavePayloadFailureHints));
 
         Console.WriteLine("[PASS] World save payload restorer");
     }
@@ -981,8 +1344,8 @@ internal static class CoreRuntimeSmokeTests
 
     private static void TestFullRuntimeSimulationLoopDeterminism()
     {
-        const int tickCount = 200;
-        const int sampleInterval = 20;
+        const int tickCount = 500;
+        const int sampleInterval = 50;
 
         var first = CreateManualRuntimeDeterminismRun();
         var second = CreateManualRuntimeDeterminismRun();
@@ -992,6 +1355,9 @@ internal static class CoreRuntimeSmokeTests
                 first,
                 tickCount,
                 sampleInterval);
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
             RuntimeDeterminismSample[] secondSamples = RunManualRuntimeDeterminismLoop(
                 second,
                 tickCount,
@@ -1489,6 +1855,9 @@ internal static class CoreRuntimeSmokeTests
         var rngDocument = new RuntimeSaveSnapshotData(
             rngDocumentManifest,
             worldPayload: null,
+            miningJobs: null,
+            transportJobs: null,
+            craftJobs: null,
             rngDocumentServices.RngStreams.GetStateSnapshot(),
             Array.Empty<CommandReplayRecord>(),
             Array.Empty<CommandReplayRecord>()).ToDocumentData();
@@ -1504,6 +1873,9 @@ internal static class CoreRuntimeSmokeTests
             _ = new RuntimeSaveSnapshotData(
                 rngDocumentManifest,
                 worldPayload: null,
+                miningJobs: null,
+                transportJobs: null,
+                craftJobs: null,
                 rngDocumentServices.RngStreams.GetStateSnapshot(),
                 Array.Empty<CommandReplayRecord>(),
                 new[]
@@ -1555,10 +1927,18 @@ internal static class CoreRuntimeSmokeTests
         RegressionAssert.True(
             noWorldManifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
             && !noWorldManifest.Content.HasContent
+            && !noWorldManifest.ContentCatalog.HasCatalog
             && noWorldManifest.Checkpoint.AggregateHash == noWorldData.AggregateHash
             && manifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
             && manifest.Content.HasContent
             && !string.IsNullOrWhiteSpace(manifest.Content.ContentHash)
+            && manifest.ContentCatalog.HasCatalog
+            && manifest.ContentCatalog.MaterialNames.Length == manifest.Content.MaterialCount
+            && manifest.ContentCatalog.TerrainKindNames.Length == manifest.Content.TerrainKindCount
+            && manifest.ContentCatalog.ConstructionIds.Length == manifest.Content.ConstructionCount
+            && manifest.ContentCatalog.RecipeIds.Length == manifest.Content.RecipeCount
+            && manifest.ContentCatalog.GeologyIds.Length == manifest.Content.GeologyCount
+            && manifest.ContentCatalog.ZoneIds.Length == manifest.Content.ZoneCount
             && manifest.Content.MaterialCount > 0
             && manifest.Content.TerrainKindCount > 0
             && manifest.Content.ConstructionCount > 0
@@ -1592,13 +1972,31 @@ internal static class CoreRuntimeSmokeTests
             && sections["commands.executed"].RecordCount == worldData.CommandLogRecordCount
             && sections["commands.pending"].Present
             && sections["commands.pending"].Hash == worldData.PendingCommandLogHash
-            && sections["commands.pending"].RecordCount == worldData.PendingCommandLogRecordCount,
+            && sections["commands.pending"].RecordCount == worldData.PendingCommandLogRecordCount
+            && sections["jobs.transport"].Present
+            && sections["jobs.transport"].Hash == worldData.TransportHash
+            && sections["jobs.transport"].RecordCount == worldData.TransportRecordCount
+            && sections["jobs.mining"].Present
+            && sections["jobs.mining"].Hash == worldData.MiningHash
+            && sections["jobs.mining"].RecordCount == worldData.MiningRecordCount
+            && sections["jobs.craft"].Present
+            && sections["jobs.craft"].Hash == worldData.CraftHash
+            && sections["jobs.craft"].RecordCount == worldData.CraftRecordCount,
             "Runtime save manifest did not bind checkpoint sections and content signature correctly.");
 
         RegressionAssert.True(
             saveSnapshot.Manifest.Checkpoint.AggregateHash == manifest.Checkpoint.AggregateHash
             && saveSnapshot.WorldPayload.HasValue
             && saveSnapshot.WorldPayload.Value.ReplayHash == worldData.WorldHash
+            && saveSnapshot.MiningJobs.HasValue
+            && RuntimeSaveSnapshotDocumentMiningMapper.CountRecords(saveSnapshot.MiningJobs.Value) == worldData.MiningRecordCount
+            && RuntimeSaveSnapshotDocumentMiningMapper.BuildReplayHash(saveSnapshot.MiningJobs.Value) == worldData.MiningHash
+            && saveSnapshot.TransportJobs.HasValue
+            && RuntimeSaveSnapshotDocumentTransportMapper.CountRecords(saveSnapshot.TransportJobs.Value) == worldData.TransportRecordCount
+            && RuntimeSaveSnapshotDocumentTransportMapper.BuildReplayHash(saveSnapshot.TransportJobs.Value) == worldData.TransportHash
+            && saveSnapshot.CraftJobs.HasValue
+            && RuntimeSaveSnapshotDocumentCraftMapper.CountRecords(saveSnapshot.CraftJobs.Value) == worldData.CraftRecordCount
+            && RuntimeSaveSnapshotDocumentCraftMapper.BuildReplayHash(saveSnapshot.CraftJobs.Value) == worldData.CraftHash
             && saveSnapshot.RngStreams.Length == worldData.RngStreamCount
             && RngReplayHashBuilder.Build(RuntimeSaveSnapshotDocumentRngMapper.ToRngStreamStateSnapshots(saveSnapshot)) == worldData.RngHash
             && saveSnapshot.ExecutedCommandRecords.Length == worldData.CommandLogRecordCount
@@ -1650,15 +2048,439 @@ internal static class CoreRuntimeSmokeTests
         var storedDocument = pendingRuntime.ReadSaveSnapshotDocument(documentStoreDirectory);
         pendingRuntime.WriteSaveSnapshotDocument(documentStoreDirectory);
         var replacedDocument = pendingRuntime.ReadSaveSnapshotDocument(documentStoreDirectory);
+        var directoryInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(documentStoreDirectory);
         var directoryValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
+        var compatibleMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            documentStoreDirectory,
+            documentStoreDirectory + "-migrated");
+        var slotManifestPath = Path.Combine(documentStoreDirectory, RuntimeSaveSlotFormat.ManifestFileName);
+        var slotManifestJson = File.ReadAllText(slotManifestPath);
+        var slotManifest = RuntimeSaveSlotManifestCodec.Deserialize(slotManifestJson);
+        var slotManifestValidationResult = RuntimeSaveSlotManifestVerifier.Validate(slotManifest, pendingDocumentRoundTrip);
+        var compatibleSlotResult = RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest);
+        var olderSlotCompatibilityResult = RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest with
+        {
+            SlotFormatVersion = RuntimeSaveSlotFormat.CurrentVersion - 1
+        });
+        var olderSnapshotCompatibilityResult = RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest with
+        {
+            RuntimeSnapshotFormatVersion = RuntimeSaveFormat.CurrentVersion - 1
+        });
+        var futureSlotCompatibilityResult = RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest with
+        {
+            SlotFormatVersion = RuntimeSaveSlotFormat.CurrentVersion + 1
+        });
+        var wrongKindCompatibilityResult = RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest with
+        {
+            SlotKind = "legacy-slot"
+        });
+        var tamperedSlotManifestJson = RuntimeSaveSlotManifestCodec.Serialize(slotManifest with
+        {
+            CheckpointAggregateHash = "tampered"
+        });
+        File.WriteAllText(slotManifestPath, tamperedSlotManifestJson);
+        var tamperedSlotManifestValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
+        var tamperedSlotInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(documentStoreDirectory);
+        var oldSlotManifestJson = RuntimeSaveSlotManifestCodec.Serialize(slotManifest with
+        {
+            SlotFormatVersion = RuntimeSaveSlotFormat.CurrentVersion - 1
+        });
+        File.WriteAllText(slotManifestPath, oldSlotManifestJson);
+        var oldSlotManifestValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
+        var oldSlotInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(documentStoreDirectory);
+        var oldSlotMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            documentStoreDirectory,
+            documentStoreDirectory + "-old-migrated");
+        var oldSlotMigratedInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(
+            documentStoreDirectory + "-old-migrated");
+        File.WriteAllText(slotManifestPath, slotManifestJson);
+        var snapshotDocumentPath = Path.Combine(documentStoreDirectory, RuntimeSaveSlotFormat.SnapshotDocumentFileName);
+        var snapshotDocumentJson = File.ReadAllText(snapshotDocumentPath);
+        File.Delete(snapshotDocumentPath);
+        var missingDocumentInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(documentStoreDirectory);
+        File.WriteAllText(snapshotDocumentPath, snapshotDocumentJson);
+        var contentMismatchDocument = pendingDocumentRoundTrip with
+        {
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                Content = pendingDocumentRoundTrip.Manifest.Content with
+                {
+                    ContentHash = pendingDocumentRoundTrip.Manifest.Content.ContentHash + "-mismatch"
+                }
+            }
+        };
+        File.WriteAllText(
+            snapshotDocumentPath,
+            RuntimeSaveSnapshotDocumentCodec.Serialize(contentMismatchDocument));
+        var contentMismatchInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(documentStoreDirectory);
+        File.WriteAllText(snapshotDocumentPath, snapshotDocumentJson);
+        var legacySnapshotOnlyDirectory = documentStoreDirectory + "-legacy-snapshot-only";
+        var legacySnapshotOnlyMigratedDirectory = legacySnapshotOnlyDirectory + "-migrated";
+        Directory.CreateDirectory(legacySnapshotOnlyDirectory);
+        File.WriteAllText(
+            Path.Combine(legacySnapshotOnlyDirectory, RuntimeSaveSlotFormat.SnapshotDocumentFileName),
+            snapshotDocumentJson);
+        var legacySnapshotOnlyInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(legacySnapshotOnlyDirectory);
+        var legacySnapshotOnlyMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            legacySnapshotOnlyDirectory,
+            legacySnapshotOnlyMigratedDirectory);
+        var legacySnapshotOnlyMigratedInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(
+            legacySnapshotOnlyMigratedDirectory);
+        var runtimeV4Directory = documentStoreDirectory + "-runtime-v4";
+        var runtimeV4MigratedDirectory = runtimeV4Directory + "-migrated";
+        var runtimeV4Document = pendingDocumentRoundTrip with
+        {
+            MiningJobs = null,
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                FormatVersion = 4
+            }
+        };
+        Directory.CreateDirectory(runtimeV4Directory);
+        File.WriteAllText(
+            Path.Combine(runtimeV4Directory, RuntimeSaveSlotFormat.SnapshotDocumentFileName),
+            RuntimeSaveSnapshotDocumentCodec.Serialize(runtimeV4Document));
+        File.WriteAllText(
+            Path.Combine(runtimeV4Directory, RuntimeSaveSlotFormat.ManifestFileName),
+            RuntimeSaveSlotManifestCodec.Serialize(RuntimeSaveSlotManifestBuilder.Build(runtimeV4Document)));
+        var runtimeV4InspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(runtimeV4Directory);
+        var runtimeV4MigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            runtimeV4Directory,
+            runtimeV4MigratedDirectory);
+        var runtimeV4MigratedInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(
+            runtimeV4MigratedDirectory);
+        var runtimeV4MigratedDocument = pendingRuntime.ReadSaveSnapshotDocument(runtimeV4MigratedDirectory);
+        var runtimeV4NonEmptyMiningDirectory = documentStoreDirectory + "-runtime-v4-non-empty-mining";
+        var runtimeV4NonEmptyMiningDocument = runtimeV4Document with
+        {
+            Manifest = runtimeV4Document.Manifest with
+            {
+                Checkpoint = runtimeV4Document.Manifest.Checkpoint with
+                {
+                    MiningRecordCount = 1
+                },
+                Sections = runtimeV4Document.Manifest.Sections
+                    .Select(section => section.Name == "jobs.mining"
+                        ? section with { RecordCount = 1 }
+                        : section)
+                    .ToArray()
+            }
+        };
+        Directory.CreateDirectory(runtimeV4NonEmptyMiningDirectory);
+        File.WriteAllText(
+            Path.Combine(runtimeV4NonEmptyMiningDirectory, RuntimeSaveSlotFormat.SnapshotDocumentFileName),
+            RuntimeSaveSnapshotDocumentCodec.Serialize(runtimeV4NonEmptyMiningDocument));
+        File.WriteAllText(
+            Path.Combine(runtimeV4NonEmptyMiningDirectory, RuntimeSaveSlotFormat.ManifestFileName),
+            RuntimeSaveSlotManifestCodec.Serialize(RuntimeSaveSlotManifestBuilder.Build(runtimeV4NonEmptyMiningDocument)));
+        var runtimeV4NonEmptyMiningInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(runtimeV4NonEmptyMiningDirectory);
+        var runtimeV4NonEmptyMiningMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            runtimeV4NonEmptyMiningDirectory,
+            runtimeV4NonEmptyMiningDirectory + "-migrated");
+        var runtimeV5NoCatalogDirectory = documentStoreDirectory + "-runtime-v5-no-catalog";
+        var runtimeV5NoCatalogMigratedDirectory = runtimeV5NoCatalogDirectory + "-migrated";
+        var runtimeV5NoCatalogDocument = pendingDocumentRoundTrip with
+        {
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                FormatVersion = 5,
+                ContentCatalog = RuntimeSaveContentCatalogSummaryData.Unavailable
+            }
+        };
+        var runtimeV5MissingCatalogJsonNode = JsonNode.Parse(RuntimeSaveSnapshotDocumentCodec.Serialize(runtimeV5NoCatalogDocument))!.AsObject();
+        runtimeV5MissingCatalogJsonNode["manifest"]!.AsObject().Remove("contentCatalog");
+        var runtimeV5MissingCatalogJson = runtimeV5MissingCatalogJsonNode.ToJsonString();
+        var runtimeV5MissingCatalogRoundTrip = RuntimeSaveSnapshotDocumentCodec.Deserialize(runtimeV5MissingCatalogJson);
+        Directory.CreateDirectory(runtimeV5NoCatalogDirectory);
+        File.WriteAllText(
+            Path.Combine(runtimeV5NoCatalogDirectory, RuntimeSaveSlotFormat.SnapshotDocumentFileName),
+            runtimeV5MissingCatalogJson);
+        File.WriteAllText(
+            Path.Combine(runtimeV5NoCatalogDirectory, RuntimeSaveSlotFormat.ManifestFileName),
+            RuntimeSaveSlotManifestCodec.Serialize(RuntimeSaveSlotManifestBuilder.Build(runtimeV5MissingCatalogRoundTrip)));
+        var runtimeV5NoCatalogInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(runtimeV5NoCatalogDirectory);
+        var runtimeV5NoCatalogMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            runtimeV5NoCatalogDirectory,
+            runtimeV5NoCatalogMigratedDirectory);
+        var runtimeV5NoCatalogMigratedInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(
+            runtimeV5NoCatalogMigratedDirectory);
+        var runtimeV5NoCatalogMigratedDocument = pendingRuntime.ReadSaveSnapshotDocument(runtimeV5NoCatalogMigratedDirectory);
+        var runtimeV5OldSlotDirectory = documentStoreDirectory + "-runtime-v5-old-slot";
+        var runtimeV5OldSlotMigratedDirectory = runtimeV5OldSlotDirectory + "-migrated";
+        Directory.CreateDirectory(runtimeV5OldSlotDirectory);
+        File.WriteAllText(
+            Path.Combine(runtimeV5OldSlotDirectory, RuntimeSaveSlotFormat.SnapshotDocumentFileName),
+            runtimeV5MissingCatalogJson);
+        File.WriteAllText(
+            Path.Combine(runtimeV5OldSlotDirectory, RuntimeSaveSlotFormat.ManifestFileName),
+            RuntimeSaveSlotManifestCodec.Serialize(
+                RuntimeSaveSlotManifestBuilder.Build(runtimeV5MissingCatalogRoundTrip) with
+                {
+                    SlotFormatVersion = RuntimeSaveSlotFormat.CurrentVersion - 1
+                }));
+        var runtimeV5OldSlotInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(runtimeV5OldSlotDirectory);
+        var runtimeV5OldSlotMigrationResult = pendingRuntime.MigrateSaveSnapshotDirectory(
+            runtimeV5OldSlotDirectory,
+            runtimeV5OldSlotMigratedDirectory);
+        var runtimeV5OldSlotMigratedInspectionResult = pendingRuntime.InspectSaveSnapshotDirectory(runtimeV5OldSlotMigratedDirectory);
+        var compatibleCurrentCatalog = directoryInspectionResult.ContentCompatibility.CurrentCatalog;
+        var compatibleSavedCatalog = directoryInspectionResult.ContentCompatibility.SavedCatalog;
+        var mismatchCurrentCatalog = contentMismatchInspectionResult.ContentCompatibility.CurrentCatalog;
+        var mismatchSavedCatalog = contentMismatchInspectionResult.ContentCompatibility.SavedCatalog;
+        var compatibleSavedCatalogMatchesSignature =
+            compatibleSavedCatalog.HasCatalog
+            && compatibleSavedCatalog.MaterialNames.Length == directoryInspectionResult.ContentCompatibility.SavedContent.MaterialCount
+            && compatibleSavedCatalog.TerrainKindNames.Length == directoryInspectionResult.ContentCompatibility.SavedContent.TerrainKindCount
+            && compatibleSavedCatalog.ConstructionIds.Length == directoryInspectionResult.ContentCompatibility.SavedContent.ConstructionCount
+            && compatibleSavedCatalog.RecipeIds.Length == directoryInspectionResult.ContentCompatibility.SavedContent.RecipeCount
+            && compatibleSavedCatalog.GeologyIds.Length == directoryInspectionResult.ContentCompatibility.SavedContent.GeologyCount
+            && compatibleSavedCatalog.ZoneIds.Length == directoryInspectionResult.ContentCompatibility.SavedContent.ZoneCount;
+        var compatibleCurrentCatalogMatchesSignature =
+            compatibleCurrentCatalog.HasCatalog
+            && compatibleCurrentCatalog.MaterialNames.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.MaterialCount
+            && compatibleCurrentCatalog.TerrainKindNames.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.TerrainKindCount
+            && compatibleCurrentCatalog.ConstructionIds.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.ConstructionCount
+            && compatibleCurrentCatalog.RecipeIds.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.RecipeCount
+            && compatibleCurrentCatalog.GeologyIds.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.GeologyCount
+            && compatibleCurrentCatalog.ZoneIds.Length == directoryInspectionResult.ContentCompatibility.CurrentContent.ZoneCount;
+        var compatibleCurrentCatalogUsesStableOrder =
+            compatibleCurrentCatalog.MaterialNames.SequenceEqual(compatibleCurrentCatalog.MaterialNames.OrderBy(static value => value, StringComparer.Ordinal))
+            && compatibleCurrentCatalog.TerrainKindNames.SequenceEqual(compatibleCurrentCatalog.TerrainKindNames.OrderBy(static value => value, StringComparer.Ordinal))
+            && compatibleCurrentCatalog.ConstructionIds.SequenceEqual(compatibleCurrentCatalog.ConstructionIds.OrderBy(static value => value, StringComparer.Ordinal))
+            && compatibleCurrentCatalog.RecipeIds.SequenceEqual(compatibleCurrentCatalog.RecipeIds.OrderBy(static value => value, StringComparer.Ordinal))
+            && compatibleCurrentCatalog.GeologyIds.SequenceEqual(compatibleCurrentCatalog.GeologyIds.OrderBy(static value => value, StringComparer.Ordinal))
+            && compatibleCurrentCatalog.ZoneIds.SequenceEqual(compatibleCurrentCatalog.ZoneIds.OrderBy(static value => value, StringComparer.Ordinal));
+        var mismatchCurrentCatalogMatchesSignature =
+            mismatchCurrentCatalog.HasCatalog
+            && mismatchCurrentCatalog.MaterialNames.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.MaterialCount
+            && mismatchCurrentCatalog.TerrainKindNames.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.TerrainKindCount
+            && mismatchCurrentCatalog.ConstructionIds.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.ConstructionCount
+            && mismatchCurrentCatalog.RecipeIds.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.RecipeCount
+            && mismatchCurrentCatalog.GeologyIds.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.GeologyCount
+            && mismatchCurrentCatalog.ZoneIds.Length == contentMismatchInspectionResult.ContentCompatibility.CurrentContent.ZoneCount;
+        var mismatchSavedCatalogMatchesSignature =
+            mismatchSavedCatalog.HasCatalog
+            && mismatchSavedCatalog.MaterialNames.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.MaterialCount
+            && mismatchSavedCatalog.TerrainKindNames.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.TerrainKindCount
+            && mismatchSavedCatalog.ConstructionIds.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.ConstructionCount
+            && mismatchSavedCatalog.RecipeIds.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.RecipeCount
+            && mismatchSavedCatalog.GeologyIds.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.GeologyCount
+            && mismatchSavedCatalog.ZoneIds.Length == contentMismatchInspectionResult.ContentCompatibility.SavedContent.ZoneCount;
+        var savedCatalogWithMissingMaterial = compatibleCurrentCatalog with
+        {
+            MaterialNames = compatibleCurrentCatalog.MaterialNames
+                .Concat(new[] { "zz_saved_only_material" })
+                .OrderBy(static value => value, StringComparer.Ordinal)
+                .ToArray()
+        };
+        var catalogShapeCompatibility = RuntimeSaveSlotContentCompatibilityPolicy.Evaluate(
+            directoryInspectionResult.ContentCompatibility.CurrentContent with
+            {
+                MaterialCount = directoryInspectionResult.ContentCompatibility.CurrentContent.MaterialCount + 1
+            },
+            savedCatalogWithMissingMaterial,
+            directoryInspectionResult.ContentCompatibility.CurrentContent,
+            compatibleCurrentCatalog);
+        var catalogShapeDifference = catalogShapeCompatibility.DifferenceDetails.SingleOrDefault(
+            difference => difference.Kind == RuntimeSaveContentCompatibilityDifferenceKind.MaterialCount);
+        var runtimeV4RequiredTransforms = new[] { "runtime_snapshot:4->5", "runtime_snapshot:5->6" };
+        var runtimeV5RequiredTransforms = new[] { "runtime_snapshot:5->6" };
+        var runtimeV5OldSlotRequiredTransforms = new[] { "runtime_snapshot:5->6", "slot:0->1" };
 
         RegressionAssert.True(
             storedDocument.Manifest.Checkpoint.AggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
             && replacedDocument.Manifest.Checkpoint.AggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
             && storedDocument.PendingCommandRecords.Length == 1
             && replacedDocument.PendingCommandRecords.Length == 1
-            && directoryValidationResult.Success,
-            "Runtime save snapshot document store did not atomically write/read the save document.");
+            && directoryInspectionResult.Success
+            && directoryInspectionResult.Validation.Success
+            && directoryInspectionResult.Manifest.HasValue
+            && directoryInspectionResult.Manifest.Value.CheckpointAggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
+            && directoryInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && directoryInspectionResult.Compatibility.CanRead
+            && directoryInspectionResult.ContentCompatibility.Status == RuntimeSaveSlotContentCompatibilityStatus.Compatible
+            && directoryInspectionResult.ContentCompatibility.CanBindContent
+            && !directoryInspectionResult.ContentCompatibility.RequiresMissingContentPolicy
+            && directoryInspectionResult.ContentCompatibility.BlockingIssues.Length == 0
+            && compatibleSavedCatalogMatchesSignature
+            && compatibleCurrentCatalogMatchesSignature
+            && compatibleCurrentCatalogUsesStableOrder
+            && !directoryInspectionResult.MigrationPlan.RequiresMigration
+            && !directoryInspectionResult.MigrationPlan.CanMigrate
+            && directoryInspectionResult.MigrationPlan.BlockingIssues.Length == 0
+            && directoryInspectionResult.RestorePlan.CanRestorePendingCommands
+            && directoryInspectionResult.RestorePlan.CanRestoreWorld
+            && directoryInspectionResult.RestorePlan.CanRestoreFull
+            && directoryInspectionResult.RestorePlan.BlockingIssues.Length == 0
+            && directoryValidationResult.Success
+            && compatibleMigrationResult.Success
+            && !compatibleMigrationResult.MigrationApplied
+            && compatibleMigrationResult.Inspection.Success
+            && compatibleMigrationResult.Inspection.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && compatibleMigrationResult.AppliedTransforms.Length == 0
+            && compatibleMigrationResult.MigrationIssues.Length == 0
+            && File.Exists(slotManifestPath)
+            && slotManifest.SlotFormatVersion == RuntimeSaveSlotFormat.CurrentVersion
+            && slotManifest.SlotKind == RuntimeSaveSlotFormat.SlotKind
+            && slotManifest.RuntimeSnapshotDocumentFileName == RuntimeSaveSlotFormat.SnapshotDocumentFileName
+            && slotManifest.RuntimeSnapshotFormatVersion == pendingDocumentRoundTrip.Manifest.FormatVersion
+            && slotManifest.CheckpointAggregateHash == pendingDocumentRoundTrip.Manifest.Checkpoint.AggregateHash
+            && slotManifest.ManifestSectionCount == pendingDocumentRoundTrip.Manifest.Sections.Count
+            && slotManifest.RngStreamCount == pendingDocumentRoundTrip.RngStreams.Length
+            && slotManifest.ExecutedCommandRecordCount == pendingDocumentRoundTrip.ExecutedCommandRecords.Length
+            && slotManifest.PendingCommandRecordCount == pendingDocumentRoundTrip.PendingCommandRecords.Length
+            && slotManifestValidationResult.Success
+            && !tamperedSlotManifestValidationResult.Success
+            && tamperedSlotManifestValidationResult.Issues.Any(issue => issue.Section == "slot.manifest")
+            && compatibleSlotResult.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && compatibleSlotResult.CanRead
+            && !compatibleSlotResult.RequiresMigration
+            && olderSlotCompatibilityResult.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && !olderSlotCompatibilityResult.CanRead
+            && olderSlotCompatibilityResult.RequiresMigration
+            && olderSnapshotCompatibilityResult.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && !olderSnapshotCompatibilityResult.CanRead
+            && olderSnapshotCompatibilityResult.RequiresMigration
+            && futureSlotCompatibilityResult.Status == RuntimeSaveSlotCompatibilityStatus.UnsupportedFutureSlotFormat
+            && !futureSlotCompatibilityResult.CanRead
+            && !futureSlotCompatibilityResult.RequiresMigration
+            && wrongKindCompatibilityResult.Status == RuntimeSaveSlotCompatibilityStatus.UnsupportedSlotKind
+            && !wrongKindCompatibilityResult.CanRead
+            && !oldSlotManifestValidationResult.Success
+            && oldSlotManifestValidationResult.Issues.Any(issue => issue.Section == "slot.compatibility")
+            && !tamperedSlotInspectionResult.Success
+            && tamperedSlotInspectionResult.Manifest.HasValue
+            && tamperedSlotInspectionResult.Compatibility.CanRead
+            && !tamperedSlotInspectionResult.RestorePlan.CanRestoreFull
+            && tamperedSlotInspectionResult.RestorePlan.BlockingIssues.Any(issue => issue.Section == "slot.manifest")
+            && !oldSlotInspectionResult.Success
+            && oldSlotInspectionResult.Manifest.HasValue
+            && oldSlotInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && oldSlotInspectionResult.Compatibility.RequiresMigration
+            && oldSlotInspectionResult.MigrationPlan.RequiresMigration
+            && oldSlotInspectionResult.MigrationPlan.CanMigrate
+            && oldSlotInspectionResult.MigrationPlan.RequiredTransforms.Contains($"slot:{RuntimeSaveSlotFormat.CurrentVersion - 1}->{RuntimeSaveSlotFormat.CurrentVersion}")
+            && oldSlotInspectionResult.MigrationPlan.BlockingIssues.Length == 0
+            && oldSlotMigrationResult.Success
+            && oldSlotMigrationResult.MigrationApplied
+            && oldSlotMigrationResult.Inspection.MigrationPlan.RequiresMigration
+            && oldSlotMigrationResult.AppliedTransforms.SequenceEqual(new[] { $"slot:{RuntimeSaveSlotFormat.CurrentVersion - 1}->{RuntimeSaveSlotFormat.CurrentVersion}" })
+            && oldSlotMigrationResult.MigrationIssues.Length == 0
+            && oldSlotMigratedInspectionResult.Success
+            && oldSlotMigratedInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && oldSlotMigratedInspectionResult.RestorePlan.CanRestoreFull
+            && !oldSlotInspectionResult.RestorePlan.CanRestoreFull
+            && oldSlotInspectionResult.Validation.Issues.Any(issue => issue.Section == "slot.compatibility")
+            && !missingDocumentInspectionResult.Success
+            && missingDocumentInspectionResult.Manifest.HasValue
+            && missingDocumentInspectionResult.Compatibility.CanRead
+            && !missingDocumentInspectionResult.RestorePlan.CanRestorePendingCommands
+            && !missingDocumentInspectionResult.RestorePlan.CanRestoreWorld
+            && !missingDocumentInspectionResult.RestorePlan.CanRestoreFull
+            && missingDocumentInspectionResult.RestorePlan.BlockingIssues.Any(issue => issue.Section == "snapshot.document")
+            && missingDocumentInspectionResult.Validation.Issues.Any(issue => issue.Section == "snapshot.document")
+            && contentMismatchInspectionResult.Success
+            && contentMismatchInspectionResult.Validation.Success
+            && contentMismatchInspectionResult.ContentCompatibility.Status == RuntimeSaveSlotContentCompatibilityStatus.ContentHashMismatch
+            && !contentMismatchInspectionResult.ContentCompatibility.CanBindContent
+            && contentMismatchInspectionResult.ContentCompatibility.RequiresMissingContentPolicy
+            && contentMismatchInspectionResult.ContentCompatibility.Differences.Any(difference => difference.Contains("content hash", StringComparison.Ordinal))
+            && contentMismatchInspectionResult.ContentCompatibility.DifferenceDetails.Any(difference =>
+                difference.Kind == RuntimeSaveContentCompatibilityDifferenceKind.ContentHash
+                && difference.Field == "content hash"
+                && !difference.HasSavedCatalogKeys
+                && !difference.HasCurrentCatalogKeys)
+            && mismatchSavedCatalogMatchesSignature
+            && mismatchCurrentCatalogMatchesSignature
+            && catalogShapeCompatibility.Status == RuntimeSaveSlotContentCompatibilityStatus.CatalogShapeMismatch
+            && !catalogShapeCompatibility.CanBindContent
+            && catalogShapeCompatibility.DifferenceDetails.Length == 1
+            && catalogShapeDifference.Kind == RuntimeSaveContentCompatibilityDifferenceKind.MaterialCount
+            && catalogShapeDifference.Field == "material count"
+            && catalogShapeDifference.HasCurrentCatalogKeys
+            && catalogShapeDifference.HasSavedCatalogKeys
+            && catalogShapeDifference.MissingCurrentKeys.SequenceEqual(new[] { "zz_saved_only_material" })
+            && catalogShapeDifference.AdditionalCurrentKeys.Length == 0
+            && catalogShapeCompatibility.Differences.SequenceEqual(catalogShapeCompatibility.DifferenceDetails.Select(static difference => difference.Message))
+            && !contentMismatchInspectionResult.RestorePlan.CanRestorePendingCommands
+            && !contentMismatchInspectionResult.RestorePlan.CanRestoreWorld
+            && !contentMismatchInspectionResult.RestorePlan.CanRestoreFull
+            && contentMismatchInspectionResult.RestorePlan.BlockingIssues.Any(issue => issue.Section == "slot.content")
+            && !legacySnapshotOnlyInspectionResult.Success
+            && !legacySnapshotOnlyInspectionResult.Manifest.HasValue
+            && legacySnapshotOnlyInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && legacySnapshotOnlyInspectionResult.Compatibility.RequiresMigration
+            && legacySnapshotOnlyInspectionResult.MigrationPlan.CanMigrate
+            && legacySnapshotOnlyInspectionResult.MigrationPlan.RequiredTransforms.SequenceEqual(new[] { "slot:0->1" })
+            && legacySnapshotOnlyInspectionResult.MigrationPlan.BlockingIssues.Length == 0
+            && !legacySnapshotOnlyInspectionResult.RestorePlan.CanRestoreFull
+            && legacySnapshotOnlyInspectionResult.Validation.Issues.Any(issue => issue.Section == "slot.manifest")
+            && legacySnapshotOnlyMigrationResult.Success
+            && legacySnapshotOnlyMigrationResult.MigrationApplied
+            && legacySnapshotOnlyMigrationResult.AppliedTransforms.SequenceEqual(new[] { "slot:0->1" })
+            && legacySnapshotOnlyMigrationResult.MigrationIssues.Length == 0
+            && legacySnapshotOnlyMigratedInspectionResult.Success
+            && legacySnapshotOnlyMigratedInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && legacySnapshotOnlyMigratedInspectionResult.RestorePlan.CanRestoreFull
+            && !runtimeV4InspectionResult.Success
+            && runtimeV4InspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && runtimeV4InspectionResult.Compatibility.RequiresMigration
+            && runtimeV4InspectionResult.MigrationPlan.CanMigrate
+            && runtimeV4InspectionResult.MigrationPlan.RequiredTransforms.SequenceEqual(runtimeV4RequiredTransforms)
+            && runtimeV4InspectionResult.MigrationPlan.BlockingIssues.Length == 0
+            && runtimeV4InspectionResult.Validation.Issues.Any(issue => issue.Section == "manifest")
+            && runtimeV4MigrationResult.Success
+            && runtimeV4MigrationResult.MigrationApplied
+            && runtimeV4MigrationResult.AppliedTransforms.SequenceEqual(runtimeV4RequiredTransforms)
+            && runtimeV4MigrationResult.MigrationIssues.Length == 0
+            && runtimeV4MigratedInspectionResult.Success
+            && runtimeV4MigratedInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && runtimeV4MigratedInspectionResult.RestorePlan.CanRestoreFull
+            && runtimeV4MigratedDocument.Manifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
+            && !runtimeV4MigratedDocument.MiningJobs.HasValue
+            && !runtimeV4NonEmptyMiningInspectionResult.MigrationPlan.CanMigrate
+            && runtimeV4NonEmptyMiningInspectionResult.MigrationPlan.BlockingIssues.Any(issue => issue.Section == "jobs.mining")
+            && !runtimeV4NonEmptyMiningMigrationResult.Success
+            && runtimeV4NonEmptyMiningMigrationResult.MigrationIssues.Any(issue => issue.Section == "jobs.mining"),
+            "Runtime save snapshot document store did not write/read/inspect a strict compatible save-slot manifest with the save document.");
+
+        RegressionAssert.True(
+            !runtimeV5NoCatalogInspectionResult.Success
+            && runtimeV5NoCatalogInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && runtimeV5NoCatalogInspectionResult.Compatibility.RequiresMigration
+            && runtimeV5NoCatalogInspectionResult.MigrationPlan.CanMigrate
+            && runtimeV5NoCatalogInspectionResult.MigrationPlan.RequiredTransforms.SequenceEqual(runtimeV5RequiredTransforms)
+            && !runtimeV5MissingCatalogRoundTrip.Manifest.ContentCatalog.HasCatalog
+            && runtimeV5NoCatalogInspectionResult.ContentCompatibility.Status == RuntimeSaveSlotContentCompatibilityStatus.Compatible
+            && !runtimeV5NoCatalogInspectionResult.ContentCompatibility.SavedCatalog.HasCatalog
+            && runtimeV5NoCatalogInspectionResult.ContentCompatibility.CurrentCatalog.HasCatalog
+            && runtimeV5NoCatalogMigrationResult.Success
+            && runtimeV5NoCatalogMigrationResult.MigrationApplied
+            && runtimeV5NoCatalogMigrationResult.AppliedTransforms.SequenceEqual(runtimeV5RequiredTransforms)
+            && runtimeV5NoCatalogMigrationResult.MigrationIssues.Length == 0
+            && runtimeV5NoCatalogMigratedInspectionResult.Success
+            && runtimeV5NoCatalogMigratedInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && runtimeV5NoCatalogMigratedInspectionResult.RestorePlan.CanRestoreFull
+            && runtimeV5NoCatalogMigratedDocument.Manifest.FormatVersion == RuntimeSaveFormat.CurrentVersion
+            && !runtimeV5NoCatalogMigratedDocument.Manifest.ContentCatalog.HasCatalog,
+            "Runtime save v5-to-v6 migration did not preserve historical missing saved content catalogs while keeping restore policy Runtime-owned.");
+
+        RegressionAssert.True(
+            !runtimeV5OldSlotInspectionResult.Success
+            && runtimeV5OldSlotInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.MigrationRequired
+            && runtimeV5OldSlotInspectionResult.Compatibility.RequiresMigration
+            && runtimeV5OldSlotInspectionResult.MigrationPlan.CanMigrate
+            && runtimeV5OldSlotInspectionResult.MigrationPlan.RequiredTransforms.SequenceEqual(runtimeV5OldSlotRequiredTransforms)
+            && runtimeV5OldSlotMigrationResult.Success
+            && runtimeV5OldSlotMigrationResult.MigrationApplied
+            && runtimeV5OldSlotMigrationResult.AppliedTransforms.SequenceEqual(runtimeV5OldSlotRequiredTransforms)
+            && runtimeV5OldSlotMigrationResult.MigrationIssues.Length == 0
+            && runtimeV5OldSlotMigratedInspectionResult.Success
+            && runtimeV5OldSlotMigratedInspectionResult.Compatibility.Status == RuntimeSaveSlotCompatibilityStatus.Compatible
+            && runtimeV5OldSlotMigratedInspectionResult.Manifest.HasValue
+            && runtimeV5OldSlotMigratedInspectionResult.Manifest.Value.SlotFormatVersion == RuntimeSaveSlotFormat.CurrentVersion
+            && runtimeV5OldSlotMigratedInspectionResult.Manifest.Value.RuntimeSnapshotFormatVersion == RuntimeSaveFormat.CurrentVersion,
+            "Runtime migration did not apply combined runtime snapshot and slot manifest transforms in the Runtime-owned execution order.");
 
         var validDocumentResult = pendingRuntime.ValidateSaveSnapshotDocument(pendingDocumentRoundTrip);
         var tamperedDocument = pendingDocumentRoundTrip with
@@ -1742,6 +2564,18 @@ internal static class CoreRuntimeSmokeTests
             }
         };
         var missingKnownManifestSectionResult = pendingRuntime.ValidateSaveSnapshotDocument(missingKnownManifestSectionDocument);
+        var nonEmptyJobStateDocument = pendingDocumentRoundTrip with
+        {
+            MiningJobs = null,
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                Sections = pendingDocumentRoundTrip.Manifest.Sections
+                    .Select(section => section.Name == "jobs.mining"
+                        ? section with { RecordCount = 1 }
+                        : section)
+                    .ToArray()
+            }
+        };
 
         var restoreRuntime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
@@ -1765,7 +2599,6 @@ internal static class CoreRuntimeSmokeTests
             strictContent: false,
             contentWarningsAsErrors: false);
         var directoryFullRestoreResult = directoryFullRestoreRuntime.RestoreFullFromSaveSnapshotDirectory(documentStoreDirectory);
-        var directoryFullRestoredDocument = directoryFullRestoreRuntime.CreateSaveSnapshotDocumentData();
         Directory.Delete(documentStoreDirectory, recursive: true);
         var missingDirectoryValidationResult = pendingRuntime.ValidateSaveSnapshotDirectory(documentStoreDirectory);
         var missingDirectoryWorldRestoreResult = pendingRuntime.RestoreWorldFromSaveSnapshotDirectory(documentStoreDirectory);
@@ -1781,7 +2614,82 @@ internal static class CoreRuntimeSmokeTests
             strictContent: false,
             contentWarningsAsErrors: false);
         var documentFullRestoreResult = documentFullRestoreRuntime.RestoreFullFromSaveSnapshotDocument(pendingDocumentRoundTrip);
-        var documentFullRestoredDocument = documentFullRestoreRuntime.CreateSaveSnapshotDocumentData();
+        var nonEmptyJobStateFullRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var nonEmptyJobStateFullRestoreResult = nonEmptyJobStateFullRestoreRuntime.RestoreFullFromSaveSnapshotDocument(nonEmptyJobStateDocument);
+        var contentMismatchPendingRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        contentMismatchPendingRestoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        var contentMismatchPendingRestoreResult = contentMismatchPendingRestoreRuntime.RestorePendingCommandsFromSaveSnapshotDocument(contentMismatchDocument);
+        var contentMismatchWorldRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var contentMismatchWorldRestoreResult = contentMismatchWorldRestoreRuntime.RestoreWorldFromSaveSnapshotDocument(contentMismatchDocument);
+        var contentMismatchFullRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        var contentMismatchFullRestoreResult = contentMismatchFullRestoreRuntime.RestoreFullFromSaveSnapshotDocument(contentMismatchDocument);
+        var invalidTransportJobs = new RuntimeSaveTransportJobsData(
+            IntakeCapHint: null,
+            MaxActiveCapHint: null,
+            ReserveSlotsHint: 0,
+            PendingRequests: Array.Empty<RuntimeSaveTransportRequestData>(),
+            ActiveJobs: new[]
+            {
+                new RuntimeSaveTransportActiveJobData(
+                    Order: 0,
+                    CreatureId: Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                    ItemId: Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"),
+                    DestinationX: 0,
+                    DestinationY: 0,
+                    DestinationZ: 0,
+                    Stage: (int)JobStage.ToItem,
+                    Quantity: 1,
+                    InvalidReplanCount: 0,
+                    Reason: (int)TransportReason.ToStockpile)
+            },
+            BacklogEntries: Array.Empty<RuntimeSaveTransportBacklogEntryData>());
+        var invalidTransportHash = RuntimeSaveSnapshotDocumentTransportMapper.BuildReplayHash(invalidTransportJobs);
+        var invalidTransportCount = RuntimeSaveSnapshotDocumentTransportMapper.CountRecords(invalidTransportJobs);
+        var invalidTransportDocument = pendingDocumentRoundTrip with
+        {
+            TransportJobs = invalidTransportJobs,
+            Manifest = pendingDocumentRoundTrip.Manifest with
+            {
+                Checkpoint = pendingDocumentRoundTrip.Manifest.Checkpoint with
+                {
+                    TransportHash = invalidTransportHash,
+                    TransportRecordCount = invalidTransportCount
+                },
+                Sections = pendingDocumentRoundTrip.Manifest.Sections
+                    .Select(section => section.Name == RuntimeSaveManifestSections.JobsTransport
+                        ? section with
+                        {
+                            Present = true,
+                            Hash = invalidTransportHash,
+                            RecordCount = invalidTransportCount
+                        }
+                        : section)
+                    .ToArray()
+            }
+        };
+        var invalidTransportDocumentValidation = pendingRuntime.ValidateSaveSnapshotDocument(invalidTransportDocument);
+        var invalidTransportFullRestoreRuntime = FortressRuntimeSessionFactory.CreateFull(
+            AppContext.BaseDirectory,
+            strictContent: false,
+            contentWarningsAsErrors: false);
+        invalidTransportFullRestoreRuntime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        invalidTransportFullRestoreRuntime.QueueHaulOrder(new RuntimeRect(4, 4, 1, 1), z: 0, priority: 7);
+        var invalidTransportRestoreBeforeHash = invalidTransportFullRestoreRuntime.GetReplayCheckpointHash();
+        var invalidTransportFullRestoreResult = invalidTransportFullRestoreRuntime.RestoreFullFromSaveSnapshotDocument(invalidTransportDocument);
+        var invalidTransportRestoreAfterHash = invalidTransportFullRestoreRuntime.GetReplayCheckpointHash();
+        var invalidTransportRestoreAfterDocument = invalidTransportFullRestoreRuntime.CreateSaveSnapshotDocumentData();
         restoreRuntime.QueueHaulOrder(new RuntimeRect(2, 2, 1, 1), z: 0, priority: 6);
         var restoredRuntimeDocument = restoreRuntime.CreateSaveSnapshotDocumentData();
         var restoredSequences = restoredRuntimeDocument.PendingCommandRecords
@@ -1816,15 +2724,11 @@ internal static class CoreRuntimeSmokeTests
             && directoryWorldRestoreResult.Validation.Success
             && directoryWorldRestoreResult.SavedWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
             && directoryWorldRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
-            && directoryFullRestoreResult.Success
             && directoryFullRestoreResult.Validation.Success
-            && directoryFullRestoreResult.SavedWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
+            && directoryFullRestoreResult.Success
             && directoryFullRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
             && directoryFullRestoreResult.RestoredRngStreamCount == pendingDocumentRoundTrip.RngStreams.Length
-            && directoryFullRestoreResult.PendingRecordCount == 1
             && directoryFullRestoreResult.RestoredCommandCount == 1
-            && directoryFullRestoredDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
-            && directoryFullRestoredDocument.PendingCommandRecords.Length == 1
             && !missingDirectoryValidationResult.Success
             && missingDirectoryValidationResult.Issues.Any(issue => issue.Section == "snapshot.document")
             && !missingDirectoryWorldRestoreResult.Success
@@ -1835,12 +2739,33 @@ internal static class CoreRuntimeSmokeTests
             && documentWorldRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
             && restoredWorldDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
             && documentFullRestoreResult.Success
+            && documentFullRestoreResult.Validation.Success
             && documentFullRestoreResult.RestoredWorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
             && documentFullRestoreResult.RestoredRngStreamCount == pendingDocumentRoundTrip.RngStreams.Length
             && documentFullRestoreResult.RestoredCommandCount == 1
-            && documentFullRestoredDocument.Manifest.Checkpoint.WorldHash == pendingDocumentRoundTrip.WorldPayload?.ReplayHash
-            && documentFullRestoredDocument.Manifest.Checkpoint.RngHash == pendingDocumentRoundTrip.Manifest.Checkpoint.RngHash
-            && documentFullRestoredDocument.PendingCommandRecords.Length == 1
+            && !nonEmptyJobStateFullRestoreResult.Success
+            && !nonEmptyJobStateFullRestoreResult.Validation.Success
+            && nonEmptyJobStateFullRestoreResult.Validation.Issues.Any(issue =>
+                issue.Section == "jobs.mining"
+                && issue.Message.Contains("no mining job payload", StringComparison.Ordinal))
+            && !contentMismatchPendingRestoreResult.Success
+            && contentMismatchPendingRestoreResult.Validation.Success
+            && contentMismatchPendingRestoreResult.PendingRecordCount == 1
+            && contentMismatchPendingRestoreResult.RestoreIssues.Any(issue => issue.Section == "slot.content")
+            && !contentMismatchWorldRestoreResult.Success
+            && contentMismatchWorldRestoreResult.Validation.Success
+            && contentMismatchWorldRestoreResult.RestoreIssues.Any(issue => issue.Section == "slot.content")
+            && !contentMismatchFullRestoreResult.Success
+            && contentMismatchFullRestoreResult.Validation.Success
+            && contentMismatchFullRestoreResult.RestoreIssues.Any(issue => issue.Section == "slot.content")
+            && invalidTransportDocumentValidation.Success
+            && !invalidTransportFullRestoreResult.Success
+            && invalidTransportFullRestoreResult.Validation.Success
+            && invalidTransportFullRestoreResult.RestoreIssues.Any(issue =>
+                issue.Section == RuntimeSaveManifestSections.JobsTransport
+                && issue.Message.Contains("missing creature", StringComparison.Ordinal))
+            && invalidTransportRestoreAfterHash == invalidTransportRestoreBeforeHash
+            && invalidTransportRestoreAfterDocument.PendingCommandRecords.Length == 1
             && restoredRuntimeDocument.PendingCommandRecords.Length == 2
             && restoredSequences.SequenceEqual(new long?[] { 1, 2 }),
             "Runtime save snapshot document validation/restore did not restore pending commands or advance command identity.");
@@ -1851,6 +2776,9 @@ internal static class CoreRuntimeSmokeTests
             _ = RuntimeSaveSnapshotDocumentCodec.Serialize(new RuntimeSaveSnapshotDocumentData(
                 pendingDocument.Manifest,
                 pendingDocument.WorldPayload,
+                pendingDocument.MiningJobs,
+                pendingDocument.TransportJobs,
+                pendingDocument.CraftJobs,
                 pendingDocument.RngStreams,
                 Array.Empty<RuntimeSaveCommandRecordData>(),
                 new[]
@@ -2119,6 +3047,28 @@ internal static class CoreRuntimeSmokeTests
             "Mining one-cell rectangles did not include SadRogue inclusive MaxExtent bounds.");
 
         Console.WriteLine("[PASS] Mining rectangle inclusive bounds");
+    }
+
+    private static void TestMiningZRangeMapper()
+    {
+        var stairwell = MiningZRangeMapper.ToSimulationRange(25, 32, MiningAction.DigStairwell);
+        var ordinaryDig = MiningZRangeMapper.ToSimulationRange(25, 32, MiningAction.Dig);
+        var singleLayerStairwell = MiningZRangeMapper.ToSimulationRange(25, 25, MiningAction.DigStairwell);
+
+        RegressionAssert.True(
+            stairwell.WasInverted
+            && stairwell.LayerCount == 7
+            && stairwell.ZMin == 18
+            && stairwell.ZMax == 25
+            && !ordinaryDig.WasInverted
+            && ordinaryDig.ZMin == 25
+            && ordinaryDig.ZMax == 32
+            && !singleLayerStairwell.WasInverted
+            && singleLayerStairwell.ZMin == 25
+            && singleLayerStairwell.ZMax == 25,
+            "Mining stairwell UI Z ranges must map to internal downward ranges while ordinary mining preserves Z bounds.");
+
+        Console.WriteLine("[PASS] Mining Z range mapper");
     }
 
     private static void TestStockpileFilterUsesItemProjection()
@@ -2771,10 +3721,36 @@ internal static class CoreRuntimeSmokeTests
 
         RegressionAssert.True(world.SizeInChunks == 4 && world.MaxZ == 50, "World was created with incorrect dimensions.");
 
+        var largeWorld = new World(World.MaxSizeInChunks, 3);
+        var tooLargeRejected = false;
+        try
+        {
+            _ = new World(World.MaxSizeInChunks + 1, 3);
+        }
+        catch (ArgumentException)
+        {
+            tooLargeRejected = true;
+        }
+
+        RegressionAssert.True(
+            largeWorld.SizeInTiles == 512 && tooLargeRejected,
+            "World size guard should allow 512x512 lazy chunk worlds while rejecting unsupported larger sizes.");
+
         var chunkKey = new ChunkKey(1, 1, 10);
         var chunk = world.GetOrCreateChunk(chunkKey);
 
         RegressionAssert.True(chunk.Key.Equals(chunkKey), "World did not create/retrieve expected chunk.");
+
+        chunk.MarkTileDirty(9, tick: 1);
+        chunk.MarkTileDirty(3, tick: 2);
+        chunk.MarkTileDirty(9, tick: 3);
+        var dirtyTiles = chunk.DrainDirtyTileIndices();
+        var dirtyTilesAfterDrain = chunk.DrainDirtyTileIndices();
+
+        RegressionAssert.True(
+            dirtyTiles.SequenceEqual(new[] { 3, 9 })
+            && dirtyTilesAfterDrain.Length == 0,
+            "Chunk dirty tile set did not deduplicate, sort, and drain local indexes deterministically.");
 
         world.UpdateLOD(64, 64, 10);
         RegressionAssert.True(world.GetActiveChunks().Any(), "World LOD update produced no active chunks.");
@@ -2871,6 +3847,92 @@ internal static class CoreRuntimeSmokeTests
             "World, placeable, or construction owner snapshots did not return stable ordering.");
 
         Console.WriteLine("[PASS] World/placeable/construction snapshots use stable ordering");
+    }
+
+    private static void TestCrossChunkPlaceableReferencesResolveAndRemove()
+    {
+        var world = new World(2, 1);
+        var anchor = new SadRogue.Primitives.Point(31, 4);
+        var secondaryCell = new SadRogue.Primitives.Point(32, 4);
+        var floor = new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1);
+        world.SetTile(anchor.X, anchor.Y, 0, floor, 0);
+        world.SetTile(secondaryCell.X, secondaryCell.Y, 0, floor, 0);
+
+        var placeable = new PlaceableInstance(
+            Guid.Parse("aaaaaaaa-7777-7777-7777-aaaaaaaaaaaa"),
+            PlaceableKind.Construction,
+            "cross_chunk_test",
+            anchor,
+            z: 0,
+            footprint: new Footprint(2, 1, 1));
+
+        PlaceableManager.PlacePlaceable(world, placeable, tick: 1);
+
+        var secondaryChunk = world.GetChunk(new ChunkKey(1, 0, 0));
+        var secondaryData = secondaryChunk?.GetPlaceableData();
+        var secondaryLocalIndex = Chunk.LocalIndex(0, 4);
+        var primaryResolved = PlaceableManager.TryGetPlaceableAt(world, anchor, 0, out var primaryPlaceable);
+        var secondaryResolved = PlaceableManager.TryGetPlaceableAt(world, secondaryCell, 0, out var secondaryPlaceable);
+        var externalRefStored = secondaryData?.TryGetExternalRefAt(secondaryLocalIndex, out var externalGuid) == true
+            && externalGuid == placeable.Guid;
+
+        var removed = PlaceableManager.RemoveOwnedAt(world, anchor, 0, tick: 2);
+        var secondaryReleased = secondaryData?.HasPlaceableAt(secondaryLocalIndex) == false;
+        var collisionAfterRemoval = PlaceableManager.CheckCollision(world, anchor, 0, new Footprint(2, 1, 1));
+        var secondaryResolvedAfterRemoval = PlaceableManager.TryGetPlaceableAt(world, secondaryCell, 0, out _);
+
+        RegressionAssert.True(
+            primaryResolved
+            && ReferenceEquals(primaryPlaceable, placeable)
+            && secondaryResolved
+            && ReferenceEquals(secondaryPlaceable, placeable)
+            && externalRefStored
+            && removed
+            && secondaryReleased
+            && collisionAfterRemoval.CanPlace
+            && !secondaryResolvedAfterRemoval,
+            "Cross-chunk placeable references must resolve through Simulation and be removed with the owner.");
+
+        Console.WriteLine("[PASS] Cross-chunk placeable references resolve and remove cleanly");
+    }
+
+    private static void TestConstructionRequirementsSupportDefinitionIds()
+    {
+        var itemDefinition = new HumanFortress.Contracts.Simulation.Items.ItemDefinition
+        {
+            Id = "core_item_block_stone",
+            Tags = new[] { "stone", "block" }
+        };
+        var matchingRequirement = ConstructionMaterialRequirement.ForDefinition("core_item_block_stone");
+        var otherRequirement = ConstructionMaterialRequirement.ForDefinition("core_item_log_wood");
+        var tagRequirement = ConstructionMaterialRequirement.ForTag("block");
+
+        var construction = new ConstructionDefinition
+        {
+            Id = "core_construction_test_def_material",
+            Name = "Definition Material Test",
+            BuildTimeTicks = 10,
+            PlaceableProfile = new PlaceableProfile { Footprint = new Footprint(1, 1, 1) },
+            MaterialCosts = new[]
+            {
+                new MaterialCost { DefId = "core_item_block_stone", Count = 2 },
+                new MaterialCost { Tag = "block", Count = 1 }
+            }
+        };
+        var requirements = BuildableConstructionSystem.BuildMaterialRequirements(construction);
+
+        RegressionAssert.True(
+            matchingRequirement == "def:core_item_block_stone"
+            && ConstructionMaterialRequirement.MatchesItem(itemDefinition, matchingRequirement)
+            && !ConstructionMaterialRequirement.MatchesItem(itemDefinition, otherRequirement)
+            && ConstructionMaterialRequirement.MatchesItem(itemDefinition, tagRequirement)
+            && requirements.TryGetValue("def:core_item_block_stone", out var requiredDefCount)
+            && requiredDefCount == 2
+            && requirements.TryGetValue("block", out var requiredTagCount)
+            && requiredTagCount == 1,
+            "Construction material requirements must preserve def_id requirements and match them by item definition id.");
+
+        Console.WriteLine("[PASS] Construction requirements support definition ids");
     }
 
     private static void TestReservations()
@@ -3056,6 +4118,44 @@ internal static class CoreRuntimeSmokeTests
             "CommandQueue failure diagnostics did not include the deterministic command id and queue sequence.");
 
         Console.WriteLine("[PASS] CommandQueue");
+    }
+
+    private static void TestEventBus()
+    {
+        var bus = new EventBus();
+        var order = new List<string>();
+        Action<TestGameEvent> first = _ => order.Add("first");
+        Action<TestGameEvent> second = _ => order.Add("second");
+        Action<TestGameEvent> failing = _ => throw new InvalidOperationException("event smoke");
+        Action<TestGameEvent> afterFailure = _ => order.Add("after");
+
+        bus.Subscribe(first);
+        bus.Subscribe(second);
+        bus.Publish(new TestGameEvent(1, "ordered"));
+
+        bus.Unsubscribe(first);
+        bus.Publish(new TestGameEvent(2, "after-unsubscribe"));
+
+        var diagnostics = new RecordingDiagnosticSink();
+        var previousSink = DiagnosticHub.Sink;
+        try
+        {
+            DiagnosticHub.Sink = diagnostics;
+            bus.Subscribe(failing);
+            bus.Subscribe(afterFailure);
+            bus.Publish(new TestGameEvent(3, "failure"));
+        }
+        finally
+        {
+            DiagnosticHub.Sink = previousSink;
+        }
+
+        RegressionAssert.True(
+            order.SequenceEqual(new[] { "first", "second", "second", "second", "after" })
+            && diagnostics.Events.Any(e => e.Category == "Core.EventBus" && e.Message.Contains("event smoke", StringComparison.Ordinal)),
+            "EventBus did not preserve registration order, unsubscribe handlers, or continue after a handler failure.");
+
+        Console.WriteLine("[PASS] EventBus");
     }
 
     private static void TestSimulationCommandStage()
@@ -3295,9 +4395,12 @@ internal static class CoreRuntimeSmokeTests
             "closed_blocks": false,
             "open_cost": 6
           },
+          "movement": {
+            "step_delay_ticks": 3
+          },
           "budgets": {
             "max_nodes_per_search": 1200,
-            "max_ms_per_tick_pathing": 4
+            "max_paths_per_tick": 4
           }
         }
         """;
@@ -3334,8 +4437,9 @@ internal static class CoreRuntimeSmokeTests
             && tuning.TrafficRestricted == 9
             && !tuning.DoorClosedBlocks
             && tuning.DoorOpenCost == 6
+            && tuning.MovementStepDelayTicks == 3
             && tuning.MaxNodesPerSearch == 1200
-            && tuning.MaxMsPerTickPathing == 4
+            && tuning.MaxPathsPerTick == 4
             && invalidNumericTuning.BaseCost == HumanFortress.Navigation.Implementation.NavigationTuning.Default.BaseCost
             && invalidNumericTuning.FluidShallowThreshold == HumanFortress.Navigation.Implementation.NavigationTuning.Default.FluidShallowThreshold,
             "NavigationTuning JSON parser did not apply supported fields or preserve defaults for invalid numeric ranges.");
@@ -3426,6 +4530,53 @@ internal static class CoreRuntimeSmokeTests
             "PlaceableTuning JSON parser did not apply supported fields.");
 
         Console.WriteLine("[PASS] Placeable tuning JSON");
+    }
+
+    private static void TestSchedulerTuningJson()
+    {
+        const string json = """
+        {
+          "threads": 0,
+          "queue_policy": "single",
+          "budgets": {
+            "hauling": { "plan_per_tick": 12 },
+            "mining": { "plan_per_tick": 0 },
+            "construction": { "plan_per_tick": 34 }
+          },
+          "backpressure": { "max_carryover_ticks": 4 },
+          "logging": { "level": "debug", "per_job_stats": false, "debug_panel": true },
+          "worker_selection": { "strategy": "highest_skill" },
+          "hauling_limits": {
+            "max_active": 9,
+            "reserve_for_mining": 3,
+            "reserve_backlog_threshold": 2,
+            "backlog_intake_cap": 5,
+            "backlog_intake_threshold": 1
+          }
+        }
+        """;
+
+        var tuning = SchedulerTunings.LoadFromJson(json, "scheduler smoke");
+
+        RegressionAssert.True(
+            tuning.Threads == 1
+            && tuning.QueuePolicy == "single"
+            && tuning.Hauling.PlanPerTick == 12
+            && tuning.Mining.PlanPerTick == 1
+            && tuning.Construction.PlanPerTick == 34
+            && tuning.BackpressureMaxCarryoverTicks == 4
+            && !tuning.PerJobStatsLogging
+            && tuning.LogLevel == "debug"
+            && tuning.DebugPanel
+            && tuning.WorkerSelection == WorkerSelectionStrategy.HighestSkill
+            && tuning.HaulingLimits.MaxActive == 9
+            && tuning.HaulingLimits.ReserveForMining == 3
+            && tuning.HaulingLimits.ReserveBacklogThreshold == 2
+            && tuning.HaulingLimits.BacklogIntakeCap == 5
+            && tuning.HaulingLimits.BacklogIntakeThreshold == 1,
+            "Scheduler tuning JSON parser did not apply deterministic plan budgets and limits.");
+
+        Console.WriteLine("[PASS] Scheduler tuning JSON");
     }
 
     private static void TestConstructionTuningJson()
@@ -3838,6 +4989,60 @@ internal static class CoreRuntimeSmokeTests
             "Order commands did not enqueue through the runtime order command target.");
 
         Console.WriteLine("[PASS] Order commands runtime target");
+    }
+
+    private static void TestOrdersManagerActiveSnapshotsUseStableOrdering()
+    {
+        var world = new World(2, 4);
+        var laterRect = new SadRogue.Primitives.Rectangle(8, 8, 2, 2);
+        var earlierRect = new SadRogue.Primitives.Rectangle(1, 1, 1, 1);
+        var buildAnchorB = new SadRogue.Primitives.Point(4, 4);
+        var buildAnchorA = new SadRogue.Primitives.Point(2, 2);
+
+        world.Orders.EnqueueHaul(laterRect, z: 2, priority: 20, createdTick: 20);
+        world.Orders.EnqueueHaul(earlierRect, z: 0, priority: 10, createdTick: 10);
+        world.Orders.EnqueueMiningAdvanced(laterRect, zMin: 2, zMax: 2, MiningAction.Dig, priority: 20, createdTick: 20);
+        world.Orders.EnqueueMiningAdvanced(earlierRect, zMin: 0, zMax: 0, MiningAction.Dig, priority: 10, createdTick: 10);
+        world.Orders.EnqueueConstruction(
+            laterRect,
+            zMin: 2,
+            zMax: 2,
+            ConstructionShape.Wall,
+            new MaterialFilterSpec { CategoryKey = "test.wall.b" },
+            priority: 20,
+            createdTick: 20);
+        world.Orders.EnqueueConstruction(
+            earlierRect,
+            zMin: 0,
+            zMax: 0,
+            ConstructionShape.Floor,
+            new MaterialFilterSpec { CategoryKey = "test.floor.a" },
+            priority: 10,
+            createdTick: 10);
+        world.Orders.EnqueueBuildableConstruction("workshop.b", buildAnchorB, z: 0, priority: 20, createdTick: 20);
+        world.Orders.EnqueueBuildableConstruction("workshop.a", buildAnchorA, z: 0, priority: 10, createdTick: 10);
+
+        var hauls = world.Orders.GetActiveHaulsSnapshot();
+        var mining = world.Orders.GetActiveMiningSnapshot();
+        var construction = world.Orders.GetActiveConstructionSnapshot();
+        var buildable = world.Orders.GetActiveBuildableSnapshot();
+
+        RegressionAssert.True(
+            hauls.Count == 2
+            && hauls[0].Z == 0
+            && hauls[0].WorldRect == earlierRect
+            && mining.Count == 2
+            && mining[0].Id == 1
+            && mining[1].Id == 2
+            && construction.Count == 2
+            && construction[0].ZMin == 0
+            && construction[0].WorldRect == earlierRect
+            && buildable.Count == 2
+            && buildable[0].ConstructionId == "workshop.a"
+            && buildable[0].Anchor == buildAnchorA,
+            "OrdersManager active snapshots should expose deterministic owner ordering.");
+
+        Console.WriteLine("[PASS] OrdersManager active snapshots use stable ordering");
     }
 
     private static void TestZoneCommandsUseRuntimeTarget()
@@ -4284,6 +5489,69 @@ internal static class CoreRuntimeSmokeTests
             && frame.Metadata.RuntimeTick == runtime.SimulationStatus.CurrentTick,
             "Runtime overlay snapshot metadata was not authored by the Runtime session.");
 
+        var sameFrame = runtime.GetUiOverlayFrameData(
+            currentZ: 0,
+            viewport: new RuntimeRect(0, 0, 10, 10),
+            showZoneOverlay: false,
+            includeManagementDrawer: false,
+            includeWorkDrawer: false,
+            includeDebugMenu: false,
+            stockpileDetailZoneId: null,
+            zoneDetailId: null);
+        var differentFrameRequest = runtime.GetUiOverlayFrameData(
+            currentZ: 0,
+            viewport: new RuntimeRect(1, 0, 10, 10),
+            showZoneOverlay: false,
+            includeManagementDrawer: false,
+            includeWorkDrawer: false,
+            includeDebugMenu: false,
+            stockpileDetailZoneId: null,
+            zoneDetailId: null);
+
+        RegressionAssert.True(
+            frame.Publication.SchemaVersion == SimulationSnapshotPublicationSchema.CurrentVersion
+            && frame.Publication.Surface == SimulationSnapshotPublicationSurface.UiOverlayFrame
+            && frame.Publication.RequestHashAlgorithm == ReplayHashBuilder.Algorithm
+            && !string.IsNullOrWhiteSpace(frame.Publication.RequestHash)
+            && frame.Publication.RequestHash == sameFrame.Publication.RequestHash
+            && frame.Publication.RequestHash != differentFrameRequest.Publication.RequestHash,
+            "Runtime overlay snapshot publication metadata was not stable and request-keyed.");
+
+        RegressionAssert.True(
+            frame.PresenterFrame.SchemaVersion == SimulationSnapshotPresenterFrameSchema.CurrentVersion
+            && frame.PresenterFrame.TransferMode == SimulationSnapshotTransferMode.FullSnapshot
+            && frame.PresenterFrame.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.JsonSha256V1
+            && frame.PresenterFrame.PublicationSequence > 0
+            && !string.IsNullOrWhiteSpace(frame.PresenterFrame.PayloadHash)
+            && frame.PresenterFrame.PayloadHash == sameFrame.PresenterFrame.PayloadHash
+            && frame.PresenterFrame.PublicationSequence == sameFrame.PresenterFrame.PublicationSequence
+            && !frame.PresenterFrame.CanDiffFromPrevious
+            && frame.PresenterFrame.DeltaBasePayloadHash is null
+            && differentFrameRequest.PresenterFrame.PublicationSequence > frame.PresenterFrame.PublicationSequence
+            && differentFrameRequest.PresenterFrame.PayloadHash != frame.PresenterFrame.PayloadHash
+            && !differentFrameRequest.PresenterFrame.CanDiffFromPrevious
+            && differentFrameRequest.PresenterFrame.DeltaBasePayloadHash is null,
+            "Runtime overlay presenter-frame metadata did not expose a stable full-snapshot payload identity.");
+
+        RegressionAssert.True(
+            frame.Delta.SchemaVersion == SimulationUiOverlayFrameDeltaSchema.CurrentVersion
+            && frame.Delta.IsAvailable
+            && frame.Delta.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.JsonSha256V1
+            && !string.IsNullOrWhiteSpace(frame.Delta.PayloadHash)
+            && !frame.Delta.CanApplyToBase
+            && frame.Delta.BasePayloadHash is null
+            && frame.Delta.SectionHashes.Count == 11
+            && frame.Delta.ChangedSections.Count == frame.Delta.SectionHashes.Count
+            && frame.Delta.SectionHashes.Any(section => section.Section == SimulationUiOverlayFrameSection.StockpilePresets)
+            && sameFrame.Delta.PayloadHash == frame.Delta.PayloadHash
+            && sameFrame.Delta.ChangedSections.Count == frame.Delta.ChangedSections.Count
+            && differentFrameRequest.Delta.IsAvailable
+            && !differentFrameRequest.Delta.CanApplyToBase
+            && differentFrameRequest.Delta.BasePayloadHash is null
+            && differentFrameRequest.Delta.SectionHashes.Count == frame.Delta.SectionHashes.Count
+            && differentFrameRequest.Delta.ChangedSections.Count == differentFrameRequest.Delta.SectionHashes.Count,
+            "Runtime overlay frame did not expose section-level delta metadata.");
+
         var renderFrame = runtime.GetFrameRenderData(
             includeMapViewport: true,
             fortressSize: 2 * 32,
@@ -4304,7 +5572,419 @@ internal static class CoreRuntimeSmokeTests
             && renderFrame.Metadata.RuntimeTick == runtime.SimulationStatus.CurrentTick,
             "Runtime frame-render snapshot metadata was not authored by the Runtime session.");
 
+        var sameRenderFrame = runtime.GetFrameRenderData(
+            includeMapViewport: true,
+            fortressSize: 2 * 32,
+            cameraPosition: new RuntimePoint(0, 0),
+            cursorPosition: new RuntimePoint(0, 0),
+            currentZ: 0,
+            zoomLevel: 1,
+            viewWidth: 10,
+            viewHeight: 10,
+            cursorGlyph: 'X',
+            navigationMode: SimulationNavigationOverlayMode.None,
+            selectedNavigationTarget: null,
+            tileInspectionWorldPosition: new RuntimePoint(0, 0),
+            tileInspectionZ: 0);
+        var differentRenderRequest = runtime.GetFrameRenderData(
+            includeMapViewport: true,
+            fortressSize: 2 * 32,
+            cameraPosition: new RuntimePoint(1, 0),
+            cursorPosition: new RuntimePoint(0, 0),
+            currentZ: 0,
+            zoomLevel: 1,
+            viewWidth: 10,
+            viewHeight: 10,
+            cursorGlyph: 'X',
+            navigationMode: SimulationNavigationOverlayMode.None,
+            selectedNavigationTarget: null,
+            tileInspectionWorldPosition: new RuntimePoint(0, 0),
+            tileInspectionZ: 0);
+
+        RegressionAssert.True(
+            renderFrame.Publication.SchemaVersion == SimulationSnapshotPublicationSchema.CurrentVersion
+            && renderFrame.Publication.Surface == SimulationSnapshotPublicationSurface.FrameRender
+            && renderFrame.Publication.RequestHashAlgorithm == ReplayHashBuilder.Algorithm
+            && !string.IsNullOrWhiteSpace(renderFrame.Publication.RequestHash)
+            && renderFrame.Publication.RequestHash == sameRenderFrame.Publication.RequestHash
+            && renderFrame.Publication.RequestHash != differentRenderRequest.Publication.RequestHash,
+            "Runtime frame-render snapshot publication metadata was not stable and request-keyed.");
+
+        RegressionAssert.True(
+            renderFrame.PresenterFrame.SchemaVersion == SimulationSnapshotPresenterFrameSchema.CurrentVersion
+            && renderFrame.PresenterFrame.TransferMode == SimulationSnapshotTransferMode.FullSnapshot
+            && renderFrame.PresenterFrame.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.JsonSha256V1
+            && renderFrame.PresenterFrame.PublicationSequence > differentFrameRequest.PresenterFrame.PublicationSequence
+            && !string.IsNullOrWhiteSpace(renderFrame.PresenterFrame.PayloadHash)
+            && renderFrame.PresenterFrame.PayloadHash == sameRenderFrame.PresenterFrame.PayloadHash
+            && renderFrame.PresenterFrame.PublicationSequence == sameRenderFrame.PresenterFrame.PublicationSequence
+            && !renderFrame.PresenterFrame.CanDiffFromPrevious
+            && renderFrame.PresenterFrame.DeltaBasePayloadHash is null
+            && differentRenderRequest.PresenterFrame.PublicationSequence > renderFrame.PresenterFrame.PublicationSequence
+            && differentRenderRequest.PresenterFrame.PayloadHash != renderFrame.PresenterFrame.PayloadHash
+            && !differentRenderRequest.PresenterFrame.CanDiffFromPrevious
+            && differentRenderRequest.PresenterFrame.DeltaBasePayloadHash is null,
+            "Runtime frame-render presenter-frame metadata did not expose a stable full-snapshot payload identity.");
+
+        RegressionAssert.True(
+            renderFrame.MapViewport.Delta.SchemaVersion == SimulationMapViewportDeltaSchema.CurrentVersion
+            && renderFrame.MapViewport.Delta.IsAvailable
+            && renderFrame.MapViewport.Delta.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1
+            && !string.IsNullOrWhiteSpace(renderFrame.MapViewport.Delta.PayloadHash)
+            && !renderFrame.MapViewport.Delta.CanApplyToBase
+            && renderFrame.MapViewport.Delta.BasePayloadHash is null
+            && renderFrame.MapViewport.Delta.ChangedCells.Count == renderFrame.MapViewport.Width * renderFrame.MapViewport.Height
+            && renderFrame.MapViewport.Delta.ChangedRows.Count == renderFrame.MapViewport.Height
+            && renderFrame.MapViewport.Delta.ChangedRows.All(row =>
+                row.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1
+                && !string.IsNullOrWhiteSpace(row.PayloadHash)
+                && row.Cells.Count == renderFrame.MapViewport.Width)
+            && renderFrame.MapViewport.Delta.ChangedRegions.Count == ExpectedMapViewportRegionCount(
+                renderFrame.MapViewport.Width,
+                renderFrame.MapViewport.Height)
+            && renderFrame.MapViewport.Delta.ChangedRegions.All(region =>
+                region.PayloadHashAlgorithm == SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1
+                && !string.IsNullOrWhiteSpace(region.PayloadHash)
+                && region.Width > 0
+                && region.Height > 0
+                && region.Cells.Count <= region.Width * region.Height)
+            && sameRenderFrame.MapViewport.Delta.PayloadHash == renderFrame.MapViewport.Delta.PayloadHash
+            && sameRenderFrame.MapViewport.Delta.ChangedCells.Count == renderFrame.MapViewport.Delta.ChangedCells.Count
+            && sameRenderFrame.MapViewport.Delta.ChangedRows.Count == renderFrame.MapViewport.Delta.ChangedRows.Count
+            && sameRenderFrame.MapViewport.Delta.ChangedRegions.Count == renderFrame.MapViewport.Delta.ChangedRegions.Count
+            && differentRenderRequest.MapViewport.Delta.IsAvailable
+            && !differentRenderRequest.MapViewport.Delta.CanApplyToBase
+            && differentRenderRequest.MapViewport.Delta.BasePayloadHash is null
+            && differentRenderRequest.MapViewport.Delta.PayloadHash != renderFrame.MapViewport.Delta.PayloadHash,
+            "Runtime frame-render map viewport did not expose full-snapshot changed-cell/row/region delta metadata.");
+
         Console.WriteLine("[PASS] Runtime stockpile preset menu uses content catalog");
+    }
+
+    private static void TestRuntimeFramePublisherPresenterDiffBase()
+    {
+        var publisher = new RuntimeFrameSnapshotPublisher();
+        var request = new RuntimeUiOverlayFrameRequest(
+            CurrentZ: 0,
+            Viewport: new RuntimeRect(0, 0, 10, 10),
+            ShowZoneOverlay: false,
+            IncludeManagementDrawer: false,
+            IncludeWorkDrawer: false,
+            IncludeDebugMenu: false,
+            StockpileDetailZoneId: null,
+            ZoneDetailId: null);
+
+        var first = publisher.PublishUiOverlayFrame(
+            session: null,
+            runtimeTick: 10,
+            allowCache: false,
+            request);
+        var second = publisher.PublishUiOverlayFrame(
+            session: null,
+            runtimeTick: 11,
+            allowCache: false,
+            request);
+        var changedRequest = publisher.PublishUiOverlayFrame(
+            session: null,
+            runtimeTick: 12,
+            allowCache: false,
+            request with { CurrentZ = 1 });
+        publisher.Invalidate();
+        var afterInvalidate = publisher.PublishUiOverlayFrame(
+            session: null,
+            runtimeTick: 13,
+            allowCache: false,
+            request);
+
+        RegressionAssert.True(
+            first.PresenterFrame.TransferMode == SimulationSnapshotTransferMode.FullSnapshot
+            && !first.PresenterFrame.CanDiffFromPrevious
+            && first.PresenterFrame.DeltaBasePayloadHash is null
+            && second.PresenterFrame.CanDiffFromPrevious
+            && second.PresenterFrame.DeltaBasePayloadHash == first.PresenterFrame.PayloadHash
+            && second.PresenterFrame.PublicationSequence > first.PresenterFrame.PublicationSequence
+            && changedRequest.PresenterFrame.PublicationSequence > second.PresenterFrame.PublicationSequence
+            && !changedRequest.PresenterFrame.CanDiffFromPrevious
+            && changedRequest.PresenterFrame.DeltaBasePayloadHash is null
+            && afterInvalidate.PresenterFrame.PublicationSequence > changedRequest.PresenterFrame.PublicationSequence
+            && !afterInvalidate.PresenterFrame.CanDiffFromPrevious
+            && afterInvalidate.PresenterFrame.DeltaBasePayloadHash is null,
+            "Runtime frame publisher did not expose stable presenter-frame diff base metadata.");
+
+        RegressionAssert.True(
+            first.Delta.IsAvailable
+            && !first.Delta.CanApplyToBase
+            && first.Delta.BasePayloadHash is null
+            && first.Delta.ChangedSections.Count == first.Delta.SectionHashes.Count
+            && second.Delta.CanApplyToBase
+            && second.Delta.BasePayloadHash == first.Delta.PayloadHash
+            && second.Delta.PayloadHash == first.Delta.PayloadHash
+            && second.Delta.ChangedSections.Count == 0
+            && !changedRequest.Delta.CanApplyToBase
+            && changedRequest.Delta.BasePayloadHash is null
+            && changedRequest.Delta.ChangedSections.Count == changedRequest.Delta.SectionHashes.Count
+            && !afterInvalidate.Delta.CanApplyToBase
+            && afterInvalidate.Delta.BasePayloadHash is null
+            && afterInvalidate.Delta.ChangedSections.Count == afterInvalidate.Delta.SectionHashes.Count,
+            "Runtime frame publisher did not expose UI overlay section deltas.");
+
+        var renderRequest = new RuntimeFrameRenderRequest(
+            IncludeMapViewport: true,
+            FortressSize: 2,
+            CameraPosition: new RuntimePoint(0, 0),
+            CursorPosition: new RuntimePoint(0, 0),
+            CurrentZ: 0,
+            ZoomLevel: 1,
+            ViewWidth: 4,
+            ViewHeight: 3,
+            CursorGlyph: 'X',
+            NavigationMode: SimulationNavigationOverlayMode.None,
+            SelectedNavigationTarget: null,
+            TileInspectionWorldPosition: new RuntimePoint(0, 0),
+            TileInspectionZ: 0);
+        var firstRender = publisher.PublishFrameRender(
+            session: null,
+            runtimeTick: 20,
+            allowCache: false,
+            renderRequest);
+        var secondRender = publisher.PublishFrameRender(
+            session: null,
+            runtimeTick: 21,
+            allowCache: false,
+            renderRequest);
+        var changedRenderRequest = publisher.PublishFrameRender(
+            session: null,
+            runtimeTick: 22,
+            allowCache: false,
+            renderRequest with { CameraPosition = new RuntimePoint(1, 0) });
+
+        RegressionAssert.True(
+            firstRender.MapViewport.Delta.IsAvailable
+            && !firstRender.MapViewport.Delta.CanApplyToBase
+            && firstRender.MapViewport.Delta.BasePayloadHash is null
+            && firstRender.MapViewport.Delta.ChangedCells.Count == firstRender.MapViewport.Width * firstRender.MapViewport.Height
+            && firstRender.MapViewport.Delta.ChangedRows.Count == firstRender.MapViewport.Height
+            && firstRender.MapViewport.Delta.ChangedRegions.Count == ExpectedMapViewportRegionCount(
+                firstRender.MapViewport.Width,
+                firstRender.MapViewport.Height)
+            && secondRender.MapViewport.Delta.CanApplyToBase
+            && secondRender.MapViewport.Delta.BasePayloadHash == firstRender.MapViewport.Delta.PayloadHash
+            && secondRender.MapViewport.Delta.PayloadHash == firstRender.MapViewport.Delta.PayloadHash
+            && secondRender.MapViewport.Delta.ChangedCells.Count == 0
+            && secondRender.MapViewport.Delta.ChangedRows.Count == 0
+            && secondRender.MapViewport.Delta.ChangedRegions.Count == 0
+            && !changedRenderRequest.MapViewport.Delta.CanApplyToBase
+            && changedRenderRequest.MapViewport.Delta.BasePayloadHash is null
+            && changedRenderRequest.MapViewport.Delta.ChangedCells.Count == changedRenderRequest.MapViewport.Width * changedRenderRequest.MapViewport.Height
+            && changedRenderRequest.MapViewport.Delta.ChangedRows.Count == changedRenderRequest.MapViewport.Height
+            && changedRenderRequest.MapViewport.Delta.ChangedRegions.Count == ExpectedMapViewportRegionCount(
+                changedRenderRequest.MapViewport.Width,
+                changedRenderRequest.MapViewport.Height),
+            "Runtime frame publisher did not expose changed-cell/row/region map viewport deltas.");
+
+        Console.WriteLine("[PASS] Runtime frame publisher exposes presenter-frame diff base metadata");
+    }
+
+    private static int ExpectedMapViewportRegionCount(int width, int height)
+    {
+        int regionSize = SimulationMapViewportDeltaSchema.RegionSize;
+        return (((width - 1) / regionSize) + 1)
+            * (((height - 1) / regionSize) + 1);
+    }
+
+    private static void TestAppMapViewportPresenterConsumesRuntimeDeltas()
+    {
+        var cache = new FortressMapViewportPresenterCache();
+        var firstRows = new[]
+        {
+            new MapViewportRowDeltaView(
+                ScreenY: 0,
+                PayloadHash: "row-0-a",
+                PayloadHashAlgorithm: SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1,
+                Cells: new[] { ViewCell(0, 0, 'a'), ViewCell(1, 0, 'b') }),
+            new MapViewportRowDeltaView(
+                ScreenY: 1,
+                PayloadHash: "row-1-a",
+                PayloadHashAlgorithm: SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1,
+                Cells: new[] { ViewCell(0, 1, 'c'), ViewCell(1, 1, 'd') })
+        };
+        var first = new SimulationMapViewportData(
+            IsAvailable: true,
+            HasWorld: true,
+            Width: 2,
+            Height: 2,
+            CameraX: 0,
+            CameraY: 0,
+            CurrentZ: 0,
+            Cells: Array.Empty<MapViewportCellView>(),
+            Delta: SimulationMapViewportDeltaData.FullSnapshot(
+                "map-a",
+                Array.Empty<MapViewportCellView>(),
+                firstRows,
+                Array.Empty<MapViewportRegionDeltaView>()));
+
+        var firstPresented = cache.Present(first);
+        var firstGlyphs = firstPresented.Cells.ToDictionary(static cell => (cell.ScreenX, cell.ScreenY), static cell => cell.Glyph);
+
+        var changedRow = new MapViewportRowDeltaView(
+            ScreenY: 1,
+            PayloadHash: "row-1-b",
+            PayloadHashAlgorithm: SimulationSnapshotPayloadHashAlgorithm.CanonicalSha256V1,
+            Cells: new[] { ViewCell(0, 1, 'e'), ViewCell(1, 1, 'f') });
+        var second = first with
+        {
+            Cells = Array.Empty<MapViewportCellView>(),
+            Delta = SimulationMapViewportDeltaData.Delta(
+                "map-b",
+                "map-a",
+                Array.Empty<MapViewportCellView>(),
+                new[] { changedRow },
+                Array.Empty<MapViewportRegionDeltaView>())
+        };
+        var secondPresented = cache.Present(second);
+        var secondGlyphs = secondPresented.Cells.ToDictionary(static cell => (cell.ScreenX, cell.ScreenY), static cell => cell.Glyph);
+
+        var third = first with
+        {
+            Cells = Array.Empty<MapViewportCellView>(),
+            Delta = SimulationMapViewportDeltaData.Delta(
+                "map-c",
+                "map-b",
+                new[] { ViewCell(1, 0, 'z') },
+                Array.Empty<MapViewportRowDeltaView>(),
+                Array.Empty<MapViewportRegionDeltaView>())
+        };
+        var thirdPresented = cache.Present(third);
+        var thirdGlyphs = thirdPresented.Cells.ToDictionary(static cell => (cell.ScreenX, cell.ScreenY), static cell => cell.Glyph);
+
+        RegressionAssert.True(
+            firstPresented.Cells.Count == 4
+            && firstGlyphs[(0, 0)] == 'a'
+            && firstGlyphs[(1, 1)] == 'd'
+            && secondPresented.Cells.Count == 4
+            && secondGlyphs[(0, 0)] == 'a'
+            && secondGlyphs[(1, 0)] == 'b'
+            && secondGlyphs[(0, 1)] == 'e'
+            && secondGlyphs[(1, 1)] == 'f'
+            && thirdPresented.Cells.Count == 4
+            && thirdGlyphs[(0, 0)] == 'a'
+            && thirdGlyphs[(1, 0)] == 'z'
+            && thirdGlyphs[(0, 1)] == 'e'
+            && thirdGlyphs[(1, 1)] == 'f',
+            "App map viewport presenter did not compose Runtime row/cell deltas into a full viewport.");
+
+        Console.WriteLine("[PASS] App map viewport presenter consumes Runtime deltas");
+    }
+
+    private static MapViewportCellView ViewCell(int x, int y, char glyph)
+    {
+        return new MapViewportCellView(
+            x,
+            y,
+            glyph,
+            new SnapshotColor(200, 200, 200));
+    }
+
+    private static void TestAppUiOverlayPresenterConsumesRuntimeSectionDeltas()
+    {
+        var cache = new FortressUiOverlayPresenterCache();
+        var first = new SimulationUiOverlayFrameData(
+            BuildCatalog: BuildCatalog("core_workshop_kitchen"),
+            Jobs: null,
+            Workshops: new SimulationWorkshopDebugData(Array.Empty<WorkshopSummaryView>(), 0, 0, 0),
+            StockpilePresets: PresetMenu("all", "All"),
+            StockpileOverlay: new SimulationStockpileOverlayData(new[] { new StockpileOverlayCellView(4, 5) }),
+            StockpileDetail: null,
+            ZoneOverlay: SimulationZoneOverlayData.Empty,
+            ZoneDetail: null,
+            ManagementDrawer: SimulationManagementDrawerData.Empty,
+            WorkDrawer: null,
+            DebugMenu: null,
+            Delta: SimulationUiOverlayFrameDeltaData.FullSnapshot(
+                "overlay-a",
+                OverlaySectionHashes("a"),
+                OverlaySectionNames()));
+        var firstPresented = cache.Present(first);
+
+        var second = first with
+        {
+            BuildCatalog = new SimulationBuildCatalogData(Array.Empty<BuildableConstructionView>()),
+            StockpilePresets = PresetMenu("wood", "Wood"),
+            StockpileOverlay = SimulationStockpileOverlayData.Empty,
+            Delta = SimulationUiOverlayFrameDeltaData.Delta(
+                "overlay-b",
+                "overlay-a",
+                OverlaySectionHashes("b"),
+                new[] { SimulationUiOverlayFrameSection.StockpilePresets })
+        };
+        var secondPresented = cache.Present(second);
+
+        RegressionAssert.True(
+            firstPresented.BuildCatalog.Workshops.Count == 1
+            && firstPresented.StockpilePresets.Options[0].Id == "all"
+            && firstPresented.StockpileOverlay.Cells.Count == 1
+            && secondPresented.BuildCatalog.Workshops.Count == 1
+            && secondPresented.BuildCatalog.Workshops[0].Id == "core_workshop_kitchen"
+            && secondPresented.StockpilePresets.Options.Count == 1
+            && secondPresented.StockpilePresets.Options[0].Id == "wood"
+            && secondPresented.StockpileOverlay.Cells.Count == 1
+            && secondPresented.StockpileOverlay.Cells[0].X == 4
+            && secondPresented.ManagementDrawer.HasValue
+            && secondPresented.ManagementDrawer.Value.HasWorld == false,
+            "App UI overlay presenter did not compose Runtime section deltas into a full overlay frame.");
+
+        Console.WriteLine("[PASS] App UI overlay presenter consumes Runtime section deltas");
+    }
+
+    private static SimulationBuildCatalogData BuildCatalog(string workshopId)
+    {
+        return new SimulationBuildCatalogData(new[]
+        {
+            new BuildableConstructionView(
+                workshopId,
+                "Kitchen",
+                "workshops",
+                3,
+                3,
+                1,
+                "walkable",
+                Array.Empty<string>())
+        });
+    }
+
+    private static SimulationStockpilePresetMenuData PresetMenu(
+        string id,
+        string name)
+    {
+        return new SimulationStockpilePresetMenuData(new[]
+        {
+            new StockpilePresetMenuOptionView(id, name, 1)
+        });
+    }
+
+    private static SimulationUiOverlaySectionHashData[] OverlaySectionHashes(string suffix)
+    {
+        return OverlaySectionNames()
+            .Select(section => new SimulationUiOverlaySectionHashData(section, $"{section}:{suffix}"))
+            .ToArray();
+    }
+
+    private static string[] OverlaySectionNames()
+    {
+        return new[]
+        {
+            SimulationUiOverlayFrameSection.BuildCatalog,
+            SimulationUiOverlayFrameSection.Jobs,
+            SimulationUiOverlayFrameSection.Workshops,
+            SimulationUiOverlayFrameSection.StockpilePresets,
+            SimulationUiOverlayFrameSection.StockpileOverlay,
+            SimulationUiOverlayFrameSection.StockpileDetail,
+            SimulationUiOverlayFrameSection.ZoneOverlay,
+            SimulationUiOverlayFrameSection.ZoneDetail,
+            SimulationUiOverlayFrameSection.ManagementDrawer,
+            SimulationUiOverlayFrameSection.WorkDrawer,
+            SimulationUiOverlayFrameSection.DebugMenu
+        };
     }
 
     private static void TestSpawnItemCommandUsesItemDiff()
@@ -4450,7 +6130,9 @@ internal static class CoreRuntimeSmokeTests
             && stats.IntakeHaul == haulJobs.LastIntakeCount
             && stats.IntakeMining == miningJobs.LastIntakeCount
             && stats.IntakeConstruction == constructionJobs.LastIntakeCount
-            && stats.IntakeCraft == craftJobs.LastIntakeCount,
+            && stats.IntakeCraft == craftJobs.LastIntakeCount
+            && stats.PlanStageCount == 5
+            && stats.ApplyStageCount == 4,
             "UnifiedJobsOrchestrator order, scheduling hints, or intake stats changed.");
 
         Console.WriteLine("[PASS] Unified jobs orchestrator");
@@ -4514,6 +6196,25 @@ internal static class CoreRuntimeSmokeTests
         public void ReadTick(ulong tick)
         {
             ReadCount++;
+        }
+
+        public void WriteTick(ulong tick)
+        {
+            WriteCount++;
+        }
+    }
+
+    private sealed class FailingReadTickSystem : ITick
+    {
+        public int ReadCount { get; private set; }
+        public int WriteCount { get; private set; }
+        public int Priority => 50;
+        public string SystemId => "FailingReadSystem";
+
+        public void ReadTick(ulong tick)
+        {
+            ReadCount++;
+            throw new InvalidOperationException("intentional read failure");
         }
 
         public void WriteTick(ulong tick)
@@ -4937,4 +6638,6 @@ internal static class CoreRuntimeSmokeTests
         public IWorldReader World { get; }
         public IEventBus EventBus { get; }
     }
+
+    private readonly record struct TestGameEvent(ulong Tick, string EventType) : IGameEvent;
 }

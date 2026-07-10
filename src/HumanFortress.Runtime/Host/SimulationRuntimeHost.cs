@@ -26,6 +26,7 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
     private readonly IConstructionCatalog _constructions;
     private readonly IRuntimeGeologyCatalog _geology;
     private readonly FortressRuntimeStockpilePresetCatalog _stockpilePresets;
+    private readonly RuntimePathServiceRegistry? _pathServices;
     private readonly SimulationCommandExecutionContext _commandContext;
     private readonly SimulationRuntimeHostCore _core;
     private readonly Func<TSystems> _createSystems;
@@ -95,6 +96,7 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _geology = geology ?? throw new ArgumentNullException(nameof(geology));
         _stockpilePresets = stockpilePresets ?? FortressRuntimeStockpilePresetCatalog.Empty;
+        _pathServices = pathServices;
         _createSystems = createSystems ?? throw new ArgumentNullException(nameof(createSystems));
         _afterSystemsRegistered = afterSystemsRegistered;
 

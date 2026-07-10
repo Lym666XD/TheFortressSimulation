@@ -10,10 +10,13 @@ internal sealed partial class OrdersManager
     internal void EnqueueHaul(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
         var d = new HaulDesignation(worldRect, z, priority, createdTick);
-        _haulQueue.Enqueue(d);
-        _recentHauls.Enqueue(d);
-        _activeHauls.Add(d);
-        while (_recentHauls.Count > RecentCapacity && _recentHauls.TryDequeue(out _)) { }
+        lock (_sync)
+        {
+            _haulQueue.Enqueue(d);
+            _recentHauls.Enqueue(d);
+            _activeHauls.Add(d);
+            TrimRecentQueue(_recentHauls);
+        }
     }
 
     /// <summary>
@@ -22,14 +25,7 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal int DrainHaulDesignations(ICollection<HaulDesignation> into, int maxCount)
     {
-        var drained = 0;
-        while (drained < maxCount && _haulQueue.TryDequeue(out var desig))
-        {
-            into.Add(desig);
-            drained++;
-        }
-
-        return drained;
+        return DrainQueue(_haulQueue, into, maxCount);
     }
 
     /// <summary>
@@ -37,7 +33,10 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal List<HaulDesignation> GetRecentHauls()
     {
-        return _recentHauls.ToList();
+        lock (_sync)
+        {
+            return _recentHauls.ToList();
+        }
     }
 
     /// <summary>
@@ -45,6 +44,9 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal List<HaulDesignation> GetActiveHaulsSnapshot()
     {
-        return _activeHauls.ToList();
+        lock (_sync)
+        {
+            return OrderHauls(_activeHauls).ToList();
+        }
     }
 }

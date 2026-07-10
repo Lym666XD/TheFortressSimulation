@@ -1,5 +1,9 @@
 # Concurrency Research Notes
 
+Archived: research background only. Current concurrency rules live in
+`docs/architecture/CONCURRENCY_MODEL.md` and
+`docs/planning/RULES.md`.
+
 Status: research notes  
 Owner: sim/core  
 Last updated: 2026-05-24

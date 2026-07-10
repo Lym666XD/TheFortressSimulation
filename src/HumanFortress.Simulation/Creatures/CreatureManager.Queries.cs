@@ -7,7 +7,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Get instance by GUID
     /// </summary>
-    public CreatureInstance? GetInstance(Guid guid)
+    internal CreatureInstance? GetInstance(Guid guid)
     {
         lock (_instanceLock)
         {
@@ -18,7 +18,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Find a creature by the compact legacy entity id used in older DiffTarget operations.
     /// </summary>
-    public CreatureInstance? GetInstanceByEntityId(uint entityId)
+    internal CreatureInstance? GetInstanceByEntityId(uint entityId)
     {
         lock (_instanceLock)
         {
@@ -33,7 +33,7 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Find a creature by the wider stable entity key used by entity-scoped DiffTarget operations.
     /// </summary>
-    public CreatureInstance? GetInstanceByEntityKey(ulong entityKey)
+    internal CreatureInstance? GetInstanceByEntityKey(ulong entityKey)
     {
         lock (_instanceLock)
         {
@@ -46,12 +46,13 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Get all instances (creates a snapshot for thread safety)
     /// </summary>
-    public IEnumerable<CreatureInstance> GetAllInstances()
+    internal IEnumerable<CreatureInstance> GetAllInstances()
     {
         lock (_instanceLock)
         {
-            return _instances.Values
-                .OrderBy(static inst => inst.Guid)
+            return _instances
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
                 .ToList();
         }
     }

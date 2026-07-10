@@ -19,7 +19,7 @@ internal sealed class MovementExecutor : IMovementExecutor
         _movementStates = new Dictionary<ulong, MovementState>();
         _pathService = pathService;
         _tuning = tuning ?? NavigationTuning.Default;
-        _stepDelay = 2; // simple slowdown so movement is visible (ticks per step)
+        _stepDelay = _tuning.MovementStepDelayTicks;
     }
 
     /// <summary>
@@ -75,7 +75,7 @@ internal sealed class MovementExecutor : IMovementExecutor
             }
         }
 
-        // Delay to slow down visual movement
+        // Deterministic pacing between movement steps.
         if (state.StepWait < _stepDelay)
         {
             state.StepWait++;

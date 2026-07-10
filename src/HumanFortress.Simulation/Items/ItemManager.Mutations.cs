@@ -7,7 +7,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Update item position and maintain position index.
     /// </summary>
-    public void UpdateItemPosition(Guid id, Point oldPos, int oldZ, Point newPos, int newZ)
+    internal void UpdateItemPosition(Guid id, Point oldPos, int oldZ, Point newPos, int newZ)
     {
         lock (_instanceLock)
         {
@@ -26,7 +26,7 @@ internal sealed partial class ItemManager
     /// Current policy: same DefinitionId at same (x,y,z) merge by increasing first instance's StackCount,
     /// deleting the redundant instances. Returns number of instances removed.
     /// </summary>
-    public int MergeStacksAt(Point worldPos, int z)
+    internal int MergeStacksAt(Point worldPos, int z)
     {
         lock (_instanceLock)
         {
@@ -84,7 +84,7 @@ internal sealed partial class ItemManager
     /// Reduces the original stack by takeCount and spawns a new item at the same position/Z.
     /// Returns the new item's Guid, or null if split cannot be performed.
     /// </summary>
-    public Guid? SplitStack(Guid sourceId, int takeCount)
+    internal Guid? SplitStack(Guid sourceId, int takeCount)
     {
         if (takeCount <= 0) return null;
         lock (_instanceLock)
@@ -97,7 +97,7 @@ internal sealed partial class ItemManager
         }
     }
 
-    public Guid? SplitStackWithGuid(Guid sourceId, int takeCount, Guid newGuid)
+    internal Guid? SplitStackWithGuid(Guid sourceId, int takeCount, Guid newGuid)
     {
         if (takeCount <= 0 || newGuid == Guid.Empty) return null;
         lock (_instanceLock)
@@ -133,7 +133,7 @@ internal sealed partial class ItemManager
     /// Remove an item instance by GUID, updating position index accordingly.
     /// Returns true if removed.
     /// </summary>
-    public bool RemoveInstance(Guid guid)
+    internal bool RemoveInstance(Guid guid)
     {
         lock (_instanceLock)
         {

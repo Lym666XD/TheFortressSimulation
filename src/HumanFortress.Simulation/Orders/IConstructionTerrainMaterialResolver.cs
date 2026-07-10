@@ -17,13 +17,23 @@ internal sealed class EmptyConstructionTerrainMaterialResolver : IConstructionTe
     {
     }
 
-    public ushort ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind)
+    internal ushort ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind)
     {
         return 0;
     }
 
-    public ushort TryMatchFromCurrent(TileBase tile, TerrainKind kind)
+    ushort IConstructionTerrainMaterialResolver.ResolveGeologyHandle(MaterialFilterSpec filter, TerrainKind kind)
+    {
+        return ResolveGeologyHandle(filter, kind);
+    }
+
+    internal ushort TryMatchFromCurrent(TileBase tile, TerrainKind kind)
     {
         return 0;
+    }
+
+    ushort IConstructionTerrainMaterialResolver.TryMatchFromCurrent(TileBase tile, TerrainKind kind)
+    {
+        return TryMatchFromCurrent(tile, kind);
     }
 }

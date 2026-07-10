@@ -28,8 +28,7 @@ internal sealed partial class PlaceableInstance
         // Load tuning if not provided
         tuning ??= PlaceableTuning.Default;
 
-        // Generate deterministic GUID from position and tick seed
-        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, position.X, position.Y, z);
+        var guid = DeterministicGuidGenerator.GenerateFromGuid(PlaceableGuidScopes.InstalledItem, sourceItem.Guid, tickSeed);
 
         var instance = new PlaceableInstance(
             guid: guid,
@@ -94,7 +93,7 @@ internal sealed partial class PlaceableInstance
         tuning ??= PlaceableTuning.Default;
 
         var item = new ItemInstance(
-            guid: DeterministicGuidGenerator.GenerateFromGuid(UninstalledItemGuidScope, placeable.Guid, currentTick),
+            guid: DeterministicGuidGenerator.GenerateFromGuid(PlaceableGuidScopes.UninstalledItem, placeable.Guid, currentTick),
             definitionId: def.Id,
             position: placeable.Position,
             z: placeable.Z,

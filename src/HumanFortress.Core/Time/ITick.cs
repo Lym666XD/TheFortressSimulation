@@ -7,7 +7,7 @@ public interface ITick
 {
     /// <summary>
     /// Called during the read phase of a tick. Systems can read state but cannot modify it.
-    /// Multiple systems may execute this phase in parallel.
+    /// The current authoritative scheduler executes systems in deterministic registered-system order.
     /// </summary>
     /// <param name="tick">Current simulation tick number</param>
     void ReadTick(ulong tick);

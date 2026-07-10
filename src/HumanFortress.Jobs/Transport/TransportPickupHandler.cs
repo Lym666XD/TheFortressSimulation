@@ -17,6 +17,7 @@ internal sealed class TransportPickupHandler
     private readonly ITransportStockpileIndexEmitter _stockpileIndexEmitter;
     private readonly TransportJobFinalizer _jobFinalizer;
     private readonly ITransportJobLogger _logger;
+    private readonly TransportStatsTracker _stats;
     private readonly int _creatureReserveTtlTicks;
     private readonly Func<Guid, Guid, uint> _seedFrom;
 
@@ -30,6 +31,7 @@ internal sealed class TransportPickupHandler
         ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         TransportJobFinalizer jobFinalizer,
         ITransportJobLogger? logger,
+        TransportStatsTracker stats,
         int creatureReserveTtlTicks,
         Func<Guid, Guid, uint> seedFrom)
     {
@@ -42,6 +44,7 @@ internal sealed class TransportPickupHandler
         _stockpileIndexEmitter = stockpileIndexEmitter ?? NullTransportStockpileIndexEmitter.Instance;
         _jobFinalizer = jobFinalizer ?? throw new ArgumentNullException(nameof(jobFinalizer));
         _logger = logger ?? NullTransportJobLogger.Instance;
+        _stats = stats ?? throw new ArgumentNullException(nameof(stats));
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
         _seedFrom = seedFrom ?? throw new ArgumentNullException(nameof(seedFrom));
     }
@@ -81,7 +84,7 @@ internal sealed class TransportPickupHandler
             _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} moved to unreachable pickup=({currentItemPos.X},{currentItemPos.Y},{currentItemPos.Z}) kind={retryPath.Kind}");
             _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
             _jobFinalizer.Finish(job, finished);
-            JobStats.NoPath++;
+            _stats.RecordNoPath();
             return;
         }
 
@@ -136,6 +139,6 @@ internal sealed class TransportPickupHandler
         _diffEmitter.UnmarkCarried(job.ItemId, workerPosition);
         _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
         _jobFinalizer.Finish(job, finished);
-        JobStats.NoPath++;
+        _stats.RecordNoPath();
     }
 }

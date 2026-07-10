@@ -1,4 +1,5 @@
 using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Runtime.Jobs;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.Stockpile;
@@ -41,6 +42,7 @@ internal sealed partial class FortressRuntimeJobSystems
         ItemsDiffLog itemsDiffLog,
         StockpileDiffLog stockpileDiffLog,
         NavigationManager navigation,
+        RuntimeNavigationServices navigationServices,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners)
     {
@@ -54,6 +56,7 @@ internal sealed partial class FortressRuntimeJobSystems
             dependencies.ProfessionAssignments,
             dependencies.SchedulerTunings.WorkerSelection,
             dependencies.NavigationTuning,
+            navigationServices,
             stockpileDiffLog);
     }
 }

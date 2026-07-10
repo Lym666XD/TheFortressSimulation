@@ -15,6 +15,7 @@ internal sealed partial class PlaceableInstance
         Point position,
         int z,
         ulong tickSeed,
+        Guid constructionSiteGuid,
         PlaceableTuning? tuning = null)
     {
         if (def.PlaceableProfile == null)
@@ -23,8 +24,7 @@ internal sealed partial class PlaceableInstance
         // Load tuning if not provided
         tuning ??= PlaceableTuning.Default;
 
-        // Generate deterministic GUID from position and tick seed
-        var guid = DeterministicGuidGenerator.GenerateFromPosition(tickSeed, position.X, position.Y, z);
+        var guid = DeterministicGuidGenerator.GenerateFromGuid(PlaceableGuidScopes.CompletedConstruction, constructionSiteGuid, tickSeed);
 
         var instance = new PlaceableInstance(
             guid: guid,

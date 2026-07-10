@@ -12,24 +12,24 @@ internal sealed class ConstructionSiteState
     /// <summary>
     /// Target construction id (e.g., core_construction_workshop_* or l0.* synthetic ids).
     /// </summary>
-    public string TargetId { get; set; } = string.Empty;
+    internal string TargetId { get; set; } = string.Empty;
 
     /// <summary>
     /// Required materials by item tag (e.g., stone_block, wood_log, clay_brick).
     /// </summary>
-    public Dictionary<string, int> MaterialsRequired { get; set; } = new();
+    internal Dictionary<string, int> MaterialsRequired { get; set; } = new();
 
     /// <summary>
     /// Delivered materials by item tag (cached/derived). Planner may recompute on Read.
     /// </summary>
-    public Dictionary<string, int> MaterialsDelivered { get; set; } = new();
+    internal Dictionary<string, int> MaterialsDelivered { get; set; } = new();
 
     /// <summary>
     /// Build progress (ticks) and total required.
     /// </summary>
-    public int BuildProgressTicks { get; set; }
+    internal int BuildProgressTicks { get; set; }
 
-    public int TotalBuildTicks { get; set; }
+    internal int TotalBuildTicks { get; set; }
 
     internal IReadOnlyList<KeyValuePair<string, int>> GetRequiredMaterialsSnapshot()
     {
@@ -38,9 +38,8 @@ internal sealed class ConstructionSiteState
 
     internal IReadOnlyList<string> GetRequiredMaterialIdsSnapshot()
     {
-        return MaterialsRequired.Keys
-            .OrderBy(static materialId => materialId, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(static materialId => materialId, StringComparer.Ordinal)
+        return OrderMaterials(MaterialsRequired)
+            .Select(static entry => entry.Key)
             .ToArray();
     }
 

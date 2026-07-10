@@ -1,6 +1,6 @@
 # UI System
 
-Updated: 2026-06-25
+Updated: 2026-07-09
 Status: current implementation map plus target boundary notes
 
 This is the active UI, input, and rendering map for the current App code. It
@@ -59,10 +59,11 @@ inside Runtime command code.
   world information through Session query DTOs rather than direct tile-array
   access.
 
-`FortressRuntimeAccess` is the current App-facing runtime facade. It delegates
-to `FortressRuntimeSessionController`, which wraps Runtime's
-`FortressRuntimeSessionCore` plus the remaining WorldGen/bootstrap adapter work.
-This is still a transition layer, but UI-facing methods now return Runtime DTOs,
+`FortressRuntimeAccess` is the current App-facing runtime facade. It is an
+App-internal role adapter over Runtime session ports created by
+`FortressRuntimeSessionFactory`; the old App-local session-controller
+passthrough has been removed and the concrete Runtime session core is internal.
+This remains a transition layer, but UI-facing methods return Runtime DTOs,
 simulation status, or command enqueue handles instead of live world/runtime
 objects. Input/rendering code receives role-specific runtime access interfaces
 for render reads, keyboard input, UI input callbacks, placement, map
@@ -122,8 +123,15 @@ Current rendering is Runtime DTO based for the active fortress screen:
 
 The older App `FortressRenderSnapshotService` / `OverlayFromSnapshot` bridge has
 been removed. Treat [Rendering Snapshot](RENDERING_SNAPSHOT.md) as the target
-contract for future presenter/versioned rendering work, not a description of the
-current active App rendering path.
+contract for broader packed world-chunk presenter work. The current active
+Runtime DTOs already carry presenter-frame identity, map-viewport changed-cell,
+changed-row, and screen-region deltas, plus UI overlay section deltas. App
+rendering now consumes the map-viewport deltas through
+`FortressMapViewportPresenterCache`, which composes a full cell list for the
+existing SadConsole renderer, and consumes UI overlay section deltas through
+`FortressUiOverlayPresenterCache`, which preserves unchanged section DTOs for
+the existing drawer/menu/modal renderers. Broader packed panel payloads and
+panel-specific redraw skipping remain future work.
 
 ## Remaining Coupling
 
@@ -138,8 +146,10 @@ The remaining coupling is mostly orchestration:
   calls.
 - App runtime bootstrap still passes `FortressMap` data into the runtime world
   fill step.
-- `FortressRuntimeSessionController` remains the transitional session adapter
-  that touches the live runtime session.
+- `FortressRuntimeAccess` remains the transitional App role adapter over
+  Runtime session ports. The adapter is allowed at the App/Runtime boundary,
+  but ordinary renderers and input controllers should continue depending on
+  narrower App-owned role interfaces.
 - App `Session`/`GameStates` still orchestrate screen flow and fortress-play
   enter/exit, with runtime lifetime delegated through `GameStateRuntimeCoordinator`.
 - Placement previews still query Runtime during active drags/highlight redraws,

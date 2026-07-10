@@ -297,7 +297,7 @@ JobScheduler — obeys LOD (assignment filter; TTL).
 
 Nav.PathService — disabled outside L0/L1; evicts caches on demotion.
 
-Persistence.SaveManager — respects dirty flags from L0/L1/L2 only.
+Runtime save/checkpoint layer — respects dirty flags from L0/L1/L2 only.
 
 RIM.RegionInstanceManager — treats non-active instances as Dormant; applies lazy catch-up on activation using last_visit_tick.
 

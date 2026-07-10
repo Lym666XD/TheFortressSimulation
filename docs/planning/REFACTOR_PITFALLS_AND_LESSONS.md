@@ -4,7 +4,82 @@ Date: 2026-06-26
 
 This document records practical pitfalls found during the current architecture refactor. It is meant to keep future refactor work fast and predictable.
 
+## Content DTO Pitfalls
+
+### Serializer-facing DTO accessors are not ordinary implementation API
+
+Do not blanket-convert every `public` accessor in `HumanFortress.Content` to
+`internal`. Some small internal container/DTO types are bound by
+`System.Text.Json`, where public setters are part of the serializer contract
+unless a deliberate converter/source-generation policy replaces them.
+
+For implementation-surface hardening, prefer explicit interface bridges and
+internal member guards in Simulation/Jobs/WorldGen-style runtime code. Treat
+Content JSON DTOs separately and prove the loader still binds data before
+narrowing serializer-facing setters.
+
 ## Save/Replay Pitfalls
+
+### Full restore must fail closed when Jobs checkpoint sections lack supported payloads
+
+Runtime checkpoints already include Jobs-owned transport/mining/craft replay
+hashes. That does not mean every save document can restore those executor
+states: each non-empty section needs matching payload rows plus a Jobs-owned
+restore seam. Keep `RuntimeSaveJobStateRestorePolicy` shared by inspection and
+the actual full-restore Runtime port, so `CanRestoreFull` and `RestoreFull...`
+are blocked with `slot.restore_plan` issues whenever a non-empty Jobs section is
+missing verified payload/restorer support. Transport, mining, and craft now have
+payload/restorer slices; keep the same fail-closed policy for malformed,
+missing, or future job-state sections. Empty counted Jobs checkpoint sections
+can be restored as empty state alongside world, RNG, and pending commands.
+
+### Migration transform ids belong in a Runtime registry seam
+
+Do not let `RuntimeSaveSlotMigrationPlanBuilder`, App, or save UI infer
+migration paths ad hoc from manifest versions. Required transform ids such as
+`slot:0->1` and `runtime_snapshot:2->3` are generated and checked by
+`RuntimeSaveSlotMigrationTransformRegistry`. The first concrete transform is
+`slot:0->1`, which rebuilds current slot metadata around a current-format
+`runtime_snapshot.json`. The first runtime snapshot schema transform is
+`runtime_snapshot:4->5`, and the next is `runtime_snapshot:5->6`. Runtime
+snapshot migrations should apply adjacent transforms in order and validate the
+final current-format result; v4 saves with non-empty mining checkpoint state
+but no mining payload must remain blocked, while v5 saves without a saved
+catalog payload must keep that saved catalog unavailable instead of fabricating
+missing-content/remap data.
+Migration execution should always enter through `RuntimeSaveSlotMigrator`, not
+App or save UI helpers. Current compatible slots return a successful no-op
+`RuntimeSaveSlotMigrationResultData`; unsupported or non-validating old runtime
+snapshot formats fail closed with Runtime-authored migration issues until
+concrete transforms exist.
+
+### Content compatibility is not structural validation
+
+`RuntimeSaveSlotInspectionData.Success` should stay about whether the slot files
+and manifest are readable/valid. Content binding is a separate Runtime policy:
+inspection carries `RuntimeSaveSlotContentCompatibilityData`, and restore plans
+can be blocked with `slot.content` even when the JSON and slot manifest are
+structurally valid. Do not make App, save UI, or migration helpers compare
+content hashes, catalog counts, material hashes, or versions themselves.
+
+Actual restore ports must enforce the same Runtime content compatibility gate
+again at execution time. Pending-command restore is content-sensitive because
+command payloads can reference recipes, constructions, materials, or other
+content ids, so it should fail closed with `slot.content` until a real
+missing-content placeholder/remap policy exists. World/full restore should also
+fail closed and clean up any half-created Runtime session/content snapshot when
+post-restore content binding fails.
+
+If save UI needs better diagnostics, add Runtime-authored read-model fields
+instead of moving comparison policy into App. The saved/current catalog
+summaries on `RuntimeSaveSlotContentCompatibilityData` are intentionally sorted
+inspection/read-model views of material names, terrain kind names,
+construction ids, recipe ids, geology ids, and zone ids. They are diagnostic
+payloads, not a migration table, and not permission for App to decide remaps.
+Structured difference rows can explain hash/count/version mismatches and, for
+format 6 saves where both sides have catalogs, exact saved-only/current-only
+keys. For historical saves without saved catalog payloads, do not fake missing
+id lists from current-only keys.
 
 ### Runtime command identity is not just payload identity
 
@@ -54,6 +129,42 @@ interfaces should expose directory-level save/validate/restore operations rather
 than Runtime-internal codec/store/restorer helpers, Core command replay records,
 or live Simulation/World objects.
 
+A save slot directory is already more than one JSON document. The current
+Runtime slice writes and validates `slot_manifest.json` beside
+`runtime_snapshot.json`; the manifest carries the slot kind, snapshot document
+name, snapshot format, Runtime metadata, checkpoint/world hashes, and row
+counts. Directory restore should preflight both files through
+`RuntimeSaveSnapshotDocumentStore.ValidateDirectory(...)` so App receives
+structured `snapshot.document` or `slot.manifest` failures instead of decoding,
+patching, or trusting individual Runtime save files.
+
+Save-slot version compatibility is also Runtime policy, not App policy.
+Contracts may expose a compatibility-result DTO for diagnostics/UI, but Runtime
+must classify current, older, future, unknown-kind, and unsupported-document
+slots. Legacy/current snapshot-only slots can migrate through `slot:0->1`, but
+unsupported older Runtime snapshot document versions should still return
+`MigrationRequired` and fail closed through structured migration issues rather
+than being loaded partially or ignored.
+
+Slot inspection is a read model, not a second loader. Future save UI/debug
+surfaces should call a Runtime-owned inspection port and display the returned
+validation, compatibility, and manifest DTOs. They should not read
+`slot_manifest.json` or `runtime_snapshot.json` themselves, and they should not
+reuse inspection success as proof that unsupported world/job payload slices can
+be restored.
+
+Likewise, restore-plan data is Runtime-authored UI/debug guidance, not a second
+restore path. It is useful because App should not infer loadability from raw
+manifest sections, but actual load still has to call Runtime restore ports and
+let their validation/preflight path decide again at execution time.
+
+Keep the Runtime save store split as it grows. The main
+`RuntimeSaveSnapshotDocumentStore` should stay an entrypoint for write/read
+/validate operations; slot inspection/read-model work belongs in the inspection
+partial, and unchecked file IO/failure helpers belong in the IO partial. This
+prevents future save UI support from turning the store into another mixed
+codec/IO/validation/restore-policy God helper.
+
 ### Partial world restore must fail closed
 
 When a world payload slice only supports terrain, it must fail with structured
@@ -63,11 +174,15 @@ sections just because the payload schema does not yet cover them. Each new
 section should be added with a hash round-trip test before it becomes loadable.
 
 As the payload grows, keep the supported-section message precise. The current
-world payload restore supports terrain, ground items, creatures, global
+world payload restore supports terrain, ground items, contained items with
+payload-local acyclic item container references, carried/equipped items with
+payload-local creature owners, installed items with valid placement anchors,
+item-local reservation tokens with valid claimant/count rows, creatures, global
 reservations, stockpile zones, owned placeables/workshop state, and active
-orders. Carried, contained, equipped, installed, or item-local reservation-token
-state still depends on inventory, container, and job restore paths and must
-remain rejected until those corresponding authoritative sections exist.
+orders. Present Jobs checkpoint sections still depend on Jobs-owned payload
+restore paths and must remain rejected by full restore until those
+corresponding authoritative sections exist; transport, mining, and craft are
+now supported payload/restore slices.
 
 Adding payload fields without binding them into the replay hash is also a
 partial-load bug. If the restorer claims hash-checked restoration, every
@@ -79,8 +194,11 @@ Keep Simulation world payload mapping split by authoritative section. The
 builder's main file should assemble sections in canonical order, while
 metadata/terrain, entities, stockpiles, placeables, orders, and shared
 conversion helpers stay in focused partials. The restorer's main file should
-own the restore order and final hash comparison, while payload validation,
-placeable validation/restore, and conversion/failure helpers stay separate.
+own the restore order and final hash comparison, while placeable
+validation/restore, conversion/failure helpers, and payload validation stay
+separate. Payload validation itself should not become a dumping ground: keep
+entity/reservation checks, stockpile checks, order checks, and shared
+world-geometry/string helpers in focused partials.
 When adding a new world payload section, add the export/import/hash fields in
 the section-owned partials and update the architecture smoke guard instead of
 growing a new save/load God Object or moving mapping into Runtime/App.
@@ -125,6 +243,13 @@ enumeration order, diagnostic strings, or render/UI DTOs. `ReplayHashBuilder`
 owns primitive encoding only; Simulation/Runtime snapshot hash builders still
 need to own the field list.
 
+Keep aggregate world replay hashing split by authority. `WorldReplayHashBuilder`
+should orchestrate aggregate and section-hash entrypoints only; terrain,
+item/creature entity state, reservations, stockpile-zone configuration, and
+common primitive helpers belong in focused `WorldReplayHashBuilder.*.cs`
+partials. This keeps save/replay field ownership reviewable and avoids turning
+the replay checkpoint into another mixed Simulation God Object.
+
 Do not leave these checks as one-off terminal commands. The formal smoke runner
 now scans save/replay/hash authority paths for object `GetHashCode()`,
 dictionary `Keys`/`Values` view iteration, and production `Guid.NewGuid()`.
@@ -164,6 +289,14 @@ live dictionaries and accidentally choose a colliding entity by runtime
 insertion/hash behavior. Keep fallback lookup behind manager-owned deterministic
 indexes and prefer fail-closed or documented stable tie-breakers if the legacy
 id cannot uniquely identify an entity.
+
+Keep general diff application reviewable. `SimulationDiffApplicator` should stay
+split into focused partials: the main entrypoint dispatches and logs,
+terrain-owned behavior handles tile mutation, ejection, and dirty propagation,
+item-owned behavior handles move/carry/uncarry plus stack merge, creature-owned
+behavior handles creature movement, and target helpers own entity-key-first plus
+guarded legacy lookup. If all of those concerns collapse into one file again,
+entity lookup and terrain side effects become hard to audit together.
 
 Broad read snapshots are part of deterministic behavior when they feed save,
 replay hashes, jobs, or Runtime UI read models. Do not return raw dictionary
@@ -228,9 +361,26 @@ restore/replay without adding hidden scheduler state.
 
 Compatibility save helpers that return dictionaries are not canonical replay
 streams. Use sorted snapshot rows for replay/save hashing. `RngStreamManager`
-still has dictionary save/restore helpers for compatibility, but deterministic
-checkpointing should use `GetStateSnapshot()` plus `RngReplayHashBuilder` so
-stream ordering cannot depend on `ConcurrentDictionary` enumeration.
+still has dictionary save/restore helpers for compatibility, but its
+materialized streams are now owner-lock state and deterministic checkpointing
+should use `GetStateSnapshot()` plus `RngReplayHashBuilder` so stream ordering
+cannot depend on dictionary enumeration.
+
+Concurrent collections are not a determinism boundary. `ConcurrentDictionary`
+and `ConcurrentQueue` protect some low-level operations, but they do not define
+save/replay/hash order and their mutation callbacks can hide shared-state
+updates. Orders, Jobs backlogs, the command queue, EventBus handlers,
+navigation path caches/nav-data registries, world chunk storage, and RNG stream
+registries now use owner-owned queues/lists/dictionaries plus explicit
+sorting/sequence fields where order matters. Future concurrent work should add
+a declared snapshot/merge contract rather than reintroducing concurrent
+collections into authority paths.
+
+The same rule applies to atomic primitives in authority paths. Runtime command
+identity sequence advancement and transport queue counters are now owner-state
+updates behind their session/queue guards. `Interlocked` is still appropriate
+for App-side async diagnostics, but it should not be used to obscure who owns a
+simulation-visible sequence or replay-adjacent counter.
 
 Derived cross-indexes should not become save authority just because they live
 beside authoritative data. Placeable hashes cover owned placeable instances and
@@ -257,6 +407,23 @@ Runtime snapshot metadata should be authored by Runtime, not App. UI tick
 counters drive presentation effects and toasts; they are not simulation ticks
 and should not be passed into Runtime read-model builders as checkpoint or
 debug authority.
+
+Runtime presenter-frame identity should also be authored by Runtime, not App.
+Frame/overlay aggregate DTOs currently still transfer full snapshots, but their
+publication sequence, full-snapshot payload hash, transfer mode, and optional
+same-request delta-base hash come from `RuntimeFrameSnapshotPublisher`. App
+renderers may use those fields for presentation caching, but they must not
+compute their own frame hashes from live world state or treat presenter payload
+hashes as authoritative replay/save hashes.
+
+The same rule applies to presenter deltas. The current map-viewport delta is
+Runtime-authored from final screen-cell values after terrain/entity overlay
+collapse and includes changed-cell, changed-row, and changed screen-region DTOs
+with per-row/region payload hashes. The current UI-overlay delta is
+Runtime-authored from named section payload hashes. Their payload/base hashes,
+changed cell/row/region/section lists, and `CanApplyToBase` flags are
+presentation cache metadata only; replay/save hashes still belong to
+Simulation/Runtime authoritative hash builders.
 
 Pending commands are save authority too. `CommandQueue.GetExecutedCommandRecords()`
 is not enough for a barrier save because future-tick commands may still be in
@@ -505,6 +672,14 @@ SadRogue `Rectangle.MaxExtentX/MaxExtentY` is treated as inclusive in the simula
 
 Mining has the same inclusive-rectangle trap as hauling/item scans. Keep `MiningOrderRules` and `MiningSystem` cursor advancement paired: scan loops use `<= MaxExtent*`, and cursor rollover checks use `> MaxExtent*`. Add one-cell rectangle coverage when touching any designation scanner.
 
+Keep the mining planner split by planner responsibility. The main
+`MiningSystem` file should stay a shell for state, constructor, scheduler
+identity, and the `PlannedDig` DTO. Tick/drain/outbox behavior, scanner/cursor
+advancement, cancellation queries, and helper/log/seed/standability behavior
+belong in focused partials, with `ActiveDesignation` kept as a separate cursor
+state type. This makes rectangle-scan changes easier to review without mixing
+Jobs executor behavior back into Simulation planner state.
+
 Runtime command ids must not use `Guid.NewGuid()` on replay-facing command paths. Command payloads should serialize meaningful mutation inputs, and Runtime session enqueue should add deterministic sequence identity when duplicate payloads can appear in the same tick. Execution order still belongs to `CommandQueue`; command ids are for stable correlation/debugging.
 
 Command payload serialization is part of command identity. Every field that can change execution must be written to `Serialize()`, including optional filters and tag lists. When a field is semantically a set, serialize it in deterministic order so equivalent UI selection order does not create a different id; when the field is semantically ordered, preserve the order.
@@ -621,6 +796,32 @@ FortressRuntimeSessionSnapshotFacade
 ```
 
 When a snapshot needs new data, add it near the read-model family it belongs to. If the mapping starts to look like reusable domain policy rather than presentation/read-model policy, move that policy closer to Runtime/Simulation/Content instead of hiding it in a snapshot helper.
+
+Viewport-dependent frame and overlay aggregates should not be treated as a
+single global world snapshot. Keep the request key explicit and let Runtime own
+the publication/cache point. `FortressRuntimeSessionCore.Snapshots.Frame` should
+construct request DTOs and delegate to `RuntimeFrameSnapshotPublisher`; it should
+not directly author snapshot metadata or call aggregate facade builders. The
+publisher should also attach a stable publication surface/request hash generated
+with canonical primitive encoding, so same-tick different viewport/UI requests
+cannot masquerade as the same published frame. This keeps the current
+request-shaped frame DTOs honest while leaving room for the future
+immutable/diff frame boundary.
+
+Keep `RuntimeFrameSnapshotPublisher` as an entrypoint rather than a new frame
+God Object. Main-file responsibilities are frame publication entrypoints only.
+Request cache reads/writes, invalidation, and small published-frame identity
+records belong in the publisher state partial. Presenter payload identity, UI
+overlay section deltas, map viewport changed-cell/row/screen-region deltas, and request hashing
+belong in focused publisher partials. Future packed world-chunk/panel delta slices should
+follow that split instead of growing the main publisher again.
+
+Do not use a tick-only frame cache while the background scheduler is running.
+`TickScheduler.CurrentTick` advances after post-tick, so a render read earlier
+in the same tick and another read after write-phase mutation can observe
+different live state under the same tick number. Until immutable world-frame
+publication exists, cache reuse must be limited to stopped/paused/manual-tick
+reads where the live authority is not concurrently changing.
 
 ### Work drawer panels should consume one aggregate read model
 
@@ -1309,11 +1510,11 @@ Final migrated batches:
 
 ### Do not let wall-clock budgets drive pathfinding
 
-The legacy Phase D concurrent pathfinder test originally used the production
-wall-clock navigation budget:
+The legacy Phase D concurrent pathfinder test originally used the old
+wall-clock navigation budget field:
 
 ```text
-MaxMsPerTickPathing = 3
+max_ms_per_tick_pathing = 3
 ```
 
 That made `PathService.Solve` allowed to return `Path.Invalid` and queue work
@@ -1326,10 +1527,11 @@ Only 8/10 paths were found
 
 That was not proof of an unreachable path; it was wall-clock budget deferral
 being treated as a failure. Pathfinding now uses deterministic budgets
-(`MaxNodesPerSearch` and `MaxPathsPerTick`) and active path caches are
-invalidated by Runtime after dirty navigation chunks rebuild. Do not reintroduce
-`Stopwatch`, elapsed milliseconds, or frame timers into simulation-visible path
-results.
+(`MaxNodesPerSearch` and `MaxPathsPerTick` / `max_paths_per_tick`) and active
+path caches are invalidated by Runtime after dirty navigation chunks rebuild.
+The old wall-clock budget field is not part of the active tuning contract. Do
+not reintroduce `Stopwatch`, elapsed milliseconds, frame timers, or
+machine-speed-dependent budget fields into simulation-visible path results.
 
 ## Runtime and Diagnostics Pitfalls
 
@@ -1500,7 +1702,13 @@ These contract types live in the `HumanFortress.Contracts.Navigation` namespace.
 
 Be careful with `ChunkKey`: Simulation world chunks and navigation contracts both define a `ChunkKey`. Files that import both `HumanFortress.Contracts.Navigation` and `HumanFortress.Simulation.World` should use explicit namespaces or aliases where both meanings appear.
 
-Jobs should depend on navigation contracts only. Runtime job-system wrappers are responsible for creating concrete `PathService`, `WorldNavigationView`, and `MovementExecutor` instances and injecting `IPathService`, `IWorldNavigationView`, and `IMovementExecutor` into Jobs-owned executors.
+Jobs should depend on navigation contracts only. Runtime job-system wrappers
+should receive path/world-view/movement contract bundles from
+`RuntimeNavigationServices`; that Runtime.Navigation seam creates concrete
+`PathService`, `WorldNavigationView`, and `MovementExecutor` instances and
+registers path services for dirty-chunk cache invalidation before injecting
+`IPathService`, `IWorldNavigationView`, and `IMovementExecutor` into Jobs-owned
+executors.
 
 Any project that implements test doubles or directly consumes these contracts should reference `HumanFortress.Contracts` explicitly. Do not rely on transitive references through App.
 
@@ -1547,7 +1755,7 @@ The App state-machine wrappers are not the SadConsole screens themselves. If no 
 
 ### Centralize session-size rules
 
-Fortress session size is used by embark UI, runtime world initialization, viewport math, and placement bounds. Do not duplicate `2..8` checks in each caller. Use `FortressSessionSizeRules` so logging, session storage, runtime initialization, and UI viewport sizing stay consistent.
+Fortress session size is used by embark UI, runtime world initialization, viewport math, and placement bounds. Do not duplicate min/max checks in each caller. Use Contracts `FortressSessionSizeLimits` plus App `FortressSessionSizeRules` so logging, session storage, runtime initialization, and UI viewport sizing stay consistent.
 
 ### Query-time rebuild must stay removed
 
@@ -1590,9 +1798,13 @@ Current first-pass behavior:
 - construction duplicates are explicitly skipped and counted;
 - recipe loading reports `errors=0`.
 
-Remaining architecture risk: there is now one normal runtime registry source model, the structured registry, and production direct reads are concentrated in Content bootstrap/snapshot capture/application. The old legacy registry source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content.Registry`. The remaining risk is policy and compatibility: strict content-load failure rules, richer diagnostics/debug surfaces, and cleanup of the few remaining non-registry content DTO compatibility namespaces should be handled without adding new singleton reads.
+Remaining architecture risk: there is now one normal runtime registry source model, the structured registry, and production direct reads are concentrated in Content bootstrap/snapshot capture/application. The old legacy registry source has been deleted, and the structured registry implementation now compiles from `HumanFortress.Content.Registry`. The remaining risk is policy rather than namespace ownership: strict content-load failure rules and richer diagnostics/debug surfaces should be handled without adding new singleton reads. Former non-registry runtime DTO compatibility names have moved into Contracts registry namespaces, and architecture smoke/source scans should keep the old compatibility namespaces from returning.
 
-Runtime geology and zone JSON DTOs have moved to `HumanFortress.Contracts` while keeping their old namespace. The zone loader now uses explicit `System.Text.Json` property mappings, which prevents `zones.json` snake_case fields such as `display_name`, `ui_hints`, and `default_policies` from silently deserializing to defaults.
+Runtime geology and zone JSON DTOs now compile from
+`HumanFortress.Contracts.Content.Registry`. The zone loader uses explicit
+`System.Text.Json` property mappings, which prevents `zones.json` snake_case
+fields such as `display_name`, `ui_hints`, and `default_policies` from silently
+deserializing to defaults.
 
 Item and creature definition loading has now moved into `HumanFortress.Content.Definitions`, and Simulation managers consume snapshots instead of reading files. Construction/recipe loading now also produces immutable snapshots owned by the structured registry and exposed through `FortressRuntimeContentSnapshot`. Construction/recipe definitions and catalog interfaces/stores compile from Contracts. The remaining registry-unification risk is strict-mode diagnostics and compatibility naming, not Core-owned registry implementation or App-local loading orchestration.
 
@@ -1615,6 +1827,22 @@ Do not let simulation systems write files directly. Emit a diagnostic event or u
 Do not use diagnostics for authoritative replay. Logs are for observability and debugging; deterministic replay still belongs to command/event/save streams.
 
 `DiagnosticHub` is a transitional bridge for Core systems that are not yet constructed with dependencies. New runtime-owned services should prefer an injected `IDiagnosticSink`.
+
+Core infrastructure is now partway through that transition: `CommandQueue`,
+`EventBus`, and `TickScheduler` accept optional `IDiagnosticSink` constructor
+dependencies, and Runtime session services pass the active sink when they
+create the default scheduler/queue/bus. Keep the hub only as a compatibility
+fallback for ad hoc construction; do not add new direct `DiagnosticHub.Error`
+calls to Runtime-composed infrastructure.
+
+WorldGen now follows the same pattern for Runtime-created paths:
+`WorldGenerationService`, `WorldGenerator`, `FortressGenerator`, and
+`FortressMap` accept an optional `IDiagnosticSink`, while Runtime composition
+passes the active sink. Keep `DiagnosticHub` only as fallback for ad hoc
+construction. Simulation and Content static diagnostics helpers now also expose
+injectable sink seams, with Runtime assigning the active sink at content load
+and simulation log-callback binding. The remaining bridge is compatibility
+fallback, not direct lower-module hub emission.
 
 `Contracts` should stay log-free.
 
@@ -1659,7 +1887,6 @@ TransportBacklogBuffer
 TransportJobFinalizer
 TransportJobStatsSnapshot
 TransportStatsTracker
-JobStats
 TransportIntakeFilter
 ITransportJobLogger
 ITransportWorkerCandidateSource
@@ -1685,7 +1912,11 @@ Use this order for future transport movement:
 state/contracts -> stats snapshots -> intake/filtering -> assignment/replan -> pickup/delivery -> active runner -> debug DTOs -> executor core -> App composition shell
 ```
 
-The stats snapshot is now a top-level `TransportJobStatsSnapshot` in Jobs. Avoid reintroducing nested DTOs on `TransportJobSystem`; nested public DTOs make later assembly movement harder.
+The stats snapshot is now a top-level `TransportJobStatsSnapshot` in Jobs, and
+the counters are owned by each executor's `TransportStatsTracker`. Avoid
+reintroducing nested DTOs on `TransportJobSystem` or static global transport
+stats; nested public DTOs make later assembly movement harder, while static
+stats leak across sessions.
 
 Transport active/debug snapshot DTOs now live in Jobs (`TransportActiveJobView`, `TransportActiveJobDebugView`, `TransportDebugSnapshot`). Keep public debug contracts near the executor that owns the data; do not put them back as nested App types.
 
@@ -1699,7 +1930,7 @@ Transport active/debug snapshot DTOs now live in Jobs (`TransportActiveJobView`,
 
 `TransportActiveJobRunner` now lives in Jobs. It should remain a coordinator over movement update, replan, pickup, delivery, and missing-worker cleanup. It depends on separate movement and item/carry diff interfaces; do not collapse those back into a monolithic concrete emitter.
 
-`TransportJobExecutor` now owns the transport tick core in Jobs: request drain/backlog, assignment throttle, active write tick, scheduling hints, and debug snapshots. The Runtime-owned `TransportJobSystem` should stay a composition shell over narrow Jobs interfaces.
+`TransportJobExecutor` now owns the transport tick core in Jobs: request drain/backlog, assignment throttle, active write tick, scheduling hints, debug snapshots, and replay snapshots. Keep the main executor file focused on constructor state/dependency assembly; read/intake, write ticks, snapshot/replay/debug read models, scheduling hints, and helper lookups belong in focused partials. The Runtime-owned `TransportJobSystem` should stay a composition shell over narrow Jobs interfaces.
 
 ### Mining extraction now follows the same shell/core pattern
 
@@ -2045,3 +2276,24 @@ Runtime save manifest verification rejects blank/duplicate section names before
 lookup. If a future restore path accepts arrays for authoritative state, sort by
 the owner key before mutating live state unless the array order is itself part
 of the saved authority.
+
+### Concurrent collections are not authority order
+
+`ConcurrentQueue`/`ConcurrentBag` can be useful as a short-lived transport
+mechanism, but their enumeration order should not become save, replay, hash, or
+debug UI authority. `OrdersManager` now keeps ingress queues, recent previews,
+and active designations as guarded owner-state collections and sorts active
+snapshots at the source. If a future manager needs concurrent ingress, drain it
+into deterministic owner state before exposing broad snapshots. Planner outbox
+queues are the same: use ordinary owner queues for deterministic read/write
+handoffs, and delete dead outboxes instead of preserving empty compatibility
+queues that imply a false concurrency contract. Jobs backlog/retry queues are
+also replay-affecting owner state, so preserve FIFO order directly with
+`Queue<T>` and snapshot/restore row order instead of depending on concurrent
+collection snapshots. `CommandQueue` follows the same rule at the replay
+ingress boundary: enqueue under a lock, assign explicit sequence identity, and
+snapshot pending commands by `(tick, sequence)` rather than treating a
+concurrent queue snapshot as authority. `EventBus` handler lists also need a
+declared order because future post-commit gameplay subscribers may observe it;
+copy registration-ordered handler lists under a lock rather than mutating lists
+through concurrent-dictionary callbacks.

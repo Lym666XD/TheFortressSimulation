@@ -12,6 +12,7 @@ internal sealed record FortressUiOverlayRenderContext(
     FortressViewRuntimePorts Runtime,
     IFortressDiagnosticsAccess Diagnostics,
     FortressUiServices? UiServices,
+    FortressUiOverlayPresenterCache UiOverlayPresenter,
     SimulationMapViewportData MapViewport,
     Point CameraPosition,
     Point CursorPosition,

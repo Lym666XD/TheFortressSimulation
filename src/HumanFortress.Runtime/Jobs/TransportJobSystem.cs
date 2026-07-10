@@ -39,14 +39,13 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest,
         IPathService? pathService = null,
         NavigationTuning? navigationTuning = null,
+        RuntimeNavigationServices? navigationServices = null,
         Action<string>? log = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
-        var paths = pathService ?? new PathService(tuning);
-        _paths = paths;
-        var navView = new WorldNavigationView(_nav);
-        var move = new MovementExecutor(paths);
+        var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(_nav, pathService);
+        _paths = jobNavigation.PathService;
         var logger = new TransportCallbackJobLogger(log);
         ITransportWorkerCandidateSource? workerCandidates = professions == null
             ? null
@@ -70,9 +69,9 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         _executor = new TransportJobExecutor(
             world,
             requestQueue,
-            paths,
-            navView,
-            move,
+            jobNavigation.PathService,
+            jobNavigation.WorldView,
+            jobNavigation.Movement,
             diffEmitter,
             diffEmitter,
             stockpileIndexEmitter,
@@ -120,6 +119,13 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         => _executor.GetDebugSnapshot(maxActive, maxRequests, includeSeeds);
 
     internal TransportJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal TransportJobRestoreResult RestoreReplaySnapshot(
+        TransportRequestQueueStateSnapshot queue,
+        TransportJobReplaySnapshot executor)
+    {
+        return _executor.RestoreReplaySnapshot(queue, executor);
+    }
 
     internal void ApplySchedulingHints(int? intakeCap, int? maxActiveCap, int reserveSlots)
         => _executor.ApplySchedulingHints(intakeCap, maxActiveCap, reserveSlots);

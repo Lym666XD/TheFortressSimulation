@@ -1,6 +1,6 @@
 # HumanFortress Architecture Overview
 
-Updated: 2026-07-09
+Updated: 2026-07-10
 Status: current overview plus target boundaries
 
 This document describes the current codebase shape. Older architecture docs described a complete deterministic, data-driven fortress simulator. That is still the target, but the implementation is currently in a transitional refactor.
@@ -19,12 +19,27 @@ Current solution projects:
 
 - `HumanFortress.Contracts` - shared DTOs and contract interfaces, including diagnostics event/sink contracts under `HumanFortress.Contracts.Diagnostics`, content-loading report/path/issue DTOs under `HumanFortress.Contracts.Content.Loading`, navigation contracts under `HumanFortress.Contracts.Navigation`, runtime request/status/geometry/notification DTOs under `HumanFortress.Contracts.Runtime`, runtime/UI snapshot DTOs under `HumanFortress.Contracts.Runtime.Snapshots`, Runtime save document DTOs under `HumanFortress.Contracts.Runtime.Save`, generated-world DTO/settings contracts under `HumanFortress.Contracts.WorldGen`, static item/creature definition contracts under `HumanFortress.Contracts.Simulation.Items` and `HumanFortress.Contracts.Simulation.Creatures`, world save payload DTOs under `HumanFortress.Contracts.Simulation.Save`, and content registry contracts/DTOs under `HumanFortress.Contracts.Content.Registry`. Catalog stores expose broad definition lists and tag/category index arrays in stable content-id/key order.
 - `HumanFortress.Core` - foundational commands, events, deterministic random, replay hash primitives, time, world primitives, and generic diff-log ordering primitives. Core diff ordering accepts numeric system order supplied by producing modules; it must not know concrete Jobs/App/Runtime system names. Entity-scoped generic diff targets support a wider stable `EntityKey` and sort/merge by that key before falling back to the old 32-bit `EntityId` compatibility bridge.
+- Runtime-composed Core infrastructure (`CommandQueue`, `EventBus`, and
+  `TickScheduler`) accepts injected `IDiagnosticSink` instances for failure
+  diagnostics. The process-wide `DiagnosticHub` remains available as a
+  compatibility fallback for ad hoc construction, not as the preferred Runtime
+  composition path.
+- Lower implementation modules should emit diagnostics through injected sinks,
+  Runtime-bound static callbacks, or module-local helpers with injectable sink
+  seams. Direct `DiagnosticHub.Sink.*` emission is guarded out of active
+  implementation source.
 - `HumanFortress.Content` - content loading facade, focused internal runtime registry implementation partials, internal/friend static definition loaders split by catalog family, internal/friend profession registry loader, and internal/friend runtime content snapshot capture. Runtime-applied content snapshot lists, such as zone definitions, are materialized in stable content-id order, and equal-priority registry selection lists use content-id tie-breaks.
-- `HumanFortress.Simulation` - internal/friend simulation implementation for world, tiles, orders, items, creatures, placeables, stockpiles, zones, save payload mapping, and diff applicators. Authoritative item/creature/order/placeable managers and entities are split by responsibility inside their Simulation submodules. Stockpile item-index diffs, messages, shard indexes, and item projections use the wider stable item entity key instead of truncated entity ids; `ItemManager` and `CreatureManager` maintain entity-key indexes for diff/applicator lookup paths across their mutation and restore flows. Broad Simulation owner snapshots sort at the source: world chunks and dirty chunk drains by Z/Y/X, item/creature instances by GUID, owned placeables by local cell, construction material rows by material id, zone definitions by content id, zone/stockpile instances and shards by zone id, zone/stockpile member chunks by Z/Y/X, and stockpile item indexes by entity key. Item position indexes also keep GUID order when they can affect authoritative stack consolidation, and merge targets are chosen by stable GUID rather than insertion order. World save payload restore canonicalizes terrain chunk, material row, improvement row, and placeable restore order before mutating state. Chunk live tile reads currently synchronize with write-phase `TileBase` replacement to prevent torn multi-field value reads until immutable frame snapshots or packed/SoA tile storage replace the transitional `TileBase[]` backing store. Stable cross-module contracts live in `HumanFortress.Contracts`; Runtime/Jobs/WorldGen/tests use friend access while App does not reference Simulation directly.
+- `HumanFortress.Simulation` - internal/friend simulation implementation for world, tiles, orders, items, creatures, placeables, stockpiles, zones, save payload mapping, and diff applicators. Authoritative item/creature/order/placeable managers and entities are split by responsibility inside their Simulation submodules, and the general `SimulationDiffApplicator` is split by terrain, item, creature, and target/entity lookup responsibility. Stockpile item-index diffs, messages, shard indexes, and item projections use the wider stable item entity key instead of truncated entity ids; `ItemManager` and `CreatureManager` maintain entity-key indexes for diff/applicator lookup paths across their mutation and restore flows. Broad Simulation owner snapshots sort at the source: world chunks and dirty chunk drains by Z/Y/X, item/creature instances by GUID, owned placeables by local cell, construction material rows by material id, zone definitions by content id, zone/stockpile instances and shards by zone id, zone/stockpile member chunks by Z/Y/X, and stockpile item indexes by entity key. Item position indexes also keep GUID order when they can affect authoritative stack consolidation, and merge targets are chosen by stable GUID rather than insertion order. World save payload restore canonicalizes terrain chunk, material row, improvement row, and placeable restore order before mutating state. Chunk live tile reads currently synchronize with write-phase `TileBase` replacement to prevent torn multi-field value reads until immutable frame snapshots or packed/SoA tile storage replace the transitional `TileBase[]` backing store. Stable cross-module contracts live in `HumanFortress.Contracts`; Runtime/Jobs/WorldGen/tests use friend access while App does not reference Simulation directly.
 - `HumanFortress.Navigation` - internal concrete pathfinding, movement execution, and navigation cache implementation with no ordinary public implementation surface; public navigation contracts live in `HumanFortress.Contracts.Navigation`. Pathfinding uses deterministic node/request budgets rather than wall-clock elapsed time, and movement execution state is keyed by the wider stable entity key rather than truncated entity ids.
 - `HumanFortress.Jobs` - internal transport, mining, construction, and craft executor cores plus domain helpers consumed by Runtime; implementation access is through internal/friend surfaces and Jobs-owned contracts rather than public helper classes. Transport request queue shard snapshots expose shard ids/counts in stable shard-id order before Runtime debug/scheduler read models consume them, and cross-module debug previews use explicit shard row DTOs rather than dictionary enumeration. Active Jobs implementation sources use focused directory namespaces such as `HumanFortress.Jobs.Configuration`, `.Diff`, `.Logging`, `.Orchestration`, `.Profession`, `.Safety`, `.Mining`, `.Construction`, `.Craft`, `.Transport`, and `.Replay` instead of the root Jobs namespace.
+- Transport scheduler/debug counters are executor-owned through
+  `TransportStatsTracker`; do not add static global Jobs counters for active
+  session state.
 - `HumanFortress.Runtime` - public runtime session/world-generation factories and session port interfaces plus internal tick pipeline, session core, generic runtime host, named internal active-session handles, concrete fortress runtime composition, and focused internal modules for command execution/targets, active-session content bootstrap, Simulation-backed navigation adapters and path-cache invalidation, startup/autodig helpers, job wrappers, snapshots, save, and replay.
 - `HumanFortress.WorldGen` - internal/friend concrete world-generation service/data/factory, world generator, fortress generator/map, and stage implementations under `HumanFortress.WorldGen.Implementation`; concrete fortress generation is split by generation phase inside focused implementation partials. Stable generated-world DTO/settings/service contracts live in `HumanFortress.Contracts.WorldGen`, and ordinary external creation enters through Runtime.
+- Runtime-created WorldGen services and fortress generation/fill maps receive
+  `IDiagnosticSink` from Runtime composition; `DiagnosticHub` is a fallback for
+  ad hoc construction, not the normal generation diagnostics path.
 - `HumanFortress.App` - startup/SadConsole app host, game states, session flow, input, rendering, UI, logger binding, and App-specific delegates. It no longer directly references Core, Content, Jobs, Simulation, Navigation, or WorldGen projects.
 - `HumanFortress.App.Tests` - lightweight regression/smoke test executable.
 
@@ -42,11 +57,12 @@ Contracts
 The formal smoke runner now locks more than this project-reference graph. It
 also checks the production source-import direction matrix, Core/Runtime/App
 public-surface allowlists, App.Runtime/Runtime import allowlists,
-implementation project public-surface rules, and the exact `InternalsVisibleTo`
-friend-assembly graph. This keeps module ownership executable: Contracts cannot
-import implementation namespaces or take package/project dependencies, App can
-only import App/Contracts/Runtime, and Runtime remains the only ordinary
-production composition boundary that can see
+implementation project public-surface rules, the exact `InternalsVisibleTo`
+friend-assembly graph, and the presence of the GitHub Actions build/smoke
+workflow. This keeps module ownership executable: Contracts cannot import
+implementation namespaces or take package/project dependencies, App can only
+import App/Contracts/Runtime, and Runtime remains the only ordinary production
+composition boundary that can see
 Content/Core/Jobs/Navigation/Simulation/WorldGen implementation projects.
 There are still transitional dependencies, but Runtime/Jobs, Content registry ownership, navigation contracts, and item/creature definition contracts now use their module namespaces in active source.
 
@@ -148,8 +164,10 @@ HumanFortress.Runtime
   stream rows. Simulation owns the world payload builder/restorer, split by
   authoritative section under `HumanFortress.Simulation.Save`: builder partials
   cover metadata/terrain, entities, stockpiles, placeables, orders, and shared
-  conversions, while restorer partials cover payload validation, placeable
-  validation/restore, conversion/failure helpers, and the main restore flow.
+  conversions, while restorer partials cover the main restore flow,
+  placeable validation/restore, conversion/failure helpers, and section-focused
+  payload validation for entity/reservation, stockpile, order, and shared
+  geometry/string checks.
   Entity identity collisions in item and creature payload rows fail during
   payload validation before any partial world restore proceeds. Stockpile zone
   ids/member chunk identities, active mining order ids, and world chunk/
@@ -158,20 +176,33 @@ HumanFortress.Runtime
   terrain-dependent preflight before the item/creature/reservation/stockpile
   manager restore passes, then a validated placeable restore pass writes owned
   placeable/workshop state.
-  Runtime validates the manifest/document and restores terrain, ground item
-  instances, creature instances, global reservations, stockpile zones, active
-  order designations, owned placeables/workshop state, RNG streams, and pending
-  command records through a Runtime-owned full restore entrypoint. RNG rows are
-  canonicalized by stream name at the Runtime snapshot boundary, and Runtime
-  save snapshot packages verify RNG plus executed/pending command journal
-  counts and hashes against the checkpoint before document serialization. Save
-  manifest sections are schema-strict through Runtime-owned section
+  Runtime validates the save-slot manifest plus snapshot document and restores
+  terrain, ground item instances, contained item instances with payload-local
+  acyclic container references, carried and equipped item instances with
+  payload-local creature owners, creature instances, global reservations,
+  stockpile zones, active order designations, owned placeables/workshop state,
+  transport pending/active/backlog job state with scheduling hints, mining
+  active/backlog/deferred/reserved/recent-completion job state, craft
+  active/backlog job state, RNG streams, and pending command records through
+  Runtime-owned staged restore ports.
+  Non-empty transport/mining/craft sections without matching verified payload
+  rows, matching hashes/counts, and Jobs-owned restore acceptance block
+  `CanRestoreFull` and the full-restore port. The
+  current directory slice writes `slot_manifest.json` beside
+  `runtime_snapshot.json`, with slot kind, document name, snapshot format,
+  Runtime metadata, checkpoint/world hashes, and section/row counts validated
+  inside Runtime before restore proceeds. RNG rows are canonicalized by stream
+  name at the Runtime snapshot boundary, and Runtime save snapshot packages
+  verify RNG plus executed/pending command journal counts and hashes against
+  the checkpoint before document serialization. Save manifest sections are
+  schema-strict through Runtime-owned section
   definitions: the known section set must be complete, and missing, blank,
   duplicate, unknown, negative-count, present-without-hash, and
   absent-with-stale-metadata sections are rejected before any section lookup.
-  Unsupported
-  item location modes and item-local reservation tokens fail closed with
-  structured restore issues. The staged persistence plan is documented in
+  Installed item placement restore is supported when anchor/z/rotation values
+  validate against the saved world, and item-local reservation tokens restore
+  when claimant/count rows validate against the item payload. The staged
+  persistence plan is documented in
   `SAVE_REPLAY_ARCHITECTURE.md`; `SAVE_FORMAT.md` remains the longer-term
   on-disk format target.
   Public Runtime surface is intentionally centered on `FortressRuntimeSessionFactory`,
@@ -311,7 +342,12 @@ FortressRuntimeSystemsFactory
 
 `HumanFortress.Jobs` also owns scheduler/workshop tuning types, worker-selection strategy, profession assignment/selection state, concrete job diff emitters, Jobs-owned diff system order constants and entity-key emission for generic diffs, profession/craft adapters, callback job loggers, mining drop/tuning resolution, construction terrain-material resolution, `UnifiedJobsOrchestrator`, and the low-frequency `SanitizeSystem` safety net. `SanitizeSystem` derives its periodic schedule from the authoritative tick rather than hidden runtime counters. These Jobs implementation types are internal; Runtime and tests reach them through transitional friend access. Profession contract DTOs/interfaces compile from `HumanFortress.Contracts.Jobs`, and profession registry JSON loading enters through Content's internal/friend `ProfessionRegistryLoader` while the concrete registry implementation stays internal.
 
-Jobs-owned executors consume navigation through `HumanFortress.Contracts.Navigation` (`IPathService`, `IWorldNavigationView`, and `IMovementExecutor`). Runtime job-system wrappers create the internal concrete `HumanFortress.Navigation.Implementation` services (`PathService`, `WorldNavigationView`, and `MovementExecutor`) and inject the contract interfaces, so Jobs does not reference the concrete Navigation project. Mining, transport, and craft movement paths derive the `IMovementExecutor` key from worker GUIDs using the wider entity key.
+Jobs-owned executors consume navigation through `HumanFortress.Contracts.Navigation` (`IPathService`, `IWorldNavigationView`, and `IMovementExecutor`). Runtime job-system wrappers receive those contract instances from `HumanFortress.Runtime.Navigation.RuntimeNavigationServices`, which is the Runtime-owned creation seam for the internal concrete `HumanFortress.Navigation.Implementation` services (`PathService`, `WorldNavigationView`, and `MovementExecutor`) and registers path services for dirty-chunk cache invalidation. Jobs does not reference the concrete Navigation project. Mining, transport, and craft movement paths derive the `IMovementExecutor` key from worker GUIDs using the wider entity key.
+
+The transport executor is also split by responsibility inside Jobs: the main
+`TransportJobExecutor` file keeps constructor state/dependency assembly, while
+read/intake, write ticks, debug/replay snapshots, scheduling hints, and helper
+lookups live in focused partials under `HumanFortress.Jobs.Transport`.
 
 `HumanFortress.Runtime` now owns the tick-facing transport/mining/construction/craft job-system wrappers in `HumanFortress.Runtime.Jobs`, active world content application, optional startup auto-dig command seeding, construction workshop-completion notification bridging, plus the concrete fortress runtime system collection/factory/grouping layer. `HumanFortress.Content` owns profession registry file loading from `professions.json` and returns the `IProfessionRegistry` contract to Runtime.
 
@@ -326,7 +362,11 @@ The App runtime composition layer is now split into smaller migration points:
 - Runtime-owned `FortressRuntimeSystemsFactory` assembles the concrete runtime system collection.
 - Runtime-owned `FortressRuntimeStartup` handles initial-worker/profession setup and invokes Runtime-owned optional auto-dig seeding when enabled by App settings.
 
-The composition center has moved to Runtime. The remaining App coupling is mostly logging callback injection, UI completion binding, session bootstrap orchestration, live debug/UI access facades, and compatibility namespaces.
+The composition center has moved to Runtime. The remaining App coupling is
+mostly logging callback injection, UI completion binding, session bootstrap
+orchestration, and App-owned role adapters over Runtime ports. Legacy
+compatibility namespaces are no longer present in active source and are guarded
+by architecture smoke tests.
 
 Target direction:
 
@@ -341,7 +381,7 @@ Jobs
   job planning/execution domain logic and module-owned tests
 
 App
-  supplies concrete systems/adapters until those composition seams move down
+  supplies platform/UI callbacks, session flow, and Runtime port adapters
 ```
 
 ## UI Boundary
@@ -359,6 +399,38 @@ Important current limitation:
 - App runtime access is split by caller role. `IFortressRuntimeReadAccess` is the render/read-model facade; keyboard, UI-input, placement, map-inspection, debug-spawn, workshop-panel, navigation-debug, simulation-control, session-bootstrap, and semantic command-request paths use smaller interfaces instead of a full play facade. `GameStateRuntimeCoordinator` creates the active Runtime session through `FortressRuntimeSessionFactory`, keeps only `IFortressRuntimeSessionPorts`, binds the concrete `FortressRuntimeAccess` adapter to module-owned port groups, and hands `FortressState` a `FortressStateRuntimePorts` bundle made from `App.Rendering`, `App.Input`, and `App.Session` port packages. Runtime still owns save/load ports internally, but fortress-play App UI no longer exposes a save/load facade until a real save UI boundary exists. App active source should not reference Core, Simulation, Jobs, Navigation, WorldGen, `HumanFortress.Runtime.Commands`, `HumanFortress.Runtime.Save`, or `HumanFortress.Runtime.Replay`; command construction belongs in Runtime.
 - App active source should also not reference `HumanFortress.Content`. Startup content validation enters through `FortressRuntimeContentLoader`, while UI registry-file lookup uses the App-owned `AppContentFileLocator` wrapper so direct Runtime imports stay confined to startup/adapter/content-location boundaries.
 - `FortressRuntimeAccess` is an App-internal adapter over Runtime session ports. Runtime access is consumed through explicit App role interfaces rather than ordinary public methods on a concrete Runtime core, and GameStates no longer construct Runtime options or concrete Runtime session implementations directly.
+- Frame and UI overlay aggregates now pass through a Runtime-owned
+  `RuntimeFrameSnapshotPublisher` before reaching App. The current publisher is
+  request-keyed because frame/overlay data depends on viewport, UI drawer state,
+  z-level, navigation mode, and inspection targets. Published frame DTOs carry
+  schema/tick metadata, publication surface/request-hash metadata, and
+  presenter-frame metadata authored by Runtime. Presenter-frame metadata
+  includes full-snapshot transfer mode, publication sequence, stable payload
+  hash, and an optional delta-base payload hash for same-request uncached
+  publications. Publisher cache/invalidation state lives in a focused Runtime
+  partial rather than the main publication entrypoint. Frame render DTOs also
+  carry a first real map-viewport
+  changed-cell/row/screen-region delta: Runtime collapses terrain/entity overlay cells to
+  final screen-cell values, hashes the full viewport payload canonically, hashes
+  each final screen row and fixed-size screen region, emits only changed final
+  cells when the previous same-request base is valid, and emits changed
+  whole-row/region DTOs for presenter paths that can skip or redraw ranges
+  without comparing live world state. App.Rendering consumes those map deltas
+  through `FortressMapViewportPresenterCache`, which composes the full visible
+  cell list for SadConsole while keeping delta authority in Runtime. UI
+  overlay frame DTOs carry a section-level delta over build catalog, jobs,
+  workshop, stockpile, zone, drawer, and debug sections, with per-section
+  payload hashes and changed section ids authored in Runtime. App.Rendering
+  consumes those overlay deltas through `FortressUiOverlayPresenterCache`, which
+  preserves unchanged section DTOs from the previous presented overlay frame.
+  The publisher is
+  split into focused partials: the main file owns publication entrypoints and
+  cache invalidation, while presenter payload identity, UI-overlay section
+  deltas, map-viewport changed-cell/row/screen-region deltas, and request hashes live in separate
+  Runtime snapshot partials.
+  Runtime disables request-cache reuse while the background scheduler is running
+  so a tick-number cache does not hide same-tick live-state changes before
+  immutable frame publication is complete.
 
 Target direction remains:
 
@@ -367,7 +439,12 @@ Simulation -> immutable/debug snapshots -> UI
 UI -> semantic Runtime command requests -> Runtime command stage -> Simulation
 ```
 
-Until snapshot facades are added, documents that say "UI reads snapshots only" should be read as target architecture, not current fact.
+Snapshot facades are now the normal fortress UI/read-model path. Documents that
+say "UI reads snapshots only" should still be read carefully: the remaining
+target is broader presenter deltas over the Runtime-published frame identity
+and current App-consumed map-viewport changed-cell/row/screen-region plus
+overlay-section delta boundaries, with broader packed panel payloads and
+redraw specialization still to do, not a return to App-side live world reads.
 
 ## Content Boundary
 
@@ -383,11 +460,15 @@ Current sources:
 - `data/core/recipes/*.json`
 - `data/core/placeable/*.json`
 
-Current public Content entry points:
+Current App-facing content entry points:
 
-- `FortressContentLoader`
+- `HumanFortress.Runtime.FortressRuntimeContentLoader`
 
-Internal/friend Content implementation loaders include `CoreContentCatalogLoader`, `FortressRuntimeContentSnapshotLoader`, `ProfessionRegistryLoader`, `RuntimeContentRegistryLoader`, `ItemDefinitionCatalogLoader`, `CreatureDefinitionCatalogLoader`, and `CoreDataRegistryLoader`.
+Internal/friend Content implementation loaders include `FortressContentLoader`,
+`CoreContentCatalogLoader`, `FortressRuntimeContentSnapshotLoader`,
+`ProfessionRegistryLoader`, `RuntimeContentRegistryLoader`,
+`ItemDefinitionCatalogLoader`, `CreatureDefinitionCatalogLoader`, and
+`CoreDataRegistryLoader`.
 
 The old `.cpack` content build pipeline remains a future design archived at `docs/archive/legacy/CONTENT_BUILD_PIPELINE_FUTURE.md`.
 
@@ -398,8 +479,8 @@ The old `.cpack` content build pipeline remains a future design archived at `doc
 - UI no longer reads live World/navigation state for main map terrain/entity rendering, frame render data, overlay frame data, Work drawer jobs/workforce/order/workshop summaries, F1/F2/F4 management drawer lists, zone/stockpile overlay/detail popups, stockpile/zone hit-testing, navigation debug overlay/path modes, tile click logging, haul/mining/construction placement previews, construction order highlight dots, debug spawn readiness, workshop panel keyboard editing, detailed workshop panel rendering, workshop overlay/material-progress rendering, workshop click-hit testing, build workshop browsing/preview, Debug menu status/items, or tile inspection popups. Those paths use Runtime-built Contracts snapshot DTO facades instead of direct concrete job-system, order, creature/item/zone/stockpile manager, construction catalog, item definition, tile/geology, visible zone/stockpile chunk/shard, live navigation cache/path object, mutable workshop state, live-placeable, `FortressMap`, or terrain/entity manager access. `FortressRuntimeAccess` hands the active Runtime core to `FortressRuntimeSessionSnapshotFacade` for read models instead of letting `GameStateManager` unpack live session internals per query. App source/project references to Jobs, Simulation, and Navigation have been removed; remaining live World exposure is the scoped fortress-map fill/bootstrap step plus Runtime-owned content injection.
 - The old legacy content registry source has been deleted; normal bootstrap loads the structured runtime registry only.
 - `ConstructionRegistry` and `RecipeRegistry` singleton compatibility classes have been deleted; construction/recipe/material/terrain/geology/biome definitions, terrain bit-layout DTOs, alias/migration DTOs, catalog interfaces, immutable catalog stores, runtime material/terrain/geology catalog interfaces, construction/placeable tuning types, fixed-point material primitives, and content version/snapshot/validation result types now compile from `HumanFortress.Contracts.Content.Registry`.
-- `CoreDataRegistryLoader` now compiles from `HumanFortress.Content.Definitions` as an internal implementation detail, and the structured `ContentRegistry` implementation compiles from `HumanFortress.Content.Registry` as focused internal partials; the remaining content gaps are strict fail-fast policy, richer diagnostics/debug surfaces, and the future compiled pack pipeline.
-- Full save/load, storyteller, combat, full snapshot rendering, and compiled content packs are not complete current systems.
+- `CoreDataRegistryLoader` now compiles from `HumanFortress.Content.Definitions` as an internal implementation detail, and the structured `ContentRegistry` implementation compiles from `HumanFortress.Content.Registry` as focused internal partials; the remaining content gaps are richer diagnostics/debug surfaces, strict content-mode policy, and the future compiled pack pipeline.
+- Full `SAVE_FORMAT.md` slot migration/chunk-shard support, storyteller, combat, full presenter delta coverage, and compiled content packs are not complete current systems.
 
 ## High-Signal References
 

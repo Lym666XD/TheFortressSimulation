@@ -11,10 +11,13 @@ public sealed class TickScheduler
 {
     private const int TARGET_TPS = 50;
     private const int MS_PER_TICK = 1000 / TARGET_TPS; // 20ms
+    private const int MAX_CONSECUTIVE_SYSTEM_FAILURES = 3;
 
     private readonly List<ITick> _systems = new();
+    private readonly Dictionary<string, SystemFailureState> _systemFailures = new(StringComparer.Ordinal);
     private readonly object _barrierLock = new();
     private readonly object _stateLock = new();
+    private readonly IDiagnosticSink? _diagnostics;
 
     private ulong _currentTick;
     private bool _isRunning;
@@ -25,6 +28,11 @@ public sealed class TickScheduler
     public event Action<ulong>? PreTick;
     public event Action<ulong>? PostTick;
     public event Action<ulong>? BarrierReached;
+
+    public TickScheduler(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics;
+    }
 
     /// <summary>
     /// Current simulation tick number.
@@ -176,13 +184,20 @@ public sealed class TickScheduler
     public void RegisterSystem(ITick system)
     {
         ArgumentNullException.ThrowIfNull(system);
+        var systemId = system.SystemId;
+        if (string.IsNullOrWhiteSpace(systemId))
+            throw new ArgumentException("Tick systems must provide a non-empty SystemId.", nameof(system));
 
         lock (_stateLock)
         {
             if (_isRunning)
                 throw new InvalidOperationException("Cannot register systems while running");
 
+            if (_systems.Any(existing => string.Equals(existing.SystemId, systemId, StringComparison.Ordinal)))
+                throw new InvalidOperationException($"Tick system id '{systemId}' is already registered.");
+
             _systems.Add(system);
+            _systemFailures.Remove(systemId);
             _systems.Sort(CompareSystems);
         }
     }
@@ -198,6 +213,7 @@ public sealed class TickScheduler
                 throw new InvalidOperationException("Cannot clear systems while running");
 
             _systems.Clear();
+            _systemFailures.Clear();
         }
     }
 
@@ -212,6 +228,7 @@ public sealed class TickScheduler
                 throw new InvalidOperationException("Cannot reset scheduler while running");
 
             _systems.Clear();
+            _systemFailures.Clear();
             _currentTick = 0;
             _isPaused = false;
             _speedMultiplier = 1.0f;
@@ -344,7 +361,7 @@ public sealed class TickScheduler
         PreTick?.Invoke(tick);
 
         // Phase 1: Read in deterministic registered-system order.
-        ExecuteReadPhase(tick, systems);
+        var readFailures = ExecuteReadPhase(tick, systems);
 
         // Barrier
         lock (_barrierLock)
@@ -353,36 +370,47 @@ public sealed class TickScheduler
         }
 
         // Phase 2: Write (serialized)
-        ExecuteWritePhase(tick, systems);
+        ExecuteWritePhase(tick, systems, readFailures);
 
         PostTick?.Invoke(tick);
 
         AdvanceTick();
     }
 
-    private void ExecuteReadPhase(ulong tick, IReadOnlyList<ITick> systems)
+    private HashSet<ITick> ExecuteReadPhase(ulong tick, IReadOnlyList<ITick> systems)
     {
+        var failedSystems = new HashSet<ITick>();
         foreach (var system in systems)
         {
+            if (IsSystemQuarantined(system))
+                continue;
+
             try
             {
                 system.ReadTick(tick);
             }
             catch (Exception ex)
             {
+                failedSystems.Add(system);
                 HandleSystemError(system, "Read", ex);
             }
         }
+
+        return failedSystems;
     }
 
-    private void ExecuteWritePhase(ulong tick, IReadOnlyList<ITick> systems)
+    private void ExecuteWritePhase(ulong tick, IReadOnlyList<ITick> systems, IReadOnlySet<ITick> readFailures)
     {
         // Write phase must be serialized
         foreach (var system in systems)
         {
+            if (IsSystemQuarantined(system) || readFailures.Contains(system))
+                continue;
+
             try
             {
                 system.WriteTick(tick);
+                ClearSystemFailure(system);
             }
             catch (Exception ex)
             {
@@ -431,15 +459,54 @@ public sealed class TickScheduler
         }
     }
 
+    private bool IsSystemQuarantined(ITick system)
+    {
+        lock (_stateLock)
+        {
+            return _systemFailures.TryGetValue(system.SystemId, out var state)
+                && state.Quarantined;
+        }
+    }
+
+    private void ClearSystemFailure(ITick system)
+    {
+        lock (_stateLock)
+        {
+            _systemFailures.Remove(system.SystemId);
+        }
+    }
+
     private void HandleSystemError(ITick system, string phase, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: catch, quarantine, log, continue
-        DiagnosticHub.Error(
+        var state = RecordSystemFailure(system);
+        Diagnostics.Error(
             "Core.TickScheduler",
-            $"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}",
+            state.Quarantined
+                ? $"[ERROR] System {system.SystemId} failed in {phase} phase and was quarantined after {state.ConsecutiveFailures} consecutive failures: {ex.Message}"
+                : $"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}",
             ex,
             CurrentTick);
-        // TODO: Implement quarantine logic
+    }
+
+    private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
+
+    private SystemFailureState RecordSystemFailure(ITick system)
+    {
+        lock (_stateLock)
+        {
+            if (!_systemFailures.TryGetValue(system.SystemId, out var state))
+            {
+                state = new SystemFailureState();
+                _systemFailures[system.SystemId] = state;
+            }
+
+            state.ConsecutiveFailures++;
+            if (state.ConsecutiveFailures >= MAX_CONSECUTIVE_SYSTEM_FAILURES)
+                state.Quarantined = true;
+
+            return state.Copy();
+        }
     }
 
     private static int CompareSystems(ITick a, ITick b)
@@ -448,5 +515,20 @@ public sealed class TickScheduler
         return priority != 0
             ? priority
             : string.CompareOrdinal(a.SystemId, b.SystemId);
+    }
+
+    private sealed class SystemFailureState
+    {
+        public int ConsecutiveFailures { get; set; }
+        public bool Quarantined { get; set; }
+
+        public SystemFailureState Copy()
+        {
+            return new SystemFailureState
+            {
+                ConsecutiveFailures = ConsecutiveFailures,
+                Quarantined = Quarantined
+            };
+        }
     }
 }

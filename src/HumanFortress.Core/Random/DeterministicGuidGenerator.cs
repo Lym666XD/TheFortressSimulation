@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 
 namespace HumanFortress.Core.Random;
 
@@ -25,22 +26,23 @@ public static class DeterministicGuidGenerator
 
         // Pack into byte array (little-endian)
         byte[] bytes = new byte[16];
-        BitConverter.GetBytes(a).CopyTo(bytes, 0);
-        BitConverter.GetBytes(b).CopyTo(bytes, 4);
-        BitConverter.GetBytes(c).CopyTo(bytes, 8);
-        BitConverter.GetBytes(d).CopyTo(bytes, 12);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(0, 4), a);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(4, 4), b);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(8, 4), c);
+        BinaryPrimitives.WriteUInt32LittleEndian(bytes.AsSpan(12, 4), d);
 
         return new Guid(bytes);
     }
 
     /// <summary>
-    /// Generate deterministic GUID from position-based seed.
-    /// Seed = tickSeed ^ HashPosition(x, y, z)
+    /// Generate deterministic GUID from a scoped position-based seed.
+    /// The scope salt is required so different systems cannot collide when
+    /// creating different entity kinds at the same tick and world position.
     /// </summary>
-    public static Guid GenerateFromPosition(ulong tickSeed, int x, int y, int z)
+    public static Guid GenerateFromPosition(ulong tickSeed, int x, int y, int z, ulong scopeSalt)
     {
         ulong positionHash = HashPosition(x, y, z);
-        ulong seed = tickSeed ^ positionHash;
+        ulong seed = tickSeed ^ HashUInt64(positionHash, scopeSalt);
         var rng = new DeterministicRng(seed);
         return Generate(rng);
     }
@@ -93,7 +95,11 @@ public static class DeterministicGuidGenerator
 
     private static ulong HashUInt64(ulong value)
     {
-        ulong hash = FnvOffset;
+        return HashUInt64(FnvOffset, value);
+    }
+
+    private static ulong HashUInt64(ulong hash, ulong value)
+    {
         for (int shift = 0; shift < 64; shift += 8)
         {
             hash = HashByte(hash, (byte)(value >> shift));

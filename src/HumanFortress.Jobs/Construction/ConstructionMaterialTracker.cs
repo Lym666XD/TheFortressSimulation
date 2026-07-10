@@ -43,7 +43,7 @@ internal sealed class ConstructionMaterialTracker
 
                 foreach (var req in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
                 {
-                    if (ConstructionRequirementMatcher.Matches(def.Tags, req))
+                    if (ConstructionRequirementMatcher.Matches(def, req))
                     {
                         delivered[req] = delivered.GetValueOrDefault(req, 0) + item.StackCount;
                         break;
@@ -82,17 +82,14 @@ internal sealed class ConstructionMaterialTracker
                     continue;
                 }
 
-                foreach (var requirement in toConsume.Keys
-                    .OrderBy(static key => key, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(static key => key, StringComparer.Ordinal)
+                foreach (var requirement in toConsume
+                    .Where(static entry => entry.Value > 0)
+                    .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static entry => entry.Key, StringComparer.Ordinal)
+                    .Select(static entry => entry.Key)
                     .ToList())
                 {
-                    if (toConsume[requirement] <= 0)
-                    {
-                        continue;
-                    }
-
-                    if (!ConstructionRequirementMatcher.Matches(def.Tags, requirement))
+                    if (!ConstructionRequirementMatcher.Matches(def, requirement))
                     {
                         continue;
                     }

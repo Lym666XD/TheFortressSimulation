@@ -2,6 +2,9 @@ namespace HumanFortress.Jobs.Transport;
 
 internal sealed class TransportStatsTracker
 {
+    private int _completedTotal;
+    private int _requeuedTotal;
+    private int _noPathTotal;
     private int _lastCompletedTotal;
     private int _lastRequeuedTotal;
     private int _lastNoPathTotal;
@@ -15,16 +18,39 @@ internal sealed class TransportStatsTracker
             intake,
             active,
             backlog,
-            CompletedDelta: JobStats.Completed - _lastCompletedTotal,
-            RequeuedDelta: JobStats.Requeued - _lastRequeuedTotal,
-            NoPathDelta: JobStats.NoPath - _lastNoPathTotal,
+            CompletedDelta: _completedTotal - _lastCompletedTotal,
+            RequeuedDelta: _requeuedTotal - _lastRequeuedTotal,
+            NoPathDelta: _noPathTotal - _lastNoPathTotal,
             CarryoverOld: carryoverOld);
     }
 
     internal void RecordFinishedJobs()
     {
-        _lastCompletedTotal = JobStats.Completed;
-        _lastNoPathTotal = JobStats.NoPath;
-        _lastRequeuedTotal = JobStats.Requeued;
+        _lastCompletedTotal = _completedTotal;
+        _lastNoPathTotal = _noPathTotal;
+        _lastRequeuedTotal = _requeuedTotal;
+    }
+
+    internal void RecordCompleted()
+    {
+        _completedTotal++;
+    }
+
+    internal void RecordNoPath()
+    {
+        _noPathTotal++;
+    }
+
+    internal void RecordRequeued()
+    {
+        _requeuedTotal++;
+    }
+
+    internal void RecordRequeued(int count)
+    {
+        if (count > 0)
+        {
+            _requeuedTotal += count;
+        }
     }
 }

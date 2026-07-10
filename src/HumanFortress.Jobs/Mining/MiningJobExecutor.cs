@@ -5,7 +5,7 @@ using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Mining;
 
-internal sealed class MiningJobExecutor
+internal sealed partial class MiningJobExecutor
 {
     internal const string SystemId = "Jobs.MiningJobSystem";
 
@@ -15,6 +15,8 @@ internal sealed class MiningJobExecutor
 
     private readonly WorldModel _world;
     private readonly IPathService _paths;
+    private readonly IWorldNavigationView _navView;
+    private readonly IMovementExecutor _move;
     private readonly IMiningJobLogger _logger;
     private readonly List<ActiveMiningJob> _active = new();
     private readonly List<MiningSystem.PlannedDig> _inboxBuffer = new();
@@ -43,7 +45,8 @@ internal sealed class MiningJobExecutor
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
-        move = move ?? throw new ArgumentNullException(nameof(move));
+        _navView = navView ?? throw new ArgumentNullException(nameof(navView));
+        _move = move ?? throw new ArgumentNullException(nameof(move));
         _logger = logger ?? NullMiningJobLogger.Instance;
 
         var adjacencyFinder = new MiningAdjacencyFinder(world);
@@ -54,8 +57,8 @@ internal sealed class MiningJobExecutor
         var assignmentHandler = new MiningAssignmentHandler(
             world,
             paths,
-            navView,
-            move,
+            _navView,
+            _move,
             dropResolver,
             _reservedTiles,
             workerCandidates,
@@ -75,8 +78,8 @@ internal sealed class MiningJobExecutor
             world,
             planner,
             paths,
-            navView,
-            move,
+            _navView,
+            _move,
             _backlog,
             diffEmitter,
             dropResolver,

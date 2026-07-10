@@ -1,4 +1,5 @@
 using HumanFortress.Content.Loading;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Core.World;
 using HumanFortress.Simulation.World;
@@ -13,7 +14,8 @@ internal static class RuntimeFortressGenerationRunner
         RuntimeFortressGenerationRequest request,
         FortressRuntimeContentSnapshot? content,
         Func<Action<World>, bool> fillRuntimeWorld,
-        Action<string>? log)
+        Action<string>? log,
+        IDiagnosticSink? diagnostics = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(fillRuntimeWorld);
@@ -29,7 +31,8 @@ internal static class RuntimeFortressGenerationRunner
             CreateWorldTile(request),
             embarkLocation,
             CreateFortressSeed(request),
-            CreateFortressGenerationContent(content));
+            CreateFortressGenerationContent(content),
+            diagnostics);
 
         var fortressMap = generator.Generate();
         log?.Invoke($"[GenerateFortressMap] Fortress map generated: {fortressMap.Size}x{fortressMap.Size} chunks");

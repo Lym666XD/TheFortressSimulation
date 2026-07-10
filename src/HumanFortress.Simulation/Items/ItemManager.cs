@@ -32,11 +32,13 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
     /// <summary>
     /// Optional logging callback (set by App layer to write to fortress_debug.log)
     /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal static Action<string>? LogCallback { get; set; }
 
-    public int DefinitionCount => _definitionCatalog.DefinitionCount;
+    internal int DefinitionCount => _definitionCatalog.DefinitionCount;
 
-    public int InstanceCount
+    int IItemDefinitionCatalog.DefinitionCount => DefinitionCount;
+
+    internal int InstanceCount
     {
         get
         {
@@ -62,7 +64,7 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
     /// <summary>
     /// Set dependencies (called after initialization)
     /// </summary>
-    public void SetDependencies(HumanFortress.Simulation.World.World world)
+    internal void SetDependencies(HumanFortress.Simulation.World.World world)
     {
         ArgumentNullException.ThrowIfNull(world);
 

@@ -16,18 +16,18 @@ internal sealed class WorkshopState
     private readonly List<CraftQueueEntry> _queue = new();
     private ulong _nextEntrySequence;
 
-    public WorkshopState()
+    internal WorkshopState()
     {
         AllowedWorkers = 1;
         MaxWorkers = 1;
     }
 
-    public IReadOnlyList<CraftQueueEntry> Queue => _queue;
-    public bool AutoRequestMaterials { get; set; } = true;
-    public bool AutoStockpileOutputs { get; set; } = true;
-    public int AllowedWorkers { get; private set; }
-    public int MaxWorkers { get; private set; }
-    public int ActiveJobs { get; private set; }
+    internal IReadOnlyList<CraftQueueEntry> Queue => _queue;
+    internal bool AutoRequestMaterials { get; set; } = true;
+    internal bool AutoStockpileOutputs { get; set; } = true;
+    internal int AllowedWorkers { get; private set; }
+    internal int MaxWorkers { get; private set; }
+    internal int ActiveJobs { get; private set; }
     internal ulong NextEntrySequence => _nextEntrySequence;
 
     internal static WorkshopState RestoreSnapshot(WorldSaveWorkshopPayloadData payload)
@@ -61,33 +61,33 @@ internal sealed class WorkshopState
         return state;
     }
 
-    public void ConfigureWorkers(int defaultAllowed, int maxWorkers)
+    internal void ConfigureWorkers(int defaultAllowed, int maxWorkers)
     {
         MaxWorkers = Math.Max(1, maxWorkers);
         AllowedWorkers = Math.Clamp(defaultAllowed, 1, MaxWorkers);
     }
 
-    public void SetAllowedWorkers(int value)
+    internal void SetAllowedWorkers(int value)
     {
         AllowedWorkers = Math.Clamp(value, 1, MaxWorkers);
     }
 
-    public void RegisterJobStart()
+    internal void RegisterJobStart()
     {
         ActiveJobs = Math.Clamp(ActiveJobs + 1, 0, MaxWorkers);
     }
 
-    public void RegisterJobComplete()
+    internal void RegisterJobComplete()
     {
         ActiveJobs = Math.Max(0, ActiveJobs - 1);
     }
 
-    public void ResetActiveJobs()
+    internal void ResetActiveJobs()
     {
         ActiveJobs = 0;
     }
 
-    public CraftQueueEntry AddEntry(string recipeId, string recipeName, Guid workshopGuid, ulong currentTick)
+    internal CraftQueueEntry AddEntry(string recipeId, string recipeName, Guid workshopGuid, ulong currentTick)
     {
         var sequence = ++_nextEntrySequence;
         var entryId = DeterministicGuidGenerator.GenerateFromGuid(WorkshopQueueEntryGuidScope ^ currentTick, workshopGuid, sequence);
@@ -96,7 +96,7 @@ internal sealed class WorkshopState
         return entry;
     }
 
-    public bool RemoveEntry(Guid entryId)
+    internal bool RemoveEntry(Guid entryId)
     {
         int idx = _queue.FindIndex(e => e.EntryId == entryId);
         if (idx >= 0)
@@ -107,7 +107,7 @@ internal sealed class WorkshopState
         return false;
     }
 
-    public bool MoveEntry(Guid entryId, int delta)
+    internal bool MoveEntry(Guid entryId, int delta)
     {
         int idx = _queue.FindIndex(e => e.EntryId == entryId);
         if (idx < 0) return false;
@@ -119,9 +119,9 @@ internal sealed class WorkshopState
         return true;
     }
 
-    public void ClearQueue() => _queue.Clear();
+    internal void ClearQueue() => _queue.Clear();
 
-    public CraftQueueEntry? GetEntry(Guid entryId) => _queue.FirstOrDefault(e => e.EntryId == entryId);
+    internal CraftQueueEntry? GetEntry(Guid entryId) => _queue.FirstOrDefault(e => e.EntryId == entryId);
 }
 
 internal enum CraftQueueStatus
@@ -134,20 +134,20 @@ internal enum CraftQueueStatus
 
 internal sealed class CraftQueueEntry
 {
-    public CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
+    internal CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
     {
         EntryId = entryId;
         RecipeId = recipeId;
         DisplayName = recipeName;
     }
 
-    public Guid EntryId { get; }
-    public string RecipeId { get; }
-    public string DisplayName { get; }
-    public CraftQueueStatus Status { get; set; } = CraftQueueStatus.Pending;
-    public bool HasPendingRequests { get; set; }
-    public ulong LastRequestTick { get; set; }
-    public Guid? ActiveWorkerId { get; set; }
-    public bool IsScheduled { get; set; }
-    public string? BlockingReason { get; set; }
+    internal Guid EntryId { get; }
+    internal string RecipeId { get; }
+    internal string DisplayName { get; }
+    internal CraftQueueStatus Status { get; set; } = CraftQueueStatus.Pending;
+    internal bool HasPendingRequests { get; set; }
+    internal ulong LastRequestTick { get; set; }
+    internal Guid? ActiveWorkerId { get; set; }
+    internal bool IsScheduled { get; set; }
+    internal string? BlockingReason { get; set; }
 }

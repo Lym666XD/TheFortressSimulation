@@ -12,6 +12,10 @@ internal interface IFortressRuntimeSessionSaveSnapshotPort
     RuntimeSaveSnapshotDocumentData CreateSaveSnapshotDocumentData();
     void WriteSaveSnapshotDocument(string directory);
     RuntimeSaveSnapshotDocumentData ReadSaveSnapshotDocument(string directory);
+    RuntimeSaveSlotInspectionData InspectSaveSnapshotDirectory(string directory);
+    RuntimeSaveSlotMigrationResultData MigrateSaveSnapshotDirectory(
+        string sourceDirectory,
+        string targetDirectory);
     RuntimeSaveSnapshotDocumentValidationResultData ValidateSaveSnapshotDirectory(string directory);
     RuntimeSaveSnapshotDocumentValidationResultData ValidateSaveSnapshotDocument(
         RuntimeSaveSnapshotDocumentData document);

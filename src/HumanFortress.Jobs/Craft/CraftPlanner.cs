@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
@@ -18,7 +17,7 @@ internal sealed class CraftPlanner : ITick, ICraftJobPlanner
     private readonly CraftWorkshopLocator _workshops;
     private readonly CraftMaterialReadinessChecker _materialReadiness;
     private readonly ICraftRecipeCatalog _recipes;
-    private readonly ConcurrentQueue<PlannedCraftJob> _outbox = new();
+    private readonly Queue<PlannedCraftJob> _outbox = new();
     private readonly int _scanBudgetPerTick;
 
     internal CraftPlanner(

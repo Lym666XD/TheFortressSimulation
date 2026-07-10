@@ -100,10 +100,9 @@ internal sealed class NavigationTuning
     internal int MaxPathsPerTick { get; set; } = 1024;
 
     /// <summary>
-    /// Deprecated compatibility field from older tuning files. Wall-clock time
-    /// must not influence pathfinding behavior.
+    /// Deterministic minimum tick spacing between movement steps.
     /// </summary>
-    internal int MaxMsPerTickPathing { get; set; } = 3;
+    internal int MovementStepDelayTicks { get; set; } = 2;
 
     /// <summary>
     /// Vertical alignment mode for ramps. "df" by default.
@@ -185,11 +184,16 @@ internal sealed class NavigationTuning
             {
                 t.MaxNodesPerSearch = ReadInt32(budgets, "max_nodes_per_search") ?? t.MaxNodesPerSearch;
                 t.MaxPathsPerTick = ReadInt32(budgets, "max_paths_per_tick") ?? t.MaxPathsPerTick;
-                t.MaxMsPerTickPathing = ReadInt32(budgets, "max_ms_per_tick_pathing") ?? t.MaxMsPerTickPathing;
+            }
+
+            if (TryGetObject(obj, "movement", out var movement))
+            {
+                t.MovementStepDelayTicks = ReadInt32(movement, "step_delay_ticks") ?? t.MovementStepDelayTicks;
             }
 
             t.MaxNodesPerSearch = Math.Max(1, t.MaxNodesPerSearch);
             t.MaxPathsPerTick = Math.Max(1, t.MaxPathsPerTick);
+            t.MovementStepDelayTicks = Math.Max(0, t.MovementStepDelayTicks);
         }
         catch (JsonException)
         {

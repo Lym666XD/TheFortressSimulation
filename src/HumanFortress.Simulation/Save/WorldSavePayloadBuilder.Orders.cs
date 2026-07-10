@@ -58,4 +58,9 @@ internal static partial class WorldSavePayloadBuilder
             filter.CategoryKey,
             ToSortedArray(filter.Tags));
     }
+
+    private static string BuildMaterialFilterSortKey(MaterialFilterSpec filter)
+    {
+        return string.Join('\0', filter.Tags.Order(StringComparer.Ordinal));
+    }
 }

@@ -50,6 +50,7 @@ internal static partial class MapViewportSnapshotBuilder
             CameraX: cameraPosition.X,
             CameraY: cameraPosition.Y,
             CurrentZ: currentZ,
-            Cells: cells);
+            Cells: cells,
+            Delta: SimulationMapViewportDeltaData.Unavailable);
     }
 }

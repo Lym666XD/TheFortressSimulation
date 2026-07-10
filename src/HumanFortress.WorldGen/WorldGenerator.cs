@@ -9,10 +9,12 @@ namespace HumanFortress.WorldGen.Implementation
     internal sealed class WorldGenerator
     {
         private readonly List<IWorldGenStage> _stages;
-        public event Action<string, float>? ProgressChanged;
+        private readonly IDiagnosticSink? _diagnostics;
+        internal event Action<string, float>? ProgressChanged;
         
-        public WorldGenerator()
+        internal WorldGenerator(IDiagnosticSink? diagnostics = null)
         {
+            _diagnostics = diagnostics;
             _stages = new List<IWorldGenStage>
             {
                 new ElevationStage(),
@@ -21,7 +23,7 @@ namespace HumanFortress.WorldGen.Implementation
             };
         }
         
-        public WorldGenResult Generate(WorldParams parameters)
+        internal WorldGenResult Generate(WorldParams parameters)
         {
             var context = new WorldGenContext(parameters);
             
@@ -36,15 +38,10 @@ namespace HumanFortress.WorldGen.Implementation
                 }
                 catch (Exception ex)
                 {
-                    DiagnosticHub.Sink.Error(
+                    Diagnostics.Error(
                         "WorldGen.Generator",
                         $"Error in stage {stage.Name}: {ex.Message}",
                         ex);
-
-                    if (!DiagnosticHub.IsConfigured)
-                    {
-                        Console.WriteLine($"Error in stage {stage.Name}: {ex.Message}");
-                    }
                 }
             }
             
@@ -57,13 +54,15 @@ namespace HumanFortress.WorldGen.Implementation
                 Params = parameters
             };
         }
+
+        private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
     }
     
     internal struct WorldGenResult
     {
-        public bool Success { get; set; }
-        public WorldTile[,] Tiles { get; set; }
-        public WorldParams Params { get; set; }
-        public string ErrorMessage { get; set; }
+        internal bool Success { get; set; }
+        internal WorldTile[,] Tiles { get; set; }
+        internal WorldParams Params { get; set; }
+        internal string ErrorMessage { get; set; }
     }
 }

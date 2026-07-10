@@ -18,13 +18,15 @@ namespace HumanFortress.WorldGen.Implementation
         private readonly IRuntimeGeologyCatalog _geology;
         private readonly int _size;
         private readonly int _maxZ;
+        private readonly IDiagnosticSink? _diagnostics;
         
-        public int Size => _size;
-        public int MaxZ => _maxZ;
-        
-        public FortressMap(int size, int maxZ, IRuntimeGeologyCatalog geology)
+        internal int Size => _size;
+        internal int MaxZ => _maxZ;
+
+        internal FortressMap(int size, int maxZ, IRuntimeGeologyCatalog geology, IDiagnosticSink? diagnostics = null)
         {
             _geology = geology ?? throw new ArgumentNullException(nameof(geology));
+            _diagnostics = diagnostics;
             _size = size;
             _maxZ = maxZ;
             _chunks = new FortressChunk[size, size];
@@ -39,7 +41,7 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
         
-        public FortressChunk GetChunk(int x, int y)
+        internal FortressChunk GetChunk(int x, int y)
         {
             if (x < 0 || x >= _size || y < 0 || y >= _size)
                 throw new ArgumentOutOfRangeException($"Chunk coordinates {x},{y} out of range");
@@ -52,7 +54,7 @@ namespace HumanFortress.WorldGen.Implementation
         /// This is the preferred method - it fills terrain into a World that already has
         /// CreatureManager and ItemManager with loaded definitions.
         /// </summary>
-        public void FillWorld(World targetWorld)
+        internal void FillWorld(World targetWorld)
         {
             try
             {
@@ -126,7 +128,7 @@ namespace HumanFortress.WorldGen.Implementation
         /// This method is kept for backward compatibility with tests.
         /// </summary>
         [Obsolete("Use FillWorld(World) instead to preserve loaded definitions")]
-        public World ToSimulationWorld()
+        internal World ToSimulationWorld()
         {
             try
             {
@@ -144,23 +146,17 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
 
-        private static void Emit(string message)
+        private void Emit(string message)
         {
-            DiagnosticHub.Sink.Information("WorldGen.FortressMap", message);
-            if (!DiagnosticHub.IsConfigured)
-            {
-                System.Console.WriteLine(message);
-            }
+            Diagnostics.Information("WorldGen.FortressMap", message);
         }
 
-        private static void Emit(string message, Exception exception)
+        private void Emit(string message, Exception exception)
         {
-            DiagnosticHub.Sink.Error("WorldGen.FortressMap", message, exception);
-            if (!DiagnosticHub.IsConfigured)
-            {
-                System.Console.WriteLine(message);
-            }
+            Diagnostics.Error("WorldGen.FortressMap", message, exception);
         }
+
+        private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
 
         private void InjectRampsAndSlopes(World world)
         {
@@ -322,10 +318,10 @@ namespace HumanFortress.WorldGen.Implementation
         private readonly int _y;
         private readonly int _maxZ;
 
-        public int X => _x;
-        public int Y => _y;
+        internal int X => _x;
+        internal int Y => _y;
 
-        public FortressChunk(int x, int y, int maxZ, IRuntimeGeologyCatalog geology)
+        internal FortressChunk(int x, int y, int maxZ, IRuntimeGeologyCatalog geology)
         {
             _geology = geology ?? throw new ArgumentNullException(nameof(geology));
             _x = x;
@@ -349,7 +345,7 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
 
-        public void SetGeology(int x, int y, int z, string geologyId)
+        internal void SetGeology(int x, int y, int z, string geologyId)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
@@ -357,7 +353,7 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
 
-        public void SetGeologyHandle(int x, int y, int z, ushort handle)
+        internal void SetGeologyHandle(int x, int y, int z, ushort handle)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
@@ -365,7 +361,7 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
 
-        public ushort GetGeologyHandle(int x, int y, int z)
+        internal ushort GetGeologyHandle(int x, int y, int z)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
@@ -375,16 +371,16 @@ namespace HumanFortress.WorldGen.Implementation
         }
 
         // Back-compat helper for tests that expect GetTerrain
-        public ushort GetTerrain(int x, int y, int z) => GetGeologyHandle(x, y, z);
+        internal ushort GetTerrain(int x, int y, int z) => GetGeologyHandle(x, y, z);
 
-        public string GetGeologyId(int x, int y, int z)
+        internal string GetGeologyId(int x, int y, int z)
         {
             var handle = GetGeologyHandle(x, y, z);
             var geology = _geology.GetGeologyByHandle(handle);
             return geology?.Id ?? "core_terrain_wall_rock_granite";
         }
 
-        public void SetSurfaceBits(int x, int y, int z, byte bits)
+        internal void SetSurfaceBits(int x, int y, int z, byte bits)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {
@@ -392,7 +388,7 @@ namespace HumanFortress.WorldGen.Implementation
             }
         }
 
-        public byte GetSurfaceBits(int x, int y, int z)
+        internal byte GetSurfaceBits(int x, int y, int z)
         {
             if (x >= 0 && x < 32 && y >= 0 && y < 32 && z >= 0 && z < _maxZ)
             {

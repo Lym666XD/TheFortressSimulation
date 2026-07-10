@@ -19,9 +19,9 @@ internal sealed class BuildableConstructionSystem : ITick
     private readonly OrdersManager _orders;
     private readonly IConstructionCatalog _constructions;
     private readonly int _maxPerTick;
-    private readonly System.Collections.Concurrent.ConcurrentQueue<PlaceableInstance> _outbox = new();
+    private readonly Queue<PlaceableInstance> _outbox = new();
 
-    public BuildableConstructionSystem(
+    internal BuildableConstructionSystem(
         World.World world,
         OrdersManager orders,
         IConstructionCatalog constructions,
@@ -33,10 +33,14 @@ internal sealed class BuildableConstructionSystem : ITick
         _maxPerTick = Math.Max(1, maxPerTick);
     }
 
-    public int Priority => UpdateOrder.Priority.Furniture; // touches L2 layer
-    public string SystemId => "Orders.BuildableConstruction";
+    internal int Priority => UpdateOrder.Priority.Furniture; // touches L2 layer
+    internal string SystemId => "Orders.BuildableConstruction";
 
-    public void ReadTick(ulong tick)
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    internal void ReadTick(ulong tick)
     {
         var desigs = new List<BuildableConstructionDesignation>();
         _orders.DrainBuildableConstructions(desigs, _maxPerTick);
@@ -61,21 +65,7 @@ internal sealed class BuildableConstructionSystem : ITick
                     continue;
                 }
 
-                // Build materials map (tag -> count). MVP: Tag only
-                var req = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (var mc in def.MaterialCosts)
-                {
-                    if (!string.IsNullOrWhiteSpace(mc.Tag))
-                    {
-                        req[mc.Tag!] = req.GetValueOrDefault(mc.Tag!, 0) + Math.Max(1, mc.Count);
-                    }
-                    else if (!string.IsNullOrWhiteSpace(mc.DefId))
-                    {
-                        // TODO: defId support in planner (map to item defs)
-                        // For MVP, ignore defId-specific entries
-                        continue;
-                    }
-                }
+                var req = BuildMaterialRequirements(def);
 
                 // Create site (defer placement to WriteTick)
                 var site = PlaceableFactory.CreateConstructionSite(
@@ -98,7 +88,12 @@ internal sealed class BuildableConstructionSystem : ITick
         }
     }
 
-    public void WriteTick(ulong tick)
+    void ITick.ReadTick(ulong tick)
+    {
+        ReadTick(tick);
+    }
+
+    internal void WriteTick(ulong tick)
     {
         int placed = 0;
         while (placed < _maxPerTick && _outbox.TryDequeue(out var site))
@@ -113,6 +108,11 @@ internal sealed class BuildableConstructionSystem : ITick
                 OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] place ERR: {ex.Message}");
             }
         }
+    }
+
+    void ITick.WriteTick(ulong tick)
+    {
+        WriteTick(tick);
     }
 
     private bool ValidateFootprint(Point anchor, int z, Footprint fp, bool requiresFloor)
@@ -138,5 +138,30 @@ internal sealed class BuildableConstructionSystem : ITick
         // Basic collision check with existing placeables
         var coll = PlaceableManager.CheckCollision(_world, anchor, z, fp);
         return coll.CanPlace;
+    }
+
+    internal static Dictionary<string, int> BuildMaterialRequirements(ConstructionDefinition definition)
+    {
+        var requirements = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cost in definition.MaterialCosts)
+        {
+            var requirementId = ToRequirementId(cost);
+            if (string.IsNullOrWhiteSpace(requirementId))
+                continue;
+
+            requirements[requirementId] = requirements.GetValueOrDefault(requirementId) + Math.Max(1, cost.Count);
+        }
+
+        return requirements;
+    }
+
+    private static string ToRequirementId(MaterialCost cost)
+    {
+        if (!string.IsNullOrWhiteSpace(cost.Tag))
+            return ConstructionMaterialRequirement.ForTag(cost.Tag!);
+
+        return !string.IsNullOrWhiteSpace(cost.DefId)
+            ? ConstructionMaterialRequirement.ForDefinition(cost.DefId!)
+            : string.Empty;
     }
 }

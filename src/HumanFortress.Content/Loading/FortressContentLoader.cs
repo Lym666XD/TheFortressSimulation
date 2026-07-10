@@ -41,34 +41,34 @@ internal sealed class FortressContentLoadResult
         Issues = issues?.ToArray() ?? throw new ArgumentNullException(nameof(issues));
     }
 
-    public ContentPathResolution ContentPath { get; }
-    public ContentPathResolution CoreDataPath { get; }
+    internal ContentPathResolution ContentPath { get; }
+    internal ContentPathResolution CoreDataPath { get; }
     internal RuntimeContentRegistryLoadResult? Registries { get; }
     internal CoreContentCatalogLoadResult? CoreCatalogs { get; }
-    public bool RegistriesAlreadyLoaded { get; }
-    public IReadOnlyList<FortressContentIssue> Issues { get; }
-    public bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
-    public int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
-    public int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
-    public string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
-    public bool CoreCatalogsLoaded => CoreCatalogs != null;
-    public int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
-    public int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
-    public int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
-    public int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
-    public int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
-    public int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
-    public int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
-    public int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
-    public bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
-    public bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
+    internal bool RegistriesAlreadyLoaded { get; }
+    internal IReadOnlyList<FortressContentIssue> Issues { get; }
+    internal bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
+    internal int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
+    internal int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
+    internal string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
+    internal bool CoreCatalogsLoaded => CoreCatalogs != null;
+    internal int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
+    internal int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
+    internal int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
+    internal int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
+    internal int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
+    internal int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
+    internal int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
+    internal int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
+    internal bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
+    internal bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
 
-    public bool IsValid(bool treatWarningsAsErrors = false)
+    internal bool IsValid(bool treatWarningsAsErrors = false)
     {
         return GetBlockingIssues(treatWarningsAsErrors).Count == 0;
     }
 
-    public IReadOnlyList<FortressContentIssue> GetBlockingIssues(bool treatWarningsAsErrors = false)
+    internal IReadOnlyList<FortressContentIssue> GetBlockingIssues(bool treatWarningsAsErrors = false)
     {
         return Issues
             .Where(issue =>
@@ -77,12 +77,12 @@ internal sealed class FortressContentLoadResult
             .ToArray();
     }
 
-    public string FormatBlockingIssues(bool treatWarningsAsErrors = false)
+    internal string FormatBlockingIssues(bool treatWarningsAsErrors = false)
     {
         return string.Join(Environment.NewLine, GetBlockingIssues(treatWarningsAsErrors));
     }
 
-    public void ThrowIfInvalid(bool treatWarningsAsErrors = false)
+    internal void ThrowIfInvalid(bool treatWarningsAsErrors = false)
     {
         var blockingIssues = GetBlockingIssues(treatWarningsAsErrors);
         if (blockingIssues.Count > 0)
@@ -91,7 +91,7 @@ internal sealed class FortressContentLoadResult
         }
     }
 
-    public FortressContentLoadReport ToReport()
+    internal FortressContentLoadReport ToReport()
     {
         return new FortressContentLoadReport(
             ContentPath,
@@ -119,7 +119,7 @@ internal sealed class FortressContentLoadResult
 /// </summary>
 internal static class FortressContentLoader
 {
-    public static FortressContentLoadResult Load(
+    internal static FortressContentLoadResult Load(
         string baseDir,
         bool includeRegistries = true,
         bool includeCoreCatalogs = true,
@@ -163,7 +163,7 @@ internal static class FortressContentLoader
             issues);
     }
 
-    public static FortressContentLoadResult LoadStrict(
+    internal static FortressContentLoadResult LoadStrict(
         string baseDir,
         bool includeRegistries = true,
         bool includeCoreCatalogs = true,
@@ -181,17 +181,17 @@ internal static class FortressContentLoader
         return result;
     }
 
-    public static ContentPathResolution ResolveContentPath(string baseDir)
+    internal static ContentPathResolution ResolveContentPath(string baseDir)
     {
         return ResolveChildDirectory(baseDir, "content");
     }
 
-    public static ContentPathResolution ResolveCoreDataPath(string baseDir)
+    internal static ContentPathResolution ResolveCoreDataPath(string baseDir)
     {
         return ResolveChildDirectory(baseDir, Path.Combine("data", "core"));
     }
 
-    public static ContentFileResolution ResolveRegistryFile(string baseDir, string fileName)
+    internal static ContentFileResolution ResolveRegistryFile(string baseDir, string fileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 

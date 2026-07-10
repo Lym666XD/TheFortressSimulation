@@ -10,7 +10,7 @@ internal sealed partial class ChunkPlaceableData
     /// Called after AddPlaceable to update L2 derived cache.
     /// PlaceableInstance (authoritative) -> FurnitureRef -> FurnitureCell (derived)
     /// </summary>
-    public void SyncToFurnitureCell(Chunk chunk, PlaceableInstance placeable, ulong tick)
+    internal void SyncToFurnitureCell(Chunk chunk, PlaceableInstance placeable, ulong tick)
     {
         // Determine passability: Blocking placeables go in Blocker slot, others in Passables
         bool isBlocker = placeable.Kind switch
@@ -63,7 +63,7 @@ internal sealed partial class ChunkPlaceableData
     /// Remove placeable from FurnitureCell layer.
     /// Called before RemovePlaceable to update L2 derived cache.
     /// </summary>
-    public void UnsyncFromFurnitureCell(Chunk chunk, PlaceableInstance placeable, ulong tick)
+    internal void UnsyncFromFurnitureCell(Chunk chunk, PlaceableInstance placeable, ulong tick)
     {
         var footprint = placeable.Footprint;
         var anchorX = placeable.Position.X % Chunk.SIZE_XY;

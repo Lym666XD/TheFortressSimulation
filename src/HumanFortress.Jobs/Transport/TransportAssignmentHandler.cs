@@ -79,7 +79,6 @@ internal sealed class TransportAssignmentHandler
                 ? request.Quantity
                 : (_world.Items.GetInstance(request.ItemGuid)?.StackCount ?? 1);
 
-            JobStats.Assigned++;
             _logger.Log($"[TRANS-JOBS][{tick}] Assigned worker={worker.Guid} item={request.ItemGuid} reason={request.Reason} -> ToItem ({request.From.X},{request.From.Y},{request.FromZ})");
 
             return new ActiveJob

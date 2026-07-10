@@ -63,8 +63,9 @@ internal sealed class ChunkStockpileData
     {
         lock (_readLock)
         {
-            return _shards.Values
-                .OrderBy(static shard => shard.ZoneId)
+            return _shards
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
                 .ToList();
         }
     }

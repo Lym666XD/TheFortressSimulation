@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 using WorldClass = HumanFortress.Simulation.World.World;
@@ -25,11 +26,12 @@ internal sealed partial class PlaceableManager
         if (!p.IsGhost) return false;
         if (!string.IsNullOrEmpty(purpose) && (p.DefinitionId != $"core_construction_ghost:{purpose}")) return false;
 
-        // Unsync and remove
+        // Unsync primary owned state and remove secondary external references.
         pd.UnsyncFromFurnitureCell(chunk, p, tick);
         pd.RemovePlaceable(idx);
+        RemoveExternalReferences(world, p, primaryChunk: chunk, tick);
         chunk.BumpConnectivityVersion();
-        chunk.MarkTileDirty(idx, tick);
+        MarkFootprintCellsDirtyForChunk(chunk, p.Position, p.Z, p.Footprint, tick);
         return true;
     }
 
@@ -51,11 +53,64 @@ internal sealed partial class PlaceableManager
         int idx = Chunk.LocalIndex(lx, ly);
         if (!pd.TryGetOwnedAt(idx, out var p)) return false;
 
-        // Unsync and remove
+        // Unsync primary owned state and remove secondary external references.
         pd.UnsyncFromFurnitureCell(chunk, p, tick);
         pd.RemovePlaceable(idx);
+        RemoveExternalReferences(world, p, primaryChunk: chunk, tick);
         chunk.BumpConnectivityVersion();
-        chunk.MarkTileDirty(idx, tick);
+        MarkFootprintCellsDirtyForChunk(chunk, p.Position, p.Z, p.Footprint, tick);
         return true;
+    }
+
+    private static void RemoveExternalReferences(WorldClass world, PlaceableInstance placeable, Chunk primaryChunk, ulong tick)
+    {
+        foreach (var chunkKey in GetAffectedChunks(placeable.Position, placeable.Z, placeable.Footprint))
+        {
+            var chunk = world.GetChunk(chunkKey);
+            if (chunk == null || chunk == primaryChunk)
+                continue;
+
+            var data = chunk.GetPlaceableData();
+            if (data == null)
+                continue;
+
+            var removedAny = false;
+            foreach (var localIndex in EnumerateFootprintLocalIndexesForChunk(chunk, placeable))
+            {
+                if (data.TryGetExternalRefAt(localIndex, out var ownerGuid)
+                    && ownerGuid == placeable.Guid
+                    && data.RemoveExternalRef(localIndex))
+                {
+                    removedAny = true;
+                }
+            }
+
+            if (!removedAny)
+                continue;
+
+            chunk.BumpConnectivityVersion();
+            MarkFootprintCellsDirtyForChunk(chunk, placeable.Position, placeable.Z, placeable.Footprint, tick);
+        }
+    }
+
+    private static IEnumerable<int> EnumerateFootprintLocalIndexesForChunk(Chunk chunk, PlaceableInstance placeable)
+    {
+        var footprint = placeable.Footprint;
+        for (int dy = 0; dy < footprint.D; dy++)
+        {
+            for (int dx = 0; dx < footprint.W; dx++)
+            {
+                var worldX = placeable.Position.X + dx;
+                var worldY = placeable.Position.Y + dy;
+                var chunkX = worldX / Chunk.SIZE_XY;
+                var chunkY = worldY / Chunk.SIZE_XY;
+                if (chunk.Key.ChunkX != chunkX || chunk.Key.ChunkY != chunkY || chunk.Key.Z != placeable.Z)
+                    continue;
+
+                var localX = worldX % Chunk.SIZE_XY;
+                var localY = worldY % Chunk.SIZE_XY;
+                yield return Chunk.LocalIndex(localX, localY);
+            }
+        }
     }
 }

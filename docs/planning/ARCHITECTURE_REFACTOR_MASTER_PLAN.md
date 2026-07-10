@@ -6,6 +6,7 @@ Sources merged:
 - `docs/archive/plans/ARCHITECTURE_ISSUE_CHATGPT_SOURCE.md`
 - `docs/archive/plans/ARCHITECTURE_ISSUE_CLAUDE_SOURCE.txt`
 - `docs/archive/plans/HUMANFORTRESS_MAIN_BRANCH_ARCHITECTURE_AUDIT_FOR_CODEX.md` (reconciled 2026-06-12)
+- `docs/archive/plans/HumanFortress_审计报告_2026-07-07.md` (reconciled 2026-07-09)
 
 This document merges both prior architecture reviews into one actionable refactor plan. It is intentionally strict: the target is a long-lived, deterministic, moddable simulation game, not a short prototype.
 
@@ -13,7 +14,8 @@ This document merges both prior architecture reviews into one actionable refacto
 
 The project already has several strong ideas:
 
-- separated projects for Core, Simulation, Navigation, WorldGen, and App;
+- separated projects for Contracts, Core, Content, Simulation, Navigation,
+  Jobs, Runtime, WorldGen, and App;
 - a fixed tick scheduler with read/write phases;
 - diff logs, command queue, event bus, deterministic RNG primitives;
 - content registries and JSON-driven data;
@@ -21,20 +23,34 @@ The project already has several strong ideas:
 - early render snapshot direction;
 - job planning and execution for mining, hauling, construction, and crafting.
 
-The problem is that these ideas are not enforced by boundaries. Runtime composition, UI, world generation, content loading, job execution, command application, navigation rebuild, debug tooling, and direct world mutation are mixed across App classes.
+At the start of this plan, those ideas were not enforced by boundaries:
+Runtime composition, UI, world generation, content loading, job execution,
+command application, navigation rebuild, debug tooling, and direct world
+mutation were mixed across App classes.
 
-The current codebase is best described as a working prototype with several professional architecture pieces present but bypassed. The refactor should first stop new architectural drift, then extract a headless deterministic runtime, then move gameplay systems out of App.
+The current codebase is no longer best described as that early prototype. The
+large App/gameplay boundary violations have mostly been moved behind
+Contracts/Runtime/Jobs/Simulation/Content seams, and architecture smoke tests
+now lock many of those boundaries. The remaining refactor work is stricter
+hardening: remove compatibility scaffolding, broaden Runtime-authored presenter
+deltas, deepen deterministic replay/save coverage, consolidate movement
+ownership, and keep future systems from bypassing the now-established module
+edges.
 
-## Current Refactor Progress - 2026-07-05
-- Save/replay architecture has a staged boundary rather than a full save implementation: Core owns immutable pending/executed command replay records, command queue replay snapshots, replay factory contracts, command journal hashing, and canonical replay hash primitives; Runtime owns a strict internal command replay factory, v1 command payload versioning, batch-atomic command replay restore, Runtime replay checkpoints, save manifest construction, and a save snapshot package port; Simulation owns field-specific and aggregate authoritative replay hash builders plus a minimal internal world save summary for section hashes/counts. App remains out of persistence/runtime decoding and does not assemble save authority from live world/job/command objects.
-- Architecture boundary checks have moved from ad-hoc review into the formal smoke runner. Tests now enforce the approved production project-reference graph, the production source-import direction matrix, the dependency-free Contracts project rule, the Contracts/Runtime-public-port presentation-primitive ban, and the exact `InternalsVisibleTo` friend-assembly graph; forbid active App source from importing lower implementation modules or old mixed runtime facade names; keep ordinary App.Runtime usage inside adapter/port composition files; lock implementation public surface plus Core/Runtime/App public API allowlists; and scan save/replay/hash authority paths for unstable object hashes, dictionary `Keys`/`Values` view iteration, and production `Guid.NewGuid()` identity generation.
-- Runtime save JSON codec/store helpers are internal/friend implementation details; App-facing persistence remains Runtime ports plus Contracts DTOs.
+## Current Refactor Progress - 2026-07-10
+- Save/replay architecture has a Runtime-owned vertical slice rather than a full save-slot implementation: Core owns immutable pending/executed command replay records, command queue replay snapshots, replay factory contracts, command journal hashing, and canonical replay hash primitives; Runtime owns a strict internal command replay factory, v1 command payload versioning, batch-atomic command replay restore, Runtime replay checkpoints, save manifest construction with format 6 saved content catalog summaries, save document codec/store validation, first-pass `slot_manifest.json` construction/validation/inspection, save-slot compatibility/content-compatibility/migration-plan/restore-plan classification, a migration transform registry with concrete `slot:0->1` manifest-rebuild plus `runtime_snapshot:4->5` and `runtime_snapshot:5->6` transforms and fail-closed gaps for unsupported runtime snapshot schemas, a Runtime migration execution seam/result DTO that no-ops compatible slots or writes migrated target directories through Runtime's slot writer, a Runtime content signature gate plus saved/current catalog diagnostic summaries and structured mismatch rows that fail closed with `slot.content` until concrete missing-content remap policy exists, RNG row restore, and full staged restore for the supported `runtime_snapshot.json` document. Full restore now applies world/job/RNG/pending-command restore to staging Runtime services and commits the active session only after every supported slice succeeds. Simulation owns field-specific and aggregate authoritative replay hash builders plus the current world payload build/restore path for terrain, ground/contained/carried/equipped/installed items, creatures, global reservations, stockpile zones, owned placeables/workshops, and active orders. App remains out of persistence/runtime decoding and does not assemble save authority from live world/job/command objects.
+- Architecture boundary checks have moved from ad-hoc review into the formal smoke runner. Tests now enforce the approved production project-reference graph, the production source-import direction matrix, the dependency-free Contracts project rule, the Contracts/Runtime-public-port presentation-primitive ban, and the exact `InternalsVisibleTo` friend-assembly graph; forbid active App source from importing lower implementation modules or old mixed runtime facade names; keep ordinary App.Runtime usage inside adapter/port composition files; lock implementation public surface plus Core/Runtime/App public API allowlists; scan active source for legacy compatibility namespace regressions; scan save/replay/hash authority paths for unstable object hashes, dictionary `Keys`/`Values` view iteration, and production `Guid.NewGuid()` identity generation; and now keep active Simulation/Jobs/Runtime implementation snapshots on explicitly ordered key/value row enumeration rather than broad dictionary view snapshots; assert that the repository keeps a GitHub Actions gate for solution build plus the smoke runner; require the default smoke runner to execute a 500-tick Runtime determinism loop with a GC boundary between equivalent sessions; and lock TickScheduler system-id uniqueness plus failure isolation so read-phase failures cannot commit write-phase state.
+- Friend-assembly cleanup has started to remove bridges that no current project
+  uses: `HumanFortress.Core` now has no friend assemblies, and the smoke
+  allowlist expects that. Remaining friend bridges are Runtime/module/test
+  access seams still used by the current architecture or smoke coverage.
+- Runtime save JSON codec/store/slot-manifest helpers are internal/friend implementation details; App-facing persistence remains Runtime ports plus Contracts DTOs.
 - Runtime save snapshot data now canonicalizes RNG stream rows at the snapshot
   boundary, world payload restore applies non-semantic payload arrays in
   Simulation owner order, and Runtime save document validation rejects malformed
   manifest section names before lookup.
 - Runtime session ports are split by audience: the public factory returns an App-facing aggregate that excludes save/replay checkpoint capabilities, while the full save/replay aggregate is internal/friend-only for Runtime tests and future dedicated save UI boundaries.
-- The App/Core direct dependency has been removed from production code. Diagnostic event/sink/level contracts plus the transitional `DiagnosticHub` now live in `HumanFortress.Contracts.Diagnostics`, so App owns log sinks and UI presentation against Contracts while Core/Content/Simulation/WorldGen emit through the same contract bridge. Content also no longer references Core; its production reference set is Contracts only.
+- The App/Core direct dependency has been removed from production code. Diagnostic event/sink/level contracts plus the transitional `DiagnosticHub` now live in `HumanFortress.Contracts.Diagnostics`, so App owns log sinks and UI presentation against Contracts while lower modules emit through Contracts diagnostics. Core infrastructure now accepts injected `IDiagnosticSink` dependencies for Runtime-composed `CommandQueue`, `EventBus`, and `TickScheduler` failure paths; Runtime-created WorldGen services/generators/maps also receive injected sinks; and Simulation/Content diagnostics helpers expose injectable sinks configured by Runtime composition. `DiagnosticHub` is now a compatibility fallback rather than the normal lower-module emission route. Content also no longer references Core; its production reference set is Contracts only.
 - The App/Content direct dependency has also been removed from production code. App-facing content load issue/path/report DTOs live in `HumanFortress.Contracts.Content.Loading`; Runtime owns the public content startup/file-location facade over the internal Content loader; App wraps registry-file lookup in `AppContentFileLocator` for UI configuration. Production App references are now Contracts + Runtime only.
 - Contracts content registry files now match their namespace layout, including
   `FixedPoint` under `Contracts/Content/Registry`, reducing the remaining
@@ -77,6 +93,22 @@ Estimated architecture-foundation progress: **99%+**.
 
 This percentage tracks the foundation/boundary cleanup from prototype structure toward a maintainable deterministic simulation architecture. It is not a gameplay feature-completion estimate and not the total refactor-program completion estimate. The wider refactor still includes UI snapshot isolation, deterministic replay hardening, save/migration, namespace cleanup, diagnostics polish, movement ownership, and performance work.
 
+Strict total refactor-program progress, measured against this plan plus the
+2026-07-07 audit findings: **about 98-99%** as a source-only architecture estimate.
+The remaining work is no longer
+"move obvious gameplay objects out of App"; it is architecture hardening:
+broader packed world-chunk/panel presenter deltas and panel-specific redraw
+specialization beyond the current Runtime-authored frame identity,
+map-viewport changed-cell/row/screen-region slice, App map-viewport presenter
+cache, UI-overlay section slice, and App UI-overlay section cache, fuller
+deterministic replay scenarios and broader CI gates,
+additional runtime snapshot schema migration transforms over the current
+Runtime compatibility, migration-plan, migrator, and transform-registry policy,
+broader deterministic replay scenarios and concrete missing-content remap
+policy over the current fail-closed content-signature gate, diagnostics/debug UI polish,
+movement ownership consolidation, focused module-level test projects, and
+eventual chunk/data-layout performance work.
+
 ### 2026-06-12 Main-Branch Audit Reconciliation
 
 - The external audit's Content project build concern has been checked against the current branch. `HumanFortress.Content` and `HumanFortress.sln` build successfully; the apparent dependency issue is caused by transitional namespaces that now compile from `HumanFortress.Contracts`.
@@ -97,7 +129,14 @@ This percentage tracks the foundation/boundary cleanup from prototype structure 
 - Latest source-only module-boundary hardening removed App's direct `HumanFortress.WorldGen` project reference. App creates world generation through Runtime's `FortressRuntimeWorldGenerationFactory`, while the concrete `WorldGenerationServiceFactory` is internal to WorldGen/friend consumers.
 - Latest source-only replay/boundary hardening removed production `Guid.NewGuid()` command identity generation. Runtime command ids are deterministic from tick/type/payload, Runtime session enqueue adds a resettable deterministic sequence wrapper for duplicate-command disambiguation, workshop commands now serialize their mutation payload, mining rectangle scans now use inclusive SadRogue `MaxExtent*` bounds, and several false-public internal helper surfaces in Simulation/App were narrowed.
 - Latest source-only follow-up hardened replay diagnostics and command-context boundaries: construction command ids now include sorted material tag filters, command failure diagnostics include the queue sequence, and the remaining internal all-target command execution aggregate was deleted so host/pipeline/stage signatures depend only on `ISimulationContext` while individual commands request narrow role contexts.
-- Latest source-only save/replay planning added a staged `SAVE_REPLAY_ARCHITECTURE.md` bridge and Core `ICommandReplayFactory` seam, explicitly deferring full save/load implementation until command replay, authoritative world snapshot, and deterministic hash seams are stable.
+- The earlier source-only save/replay planning milestone has been superseded by
+  the current Runtime save/replay vertical slice. `SAVE_REPLAY_ARCHITECTURE.md`
+  remains the staged bridge, but Runtime now owns the supported
+  `runtime_snapshot.json` document build/validate/read/restore path and a
+  Runtime-owned slot compatibility/content-compatibility policy while the full
+  chunk-sharded save-slot layout, concrete migration transforms, concrete
+  missing-content placeholder/remap policy, and broader replay/restore
+  scenarios remain future work.
 
 ### Completed Since This Plan Was Created
 
@@ -214,14 +253,14 @@ This percentage tracks the foundation/boundary cleanup from prototype structure 
   creates the concrete generation services.
 - Added `HumanFortress.Jobs` as the first dedicated job-system assembly and wired it into `HumanFortress.sln`.
 - Moved the first low-risk transport slice into `HumanFortress.Jobs`: active transport job state/stage, backlog buffering, and reservation finalization.
-- Moved transport stats DTO/tracking/counters into `HumanFortress.Jobs`, replacing the `TransportJobSystem` nested stats DTO with `TransportJobStatsSnapshot`.
+- Moved transport stats DTO/tracking/counters into `HumanFortress.Jobs`, replacing the `TransportJobSystem` nested stats DTO with `TransportJobStatsSnapshot`. Follow-up hardening deleted the static `JobStats` global counter carrier; transport stat totals now live on each executor-owned `TransportStatsTracker`.
 - Moved `TransportIntakeFilter` into `HumanFortress.Jobs`, so transport request readiness/de-dup filtering is no longer App-owned.
 - Added Jobs-owned transport seams for logging and worker candidate selection, with App adapters over the existing logger and profession assignment system.
 - Moved `TransportAssignmentHandler` into `HumanFortress.Jobs`; worker assignment/path seeding/reservation setup is now Jobs-owned while App still supplies profession selection through an adapter.
 - Added a narrow Jobs-owned `ITransportMovementDiffEmitter` seam and moved `TransportReplanHandler` into `HumanFortress.Jobs`.
 - Added Jobs-owned item/carry diff and job-completion seams, then moved `TransportPickupHandler` and `TransportDeliveryHandler` into `HumanFortress.Jobs`.
 - Moved `TransportActiveJobRunner` into `HumanFortress.Jobs`, with movement and item/carry writes routed through narrow Jobs-owned diff interfaces.
-- Added a Jobs-owned `TransportJobExecutor` core that owns transport request drain/backlog handling, assignment throttling, active write ticks, scheduling hints, and transport debug snapshots.
+- Added a Jobs-owned `TransportJobExecutor` core that owns transport request drain/backlog handling, assignment throttling, active write ticks, scheduling hints, and transport debug snapshots. It is now split into focused partials for read/intake, write ticks, snapshot/replay/debug read models, scheduling hints, and small helper lookups so the transport long-horizon state owner does not regrow into one mixed executor file.
 - Reduced `TransportJobSystem` to a composition shell, then moved that wrapper source to Runtime; transport diff emission, logging bridge, and profession adapters are now Jobs-owned.
 - Removed business reliance on obsolete item carry/reservation flags (`IsCarried`, `IsReserved`, `ReservedBy`) in favor of `IsOnGround`, `CarriedBy`, and `ReservationManager`.
 - Added ground-item query helpers to `ItemManager` for safer system access.
@@ -326,23 +365,47 @@ This percentage tracks the foundation/boundary cleanup from prototype structure 
 - Creature and item definition loading/validation now lives in `HumanFortress.Content.Definitions`. `ItemManager` and `CreatureManager` no longer parse files; they consume immutable catalog snapshots supplied by App/runtime composition.
 - Static item/creature/construction/recipe/material/terrain/geology/biome definition DTOs, terrain bit-layout DTOs, alias/migration DTOs, shared placeable/geology/zone DTOs, fixed-point material primitives, tuning contract types, content version/snapshot/validation result types, runtime geology catalog interface, definition catalog interfaces, and immutable catalog snapshot stores now compile from `HumanFortress.Contracts`; content registry contracts now use `HumanFortress.Contracts.Content.Registry`.
 - Content loading now has a first unified `HumanFortress.Content` boundary for item, creature, construction, recipe snapshots, structured runtime registry bootstrap and implementation, strict bootstrap diagnostics, App registry-file resolution, runtime catalog/tuning/geology/zone snapshot capture, Content-owned core-data loading, internal/friend profession registry loading, and structured core-data application. Runtime construction/mining/navigation/placeable/scheduler/workshop tuning and WorldGen mapgen/ore/cavern tuning now enter through internal/friend Content snapshots, while public `FortressContentLoadResult` exposes issues and summary counts instead of full catalog objects. Remaining content work is richer debug surfaces, compatibility naming cleanup, and the future compiled content-pack pipeline.
-- Simulation-owned world save payload build/restore is now split by authoritative section. `WorldSavePayloadBuilder` keeps only canonical section assembly in its main file, while metadata/terrain, entities, stockpiles, placeables, orders, and shared conversion helpers live in focused partials. `WorldSavePayloadRestorer` keeps restore flow, terrain reconstruction, supported-section restore order, and final replay-hash verification in its main file, while payload validation, placeable validation/restore, and conversion/failure helpers live in focused partials. Runtime consumes this through the save/restore session ports; App does not build or decode world payload sections.
-- Simulation authoritative managers are being reduced from single-file service objects into focused state owners. `ItemManager` now separates catalog access, position indexing, read queries, stack/move/remove mutations, spawn behavior, and save/restore validation/conversion into partial files while keeping state and deterministic item GUID allocation in the main file. `CreatureManager` now separates catalog access, runtime instance queries, spawn behavior, and save/restore validation/conversion into partial files while keeping state, world binding, and deterministic creature GUID allocation in the main file. `OrdersManager` now separates haul, mining, construction/buildable, and save/restore behavior into partial files while keeping queue state and logging in the main file. Placeable authority is split inside `HumanFortress.Simulation.Placeables`: `PlaceableInstance` keeps runtime state separate from item/install and construction factory behavior, small placeable component types live in their own files, `ChunkPlaceableData` keeps authoritative storage separate from derived furniture sync, and `PlaceableManager` separates collision, cross-chunk placement, removal, and affected-chunk queries. These remain Simulation-owned authority; Runtime/App consume them through existing world/session seams rather than owning item/creature/order/placeable state.
+- Simulation-owned world save payload build/restore is now split by authoritative section. `WorldSavePayloadBuilder` keeps only canonical section assembly in its main file, while metadata/terrain, entities, stockpiles, placeables, orders, and shared conversion helpers live in focused partials. `WorldSavePayloadRestorer` keeps restore flow, terrain reconstruction, supported-section restore order, and final replay-hash verification in its main file, while placeable validation/restore, conversion/failure helpers, and section-focused payload validation live in focused partials. Payload validation is now split into entity/reservation, stockpile, order, and shared geometry/string helper files. Runtime consumes this through the save/restore session ports; App does not build or decode world payload sections.
+- Simulation-owned world replay hashing is now split by authoritative section as well. `WorldReplayHashBuilder` keeps aggregate and section-hash orchestration in its main file, while terrain, item/creature entity state, reservation state, stockpile-zone configuration, and shared primitive hash helpers live in focused partials under `HumanFortress.Simulation.Replay`. Architecture smoke tests lock that split so replay/save authority does not drift back into a mixed hash God Object.
+- Simulation authoritative managers are being reduced from single-file service objects into focused state owners. `World`/`Chunk` and their helper structs now keep ordinary implementation members internal/friend-only, with `IWorldReader` and `IEquatable<ChunkKey>` preserved through explicit interface bridges and only required `object` overrides left public. `TileBase` and terrain bit accessors are likewise internal/friend-only implementation values rather than public DTOs. `ItemManager` now separates catalog access, position indexing, read queries, stack/move/remove mutations, spawn behavior, and save/restore validation/conversion into partial files while keeping state and deterministic item GUID allocation in the main file; its implementation seams are internal/friend-only and the cross-module catalog view is exposed through explicit `IItemDefinitionCatalog` implementation. `CreatureManager` now separates catalog access, runtime instance queries, spawn behavior, and save/restore validation/conversion into partial files while keeping state, world binding, and deterministic creature GUID allocation in the main file; it mirrors the same explicit `ICreatureDefinitionCatalog` boundary. `OrdersManager` now separates haul, mining, construction/buildable, and save/restore behavior into partial files while keeping queue state and logging in the main file. `MiningSystem` now keeps planner state and `PlannedDig` identity in the main file while tick/drain/outbox behavior, cursor scanning, cancellation query behavior, helper logic, and active designation cursor state live in focused files. The general `SimulationDiffApplicator` now keeps dispatch/logging separate from terrain mutation/ejection/dirty propagation, item move/carry/merge behavior, creature movement, and target/entity-key lookup helpers. Placeable authority is split inside `HumanFortress.Simulation.Placeables`: `PlaceableInstance` keeps runtime state separate from item/install and construction factory behavior, small placeable component types live in their own files, `ChunkPlaceableData` keeps authoritative storage separate from derived furniture sync, and `PlaceableManager` separates collision, cross-chunk placement, removal, and affected-chunk queries; placeable state/storage members are now internal/friend-only. Simulation.Jobs state and queue services now keep ordinary members internal/friend-only as well, with transport intake/request-queue and construction material planner tick contracts preserved through explicit interface bridges. Zone runtime implementation types under `HumanFortress.Simulation.Zones`, the Stockpile implementation directory, the Items/Creatures implementation directories, the Placeables/Tiles implementation directories, the Simulation.Jobs implementation directory, and the World implementation directory now keep ordinary members internal/friend-only rather than exposing a misleading public implementation API. These remain Simulation-owned authority; Runtime/App consume them through existing world/session seams rather than owning world/item/creature/order/placeable/zone/stockpile/entity/tile/job state.
+- Orders implementation-surface hardening now keeps buildable construction,
+  structural construction, hauling, and mining tick-system members
+  internal/friend-only while preserving `ITick` through explicit interface
+  bridges. Order designation/value objects and the construction terrain
+  material resolver are internal/friend-only too, and architecture smoke scans
+  the Orders directory for ordinary public-member drift.
+- WorldGen implementation-surface hardening now keeps world-generation
+  services/data, generator stages, fortress generation content, maps, and chunks
+  internal/friend-only. Contracts-facing generation access is preserved through
+  explicit `IWorldGenerationService` / `IGeneratedWorldData` bridges, and
+  architecture smoke scans WorldGen for ordinary public-member drift.
+- Runtime implementation-surface hardening now keeps save snapshot data,
+  document codec/store helpers, and command replay factory helpers
+  internal/friend-only. App-facing Runtime API remains the approved
+  ports/factories/content/logging bootstrap surface, while `ICommandReplayFactory`
+  is preserved through explicit implementation and architecture smoke rejects
+  ordinary public members outside approved Runtime API files.
+- Content implementation-surface hardening now keeps profession registry and
+  content loader/result helpers internal/friend-only, with
+  `IProfessionRegistry` preserved through explicit implementation. Content
+  public-member drift is guarded, with only the approved `System.Text.Json`
+  DTO accessor for runtime zone definitions left public until the serializer
+  binding policy changes.
 - Startup content diagnostics are improved and current legacy content loads without registry errors. The structured registry now loads successfully and reports remaining validation warnings explicitly.
-- Logging now has a first-pass structured async diagnostics pipeline with category/level events, a main timeline log, category log files, and a ring-buffer sink. The Debug Status tab can show first-pass diagnostic counts and latest Content issue from a `DiagnosticSnapshot`. The secondary content registry, WorldGen progress/error paths, stockpile diff errors, and key Simulation orders/jobs fallbacks now route through diagnostic helpers. Remaining work is mostly command-line/test output, no-logger fallback helpers, and a dedicated diagnostics/debug UI.
+- Logging now has a first-pass structured async diagnostics pipeline with category/level events, a main timeline log, category log files, and a ring-buffer sink. The Debug Status tab can show first-pass diagnostic counts and latest Content issue from a `DiagnosticSnapshot`. The secondary content registry, WorldGen progress/error paths, stockpile diff errors, and key Simulation orders/jobs fallbacks now route through diagnostic helpers. Lower implementation modules no longer use direct `Console.WriteLine` fallback output; remaining work is mostly App-owned command-line/test output and a dedicated diagnostics/debug UI.
 - The world map embarkability UI now shows first-pass rule failures for the current tile. It still needs richer terrain/biome/geology diagnostics if embark rules become more complex.
 - A formal regression-test project now exists and the former App `TestRunner` plus `PhaseTests` coverage has moved into `tests/HumanFortress.App.Tests`; App `--test` and `--validate` are compatibility pointers to `./RunTests.sh`.
 - Historical analyzer warnings remain; they are not currently blocking runtime but should be cleaned during build-hygiene work.
 
 ### Updated Near-Term Order
 
-1. Tighten Content hygiene: improve debug visibility and plan final namespace/compiled-pack cleanup now that structured registry implementation and strict fail-fast loading are Content-owned.
-2. Finish App boundary cleanup around runtime composition: replace compatibility namespaces, narrow App-provided delegates, keep session/input/rendering/UI helpers in their App submodules, and move any remaining non-UI startup/content glue behind Runtime or Content seams.
-3. Normalize compatibility namespaces and remove transitional `InternalsVisibleTo` bridges where modules now have correct source ownership.
-4. Normalize diff priority semantics with explicit documentation and regression tests.
-5. Continue UI/debug snapshot facades and bootstrap cleanup so remaining session/render-snapshot/bootstrap glue stops exposing live `World`/navigation internals to UI code. Runtime-owned jobs/workforce/orders/workshop/build/debug/tile-inspection/management-drawer/zone-overlay/detail/stockpile/navigation-overlay/navigation-path/placement-preview/debug-spawn/map-viewport/work-drawer/frame-render/overlay-frame/session-snapshot facades are in place, and their first large builders have been split by read-model family.
+1. Continue deterministic/diff hardening in Simulation-owned applicators and typed diff paths. `SimulationDiffApplicator` is now split by operation/entity family; the next work is broader typed diff/applicator coverage and conflict tests where authoritative subsystems still bypass the target model.
+2. Broaden Runtime presenter deltas beyond the current App-consumed map changed-cell/row/screen-region cache and App-consumed overlay-section cache into packed world-chunk/panel payloads and panel-specific redraw paths where UI redraw cost justifies it.
+3. Finish save/replay hardening: migration transforms, concrete missing-content placeholder/remap policy, and more replay scenarios over the existing Runtime save-slot vertical slice.
+4. Keep compatibility namespaces from returning and reduce transitional `InternalsVisibleTo` bridges where module ownership is now enforced by contracts and smoke tests.
+5. Improve diagnostics/debug UI and content diagnostics without giving App direct access to Content/Simulation/Jobs internals.
 6. Centralize path/movement ownership into runtime-wide navigation/movement services after Jobs/Runtime boundaries are stable.
-7. Split the monolithic test executable into focused project-level test assemblies when module boundaries are stable enough.
+7. Split the monolithic smoke executable into focused project-level test assemblies once the module dependency graph is stable enough for ordinary `dotnet test`.
 
 ## Current Critical Findings
 
@@ -366,7 +429,16 @@ FortressRuntime / SimulationHost
 
 ### P0: `FortressState` Is a God Screen
 
-`FortressState` is currently responsible for UI surfaces, camera, cursor, map generation, filling the simulation world, snapshot building, navigation rebuild, UI callbacks, auto-dig debug orders, input handling, order submission, direct world reads, and rendering.
+`FortressState` started as a God screen that owned UI surfaces, camera/cursor
+state, map/session startup, world fill, snapshot building, navigation rebuilds,
+UI callbacks, auto-dig debug orders, input handling, order submission, live
+world reads, and rendering. Current source has split much of that into
+App.GameStates, App.Input, App.Rendering, App.UI, App.Session, App.Runtime
+adapters, and Runtime-owned snapshot/session ports.
+
+The remaining risk is regression: `FortressState` and its game-state wrappers
+should stay lifecycle/presentation shells, not places where new gameplay,
+runtime composition, or live-world query logic accumulates.
 
 Target split:
 
@@ -435,22 +507,40 @@ Existing deterministic pieces are good but underused:
 
 Current blockers:
 
-- `DiffLog`, movement execution, stockpile item-index diffs, entity lookup indexes, item position-index stack merging, world/chunk/placeable/material owner snapshots, zone/stockpile owner snapshots, Contracts catalog stores, Content runtime zone definition snapshots, Runtime save/RNG payload rows, compatibility RNG/material snapshots, transport shard debug rows, and chunk lifecycle heat decay now use wider/stable ids or explicit stable ordering on migrated paths. Live chunk tile reads are synchronized to avoid `TileBase` tearing. Deterministic replay coverage is still thin, not every producer supplies meaningful local sequence values yet, some non-stockpile typed compatibility handles still use the legacy 32-bit projection, and the long-term frame-snapshot/SoA tile layout is not complete;
-- many authoritative IDs use `Guid.NewGuid()`;
-- command IDs are still random GUIDs, though `CommandQueue` now orders by target tick plus enqueue sequence rather than `CommandId`; the long-term fix is an explicit replay/command sequence id assigned by the queue or replay loader;
+- `DiffLog`, Runtime command identities, movement execution, stockpile
+  item-index diffs, entity lookup indexes, item position-index stack merging,
+  world/chunk/placeable/material owner snapshots, zone/stockpile owner
+  snapshots, Contracts catalog stores, Content runtime zone definition
+  snapshots, Runtime save/RNG payload rows, compatibility RNG/material
+  snapshots, transport shard debug rows, and chunk lifecycle heat decay now use
+  wider/stable ids, deterministic command identity, or explicit stable ordering
+  on migrated paths. Live chunk tile reads are synchronized to avoid `TileBase`
+  tearing. Deterministic replay coverage is still thin, not every producer
+  supplies meaningful local sequence values yet, some non-stockpile typed
+  compatibility handles still use the legacy 32-bit projection, and the
+  long-term frame-snapshot/SoA tile layout is not complete;
+- remaining random GUID generation, if any, should be treated as compatibility
+  or non-authoritative setup only and must not enter replay-facing command or
+  simulation-visible identity paths;
+- Runtime command IDs on current replay-facing paths are deterministic from
+  tick/type/payload plus Runtime enqueue sequence disambiguation. Remaining
+  command work is broader replay coverage and complete payload identity for
+  every simulation-affecting command family;
 - App world-generation UI randomization no longer uses `Environment.TickCount` or direct `new Random()` calls. Explicit user-randomized seeds now come from `WorldGenerationSettingsDefaults`, while Core defaults use a fixed seed and world generation remains deterministic after the seed is chosen;
 - `RngStreamManager` is constructed but not used by most systems;
 - `SimulationRuntimeContext.CurrentTick` is now set by the runtime command stage, but command timestamp propagation still needs broader replay coverage;
 - diff applicators cover only part of the authoritative state;
-- `EventBus` infrastructure exists but is effectively unused.
+- `EventBus` infrastructure is still lightly used, but its handler lists are
+  now lock-owned and registration-ordered so future post-commit subscribers do
+  not inherit concurrent collection ordering.
 
 Fix:
 
-1. Lock deterministic diff ordering behind tests, and eventually replace hash-derived system ordering with explicit numeric system order.
-2. Replace authoritative GUIDs with deterministic `EntityId`, `ItemId`, `PlaceableId`, `CommandSeq`.
-3. Use named RNG streams for all sim branches.
-4. Move commands into the tick pipeline.
-5. Add a headless deterministic replay test.
+1. Keep deterministic diff ordering locked behind tests, and extend explicit local-sequence/system-order coverage to any remaining typed diff producers.
+2. Continue moving replay-facing identity away from legacy 32-bit compatibility projections where wider entity keys or module-owned deterministic ids exist.
+3. Use named RNG streams for all sim branches, not just the Runtime checkpoint slice.
+4. Keep commands in the tick pipeline and add strict replay decode/hash coverage for every simulation-affecting command payload.
+5. Broaden the existing full Runtime simulation-loop determinism smoke into more scenarios and eventually CI-style cross-thread/cross-platform gates.
 
 ### P0: Job System Composition Still Leaks Through App
 
@@ -470,22 +560,38 @@ HumanFortress.App
 
 The move requires first fixing Navigation dependencies so Jobs can depend on pathfinding without pulling SadConsole/MonoGame.
 
-### P0: Navigation Depends on Simulation World Directly
+### P0: Navigation Boundary Is Mostly Inverted
 
-`NavigationManager` directly references `HumanFortress.Simulation.World.World` even though `IWorldNavigationView` already exists.
+The original issue was that `NavigationManager` directly referenced
+`HumanFortress.Simulation.World.World` even though navigation contracts already
+existed. Current source has removed the production Navigation -> Simulation
+project/reference edge. `NavigationManager` consumes `INavigationWorldSource`,
+public navigation contracts live in `HumanFortress.Contracts.Navigation`, and
+Runtime owns the Simulation-backed source adapter plus explicit rebuild points.
 
 Target:
 
 ```text
 Navigation
   depends on Foundation/Contracts only
-  consumes IWorldNavigationView
+  consumes INavigationWorldSource / IWorldNavigationView
 
 World or Runtime
-  implements IWorldNavigationView adapter
+  implements the Simulation-backed adapter
 ```
 
-Also remove on-demand rebuild from query paths. Rebuild must be scheduled in `RebuildDerived`, not triggered by path queries.
+On-demand rebuild has also been removed from query paths:
+`NavigationManager.GetNavDataAt(...)` is read-only, while Runtime/session
+composition and dirty-commit post-tick logic call explicit rebuild APIs. Path
+service, world-view, per-job movement executor, and debug path-query creation
+now enters through `RuntimeNavigationServices`. Runtime session hosts retain
+the session-owned path-service registry, and debug path-overlay snapshot
+queries use that registry-backed seam rather than a standalone pathfinder, so
+dirty-chunk cache invalidation covers those Runtime-created path services as
+well. The remaining work is not inversion; it is the future runtime-wide
+movement intent/reservation system, broader cache-invalidation coverage as new
+path services appear, and the future chunk-partitioned scheduler/data-layout
+target.
 
 ### P1: Content Registry Unification Is Mostly Done
 
@@ -506,7 +612,7 @@ Remaining fix:
 
 ### P1: Rendering Snapshot / Presenter Boundary Still Needs Hardening
 
-Active fortress rendering now consumes Runtime-built snapshot DTO contracts for the main map, overlays, drawers, debug pages, workshop UI, and placement previews instead of live `World` reads or the legacy App `RenderSnapshotBuilder` bridge. The older `HumanFortress.Simulation.Rendering.RenderSnapshot` implementation has been removed; PhaseTests now smoke the Runtime frame snapshot port instead. App UI state keeps its own construction shape and stockpile menu options, diagnostics are passed through an App diagnostics provider instead of the runtime facade, and App maps UI construction shape to Simulation only at the command/preview boundary. The remaining work is turning the Runtime/Contracts snapshot DTO family into a clearer versioned presenter/diff boundary.
+Active fortress rendering now consumes Runtime-built snapshot DTO contracts for the main map, overlays, drawers, debug pages, workshop UI, and placement previews instead of live `World` reads or the legacy App `RenderSnapshotBuilder` bridge. Frame/overlay aggregate DTOs now pass through a Runtime-owned request-keyed publisher/cache before reaching App, so `FortressRuntimeSessionCore` no longer authors aggregate frame metadata or directly calls aggregate snapshot facade builders. Published frame DTOs carry Runtime-authored schema/tick metadata, publication surface/request-hash metadata, and presenter-frame metadata with full-snapshot transfer mode, publication sequence, payload hash, and optional same-request delta-base hash. Frame render DTOs also carry map-viewport changed-cell, changed-row, and changed screen-region deltas over final screen-cell values, with canonical payload/base hashes, per-row/region hashes, and same-request applicability authored in Runtime. App.Rendering now has a `FortressMapViewportPresenterCache` that consumes those Runtime-authored map deltas and composes the full visible cell list for SadConsole without comparing live world state. UI overlay DTOs carry section-level deltas over build catalog, jobs, workshop, stockpile, zone, drawer, and debug sections, with per-section hashes and changed section ids authored in Runtime; App.Rendering consumes those section deltas through `FortressUiOverlayPresenterCache`, preserving unchanged sections from the previous presented overlay frame. The older `HumanFortress.Simulation.Rendering.RenderSnapshot` implementation has been removed; PhaseTests now smoke the Runtime frame snapshot port instead. App UI state keeps its own construction shape and stockpile menu options, diagnostics are passed through an App diagnostics provider instead of the runtime facade, and App maps UI construction shape to Simulation only at the command/preview boundary. The remaining work is broadening the presenter-delta model into packed world-chunk/panel payloads and panel-specific redraw paths without moving frame authority into App.
 
 Target:
 
@@ -523,7 +629,7 @@ UI
 
 ### P1: Tests Are Not Structured
 
-There is now an initial formal regression-test project, `tests/HumanFortress.App.Tests`. The former App `TestRunner` and `PhaseTests` coverage has moved into it, including transport/construction/craft, mining/items/diff, core runtime smoke checks, and Phase A-D validation. App `--test` and `--validate` are compatibility pointers to `./RunTests.sh`.
+There is now an initial formal regression-test project, `tests/HumanFortress.App.Tests`. The former App `TestRunner` and `PhaseTests` coverage has moved into it, including transport/construction/craft, mining/items/diff, core runtime smoke checks, and Phase A-D validation. App `--test` and `--validate` are compatibility pointers to `./RunTests.sh`. The repository now has a first GitHub Actions workflow that restores/builds the solution, builds the smoke runner, and executes the custom smoke runner on Linux and Windows; architecture smoke coverage asserts that this CI gate remains wired.
 
 Fix:
 
@@ -545,18 +651,27 @@ Minimum required tests:
 - fixed seed simulation hash;
 - save/load round trip hash.
 
-### P1: Save/Load Is Designed but Not Implemented
+### P1: Save/Load Has a Runtime Vertical Slice, Not the Full Format
 
-`SAVE_FORMAT.md` is strong and should remain the target. Implementation should start with a minimal vertical slice:
+`SAVE_FORMAT.md` is still the long-term slot/chunk-sharded target. The current
+implementation now has a Runtime-owned save directory slice:
+`slot_manifest.json` plus `runtime_snapshot.json`, manifest validation,
+compatibility classification, inspection/restore-plan DTOs, command replay
+rows, primitive RNG rows, and a Simulation-owned world payload for supported
+terrain/entity/reservation/stockpile/placeable/order slices. Runtime can
+validate/read a compatible directory and restore the supported world payload,
+RNG streams, and pending commands into a freshly composed session.
 
-1. manifest with engine/content hash;
-2. world/chunk terrain snapshot;
-3. items, placeables, creatures;
-4. job queues and reservations;
-5. RNG stream states;
-6. reload and hash equality at the same tick.
+Remaining persistence work:
 
-Do not persist caches: navigation cache, path cache, spatial indexes, render snapshots, stockpile cached lists.
+1. full `SAVE_FORMAT.md` slot catalog/chunk-shard alignment;
+2. migration transforms/table for older slot and document versions;
+3. autosave ring and durable directory fsync policy;
+4. complete long-horizon job-state restore and broader gameplay-system hashes;
+5. save/load migration and placeholder policy for missing content.
+
+Do not persist caches: navigation cache, path cache, spatial indexes, render
+snapshots, stockpile cached lists, or presenter deltas.
 
 ### P2: Build Hygiene and Project Hygiene
 
@@ -567,8 +682,10 @@ Issues:
 - global warning suppressions hide determinism risks;
 - App is always `win-x64` self-contained;
 - package version split for `TheSadRogue.Primitives`;
-- obsolete item fields are still used;
-- direct `Console.WriteLine` logging still exists in command-line compatibility messages, tests, startup summaries, and no-logger fallback helpers.
+- obsolete item carry/reservation compatibility fields have been removed from
+  `ItemInstance`; future compatibility paths should use save/content migration
+  transforms rather than reintroducing runtime flags;
+- direct `Console.WriteLine` logging still exists in App command-line compatibility messages, tests, and startup/crash-test summaries.
 
 Fix:
 
@@ -576,7 +693,8 @@ Fix:
 2. Move publish settings into a publish profile.
 3. Turn determinism-related warnings into errors.
 4. Align package versions.
-5. Replace obsolete item reservation/carry fields.
+5. Keep removed item reservation/carry compatibility flags from returning; use
+   explicit save/content migration transforms for any legacy payloads.
 6. Continue structured logging migration with categories, levels, and UI-facing debug surfaces.
 
 ## Recommended Target Architecture
@@ -868,7 +986,7 @@ Still pending:
 
 ### Phase 1: Extract Runtime Inside Existing Projects
 
-Status: in progress.
+Status: mostly complete; remaining work is cleanup and hardening.
 
 Before creating many new assemblies, create a runtime folder/class in the current structure:
 
@@ -887,8 +1005,8 @@ Move world creation, system composition, tick start/stop, post-tick diff applica
 Progress:
 
 - `FortressState` has been split into focused helpers for session loading, view state, interaction routing, placement, rendering, and viewport math.
-- More runtime/session responsibilities now live outside the screen class.
-- A true independent runtime composition root is still pending.
+- Runtime/session responsibilities now live behind Runtime session factories, ports, host/session modules, and App-owned role adapters.
+- A Runtime-owned composition root exists for the current fortress simulation slice; remaining work is to keep App callbacks narrow and prevent new startup/content/debug glue from regrowing in `GameStateManager`.
 
 ### Phase 2: Move Commands Into Tick Pipeline
 
@@ -903,7 +1021,7 @@ Status: first pass complete.
 
 ### Phase 3: Make Diff Commit Real
 
-Status: in progress.
+Status: mostly complete for current Navigation ownership.
 
 Choose and enforce:
 
@@ -980,13 +1098,13 @@ Progress:
 - `NavigationManager` now consumes `INavigationWorldSource` instead of `Simulation.World.World`.
 - `ChunkNavData` rebuilds from `NavigationTile[]` snapshots instead of `TileBase[]`.
 - `WorldNavigationView` is source-backed and stays inside Navigation without knowing Simulation terrain types.
-- Runtime provides `SimulationNavigationSource` as the current adapter over authoritative `World`; App still owns session-level timing for when the shared navigation manager is created and rebuilt.
+- Runtime provides `SimulationNavigationSource` as the current adapter over authoritative `World`; Runtime/session composition owns shared navigation creation, initial rebuild, dirty post-tick rebuilds, and active path-service cache invalidation.
 - `NavigationManager.GetNavDataAt` is now read-only; explicit `RebuildAll`/`RebuildChunkNavData` calls own cache mutation.
 - Private job-system navigation managers explicitly rebuild once at composition time; shared runtime navigation is rebuilt after fortress map generation and after dirty world commits.
 
 ### Phase 5: Move Jobs Out of App
 
-Status: executor-core move is complete for the current transport/mining/construction/craft slice. Runtime owns the tick-facing job wrappers, Jobs owns executor cores and adapters, Content owns profession registry loading, and App retains concrete session/system composition plus UI/debug surfaces.
+Status: executor-core move is complete for the current transport/mining/construction/craft slice. Runtime owns the concrete fortress system composition and tick-facing job wrappers, Jobs owns executor cores/adapters/state, Content owns profession registry loading, and App retains UI/debug surfaces plus callback binding only.
 
 After Navigation is inverted:
 
@@ -1009,7 +1127,7 @@ Preparation progress:
 - Mining intake coordination, per-dig read processing, backlog, deferred stairwell retry, deterministic dig ordering, stat snapshots, debug snapshot building, diff emission, drop resolution, tile reservation tracking, adjacency lookup, stairwell gating, assignment, active execution, result application, path seeding, and finalization have been isolated from the main executor.
 - Construction material tracking, site safety/clearance, progress/diagnostics, diff emission, target mapping, completion sequencing, and completion application have been isolated from the main executor.
 - Craft diff emission, workshop lookup, input counting/readiness, material transport requests, material consumption, output emission, worker assignment, active execution, stat snapshots, and finalization have been isolated from the main executor/planner.
-- Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`; craft planning, diff emitters, callback loggers, profession/craft adapters, scheduler/workshop tuning types, and profession assignment state also live outside App. Runtime owns the tick-facing job wrappers. App still owns concrete session/runtime composition and UI/debug surfaces.
+- Transport, mining, construction, and craft executor cores now live in `HumanFortress.Jobs`; craft planning, diff emitters, callback loggers, profession/craft adapters, scheduler/workshop tuning types, and profession assignment state also live outside App. Runtime owns concrete session/runtime composition and tick-facing job wrappers. App owns UI/debug surfaces and callback binding.
 
 ### Phase 6: Split Content
 
@@ -1022,26 +1140,29 @@ Preparation progress:
 ### Phase 7: Snapshot-Driven UI and Rendering
 
 1. Runtime publishes render/presentation snapshots after commit.
-2. [First pass] UI panels read Runtime-owned snapshots, not `World`, for Work drawer jobs/workforce/orders/workshops, F1/F2/F4 management drawer lists, zone/stockpile overlay/detail popups, stockpile/zone hit-testing, workshop panel/overlay/click paths, build workshop browsing/preview, Debug menu status/items, and tile inspection popups. The larger snapshot builders and App presentation/input routers are being split by read-model family, event channel, and UI surface so the facade layer does not become a new god object.
+2. [Mostly done] UI panels and main map rendering read Runtime/Contracts snapshots, not live `World`, for Work drawer jobs/workforce/orders/workshops, F1/F2/F4 management drawer lists, zone/stockpile overlay/detail popups, stockpile/zone hit-testing, workshop panel/overlay/click paths, build workshop browsing/preview, Debug menu status/items, tile inspection popups, placement previews, navigation/path debug views, map terrain/entity glyphs, frame render data, and overlay-frame data. The larger snapshot builders and App presentation/input routers are split by read-model family, event channel, and UI surface so the facade layer does not become a new god object.
 3. Rendering owns palette/glyph visual mapping.
 4. Debug tools consume explicit debug snapshots.
 
 ### Phase 8: Save/Load and Determinism CI
 
-1. Add headless runner.
-2. Add canonical snapshot hash.
-3. Add fixed seed scenario.
+1. [First pass] Add headless/manual Runtime runner seams for deterministic tests.
+2. [First pass] Add canonical Runtime/world/job/RNG replay hashes.
+3. [First pass] Add fixed seed Runtime simulation-loop scenario.
 4. [First pass] Add save/load round-trip: Runtime save documents now carry a
-   Simulation-owned world payload for terrain, ground items, creatures, global
-   reservations, stockpile zones, owned placeables/workshop state, and active
-   order designations, plus primitive RNG stream rows and pending/executed
-   command replay document rows. Runtime can restore the supported world
-   sections into a freshly composed session, then restore RNG streams and
-   pending commands through a Runtime-owned full restore entrypoint. Full load
-   still needs carried/contained/equipped/installed item state, item-local
-   reservation tokens, and long-horizon job-state payload restore before this
-   milestone is complete.
-5. Add command replay.
+   Simulation-owned world payload for terrain, ground/contained/carried/equipped/
+   installed items with payload-local item/creature/placement owners, creatures,
+   global reservations, stockpile zones, owned placeables/workshop state, and
+   active order designations, plus
+   primitive RNG stream rows and pending/executed command replay document rows.
+   Runtime can restore the supported world sections into a freshly composed
+   session, restore supported transport, mining, and craft job-state payload
+   rows through Jobs-owned executor restore seams, then restore RNG streams and
+   pending commands through a staged Runtime restore entrypoint. Empty counted
+   Jobs sections can full-restore as empty state, and malformed/non-matching job
+   payloads still fail closed through Runtime document validation.
+5. [First pass] Add command replay; remaining work is broader command-family
+   coverage and richer scenario replay gates.
 
 ## Definition of Done for the Refactor Foundation
 
@@ -1060,15 +1181,22 @@ The foundation refactor is not done until all of these are true:
   chunks, ground items, creatures, global reservations, stockpile zones, and
   active order plus owned placeable/workshop payloads round-trip by hash, and
   Runtime full restore now also restores RNG streams plus pending command replay
-  rows. Unsupported item location modes and job-state payloads still fail
-  closed until their restore slices exist.
+  rows. Job-state payloads restore through Jobs-owned transport/mining/craft
+  restore seams when verified Runtime document rows are present.
+  Contained item state is supported when the
+  containing item is present in the same acyclic world payload graph; carried
+  and equipped item state is supported when the owning creature is present in
+  the same world payload; installed item state is supported when the placement
+  anchor/z/rotation validates against the saved world; item-local reservation
+  tokens are supported when token claimants and reserved counts validate against
+  the item payload.
 
 ## Practical First Pull Requests
 
 Recommended PR order:
 
 1. [Done] Clean solution and obsolete play-state code.
-2. [In progress] Add `FortressRuntime` shell and move world/tick ownership.
+2. [Mostly done] Add `FortressRuntime` shell and move world/tick ownership.
 3. [Done first pass] Move command execution into tick.
 4. [Done first pass] Replace direct mining order enqueue with command.
 5. [Done first pass] Fix command execution `CurrentTick`.
@@ -1080,6 +1208,8 @@ Recommended PR order:
 
 Immediate next PR-sized work:
 
-1. Continue structured logging/debug diagnostics cleanup and expose content diagnostics in a UI/debug surface.
-2. Carve a real Runtime composition boundary out of `GameStateManager` and App runtime helpers.
-3. Split the current monolithic App test project into focused module-level test projects when dependencies make that practical.
+1. Broaden Runtime-authored presenter deltas into packed world-chunk/panel payloads and extend redraw specialization beyond the current App map-viewport and UI-overlay section caches where it reduces high-frequency UI redraw work without App computing live-world diffs.
+2. Add save/replay hardening slices for migrations, concrete missing-content placeholder/remap policy, and broader deterministic replay scenarios.
+3. Continue typed diff/applicator hardening for authoritative subsystems that still bypass the full target model.
+4. Continue structured diagnostics/content-debug cleanup and expose it through DTOs/debug surfaces.
+5. Split the current monolithic App test executable into focused module-level test projects when dependencies make that practical.

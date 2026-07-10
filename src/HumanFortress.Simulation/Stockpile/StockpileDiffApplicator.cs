@@ -157,24 +157,17 @@ internal sealed class StockpileDiffApplicator
             }
         }
 
-        int acceptedCount = acceptedCells.Values.Sum(static cells => cells.Count);
+        var acceptedRows = OrderCellsByChunk(acceptedCells).ToArray();
+        int acceptedCount = acceptedRows.Sum(static entry => entry.Value.Count);
         if (acceptedCount == 0)
             return;
 
         var homeChunk = acceptedCells.ContainsKey(request.HomeChunk)
             ? request.HomeChunk
-            : acceptedCells.Keys
-                .OrderBy(static key => key.Z)
-                .ThenBy(static key => key.ChunkY)
-                .ThenBy(static key => key.ChunkX)
-                .First();
+            : acceptedRows[0].Key;
         int zoneId = _zoneManager.CreateZone(request.Name, homeChunk, request.CreatedTick);
 
-        foreach (var (chunkKey, cells) in acceptedCells
-            .OrderBy(static entry => entry.Key.Z)
-            .ThenBy(static entry => entry.Key.ChunkY)
-            .ThenBy(static entry => entry.Key.ChunkX)
-            .Select(static entry => (entry.Key, entry.Value)))
+        foreach (var (chunkKey, cells) in acceptedRows.Select(static entry => (entry.Key, entry.Value)))
         {
             var chunk = world.GetChunk(chunkKey);
             if (chunk == null)
@@ -191,7 +184,7 @@ internal sealed class StockpileDiffApplicator
         {
             zone.Filter = request.Filter;
             zone.Priority = request.ZonePriority;
-            zone.UpdateMemberChunks(acceptedCells.Keys);
+            zone.UpdateMemberChunks(acceptedRows.Select(static entry => entry.Key));
         }
 
         SimulationDiagnostics.Information(
@@ -207,6 +200,15 @@ internal sealed class StockpileDiffApplicator
 
         var (localX, localY) = Chunk.IndexToLocal(cellIndex);
         return chunk.GetTile(localX, localY).Kind == TerrainKind.OpenWithFloor;
+    }
+
+    private static IOrderedEnumerable<KeyValuePair<ChunkKey, List<int>>> OrderCellsByChunk(
+        IEnumerable<KeyValuePair<ChunkKey, List<int>>> cellsByChunk)
+    {
+        return cellsByChunk
+            .OrderBy(static entry => entry.Key.Z)
+            .ThenBy(static entry => entry.Key.ChunkY)
+            .ThenBy(static entry => entry.Key.ChunkX);
     }
 
     private void HandleDeleteZone(SimulationWorld world, StockpileDiff diff)

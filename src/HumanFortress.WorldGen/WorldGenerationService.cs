@@ -1,4 +1,5 @@
 using System;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Contracts.WorldGen;
 using HumanFortress.Core.World;
 
@@ -8,17 +9,28 @@ internal sealed class WorldGenerationService : IWorldGenerationService
 {
     private readonly WorldGenerator _generator;
 
-    internal WorldGenerationService()
+    internal WorldGenerationService(IDiagnosticSink? diagnostics = null)
     {
-        _generator = new WorldGenerator();
+        _generator = new WorldGenerator(diagnostics);
         _generator.ProgressChanged += (stage, progress) => ProgressChanged?.Invoke(stage, progress);
     }
 
-    public event Action<string, float>? ProgressChanged;
+    internal event Action<string, float>? ProgressChanged;
 
-    public IGeneratedWorldData Generate(WorldGenerationSettings settings)
+    event Action<string, float>? IWorldGenerationService.ProgressChanged
+    {
+        add => ProgressChanged += value;
+        remove => ProgressChanged -= value;
+    }
+
+    internal IGeneratedWorldData Generate(WorldGenerationSettings settings)
     {
         return GeneratedWorldData.FromWorldGenResult(_generator.Generate(ToWorldParams(settings)));
+    }
+
+    IGeneratedWorldData IWorldGenerationService.Generate(WorldGenerationSettings settings)
+    {
+        return Generate(settings);
     }
 
     private static WorldParams ToWorldParams(WorldGenerationSettings settings)
