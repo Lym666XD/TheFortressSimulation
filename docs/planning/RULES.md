@@ -1,517 +1,442 @@
-HumanFortress — Unified Rules
-
-(Determinism · Concurrency · Update Order · Data · Rendering · Stability)
-
-0) Scope
-
-This file is the single source of truth for rules that govern: design, coding, data layout, update order, rendering, testing, CI, stability, and modding.
-
-Everything marked (Normative) is a hard requirement. Items marked (Informative) are recommended practices.
-
-1) North Star (Normative)
-
-Simulation first — CPU budget prioritizes simulation over rendering.
-
-Deterministic & replayable — same seed + same inputs ⇒ same outputs (bitwise where feasible).
-
-Low coupling, high cohesion — clear module boundaries and contracts.
-
-Safe concurrency — parallelize reads and isolated work; enforce a single, deterministic write point.
-
-1.1) Active Development Constraints - 2026-06-18 (Normative)
-
-These constraints reflect the current refactor state and override older target-only wording when there is a conflict.
-
-Current source ownership
-
-- `HumanFortress.Contracts` owns cross-module DTOs/interfaces, including profession contracts and content contract types.
-- Contracts should remain passive DTO/port definitions. Do not add runtime-authority helpers there: no RNG selectors (`System.Random`, `Random.Shared`, `new Random()`), wall-clock/time probes, `Stopwatch`, or `Guid.NewGuid()` identity generation.
-- `HumanFortress.Content` owns public content path/loading diagnostics through `FortressContentLoader`, internal/friend item/creature/core-data loader implementations, the structured runtime registry implementation, internal/friend runtime content snapshot capture, strict content loading, and internal/friend profession registry JSON loading through a contract-returning facade.
-- Structured `ContentRegistry` behavior should stay split by Content responsibility: load orchestration/state/query/snapshot compatibility in the main partial, material/terrain parsing in a material/terrain partial, biome/geology parsing and deterministic geology indexing in a biome/geology partial, and tuning/zones/aliases/validation/hash behavior in a tuning/zones/validation partial. Do not collapse the registry back into one God Object file for convenience.
-- Core data registry loading should also stay split by catalog family. `CoreDataRegistryLoader` should keep only core-data directory orchestration in the main partial, with construction/workshop parsing, recipe parsing, and shared JSON helpers in focused `HumanFortress.Content.Definitions` partials. Do not add App-local data/core traversal or collapse construction and recipe compatibility parsing into one mixed loader file.
-- Static definition loaders should keep file traversal separate from compatibility parsing and validation. `ItemDefinitionCatalogLoader` should keep item file enumeration/options in the main partial, legacy furniture/items parsing in a parsing partial, and normalization/name enrichment/validation in a validation partial. `CreatureDefinitionCatalogLoader` should keep creature file enumeration/options in the main partial and creature definition validation in a validation partial. Do not move static item/creature parsing into Simulation managers or Runtime startup code.
-- `HumanFortress.Core` owns foundation primitives only; do not add content registry implementation, JSON content loaders, or App/runtime composition back into Core.
-- Core infrastructure that can be constructed by Runtime should accept an injected `IDiagnosticSink` for failure reporting. `DiagnosticHub` remains a compatibility fallback for ad hoc/manual construction, not the preferred Runtime-composed diagnostics path.
-- Lower implementation modules should not emit directly through `DiagnosticHub.Sink.*` or `DiagnosticHub.Error(...)`. Use injected sinks, Runtime-owned static callback binding, or a module-local diagnostics helper with an injectable sink and hub fallback.
-- `HumanFortress.Simulation` owns authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
-- `HumanFortress.Navigation` owns internal concrete navigation algorithms and cache structures; its cross-module surface is `HumanFortress.Contracts.Navigation`, and Navigation must remain decoupled from Simulation through adapter interfaces.
-- `HumanFortress.Jobs` owns internal job executor cores, job helpers, job diff emitters, callback loggers, scheduler/workshop tuning types, worker selection, profession assignment state, and unified job orchestration. Runtime may consume these through the transitional friend bridge; App must not.
-- Jobs implementation helpers should use the namespace of their module directory, such as `HumanFortress.Jobs.Configuration`, `.Diff`, `.Logging`, `.Orchestration`, `.Profession`, `.Safety`, `.Mining`, `.Construction`, `.Craft`, `.Transport`, and `.Replay`; do not put newly split helper classes in the root Jobs namespace.
-- `HumanFortress.Runtime` owns the generic runtime host, tick pipeline, command stage, internal command implementations/target graph, Simulation-backed navigation adapter/factory, startup helpers, tick-facing job wrappers, concrete runtime system collection/factories/groups, runtime dependency groups, runtime host/startup factories, and the public world-generation factory facade.
-- Runtime root namespace/files should stay focused on public factories/ports, logging/content/world-generation facades, and `FortressRuntimeSessionCore` facade partials. Internal Runtime helpers should use focused namespaces and physical directories such as `HumanFortress.Runtime.Composition`, `.Host`, `.Session`, `.Diff`, `.Content`, `.Geometry`, `.WorldGeneration`, `.Navigation`, `.Startup`, `.Commands`, `.Jobs`, `.Snapshots`, `.Save`, and `.Replay`; do not add newly split host/tick/session services, command targets, content bootstrap adapters, navigation adapters, startup helpers, or composition helpers back into the root Runtime namespace.
-- `HumanFortress.WorldGen` consumes explicit generation content; it must not read global content registries directly. Stable generated-world DTO/settings/service contracts live in `HumanFortress.Contracts.WorldGen`; concrete WorldGen service/data/factory implementations should stay internal/friend-only, and App screens should receive contract services from Runtime rather than referencing concrete WorldGen service/data/factory types. Concrete fortress generation should stay split by phase inside `HumanFortress.WorldGen.Implementation`; keep `FortressGenerator` orchestration separate from cavern, strata/surface, ore, and tuning JSON helper partials instead of moving generation policy into Runtime/App or collapsing it back into one large generator file.
-- Runtime-created WorldGen services and fortress generators should receive `IDiagnosticSink` from Runtime composition. `DiagnosticHub` may remain a compatibility fallback inside WorldGen implementation constructors, but WorldGen generation/fill code should not directly emit through `DiagnosticHub.Sink`.
-- `HumanFortress.App` owns SadConsole/MonoGame UI, UI bootstrap, logger callback binding, App-specific optional command delegates, construction UI completion binding, and UI/debug surfaces. Do not add new gameplay rules, content loaders, job logic, or authoritative world mutations to App.
-
-Current compatibility debt
-
-- Navigation contracts now use `HumanFortress.Contracts.Navigation`; do not add new `HumanFortress.Navigation` contract-shaped DTOs or interfaces.
-- World-generation contracts now use `HumanFortress.Contracts.WorldGen`; do not add new contract-shaped DTOs or interfaces under the concrete `HumanFortress.WorldGen.Implementation` namespace, and keep Runtime's direct implementation imports at world-generation composition boundaries.
-- Transitional `InternalsVisibleTo` bridges are allowed only as migration scaffolding. Do not use them as justification for new cross-module ownership leaks.
-- Do not add `InternalsVisibleTo("HumanFortress.App")` back to Jobs, Navigation, or Runtime implementation assemblies. App should cross those boundaries through Runtime/Content/WorldGen/contracts and App-owned facades.
-- `HumanFortress.App/Jobs` should remain empty of active source files.
-- `HumanFortress.App/Commands` should remain empty of active source files.
-
-Mutation and command rules
-
-- UI/debug actions that affect simulation state should enter through semantic Runtime facade methods, the Runtime command stage, or typed diff logs.
-- Runtime command targets and post-tick applicators should share typed command mutation logs through the `RuntimeSessionServices` owned `RuntimeMutationDiffLogs`; do not add new long constructor chains of individual mutation logs, and do not create a second bundle inside host/pipeline composition.
-- Starting a new Runtime session must reset the scheduler, command queue, main diff log, item diff log, and all typed command mutation logs together through the session services boundary.
-- Runtime command ids on replay-facing paths must be deterministic. Do not use `Guid.NewGuid()` in Runtime command implementations or App/Simulation/Jobs command pipelines; use stable command payload identity and Runtime session enqueue sequence where duplicate payloads need disambiguation.
-- Runtime session command identity sequence is session-owned replay-adjacent state. Keep sequence advance/restore behind the session owner guard; do not use atomic primitives as a substitute for declaring ownership and reset/restore behavior.
-- Runtime command serialization must include every execution-affecting input that participates in deterministic command identity. Do not omit optional filters, tags, tuning-like flags, or command-specific payload fields from `Serialize()`; the Runtime session sequence wrapper disambiguates duplicate commands but must not compensate for incomplete payload identity.
-- Runtime command payloads must include the Runtime-owned replay payload version header and decode through Runtime-owned replay factories. Do not add new Runtime commands without adding strict replay decode coverage for their payload format.
-- Runtime command replay decode implementation should stay split by command domain under `HumanFortress.Runtime.Commands`. Keep the main replay factory focused on dispatch/version/common binary readers; put order, zone/stockpile, profession/workshop, debug, and future command families in focused replay factory partials.
-- Restored replay commands should re-enter the command queue as pending work, not as already-executed history. Executed command history should reflect commands that actually ran in the current replay/session execution.
-- Runtime replay restore must decode/validate a full command-record batch before mutating the active command queue, and successful restore must advance the Runtime command identity sequence cursor to at least the restored max sequence.
-- Save/replay persistence should consume immutable `CommandReplayRecord` data (`Tick`, `CommandId`, `CommandType`, optional Runtime command identity sequence, payload bytes), not live `ICommand` objects. `CommandQueue.GetExecutedCommands()` is an in-memory compatibility/diagnostic view; `GetExecutedCommandRecords()` is the persistence boundary.
-- `CommandQueue` pending commands are authoritative replay order. Keep them as lock-owned FIFO state plus explicit sequence tie-breaks; do not use `ConcurrentQueue` enumeration as command/save/replay ordering authority.
-- Concrete command replay decoding belongs in Runtime through `ICommandReplayFactory` implementations. Core owns the replay record/factory contract only; Core must not reference Runtime command implementations or content-aware payload decoders.
-- Event handlers can become post-commit gameplay behavior. Keep `EventBus` handler lists lock-owned and registration-ordered; do not use concurrent dictionary mutation callbacks as handler order authority.
-- Deterministic replay checkpoint hashes should use explicit canonical primitive encoding through `ReplayHashBuilder` or a field-specific wrapper over it. Do not use object `GetHashCode()`, dictionary iteration order, or presentation/render snapshots as replay authority.
-- Field-specific replay hash builders belong with the module that owns the authoritative state being hashed. For example, order designation hash field selection belongs in Simulation, not App or tests.
-- Private counters/cursors that affect future deterministic ids or RNG output are authoritative replay state even when the visible collection can be rebuilt. Include them in save/hash snapshots through module-owned read APIs.
-- Low-frequency simulation schedules should be derived from the authoritative tick when possible. Do not add hidden per-system counters that change whether a write occurs unless that counter is explicitly part of module-owned save/hash state.
-- RNG checkpointing should use canonical stream snapshot rows (`RngStreamManager.GetStateSnapshot()` / `RngReplayHashBuilder`) rather than dictionary enumeration order.
-- Session RNG stream registries are replay-adjacent owner state. Keep `RngStreamManager` streams behind an owner lock and materialize sorted stream-name rows for save/hash boundaries; do not use concurrent dictionary enumeration or creation callbacks as stream ordering authority.
-- Runtime replay checkpoint hashing must include session-owned RNG streams and use the Runtime-owned aggregate checkpoint builder/`RuntimeReplayCheckpointData` instead of App/tests manually concatenating world/job/RNG hashes.
-- Save-slot compatibility and migration classification must be Runtime-owned. App may pass a slot directory and display Contracts DTO diagnostics, but it must not compare slot/document versions, decide whether old/future slots are loadable, or inspect Runtime save files directly.
-- Save-slot migration plans must also be Runtime-authored. UI/debug surfaces may display required transform ids and `slot.migration` issues from `RuntimeSaveSlotInspectionData`, but they must not infer migration paths from manifest versions or run partial load paths outside Runtime restore/migration ports.
-- Save-slot migration transform ids and coverage checks belong in the Runtime migration transform registry seam. `RuntimeSaveSlotMigrationPlanBuilder` should assemble the read model from that registry; App/UI must not synthesize transform ids or decide missing-transform policy.
-- Save-slot migration execution must enter through Runtime migration ports and `RuntimeSaveSlotMigrator`. App/save UI may pass source and target directories and display `RuntimeSaveSlotMigrationResultData`, but it must not decode, patch, copy, or partially load save files to migrate them.
-- Save-slot inspection read models are not load authority. UI/debug surfaces may display `RuntimeSaveSlotInspectionData`, but restore still has to enter through Runtime save/restore ports and their validation/preflight path.
-- Save-slot restore plans must be authored by Runtime and treated as UI/debug guidance. App must not recompute restore mode availability from manifest sections, and it must not execute partial load paths outside Runtime restore ports.
-- Save-slot content compatibility must be Runtime-owned. App/save UI may display `RuntimeSaveSlotContentCompatibilityData`, its structured Runtime-authored difference rows, and its Runtime-authored saved/current catalog summaries, but it must not compare content hashes, catalog counts, catalog key lists, material hashes, or content versions, and it must not decide missing-content placeholder/remap behavior. Until a real missing-content policy exists, Runtime restore plans and restore ports must fail closed with structured `slot.content` issues when saved/current content signatures do not bind.
-- Present Jobs checkpoint sections are not equivalent to restorable job-state payloads. Keep the Runtime-owned job-state restore policy shared by slot inspection and the actual full-restore port. `jobs.transport`, `jobs.mining`, and `jobs.craft` may full-restore only when the document contains Runtime-verified payload rows and Jobs-owned restore logic accepts them. Empty counted Jobs checkpoint sections should not block full world + RNG + pending-command restore.
-- Runtime determinism smoke tests should advance the scheduler through manual `ExecuteSingleTick()` on production-composed Runtime systems, not through the background tick thread. Keep the internal Runtime manual-tick host seam narrow and out of App/public API.
-- Until the scheduler has real chunk-partitioned read jobs with enforced non-overlap, simulation-visible read phases should run in deterministic system order. Do not reintroduce read-phase `Parallel.ForEach` for the current coarse system list.
-- Job scheduler tuning budgets should be deterministic work-count budgets, such as `plan_per_tick`. Do not add wall-clock millisecond budget fields to `tuning.scheduler.json` or `SchedulerTunings` for simulation-visible planning.
-- Navigation/pathfinding must never use wall-clock time, `Stopwatch`, elapsed milliseconds, frame timers, or machine-speed-dependent checks to decide simulation-visible path results. Use deterministic budgets such as max nodes per search and max path computations per tick, and queue excess work in deterministic request order.
-- Path request queues are simulation-visible scheduling state. Keep queued path requests in explicit deterministic FIFO order; do not use concurrent queues or budget-full drain loops that rotate the oldest request behind newer requests.
-- Runtime-owned path and per-job movement service creation should enter through `RuntimeNavigationServices`, not ad hoc `new PathService(...)` / `new MovementExecutor(...)` calls in job-system wrappers. This keeps path-cache registration and future movement-service consolidation in one Runtime.Navigation seam.
-- Path caches are behavior-affecting derived state. Whenever Runtime rebuilds dirty navigation chunks after simulation mutations, it must invalidate every active path service cache for those chunks. Do not treat path caches as harmless UI caches.
-- Navigation derived-data registries and path caches should be lock-owned dictionaries with explicit spatial/key ordering where eviction, invalidation, or snapshots touch behavior. Do not use `ConcurrentDictionary.AddOrUpdate` or mutable callback state for navigation cache indexes.
-- Movement execution pacing is simulation-visible. Keep it deterministic and content/config driven through navigation tuning or future actor movement profiles; do not hardcode visual-only delays inside navigation executors.
-- General `DiffLog` conflict order should use explicit numeric system order supplied by the producing module plus local sequence hooks for same-system operations. Core must not hardcode Jobs/App/Runtime system names or depend on tiny hash fragments to decide simulation-visible precedence.
-- Entity-scoped general `DiffLog` operations should carry a wider stable `EntityKey` when the producer has the source GUID/entity identity. Keep the legacy 32-bit `EntityId` only as a compatibility bridge; do not add new merge/apply paths that rely solely on truncated GUID ids.
-- Producers that have a GUID should use GUID-aware target encoding helpers such as `DiffTargetEncoding.ForWorldCell(..., Guid)` or `WorldCellTarget.ToDiffTarget(Guid)` instead of hand-writing both `SignedEntityId(...)` and `EntityKey(...)` at the call site.
-- Simulation diff applicators should resolve entity-key targets through manager-owned indexed query methods such as `GetInstanceByEntityKey(...)`, not by scanning live `GetAllInstances()` snapshots inside the applicator. Legacy 32-bit entity-id fallback lookup should also be manager-owned and deterministic under collisions; do not rely on dictionary value enumeration for compatibility identity resolution.
-- Keep `SimulationDiffApplicator` split by operation/lookup responsibility. The main file should own only `ApplyAll` dispatch and logging, while terrain mutation/ejection/dirty propagation, item move/carry/merge behavior, creature movement, and target/entity-key lookup helpers live in focused `SimulationDiffApplicator.*.cs` partials under `HumanFortress.Simulation.Diff`.
-- Manager-owned broad instance snapshots that may feed simulation, save/replay, jobs, or Runtime snapshots should use stable ordering at the source, normally by GUID. Do not expose raw dictionary value order as a general read API.
-- Manager-owned position indexes that can influence authoritative mutations should also maintain stable identity order. Item stack consolidation must choose merge targets by stable item GUID/entity identity, not by dictionary/list insertion order.
-- Zone/stockpile owner read snapshots should also sort at the source: zone definitions by content id, zone and stockpile instances by zone id, chunk shards by zone id, member chunks by Z/Y/X, and stockpile item-index handles by stable entity key. Do not make save/replay, Runtime snapshots, or UI callers compensate for raw dictionary/list/hash-set order from these managers.
-- World/chunk/placeable owner snapshots should sort at the source: chunks and affected chunk keys by Z/Y/X, dirty navigation chunk drains by Z/Y/X, and owned placeables by authoritative local cell. Do not return raw concurrent-dictionary or dictionary values from these owner APIs.
-- World chunk storage is authoritative owner state even when chunks are lazily created. Keep chunk materialization behind the world owner lock, and expose chunk snapshots through stable Z/Y/X ordering rather than concurrent dictionary value enumeration.
-- Chunk lifecycle/LOD owner loops that iterate chunk-key dictionaries should sort keys spatially before applying heat decay, unload, catch-up, or future behavior-affecting transitions. Do not let lifecycle behavior depend on dictionary key order.
-- Navigation movement execution state should be keyed by the same wider stable entity key. Do not add new movement executor APIs or job movement paths that identify active movement by truncated `uint` ids.
-- Job worker/profession selection should include stable worker GUID tie-breaks after domain priority, skill, idle status, and distance. Do not let equal candidates inherit unordered manager snapshot order.
-- Transport request queue shard snapshots should sort shard ids/counts by shard id before exposing scheduler/debug data. Public or cross-module debug/read DTOs that are displayed as ordered previews should use explicit row lists, not dictionaries whose enumeration order becomes an implicit UI contract.
-- Stockpile item-index diffs, messages, shard indexes, and projected `ItemStackRef` handles should use the wider stable item entity key. Keep any `int` stockpile handle overloads as legacy compatibility shims only; new Jobs/Simulation stockpile item-index paths must not emit `SignedEntityId(item...)` or look up stockpile items by truncated entity id.
-- Live `TileBase` reads must stay synchronized with write-phase replacement until the project has packed tile storage, chunk seqlocks, or immutable frame snapshots. Do not read/copy the `TileBase[]` backing store without the chunk synchronization guard.
-- Transport replay checkpointing requires both pending request queue state and executor active/backlog/scheduling state; hashing only the executor drops authoritative pending work.
-- Transport request queue diagnostics and pending-request counters live under the queue owner lock. Do not use atomic increments inside the simulation queue to hide an undeclared multi-writer authority path.
-- Long-horizon job checkpointing should use Jobs-owned replay snapshots for pending, active, backlog, and scheduling state. Do not use UI/debug DTOs as job save authority, and do not persist rebuildable shard indexes unless they become behavior-affecting state. Construction-site progress currently belongs to Simulation placeable state, not a separate construction executor checkpoint.
-- Runtime reservations are Simulation-owned write-phase state. Do not use `ConcurrentDictionary.AddOrUpdate` callbacks or read-path cleanup side effects for item/creature reservations; reserve/release paths should own mutation explicitly, and reservation snapshots should use stable identity ordering.
-- Active order designations are Simulation-owned authoritative state. `OrdersManager` should keep ingress queues, recent previews, and active designation lists as ordinary owner collections behind its guard and expose stable sorted active snapshots; do not use `ConcurrentBag`/`ConcurrentQueue` enumeration as save/replay/UI ordering authority.
-- Order planner outboxes that bridge deterministic read/write phases should be ordinary owner queues unless there is a real multi-producer thread boundary. Remove dead outboxes instead of preserving empty compatibility queues; do not use `ConcurrentQueue` as a substitute for a declared ordering contract.
-- Jobs-owned backlog/planner queues that participate in replay snapshots, restore, retry order, or worker assignment should also be ordinary owner queues with explicit FIFO snapshot/restore behavior. Do not use `ConcurrentQueue` for single-thread tick scheduler state.
-- Jobs debug/scheduler counters that describe active session state should be owned by the executor instance that produces them. Do not add static global Jobs counters for transport/mining/craft state; they leak across sessions and make replay/debug deltas ambiguous.
-- Construction material requirement/delivery dictionaries belong to Simulation placeable state. Jobs/Runtime/Save/Replay readers should use `ConstructionSiteState` snapshot helpers for sorted material ids/rows instead of enumerating `MaterialsRequired.Keys` or raw dictionaries directly.
-- Runtime save snapshots and restore paths must canonicalize non-semantic row order at their module boundary. RNG stream rows sort by stream name; world payload terrain chunks restore by Z/Y/X; material string-int rows and improvement rows restore by stable keys; world payload supported sections must reject duplicate item/creature ids, duplicate stockpile zone/member identities, duplicate mining order ids, and obvious out-of-bounds chunk/rectangle/Z payloads before restore mutation; terrain-dependent placeable validation may run after terrain reconstruction but must preflight before item/creature/reservation/stockpile manager restore mutation; manifest sections must be present, named, and duplicate-free before section lookup. Runtime save-slot directories must validate both the slot manifest and snapshot document inside Runtime; App must not decode or patch Runtime save files to decide restore authority.
-- Aggregate world replay hashes should include authoritative Simulation state only. Keep rebuildable indexes/caches such as navigation data and stockpile chunk item indexes out of `WorldReplayHashBuilder`; include their source authority instead. Keep `WorldReplayHashBuilder` split by authoritative section: the main file should orchestrate aggregate and section-hash entrypoints, while terrain, item/creature entity state, reservations, stockpile-zone configuration, and common primitive helpers live in focused partials under `HumanFortress.Simulation.Replay`.
-- Simulation world save payload build/restore authority belongs in `HumanFortress.Simulation.Save` and should stay split by authoritative section. Keep `WorldSavePayloadBuilder` focused on orchestration plus section-specific partials for metadata/terrain, entities, stockpiles, placeables, orders, and common conversions. Keep `WorldSavePayloadRestorer` focused on restore flow plus partials for section-focused payload validation, placeable validation/restore, and conversion/failure helpers; validation helpers should stay split by entity/reservation, stockpile, order, and shared geometry/string checks instead of growing one mixed validator. Do not move world payload section mapping into Runtime or App, and do not collapse it back into one save/load God Object.
-- Simulation authoritative managers should split by owned responsibility instead of accumulating every entrypoint in one file. `ItemManager` should keep catalog access, position indexing, queries, item mutations/stacks, spawn behavior, and save/restore mapping in focused partials under `HumanFortress.Simulation.Items`. `CreatureManager` should keep catalog access, runtime instance queries, spawn behavior, and save/restore mapping in focused partials under `HumanFortress.Simulation.Creatures`. `OrdersManager` should keep haul, mining, construction/buildable, and save/restore mapping in focused partials under `HumanFortress.Simulation.Orders`. The mining planner should keep tick/drain/outbox behavior, scanner/cursor advancement, cancellation queries, and planner helpers in focused `MiningSystem.*` partials with `ActiveDesignation` separated from the planner shell. Placeable state and world mutation should stay split under `HumanFortress.Simulation.Placeables`: `PlaceableInstance` owns runtime state plus item/construction factory partials, `PlaceableManager` owns collision, placement, removal, and affected-chunk partials, `ChunkPlaceableData` keeps authoritative storage separate from derived furniture sync, and small component types stay in their own files. Do not move these authoritative state paths into Runtime/App for convenience, and do not collapse them back into single-file manager/entity God Objects.
-- Stockpile command diffs should enter the simulation through world-level `StockpileDiffApplicator.ApplyAll(world, diffs)` only. Do not reintroduce chunk-local stockpile apply entrypoints for create/delete; authoritative membership and same-tick conflicts must be resolved against the current world state.
-- App input/UI code should call semantic Runtime facade methods for simulation-affecting actions; do not construct Runtime command objects, use `Runtime.Commands` factories, or pass `ICommand` factories from App.
-- App UI/presentation code should consume App-owned view snapshots or Runtime/Contracts read-model DTOs. `SimulationStatus` is a Contracts runtime snapshot and may be passed to UI chrome; do not introduce App-local duplicate wrappers for it.
-- App must not pass UI frame/tick counters as Runtime snapshot authority. Aggregate Runtime read-model DTO metadata should be authored inside Runtime from the session clock and schema version.
-- Runtime presenter-frame metadata should also be authored by Runtime. App may consume Contracts `PresenterFrame` fields for cache/presenter decisions, but it must not compute frame payload hashes from live world state or treat presenter payload hashes as replay/save authority.
-- Runtime presenter deltas should be authored at the Runtime snapshot publication boundary. App may consume Contracts delta DTOs, but it must not derive changed cells/sections by reading live world state or by comparing lower-layer implementation objects.
-- Runtime public session ports should expose Contracts DTOs/primitives, not SadConsole/SadRogue or other presentation-library geometry. App may use SadRogue inside App-owned UI/access interfaces, but the App.Runtime adapter must map those values to `HumanFortress.Contracts.Runtime` primitives before crossing into Runtime.
-- App game-state wrappers should depend on narrow collaborators such as screen presenters and fortress-play runtime hosts; do not pass the whole `GameStateManager` into a state just to reach runtime/session helpers.
-- Keep `Program` as a thin startup entrypoint. SadConsole lifetime, CLI parsing, native preload, strict-content gates, headless init, and diagnostic runners belong in App startup helpers rather than in the entrypoint.
-- Do not directly mutate item, creature, terrain, construction, stockpile, or profession state from App event handlers.
-- Construction/craft/transport/mining item changes must go through `ItemsDiffLog` or the relevant Jobs-owned diff emitter.
-- Any replacement of direct mutation with diffs needs focused regression coverage for duplicate application, rollback, and missing-resource behavior.
-
-Content and data rules
-
-- Runtime systems should consume explicit catalogs/tunings/snapshots, not `ContentRegistry.Instance` convenience reads.
-- App may resolve active-session content only through Runtime/Content-owned facades.
-- Content JSON compatibility belongs in Content loaders, not App startup code or Simulation managers.
-- Content-owned runtime snapshots that turn registry dictionaries into ordered lists should sort by stable content ids before Runtime applies them to Simulation. Registry selection lists should also use explicit content-id tie-breaks after domain priority. Do not let content bootstrap or equal-priority selection order depend on dictionary/file enumeration.
-- Content concrete registries/loaders should remain internal where possible; ordinary external entry should be `FortressContentLoader`, while Runtime/tests may use friend-only loader/snapshot surfaces. Cross-module reads should use Contracts catalog interfaces such as `IRuntimeMaterialCatalog`, `IRuntimeTerrainKindCatalog`, `IRuntimeGeologyCatalog`, `IConstructionCatalog`, `IRecipeCatalog`, and `IProfessionRegistry`.
-- Contracts catalog stores and Content registry snapshots should expose broad lists and index arrays in stable content-id/category/key order. Compatibility dictionary snapshots, including material name maps and RNG stream save/restore dictionaries, should be materialized or iterated in sorted key order even if newer canonical snapshot APIs exist.
-
-Verification workflow
-
-- Use .NET 8 explicitly on macOS: `/opt/homebrew/opt/dotnet@8/bin/dotnet`.
-- Do not run overlapping App/test/solution builds in parallel; macOS apphost signing and shared `obj` files can race.
-- Prefer sequential verification:
-  - `/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false`
-  - `/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll`
-  - `/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors`
-- For `dotnet exec`, do not insert the `dotnet run`-style `--` separator before app arguments.
-- If a build/run command has no output for roughly 30 seconds, check `pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"` and report whether anything is actually still running.
-- `Microsoft.CodeAnalysis.LanguageServer` / Roslyn alone is normal editor background activity, not a stuck game/build.
-- Codex does not have an independent timer while a tool call is pending; the 30-second rule only works when commands are launched with short wait windows and control returns at the tool boundary.
-- For broad refactors, batch several coherent source edits first, then run one bounded sequential verification pass instead of compiling after every tiny change.
-- For very large or risky batches, the human may run the full local compile manually while the agent continues with code reading, design notes, `rg` scans, and `git diff --check`.
-
-Documentation workflow
-
-- Update `docs/planning/REFACTOR_BATCH_PROGRESS.md` after each meaningful architecture batch.
-- Update `docs/planning/REFACTOR_PITFALLS_AND_LESSONS.md` whenever a repeated build, runtime, ownership, or verification trap is discovered.
-- Keep `docs/architecture/GAME_ARCHITECTURE.md` and `docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md` aligned with actual source ownership, not aspirational ownership.
-- Archived documents are historical context only unless a current document explicitly points to them.
-
-2) Architectural Boundaries & Dependencies (Normative)
-
-Core: tick, time, RNG, events, serialization. (No dependencies.)
-
-ECS: entities/components/systems. (Depends on Core.)
-
-World/Fortress: chunks/tiles/layers/regions/connectivity. (Depends on Core + ECS.)
-
-Subsystems: nav/AI/economy/fluids/fields/vegetation/items/units. (Depend on World + ECS + Core.)
-
-Save/Replay/Modding: read-only contracts into all above; never mutate sim state.
-
-App/Rendering: consumes immutable snapshots only; never touches live world.
-
-3) Determinism & Concurrency (Normative)
-
-Fixed-step tick (e.g., 20 ms). Never couple sim to wall-clock.
-
-RNG streams per stage/system/chunk. Seed = WorldSeed ^ Hash(StageId,SystemId,ChunkId). Do not call RNG inside an iteration whose order can vary.
-
-Read/Write guards — read-phase receives IWorldReader; only the Commit phase can obtain IWorldWriter.
-
-Stable orders everywhere — where order affects results, sort by a deterministic key (e.g., ChunkId → TileIndex → Priority → SystemId).
-
-No nondeterminism — no system time, GUIDs, non-deterministic FP on sim paths; isolate platform variance.
-
-Performance caps — hard deterministic work budgets for pathfinding, LOS, fluids, and fields that remain replay-verifiable.
-
-4) Update Order (Per-Tick Pipeline) (Normative)
-
-Stages may parallelize across chunks, but write sets must not overlap. A job system enforces read/write masks and alias checks.
-
-Stages
-
-ApplyCommands — consume orders; writes L0/L2/L7; mark tile + neighbors dirty.
-
-RebuildDerived (local) — recompute Nav/Opac/Support for dirty sets; bump ConnectivityVersion.
-
-Support & Collapse — resolve structural support; may affect L0/L2/L5.
-
-FluidsStep (budgeted) — process ≤ F active cells; writes L3; may enqueue steam to L4.
-
-FieldsStep (budgeted) — process ≤ G entries; writes L4 and events.
-
-Vegetation & Surface — writes L1 (soil/plant growth/erosion).
-
-Items — writes L5 (stacks/ownership/moves).
-
-EmitEvents — publish compact event stream for UI/logic.
-
-BuildRenderSnapshot — build immutable snapshot; no more world writes after this point.
-
-5) Data Layout Rules (Normative)
-
-Chunked SoA — world partitioned into fixed-size chunks (e.g., 16×16×Zc). Hot fields use Structure-of-Arrays; overlays are sparse structures keyed by tile index.
-
-Hot tile base (target ≤ 12 bytes)
-
-GeoMatId:uint16, TerrainBits:uint16, SurfaceBits:byte, FluidKind:byte, FluidDepth:byte, MetaBits:byte, TrafficCost:uint16.
-
-Base is immutable within a tick; mutations occur only in Commit.
-
-Sparse overlays
-
-L2 constructions/furniture, L4 fields (inline small, pooled overflow), L5 item stacks (pooled handles).
-
-Derived caches (NavMask/Cost, OpacMask, SupportMask) rebuild only for dirty tiles and targeted neighbors.
-
-Dirty propagation
-
-Topology edits (L0/L2) ⇒ tile + 6 neighbors dirty.
-
-L3 (fluids) ⇒ tile (optionally neighbors for steep gradients).
-
-L4 (fields) ⇒ local LOS/nebulous where applicable.
-
-Save/Load — serialize authoritative data only (bases, overlays, stacks, fluids, fields, meta). Never serialize derived caches; rebuild on load. Include schemaVersion.
-
-6) Tile Layers — Responsibilities & Write Windows (Normative)
-
-L0 Terrain (topology) — floor/wall/edge; dig/channel/build; provides support & standability.
-
-L1 Surface — soil/mud/vegetation skin; visual/light modifiers; does not block movement.
-
-L2 Constructions & Furniture — hard/soft blockers; passables[]; support; opacity; autotile connect groups.
-
-L3 Fluids — kind + depth (0..7); solver is budgeted per tick; interacts with L4 (steam/gas).
-
-L4 Fields — multiple per tile (id, intensity, age); soft opacity/decals/gases/fire.
-
-L5 Items — pooled stacks; blocking per prototype; single owning stockpile at a time.
-
-L6 Units/Vehicles — transient occupancy; species-specific block rules.
-
-L7 Meta/Markers — designations, rooms, traffic, visibility, biome, connectivity version.
-
-7) Rendering Rules (Normative)
-
-Renderer isolation — renders from the immutable snapshot only; never reads live world.
-
-Snapshot contents per Z — TilePaletteIndex (autotile/rotation already resolved), FluidDepth, FieldGlyphs, Designations, Billboards (items/units).
-
-Autotiling/Rotation — computed during snapshot build from connect_groups/connects_to and rotates_to.
-
-Draw order — Floors → Surface → Fluids → Furniture → Items → Fields → Units → UI overlays.
-
-Work only on dirty chunks; always apply view frustum/viewport culling.
-
-8) Runtime Stability & Exception Handling (Normative)
-
-Crash-proof orchestration
-
-Wrap each stage in a top-level try-catch.
-
-On exception: quarantine the offending chunk/system for this tick, drop invalid diffs/messages, degrade to serial on next tick for that chunk/system. Never tear down the main loop.
-
-Catch at boundaries, not inner loops
-
-Boundaries: stage orchestrator, chunk-actor Apply, mod sandbox, I/O. Inner loops: prefer result codes; avoid exceptions for control flow.
-
-Classification & policy
-
-Expected/recoverable: content validation failures, over-capacity, missing assets → clip/drop & audit.
-
-Unexpected/bug: null refs, OOB, race assertions → quarantine + error event + metrics spike; optionally enable determinism replay for next N ticks.
-
-Fail-safe sequence
-
-Drop invalid op → Skip system on that chunk → Degrade that chunk to serial → Freeze that chunk for 1 tick (read-only) and schedule rebuild.
-
-Logging/telemetry
-
-Rate-limit identical errors (1 per root cause per second).
-
-Structured log fields: {seed, tick, stage, systemId, chunkId, tileIndex, rngPositions, last32Ops}.
-
-catch (Exception ex) must either rethrow wrapped outside hot path or emit a structured error event visible to UI/debug overlay.
-
-External calls
-
-File/network/OS: timeout + bounded retries + circuit breaker; convert to domain errors.
-
-9) Data-Driven & Anti-Hardcoding (Normative)
-
-No magic numbers in simulation. Tunables live in versioned JSON/TOML under /content, validated at load.
-
-Enum policy
-
-Keep only intrinsic engine enums (e.g., Direction, Axis, LayerId).
-
-Domain sets that may expand (materials, fluids, fields, jobs, biomes, furniture…) use a Registry with string IDs (e.g., "fluid.water", "mat.granite"), loaded from JSON.
-
-Saves persist string IDs, never raw numeric enums.
-
-Registries
-
-Each has a schema, loader, validator, conflict resolver (base → DLC → mods), and a dense integer index for runtime.
-
-Deterministic override order; conflicts are reported with exact source locations.
-
-Provide defaults and feature flags to keep old saves playable as data grows.
-
-JSON quality gates
-
-Strict schema validation at boot (fail to main menu, not crash the process).
-
-Unknown fields produce warnings; missing required fields reject the entry with clear diagnostics.
-
-Use source-generated serializers for speed and safety.
-
-10) Coding Rules (Normative, Mature)
-
-Determinism & Time
-
-Fixed-step loop only; no wall-clock in sim; profiling outside sim path only.
-
-Separate RNG streams per stage/system/chunk; never RNG inside order-dependent loops.
-
-Mutability & Access
-
-Sim code receives IWorldReader; only Commit may obtain IWorldWriter.
-
-No global mutable singletons; use DI/constructor injection for systems.
-
-Exceptions
-
-Do not use exceptions for control flow in hot paths.
-
-Boundary try-catch logs include {seed, tick, stage, systemId, chunkId} and a compact diff/message tail.
-
-Nullability & Contracts
-
-C# nullable enabled; WarningsAsErrors on.
-
-Public APIs fully documented; validate inputs; Debug.Assert for impossible states; throw domain exceptions only at boundaries.
-
-Memory & Allocation
-
-Zero avoidable allocations in per-tile loops; prefer Span<T>, pooling, stackalloc, value types without boxing.
-
-No LINQ/regex/reflection on hot paths; avoid closure captures in loops.
-
-Pooled containers must document ownership and lifetime; return to pool in finally.
-
-Concurrency
-
-No locks on the main sim path. Use diff-logs (intra-chunk) and messages (inter-chunk).
-
-Every job declares read/write masks; scheduler rejects overlapping write sets.
-
-No ad-hoc Task.Run inside stage code; the orchestrator owns scheduling.
-
-Collections & Ordering
-
-Any outcome-relevant collection must be explicitly sorted with deterministic keys.
-
-Implement IEquatable<T> and stable GetHashCode() for value-like structs.
-
-Numerics & Culture
-
-Use integer/fixed-point for gameplay invariants; floats for visuals/continuous decays only.
-
-Always use CultureInfo.InvariantCulture for parsing/formatting in logs/saves.
-
-Error Codes & Events
-
-Centralize domain error codes (ERR_*). Emit typed events for UI/telemetry on failures instead of silent fallthrough.
-
-Configuration
-
-All user-tunable options (tick rate, budgets, debug overlays) are config-driven and hot-reload safe.
-
-Experimental systems are gated by feature flags; flags serialize into saves for replayability.
-
-Logging & Metrics
-
-Structured logs (JSON) with seed/tick first. Metrics: per-stage time, conflict rate, back-pressure, message throughput, degradation counts.
-
-Rate-limit duplicates; collapse traces in release; keep full traces in dev builds.
-
-Serialization
-
-Saves include schemaVersion, build hash, content hashes, registry manifests.
-
-Persist only authoritative data; rebuild all derived caches on load.
-
-Style & Hygiene
-
-Enforce .editorconfig (naming, spacing, braces, file-scoped namespaces).
-
-Roslyn analyzers + StyleCop/FxCop; no warnings permitted in CI.
-
-Unit tests: serialization round-trip; determinism (golden seeds); merge strategies; registry load/validation.
-
-APIs & Modding
-
-Public APIs minimal and stable; breaking changes require an ADR and version bump.
-
-Sandbox scripting has no file/network access unless whitelisted and version-gated.
-
-11) Persistence & Migrations (Normative)
-
-Chunked binary saves with compression; versioned schema and migrations.
-
-Maintain golden saves for forward/backward compatibility in CI.
-
-Never persist derived caches; rebuild deterministically after load.
-
-12) Testing & CI Gates (Normative)
-
-Determinism harness — replays must produce the same world/snapshot hashes across OS/architectures.
-
-Scheduler jitter fuzz — randomize job order/affinity; results must remain identical.
-
-Budgets — assert per-stage deterministic work budgets; CI fails on regressions.
-
-Content schema — validate all registries and report conflicts deterministically.
-
-Golden seeds & golden saves — shipped with the repo; CI fails if they drift.
-
-13) Modding & Sandbox (Normative)
-
-Data-driven raws for entities/recipes/biomes/worldgen with validation & conflict reports.
-
-Script sandbox (Lua/Roslyn) runs with tight permissions; no I/O unless explicitly granted.
-
-Mod load order: base → DLC → mods; deterministic overrides with diagnostics.
-
-14) PR Review Checklist (Normative)
-
-Determinism preserved? Where do writes commit?
-
-Stable iteration/sort keys in all outcome-dependent loops?
-
-RNG streams separated and seeded?
-
-No allocations/locks/LINQ on hot paths?
-
-Path/LOS/fluids/fields within budgets?
-
-Error handling converts to domain events? Logs include seed/tick?
-
-APIs minimal? ADR updated? Docs & schema updated? Tests added/updated?
-
-15) Practical Checklists (Drop-in)
-15.1 Exception Handling
-
- Stage orchestrator/actor Apply/mod sandbox wrapped in try-catch.
-
- On exception: quarantine chunk/system → drop invalid diffs → degrade to serial → emit UI event.
-
- Log fields: {seed, tick, stage, systemId, chunkId, tileIndex, rngPositions, last32Ops}.
-
- Rate-limit duplicates; show one concise on-screen message.
-
-15.2 Data-Driven
-
- No magic numbers in sim; values in /content/*.json|toml.
-
- Extensible sets use Registry with string IDs; numeric handles are runtime-only.
-
- Schema versioned; loader validates and reports conflicts deterministically.
-
- Old saves load with defaults/feature flags; deprecations logged once.
-
-15.3 Coding Hygiene
-
- Nullable enabled; warnings as errors; analyzers green.
-
- No locks/LINQ/reflection/allocations in hot loops.
-
- Deterministic sorts wherever order matters.
-
- Public inputs validated; authoritative state mutated only in Commit.
-
-16) Glossary (Informative)
-
-Authoritative data: minimal state required to reconstruct the world.
-
-Derived caches: acceleration structures recomputed from authoritative data.
-
-Dirty set: tiles/chunks scheduled for derived cache rebuild.
-
-Back-pressure: deferred work (e.g., excess fluids) carried to future ticks.
-
-Quarantine: isolate a faulty chunk/system without crashing the game.
-
-ChangeLog
-
-v2: Consolidated baseline rules (determinism, update order, data layout, layers, rendering) and added Runtime Stability & Exception Handling, Data-Driven & Anti-Hardcoding, and an expanded Coding Rules (Mature) set with practical checklists.
+# HumanFortress Engineering Rules
+Status: Active engineering policy
+Last rewritten: 2026-07-11
+
+## 0. How To Read This Document
+This document defines the rules used to review and change HumanFortress.
+Rule labels are intentional:
+- **Current Normative** describes a boundary or invariant that the current codebase supports and must not regress.
+- **Current Limitation** records an observed gap. It is not permission to expand the gap.
+- **Target Normative** describes the required end state. It is a delivery target, not a claim that the implementation already satisfies it.
+- **Informative** explains rationale or gives examples.
+A target rule becomes current only after implementation, behavior tests, and the active architecture documents agree.
+When documents disagree:
+1. Current source behavior and executable tests establish what exists.
+2. Current Normative rules establish what new changes may do.
+3. Target Normative rules establish the refactor direction.
+4. Progress logs and archived documents are historical evidence only.
+Do not weaken a behavior test merely to make an architecture claim pass.
+First determine whether the test found a runtime defect or only a stale textual guard.
+
+## 1. Engineering North Star
+### Current Normative
+- Simulation state has an explicit owner.
+- Gameplay mutation enters through Runtime commands, scheduled systems, or typed mutation logs.
+- Cross-module data travels through Contracts DTOs and ports.
+- App is a presentation and input adapter, not a gameplay implementation module.
+- Deterministic behavior uses explicit ordering, stable identity, deterministic work budgets, and owned RNG streams.
+- Invalid external data fails through structured diagnostics without partially committing authority state.
+- Derived state is rebuildable from authoritative state or explicitly persisted when it affects future behavior.
+### Target Normative
+- Every tick produces one immutable committed state boundary.
+- Simulation work follows `ReadSnapshot -> Intent -> Resolve -> Commit` where parallel work is useful.
+- UI, save, replay hash, and diagnostics read committed data rather than a live mutable `World`.
+- A loaded save is a deterministic continuation, not merely a visually similar reconstruction.
+
+## 2. Module Boundaries
+### Current Normative
+`HumanFortress.Contracts`
+- Owns passive cross-module DTOs, value contracts, and interfaces.
+- Must not own gameplay algorithms, mutable authority, content loading, file IO, clocks, RNG selection, or identity generation.
+- Must not add `Random`, `Random.Shared`, `Stopwatch`, wall-clock probes, or `Guid.NewGuid()` helpers for simulation behavior.
+`HumanFortress.Core`
+- Owns foundation primitives such as ticks, commands, events, deterministic diff primitives, and RNG infrastructure; it consumes diagnostic contracts from Contracts.
+- May depend on Contracts only.
+- Must not own content registry implementation, world state, concrete jobs, Runtime composition, or App concerns.
+`HumanFortress.Content`
+- Owns JSON parsing, definition validation, structured registries, catalog construction, and content snapshot capture.
+- Its implementation surface remains internal or friend-only except serializer-required accessors.
+- Serializer-required public setters are not general-purpose public API.
+- The external application entry to content loading is Runtime's `FortressRuntimeContentLoader`.
+- App may choose the base directory and request a Runtime content load; it must not traverse content files or call Content implementation loaders directly.
+`HumanFortress.Simulation`
+- Owns authoritative world, chunk, terrain, item, creature, order, stockpile, zone, placeable, workshop, and reservation state.
+- Owns mutation validation, diff application, authoritative save mapping, and world replay field selection.
+- Must not depend on Jobs, Navigation implementation, Runtime, or App.
+`HumanFortress.Navigation`
+- Owns concrete pathfinding, navigation chunks, deterministic queues, and path caches.
+- Exposes cross-module shapes through `HumanFortress.Contracts.Navigation`.
+- Reads the world through adapter contracts; it must not take ownership of Simulation state.
+`HumanFortress.Jobs`
+- Owns job planning, assignment, execution, backlog, worker selection, profession state, and job replay/restore logic.
+- May consume Simulation through the existing bounded friend bridge while the refactor is active.
+- Must not leak concrete job executors to App.
+`HumanFortress.WorldGen`
+- Owns deterministic generation services and generation phases.
+- Consumes explicit content/catalog contracts supplied by Runtime.
+- Must not read global content singletons or move generation policy into App.
+`HumanFortress.Runtime`
+- Owns composition, session lifecycle, the tick host, command staging, navigation adapters, save/replay coordination, content startup, and App-facing ports.
+- Is the only normal composition root for Simulation, Jobs, Navigation, WorldGen, and Content.
+- Owns all save directory IO, codecs, validation, migration, staging restore, and commit policy.
+- May expose Contracts DTOs and narrow Runtime facades to App, not lower-module implementations.
+`HumanFortress.App`
+- Owns SadConsole/MonoGame presentation, input mapping, layout, view state, startup shell, and user-facing diagnostics.
+- References only Contracts and Runtime projects.
+- Chooses content/save directories and presents Runtime-authored results.
+- Must not perform save IO, decode save files, compare content signatures, mutate `World`, execute jobs, or implement gameplay rules.
+### Current Limitation
+- `InternalsVisibleTo` is still used as migration scaffolding between lower implementation modules and Runtime/tests.
+- Friend access does not make an implementation type a stable public contract.
+- New App friend access and new App references to lower modules are prohibited.
+### Target Normative
+- Replace broad friend access with narrow module-owned ports where it reduces real coupling.
+- Keep concrete implementation types internal even after friend bridges shrink.
+- Split `FortressRuntimeSessionCore` by state ownership, not merely by adding more partial files.
+
+## 3. Authority State And Ownership
+### Current Normative
+- Every mutable gameplay collection has one declared module and session owner.
+- Authority includes visible entities and hidden behavior-affecting state.
+- Hidden authority includes ID cursors, command sequences, RNG streams, queue order, retry/backlog order, reservation state, and low-frequency schedule state.
+- Owner locks protect a state transition; concurrent containers do not replace an ownership model.
+- Dictionary enumeration is never simulation order.
+- Owner snapshot methods materialize explicitly sorted rows.
+- A rebuildable cache is derived state only if rebuilding it cannot alter gameplay results.
+- Static mutable gameplay counters and process-global job statistics are prohibited.
+- Runtime session services own scheduler, command queue, mutation logs, RNG streams, and command identity sequence as one session unit.
+### Target Normative
+- Each authority aggregate exposes an immutable read snapshot and a single commit API.
+- Commit validation is performed before authority mutation.
+- Cross-aggregate transactions either commit together at the tick barrier or do not commit.
+- Ownership is visible in types and APIs, not inferred from call order.
+
+## 4. Tick, Read, And Write Rules
+### Current Normative
+- Runtime executes queued commands in the pre-tick stage.
+- `ITick.ReadTick` runs before `ITick.WriteTick`.
+- The current coarse system read phase is sequential and deterministic.
+- Systems are ordered by `Priority`, then ordinal `SystemId`.
+- Lower numeric priority executes first and wins priority conflicts throughout the codebase.
+- The write phase is serialized.
+- Typed mutation logs are merged and applied in deterministic post-tick order.
+- Navigation dirty chunks are rebuilt after committed simulation diffs.
+- A system that fails its read phase does not execute its write phase for that tick.
+- Do not reintroduce `Parallel.ForEach` over the current coarse system list.
+- Locks around current owner reads and writes are allowed while immutable committed snapshots are not yet complete.
+- A lock must protect a documented owner boundary and must not establish ordering through timing.
+### Current Limitation
+- Some reads still observe live session state under coarse locks.
+- Some current `ReadTick` implementations mutate workshop, backlog, active-job, reservation, movement, or statistics state; this blocks safe parallel reads and must not be copied into new systems.
+- Some subsystem mutation APIs still rely on phase discipline rather than a uniform transaction type.
+- Post-tick diff application is a commit-like barrier, but there is not yet one immutable committed-state object for every consumer.
+### Target Normative
+- Systems read only an immutable snapshot for tick `N`.
+- Systems emit intents without mutating authority during planning.
+- A deterministic resolver validates conflicts, identity, reservation, and conservation rules.
+- One commit stage applies the accepted intent set and publishes tick `N`.
+- Parallel read/plan work is allowed only for proven non-overlapping partitions with deterministic collection and merge order.
+- Work partition count, thread timing, and machine speed must not change results.
+
+## 5. Determinism And Ordering
+### Current Normative
+- The determinism contract is same content signature, seed, initial authority, command records, and tick count producing the same checkpoint hash.
+- Simulation-visible budgets are counts, not elapsed milliseconds.
+- Pathfinding uses node/search/request budgets, never `Stopwatch` or frame time.
+- Queue authority uses explicit FIFO storage and stable tie-breakers.
+- Text ordering uses ordinal comparison unless a content contract explicitly says otherwise.
+- Spatial rows define their full sort tuple, including `Z`, chunk coordinates, local index, and entity key where relevant.
+- Replay hashes use canonical primitive encoding and explicit field order.
+- Never use object `GetHashCode()`, culture-sensitive formatting, dictionary order, or platform-endian encoding as replay authority.
+- RNG is obtained from session-owned named deterministic streams.
+- Runtime command payloads include all execution-affecting inputs and an explicit payload version.
+- Duplicate command payloads remain distinct through the session-owned command identity sequence.
+- Lower numeric priority always wins.
+- Equal priority is resolved by explicit system order, ordinal stable ID, local sequence, or a domain-specific canonical tuple.
+- Documentation and UI labels must not describe a larger number as higher execution/conflict priority.
+### Target Normative
+- Determinism tests cover long-running sessions, save/load continuation, and different scheduling configurations.
+- Replay checkpoint sections identify divergence by authority owner.
+- All behavior-affecting derived state is either included in the checkpoint or proven canonical when rebuilt.
+
+## 6. Entity Identity
+### Current Normative
+- Full GUID identity remains authoritative for current items, creatures, placeables, jobs, commands, and reservations where defined.
+- Deterministic GUID generation uses explicit scoped inputs and portable byte encoding.
+- Position alone is not a sufficient identity scope.
+- A source GUID or explicit domain scope participates in derived identity generation.
+- The current 64-bit `EntityKey` is an index/diff projection, not proof of globally collision-free identity.
+- New persistence or mutation contracts must not replace a full authority identity with a 32-bit truncated value.
+- Index lookups are manager-owned; applicators do not scan unordered live collections to resolve identity.
+### Current Limitation
+- Some compatibility paths retain 32-bit IDs.
+- The 64-bit GUID projection can collide and some indexes do not yet fail loudly on collision.
+### Target Normative
+- Entity handles include a stable ID plus generation, or use the full canonical identity where cost is acceptable.
+- Duplicate or colliding authority identity is an invariant breach detected before commit/restore.
+- Allocator high-water marks and generations are persisted and replay-hashed.
+- Stale handles cannot resolve to a different entity after deletion/reuse.
+
+## 7. World Topology And Navigation
+### Current Normative
+- Simulation owns terrain and placeable topology; Navigation owns derived traversability and path caches.
+- Navigation is created through Runtime navigation services and a Simulation-backed adapter.
+- Runtime registers path services so dirty-chunk invalidation reaches every active path cache.
+- Path request queues preserve FIFO order when a per-tick budget is exhausted.
+- A budget-exhausted search must not be treated as authoritative proof that no path exists.
+- Cache keys include every behavior-affecting input, and eviction order is deterministic.
+- Cross-chunk placeable references are resolved through Simulation owner queries.
+### Current Limitation
+- Terrain dirty propagation is stronger than placeable/door topology propagation.
+- Navigation mapping still has paths that derive primarily from tile data.
+- Partial path results can be misclassified/cached as complete success in the current implementation.
+### Target Normative
+- Every traversability-changing mutation emits one topology-change record.
+- Terrain, doors, stairs, bridges, furniture, construction completion, and placeable removal use the same topology invalidation path.
+- Navigation rebuild and path-cache invalidation consume the committed topology-change set.
+- Path results distinguish `Found`, `NotFound`, `BudgetExceeded`, `Invalidated`, and `InvalidRequest`.
+- Only complete results may enter a reusable path cache.
+- Movement validates that its path revision still matches committed topology before applying a step.
+
+## 8. Reservations
+### Current Normative
+- Simulation owns reservation state.
+- Reserve/release mutation occurs in the serialized write/commit path.
+- Reservation snapshots are materialized in stable identity order.
+- Concurrent dictionary callbacks must not mutate reservation authority.
+- Resource availability checks and reservation writes must use the same authority owner.
+- A failed reserve does not partially decrement availability.
+### Current Limitation
+- Current release paths do not consistently prove owner/job/generation identity.
+- A resource ID alone is insufficient protection against stale or duplicate release.
+### Target Normative
+- A reservation token identifies resource, owner/job, generation, quantity, and lifecycle state.
+- Acquire, consume, transfer, cancel, and release are explicit validated transitions.
+- Only the current token owner may consume or release.
+- Duplicate release, over-consumption, and stale generation are rejected before mutation.
+- Job cancellation and restore reconcile all token state without leaking or fabricating resources.
+
+## 9. Items, Stacks, And Conservation
+### Current Normative
+- Item identity and stack quantity are authoritative Simulation state.
+- A stack merge is valid only when every stack-affecting attribute is compatible.
+- Definition ID alone is not sufficient evidence that two stacks are compatible.
+- Position indexes may reference every item at a cell; adding an item must not silently replace an unrelated index entry.
+- Split, merge, move, carry, install, consume, and remove validate source identity and quantity.
+- Quantities never become negative or exceed the applicable stack limit.
+- No item mutation may silently destroy or duplicate quantity.
+- Save/export and restore preserve containment, ownership, placement, reservation, and stack-affecting state.
+### Current Limitation
+- Current merge logic still relies too heavily on definition identity.
+- Current cell indexing can overwrite a previous same-cell entry.
+### Target Normative
+- One item transaction API validates a complete mutation set before commit.
+- Item conservation tests compare pre-state, accepted inputs/outputs, and post-state by definition and identity.
+- Stack compatibility is a named policy covering quality, material, improvements, perishability, ownership, containment, and reservations.
+- Multi-item cell occupancy is represented explicitly rather than by accidental last-writer behavior.
+
+## 10. Snapshot Publication And Read Models
+### Current Normative
+- Contracts owns App-facing snapshot DTOs and metadata shapes.
+- Runtime owns snapshot construction, publication sequence, full/delta metadata, and presenter cache policy.
+- App consumes Runtime read models; it does not assemble presentation state from `World`.
+- Snapshot rows use stable ordering authored by the state owner or Runtime mapper.
+- A delta declares its base publication sequence and cannot be applied to a different base.
+- UI snapshot metadata is diagnostic/read-model data, not simulation authority.
+- Coarse sequential capture and owner locks are allowed as the current transition mechanism.
+### Current Limitation
+- The current publisher can still read live session state on the calling/UI thread.
+- Separate snapshot and save reads are not yet guaranteed to describe one atomic committed tick.
+### Target Normative
+- The simulation thread publishes an immutable committed-state handle after post-tick commit.
+- Publication includes tick, schema version, session generation, sequence, and stable content/session identity.
+- UI, save, replay hash, and diagnostics derive their own DTOs from the same committed tick handle.
+- Presentation polling never holds a simulation owner lock for expensive mapping.
+- A full snapshot is always available after delta-base loss or schema mismatch.
+
+## 11. Save, Replay, And Content Binding
+### Current Normative
+- Runtime owns save snapshot creation, slot manifests, codecs, directory IO, compatibility classification, migration, validation, restore plans, and restore execution.
+- App selects a directory and displays Runtime-authored DTOs; App never reads or patches `slot_manifest.json` or `runtime_snapshot.json`.
+- Save writes enter Runtime's durable temp-file/document writer. The current two-file slot slice is not a whole-slot atomic generation commit and must not be described as one.
+- Restore preflights and validates all supplied sections before committing a new active session.
+- Full restore is staged; a failed world, jobs, RNG, command, or content step leaves the current session unchanged.
+- Unknown, malformed, future, unsupported, or mechanically incompatible content fails closed with structured issues.
+- Slot inspection is a read model, not restore authority.
+- A restore plan is guidance; execution repeats validation.
+- Command replay restore decodes the complete batch before replacing the pending queue.
+- Executed history is not restored as pending work unless replay semantics explicitly request it.
+- Replay/save rows and manifest sections use canonical stable ordering and hashes.
+- Mechanical content compatibility decisions are Runtime-owned.
+- Numeric catalog IDs are not assumed stable across content sets without a verified binding/remap policy.
+- Empty job sections may restore as empty only when manifest counts and payload policy agree.
+### Current Limitation
+- Current full restore does not yet prove complete deterministic continuation for every authority field.
+- Tick, allocator high-water state, ordinary zones/profession state, exact movement state, and executed journal semantics require explicit closure or proof.
+- Current content signatures do not yet cover every mechanical property.
+- Some payload fields still bind to numeric material/catalog identifiers.
+### Target Normative
+- A save captures one committed tick and every field that can affect future simulation.
+- Restore reinstates tick, RNG, queues, cursors, allocator/generation state, jobs, reservations, and content bindings exactly.
+- A post-restore checkpoint hash equals the saved checkpoint before simulation resumes.
+- Content signatures hash canonical mechanical definitions, not presentation-only fields or file enumeration order.
+- Content references persist stable keys and resolve through an explicit versioned binding table.
+- Unsupported partial restore modes say `Unsupported`; they never silently drop authority sections.
+- Replay from a checkpoint plus command records converges on the uninterrupted-session hash.
+
+## 12. App And UI
+### Current Normative
+- UI actions map to semantic Runtime commands/facade calls.
+- App does not mutate Simulation managers, job executors, queues, or content registries.
+- App-local state is limited to presentation concerns such as selection, camera, drawers, focus, and transient interaction state.
+- The same world-to-screen transform is used for terrain, entities, overlays, hit testing, and selection.
+- Input handlers use the current event coordinates, not stale cached mouse coordinates.
+- UI cannot infer save compatibility, migration transforms, content remaps, or restore support.
+- UI may degrade gracefully when an optional read model is unavailable.
+- Debug actions that alter gameplay follow the same Runtime command boundary as normal actions.
+- App startup remains thin; parsing, native preload, strict content gate, headless init, and lifetime helpers stay focused.
+### Target Normative
+- Every gameplay screen renders only immutable Runtime snapshots.
+- UI commands carry the snapshot tick/session generation needed to detect stale intents where relevant.
+- Rendering cadence and dropped frames cannot affect simulation results.
+- Coordinate transform behavior has desktop/mobile/zoom regression coverage appropriate to the App technology.
+
+## 13. Session Isolation And Lifecycle
+### Current Normative
+- One Runtime session owns one scheduler, world, command queue, mutation-log set, RNG stream registry, job state set, navigation registry, and snapshot publication sequence.
+- Starting a new session resets all session-owned queues, logs, counters, RNG streams, caches, and publisher state together.
+- Stopping detaches tick handlers and background work before owned state is discarded.
+- A staged restore is not visible until every required section validates and restores successfully.
+- Session-owned data must not be stored in mutable statics.
+- Background work from an old session must not publish into a new session.
+- Public session facades reject operations when no compatible active session exists.
+### Current Limitation
+- The structured content registry and several logging callbacks still use process-global mutable/static compatibility paths; staging and multi-session tests must treat them as isolation debt.
+- Scheduler shutdown still uses an unbounded join without a system cancellation contract.
+### Target Normative
+- Every session receives a generation token carried by commands, snapshots, async results, and save staging work.
+- Late work with an old generation is discarded deterministically.
+- Lifecycle coordination, committed checkpoint ownership, save/restore coordination, and read-model publication are separate Runtime services.
+- Multiple isolated sessions can run in tests without shared mutable authority.
+
+## 14. Failure And Error Policy
+### Current Normative
+Recoverable failures include:
+- Invalid user commands or selections.
+- Missing/invalid content files reported during bootstrap.
+- Corrupt, incompatible, unsupported, or future save slots.
+- Save IO failures.
+- Expected path failure or deterministic budget exhaustion.
+- Optional UI/debug read-model unavailability.
+Recoverable failures must:
+- Return a typed result or structured issue list at the owning boundary.
+- Include stable issue category/context for diagnostics.
+- Avoid partial authority mutation.
+- Allow App to present the failure without inspecting lower implementation details.
+Invariant breaches include:
+- Duplicate/colliding authority identity accepted into an owner index.
+- Negative item quantity or broken conservation after commit.
+- Stale reservation token consumption or impossible ownership transition.
+- Hash mismatch after an owner claims successful canonical restore.
+- Mutation outside the declared write/commit boundary.
+- A supposedly atomic transaction that partially commits.
+Invariant breaches must:
+- Be logged with tick, session, owner, and relevant stable identity.
+- Abort or quarantine the affected tick/session operation rather than report success.
+- Never be converted into a default value that allows invalid authority to continue silently.
+- Be covered by a regression test before the incident is considered resolved.
+### Current Limitation
+- `TickScheduler` currently catches system exceptions and quarantines repeated failures.
+- Quarantine is a containment mechanism, not proof that authority remains valid after an invariant breach.
+### Target Normative
+- Commit APIs distinguish validation failures from internal invariant breaches.
+- Runtime can fail a staging session or halt an unsafe active session while preserving diagnostic evidence.
+- Recovery policy is explicit per aggregate instead of relying on a broad catch-and-continue convention.
+
+## 15. Testing And CI
+### Current Normative
+- Behavior tests are the primary evidence for gameplay correctness.
+- Architecture text guards protect stable boundaries but must not depend on incidental variable names, indentation, or whole-method text.
+- A textual guard should assert a durable forbidden dependency or required API seam.
+- Determinism tests use manual `ExecuteSingleTick()` through production Runtime composition.
+- Do not use the background scheduler thread for deterministic behavior tests.
+- Save/restore tests cover malformed input, atomic failure, hash round trip, and current-session preservation.
+- Item/reservation/topology fixes require focused behavior tests, not only source scans.
+- CI runs on supported platforms and treats warnings/errors consistently with repository policy.
+- Never claim full tests are green unless the complete harness completed successfully in the current verification context.
+Required local verification sequence:
+
+```sh
+git status --short
+git diff --check
+/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
+/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
+```
+
+Dotnet execution rules:
+- Do not run multiple build/test/App dotnet commands in parallel.
+- Wait for each dotnet process to exit before starting the next.
+- If a dotnet command has no output for about 30 seconds, inspect processes first:
+
+```sh
+pgrep -fl "dotnet|msbuild|VBCSCompiler|HumanFortress"
+```
+
+- VS Code Roslyn language-service processes alone do not prove the build is stuck.
+- Do not kill processes or rerun concurrently until the owning process is identified.
+### Target Normative
+- Replace the custom smoke executable with standard discoverable/filterable test projects without losing current coverage.
+- Add long-horizon deterministic continuation tests and performance baselines.
+- Run architecture, behavior, determinism, content, and save compatibility suites as distinct CI gates.
+
+## 16. Documentation And Refactor Workflow
+### Current Normative
+- `RULES.md` records engineering policy, not batch-by-batch accomplishment claims.
+- `ARCHITECTURE_REFACTOR_MASTER_PLAN.md` records outcomes, workstreams, gates, and priority.
+- `REFACTOR_BATCH_PROGRESS.md` records verified evidence and current status.
+- Architecture documents describe the current system and clearly label future design.
+- Historical status snapshots and obsolete plans move to `docs/archive`; do not rewrite them as current truth.
+- A progress percentage must be backed by explicit exit criteria. Avoid impressionistic `98%` or `99%` claims.
+- Each audit finding is recorded as `reproduced`, `partially fixed`, `fixed + behavior-tested`, or `intentionally unsupported`.
+- Source-only work is labeled source-only until build/test verification finishes.
+- Documentation updates do not upgrade an implementation target to completed status.
+- When moving/deleting many tracked and untracked documents, inspect `git status` carefully; use `git add -A` only when the user requests a commit and all moves belong to its scope.
+- Never revert unrelated user changes.
+- Do not commit unless the user explicitly requests it.
+### Required Change Sequence
+1. Read the owning implementation and its behavior tests.
+2. State the authority owner and invariant being changed.
+3. Reproduce the defect or add a failing focused test when practical.
+4. Make the smallest coherent implementation change.
+5. Add or update behavior coverage.
+6. Run `git diff --check` and the narrowest relevant test.
+7. Run the required build/full harness/content gate when the batch is ready.
+8. Update active planning documents with actual verification evidence.
+### Target Normative
+- Planning is organized around authority contracts and executable gates, not file counts.
+- Completed goals are removed from active plans or summarized briefly; detailed history lives in the archive/progress log.
+- Large refactors ship as vertical slices that leave the repository buildable and behavior-tested.
+
+## 17. Review Checklist
+Before approving a gameplay or architecture change, verify:
+- The authority owner is explicit.
+- Module dependency direction is unchanged or intentionally improved.
+- App still depends only on Contracts and Runtime.
+- Content enters through `FortressRuntimeContentLoader`.
+- Save directory IO remains in Runtime.
+- Reads and writes occur in allowed tick phases.
+- Lower numeric priority wins and tie-breaks are explicit.
+- No wall-clock value affects simulation-visible results.
+- No unordered collection enumeration establishes authority order.
+- Identity is full-width/scoped and collision handling is explicit.
+- Item quantity and reservation ownership are conserved.
+- Topology mutations invalidate navigation and path caches.
+- Snapshot/save/replay data names its committed tick or current limitation.
+- Restore is validated and staged before active-session commit.
+- Recoverable failures are structured; invariant breaches are not swallowed.
+- Behavior tests cover the changed invariant.
+- Architecture guards test durable seams rather than formatting.
+- Verification claims name the commands that actually completed.
+
+## 18. Immediate Architecture Priorities
+These are Target Normative delivery priorities, not current completion claims.
+1. Restore a green full harness and classify each audit finding with behavior evidence.
+2. Fix stack compatibility/index conservation, partial-path classification/cache policy, and App coordinate/input defects.
+3. Establish unified topology mutation and owner/generation reservation tokens.
+4. Close deterministic save continuation fields or return explicit `Unsupported` for incomplete modes.
+5. Publish immutable committed tick state and derive UI/save/replay reads from it.
+6. Introduce the first `ReadSnapshot -> Intent -> Resolve -> Commit` vertical slice for transport/item/reservation work.
+7. Complete canonical mechanical content hashing, schema validation, standard test discovery, and performance baselines.
+Do not introduce ECS, actor-model infrastructure, or broad parallel scheduling merely to satisfy a target diagram.
+Adopt them only if measured workload and ownership boundaries justify the added complexity.

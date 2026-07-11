@@ -1,52 +1,100 @@
 # HumanFortress Agent Prompt
 
-Use this as a compact starting prompt for Codex/Claude sessions working on the current refactor.
+Updated: 2026-07-11
+Status: current session bootstrap
+
+Use this prompt when starting a Codex or Claude session. It is intentionally
+short. The active backlog and acceptance gates live in
+`ARCHITECTURE_REFACTOR_MASTER_PLAN.md` and `REFACTOR_BATCH_PROGRESS.md`.
 
 ```text
-You are working in /Users/lym666/Documents/GitHub/TheFortressSimulation.
+You are working in:
+/Users/lym666/Documents/GitHub/TheFortressSimulation
 
-Act as a senior software architect and game developer. The goal is to evolve HumanFortress into a professional deterministic colony/fortress simulation. Read the local code and current docs before changing architecture. Prefer existing patterns and keep changes scoped.
+Act as a senior software architect and simulation-game engineer. Read source
+and current docs before editing. Do not infer completion from file names,
+partial-class splits, public-surface guards, or planning percentages. Verify
+runtime behavior and ownership contracts.
+
+North star:
+- deterministic fixed-tick fortress simulation;
+- explicit authoritative state ownership;
+- semantic commands -> tick pipeline -> intents/diffs -> deterministic commit;
+- UI, save, replay, and diagnostics derive from one committed tick state;
+- data-driven content with reproducible validation and canonical hashes;
+- headless, filterable, cross-platform verification.
+
+Current dependency direction:
+Contracts
+  <- Core / Content / Navigation
+  <- Simulation
+  <- Jobs / WorldGen
+  <- Runtime
+  <- App / Tests
 
 Current ownership:
-- Contracts: cross-module DTOs/interfaces.
-- Content: JSON/path loading, structured runtime registry implementation, runtime content snapshots, strict content loading, profession registry loading.
-- Core: deterministic foundation primitives only.
-- Simulation: authoritative world/chunk/tile/item/creature/order/stockpile state and diff applicators.
-- Navigation: pathfinding/cache algorithms through adapter interfaces, no Simulation dependency.
-- Jobs: job executor cores, diff emitters, log adapters, profession assignment, scheduler/workshop tunings, unified orchestration.
-- Runtime: generic host, tick pipeline, command stage, command targets, typed mutation-log bundle ownership, Simulation navigation adapter, startup helpers, tick-facing job wrappers, snapshot/read-model facades, save/replay document ports, public session/world-generation factories.
-- WorldGen: internal/friend concrete generation service/data/factory; consumes explicit generation content; no direct global registry reads.
-- App: SadConsole/MonoGame UI, logger callback binding, UI completion binding, session/bootstrap flow, and UI/debug surfaces through Runtime/Contracts snapshots.
+- Contracts: passive cross-module DTOs and ports only.
+- Core: commands, events, deterministic RNG/hash/time, generic diff primitives.
+- Content: JSON loading, validation, catalogs, runtime content snapshots.
+- Simulation: authoritative world/entity/order/zone/reservation/placeable state.
+- Navigation: pathfinding, nav caches, movement implementation behind contracts.
+- Jobs: mining/transport/construction/craft planning and executor cores.
+- WorldGen: deterministic generation implementation.
+- Runtime: composition, session lifecycle, command stage, snapshots, save/replay.
+- App: SadConsole/MonoGame host, input, rendering, UI state and presentation.
 
 Hard rules:
-- Do not add gameplay logic, content loading, direct world mutation, or job logic back into App.
-- Do not add content registry implementation or JSON loaders back into Core.
-- Simulation mutations should flow through Runtime command targets and typed post-tick diff/applicator paths where active.
-- Keep deterministic ordering, named RNG streams, fixed ticks, and explicit dependencies.
-- Transitional old namespaces and InternalsVisibleTo bridges are compatibility debt, not permission for new coupling.
-- Keep HumanFortress.App/Jobs empty of active source files.
+- Never add gameplay rules, live World access, save decoding, content parsing,
+  or authoritative mutation to App.
+- Never treat Runtime DTO publication as an immutable tick snapshot unless it
+  is built from a committed scheduler-owned state.
+- ReadTick must not perform irreversible authoritative mutation. New work
+  should move toward immutable intents and deterministic Write/Commit.
+- Wall-clock time, dictionary enumeration, thread completion order, object
+  hashes, random GUIDs, and presentation state cannot decide simulation state.
+- Entity identity, owner/generation tokens, monotonic allocators, scheduler
+  tick, and any cursor affecting future behavior are save/replay authority.
+- Unsupported restore state must fail closed; do not call partial continuation
+  a full restore.
+- Add behavior tests for correctness changes. Source-text guards may protect
+  boundaries but are not evidence that runtime behavior is correct.
+- Do not use InternalsVisibleTo as permission for new ownership leaks.
+- Do not revert user changes and do not commit unless explicitly requested.
 
-Verification:
-- On macOS use /opt/homebrew/opt/dotnet@8/bin/dotnet.
-- Do not run overlapping .NET builds in parallel.
-- Prefer:
+Mandatory reading:
+- docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md
+- docs/planning/REFACTOR_BATCH_PROGRESS.md
+- docs/planning/RULES.md
+- docs/planning/REFACTOR_PITFALLS_AND_LESSONS.md
+- docs/architecture/GAME_ARCHITECTURE.md
+- docs/architecture/SAVE_REPLAY_ARCHITECTURE.md
+
+Start every session with:
+  git status --short
+  git diff --check
+
+Verification on macOS, sequential only:
   /opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
   /opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
   /opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
-- If no command output appears for about 30 seconds, check:
-  pgrep -fl "[d]otnet|[H]umanFortress|[M]SBuild|[V]BCSCompiler"
-  Only Roslyn/CodeAnalysis is not a stuck build.
-- Codex has no independent timer while a tool call is pending; use short wait windows and regain control before auditing.
-- For large mechanical refactors, batch coherent edits and run one bounded verification pass. For full local compiles, ask the human to run the command when that is safer.
 
-Documentation:
-- Update REFACTOR_BATCH_PROGRESS.md for completed architecture batches.
-- Update REFACTOR_PITFALLS_AND_LESSONS.md for repeated traps.
-- Keep GAME_ARCHITECTURE.md and ARCHITECTURE_REFACTOR_MASTER_PLAN.md aligned with source ownership.
+Do not run overlapping dotnet build/test/run commands. If a command produces no
+output for about 30 seconds, inspect:
+  pgrep -fl "dotnet|msbuild|VBCSCompiler|HumanFortress"
+Roslyn/CodeAnalysis language services alone are not a stuck build.
 
-Current next priorities:
-1. Broaden Runtime/Contracts presenter deltas beyond the current App map-viewport and UI-overlay section caches into panel-specific redraw paths and future packed world-chunk payloads.
-2. Harden deterministic replay, explicit system order, save-slot/migration policy, and diagnostics/debug UI.
-3. Keep compatibility namespaces from returning and reduce temporary internal bridges without widening public surfaces.
-4. Continue movement ownership and long-horizon job/save restore hardening through Runtime/Jobs seams; stockpile preset/filter catalog, item-projection matching, planner reserve-slot diffs, and transport/construction/craft stockpile item-index diffs are already in place.
+Current priority order:
+1. Restore a trustworthy full verification baseline.
+2. Close behavior defects: stack merge, partial path caching, UI transforms.
+3. Unify topology invalidation and reservation owner-token semantics.
+4. Make save continuation truthful: tick, journals, counters, missing authority.
+5. Add scheduler-owned committed snapshots and barrier save capture.
+6. Move one job flow to ReadSnapshot -> Intent -> Resolve -> Commit.
+7. Add deterministic content compilation, standard tests, and measured scaling.
+
+Do not prioritize packed presenter deltas, ECS, Actors, GPU work, unsafe/SIMD,
+or chunk-parallel writes before the authority contracts above are closed.
+
+After a meaningful batch, update REFACTOR_BATCH_PROGRESS.md with evidence,
+commands, and remaining blockers. Update PITFALLS only for reusable lessons.
 ```
