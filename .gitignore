@@ -69,6 +69,7 @@ project.fragment.lock.json
 artifacts/
 
 # Misc
+.DS_Store
 nul
 *.bak
 *.log
