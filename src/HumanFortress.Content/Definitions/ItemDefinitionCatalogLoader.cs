@@ -45,9 +45,17 @@ internal static partial class ItemDefinitionCatalogLoader
         }
 
         var files = Directory.GetFiles(itemsPath, "*.json");
+        if (File.Exists(Path.Combine(itemsPath, "weapons_melee.json"))
+            && File.Exists(Path.Combine(itemsPath, "weapons_ranged.json")))
+        {
+            files = files
+                .Where(file => !Path.GetFileName(file).Equals("weapons.json", StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+        }
         Array.Sort(files, StringComparer.OrdinalIgnoreCase);
         int loaded = 0;
         int failed = 0;
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in files)
         {
@@ -67,6 +75,12 @@ internal static partial class ItemDefinitionCatalogLoader
                         NormalizeDefinition(def);
                         EnrichGenericResourceName(def, messages);
                         ValidateDefinition(def, messages);
+                        if (!seenIds.Add(def.Id))
+                        {
+                            messages.Add($"[ItemManager] ERROR: Duplicate or case-ambiguous definition '{def.Id}' in {Path.GetFileName(file)}");
+                            failed++;
+                            continue;
+                        }
                         definitions.Add(def);
                         loaded++;
                     }

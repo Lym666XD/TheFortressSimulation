@@ -1,4 +1,5 @@
 using System;
+using System.Buffers.Binary;
 
 namespace HumanFortress.Core.Simulation;
 
@@ -15,9 +16,48 @@ public static class DiffTargetEncoding
         return ForChunkLocal(chunkX, chunkY, z, localX, localY, entityId);
     }
 
+    public static DiffTarget ForWorldCell(int worldX, int worldY, int z, int entityId, ulong entityKey)
+    {
+        int chunkX = worldX / ChunkSizeXY;
+        int chunkY = worldY / ChunkSizeXY;
+        int localX = worldX % ChunkSizeXY;
+        int localY = worldY % ChunkSizeXY;
+        return ForChunkLocal(chunkX, chunkY, z, localX, localY, entityId, entityKey);
+    }
+
+    public static DiffTarget ForWorldCell(int worldX, int worldY, int z, Guid entityGuid)
+    {
+        return ForWorldCell(worldX, worldY, z, SignedEntityId(entityGuid), EntityKey(entityGuid));
+    }
+
     public static DiffTarget ForChunkLocal(int chunkX, int chunkY, int z, int localX, int localY, int entityId = -1)
     {
-        return new DiffTarget(EncodeChunkId(chunkX, chunkY, z), LocalIndex(localX, localY), entityId);
+        return ForEncodedTarget(EncodeChunkId(chunkX, chunkY, z), LocalIndex(localX, localY), entityId);
+    }
+
+    public static DiffTarget ForChunkLocal(int chunkX, int chunkY, int z, int localX, int localY, int entityId, ulong entityKey)
+    {
+        return ForEncodedTarget(EncodeChunkId(chunkX, chunkY, z), LocalIndex(localX, localY), entityId, entityKey);
+    }
+
+    public static DiffTarget ForChunkLocal(int chunkX, int chunkY, int z, int localX, int localY, Guid entityGuid)
+    {
+        return ForChunkLocal(chunkX, chunkY, z, localX, localY, SignedEntityId(entityGuid), EntityKey(entityGuid));
+    }
+
+    public static DiffTarget ForEncodedTarget(int chunkId, int localIndex, Guid entityGuid)
+    {
+        return new DiffTarget(chunkId, localIndex, SignedEntityId(entityGuid), EntityKey(entityGuid));
+    }
+
+    public static DiffTarget ForEncodedTarget(int chunkId, int localIndex, int entityId = -1)
+    {
+        return new DiffTarget(chunkId, localIndex, entityId);
+    }
+
+    public static DiffTarget ForEncodedTarget(int chunkId, int localIndex, int entityId, ulong entityKey)
+    {
+        return new DiffTarget(chunkId, localIndex, entityId, entityKey);
     }
 
     public static int EncodeChunkId(int chunkX, int chunkY, int z)
@@ -48,7 +88,13 @@ public static class DiffTargetEncoding
     public static uint EntityId(Guid value)
     {
         var bytes = value.ToByteArray();
-        return BitConverter.ToUInt32(bytes, 0);
+        return BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(0, sizeof(uint)));
+    }
+
+    public static ulong EntityKey(Guid value)
+    {
+        var bytes = value.ToByteArray();
+        return BinaryPrimitives.ReadUInt64LittleEndian(bytes.AsSpan(0, sizeof(ulong)));
     }
 
     public static int SignedEntityId(Guid value)

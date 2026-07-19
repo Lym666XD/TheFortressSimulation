@@ -31,11 +31,11 @@ internal sealed partial class FortressRuntimeSessionCore
         int zMin,
         int zMax,
         RuntimeConstructionShape shape,
-        string? preferredMaterialId,
-        string[] materialTags,
+        string? resultMaterialId,
+        RuntimeConstructionMaterialRequirement[] materialRequirements,
         int priority)
     {
-        var filter = RuntimePlacementCommandFactory.CreateMaterialFilter(shape, preferredMaterialId, materialTags);
+        var filter = RuntimePlacementCommandFactory.CreateMaterialFilter(shape, resultMaterialId, materialRequirements);
         EnqueueCurrentTickCommand(RuntimePlacementCommandFactory.CreateConstructionOrder(
             rect.ToSadRogueRectangle(),
             zMin,

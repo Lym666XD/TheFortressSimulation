@@ -1,4 +1,5 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -10,36 +11,43 @@ internal static partial class MapViewportSnapshotBuilder
         List<MapViewportCellView> cells,
         World? world,
         IRuntimeGeologyCatalog? geologyCatalog,
-        int maxWorldSize,
-        Point cameraPosition,
+        RuntimeViewportGeometry viewport,
         Point cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph)
     {
-        for (int screenX = 0; screenX < viewWidth; screenX++)
+        int visibleWorldWidth = RuntimeViewportGeometryMath.VisibleWorldWidth(viewport);
+        int visibleWorldHeight = RuntimeViewportGeometryMath.VisibleWorldHeight(viewport);
+        for (int worldOffsetX = 0; worldOffsetX < visibleWorldWidth; worldOffsetX++)
         {
-            for (int screenY = 0; screenY < viewHeight; screenY++)
+            for (int worldOffsetY = 0; worldOffsetY < visibleWorldHeight; worldOffsetY++)
             {
-                int worldX = cameraPosition.X + (screenX / zoomLevel);
-                int worldY = cameraPosition.Y + (screenY / zoomLevel);
+                int worldX = viewport.CameraWorldOrigin.X + worldOffsetX;
+                int worldY = viewport.CameraWorldOrigin.Y + worldOffsetY;
                 bool isCursor = worldX == cursorPosition.X && worldY == cursorPosition.Y;
 
                 var (glyph, color) = GetTerrainDisplay(
                     world,
                     geologyCatalog,
-                    maxWorldSize,
+                    viewport.WorldBounds,
                     worldX,
                     worldY,
-                    currentZ);
+                    viewport.CurrentZ);
 
-                cells.Add(new MapViewportCellView(
-                    screenX,
-                    screenY,
-                    isCursor ? cursorGlyph : glyph,
-                    (isCursor ? Color.Yellow : color).ToSnapshotColor()));
+                int firstScreenX = worldOffsetX * viewport.ZoomLevel;
+                int firstScreenY = worldOffsetY * viewport.ZoomLevel;
+                int lastScreenX = Math.Min(viewport.Surface.Width, firstScreenX + viewport.ZoomLevel);
+                int lastScreenY = Math.Min(viewport.Surface.Height, firstScreenY + viewport.ZoomLevel);
+                for (int screenX = firstScreenX; screenX < lastScreenX; screenX++)
+                {
+                    for (int screenY = firstScreenY; screenY < lastScreenY; screenY++)
+                    {
+                        cells.Add(new MapViewportCellView(
+                            screenX,
+                            screenY,
+                            isCursor ? cursorGlyph : glyph,
+                            (isCursor ? Color.Yellow : color).ToSnapshotColor()));
+                    }
+                }
             }
         }
     }
@@ -47,12 +55,12 @@ internal static partial class MapViewportSnapshotBuilder
     private static (int Glyph, Color Color) GetTerrainDisplay(
         World? world,
         IRuntimeGeologyCatalog? geologyCatalog,
-        int maxWorldSize,
+        RuntimeWorldBounds worldBounds,
         int worldX,
         int worldY,
         int currentZ)
     {
-        if (worldX < 0 || worldX >= maxWorldSize || worldY < 0 || worldY >= maxWorldSize)
+        if (!worldBounds.Contains(worldX, worldY, currentZ))
             return ('#', Color.DarkGray);
 
         if (world == null)

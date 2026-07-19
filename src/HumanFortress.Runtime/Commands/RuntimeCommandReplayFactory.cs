@@ -8,7 +8,7 @@ internal sealed partial class RuntimeCommandReplayFactory : ICommandReplayFactor
 {
     private const int MaxDecodedStringArrayLength = 1024;
 
-    public bool TryCreateCommand(
+    internal bool TryCreateCommand(
         CommandReplayRecord record,
         out ICommand? command,
         out string? errorMessage)
@@ -48,6 +48,14 @@ internal sealed partial class RuntimeCommandReplayFactory : ICommandReplayFactor
             errorMessage = $"Replay command decode failed for '{record.CommandType}': {ex.Message}";
             return false;
         }
+    }
+
+    bool ICommandReplayFactory.TryCreateCommand(
+        CommandReplayRecord record,
+        out ICommand? command,
+        out string? errorMessage)
+    {
+        return TryCreateCommand(record, out command, out errorMessage);
     }
 
     private static bool TryDecodeCommand(

@@ -9,13 +9,13 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Per-chunk stockpile data including zone shards and item indexing.
 /// Thread-safe for reads during Read phase, mutations only in Write phase per STOCKPILE_SPEC.md.
 /// </summary>
-internal sealed class ChunkStockpileData
+internal sealed partial class ChunkStockpileData
 {
     private readonly Dictionary<int, ZoneShard> _shards = new();
     private readonly int[] _cellZones; // zoneId per cell, 0=none
-    private readonly Dictionary<string, List<int>> _itemsByTag = new();
-    private readonly Dictionary<int, List<int>> _itemsByZone = new();
-    private readonly List<int> _looseItems = new(); // not in any zone
+    private readonly Dictionary<string, List<ulong>> _itemsByTag = new();
+    private readonly Dictionary<int, List<ulong>> _itemsByZone = new();
+    private readonly List<ulong> _looseItems = new(); // not in any zone
     private readonly object _readLock = new();
 
     /// <summary>
@@ -63,44 +63,49 @@ internal sealed class ChunkStockpileData
     {
         lock (_readLock)
         {
-            return _shards.Values.ToList();
+            return _shards
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Get items by tag (Read-safe).
     /// </summary>
-    internal IEnumerable<int> GetItemsByTag(string tag)
+    internal IEnumerable<ulong> GetItemsByTag(string tag)
     {
         lock (_readLock)
         {
             return _itemsByTag.TryGetValue(tag, out var items)
-                ? items.ToList()
-                : Enumerable.Empty<int>();
+                ? items.OrderBy(static handle => handle).ToList()
+                : Enumerable.Empty<ulong>();
         }
     }
 
     /// <summary>
     /// Get items in a zone (Read-safe).
     /// </summary>
-    internal IEnumerable<int> GetItemsInZone(int zoneId)
+    internal IEnumerable<ulong> GetItemsInZone(int zoneId)
     {
         lock (_readLock)
         {
             return _itemsByZone.TryGetValue(zoneId, out var items)
-                ? items.ToList()
-                : Enumerable.Empty<int>();
+                ? items.OrderBy(static handle => handle).ToList()
+                : Enumerable.Empty<ulong>();
         }
     }
 
     /// <summary>
     /// Get loose items not in any zone (Read-safe).
     /// </summary>
-    internal IEnumerable<int> GetLooseItems()
+    internal IEnumerable<ulong> GetLooseItems()
     {
         lock (_readLock)
         {
-            return _looseItems.ToList();
+            return _looseItems
+                .OrderBy(static handle => handle)
+                .ToList();
         }
     }
 
@@ -192,6 +197,11 @@ internal sealed class ChunkStockpileData
     /// </summary>
     internal void OnItemPlaced(int itemHandle, int cellIndex, int zoneId, List<string> tags)
     {
+        OnItemPlaced(unchecked((uint)itemHandle), cellIndex, zoneId, tags);
+    }
+
+    internal void OnItemPlaced(ulong itemHandle, int cellIndex, int zoneId, List<string> tags)
+    {
         // Remove from loose if present
         _looseItems.Remove(itemHandle);
 
@@ -200,7 +210,7 @@ internal sealed class ChunkStockpileData
         {
             if (!_itemsByZone.TryGetValue(zoneId, out var zoneItems))
             {
-                zoneItems = new List<int>();
+                zoneItems = new List<ulong>();
                 _itemsByZone[zoneId] = zoneItems;
             }
 
@@ -216,7 +226,8 @@ internal sealed class ChunkStockpileData
         }
         else
         {
-            _looseItems.Add(itemHandle);
+            if (!_looseItems.Contains(itemHandle))
+                _looseItems.Add(itemHandle);
         }
 
         // Update tag index
@@ -224,7 +235,7 @@ internal sealed class ChunkStockpileData
         {
             if (!_itemsByTag.TryGetValue(tag, out var taggedItems))
             {
-                taggedItems = new List<int>();
+                taggedItems = new List<ulong>();
                 _itemsByTag[tag] = taggedItems;
             }
 
@@ -239,6 +250,11 @@ internal sealed class ChunkStockpileData
     /// Update item removal (Write phase only).
     /// </summary>
     internal void OnItemRemoved(int itemHandle, int cellIndex, int zoneId, List<string> tags)
+    {
+        OnItemRemoved(unchecked((uint)itemHandle), cellIndex, zoneId, tags);
+    }
+
+    internal void OnItemRemoved(ulong itemHandle, int cellIndex, int zoneId, List<string> tags)
     {
         // Remove from zone index
         if (zoneId > 0)

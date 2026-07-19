@@ -50,6 +50,7 @@ internal static class MiningReplayHashBuilder
             hash.AddInt32((int)job.Action);
             hash.AddInt32((int)job.Segment);
             hash.AddInt32(job.DesignationId);
+            hash.AddByte(job.PathSearchAttempt);
         }
     }
 
@@ -122,6 +123,7 @@ internal static class MiningReplayHashBuilder
         hash.AddInt32((int)dig.Action);
         hash.AddInt32((int)dig.Segment);
         hash.AddInt32(dig.DesignationId);
+        hash.AddByte(dig.PathSearchAttempt);
     }
 
     private static void AddPointHash(ReplayHashBuilder hash, Point point)

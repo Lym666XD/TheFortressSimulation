@@ -13,5 +13,8 @@ public readonly record struct RuntimeReplayCheckpointData(
     string PendingCommandLogHash,
     int PendingCommandLogRecordCount,
     string? TransportHash,
+    int TransportRecordCount,
     string? MiningHash,
-    string? CraftHash);
+    int MiningRecordCount,
+    string? CraftHash,
+    int CraftRecordCount);

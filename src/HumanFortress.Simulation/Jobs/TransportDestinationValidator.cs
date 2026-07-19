@@ -61,7 +61,7 @@ internal sealed class TransportDestinationValidator
         if (!ValidateDestination(x, y, z, reason))
             return false;
 
-        if (!IsStockpileIndexedReason(reason))
+        if (!WritesStockpileIndex(reason))
             return true;
 
         if (!TryGetStockpileZone(x, y, z, out var zone))
@@ -165,13 +165,20 @@ internal sealed class TransportDestinationValidator
         return true;
     }
 
-    private static bool IsStockpileIndexedReason(TransportReason reason)
+    internal static bool WritesStockpileIndex(TransportReason reason)
     {
         return reason is TransportReason.ToStockpile
             or TransportReason.ToWorkshopOutput
             or TransportReason.FromTradeDepot
             or TransportReason.ToArmory
             or TransportReason.ToAmmoCache;
+    }
+
+    internal static bool RequiresStockpileCell(TransportReason reason)
+    {
+        return reason is TransportReason.ToStockpile
+            or TransportReason.ToWorkshopOutput
+            or TransportReason.FromTradeDepot;
     }
 
     private static bool IsWithinFootprintOrAdjacent(int x, int y, int originX, int originY, int width, int depth)

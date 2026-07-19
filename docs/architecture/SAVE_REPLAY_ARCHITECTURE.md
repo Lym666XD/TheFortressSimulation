@@ -1,31 +1,67 @@
 # Save And Replay Architecture
 
-Updated: 2026-07-03
-Status: current implementation boundary plus staged plan
+Updated: 2026-07-11
+Status: experimental internal substrate; player persistence deferred
 
-This document describes how HumanFortress should approach persistence from the
-current refactor state. `SAVE_FORMAT.md` remains the long-term on-disk format
-target. This file is the near-term architecture bridge: what exists now, what
-must not be persisted yet, and which seams should be added before a full save
-loader is implemented.
+This document records the experimental internal snapshot export/restore substrate
+and future persistence constraints. It is not an active implementation plan and
+does not describe a player save/load feature. `SAVE_FORMAT.md` remains a
+long-term design reference only.
 
 ## Current Decision
 
-Do not implement full save/load yet.
+Player save/load, autosave, persistence compatibility, migration, and public slot
+formats are explicitly deferred until after the active architecture refactor.
+App exposes no persistence port and must remain that way during the current goal.
 
-The module boundaries are now mostly stable, but authoritative world schema,
-stockpile maintenance, movement ownership, and long-horizon job state are still
-being hardened. A full save implementation now would freeze too much unstable
-internal shape into a compatibility burden.
+A Runtime-owned, test-only vertical slice exists: Runtime can assemble an
+experimental export directory containing `slot_manifest.json` plus a
+`runtime_snapshot.json` document. The document contains manifest metadata,
+command replay rows, primitive RNG stream rows, and a Simulation-owned world
+payload for the currently supported authoritative slices. The document now also
+carries Jobs-owned payload slices for transport pending requests, transport
+active/backlog jobs, transport scheduling hints, mining active/backlog/
+deferred/reserved/recent-completion jobs, and craft active/backlog jobs.
+The development manifest records
+the document filename, snapshot format, Runtime-authored metadata,
+checkpoint/world/job hashes, and section/row counts. Runtime also owns the
+first development compatibility policy for this vertical slice: known documents
+are readable by internal tests, registered transforms exercise migration
+mechanics, and future/unknown kinds fail closed. Runtime can validate/read a
+compatible directory and restore the
+supported world payload, transport/mining/craft job payloads, RNG streams, and
+pending commands into a freshly composed session. Runtime also owns the current
+content signature compatibility gate: mismatched or unavailable saved/current
+content signatures block inspection restore plans and actual restore ports with
+structured `slot.content` issues until concrete missing-content remap policy
+exists. Current format 6 manifests also persist a content catalog summary beside
+the content signature. None of these development versions have been released to
+players or carry a backward-compatibility promise.
 
-The near-term goal is narrower:
+This is not the `SAVE_FORMAT.md` player-slot implementation. Capture is not one
+committed tick, the two files are not one crash-atomic generation, and restore is
+not complete deterministic continuation. Chunk shards, autosave rings, public
+formats, compatibility, directory durability, missing-content policy, and player
+UX all remain future persistence work.
+The current world payload restore supports contained items when their
+containing item exists in the same acyclic payload graph, carried/equipped
+items when their owning creature exists in the same payload, installed item
+placement data when the installed anchor/z/rotation is valid for the saved
+world, and item-local reservation tokens whose claimant creatures and reserved
+counts validate against the item payload.
+App must not access this substrate or assemble restore authority from live
+`World`, job systems, command queues, or Runtime-internal codec/store helpers.
+
+While persistence is deferred:
 
 - keep command replay data immutable and independent from live command objects;
 - define where command replay decoding will live;
-- expose Runtime-authored save manifests/packages without letting App assemble
-  authority from `World`, job systems, or `CommandQueue`;
+- keep existing export/restore APIs internal and test-only;
 - document which state is authoritative vs derived;
-- prepare deterministic replay tests before writing chunk/world save files.
+- do not add document versions, player entry points, compatibility promises, or
+  migration scope merely to extend the prototype;
+- allow active replay/determinism work to reuse stable primitive hashing and
+  command-record seams without treating that as save feature work.
 
 ## Existing Seams
 
@@ -44,6 +80,8 @@ The near-term goal is narrower:
 - Core-owned snapshot of pending and executed command replay records captured
   under one command-queue lock.
 - Pending records are sorted by future execution order `(tick, queue sequence)`.
+- The pending queue is lock-owned FIFO state; queue sequence is the replay
+  tie-break, not concurrent collection enumeration order.
 - Save/replay callers should use this instead of reading pending and executed
   queues separately when the two sides must match one manifest/checkpoint.
 
@@ -156,6 +194,10 @@ Construction jobs
 - Also exposes section-level hashes for terrain, items, creatures,
   reservations, stockpile zones, placeables, and orders so Runtime save
   manifests can name world slices without exposing live world internals.
+- The builder is split by authoritative section: main orchestration plus
+  terrain, item/creature entities, reservations, stockpile zones, and common
+  primitive helper partials. Do not move these field lists into Runtime/App or
+  collapse them back into one mixed replay hash file.
 
 `HumanFortress.Simulation.Save.WorldSaveSnapshotBuilder`
 
@@ -214,28 +256,239 @@ Construction jobs
   directories through its narrow Runtime save access and should not query live
   Runtime/Simulation authority or Runtime-internal file helpers to assemble it.
 
+`HumanFortress.Contracts.Runtime.Save.RuntimeSaveSlotManifestData`
+
+- Contracts-owned first-pass slot manifest DTO for the current save directory.
+- `RuntimeSaveSlotFormat` names the current slot kind, manifest filename, and
+  Runtime snapshot document filename.
+- Records slot format version, Runtime snapshot format version, engine build,
+  Runtime-authored snapshot metadata, checkpoint/world hashes, section count,
+  RNG stream count, and executed/pending command row counts.
+- `RuntimeSaveSlotCompatibilityData` is the Contracts-owned result shape for
+  current/future migration UI and diagnostics. Runtime owns the policy that
+  fills it.
+- `RuntimeSaveSlotContentCompatibilityData` is the Contracts-owned content
+  binding result nested in inspection. Runtime fills it from saved and current
+  content signatures, reports whether content can be bound, and emits
+  structured `slot.content` blockers until a real missing-content/remap policy
+  exists.
+- The content compatibility read model carries both the saved catalog summary
+  from format 6 manifests, when present, and a Runtime-authored current catalog
+  summary: sorted material names, terrain kind names, construction ids,
+  recipe ids, geology ids, and zone ids. This supports future
+  missing-content/remap diagnostics without making App compare catalog ids or
+  treating either summary as remap authority. Historical migrated v5 saves may
+  still have an unavailable saved catalog summary.
+- Content mismatches are exposed both as legacy display strings and as
+  structured `RuntimeSaveContentCompatibilityDifferenceData` rows that name the
+  mismatch kind, field, saved/current values, and whether catalog key-level
+  diagnostics are available. Current format 6 saves can report saved-only and
+  current-only key lists when both saved/current catalog summaries are
+  available; historical migrated saves without a saved catalog keep those key
+  lists empty and still fail closed instead of inferring per-id remaps.
+- `RuntimeSaveSlotInspectionData` is the Contracts-owned directory inspection
+  read model for future save UI/debug surfaces: it carries the Runtime
+  validation result, compatibility classification, content compatibility,
+  migration plan, restore plan, and readable slot manifest when available.
+- `RuntimeSaveSlotMigrationPlanData` is the Contracts-owned migration read
+  model nested in inspection. Runtime fills it with whether migration is
+  required, whether the current runtime has a registered transform path, stable
+  required transform ids such as `slot:0->1`, and blocking issues with missing
+  transform ids. Slot-format-only migration from legacy/current
+  `runtime_snapshot.json` directories to current slot manifests is supported
+  through `slot:0->1`; Runtime save format 4 can migrate through
+  `runtime_snapshot:4->5` and `runtime_snapshot:5->6` only when the final
+  current-format document validates, which allows empty mining checkpoint state
+  and rejects non-empty mining checkpoint state with no mining payload. Runtime
+  save format 5 can migrate through `runtime_snapshot:5->6`, preserving an
+  unavailable saved catalog for historical documents that lack the format 6
+  catalog payload.
+- `RuntimeSaveSlotMigrationResultData` is the Contracts-owned result shape for
+  Runtime-owned migration execution attempts. Current compatible slots return
+  a successful no-op result, `slot:0->1` applies a current manifest into a
+  target directory, registered runtime snapshot transforms apply into a target
+  directory, and unsupported format paths return structured `slot.migration`
+  issues until concrete transforms are registered.
+- `RuntimeSaveSlotRestorePlanData` is the Contracts-owned restore-plan read
+  model nested in inspection. Runtime fills it with the currently allowed
+  pending-command/world/full restore modes and blocking issues so UI/debug
+  surfaces do not infer loadability from raw validation fields. `jobs.transport`,
+  `jobs.mining`, and `jobs.craft` are restorable only when the document
+  contains Runtime-verified payload rows that map back to Jobs-owned snapshots.
+  Empty Jobs checkpoint sections do not prevent full world + RNG +
+  pending-command restore.
+- It is a directory/index contract, not the final chunk-sharded save catalog or
+  migration table.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotCompatibilityPolicy`
+
+- Runtime-owned compatibility classifier for the current manifest/document
+  slice.
+- Current slot/runtime snapshot versions are readable. Legacy directories that
+  contain a current-format `runtime_snapshot.json` but lack `slot_manifest.json`
+  are reported as `MigrationRequired` with source slot format `0`; older
+  runtime snapshot documents are also reported as migration-required and can
+  migrate only through registered adjacent transforms such as
+  `runtime_snapshot:4->5` and `runtime_snapshot:5->6`. Future versions,
+  unknown slot kinds, unsupported snapshot document names, and older
+  unregistered runtime snapshot schemas fail closed.
+- Validation emits structured `slot.compatibility` issues, so App does not need
+  to inspect manifest internals or decide whether a slot is loadable.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotContentCompatibilityPolicy`
+
+- Runtime-owned content binding classifier for the current manifest/document
+  slice.
+- It compares the saved content signature against the active Runtime content
+  signature: content version, aggregate content hash, material content hash,
+  and catalog-shape counts for material, terrain, construction, recipe,
+  geology, and zone data.
+- Runtime attaches the saved catalog summary from the manifest, when available,
+  and a sorted current catalog key summary to the Contracts read model so
+  diagnostics can explain which saved/current content keys differ. The saved
+  manifest remains an exact signature/count gate; catalog summaries are
+  diagnostic payloads and do not implement remapping.
+- Runtime-authored structured difference rows are the future remap diagnostic
+  seam. They can tell UI/debug surfaces which signature or catalog-count field
+  failed and whether saved/current catalog keys are available. Format 6 saves
+  can include saved-only/current-only key lists; migrated historical saves with
+  no saved catalog continue to report saved key sets as unavailable.
+- Matching signatures allow restore plans and restore ports to proceed. Missing
+  saved/current signatures or mismatches return `slot.content` blockers and
+  `RequiresMissingContentPolicy: true`.
+- This is the current fail-closed seam for future placeholder/remap behavior.
+  App/save UI may display the Contracts DTO, but it must not compare content
+  hashes or decide whether a save can be loaded with substituted content.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotMigrationPlanBuilder`
+
+- Runtime-owned migration read-model builder for the current manifest/document
+  slice.
+- A compatible current slot reports no migration requirement. An older slot
+  reports `RequiresMigration`, asks the Runtime migration transform registry for
+  required transform ids, returns `CanMigrate: true` only when the registry can
+  satisfy every required transform, and otherwise emits a structured
+  `slot.migration` blocking issue. The current concrete transform is
+  `slot:0->1` for rebuilding current slot metadata around a current Runtime
+  snapshot document, plus registered adjacent runtime snapshot transforms such
+  as `runtime_snapshot:4->5` and `runtime_snapshot:5->6` when the final
+  current-format payload validates.
+- This is the read-model builder, not the executor. It exists so App/save
+  UI/debug surfaces can display migration state without comparing format
+  versions or guessing load policy.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotMigrationTransformRegistry`
+
+- Runtime-owned transform-path seam for save-slot and runtime snapshot format
+  migrations.
+- The current registry registers `slot:0->1`, `runtime_snapshot:4->5`, and
+  `runtime_snapshot:5->6`.
+  `slot:0->1` reads an existing current-format `runtime_snapshot.json` and
+  writes a new target directory through Runtime's normal slot writer so
+  `slot_manifest.json` is rebuilt from the document. Runtime snapshot
+  transforms currently bump adjacent document format versions, then validate
+  the resulting current-format document before writing; this keeps non-empty
+  mining checkpoint state without mining payloads blocked instead of silently
+  dropping state, and keeps historical v5 missing saved-catalog payloads
+  explicit as unavailable rather than fabricating remap data. The same
+  registry still centralizes transform-id generation, coverage checks,
+  missing-transform diagnostics, and future transform application entrypoints
+  so runtime snapshot schema migrations can be added without moving
+  version/path logic into App or inspection callers.
+- Required transform ids are returned in Runtime execution order, not
+  lexicographic order: adjacent runtime snapshot document transforms first,
+  followed by slot-manifest rebuild when a legacy slot manifest is present.
+  Migration results report the transforms actually applied in that same order.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotMigrator`
+
+- Runtime-owned migration execution seam for save directories.
+- It preflights through `InspectDirectory(...)`, returns a successful no-op
+  `RuntimeSaveSlotMigrationResultData` for current compatible slots, applies
+  `slot:0->1` into a target directory for legacy snapshot-only/current-document
+  slots, applies registered runtime snapshot transforms such as
+  `runtime_snapshot:4->5` and `runtime_snapshot:5->6`, and returns structured
+  migration issues for unsupported or non-validating runtime snapshot format
+  paths.
+- It is the only place future transform application should enter; App/save UI
+  should pass source/target directories through Runtime ports and display the
+  Contracts result.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSlotRestorePlanBuilder`
+
+- Runtime-owned loadability classifier for the current supported restore modes.
+- A valid, compatible current slot can advertise pending-command and world
+  restore support independently only when the saved content signature can bind
+  to the current Runtime content. `CanRestoreFull` is blocked when non-empty or
+  uncounted job checkpoint sections have no matching Runtime-verified payload
+  rows and supported Jobs-owned restorer.
+- Malformed, migration-required, future, content-incompatible, or incomplete
+  slots return a blocked plan with structured issues.
+- This is not a restore executor and not a migration transform. Actual load
+  still enters through Runtime restore ports and their preflight path.
+
+`HumanFortress.Runtime.Save.RuntimeSaveJobStateRestorePolicy`
+
+- Runtime-owned fail-closed policy for matching Jobs-owned replay hashes with
+  Runtime-verified job-state payload rows and Jobs-owned restore seams.
+- The same policy is used by save-slot inspection and the full-restore Runtime
+  port, so a slot with a non-empty job checkpoint section is not advertised or
+  executed as a full restore unless matching job-state payloads and restore
+  logic are supported. Transport, mining, and craft are the currently supported
+  job slices:
+  the Runtime save document carries pending transport requests, transport
+  active jobs/backlog/scheduling hints, mining active/backlog/deferred/
+  reserved/recent-completion jobs, and craft active/backlog jobs, while Jobs
+  owns the restore seams.
+
+`HumanFortress.Runtime.Save.RuntimeSaveSnapshotDocumentStore`
+
+- Runtime-owned directory store for the current save vertical slice.
+- Writes `runtime_snapshot.json` and `slot_manifest.json` atomically enough for
+  the current local-file helper, while keeping codec and validation behavior
+  inside Runtime.
+- The store is split by responsibility: the main file keeps public store
+  entrypoints, the inspection partial owns slot inspection/read-model assembly,
+  and the IO partial owns unchecked file reads, durable writes, and structured
+  directory failures.
+- `InspectDirectory(...)` is the canonical Runtime-owned read path for a slot
+  summary. It reads the document and manifest, applies the compatibility policy,
+  computes content compatibility, migration plans, and restore plans, and
+  returns a Contracts inspection DTO without exposing the Runtime codec/store
+  helpers.
+- `ValidateDirectory(...)` validates the document plus slot manifest and returns
+  structured `snapshot.document`, `slot.manifest`, or `slot.compatibility`
+  issues by reusing the inspection path instead of requiring App to inspect
+  individual files.
+- Restore paths preflight the directory through the same Runtime validation
+  seam before reading the unchecked document payload. Pending-command,
+  world-payload, and full staged restore ports also enforce the Runtime content
+  compatibility gate at execution time, so inspection remains guidance rather
+  than a second load authority.
+
 `HumanFortress.Contracts.Simulation.Save.WorldSavePayloadData`
 
 - Contracts-owned minimal world payload DTO for the current Runtime document.
 - Contains schema/version, world dimensions, aggregate world replay hash,
   section hashes/counts, chunk coordinates, per-cell terrain tile fields, and
-  payload rows for the currently supported world authority slices: ground item
-  instances, creature instances, global item/creature reservations, stockpile
-  zone definitions, owned placeables/workshop state, and active order
-  designations.
+  payload rows for the currently supported world authority slices: ground,
+  contained, carried, equipped, and installed item instances, creature
+  instances, global item/creature reservations, stockpile zone definitions,
+  owned placeables/workshop state, and active order designations.
 - The current restore implementation supports terrain, ground item instances,
-  creature instances, global reservations, stockpile zones, owned
-  placeables/workshops, and active orders.
-  If carried, contained, equipped, installed, or item-local reservation-token
-  state is present, Runtime returns structured `world.payload` restore issues
-  instead of silently dropping unsupported authoritative state.
+  contained item instances with payload-local acyclic container references,
+  carried and equipped item instances with payload-local creature owners,
+  installed item placement data with valid anchors, item-local reservation
+  tokens with valid claimant/count rows, creature instances, global
+  reservations, stockpile zones, owned placeables/workshops, and active orders.
 
 `HumanFortress.Simulation.Save.WorldSavePayloadBuilder` /
 `HumanFortress.Simulation.Save.WorldSavePayloadRestorer`
 
 - Simulation-owned builder/restorer for authoritative terrain chunk payloads,
-  ground item instances, creature instances, global reservations, stockpile
-  zones, owned placeables/workshop state, and active order designations.
+  ground, contained, carried, equipped, and installed item instances, creature instances,
+  global reservations, stockpile zones, owned placeables/workshop state, and
+  active order designations.
 - The restorer creates a new Simulation `World`, writes tiles through chunk
   write APIs, restores supported runtime authority through Simulation managers,
   recomputes the aggregate `WorldReplayHash`, and only succeeds when the
@@ -283,12 +536,15 @@ Construction jobs
 - Directory validation/restore ports convert missing/corrupt document reads into
   structured `snapshot.document` validation issues instead of exposing IO/JSON
   exceptions as App-facing load failures.
-- Full restore currently composes the supported world payload through the normal
-  Runtime session factory, restores RNG streams, then restores pending command
-  records. Executed command records remain document/journal history and are not
-  requeued as pending work.
+- Full restore composes the supported world payload through a staging Runtime
+  session/services pair, restores supported transport/mining/craft job payload
+  rows, restores RNG streams, then restores pending command records on the
+  staging services. The active Runtime session is replaced only after every
+  supported restore slice succeeds, so a late job/RNG/command restore failure
+  does not leave the current session half-restored. Executed command records
+  remain document/journal history and are not requeued as pending work.
 - This is not the full `SAVE_FORMAT.md` slot implementation; chunk shards,
-  autosave rings, migrations, directory fsync policy, and full load
+  autosave rings, migration transforms, directory fsync policy, and full load
   orchestration remain future persistence work.
 
 `HumanFortress.Contracts.Runtime.Snapshots.SimulationSnapshotMetadata`
@@ -371,13 +627,17 @@ Do not persist derived state:
 `Runtime`
 
 - Owns concrete command replay factory/registry implementations.
-- Owns session-level save/replay orchestration when this is implemented.
+- Owns current session-level save/replay orchestration, including directory
+  validation/inspection, slot compatibility policy, restore-plan read models,
+  supported world payload restore, supported transport/mining/craft job payload
+  restore, RNG stream restore, and pending-command replay restore.
 - Rebuilds derived services such as navigation after load.
 
 `Simulation`
 
-- Owns authoritative world state DTO/extraction/application helpers when world
-  save begins.
+- Owns authoritative world state DTO/extraction/application helpers for the
+  current supported terrain/entity/reservation/stockpile/placeable/order world
+  payload slices.
 - Does not parse save slots or content packs directly.
 
 `Content`
@@ -391,7 +651,7 @@ Do not persist derived state:
 
 ## Near-Term Implementation Guardrails
 
-- Add command replay decoders one command family at a time.
+- Add command replay decoders for new command families one command family at a time.
 - Payload decoders must validate length, version, and known ids before creating
   commands.
 - Runtime command payloads use `RuntimeCommandPayload.CurrentVersion`; format
@@ -403,10 +663,10 @@ Do not persist derived state:
   replay records or save files.
 - Golden replay tests should compare deterministic snapshot hashes from
   `ReplayHashBuilder`-backed authoritative snapshots after fixed tick counts
-  before full save/load is attempted.
+  before expanding the full save-slot and migration layer.
 - Runtime aggregate frame/read-model DTOs should carry Runtime-authored
-  snapshot metadata. App UI frame counters are presentation state, not
-  simulation checkpoint ticks.
+  snapshot and publication metadata. App UI frame counters are presentation
+  state, not simulation checkpoint ticks or frame identity.
 
 ## Open Work
 
@@ -415,5 +675,8 @@ Do not persist derived state:
   hashes.
 - Connect future gameplay systems that need mutable randomness to the
   session-owned RNG streams instead of creating local RNG cursors.
-- Save slot manifest implementation aligned with `SAVE_FORMAT.md`.
-- Save/load migration and placeholder policy for missing content.
+- Full `SAVE_FORMAT.md` alignment: chunk-sharded slot catalog, migration
+  transforms/table, autosave ring policy, directory fsync policy, and broader
+  payload/replay scenario sections beyond the
+  current `slot_manifest.json` + `runtime_snapshot.json` slice.
+- Save/load migration and concrete placeholder/remap policy for missing content.

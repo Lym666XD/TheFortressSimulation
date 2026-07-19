@@ -3,12 +3,12 @@ using HumanFortress.Contracts.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;
 
-public interface IFortressRuntimeSessionSnapshotPort
+internal interface IFortressRuntimeSessionSnapshotPort
 {
-    SimulationBuildCatalogData GetBuildCatalogData();
+    SimulationStatus SimulationStatus { get; }
+
     SimulationDebugMenuData GetDebugMenuData();
     SimulationDebugSpawnData GetDebugSpawnData();
-    SimulationWorldAvailabilityData GetWorldAvailabilityData();
     ZoneHitData FindZoneAt(RuntimePoint worldPosition, int z);
     StockpileHitData FindStockpileAt(RuntimePoint worldPosition, int z);
 
@@ -22,5 +22,29 @@ public interface IFortressRuntimeSessionSnapshotPort
     WorkforceDebugData GetWorkforceInputData();
     SimulationWorkshopDebugData GetWorkshopDebugData();
     WorkshopSummaryView? GetWorkshopPanelData(Guid workshopId);
-    string? GetDefaultRecipeForWorkshop(string? workshopId);
+
+    SimulationUiOverlayFrameData GetUiOverlayFrameData(
+        RuntimeViewportGeometry viewport,
+        bool showZoneOverlay,
+        bool includeManagementDrawer,
+        bool includeWorkDrawer,
+        bool includeDebugMenu,
+        int? stockpileDetailZoneId,
+        int? zoneDetailId);
+
+    SimulationFrameRenderData GetFrameRenderData(
+        bool includeMapViewport,
+        RuntimeViewportGeometry viewport,
+        RuntimePoint cursorPosition,
+        int cursorGlyph,
+        SimulationNavigationOverlayMode navigationMode,
+        RuntimePoint? selectedNavigationTarget,
+        RuntimePoint tileInspectionWorldPosition,
+        int tileInspectionZ);
+
+    SimulationPlacementPreviewData GetPlacementPreviewData(
+        RuntimePoint first,
+        RuntimePoint second,
+        int z,
+        SimulationPlacementPreviewMode mode);
 }

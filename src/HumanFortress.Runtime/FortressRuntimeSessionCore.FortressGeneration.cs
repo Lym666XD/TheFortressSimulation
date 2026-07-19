@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Runtime.WorldGeneration;
 
@@ -14,6 +15,7 @@ internal sealed partial class FortressRuntimeSessionCore
             request,
             _runtimeContentSnapshot,
             FillRuntimeWorld,
-            _log);
+            _log,
+            DiagnosticHub.Sink);
     }
 }

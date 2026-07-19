@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.Core.Events;
@@ -8,8 +7,14 @@ namespace HumanFortress.Core.Events;
 /// </summary>
 public sealed class EventBus : IEventBus
 {
-    private readonly ConcurrentDictionary<Type, List<Delegate>> _handlers = new();
+    private readonly Dictionary<Type, List<Delegate>> _handlers = new();
     private readonly object _lock = new();
+    private readonly IDiagnosticSink? _diagnostics;
+
+    public EventBus(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics;
+    }
 
     public void Publish<TEvent>(TEvent gameEvent) where TEvent : IGameEvent
     {
@@ -17,28 +22,28 @@ public sealed class EventBus : IEventBus
             throw new ArgumentNullException(nameof(gameEvent));
 
         var eventType = typeof(TEvent);
-        if (_handlers.TryGetValue(eventType, out var handlers))
+        List<Delegate> handlersCopy;
+        lock (_lock)
         {
-            List<Delegate> handlersCopy;
-            lock (_lock)
-            {
-                handlersCopy = new List<Delegate>(handlers);
-            }
+            if (!_handlers.TryGetValue(eventType, out var handlers))
+                return;
 
-            foreach (var handler in handlersCopy)
+            handlersCopy = new List<Delegate>(handlers);
+        }
+
+        foreach (var handler in handlersCopy)
+        {
+            try
             {
-                try
-                {
-                    ((Action<TEvent>)handler)(gameEvent);
-                }
-                catch (Exception ex)
-                {
-                    // Per ERROR_HANDLING_POLICY.md: catch and continue
-                    DiagnosticHub.Error(
-                        "Core.EventBus",
-                        $"[ERROR] Event handler failed for {gameEvent.EventType}: {ex.Message}",
-                        ex);
-                }
+                ((Action<TEvent>)handler)(gameEvent);
+            }
+            catch (Exception ex)
+            {
+                // Per ERROR_HANDLING_POLICY.md: catch and continue
+                Diagnostics.Error(
+                    "Core.EventBus",
+                    $"[ERROR] Event handler failed for {gameEvent.EventType}: {ex.Message}",
+                    ex);
             }
         }
     }
@@ -51,13 +56,13 @@ public sealed class EventBus : IEventBus
         var eventType = typeof(TEvent);
         lock (_lock)
         {
-            _handlers.AddOrUpdate(eventType,
-                new List<Delegate> { handler },
-                (_, list) =>
-                {
-                    list.Add(handler);
-                    return list;
-                });
+            if (!_handlers.TryGetValue(eventType, out var handlers))
+            {
+                handlers = new List<Delegate>();
+                _handlers[eventType] = handlers;
+            }
+
+            handlers.Add(handler);
         }
     }
 
@@ -74,9 +79,11 @@ public sealed class EventBus : IEventBus
                 handlers.Remove(handler);
                 if (handlers.Count == 0)
                 {
-                    _handlers.TryRemove(eventType, out _);
+                    _handlers.Remove(eventType);
                 }
             }
         }
     }
+
+    private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
 }

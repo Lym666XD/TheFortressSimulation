@@ -39,20 +39,21 @@ internal sealed partial class StockpileCommandTarget : IStockpileCommandTarget
             }
         }
 
-        int totalCells = cellsByChunk.Values.Sum(static list => list.Count);
+        var cellsByChunkRows = OrderCellsByChunk(cellsByChunk).ToArray();
+        int totalCells = cellsByChunkRows.Sum(static entry => entry.Value.Count);
         if (totalCells == 0)
         {
             _log?.Invoke($"[STOCKPILE] Skipped empty stockpile command preset={normalizedPreset} rect=({worldRect.X},{worldRect.Y},{worldRect.Width}x{worldRect.Height}) z={z} invalid={skippedInvalid} overlap={skippedOverlap}");
             return false;
         }
 
-        var homeChunk = GetHomeChunk(cellsByChunk.Keys);
+        var homeChunk = GetHomeChunk(cellsByChunkRows);
         var preset = _presetCatalog.Resolve(normalizedPreset);
         string zoneName = BuildZoneName(preset.Id, _stockpileDiffLog.PendingCreateZoneCount);
         _stockpileDiffLog.AddCreateZone(
             zoneName,
             homeChunk,
-            cellsByChunk.ToDictionary(
+            cellsByChunkRows.ToDictionary(
                 static entry => entry.Key,
                 static entry => (IReadOnlyList<int>)entry.Value.ToArray()),
             currentTick,

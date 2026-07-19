@@ -1,5 +1,6 @@
 using System;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Configuration;
@@ -18,10 +19,11 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned mining executor.
 /// </summary>
-internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
+internal sealed class MiningJobSystem : IUnifiedMiningJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly MiningJobExecutor _executor;
+    private readonly IPathService _paths;
 
     internal MiningJobSystem(
         HumanFortress.Simulation.World.World world,
@@ -34,15 +36,15 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         ProfessionAssignments? professions = null,
         WorkerSelectionStrategy workerStrategy = WorkerSelectionStrategy.Closest,
         NavigationTuning? navigationTuning = null,
+        RuntimeNavigationServices? navigationServices = null,
         string? miningTuningJson = null,
         IRuntimeGeologyCatalog? geology = null,
         Action<string>? log = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
-        var paths = new PathService(tuning);
-        var navView = new WorldNavigationView(_nav);
-        var move = new MovementExecutor(paths);
+        var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(_nav);
+        _paths = jobNavigation.PathService;
         var logger = new MiningCallbackJobLogger(log);
         var dropResolver = new MiningDropResolver(geology, miningTuningJson, log);
         var diffEmitter = new MiningDiffEmitter(diffLog, itemsDiff, SystemId, Priority);
@@ -56,13 +58,13 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         _executor = new MiningJobExecutor(
             world,
             planner,
-            paths,
-            navView,
+            jobNavigation.PathService,
+            jobNavigation.WorldView,
             diffEmitter,
             dropResolver,
             workerCandidates,
             completionSink,
-            move,
+            jobNavigation.Movement,
             logger,
             intakeBudget,
             carryoverMaxTicks);
@@ -76,19 +78,19 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
 
     internal NavigationManager NavigationManager => _nav;
 
+    internal IPathService PathService => _paths;
+
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
+    internal void PrepareSequentialCompatibility(ulong tick) => _executor.PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
-
-    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
-
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now) => _executor.GetRecentCompletions(now);
 
@@ -98,6 +100,8 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
         => _executor.GetDebugSnapshot(maxActive, includeSeeds);
 
     internal MiningJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal MiningJobRestoreResult RestoreReplaySnapshot(MiningJobReplaySnapshot snapshot) => _executor.RestoreReplaySnapshot(snapshot);
 
     internal int GetBacklogCount() => _executor.GetBacklogCount();
 

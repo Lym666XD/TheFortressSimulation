@@ -9,13 +9,11 @@ internal sealed class WorkshopDiffLog
     internal void AddRecipe(
         Guid workshopGuid,
         string recipeId,
-        string recipeName,
         ulong currentTick,
         int priority,
         string systemId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(recipeId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(recipeName);
         ArgumentException.ThrowIfNullOrWhiteSpace(systemId);
 
         Add(new WorkshopDiff
@@ -23,7 +21,6 @@ internal sealed class WorkshopDiffLog
             Op = WorkshopDiffOp.AddRecipe,
             WorkshopGuid = workshopGuid,
             RecipeId = recipeId,
-            RecipeName = recipeName,
             EntryId = null,
             IntValue = 0,
             MoveOffset = 0,
@@ -43,7 +40,6 @@ internal sealed class WorkshopDiffLog
             Op = WorkshopDiffOp.RemoveEntry,
             WorkshopGuid = workshopGuid,
             RecipeId = string.Empty,
-            RecipeName = string.Empty,
             EntryId = entryId,
             IntValue = 0,
             MoveOffset = 0,
@@ -63,7 +59,6 @@ internal sealed class WorkshopDiffLog
             Op = WorkshopDiffOp.MoveEntry,
             WorkshopGuid = workshopGuid,
             RecipeId = string.Empty,
-            RecipeName = string.Empty,
             EntryId = entryId,
             IntValue = 0,
             MoveOffset = moveOffset,
@@ -90,7 +85,6 @@ internal sealed class WorkshopDiffLog
             Op = WorkshopDiffOp.SetWorkerSlots,
             WorkshopGuid = workshopGuid,
             RecipeId = string.Empty,
-            RecipeName = string.Empty,
             EntryId = null,
             IntValue = workerSlots,
             MoveOffset = 0,
@@ -140,7 +134,6 @@ internal sealed class WorkshopDiffLog
             Op = op,
             WorkshopGuid = workshopGuid,
             RecipeId = string.Empty,
-            RecipeName = string.Empty,
             EntryId = null,
             IntValue = 0,
             MoveOffset = 0,
@@ -158,7 +151,6 @@ internal sealed class WorkshopDiffLog
             Op = op,
             WorkshopGuid = workshopGuid,
             RecipeId = string.Empty,
-            RecipeName = string.Empty,
             EntryId = null,
             IntValue = 0,
             MoveOffset = 0,

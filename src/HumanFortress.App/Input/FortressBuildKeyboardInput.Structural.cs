@@ -1,20 +1,25 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
 
 internal static partial class FortressBuildKeyboardInput
 {
-    private static bool HandleStructural(Keyboard keyboard, UiStore ui, ulong uiTick)
+    private static bool HandleStructural(
+        Keyboard keyboard,
+        UiStore ui,
+        ulong uiTick,
+        SimulationBuildCatalogData buildCatalog)
     {
         if (keyboard.IsKeyPressed(Keys.Z))
-            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Wall, "Wall: choose material [Z]=Stone [X]=Log");
+            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Wall, buildCatalog);
 
         if (keyboard.IsKeyPressed(Keys.X))
-            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Floor, "Floor: [Z]=Stone [X]=Plank");
+            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Floor, buildCatalog);
 
         if (keyboard.IsKeyPressed(Keys.C))
-            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Ramp, "Ramp: [ENTER]=Stone+Plank");
+            return OpenMaterialDialog(ui, uiTick, UiConstructionShape.Ramp, buildCatalog);
 
         if (keyboard.IsKeyPressed(Keys.V))
         {
@@ -25,13 +30,25 @@ internal static partial class FortressBuildKeyboardInput
         return false;
     }
 
-    private static bool OpenMaterialDialog(UiStore ui, ulong uiTick, UiConstructionShape shape, string toast)
+    private static bool OpenMaterialDialog(
+        UiStore ui,
+        ulong uiTick,
+        UiConstructionShape shape,
+        SimulationBuildCatalogData buildCatalog)
     {
         ui.SelectedConstructionShape = shape;
         ui.ResetConstructionSelection();
+        var options = ConstructionMaterialOptionPresentation.GetOptions(buildCatalog, shape);
+        if (options.Count == 0)
+        {
+            ui.ConstructionMaterialDialogOpen = false;
+            ui.AddToast($"No {shape} materials available", uiTick + 120);
+            return true;
+        }
+
         ui.ConstructionMaterialDialogOpen = true;
         Logger.Log($"[BUILD.UI] Open material dialog shape={shape}");
-        ui.AddToast(toast, uiTick + 200);
+        ui.AddToast($"Choose {shape} material", uiTick + 200);
         return true;
     }
 }

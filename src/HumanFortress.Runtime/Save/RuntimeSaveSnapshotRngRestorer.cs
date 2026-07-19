@@ -56,7 +56,7 @@ internal static class RuntimeSaveSnapshotRngRestorer
             RestoreIssues: new[]
             {
                 new RuntimeSaveSnapshotDocumentIssueData(
-                    "rng",
+                    RuntimeSaveManifestSections.Rng,
                     null,
                     message)
             });

@@ -12,7 +12,8 @@ internal static partial class UiQuickMenuRenderer
         ZonesUI? zonesUI = null,
         BuildUI? buildUI = null,
         StockpileQuickUI? stockpileUI = null,
-        SimulationBuildCatalogData? buildCatalog = null)
+        SimulationBuildCatalogData? buildCatalog = null,
+        SimulationZoneCatalogData? zoneCatalog = null)
     {
         if (ui.QuickMenu == QuickMenuKind.None) return;
         var surf = mapSurface.Surface;
@@ -24,7 +25,12 @@ internal static partial class UiQuickMenuRenderer
         }
         else if (ui.QuickMenu == QuickMenuKind.Zones && zonesUI != null)
         {
-            DrawZonesMenu(mapSurface, ui, zonesUI, centerX);
+            DrawZonesMenu(
+                mapSurface,
+                ui,
+                zonesUI,
+                centerX,
+                zoneCatalog ?? SimulationZoneCatalogData.Empty);
         }
         else if (ui.QuickMenu == QuickMenuKind.Build && buildUI != null)
         {

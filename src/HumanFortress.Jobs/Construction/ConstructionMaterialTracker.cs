@@ -28,22 +28,27 @@ internal sealed class ConstructionMaterialTracker
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    internal Dictionary<string, int> CountDelivered(PlaceableInstance site)
+    internal Dictionary<string, int> CountDelivered(PlaceableInstance site, ulong currentTick)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var cell in _cells.EnumerateFootprintAndRing(site))
         {
             foreach (var item in _world.Items.GetGroundItemsAt(cell, site.Z))
             {
+                if (_world.Reservations.IsItemReserved(item.Guid, currentTick))
+                {
+                    continue;
+                }
+
                 var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {
                     continue;
                 }
 
-                foreach (var req in site.ConstructionSite!.MaterialsRequired.Keys)
+                foreach (var req in site.ConstructionSite!.GetRequiredMaterialIdsSnapshot())
                 {
-                    if (ConstructionRequirementMatcher.Matches(def.Tags, req))
+                    if (ConstructionRequirementMatcher.Matches(def, req))
                     {
                         delivered[req] = delivered.GetValueOrDefault(req, 0) + item.StackCount;
                         break;
@@ -55,7 +60,10 @@ internal sealed class ConstructionMaterialTracker
         return delivered;
     }
 
-    internal bool TryConsume(PlaceableInstance site, Dictionary<string, int> toConsume)
+    internal bool TryConsume(
+        PlaceableInstance site,
+        Dictionary<string, int> toConsume,
+        ulong currentTick)
     {
         var removals = new List<PlannedItemRemoval>();
         var plannedByItem = new Dictionary<Guid, int>();
@@ -69,6 +77,11 @@ internal sealed class ConstructionMaterialTracker
 
             foreach (var item in itemsAtCell)
             {
+                if (_world.Reservations.IsItemReserved(item.Guid, currentTick))
+                {
+                    continue;
+                }
+
                 var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {
@@ -82,14 +95,14 @@ internal sealed class ConstructionMaterialTracker
                     continue;
                 }
 
-                foreach (var requirement in toConsume.Keys.OrderBy(k => k).ToList())
+                foreach (var requirement in toConsume
+                    .Where(static entry => entry.Value > 0)
+                    .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+                    .ThenBy(static entry => entry.Key, StringComparer.Ordinal)
+                    .Select(static entry => entry.Key)
+                    .ToList())
                 {
-                    if (toConsume[requirement] <= 0)
-                    {
-                        continue;
-                    }
-
-                    if (!ConstructionRequirementMatcher.Matches(def.Tags, requirement))
+                    if (!ConstructionRequirementMatcher.Matches(def, requirement))
                     {
                         continue;
                     }
@@ -147,7 +160,9 @@ internal sealed class ConstructionMaterialTracker
             }
 
             var def = _itemDefinitions.GetDefinition(item.DefinitionId);
-            string tags = def?.Tags != null ? string.Join(",", def.Tags) : "none";
+            string tags = def?.Tags != null
+                ? string.Join(",", def.Tags.OrderBy(static tag => tag, StringComparer.Ordinal))
+                : "none";
             result.Add((item, dist, tags));
         }
 
@@ -156,7 +171,10 @@ internal sealed class ConstructionMaterialTracker
 
     private static string FormatDict(Dictionary<string, int> values)
     {
-        return "{" + string.Join(", ", values.Select(kv => $"{kv.Key}:{kv.Value}")) + "}";
+        return "{" + string.Join(", ", values
+            .OrderBy(static kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static kv => kv.Key, StringComparer.Ordinal)
+            .Select(static kv => $"{kv.Key}:{kv.Value}")) + "}";
     }
 
     private readonly record struct PlannedItemRemoval(Guid ItemGuid, Point Position, int Z, int Quantity);

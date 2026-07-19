@@ -1,4 +1,5 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -9,47 +10,37 @@ internal static partial class MapViewportSnapshotBuilder
     internal static SimulationMapViewportData Build(
         World? world,
         IRuntimeGeologyCatalog? geologyCatalog,
-        int fortressSize,
-        Point cameraPosition,
+        RuntimeViewportGeometry viewport,
         Point cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph)
     {
-        if (viewWidth <= 0 || viewHeight <= 0)
+        viewport = RuntimeViewportGeometryMath.Normalize(viewport);
+        if (viewport.Surface.Width <= 0 || viewport.Surface.Height <= 0)
             return SimulationMapViewportData.Unavailable;
 
-        zoomLevel = Math.Max(1, zoomLevel);
-
-        var cells = new List<MapViewportCellView>(viewWidth * viewHeight);
-        int maxWorldSize = fortressSize * Chunk.SIZE_XY;
+        var cells = new List<MapViewportCellView>(viewport.Surface.Width * viewport.Surface.Height);
 
         AddTerrainCells(
             cells,
             world,
             geologyCatalog,
-            maxWorldSize,
-            cameraPosition,
+            viewport,
             cursorPosition,
-            currentZ,
-            zoomLevel,
-            viewWidth,
-            viewHeight,
             cursorGlyph);
 
         if (world != null)
-            AddEntityCells(cells, world, cameraPosition, currentZ, viewWidth, viewHeight);
+            AddEntityCells(cells, world, viewport);
 
         return new SimulationMapViewportData(
             IsAvailable: true,
             HasWorld: world != null,
-            Width: viewWidth,
-            Height: viewHeight,
-            CameraX: cameraPosition.X,
-            CameraY: cameraPosition.Y,
-            CurrentZ: currentZ,
-            Cells: cells);
+            Width: viewport.Surface.Width,
+            Height: viewport.Surface.Height,
+            CameraX: viewport.CameraWorldOrigin.X,
+            CameraY: viewport.CameraWorldOrigin.Y,
+            CurrentZ: viewport.CurrentZ,
+            Cells: cells,
+            Delta: SimulationMapViewportDeltaData.Unavailable,
+            Viewport: viewport);
     }
 }

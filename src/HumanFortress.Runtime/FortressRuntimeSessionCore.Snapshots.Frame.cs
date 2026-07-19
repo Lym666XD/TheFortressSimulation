@@ -1,15 +1,19 @@
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
-using HumanFortress.Runtime.Geometry;
 using HumanFortress.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore
 {
-    SimulationUiOverlayFrameData IFortressRuntimeSessionReadPort.GetUiOverlayFrameData(
-        int currentZ,
-        RuntimeRect viewport,
+    SimulationAppFrameData IFortressRuntimeSessionReadPort.GetCommittedAppFrame(
+        SimulationAppFrameRequestData request)
+    {
+        return GetCommittedAppFrameCore(request);
+    }
+
+    SimulationUiOverlayFrameData IFortressRuntimeSessionSnapshotPort.GetUiOverlayFrameData(
+        RuntimeViewportGeometry viewport,
         bool showZoneOverlay,
         bool includeManagementDrawer,
         bool includeWorkDrawer,
@@ -17,51 +21,53 @@ internal sealed partial class FortressRuntimeSessionCore
         int? stockpileDetailZoneId,
         int? zoneDetailId)
     {
-        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
-        return FortressRuntimeSessionSnapshotFacade.BuildUiOverlayFrameSnapshot(
+        viewport = NormalizeViewport(viewport);
+        return _frameSnapshots.PublishUiOverlayFrame(
             _runtimeSession,
-            currentZ,
-            viewport.ToSadRogueRectangle(),
-            showZoneOverlay,
-            includeManagementDrawer,
-            includeWorkDrawer,
-            includeDebugMenu,
-            stockpileDetailZoneId,
-            zoneDetailId,
-            metadata);
+            _services.TickScheduler.CurrentTick,
+            allowCache: !_services.TickScheduler.IsRunning,
+            new RuntimeUiOverlayFrameRequest(
+                viewport,
+                showZoneOverlay,
+                includeManagementDrawer,
+                includeWorkDrawer,
+                includeDebugMenu,
+                stockpileDetailZoneId,
+                zoneDetailId));
     }
 
-    SimulationFrameRenderData IFortressRuntimeSessionReadPort.GetFrameRenderData(
+    SimulationFrameRenderData IFortressRuntimeSessionSnapshotPort.GetFrameRenderData(
         bool includeMapViewport,
-        int fortressSize,
-        RuntimePoint cameraPosition,
+        RuntimeViewportGeometry viewport,
         RuntimePoint cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph,
         SimulationNavigationOverlayMode navigationMode,
         RuntimePoint? selectedNavigationTarget,
         RuntimePoint tileInspectionWorldPosition,
         int tileInspectionZ)
     {
-        var metadata = SimulationSnapshotMetadata.Current(_services.TickScheduler.CurrentTick);
-        return FortressRuntimeSessionSnapshotFacade.BuildFrameRenderSnapshot(
+        viewport = NormalizeViewport(viewport);
+        return _frameSnapshots.PublishFrameRender(
             _runtimeSession,
-            includeMapViewport,
-            fortressSize,
-            cameraPosition.ToSadRoguePoint(),
-            cursorPosition.ToSadRoguePoint(),
-            currentZ,
-            zoomLevel,
-            viewWidth,
-            viewHeight,
-            cursorGlyph,
-            navigationMode,
-            selectedNavigationTarget.ToSadRoguePoint(),
-            tileInspectionWorldPosition.ToSadRoguePoint(),
-            tileInspectionZ,
-            metadata);
+            _services.TickScheduler.CurrentTick,
+            allowCache: !_services.TickScheduler.IsRunning,
+            new RuntimeFrameRenderRequest(
+                includeMapViewport,
+                viewport,
+                cursorPosition,
+                cursorGlyph,
+                navigationMode,
+                selectedNavigationTarget,
+                tileInspectionWorldPosition,
+                tileInspectionZ));
+    }
+
+    private RuntimeViewportGeometry NormalizeViewport(RuntimeViewportGeometry viewport)
+    {
+        var world = _runtimeSession?.World;
+        var worldBounds = world == null
+            ? RuntimeWorldBounds.Empty
+            : new RuntimeWorldBounds(0, 0, world.SizeInTiles, world.SizeInTiles, 0, world.MaxZ);
+        return RuntimeViewportGeometryMath.Normalize(viewport with { WorldBounds = worldBounds });
     }
 }

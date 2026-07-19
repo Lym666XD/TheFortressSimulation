@@ -11,7 +11,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Maintains zone definitions and runtime instances.
 /// Thread-safe for reads during Read phase.
 /// </summary>
-internal sealed class ZoneManager
+internal sealed partial class ZoneManager
 {
     private readonly Dictionary<int, ZoneInstance> _zones = new();
     private readonly Dictionary<string, ZoneDefinition> _definitions = new();
@@ -21,7 +21,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Register a zone definition from content data.
     /// </summary>
-    public void RegisterDefinition(ZoneDefinitionData data)
+    internal void RegisterDefinition(ZoneDefinitionData data)
     {
         if (data == null)
             throw new ArgumentNullException(nameof(data));
@@ -55,7 +55,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Get zone definition by ID.
     /// </summary>
-    public ZoneDefinition? GetDefinition(string defId)
+    internal ZoneDefinition? GetDefinition(string defId)
     {
         lock (_lock)
         {
@@ -66,18 +66,21 @@ internal sealed class ZoneManager
     /// <summary>
     /// Get all zone definitions.
     /// </summary>
-    public IEnumerable<ZoneDefinition> GetAllDefinitions()
+    internal IEnumerable<ZoneDefinition> GetAllDefinitions()
     {
         lock (_lock)
         {
-            return _definitions.Values.ToList();
+            return _definitions
+                .OrderBy(static entry => entry.Key, StringComparer.Ordinal)
+                .Select(static entry => entry.Value)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Create a new zone instance.
     /// </summary>
-    public int CreateZone(string defId, string name, ChunkKey homeChunk, ulong currentTick)
+    internal int CreateZone(string defId, string name, ChunkKey homeChunk, ulong currentTick)
     {
         lock (_lock)
         {
@@ -91,7 +94,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Get a zone by ID (thread-safe).
     /// </summary>
-    public ZoneInstance? GetZone(int zoneId)
+    internal ZoneInstance? GetZone(int zoneId)
     {
         lock (_lock)
         {
@@ -102,22 +105,27 @@ internal sealed class ZoneManager
     /// <summary>
     /// Get all zones (thread-safe).
     /// </summary>
-    public IEnumerable<ZoneInstance> GetAllZones()
+    internal IEnumerable<ZoneInstance> GetAllZones()
     {
         lock (_lock)
         {
-            return _zones.Values.ToList();
+            return _zones
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Get zones by category.
     /// </summary>
-    public IEnumerable<ZoneInstance> GetZonesByCategory(string category)
+    internal IEnumerable<ZoneInstance> GetZonesByCategory(string category)
     {
         lock (_lock)
         {
-            return _zones.Values
+            return _zones
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
                 .Where(z => _definitions.TryGetValue(z.DefId, out var def) && def.Category == category)
                 .ToList();
         }
@@ -126,7 +134,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Delete a zone.
     /// </summary>
-    public bool DeleteZone(int zoneId)
+    internal bool DeleteZone(int zoneId)
     {
         lock (_lock)
         {
@@ -137,7 +145,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Update zone configuration.
     /// </summary>
-    public void UpdateZone(int zoneId, Action<ZoneInstance> update)
+    internal void UpdateZone(int zoneId, Action<ZoneInstance> update)
     {
         lock (_lock)
         {
@@ -152,7 +160,7 @@ internal sealed class ZoneManager
     /// <summary>
     /// Clear all zones (for testing/reset).
     /// </summary>
-    public void Clear()
+    internal void Clear()
     {
         lock (_lock)
         {

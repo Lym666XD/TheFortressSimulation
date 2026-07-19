@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "target-colony-v1",
+  "description": "Target-scale composition proof with 1000 workers, 100000 items, 10000 jobs, and a 16x16 multi-Z world.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "flat",
+    "sizeInChunks": 16,
+    "maxZ": 16,
+    "standableZ": 1,
+    "generationSeed": 12648430
+  },
+  "workload": {
+    "initialCreatures": 1000,
+    "itemInstances": 100000,
+    "transportRequests": 10000,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 1,
+  "measuredTicks": 4,
+  "checkpointInterval": 1,
+  "commandJournal": "journals/flat-scale.v1.json"
+}

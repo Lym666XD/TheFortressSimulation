@@ -5,9 +5,14 @@ namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore
 {
-    SimulationBuildCatalogData IFortressRuntimeSessionSnapshotPort.GetBuildCatalogData()
+    SimulationBuildCatalogData IFortressRuntimeSessionCatalogQueryPort.GetBuildCatalogData()
     {
         return FortressRuntimeSessionSnapshotFacade.BuildCatalogSnapshot(_runtimeSession);
+    }
+
+    SimulationZoneCatalogData IFortressRuntimeSessionCatalogQueryPort.GetZoneCatalogData()
+    {
+        return FortressRuntimeSessionSnapshotFacade.BuildZoneCatalogSnapshot(_runtimeSession);
     }
 
     SimulationDebugMenuData IFortressRuntimeSessionSnapshotPort.GetDebugMenuData()
@@ -20,7 +25,7 @@ internal sealed partial class FortressRuntimeSessionCore
         return FortressRuntimeSessionSnapshotFacade.BuildDebugSpawnSnapshot(_runtimeSession);
     }
 
-    SimulationWorldAvailabilityData IFortressRuntimeSessionSnapshotPort.GetWorldAvailabilityData()
+    SimulationWorldAvailabilityData IFortressRuntimeSessionCatalogQueryPort.GetWorldAvailabilityData()
     {
         return FortressRuntimeSessionSnapshotFacade.BuildWorldAvailabilitySnapshot(_runtimeSession);
     }

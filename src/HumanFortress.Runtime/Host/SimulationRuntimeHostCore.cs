@@ -1,10 +1,13 @@
 using HumanFortress.Core.Commands;
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Time;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
 using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Diff;
+using HumanFortress.Runtime.Navigation;
+using HumanFortress.Runtime.Diagnostics;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Host;
@@ -24,6 +27,7 @@ internal sealed partial class SimulationRuntimeHostCore
     private readonly IConstructionCatalog _constructions;
     private readonly NavigationManager? _navigation;
     private readonly IRuntimeGeologyCatalog? _geology;
+    private readonly RuntimePathServiceRegistry? _pathServices;
 
     private SimulationTickPipeline? _pipeline;
 
@@ -37,7 +41,8 @@ internal sealed partial class SimulationRuntimeHostCore
         RuntimeMutationDiffLogs mutationDiffs,
         IConstructionCatalog constructions,
         NavigationManager? navigation,
-        IRuntimeGeologyCatalog? geology = null)
+        IRuntimeGeologyCatalog? geology = null,
+        RuntimePathServiceRegistry? pathServices = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _tickScheduler = tickScheduler ?? throw new ArgumentNullException(nameof(tickScheduler));
@@ -49,20 +54,36 @@ internal sealed partial class SimulationRuntimeHostCore
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _navigation = navigation;
         _geology = geology;
+        _pathServices = pathServices;
     }
 
     internal bool IsRunning => _tickScheduler.IsRunning;
 
+    internal bool HasActiveTickThread => _tickScheduler.HasActiveThread;
+
+    internal RuntimeTopologyMetricsSnapshot CaptureTopologyMetrics()
+    {
+        return _pipeline?.CaptureTopologyMetrics() ?? default;
+    }
+
     internal TSystems Configure<TSystems>(
         Func<TSystems> createSystems,
         Action<TSystems>? afterSystemsRegistered = null,
-        Action<TSystems>? afterPipelineAttached = null)
+        Action<TSystems>? afterPipelineAttached = null,
+        Action<TSystems, ulong>? afterPostTickCommit = null)
         where TSystems : class, IRuntimeTickSystems
     {
         ArgumentNullException.ThrowIfNull(createSystems);
 
-        StopScheduler();
-        DetachPipeline();
+        var stopResult = Stop(TickScheduler.DefaultStopTimeout);
+        if (!stopResult.HasStopped)
+        {
+            throw new InvalidOperationException(
+                $"Cannot configure a runtime host while its previous tick thread is still active " +
+                $"(status={stopResult.Status}, tick={stopResult.Tick}, phase={stopResult.Phase}, " +
+                $"system={stopResult.SystemId ?? "<none>"}).");
+        }
+
         _tickScheduler.ClearSystems();
 
         var systems = createSystems()
@@ -80,7 +101,11 @@ internal sealed partial class SimulationRuntimeHostCore
             _mutationDiffs,
             _constructions,
             _navigation,
-            _geology);
+            _geology,
+            _pathServices,
+            afterPostTickCommit == null
+                ? null
+                : tick => afterPostTickCommit(systems, tick));
         _pipeline.AttachTo(_tickScheduler);
 
         afterPipelineAttached?.Invoke(systems);

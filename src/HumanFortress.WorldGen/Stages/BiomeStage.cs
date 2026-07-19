@@ -4,9 +4,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
 {
     internal sealed class BiomeStage : IWorldGenStage
     {
-        public string Name => "Biomes";
+        internal string Name => "Biomes";
+
+        string IWorldGenStage.Name => Name;
         
-        public void Execute(WorldGenContext context)
+        internal void Execute(WorldGenContext context)
         {
             for (int x = 0; x < context.Width; x++)
             {
@@ -17,6 +19,11 @@ namespace HumanFortress.WorldGen.Implementation.Stages
                     context.Tiles[x, y].BiomeId = (ushort)biome;
                 }
             }
+        }
+
+        void IWorldGenStage.Execute(WorldGenContext context)
+        {
+            Execute(context);
         }
         
         private BiomeType DetermineBiome(float elevation, float temperature, float rainfall)

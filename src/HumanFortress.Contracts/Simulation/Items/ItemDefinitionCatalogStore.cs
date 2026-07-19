@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace HumanFortress.Contracts.Simulation.Items;
 
 /// <summary>
@@ -29,7 +33,7 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
     public static ItemDefinitionCatalogStore FromDefinitions(IEnumerable<ItemDefinition> definitions)
     {
         var definitionMap = new Dictionary<string, ItemDefinition>(StringComparer.Ordinal);
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             definitionMap[definition.Id] = definition;
         }
@@ -47,7 +51,8 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
 
     public IEnumerable<ItemDefinition> GetAllDefinitions()
     {
-        return _definitions.Values;
+        return _definitions.Values
+            .OrderBy(static definition => definition.Id, StringComparer.Ordinal);
     }
 
     public IEnumerable<ItemDefinition> GetByKind(string kind)
@@ -60,7 +65,7 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
 
     public IEnumerable<string> GetAvailableKinds()
     {
-        return _kindIndex.Keys.OrderBy(kind => kind);
+        return _kindIndex.Keys.OrderBy(static kind => kind, StringComparer.Ordinal);
     }
 
     public IEnumerable<ItemDefinition> GetByTag(string tag)
@@ -73,7 +78,7 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
     private static Dictionary<string, string[]> BuildKindIndex(IEnumerable<ItemDefinition> definitions)
     {
         var index = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             var kind = definition.Kind.ToLowerInvariant();
             if (!index.TryGetValue(kind, out var ids))
@@ -91,7 +96,7 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
     private static Dictionary<string, string[]> BuildTagIndex(IEnumerable<ItemDefinition> definitions)
     {
         var index = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             foreach (var tag in definition.Tags)
             {
@@ -111,9 +116,11 @@ public sealed class ItemDefinitionCatalogStore : IItemDefinitionCatalog
     private static Dictionary<string, string[]> FreezeIndex(Dictionary<string, List<string>> index)
     {
         var frozen = new Dictionary<string, string[]>(index.Count, StringComparer.Ordinal);
-        foreach (var (key, ids) in index)
+        foreach (var (key, ids) in index.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
         {
-            frozen[key] = ids.ToArray();
+            frozen[key] = ids
+                .OrderBy(static id => id, StringComparer.Ordinal)
+                .ToArray();
         }
 
         return frozen;

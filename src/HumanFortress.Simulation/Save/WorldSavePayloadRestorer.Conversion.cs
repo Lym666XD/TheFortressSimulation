@@ -18,7 +18,10 @@ internal static partial class WorldSavePayloadRestorer
             payload.DefinitionId,
             ToPoint(payload.Position),
             payload.Z,
-            new Footprint(payload.Footprint.W, payload.Footprint.D, payload.Footprint.H))
+            new Footprint(payload.Footprint.W, payload.Footprint.D, payload.Footprint.H),
+            payload.DoorState.HasValue
+                ? new DoorState(payload.DoorState.Value.IsOpen, payload.DoorState.Value.IsLocked)
+                : null)
         {
             SourceItemGuid = payload.SourceItemGuid,
             SourceItemMaterial = payload.SourceItemMaterial,
@@ -37,13 +40,6 @@ internal static partial class WorldSavePayloadRestorer
             ConstructionSite = ToConstructionSite(payload.ConstructionSite),
             Workshop = payload.Workshop.HasValue
                 ? WorkshopState.RestoreSnapshot(payload.Workshop.Value)
-                : null,
-            DoorState = payload.DoorState.HasValue
-                ? new DoorState
-                {
-                    IsOpen = payload.DoorState.Value.IsOpen,
-                    IsLocked = payload.DoorState.Value.IsLocked
-                }
                 : null,
             OwnerFactionId = payload.OwnerFactionId,
             OwnerCreatureGuid = payload.OwnerCreatureGuid,
@@ -75,7 +71,7 @@ internal static partial class WorldSavePayloadRestorer
         if (rows == null)
             return result;
 
-        foreach (var row in rows)
+        foreach (var row in rows.OrderBy(static row => row.Key, StringComparer.Ordinal))
         {
             result[row.Key] = row.Value;
         }
@@ -89,6 +85,11 @@ internal static partial class WorldSavePayloadRestorer
             return null;
 
         return improvements
+            .OrderBy(improvement => improvement.Type, StringComparer.Ordinal)
+            .ThenBy(improvement => improvement.MaterialId, StringComparer.Ordinal)
+            .ThenBy(improvement => improvement.QualityTier)
+            .ThenBy(improvement => improvement.CreatedBy)
+            .ThenBy(improvement => improvement.Description, StringComparer.Ordinal)
             .Select(improvement => new Improvement
             {
                 Type = improvement.Type,

@@ -39,6 +39,7 @@ internal static class CraftReplayHashBuilder
             hash.AddInt32(job.WorkTicksRemaining);
             AddPointHash(hash, job.Anchor);
             hash.AddInt32(job.Z);
+            hash.AddByte(job.PathSearchAttempt);
         }
     }
 
@@ -62,6 +63,7 @@ internal static class CraftReplayHashBuilder
         hash.AddInt32(job.DurationTicks);
         AddPointHash(hash, job.Anchor);
         hash.AddInt32(job.Z);
+        hash.AddByte(job.PathSearchAttempt);
     }
 
     private static void AddPointHash(ReplayHashBuilder hash, Point point)

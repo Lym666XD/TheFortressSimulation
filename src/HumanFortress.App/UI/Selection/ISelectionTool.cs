@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI.Selection;
@@ -13,6 +14,7 @@ internal interface ISelectionTool
     void Cancel();
     void AdjustZRange(int delta);
     void SetZRangeEnd(int z);
+    void SetWorldBounds(RuntimeWorldBounds worldBounds);
 
     event Action<Selection3D>? Started;
     event Action<Selection3D>? Changed;

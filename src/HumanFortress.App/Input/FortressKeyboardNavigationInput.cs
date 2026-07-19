@@ -1,4 +1,5 @@
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadConsole.Input;
 using SadRogue.Primitives;
 
@@ -12,6 +13,7 @@ internal static class FortressKeyboardNavigationInput
         Keyboard keyboard,
         Point cameraPosition,
         int currentZ,
+        RuntimeWorldBounds worldBounds,
         ISelectionTool? selectionTool)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
@@ -44,7 +46,7 @@ internal static class FortressKeyboardNavigationInput
             if (ShouldAdjustSelectionZ(keyboard, selectionTool))
                 selectionTool!.AdjustZRange(-1);
             else
-                currentZ = Math.Max(0, currentZ - 1);
+                currentZ = ClampZ(currentZ - 1, worldBounds);
 
             changed = true;
         }
@@ -53,12 +55,19 @@ internal static class FortressKeyboardNavigationInput
             if (ShouldAdjustSelectionZ(keyboard, selectionTool))
                 selectionTool!.AdjustZRange(+1);
             else
-                currentZ = Math.Min(49, currentZ + 1);
+                currentZ = ClampZ(currentZ + 1, worldBounds);
 
             changed = true;
         }
 
         return new FortressKeyboardNavigationResult(cameraPosition, currentZ, changed);
+    }
+
+    internal static int ClampZ(int value, RuntimeWorldBounds worldBounds)
+    {
+        return worldBounds.IsEmpty
+            ? 0
+            : Math.Clamp(value, worldBounds.MinZ, worldBounds.MaxZExclusive - 1);
     }
 
     private static bool ShouldAdjustSelectionZ(Keyboard keyboard, ISelectionTool? selectionTool)

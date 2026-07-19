@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>HumanFortress.Scenarios</AssemblyName>
+    <RootNamespace>HumanFortress.Scenarios</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HumanFortress.Contracts\HumanFortress.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\HumanFortress.Core\HumanFortress.Core.csproj" />
+    <ProjectReference Include="..\..\src\HumanFortress.Runtime\HumanFortress.Runtime.csproj" />
+  </ItemGroup>
+
+</Project>

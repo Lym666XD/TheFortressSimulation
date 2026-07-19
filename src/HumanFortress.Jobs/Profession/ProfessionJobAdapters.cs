@@ -42,7 +42,7 @@ internal sealed class TransportProfessionCandidateSource : ITransportWorkerCandi
     }
 }
 
-internal sealed class TransportProfessionCompletionSink : ITransportJobCompletionSink
+internal sealed partial class TransportProfessionCompletionSink : ITransportJobCompletionSink
 {
     private readonly ProfessionAssignments _professions;
     private readonly string _jobTag;

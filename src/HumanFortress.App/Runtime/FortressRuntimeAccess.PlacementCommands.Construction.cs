@@ -10,8 +10,8 @@ internal sealed partial class FortressRuntimeAccess
         int zMin,
         int zMax,
         RuntimeConstructionShape shape,
-        string? preferredMaterialId,
-        string[] materialTags,
+        string? resultMaterialId,
+        RuntimeConstructionMaterialRequirement[] materialRequirements,
         int priority = 50)
     {
         _placementCommands.QueueConstructionOrder(
@@ -19,8 +19,8 @@ internal sealed partial class FortressRuntimeAccess
             zMin,
             zMax,
             shape,
-            preferredMaterialId,
-            materialTags,
+            resultMaterialId,
+            materialRequirements,
             priority);
     }
 
@@ -42,10 +42,10 @@ internal sealed partial class FortressRuntimeAccess
         int zMin,
         int zMax,
         RuntimeConstructionShape shape,
-        string? preferredMaterialId,
-        string[] materialTags,
+        string? resultMaterialId,
+        RuntimeConstructionMaterialRequirement[] materialRequirements,
         int priority) =>
-        QueueConstructionOrder(rect, zMin, zMax, shape, preferredMaterialId, materialTags, priority);
+        QueueConstructionOrder(rect, zMin, zMax, shape, resultMaterialId, materialRequirements, priority);
 
     void IFortressRuntimePlacementCommandAccess.QueueBuildableConstructionOrder(
         string constructionId,

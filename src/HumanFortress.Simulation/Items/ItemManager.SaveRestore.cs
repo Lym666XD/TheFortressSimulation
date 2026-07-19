@@ -32,15 +32,28 @@ internal sealed partial class ItemManager
 
         lock (_instanceLock)
         {
-            _instances.Clear();
-            _posIndex.Clear();
-            foreach (var instance in restored.Values.OrderBy(item => item.Guid))
+            var identityReplacement = _identityIndex.TryReplace(restored.Keys);
+            if (!identityReplacement.Success)
             {
-                _instances[instance.Guid] = instance;
+                return new[]
+                {
+                    $"World item identity preflight failed: {identityReplacement.Describe("item")}"
+                };
+            }
+
+            _instances.Clear();
+            _legacyEntityIdIndex.Clear();
+            _posIndex.Clear();
+            foreach (var instance in restored
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value))
+            {
+                _instances.Add(instance.Guid, instance);
+                LegacyEntityIdIndexAdd(instance.Guid);
                 IndexAdd(instance.Guid, instance.Position, instance.Z);
             }
 
-            _nextInstanceSequence = (ulong)_instances.Count;
+            _nextInstanceSequence = Math.Max(_nextInstanceSequence, (ulong)_instances.Count);
         }
 
         return Array.Empty<string>();

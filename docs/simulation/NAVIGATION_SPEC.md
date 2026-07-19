@@ -7,7 +7,7 @@ last_updated: 2026-05-24
 
 This specification defines the fortress navigation model: data layout, ramp/stairs semantics, cost model, pathfinding API, and tuning. It is UTF-8 encoded and supersedes older non-UTF8 drafts.
 
-The implementation is deterministic across OS/thread counts and cooperates with the fixed UPDATE_ORDER (read-parallel, write-serialized).
+The implementation is deterministic across OS/thread counts and cooperates with the fixed UPDATE_ORDER. The current coarse scheduler uses deterministic registered-system read order plus serialized writes; future chunk-partitioned read parallelism must preserve the same replay hashes.
 
 Current implementation note (2026-06-12):
 
@@ -157,7 +157,7 @@ Traffic cost is a static or slowly changing preference layer, not a complete mul
 Use Manhattan/Octile heuristic; open set keyed by `(f,h,g,localIdx)` with stable tie-breakers:
 1) smaller `f=g+h`, 2) smaller `h`, 3) smaller `g`, 4) smaller `LocalIndex` (row-major 0..1023).
 
-Node/time budgets enforce fail-soft behavior (return `Partial` with best frontier when limits are hit). All iteration orders are deterministic.
+Node/request budgets enforce fail-soft behavior (return `Partial` with best frontier when node limits are hit, and queue excess service requests deterministically). All iteration orders are deterministic.
 
 A* remains the baseline general-purpose search because it handles weighted costs, dynamic terrain, multiple Z levels, and actor-specific passability.
 
@@ -240,7 +240,8 @@ Future APIs may accept richer movement profiles, footprint descriptors, or query
   "fluids": { "shallow_threshold": 1, "deep_threshold": 6, "wade_cost": 6, "swim_cost": 18 },
   "traffic": { "low": -2, "normal": 0, "high": 2, "restricted": 8 },
   "doors": { "closed_blocks": true, "open_cost": 4 },
-  "budgets": { "max_nodes_per_search": 10000, "max_ms_per_tick_pathing": 3 },
+  "movement": { "step_delay_ticks": 2 },
+  "budgets": { "max_nodes_per_search": 10000, "max_paths_per_tick": 1024 },
   "surface_cost": { "mud": 2, "snow": 3, "grass": 1, "moss": 1 }
 }
 ```

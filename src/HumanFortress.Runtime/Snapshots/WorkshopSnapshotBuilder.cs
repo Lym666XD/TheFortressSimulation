@@ -7,9 +7,10 @@ internal static partial class WorkshopSnapshotBuilder
 {
     internal static SimulationWorkshopDebugData Build(
         World? world,
-        IConstructionCatalog? constructions)
+        IConstructionCatalog? constructions,
+        IRecipeCatalog? recipes)
     {
-        if (world == null || constructions == null)
+        if (world == null || constructions == null || recipes == null)
             return new SimulationWorkshopDebugData(Array.Empty<WorkshopSummaryView>(), 0, 0, 0);
 
         var workshops = new List<WorkshopSummaryView>();
@@ -21,7 +22,7 @@ internal static partial class WorkshopSnapshotBuilder
 
             foreach (var placeable in placeables.GetAllOwnedPlaceables())
             {
-                if (TryCreateWorkshopView(world, constructions, placeable, out var workshop))
+                if (TryCreateWorkshopView(world, constructions, recipes, placeable, out var workshop))
                     workshops.Add(workshop);
             }
         }
@@ -42,9 +43,10 @@ internal static partial class WorkshopSnapshotBuilder
     internal static WorkshopSummaryView? FindById(
         World? world,
         IConstructionCatalog? constructions,
+        IRecipeCatalog? recipes,
         Guid workshopGuid)
     {
-        if (world == null || constructions == null)
+        if (world == null || constructions == null || recipes == null)
             return null;
 
         foreach (var chunk in world.GetAllChunks())
@@ -58,7 +60,7 @@ internal static partial class WorkshopSnapshotBuilder
                 if (placeable.Guid != workshopGuid)
                     continue;
 
-                return TryCreateWorkshopView(world, constructions, placeable, out var workshop)
+                return TryCreateWorkshopView(world, constructions, recipes, placeable, out var workshop)
                     ? workshop
                     : null;
             }

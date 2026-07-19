@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Simulation.Creatures;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -8,9 +9,11 @@ internal sealed partial class CreatureManager
     /// <summary>
     /// Spawn a creature at the specified world position.
     /// Returns creature GUID on success, null on failure.
-    /// TODO: Use Diff-Log instead of direct Chunk write (per UPDATE_ORDER.md)
+    /// Gameplay commands should enqueue CreaturesDiffLog additions; this owner
+    /// mutation entry is used by diff application, bootstrap, save restore,
+    /// and focused Simulation tests.
     /// </summary>
-    public Guid? SpawnCreature(string creatureId, Point worldPos, int z, string factionId = "neutral", ulong currentTick = 0)
+    internal Guid? SpawnCreature(string creatureId, Point worldPos, int z, string factionId = "neutral", ulong currentTick = 0)
     {
         try
         {
@@ -58,17 +61,17 @@ internal sealed partial class CreatureManager
                 return null;
             }
 
-            var maxHP = 100; // TODO: Calculate from creature stats
+            var maxHP = CalculateMaxHitPoints(def);
             Guid guid;
 
             lock (_instanceLock)
             {
                 guid = CreateNextInstanceGuidLocked();
                 var instance = new CreatureInstance(guid, creatureId, factionId, worldPos, z, maxHP, currentTick);
-                _instances[guid] = instance;
+                EntityKeyIndexAdd(guid);
+                _instances.Add(guid, instance);
             }
 
-            // TODO: Write to Chunk L6 layer via Diff-Log (currently just tracking in manager)
             Emit($"[CreatureManager] SUCCESS: Spawned '{def.Name}' (id={creatureId}, guid={guid}) at ({worldPos.X},{worldPos.Y},{z})");
 
             return guid;
@@ -80,5 +83,10 @@ internal sealed partial class CreatureManager
             Emit($"[CreatureManager] StackTrace: {ex.StackTrace}");
             return null;
         }
+    }
+
+    private static int CalculateMaxHitPoints(CreatureDefinition definition)
+    {
+        return Math.Clamp(50 + definition.BaseToughness * 5, 1, 1000);
     }
 }

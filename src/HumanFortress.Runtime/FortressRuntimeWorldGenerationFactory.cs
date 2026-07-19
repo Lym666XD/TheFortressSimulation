@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Contracts.WorldGen;
 using HumanFortress.WorldGen.Implementation;
 
@@ -7,6 +8,6 @@ public static class FortressRuntimeWorldGenerationFactory
 {
     public static IWorldGenerationService Create()
     {
-        return WorldGenerationServiceFactory.Create();
+        return WorldGenerationServiceFactory.Create(DiagnosticHub.Sink);
     }
 }

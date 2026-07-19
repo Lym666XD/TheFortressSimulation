@@ -22,10 +22,7 @@ internal static partial class WorldSavePayloadBuilder
             zone.HysteresisHigh,
             zone.Generation,
             zone.CreatedTick,
-            zone.MemberChunks
-                .OrderBy(chunk => chunk.Z)
-                .ThenBy(chunk => chunk.ChunkY)
-                .ThenBy(chunk => chunk.ChunkX)
+            zone.GetMemberChunksSnapshot()
                 .Select(ToPayloadChunkKey)
                 .ToArray());
     }

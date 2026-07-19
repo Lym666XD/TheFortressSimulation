@@ -11,43 +11,43 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
         ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
     {
         ValidateWorldPayloadSection(
-            "world.terrain",
+            RuntimeSaveManifestSections.WorldTerrain,
             payload.SectionHashes.TerrainHash,
             payload.Counts.TileCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.items",
+            RuntimeSaveManifestSections.WorldItems,
             payload.SectionHashes.ItemsHash,
             payload.Counts.ItemCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.creatures",
+            RuntimeSaveManifestSections.WorldCreatures,
             payload.SectionHashes.CreaturesHash,
             payload.Counts.CreatureCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.stockpiles",
+            RuntimeSaveManifestSections.WorldStockpiles,
             payload.SectionHashes.StockpileZonesHash,
             payload.Counts.StockpileZoneCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.placeables",
+            RuntimeSaveManifestSections.WorldPlaceables,
             payload.SectionHashes.PlaceablesHash,
             payload.Counts.OwnedPlaceableCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.reservations",
+            RuntimeSaveManifestSections.WorldReservations,
             payload.SectionHashes.ReservationsHash,
             payload.Counts.ItemReservationCount + payload.Counts.CreatureReservationCount,
             document,
             issues);
         ValidateWorldPayloadSection(
-            "world.orders",
+            RuntimeSaveManifestSections.WorldOrders,
             payload.SectionHashes.OrdersHash,
             payload.Counts.MiningOrderCount
                 + payload.Counts.HaulOrderCount

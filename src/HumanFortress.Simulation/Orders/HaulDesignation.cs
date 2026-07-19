@@ -9,12 +9,12 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 internal sealed class HaulDesignation
 {
-    public readonly Rectangle WorldRect;
-    public readonly int Z;
-    public readonly int Priority; // 0..100
-    public readonly ulong CreatedTick;
+    internal readonly Rectangle WorldRect;
+    internal readonly int Z;
+    internal readonly int Priority; // 0..100
+    internal readonly ulong CreatedTick;
 
-    public HaulDesignation(Rectangle worldRect, int z, int priority, ulong createdTick)
+    internal HaulDesignation(Rectangle worldRect, int z, int priority, ulong createdTick)
     {
         WorldRect = worldRect;
         Z = z;
@@ -22,4 +22,3 @@ internal sealed class HaulDesignation
         CreatedTick = createdTick;
     }
 }
-

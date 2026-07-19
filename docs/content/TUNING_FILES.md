@@ -24,11 +24,19 @@
   - `fluids`: `{ shallow_threshold, deep_threshold, wade_cost, swim_cost }`
   - `traffic`: `{ low, normal, high, restricted }`
   - `doors`: `{ closed_blocks, open_cost }`
-  - `budgets`: `{ max_nodes_per_search, max_ms_per_tick_pathing }`
+  - `movement`: `{ step_delay_ticks }`
+  - `budgets`: `{ max_nodes_per_search, max_paths_per_tick }`
   - `ramp_vertical_alignment_mode`: `"df"` — ramp at (x,y,z) ascends to neighbors at z+1 while (x,y,z+1) stays `OpenNoFloor`
   - `ramp_requires_highside_support`: true|false — require support at high side below
   - `diagonal_rules`: optional corner checks for diagonals
   - `surface_cost`: optional map `{ mud, snow, grass, moss, ... } -> cost adj`
+
+- `content/registries/tuning.scheduler.json`
+  - `threads`: current deterministic scheduler thread setting
+  - `queue_policy`: current queue policy identifier
+  - `budgets`: `{ hauling, mining, construction }`, each with deterministic `{ plan_per_tick }`
+  - `backpressure`: `{ max_carryover_ticks }`
+  - `hauling_limits`: active/backlog intake limits and reserve thresholds
 
 Notes
 - Cavern generation uses a single connected band at mid-Z of the densest band from `tuning.mapgen.json`.

@@ -12,7 +12,6 @@ internal sealed class FortressNavigationDebugController
 
     public bool HandleKeyboard(
         Keyboard keyboard,
-        FortressNavigationDebugRuntimePorts runtime,
         NavigationOverlay? navigationOverlay,
         Point cursorPosition,
         int currentZ,
@@ -20,7 +19,6 @@ internal sealed class FortressNavigationDebugController
         ulong uiTick)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
-        ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(ui);
 
         if (keyboard.IsKeyPressed(Keys.F9))
@@ -41,7 +39,7 @@ internal sealed class FortressNavigationDebugController
             return true;
         }
 
-        HandlePathTool(runtime, navigationOverlay, cursorPosition, currentZ, ui, uiTick);
+        HandlePathTool(navigationOverlay, cursorPosition, currentZ, ui, uiTick);
         return true;
     }
 
@@ -61,7 +59,6 @@ internal sealed class FortressNavigationDebugController
     }
 
     private void HandlePathTool(
-        FortressNavigationDebugRuntimePorts runtime,
         NavigationOverlay? navigationOverlay,
         Point cursorPosition,
         int currentZ,
@@ -80,11 +77,12 @@ internal sealed class FortressNavigationDebugController
             return;
         }
 
-        var path = runtime.FindNavigationDebugPath(_pathStart.Value, _pathStartZ, cursorPosition, currentZ);
         navigationOverlay.CurrentMode = NavigationOverlay.OverlayMode.PathDisplay;
-        navigationOverlay.SetPath(path);
-
-        double totalCost = path.TotalCost / 10.0;
-        ui.AddToast($"Path: {path.Kind} len={path.Length} cost={totalCost:F1}", uiTick + 180);
+        navigationOverlay.RequestPath(
+            _pathStart.Value,
+            _pathStartZ,
+            cursorPosition,
+            currentZ);
+        ui.AddToast("Path requested", uiTick + 120);
     }
 }

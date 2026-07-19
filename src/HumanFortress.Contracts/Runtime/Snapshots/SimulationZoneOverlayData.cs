@@ -1,5 +1,17 @@
 namespace HumanFortress.Contracts.Runtime.Snapshots;
 
+public readonly record struct ZoneMenuOptionView(
+    string Id,
+    string Category,
+    string DisplayName,
+    string Keybind);
+
+public readonly record struct SimulationZoneCatalogData(
+    IReadOnlyList<ZoneMenuOptionView> Options)
+{
+    public static SimulationZoneCatalogData Empty { get; } = new(Array.Empty<ZoneMenuOptionView>());
+}
+
 public readonly record struct SimulationZoneOverlayData(
     IReadOnlyList<ZoneOverlayCellView> Cells)
 {
@@ -10,7 +22,8 @@ public readonly record struct ZoneOverlayCellView(
     int X,
     int Y,
     char Glyph,
-    string ColorHex);
+    string ColorHex,
+    int ZoneId = 0);
 
 public readonly record struct SimulationZoneDetailData(
     bool HasZone,

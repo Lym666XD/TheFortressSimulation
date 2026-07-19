@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-ore.schema.json",
+  "title": "Active ore generation tuning",
+  "description": "Mechanical contract for deterministic ore deposit counts, host filtering, and vein/blob geometry.",
+  "type": "object",
+  "required": ["global", "ores"],
+  "properties": {
+    "global": {
+      "type": "object",
+      "required": ["tiles_per_deposit", "density_k", "abundance_mult", "size_mult"],
+      "properties": {
+        "tiles_per_deposit": { "type": "integer", "minimum": 1 },
+        "density_k": { "type": "number", "exclusiveMinimum": 0 },
+        "abundance_mult": { "type": "number", "exclusiveMinimum": 0 },
+        "size_mult": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "ores": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/ore" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "contentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "positiveIntegerPair": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "integer", "minimum": 1 }
+    },
+    "ore": {
+      "type": "object",
+      "required": ["id", "allowed_host_tags", "rarity", "form"],
+      "properties": {
+        "id": { "$ref": "#/definitions/contentId" },
+        "allowed_host_tags": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$" }
+        },
+        "rarity": { "enum": ["common", "uncommon", "rare"] },
+        "form": { "enum": ["vein", "blob"] },
+        "size_mult": { "type": "number", "exclusiveMinimum": 0 },
+        "thickness_mult": { "type": "number", "exclusiveMinimum": 0 },
+        "radius_mult": { "type": "number", "exclusiveMinimum": 0 },
+        "vein": { "$ref": "#/definitions/vein" },
+        "blob": { "$ref": "#/definitions/blob" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "form": { "const": "vein" } } },
+          "then": { "required": ["vein"] }
+        },
+        {
+          "if": { "properties": { "form": { "const": "blob" } } },
+          "then": { "required": ["blob"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "vein": {
+      "type": "object",
+      "required": ["size", "thickness", "orientation_bias", "branch_chance"],
+      "properties": {
+        "size": { "$ref": "#/definitions/positiveIntegerPair" },
+        "thickness": { "$ref": "#/definitions/positiveIntegerPair" },
+        "orientation_bias": { "type": "number", "minimum": 0, "maximum": 1 },
+        "branch_chance": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "blob": {
+      "type": "object",
+      "required": ["size", "radius"],
+      "properties": {
+        "size": { "$ref": "#/definitions/positiveIntegerPair" },
+        "radius": { "$ref": "#/definitions/positiveIntegerPair" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

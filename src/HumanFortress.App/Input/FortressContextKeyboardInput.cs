@@ -7,11 +7,12 @@ namespace HumanFortress.App.Input;
 internal readonly record struct FortressContextKeyboardInputContext(
     Keyboard Keyboard,
     UiStore Ui,
-    ZonesUI? ZonesUi,
     StockpileUI? StockpileUi,
     int CurrentZ,
     ulong UiTick,
     SimulationBuildCatalogData BuildCatalog,
+    SimulationZoneCatalogData ZoneCatalog,
+    SimulationDebugMenuData DebugMenu,
     bool TilePanelOpen,
     Action HideTilePanel,
     Action<string> CreateStockpile);
@@ -31,7 +32,8 @@ internal static class FortressContextKeyboardInput
 
         if (ui.DebugOpen)
         {
-            changed |= FortressDebugMenuInput.Handle(keyboard, ui);
+            DebugSelectionPolicy.EnsureValidSelections(ui, context.DebugMenu);
+            changed |= FortressDebugMenuInput.Handle(keyboard, ui, context.DebugMenu);
         }
         else if (ui.Context == UiContext.QuickMenu && ui.QuickMenu == QuickMenuKind.Orders)
         {
@@ -39,7 +41,12 @@ internal static class FortressContextKeyboardInput
         }
         else if (ui.Context == UiContext.QuickMenu && ui.QuickMenu == QuickMenuKind.Zones)
         {
-            changed |= FortressZonesKeyboardInput.Handle(keyboard, ui, context.ZonesUi, context.CurrentZ, context.UiTick);
+            changed |= FortressZonesKeyboardInput.Handle(
+                keyboard,
+                ui,
+                context.ZoneCatalog,
+                context.CurrentZ,
+                context.UiTick);
         }
         else if (ui.Context == UiContext.QuickMenu && ui.QuickMenu == QuickMenuKind.Build)
         {

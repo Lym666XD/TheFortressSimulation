@@ -13,24 +13,24 @@ internal sealed class ZoneShard
     /// <summary>
     /// Zone ID this shard belongs to.
     /// </summary>
-    public int ZoneId { get; }
+    internal int ZoneId { get; }
 
     /// <summary>
     /// Chunk this shard is in.
     /// </summary>
-    public ChunkKey ChunkKey { get; }
+    internal ChunkKey ChunkKey { get; }
 
     /// <summary>
     /// Member cells in this chunk (bitset for 32x32=1024 cells).
     /// </summary>
-    public BitArray MemberCells { get; }
+    internal BitArray MemberCells { get; }
 
     /// <summary>
     /// Number of member cells in this shard.
     /// </summary>
-    public int CellCount { get; private set; }
+    internal int CellCount { get; private set; }
 
-    public ZoneShard(int zoneId, ChunkKey chunkKey)
+    internal ZoneShard(int zoneId, ChunkKey chunkKey)
     {
         ZoneId = zoneId;
         ChunkKey = chunkKey;
@@ -41,7 +41,7 @@ internal sealed class ZoneShard
     /// <summary>
     /// Add cells to this shard.
     /// </summary>
-    public void AddCells(System.Collections.Generic.IEnumerable<int> cellIndices)
+    internal void AddCells(System.Collections.Generic.IEnumerable<int> cellIndices)
     {
         foreach (var idx in cellIndices)
         {
@@ -56,7 +56,7 @@ internal sealed class ZoneShard
     /// <summary>
     /// Remove cells from this shard.
     /// </summary>
-    public void RemoveCells(System.Collections.Generic.IEnumerable<int> cellIndices)
+    internal void RemoveCells(System.Collections.Generic.IEnumerable<int> cellIndices)
     {
         foreach (var idx in cellIndices)
         {
@@ -71,7 +71,7 @@ internal sealed class ZoneShard
     /// <summary>
     /// Check if a cell is part of this shard.
     /// </summary>
-    public bool ContainsCell(int cellIndex)
+    internal bool ContainsCell(int cellIndex)
     {
         return cellIndex >= 0 && cellIndex < Chunk.CELLS_PER_LAYER && MemberCells[cellIndex];
     }
@@ -79,7 +79,7 @@ internal sealed class ZoneShard
     /// <summary>
     /// Clear all cells.
     /// </summary>
-    public void Clear()
+    internal void Clear()
     {
         MemberCells.SetAll(false);
         CellCount = 0;

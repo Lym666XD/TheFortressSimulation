@@ -1,11 +1,10 @@
-using System.Collections.Concurrent;
 using HumanFortress.Simulation.Orders;
 
 namespace HumanFortress.Jobs.Mining;
 
 internal sealed class MiningBacklogBuffer
 {
-    private readonly ConcurrentQueue<BacklogEntry> _queue = new();
+    private readonly Queue<BacklogEntry> _queue = new();
 
     internal int Count => _queue.Count;
 
@@ -46,6 +45,14 @@ internal sealed class MiningBacklogBuffer
         }
 
         return snapshot;
+    }
+
+    internal void RestoreStateSnapshot(IEnumerable<MiningBacklogEntrySnapshot> entries)
+    {
+        _queue.Clear();
+
+        foreach (var entry in entries.OrderBy(static entry => entry.Order))
+            _queue.Enqueue(new BacklogEntry(entry.Dig, entry.EnqueuedTick));
     }
 
     private readonly record struct BacklogEntry(MiningSystem.PlannedDig Dig, ulong EnqueueTick);

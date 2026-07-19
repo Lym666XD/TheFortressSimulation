@@ -1,10 +1,12 @@
+using HumanFortress.Contracts.Runtime;
+
 namespace HumanFortress.App.Session;
 
 internal static class FortressSessionSizeRules
 {
-    public const int DefaultFortressSize = 2;
-    public const int MinFortressSize = 2;
-    public const int MaxFortressSize = 8;
+    public const int DefaultFortressSize = FortressSessionSizeLimits.DefaultFortressSize;
+    public const int MinFortressSize = FortressSessionSizeLimits.MinFortressSize;
+    public const int MaxFortressSize = FortressSessionSizeLimits.MaxFortressSize;
 
     internal static int Normalize(int fortressSize)
     {

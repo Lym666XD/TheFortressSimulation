@@ -24,7 +24,7 @@ internal static partial class ZoneOverlaySnapshotBuilder
             definition.DisplayName,
             definition.Category,
             zone.TotalCells,
-            zone.MemberChunks.Count,
+            zone.GetMemberChunksSnapshot().Count,
             zone.Enabled);
     }
 }

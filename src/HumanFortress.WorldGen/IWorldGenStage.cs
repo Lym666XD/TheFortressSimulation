@@ -10,20 +10,20 @@ namespace HumanFortress.WorldGen.Implementation
     
     internal sealed class WorldGenContext
     {
-        public WorldParams Params { get; set; }
-        public WorldTile[,] Tiles { get; set; }
-        public uint Seed { get; set; }
-        public int Width => Tiles.GetLength(0);
-        public int Height => Tiles.GetLength(1);
+        internal WorldParams Params { get; set; }
+        internal WorldTile[,] Tiles { get; set; }
+        internal uint Seed { get; set; }
+        internal int Width => Tiles.GetLength(0);
+        internal int Height => Tiles.GetLength(1);
         
-        public WorldGenContext(WorldParams parameters)
+        internal WorldGenContext(WorldParams parameters)
         {
             Params = parameters;
             Tiles = new WorldTile[parameters.Width, parameters.Height];
             Seed = parameters.Seed;
         }
         
-        public uint GetStageSeed(string stageName)
+        internal uint GetStageSeed(string stageName)
         {
             unchecked
             {

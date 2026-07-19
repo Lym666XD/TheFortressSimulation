@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.stockpile-catalog.schema.json",
+  "title": "Stockpile definition registry source family",
+  "type": "array",
+  "items": { "$ref": "#/definitions/stockpile" },
+  "definitions": {
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "stockpile": {
+      "type": "object",
+      "required": ["id", "name", "mode", "target_fill", "filters"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$" },
+        "name": { "type": "string", "minLength": 1 },
+        "desc": { "type": "string" },
+        "mode": { "enum": ["pull_only", "push_only", "bidirectional"] },
+        "target_fill": { "type": "number", "minimum": 0, "maximum": 1 },
+        "filters": {
+          "type": "object",
+          "required": ["allow_tags", "deny_tags"],
+          "properties": {
+            "allow_tags": { "$ref": "#/definitions/stringSet" },
+            "deny_tags": { "$ref": "#/definitions/stringSet" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

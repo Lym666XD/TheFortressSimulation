@@ -2,7 +2,7 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
 
-internal sealed class StockpileDiffLog
+internal sealed partial class StockpileDiffLog
 {
     private readonly List<StockpileDiff> _ops = new();
     private readonly object _lock = new();
@@ -53,7 +53,7 @@ internal sealed class StockpileDiffLog
                 ZoneId = 0,
                 CellIndex = -1,
                 ItemHandle = 0,
-                Quantity = copiedCells.Values.Sum(static cells => cells.Count),
+                Quantity = copiedCells.Sum(static entry => entry.Value.Count),
                 Priority = priority,
                 SystemId = systemId,
                 LocalSeq = _localSeq++,
@@ -97,7 +97,7 @@ internal sealed class StockpileDiffLog
     }
 
     internal void AddPlaceItem(
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -119,7 +119,7 @@ internal sealed class StockpileDiffLog
     }
 
     internal void AddRemoveItem(
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -198,7 +198,7 @@ internal sealed class StockpileDiffLog
 
     private void AddItemIndexDiff(
         StockpileDiffOp op,
-        int itemHandle,
+        ulong itemHandle,
         ChunkKey chunk,
         int cellIndex,
         int zoneId,
@@ -234,7 +234,7 @@ internal sealed class StockpileDiffLog
     {
         lock (_lock)
         {
-            _ops.Sort((a, b) => a.GetSortKey().CompareTo(b.GetSortKey()));
+            _ops.Sort(StockpileDiff.CompareDeterministic);
             return _ops.ToList();
         }
     }

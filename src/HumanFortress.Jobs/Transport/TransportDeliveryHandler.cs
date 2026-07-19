@@ -11,6 +11,7 @@ internal sealed class TransportDeliveryHandler
     private readonly TransportJobFinalizer _jobFinalizer;
     private readonly ITransportJobCompletionSink _completionSink;
     private readonly ITransportJobLogger _logger;
+    private readonly TransportStatsTracker _stats;
     private readonly string _jobTag;
 
     internal TransportDeliveryHandler(
@@ -20,6 +21,7 @@ internal sealed class TransportDeliveryHandler
         TransportJobFinalizer jobFinalizer,
         ITransportJobCompletionSink? completionSink,
         ITransportJobLogger? logger,
+        TransportStatsTracker stats,
         string jobTag)
     {
         _destinationValidator = destinationValidator ?? throw new ArgumentNullException(nameof(destinationValidator));
@@ -28,6 +30,7 @@ internal sealed class TransportDeliveryHandler
         _jobFinalizer = jobFinalizer ?? throw new ArgumentNullException(nameof(jobFinalizer));
         _completionSink = completionSink ?? NullTransportJobCompletionSink.Instance;
         _logger = logger ?? NullTransportJobLogger.Instance;
+        _stats = stats ?? throw new ArgumentNullException(nameof(stats));
         _jobTag = jobTag ?? throw new ArgumentNullException(nameof(jobTag));
     }
 
@@ -46,7 +49,7 @@ internal sealed class TransportDeliveryHandler
         _diffEmitter.UnmarkCarried(job.ItemId, job.Dest);
         _stockpileIndexEmitter.RecordDelivery(job.ItemId, job.Dest, job.Reason);
         _jobFinalizer.Finish(job, finished);
-        JobStats.Completed++;
+        _stats.RecordCompleted();
         _logger.Log($"[TRANS-JOBS][{tick}] Completed item={job.ItemId} to=({job.Dest.X},{job.Dest.Y},{job.Dest.Z}) reason={job.Reason} by worker={job.CreatureId}");
         _completionSink.RecordJobCompletion(job.CreatureId, _jobTag);
     }

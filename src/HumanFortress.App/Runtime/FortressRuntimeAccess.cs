@@ -11,6 +11,7 @@ internal sealed partial class FortressRuntimeAccess :
     IFortressRuntimeDebugSpawnQueryAccess,
     IFortressRuntimeDebugSpawnCommandAccess,
     IFortressRuntimeBuildCatalogAccess,
+    IFortressRuntimeZoneCatalogAccess,
     IFortressRuntimeWorkshopPanelQueryAccess,
     IFortressRuntimeWorkshopPanelCommandAccess,
     IFortressRuntimeNavigationDebugAccess,
@@ -21,8 +22,8 @@ internal sealed partial class FortressRuntimeAccess :
     IFortressRuntimeBootstrapAccess
 {
     private readonly IFortressRuntimeSessionBootstrapPort _bootstrap;
+    private readonly IFortressRuntimeSessionCatalogQueryPort _catalog;
     private readonly IFortressRuntimeSessionReadPort _read;
-    private readonly IFortressRuntimeSessionSnapshotPort _snapshots;
     private readonly IFortressRuntimeSessionPlacementCommandPort _placementCommands;
     private readonly IFortressRuntimeSessionDebugCommandPort _debugCommands;
     private readonly IFortressRuntimeSessionSimulationControlPort _simulationControl;
@@ -34,8 +35,8 @@ internal sealed partial class FortressRuntimeAccess :
         ArgumentNullException.ThrowIfNull(runtimeSession);
 
         _bootstrap = runtimeSession;
+        _catalog = runtimeSession;
         _read = runtimeSession;
-        _snapshots = runtimeSession;
         _placementCommands = runtimeSession;
         _debugCommands = runtimeSession;
         _simulationControl = runtimeSession;

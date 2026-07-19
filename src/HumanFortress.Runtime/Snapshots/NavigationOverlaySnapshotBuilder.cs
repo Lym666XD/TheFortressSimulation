@@ -1,5 +1,6 @@
 using HumanFortress.Contracts.Navigation;
 using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Navigation;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Runtime.Snapshots;
@@ -20,6 +21,7 @@ internal static partial class NavigationOverlaySnapshotBuilder
     internal static SimulationNavigationPathData FindPath(
         NavigationManager? navigation,
         NavigationTuning? tuning,
+        RuntimeNavigationServices? navigationServices,
         Point start,
         int startZ,
         Point destination,
@@ -29,7 +31,6 @@ internal static partial class NavigationOverlaySnapshotBuilder
             return SimulationNavigationPathData.Unavailable;
 
         var activeTuning = tuning ?? NavigationTuning.Default;
-        var astar = new DeterministicAStar(activeTuning);
         var flags = activeTuning.AllowDiagonals ? PathFlags.AllowDiagonal : PathFlags.None;
         var request = new PathRequest(
             new Point3(start.X, start.Y, startZ),
@@ -38,7 +39,7 @@ internal static partial class NavigationOverlaySnapshotBuilder
             flags,
             0);
 
-        var path = astar.FindPath(request, new WorldNavigationView(navigation));
+        var path = (navigationServices ?? new RuntimeNavigationServices(null, activeTuning)).FindPath(navigation, in request);
         return new SimulationNavigationPathData(
             true,
             path.Kind.ToString(),

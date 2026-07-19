@@ -16,7 +16,7 @@ internal sealed class MiningJobFinalizer
     internal void Finish(ActiveMiningJob job, ICollection<ActiveMiningJob> finished)
     {
         _tileReservations.Release(job);
-        _reservations.ReleaseCreature(job.WorkerId);
+        _reservations.TryReleaseCreature(job.CreatureReservation);
         finished.Add(job);
     }
 }

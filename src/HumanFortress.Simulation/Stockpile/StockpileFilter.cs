@@ -119,7 +119,7 @@ internal struct ItemStackRef
     /// <summary>
     /// Unique handle for this item stack.
     /// </summary>
-    internal int Handle { get; init; }
+    internal ulong Handle { get; init; }
 
     /// <summary>
     /// Static item definition id for filter matching.
@@ -157,7 +157,7 @@ internal struct ItemStackRef
     internal int ReservedByJobId { get; set; }
 
     internal ItemStackRef(
-        int handle,
+        ulong handle,
         string definitionId = "",
         IEnumerable<string>? tags = null,
         string? materialId = null,

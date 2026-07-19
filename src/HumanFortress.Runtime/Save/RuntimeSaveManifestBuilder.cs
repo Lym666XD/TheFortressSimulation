@@ -21,27 +21,37 @@ internal static class RuntimeSaveManifestBuilder
         var worldCounts = worldSnapshot?.Counts;
         var sections = new[]
         {
-            CreateSection("world", checkpoint.WorldHash, requiredForFortressMode: true, worldCounts?.ChunkCount),
-            CreateSection("world.terrain", worldSectionHashes?.TerrainHash, requiredForFortressMode: true, worldCounts?.TileCount),
-            CreateSection("world.items", worldSectionHashes?.ItemsHash, requiredForFortressMode: true, worldCounts?.ItemCount),
-            CreateSection("world.creatures", worldSectionHashes?.CreaturesHash, requiredForFortressMode: true, worldCounts?.CreatureCount),
-            CreateSection("world.reservations", worldSectionHashes?.ReservationsHash, requiredForFortressMode: true, CountReservations(worldCounts)),
-            CreateSection("world.stockpiles", worldSectionHashes?.StockpileZonesHash, requiredForFortressMode: true, worldCounts?.StockpileZoneCount),
-            CreateSection("world.placeables", worldSectionHashes?.PlaceablesHash, requiredForFortressMode: true, worldCounts?.OwnedPlaceableCount),
-            CreateSection("world.orders", worldSectionHashes?.OrdersHash, requiredForFortressMode: true, CountOrders(worldCounts)),
-            CreateSection("rng", checkpoint.RngHash, requiredForFortressMode: true, checkpoint.RngStreamCount),
-            CreateSection("commands.executed", checkpoint.CommandLogHash, requiredForFortressMode: false, checkpoint.CommandLogRecordCount),
-            CreateSection("commands.pending", checkpoint.PendingCommandLogHash, requiredForFortressMode: false, checkpoint.PendingCommandLogRecordCount),
-            CreateSection("jobs.transport", checkpoint.TransportHash, requiredForFortressMode: false),
-            CreateSection("jobs.mining", checkpoint.MiningHash, requiredForFortressMode: false),
-            CreateSection("jobs.craft", checkpoint.CraftHash, requiredForFortressMode: false)
+            CreateSection(RuntimeSaveManifestSections.World, checkpoint.WorldHash, worldCounts?.ChunkCount),
+            CreateSection(RuntimeSaveManifestSections.WorldTerrain, worldSectionHashes?.TerrainHash, worldCounts?.TileCount),
+            CreateSection(RuntimeSaveManifestSections.WorldItems, worldSectionHashes?.ItemsHash, worldCounts?.ItemCount),
+            CreateSection(RuntimeSaveManifestSections.WorldCreatures, worldSectionHashes?.CreaturesHash, worldCounts?.CreatureCount),
+            CreateSection(RuntimeSaveManifestSections.WorldReservations, worldSectionHashes?.ReservationsHash, CountReservations(worldCounts)),
+            CreateSection(RuntimeSaveManifestSections.WorldStockpiles, worldSectionHashes?.StockpileZonesHash, worldCounts?.StockpileZoneCount),
+            CreateSection(RuntimeSaveManifestSections.WorldPlaceables, worldSectionHashes?.PlaceablesHash, worldCounts?.OwnedPlaceableCount),
+            CreateSection(RuntimeSaveManifestSections.WorldOrders, worldSectionHashes?.OrdersHash, CountOrders(worldCounts)),
+            CreateSection(RuntimeSaveManifestSections.Rng, checkpoint.RngHash, checkpoint.RngStreamCount),
+            CreateSection(RuntimeSaveManifestSections.CommandsExecuted, checkpoint.CommandLogHash, checkpoint.CommandLogRecordCount),
+            CreateSection(RuntimeSaveManifestSections.CommandsPending, checkpoint.PendingCommandLogHash, checkpoint.PendingCommandLogRecordCount),
+            CreateSection(
+                RuntimeSaveManifestSections.JobsTransport,
+                checkpoint.TransportHash,
+                CountSection(checkpoint.TransportHash, checkpoint.TransportRecordCount)),
+            CreateSection(
+                RuntimeSaveManifestSections.JobsMining,
+                checkpoint.MiningHash,
+                CountSection(checkpoint.MiningHash, checkpoint.MiningRecordCount)),
+            CreateSection(
+                RuntimeSaveManifestSections.JobsCraft,
+                checkpoint.CraftHash,
+                CountSection(checkpoint.CraftHash, checkpoint.CraftRecordCount))
         };
 
         return new RuntimeSaveManifestData(
             RuntimeSaveFormat.CurrentVersion,
             EngineBuild,
             checkpoint.Metadata,
-            CreateContentSignature(content),
+            RuntimeSaveContentSignatureFactory.FromRuntimeContent(content),
+            RuntimeSaveContentCatalogSummaryFactory.FromRuntimeContent(content),
             checkpoint,
             sections);
     }
@@ -49,9 +59,11 @@ internal static class RuntimeSaveManifestBuilder
     private static RuntimeSaveManifestSectionData CreateSection(
         string name,
         string? hash,
-        bool requiredForFortressMode,
         long? recordCount = null)
     {
+        if (!RuntimeSaveManifestSections.TryGetRequirement(name, out var requiredForFortressMode))
+            throw new InvalidOperationException($"Runtime save manifest section '{name}' is not defined.");
+
         return new RuntimeSaveManifestSectionData(
             name,
             hash != null,
@@ -77,22 +89,11 @@ internal static class RuntimeSaveManifestBuilder
             : null;
     }
 
-    private static RuntimeSaveContentSignatureData CreateContentSignature(
-        FortressRuntimeContentSnapshot? content)
+    private static long? CountSection(string? hash, int recordCount)
     {
-        if (content == null)
-            return RuntimeSaveContentSignatureData.Unavailable;
-
-        return new RuntimeSaveContentSignatureData(
-            HasContent: true,
-            ContentVersion: content.ContentVersion.ToString(),
-            ContentHash: content.ContentHash,
-            MaterialContentHash: content.Materials.ContentHash,
-            MaterialCount: content.Materials.GetNameToIdSnapshot().Count,
-            TerrainKindCount: content.TerrainKinds.GetAllKinds().Count(),
-            ConstructionCount: content.Constructions.Count,
-            RecipeCount: content.Recipes.Count,
-            GeologyCount: content.GeologyEntries.Count,
-            ZoneCount: content.ZonesById.Count);
+        return hash == null
+            ? null
+            : recordCount;
     }
+
 }

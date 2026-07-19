@@ -14,8 +14,6 @@ namespace HumanFortress.Simulation.Stockpile;
 /// </summary>
 internal sealed class StockpileDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     private readonly SimulationWorld _world;
     private readonly StockpileManager _zoneManager;
 
@@ -33,8 +31,11 @@ internal sealed class StockpileDiffApplicator
         if (diffs.Count == 0)
             return;
 
+        var sortedDiffs = diffs.ToList();
+        sortedDiffs.Sort(StockpileDiff.CompareDeterministic);
+
         var applicator = new StockpileDiffApplicator(world);
-        foreach (var diff in diffs.OrderBy(static d => d.GetSortKey()))
+        foreach (var diff in sortedDiffs)
         {
             try
             {
@@ -43,10 +44,11 @@ internal sealed class StockpileDiffApplicator
             catch (Exception ex)
             {
                 SimulationDiagnostics.Error(
-                    LogCallback,
+                    world.Diagnostics,
                     "Simulation.StockpileDiff",
                     $"[StockpileDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
                     ex);
+                throw;
             }
         }
     }
@@ -154,20 +156,17 @@ internal sealed class StockpileDiffApplicator
             }
         }
 
-        int acceptedCount = acceptedCells.Values.Sum(static cells => cells.Count);
+        var acceptedRows = OrderCellsByChunk(acceptedCells).ToArray();
+        int acceptedCount = acceptedRows.Sum(static entry => entry.Value.Count);
         if (acceptedCount == 0)
             return;
 
         var homeChunk = acceptedCells.ContainsKey(request.HomeChunk)
             ? request.HomeChunk
-            : acceptedCells.Keys
-                .OrderBy(static key => key.Z)
-                .ThenBy(static key => key.ChunkY)
-                .ThenBy(static key => key.ChunkX)
-                .First();
+            : acceptedRows[0].Key;
         int zoneId = _zoneManager.CreateZone(request.Name, homeChunk, request.CreatedTick);
 
-        foreach (var (chunkKey, cells) in acceptedCells)
+        foreach (var (chunkKey, cells) in acceptedRows.Select(static entry => (entry.Key, entry.Value)))
         {
             var chunk = world.GetChunk(chunkKey);
             if (chunk == null)
@@ -184,11 +183,11 @@ internal sealed class StockpileDiffApplicator
         {
             zone.Filter = request.Filter;
             zone.Priority = request.ZonePriority;
-            zone.UpdateMemberChunks(acceptedCells.Keys);
+            zone.UpdateMemberChunks(acceptedRows.Select(static entry => entry.Key));
         }
 
         SimulationDiagnostics.Information(
-            LogCallback,
+            _world.Diagnostics,
             "Simulation.StockpileDiff",
             $"[STOCKPILE] Applied zone {zoneId} name={request.Name} cells={acceptedCount}");
     }
@@ -202,17 +201,22 @@ internal sealed class StockpileDiffApplicator
         return chunk.GetTile(localX, localY).Kind == TerrainKind.OpenWithFloor;
     }
 
+    private static IOrderedEnumerable<KeyValuePair<ChunkKey, List<int>>> OrderCellsByChunk(
+        IEnumerable<KeyValuePair<ChunkKey, List<int>>> cellsByChunk)
+    {
+        return cellsByChunk
+            .OrderBy(static entry => entry.Key.Z)
+            .ThenBy(static entry => entry.Key.ChunkY)
+            .ThenBy(static entry => entry.Key.ChunkX);
+    }
+
     private void HandleDeleteZone(SimulationWorld world, StockpileDiff diff)
     {
         var zone = _zoneManager.GetZone(diff.ZoneId);
         if (zone == null)
             return;
 
-        foreach (var chunkKey in zone.MemberChunks
-            .Distinct()
-            .OrderBy(static key => key.Z)
-            .ThenBy(static key => key.ChunkY)
-            .ThenBy(static key => key.ChunkX))
+        foreach (var chunkKey in zone.GetMemberChunksSnapshot())
         {
             var chunk = world.GetChunk(chunkKey);
             chunk?.GetStockpileData()?.DeleteShard(diff.ZoneId);
@@ -220,7 +224,7 @@ internal sealed class StockpileDiffApplicator
 
         _zoneManager.DeleteZone(diff.ZoneId);
         SimulationDiagnostics.Information(
-            LogCallback,
+            _world.Diagnostics,
             "Simulation.StockpileDiff",
             $"[STOCKPILE] Deleted zone {diff.ZoneId}");
     }
@@ -327,9 +331,9 @@ internal sealed class StockpileDiffApplicator
             : new List<string>();
     }
 
-    private bool TryProjectItem(int itemHandle, out ItemStackRef stack)
+    private bool TryProjectItem(ulong itemHandle, out ItemStackRef stack)
     {
-        var item = _world.Items.GetInstanceByEntityId(unchecked((uint)itemHandle));
+        var item = _world.Items.GetInstanceByEntityKey(itemHandle);
         if (item == null)
         {
             stack = new ItemStackRef(itemHandle);

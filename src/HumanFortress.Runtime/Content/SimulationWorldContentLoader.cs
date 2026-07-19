@@ -1,6 +1,8 @@
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
+using HumanFortress.Content.Registry;
 using HumanFortress.Contracts.Content.Loading;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Content;
@@ -16,12 +18,17 @@ internal static partial class SimulationWorldContentLoader
         bool strictContent = false,
         bool treatWarningsAsErrors = false,
         Action<string>? log = null,
-        Action<FortressContentLoadReport>? logContentIssues = null)
+        Action<FortressContentLoadReport>? logContentIssues = null,
+        IDiagnosticSink? diagnostics = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var loadedContent = FortressContentLoader.Load(baseDir);
+        using var diagnosticScope = ContentRegistryDiagnostics.PushSink(diagnostics ?? world.Diagnostics);
+        var loadedContent = strictContent
+            ? FortressContentLoader.LoadStrictResult(baseDir)
+            : FortressContentLoader.Load(baseDir);
+        var structuredRegistry = loadedContent.StructuredRegistry;
         logContentIssues?.Invoke(loadedContent.ToReport());
         if (strictContent)
         {
@@ -33,7 +40,7 @@ internal static partial class SimulationWorldContentLoader
             log?.Invoke("[GameStateManager] WARNING: Data directory not found. Tried:");
             log?.Invoke($"  - {loadedContent.CoreDataPath.PublishedPath}");
             log?.Invoke($"  - {loadedContent.CoreDataPath.DevelopmentPath}");
-            return FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+            return FortressRuntimeContentSnapshotLoader.CaptureLoaded(structuredRegistry);
         }
 
         log?.Invoke($"[GameStateManager] Loading core content catalogs from {loadedContent.CoreDataPath.ResolvedPath}");
@@ -46,7 +53,12 @@ internal static partial class SimulationWorldContentLoader
         LogItemDefinitions(content.Items, log);
         world.Items.SetDefinitionCatalog(content.Items.Catalog);
 
-        var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(content.CoreData);
+        var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(
+            structuredRegistry,
+            content.CoreData,
+            loadedContent.MechanicalIdentity,
+            loadedContent.Professions,
+            loadedContent.StockpilePresetDefinitions);
 
         foreach (var zoneData in runtimeContent.ZoneDefinitions)
         {

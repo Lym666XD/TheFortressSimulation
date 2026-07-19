@@ -1,5 +1,6 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
 
@@ -9,9 +10,10 @@ internal static partial class FortressPlacementOverlayRenderer
 {
     private static void RenderAnchoredPlacementPreview(
         FortressUiOverlayRenderContext context,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         Point mouseWorld,
-        SimulationBuildCatalogData buildCatalog)
+        SimulationBuildCatalogData buildCatalog,
+        SimulationPlacementPreviewFrameData placementPreviews)
     {
         var ui = context.Ui;
         var mapSurface = context.MapSurface;
@@ -23,7 +25,8 @@ internal static partial class FortressPlacementOverlayRenderer
         }
         else if (ui.PlaceMode == PlacementMode.HaulSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            var preview = context.Runtime.Read.GetPlacementPreviewData(
+            var preview = FortressPlacementPreviewRequests.Find(
+                placementPreviews,
                 firstCorner,
                 mouseWorld,
                 context.CurrentZ,
@@ -32,8 +35,10 @@ internal static partial class FortressPlacementOverlayRenderer
         }
         else if (ui.PlaceMode == PlacementMode.MiningSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            var previewMode = ToPlacementPreviewMode(ui.SelectedMiningAction);
-            var preview = context.Runtime.Read.GetPlacementPreviewData(
+            var previewMode = FortressPlacementPreviewRequests.ForMiningAction(
+                ui.SelectedMiningAction);
+            var preview = FortressPlacementPreviewRequests.Find(
+                placementPreviews,
                 firstCorner,
                 mouseWorld,
                 context.CurrentZ,
@@ -47,7 +52,12 @@ internal static partial class FortressPlacementOverlayRenderer
         }
         else if (ui.PlaceMode == PlacementMode.ConstructionSecondCorner && context.UiServices?.OrdersUI != null)
         {
-            RenderConstructionPlacementPreview(context, viewport, mouseWorld, firstCorner);
+            RenderConstructionPlacementPreview(
+                context,
+                viewport,
+                mouseWorld,
+                firstCorner,
+                placementPreviews);
         }
         else if (ui.PlaceMode == PlacementMode.BuildableConfirmAnchor && ui.SelectedBuildableConstructionId != null)
         {
@@ -62,13 +72,16 @@ internal static partial class FortressPlacementOverlayRenderer
 
     private static void RenderConstructionPlacementPreview(
         FortressUiOverlayRenderContext context,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         Point mouseWorld,
-        Point firstCorner)
+        Point firstCorner,
+        SimulationPlacementPreviewFrameData placementPreviews)
     {
         var ui = context.Ui;
-        var previewMode = ToPlacementPreviewMode(ui.SelectedConstructionShape);
-        var preview = context.Runtime.Read.GetPlacementPreviewData(
+        var previewMode = FortressPlacementPreviewRequests.ForConstructionShape(
+            ui.SelectedConstructionShape);
+        var preview = FortressPlacementPreviewRequests.Find(
+            placementPreviews,
             firstCorner,
             mouseWorld,
             context.CurrentZ,

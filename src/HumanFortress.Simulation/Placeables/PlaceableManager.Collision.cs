@@ -19,6 +19,13 @@ internal sealed partial class PlaceableManager
     {
         var result = new CollisionResult { CanPlace = true };
 
+        if (footprint.W <= 0 || footprint.D <= 0 || footprint.H <= 0)
+        {
+            result.CanPlace = false;
+            result.FailureReason = $"Invalid footprint {footprint}";
+            return result;
+        }
+
         // Check each cell in footprint
         for (int dy = 0; dy < footprint.D; dy++)
         {
@@ -26,6 +33,14 @@ internal sealed partial class PlaceableManager
             {
                 int worldX = position.X + dx;
                 int worldY = position.Y + dy;
+
+                if (!world.IsValidPosition(worldX, worldY, z))
+                {
+                    result.CanPlace = false;
+                    result.FailureReason = $"Cell ({worldX}, {worldY}, {z}) is outside the world";
+                    result.BlockedCells.Add(new Point(worldX, worldY));
+                    return result;
+                }
 
                 // Get chunk for this cell
                 int chunkX = worldX / Chunk.SIZE_XY;
@@ -45,7 +60,8 @@ internal sealed partial class PlaceableManager
 
                 // Check if cell already has placeable
                 var placeableData = chunk.GetPlaceableData();
-                if (placeableData?.HasPlaceableAt(localIndex) == true)
+                if (placeableData?.HasPlaceableAt(localIndex) == true
+                    || chunk.HasFurnitureAt(localIndex))
                 {
                     result.CanPlace = false;
                     result.FailureReason = $"Cell ({worldX}, {worldY}) already occupied";

@@ -9,13 +9,13 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 internal sealed class BuildableConstructionDesignation
 {
-    public readonly string ConstructionId;
-    public readonly Point Anchor;
-    public readonly int Z;
-    public readonly int Priority;
-    public readonly ulong CreatedTick;
+    internal readonly string ConstructionId;
+    internal readonly Point Anchor;
+    internal readonly int Z;
+    internal readonly int Priority;
+    internal readonly ulong CreatedTick;
 
-    public BuildableConstructionDesignation(string constructionId, Point anchor, int z, int priority, ulong createdTick)
+    internal BuildableConstructionDesignation(string constructionId, Point anchor, int z, int priority, ulong createdTick)
     {
         ConstructionId = constructionId;
         Anchor = anchor;
@@ -24,4 +24,3 @@ internal sealed class BuildableConstructionDesignation
         CreatedTick = createdTick;
     }
 }
-

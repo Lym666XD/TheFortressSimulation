@@ -4,10 +4,11 @@ namespace HumanFortress.App.Input;
 
 internal readonly record struct FortressInputRuntimePortDependencies(
     IFortressRuntimeBuildCatalogAccess BuildCatalog,
+    IFortressRuntimeZoneCatalogAccess ZoneCatalog,
     IFortressRuntimeWorkshopPanelQueryAccess WorkshopQueries,
     IFortressRuntimeWorkshopPanelCommandAccess WorkshopCommands,
-    IFortressRuntimeNavigationDebugAccess NavigationDebug,
     IFortressRuntimeSimulationControlAccess SimulationControl,
+    IFortressRuntimeUiInputAccess UiInput,
     IFortressRuntimePlacementQueryAccess PlacementQueries,
     IFortressRuntimePlacementCommandAccess PlacementCommands,
     IFortressRuntimeDebugSpawnQueryAccess DebugSpawnQueries,

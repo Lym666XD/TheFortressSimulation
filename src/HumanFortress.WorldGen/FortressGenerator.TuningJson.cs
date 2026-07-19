@@ -5,13 +5,6 @@ namespace HumanFortress.WorldGen.Implementation
 {
     internal sealed partial class FortressGenerator
     {
-        private static float SimplexNoise(float x, float y, uint seed)
-        {
-            int n = (int)(x * 1619 + y * 31337 + seed * 6971);
-            n = (n << 13) ^ n;
-            return (1.0f - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f);
-        }
-
         private static JsonObject? Object(JsonObject? parent, string name)
         {
             return parent?[name] as JsonObject;

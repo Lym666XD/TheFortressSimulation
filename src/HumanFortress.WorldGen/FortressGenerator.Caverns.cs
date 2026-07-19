@@ -118,12 +118,15 @@ namespace HumanFortress.WorldGen.Implementation
                 int gy = (int)(rng.NextFloat() * worldSize);
                 int sZ = surfaceZ[gx, gy];
                 int zTop = Math.Max(1, sZ);
-                int zBot = Math.Max(1, zC);
+                // Keep the cavern floor as the shaft landing and clear only the air column above it.
+                int zBot = Math.Max(1, zC + 1);
                 for (int z = zBot; z <= zTop; z++)
                 {
                     int ccx = gx / tilesPerChunk; int llx = gx % tilesPerChunk;
                     int ccy = gy / tilesPerChunk; int lly = gy % tilesPerChunk;
-                    map.GetChunk(ccx, ccy).SetGeology(llx, lly, z, "core_terrain_air");
+                    var shaftChunk = map.GetChunk(ccx, ccy);
+                    shaftChunk.SetGeology(llx, lly, z, "core_terrain_air");
+                    shaftChunk.SetSurfaceBits(llx, lly, z, 0);
                 }
 
                 int tx = gx, ty = gy;

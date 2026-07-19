@@ -1,5 +1,7 @@
 using HumanFortress.Contracts.Simulation.Save;
+using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.World;
+using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Save;
 
@@ -12,7 +14,7 @@ internal static partial class WorldSavePayloadRestorer
             issues.Add($"Unsupported world payload schema version {payload.SchemaVersion}.");
         }
 
-        if (payload.SizeInChunks < 2 || payload.SizeInChunks > 8)
+        if (payload.SizeInChunks < WorldModel.MinSizeInChunks || payload.SizeInChunks > WorldModel.MaxSizeInChunks)
         {
             issues.Add($"World payload size in chunks {payload.SizeInChunks} is outside the supported range.");
         }
@@ -51,6 +53,14 @@ internal static partial class WorldSavePayloadRestorer
         {
             issues.Add("World payload item count does not match payload items.");
         }
+        else
+        {
+            ValidateUniquePayloadIds(
+                payload.Items,
+                static item => item.Guid,
+                "item",
+                issues);
+        }
 
         if (payload.Creatures == null)
         {
@@ -59,6 +69,14 @@ internal static partial class WorldSavePayloadRestorer
         else if (payload.Counts.CreatureCount != payload.Creatures.Length)
         {
             issues.Add("World payload creature count does not match payload creatures.");
+        }
+        else
+        {
+            ValidateUniquePayloadIds(
+                payload.Creatures,
+                static creature => creature.Guid,
+                "creature",
+                issues);
         }
 
         if (payload.ItemReservations == null)
@@ -170,6 +188,42 @@ internal static partial class WorldSavePayloadRestorer
         }
     }
 
+    private static void ValidateUniquePayloadIds<T>(
+        IReadOnlyList<T> rows,
+        Func<T, Guid> getGuid,
+        string label,
+        ICollection<string> issues)
+    {
+        var seen = new HashSet<Guid>();
+        var ownersByEntityKey = new Dictionary<ulong, Guid>();
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var guid = getGuid(rows[i]);
+            if (guid == Guid.Empty)
+            {
+                issues.Add($"World payload {label}[{i}] has an empty guid.");
+                continue;
+            }
+
+            if (!seen.Add(guid))
+            {
+                issues.Add($"World payload {label}[{i}] duplicates guid {guid}.");
+                continue;
+            }
+
+            ulong entityKey = DiffTargetEncoding.EntityKey(guid);
+            if (ownersByEntityKey.TryGetValue(entityKey, out var existingOwner))
+            {
+                issues.Add(
+                    $"World payload {label}[{i}] guid {guid} collides with {existingOwner} at entity key 0x{entityKey:X16}.");
+            }
+            else
+            {
+                ownersByEntityKey.Add(entityKey, guid);
+            }
+        }
+    }
+
     private static void ValidateSupportedSections(
         WorldSavePayloadData payload,
         bool restoreSupportedState,
@@ -194,60 +248,8 @@ internal static partial class WorldSavePayloadRestorer
         {
             ValidateSupportedItemSlice(payload, issues);
             ValidateReservationReferences(payload, issues);
-        }
-    }
-
-    private static void ValidateSupportedItemSlice(
-        WorldSavePayloadData payload,
-        ICollection<string> issues)
-    {
-        if (payload.Items == null)
-            return;
-
-        for (var i = 0; i < payload.Items.Length; i++)
-        {
-            var item = payload.Items[i];
-            if (item.ContainedBy.HasValue
-                || item.CarriedBy.HasValue
-                || item.EquippedBy.HasValue
-                || item.InstalledAt.HasValue)
-            {
-                issues.Add($"World item payload[{i}] is not a ground item; carried, contained, equipped, and installed item restore is not supported yet.");
-            }
-
-            if (item.ReservationTokens is { Length: > 0 })
-            {
-                issues.Add($"World item payload[{i}] has item-local reservation tokens; reservation restore is not supported yet.");
-            }
-        }
-    }
-
-    private static void ValidateReservationReferences(
-        WorldSavePayloadData payload,
-        ICollection<string> issues)
-    {
-        if (payload.Items != null && payload.ItemReservations != null)
-        {
-            var itemIds = payload.Items.Select(item => item.Guid).ToHashSet();
-            for (var i = 0; i < payload.ItemReservations.Length; i++)
-            {
-                if (!itemIds.Contains(payload.ItemReservations[i].ItemId))
-                {
-                    issues.Add($"World item reservation payload[{i}] references missing item {payload.ItemReservations[i].ItemId}.");
-                }
-            }
-        }
-
-        if (payload.Creatures != null && payload.CreatureReservations != null)
-        {
-            var creatureIds = payload.Creatures.Select(creature => creature.Guid).ToHashSet();
-            for (var i = 0; i < payload.CreatureReservations.Length; i++)
-            {
-                if (!creatureIds.Contains(payload.CreatureReservations[i].WorkerId))
-                {
-                    issues.Add($"World creature reservation payload[{i}] references missing creature {payload.CreatureReservations[i].WorkerId}.");
-                }
-            }
+            ValidateStockpileZonePayloads(payload, issues);
+            ValidateOrderPayloads(payload, issues);
         }
     }
 }

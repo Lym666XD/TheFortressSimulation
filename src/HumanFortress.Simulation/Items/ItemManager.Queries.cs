@@ -8,7 +8,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get instance by GUID
     /// </summary>
-    public ItemInstance? GetInstance(Guid guid)
+    internal ItemInstance? GetInstance(Guid guid)
     {
         lock (_instanceLock)
         {
@@ -19,61 +19,77 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Find an item by the compact entity id used in DiffTarget.
     /// </summary>
-    public ItemInstance? GetInstanceByEntityId(uint entityId)
+    internal ItemInstance? GetInstanceByEntityId(uint entityId)
     {
         lock (_instanceLock)
         {
-            foreach (var inst in _instances.Values)
-            {
-                if (ToEntityId(inst.Guid) == entityId)
-                    return inst;
-            }
+            return _legacyEntityIdIndex.TryGetValue(entityId, out var ids)
+                && ids.Count > 0
+                && _instances.TryGetValue(ids[0], out var instance)
+                ? instance
+                : null;
+        }
+    }
 
-            return null;
+    /// <summary>
+    /// Find an item by the wider stable entity key used by entity-scoped DiffTarget operations.
+    /// </summary>
+    internal ItemInstance? GetInstanceByEntityKey(ulong entityKey)
+    {
+        lock (_instanceLock)
+        {
+            return _identityIndex.TryResolve(entityKey, out var guid)
+                ? _instances.GetValueOrDefault(guid)
+                : null;
         }
     }
 
     /// <summary>
     /// Get all instances (creates a snapshot for thread safety)
     /// </summary>
-    public IEnumerable<ItemInstance> GetAllInstances()
+    internal IEnumerable<ItemInstance> GetAllInstances()
     {
         lock (_instanceLock)
         {
-            return _instances.Values.ToList();
+            return _instances
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Get all item instances that are physically on the ground.
     /// </summary>
-    public IEnumerable<ItemInstance> GetGroundInstances()
+    internal IEnumerable<ItemInstance> GetGroundInstances()
     {
         lock (_instanceLock)
         {
-            return _instances.Values
+            return OrderItemsSpatially(_instances
+                .Select(static entry => entry.Value)
                 .Where(inst => inst.IsOnGround)
-                .ToList();
+            ).ToList();
         }
     }
 
     /// <summary>
     /// Get all ground item instances on a Z layer.
     /// </summary>
-    public IEnumerable<ItemInstance> GetGroundInstancesAtZ(int z)
+    internal IEnumerable<ItemInstance> GetGroundInstancesAtZ(int z)
     {
         lock (_instanceLock)
         {
-            return _instances.Values
+            return OrderItemsSpatially(_instances
+                .Select(static entry => entry.Value)
                 .Where(inst => inst.IsOnGround && inst.Z == z)
-                .ToList();
+            ).ToList();
         }
     }
 
     /// <summary>
     /// Get snapshot of items at a given tile (on ground by default).
     /// </summary>
-    public IEnumerable<ItemInstance> GetItemsAt(Point worldPos, int z, bool groundOnly = true)
+    internal IEnumerable<ItemInstance> GetItemsAt(Point worldPos, int z, bool groundOnly = true)
     {
         lock (_instanceLock)
         {
@@ -91,14 +107,16 @@ internal sealed partial class ItemManager
                 }
             }
 
-            return list;
+            return list
+                .OrderBy(static item => item.Guid)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Get snapshot of ground items at a given tile.
     /// </summary>
-    public IEnumerable<ItemInstance> GetGroundItemsAt(Point worldPos, int z)
+    internal IEnumerable<ItemInstance> GetGroundItemsAt(Point worldPos, int z)
     {
         return GetItemsAt(worldPos, z, groundOnly: true);
     }
@@ -106,7 +124,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get snapshot of ground items inside a world rectangle on one Z layer.
     /// </summary>
-    public IEnumerable<ItemInstance> GetGroundItemsIn(Rectangle worldRect, int z)
+    internal IEnumerable<ItemInstance> GetGroundItemsIn(Rectangle worldRect, int z)
     {
         lock (_instanceLock)
         {
@@ -127,12 +145,26 @@ internal sealed partial class ItemManager
                 }
             }
 
-            return list;
+            return OrderItemsSpatially(list).ToList();
         }
+    }
+
+    private static IOrderedEnumerable<ItemInstance> OrderItemsSpatially(IEnumerable<ItemInstance> items)
+    {
+        return items
+            .OrderBy(static item => item.Z)
+            .ThenBy(static item => item.Position.Y)
+            .ThenBy(static item => item.Position.X)
+            .ThenBy(static item => item.Guid);
     }
 
     private static uint ToEntityId(Guid guid)
     {
         return DiffTargetEncoding.EntityId(guid);
+    }
+
+    private static ulong ToEntityKey(Guid guid)
+    {
+        return DiffTargetEncoding.EntityKey(guid);
     }
 }

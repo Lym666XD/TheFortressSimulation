@@ -1,5 +1,6 @@
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
+using HumanFortress.Jobs.Diff;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Jobs.Safety;
@@ -13,7 +14,6 @@ internal sealed class SanitizeSystem : ITick
     private readonly HumanFortress.Simulation.World.World _world;
     private readonly DiffLog? _diff;
     private readonly Action<string>? _log;
-    private int _counter;
     private readonly int _interval;
     private readonly int _maxPerTick;
 
@@ -41,8 +41,7 @@ internal sealed class SanitizeSystem : ITick
 
     internal void WriteTick(ulong tick)
     {
-        _counter++;
-        if ((_counter % _interval) != 0) return;
+        if (((tick + 1) % (ulong)_interval) != 0) return;
 
         int moved = 0;
         foreach (var creature in _world.Creatures.GetAllInstances().ToList())
@@ -87,7 +86,12 @@ internal sealed class SanitizeSystem : ITick
         if (_diff == null || creatureId == Guid.Empty) return false;
         if (!WorldCellTargetEncoding.TryEncode(dest.X, dest.Y, dest.Z, out var target)) return false;
 
-        _diff.AddOp(new DiffOp(DiffOpType.MoveCreature, target.ToDiffTarget(DiffTargetEncoding.SignedEntityId(creatureId)), SystemId, Priority));
+        _diff.AddOp(new DiffOp(
+            DiffOpType.MoveCreature,
+            target.ToDiffTarget(creatureId),
+            SystemId,
+            Priority,
+            systemOrder: JobDiffSystemOrder.Sanitize));
         return true;
     }
 
@@ -96,7 +100,12 @@ internal sealed class SanitizeSystem : ITick
         if (_diff == null || itemId == Guid.Empty) return false;
         if (!WorldCellTargetEncoding.TryEncode(dest.X, dest.Y, dest.Z, out var target)) return false;
 
-        _diff.AddOp(new DiffOp(DiffOpType.MoveItem, target.ToDiffTarget(DiffTargetEncoding.SignedEntityId(itemId)), SystemId, Priority));
+        _diff.AddOp(new DiffOp(
+            DiffOpType.MoveItem,
+            target.ToDiffTarget(itemId),
+            SystemId,
+            Priority,
+            systemOrder: JobDiffSystemOrder.Sanitize));
         return true;
     }
 

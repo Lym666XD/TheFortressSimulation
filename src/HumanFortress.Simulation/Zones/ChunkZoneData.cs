@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Per-chunk zone data including zone shards per ZONE_SPEC.md §4.3.
 /// Thread-safe for reads during Read phase, mutations only in Write phase.
 /// </summary>
-internal sealed class ChunkZoneData
+internal sealed partial class ChunkZoneData
 {
     private readonly Dictionary<int, ZoneShard> _shards = new();
     private readonly int[] _cellZones; // zoneId per cell, 0=none
@@ -18,9 +18,9 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Dirty generation for cache invalidation.
     /// </summary>
-    public uint DirtyGeneration { get; private set; }
+    internal uint DirtyGeneration { get; private set; }
 
-    public ChunkZoneData()
+    internal ChunkZoneData()
     {
         _cellZones = new int[Chunk.CELLS_PER_LAYER];
         DirtyGeneration = 1;
@@ -31,7 +31,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Get zone ID at a specific cell (Read-safe).
     /// </summary>
-    public int GetZoneAtCell(int cellIndex)
+    internal int GetZoneAtCell(int cellIndex)
     {
         if (cellIndex < 0 || cellIndex >= Chunk.CELLS_PER_LAYER)
             return 0;
@@ -45,7 +45,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Get shard for a zone (Read-safe).
     /// </summary>
-    public ZoneShard? GetShard(int zoneId)
+    internal ZoneShard? GetShard(int zoneId)
     {
         lock (_readLock)
         {
@@ -56,18 +56,21 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Get all shards in this chunk (Read-safe).
     /// </summary>
-    public IEnumerable<ZoneShard> GetAllShards()
+    internal IEnumerable<ZoneShard> GetAllShards()
     {
         lock (_readLock)
         {
-            return _shards.Values.ToList();
+            return _shards
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => entry.Value)
+                .ToList();
         }
     }
 
     /// <summary>
     /// Check if zone has any cells in this chunk.
     /// </summary>
-    public bool HasZone(int zoneId)
+    internal bool HasZone(int zoneId)
     {
         lock (_readLock)
         {
@@ -82,7 +85,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Create or update a zone shard (Write phase only).
     /// </summary>
-    public void CreateOrUpdateShard(int zoneId, ChunkKey chunkKey)
+    internal void CreateOrUpdateShard(int zoneId, ChunkKey chunkKey)
     {
         if (!_shards.ContainsKey(zoneId))
         {
@@ -94,7 +97,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Add cells to a zone (Write phase only).
     /// </summary>
-    public void AddCellsToZone(int zoneId, IEnumerable<int> cellIndices)
+    internal void AddCellsToZone(int zoneId, IEnumerable<int> cellIndices)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;
@@ -114,7 +117,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Remove cells from a zone (Write phase only).
     /// </summary>
-    public void RemoveCellsFromZone(int zoneId, IEnumerable<int> cellIndices)
+    internal void RemoveCellsFromZone(int zoneId, IEnumerable<int> cellIndices)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;
@@ -134,7 +137,7 @@ internal sealed class ChunkZoneData
     /// <summary>
     /// Delete a zone shard (Write phase only).
     /// </summary>
-    public void DeleteShard(int zoneId)
+    internal void DeleteShard(int zoneId)
     {
         if (!_shards.TryGetValue(zoneId, out var shard))
             return;

@@ -54,8 +54,10 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
         IReadOnlyList<CreatureInstance> creatures,
         HashSet<Guid> busy,
         ulong tick,
-        bool middleAlreadySatisfied)
+        bool middleAlreadySatisfied,
+        out bool increasePathSearchAttempt)
     {
+        increasePathSearchAttempt = false;
         var jobPoint = new Point3(dig.Cell.X, dig.Cell.Y, dig.Z);
         var candidates = _workerCandidates?.SelectCandidates(_world, _jobTag, busy, _world.Reservations, tick, jobPoint)
             ?? creatures;
@@ -72,7 +74,14 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
                 continue;
             }
 
-            if (!_world.Reservations.TryReserveCreature(worker.Guid, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"mine:{dig.DesignationId}"))
+            string jobId = $"mine:{dig.DesignationId}";
+            if (!_world.Reservations.TryAcquireCreature(
+                    worker.Guid,
+                    _systemId,
+                    jobId,
+                    tick,
+                    tick + (ulong)_creatureReserveTtlTicks,
+                    out var creatureReservation))
             {
                 continue;
             }
@@ -82,11 +91,14 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
                 new Point3(adjacent.X, adjacent.Y, dig.Z),
                 MoveMode.Walk,
                 PathFlags.AllowDiagonal,
-                MiningPathSeed.From(worker.Guid, dig.Cell));
+                MiningPathSeed.From(worker.Guid, dig.Cell),
+                dig.PathSearchAttempt);
             var path = _paths.Solve(in request, in _navView);
             if (path.Kind != PathResultKind.Found)
             {
-                _world.Reservations.ReleaseCreature(worker.Guid);
+                if (path.Kind == PathResultKind.Partial)
+                    increasePathSearchAttempt = true;
+                _world.Reservations.TryReleaseCreature(creatureReservation);
                 continue;
             }
 
@@ -112,10 +124,12 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
                 ReplanFailCount = 0,
                 Action = dig.Action,
                 Segment = dig.Segment,
-                DesignationId = dig.DesignationId
+                DesignationId = dig.DesignationId,
+                PathSearchAttempt = request.EffectiveSearchAttempt,
+                CreatureReservation = creatureReservation
             };
 
-            _move.BeginMovement(DiffTargetEncoding.EntityId(worker.Guid), request, path);
+            _move.BeginMovement(DiffTargetEncoding.EntityKey(worker.Guid), request, path);
             busy.Add(worker.Guid);
             _reservedTiles.Reserve(dig);
             _logger.Log($"[MINING][{tick}] Assign worker={worker.Guid} target=({dig.Cell.X},{dig.Cell.Y},{dig.Z}) id={dig.DesignationId} adj=({adjacent.X},{adjacent.Y},{dig.Z}) terrain={job.TerrainKind} ticks={requiredTicks}");
@@ -131,6 +145,14 @@ internal sealed class MiningAssignmentHandler : IMiningAssignmentHandler
         IReadOnlyList<CreatureInstance> creatures,
         HashSet<Guid> busy,
         ulong tick,
-        bool middleAlreadySatisfied) =>
-        TryAssign(in dig, adjacent, creatures, busy, tick, middleAlreadySatisfied);
+        bool middleAlreadySatisfied,
+        out bool increasePathSearchAttempt) =>
+        TryAssign(
+            in dig,
+            adjacent,
+            creatures,
+            busy,
+            tick,
+            middleAlreadySatisfied,
+            out increasePathSearchAttempt);
 }

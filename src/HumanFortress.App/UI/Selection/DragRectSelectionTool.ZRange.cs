@@ -10,9 +10,9 @@ internal sealed partial class DragRectSelectionTool
         if (delta == 0) return;
 
         if (delta > 0)
-            _zMax = Math.Min(_worldSizeTiles - 1, _zMax + 1);
+            _zMax = Math.Min(_worldBounds.MaxZExclusive - 1, _zMax + 1);
         else
-            _zMin = Math.Max(0, _zMin - 1);
+            _zMin = Math.Max(_worldBounds.MinZ, _zMin - 1);
 
         EnsureStartZInsideRange();
         Changed?.Invoke(Current);
@@ -22,7 +22,7 @@ internal sealed partial class DragRectSelectionTool
     {
         if (_state != State.Dragging) return;
 
-        int clampedZ = Math.Max(0, Math.Min(_worldSizeTiles - 1, z));
+        int clampedZ = ClampZ(z);
         _zMin = Math.Min(_zStart, clampedZ);
         _zMax = Math.Max(_zStart, clampedZ);
         Changed?.Invoke(Current);
@@ -36,8 +36,13 @@ internal sealed partial class DragRectSelectionTool
 
     private Point Clamp(Point p)
     {
-        int x = Math.Max(0, Math.Min(_worldSizeTiles - 1, p.X));
-        int y = Math.Max(0, Math.Min(_worldSizeTiles - 1, p.Y));
+        int x = Math.Clamp(p.X, _worldBounds.MinX, _worldBounds.MaxXExclusive - 1);
+        int y = Math.Clamp(p.Y, _worldBounds.MinY, _worldBounds.MaxYExclusive - 1);
         return new Point(x, y);
+    }
+
+    private int ClampZ(int z)
+    {
+        return Math.Clamp(z, _worldBounds.MinZ, _worldBounds.MaxZExclusive - 1);
     }
 }

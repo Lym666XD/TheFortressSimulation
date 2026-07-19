@@ -33,7 +33,10 @@ internal static partial class WorldSavePayloadRestorer
             return Failed(payload, issues);
 
         var world = new SimulationWorld(payload.SizeInChunks, payload.MaxZ);
-        foreach (var chunkPayload in payload.Chunks)
+        foreach (var chunkPayload in payload.Chunks
+                     .OrderBy(static chunk => chunk.Z)
+                     .ThenBy(static chunk => chunk.ChunkY)
+                     .ThenBy(static chunk => chunk.ChunkX))
         {
             var chunk = world.GetOrCreateChunk(new ChunkKey(chunkPayload.ChunkX, chunkPayload.ChunkY, chunkPayload.Z));
             for (var i = 0; i < chunkPayload.Tiles.Length; i++)
@@ -45,6 +48,11 @@ internal static partial class WorldSavePayloadRestorer
 
         if (restoreSupportedState)
         {
+            var placeablePreflightIssues = ValidatePlaceablesSnapshot(world, payload.Placeables);
+            issues.AddRange(placeablePreflightIssues);
+            if (issues.Count > 0)
+                return FailedAfterPartialRestore(payload, world, issues);
+
             world.Items.SetDependencies(world);
             var itemIssues = world.Items.RestoreItemsSnapshot(payload.Items);
             issues.AddRange(itemIssues);
@@ -56,8 +64,11 @@ internal static partial class WorldSavePayloadRestorer
             issues.AddRange(reservationIssues);
             var stockpileIssues = world.Stockpiles.RestoreZonesSnapshot(payload.StockpileZones);
             issues.AddRange(stockpileIssues);
-            var placeableIssues = RestorePlaceablesSnapshot(world, payload.Placeables);
-            issues.AddRange(placeableIssues);
+
+            if (issues.Count > 0)
+                return FailedAfterPartialRestore(payload, world, issues);
+
+            RestoreValidatedPlaceablesSnapshot(world, payload.Placeables!);
             var orderIssues = world.Orders.RestoreActiveSnapshot(
                 payload.MiningOrders,
                 payload.HaulOrders,

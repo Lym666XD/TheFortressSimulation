@@ -1,20 +1,31 @@
 # Diff Log And Merge Strategies
 
-Updated: 2026-06-13
+Updated: 2026-07-09
 Status: target contract with current implementation notes
 
-Current code implements the first deterministic `DiffLog` pass in
-`src/HumanFortress.Core/Simulation/DiffLog.cs`, but it is not the full contract
-below. Current implementation details:
+Current code implements a deterministic `DiffLog` pass in
+`src/HumanFortress.Core/Simulation/DiffLog.cs`, plus several typed
+Simulation-owned diff logs/applicators. It is still not the full data-driven
+contract below. Current implementation details:
 
 - operations are still enum-backed `DiffOpType`, not data-driven operation IDs;
-- targets are numeric `DiffTarget` values, not the JSON schema shown below;
-- the sort key uses chunk, local index, numeric priority, and a stable
-  FNV-derived low-byte system hash;
+- targets are numeric `DiffTarget` values, not the JSON schema shown below, but
+  entity-scoped targets now carry a wider stable `EntityKey` beside the legacy
+  32-bit `EntityId` compatibility field;
+- the coarse sort key uses chunk, local index, numeric priority, and operation;
+  the final comparer then uses operation, effective entity key, legacy entity
+  id, explicit numeric `SystemOrder`, ordinal `SystemId`, `LocalSeq`, and
+  packed args;
 - lower numeric priority currently wins in conflicts;
-- explicit system precedence is Mining > Transport/Haul > Construction >
-  default;
-- several authoritative subsystems still bypass the full diff/applicator model.
+- explicit system precedence is now producer-supplied numeric `SystemOrder`
+  rather than Core hardcoding Jobs/App/Runtime system names;
+- typed Simulation diff families use explicit local-sequence or
+  spatial/priority sort-key helpers in `SimulationDiffSortKeys`;
+- the general `SimulationDiffApplicator` is split by dispatch/logging, terrain,
+  item, creature, and target/entity lookup responsibility;
+- several authoritative subsystems still bypass the future full data-driven
+  layer/operation registry, even where current commands already flow through
+  typed diff/applicator paths.
 
 Use this file as the target merge contract. Use current code and
 [GAME_ARCHITECTURE.md](GAME_ARCHITECTURE.md) for present implementation facts.
@@ -243,7 +254,7 @@ Compaction: where commutative, pre-combine diffs with identical (tileKey, op, ar
 
 Pooling: diff buffers are pooled per worker; merge lists use struct nodes to avoid allocations.
 
-Budgets: per stage iterations/ms enforced; long lists may yield and continue next tick (see Job Scheduler).
+Budgets: deterministic per-stage work counts are enforced; long lists may yield and continue next tick (see Job Scheduler).
 
 11) LLM Integration Rules (Normative)
 

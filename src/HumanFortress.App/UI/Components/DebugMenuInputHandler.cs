@@ -29,6 +29,7 @@ internal sealed partial class DebugMenuInputHandler
     {
         var ui = _uiStateManager.Store;
         var debugMenu = _debugMenuProvider();
+        DebugSelectionPolicy.EnsureValidSelections(ui, debugMenu);
         if (!ui.DebugOpen) return false;
 
         var win = DebugLayoutCalculator.CalculateWindow(_screenWidth, _screenHeight);
@@ -38,7 +39,7 @@ internal sealed partial class DebugMenuInputHandler
             return true;
 
         if (ui.DebugMenuTab == 1)
-            return HandleCreatureTabClick(ui, win, localPos);
+            return HandleCreatureTabClick(ui, debugMenu, win, localPos);
 
         if (ui.DebugMenuTab != 2)
             return true;

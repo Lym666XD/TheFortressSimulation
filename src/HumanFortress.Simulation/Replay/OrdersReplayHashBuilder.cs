@@ -27,7 +27,7 @@ internal static class OrdersReplayHashBuilder
     {
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("orders.snapshot.v1");
+            hash.AddString("orders.snapshot.v2");
             Append(hash, mining, hauls, construction, buildable);
         });
     }
@@ -37,7 +37,7 @@ internal static class OrdersReplayHashBuilder
         ArgumentNullException.ThrowIfNull(hash);
         ArgumentNullException.ThrowIfNull(world);
 
-        hash.AddString("orders.snapshot.v1");
+        hash.AddString("orders.snapshot.v2");
         Append(
             hash,
             world.Orders.GetActiveMiningSnapshot(),
@@ -89,6 +89,9 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Priority)
             .ThenBy(d => d.WorldRect.X)
             .ThenBy(d => d.WorldRect.Y)
+            .ThenBy(d => d.WorldRect.Width)
+            .ThenBy(d => d.WorldRect.Height)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -108,6 +111,13 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Priority)
             .ThenBy(d => d.WorldRect.X)
             .ThenBy(d => d.WorldRect.Y)
+            .ThenBy(d => d.WorldRect.Width)
+            .ThenBy(d => d.WorldRect.Height)
+            .ThenBy(d => d.Shape)
+            .ThenBy(d => d.Filter.CategoryKey, StringComparer.Ordinal)
+            .ThenBy(d => d.Filter.PreferredMaterialId, StringComparer.Ordinal)
+            .ThenBy(d => BuildMaterialFilterSortKey(d.Filter), StringComparer.Ordinal)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -119,6 +129,7 @@ internal static class OrdersReplayHashBuilder
             hash.AddNullableString(designation.Filter.PreferredMaterialId);
             hash.AddString(designation.Filter.CategoryKey);
             AddStringArrayHash(hash, designation.Filter.Tags);
+            AddMaterialRequirementsHash(hash, designation.Filter.Requirements);
             hash.AddInt32(designation.Priority);
             hash.AddUInt64(designation.CreatedTick);
         }
@@ -132,6 +143,7 @@ internal static class OrdersReplayHashBuilder
             .ThenBy(d => d.Anchor.Y)
             .ThenBy(d => d.Z)
             .ThenBy(d => d.Priority)
+            .ThenBy(d => d.CreatedTick)
             .ToArray();
         hash.AddInt32(ordered.Length);
         foreach (var designation in ordered)
@@ -163,6 +175,39 @@ internal static class OrdersReplayHashBuilder
         foreach (var value in ordered)
         {
             hash.AddString(value);
+        }
+    }
+
+    private static string BuildMaterialFilterSortKey(MaterialFilterSpec filter)
+    {
+        return string.Join(
+            '\0',
+            filter.Tags.Order(StringComparer.Ordinal)
+                .Concat(filter.Requirements
+                    .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.Count)
+                    .Select(static requirement => $"{requirement.Tag}|{requirement.DefinitionId}|{requirement.Count}")));
+    }
+
+    private static void AddMaterialRequirementsHash(
+        ReplayHashBuilder hash,
+        IEnumerable<MaterialRequirementSpec> requirements)
+    {
+        var ordered = requirements
+            .Where(static requirement =>
+                !string.IsNullOrWhiteSpace(requirement.Tag)
+                || !string.IsNullOrWhiteSpace(requirement.DefinitionId))
+            .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static requirement => requirement.Count)
+            .ToArray();
+        hash.AddInt32(ordered.Length);
+        foreach (var requirement in ordered)
+        {
+            hash.AddNullableString(requirement.Tag);
+            hash.AddNullableString(requirement.DefinitionId);
+            hash.AddInt32(requirement.Count);
         }
     }
 }

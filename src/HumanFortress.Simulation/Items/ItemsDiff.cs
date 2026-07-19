@@ -1,5 +1,6 @@
 using System;
 using HumanFortress.Simulation.Diff;
+using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Items;
@@ -27,6 +28,8 @@ internal readonly struct ItemsDiff
     internal readonly int LocalSeq;
     internal readonly Guid ItemGuid;
     internal readonly Guid NewItemGuid;
+    internal readonly ReservationManager.ItemToken SourceReservation;
+    internal readonly ReservationManager.ItemToken StagedReservation;
 
     internal ItemsDiff(
         ItemsDiffOp op,
@@ -38,7 +41,9 @@ internal readonly struct ItemsDiff
         string systemId,
         int localSeq,
         Guid itemGuid = default,
-        Guid newItemGuid = default)
+        Guid newItemGuid = default,
+        ReservationManager.ItemToken sourceReservation = default,
+        ReservationManager.ItemToken stagedReservation = default)
     {
         Op = op;
         Chunk = chunk;
@@ -50,6 +55,8 @@ internal readonly struct ItemsDiff
         LocalSeq = localSeq;
         ItemGuid = itemGuid;
         NewItemGuid = newItemGuid;
+        SourceReservation = sourceReservation;
+        StagedReservation = stagedReservation;
     }
 
     internal long GetSortKey()
@@ -61,5 +68,28 @@ internal readonly struct ItemsDiff
             LocalIndex,
             Priority,
             LocalSeq);
+    }
+
+    internal static int CompareDeterministic(ItemsDiff left, ItemsDiff right)
+    {
+        int result = left.Chunk.Z.CompareTo(right.Chunk.Z);
+        if (result != 0) return result;
+        result = left.Chunk.ChunkX.CompareTo(right.Chunk.ChunkX);
+        if (result != 0) return result;
+        result = left.Chunk.ChunkY.CompareTo(right.Chunk.ChunkY);
+        if (result != 0) return result;
+        result = left.LocalIndex.CompareTo(right.LocalIndex);
+        if (result != 0) return result;
+        result = left.Priority.CompareTo(right.Priority);
+        if (result != 0) return result;
+        result = left.Op.CompareTo(right.Op);
+        if (result != 0) return result;
+        result = left.ItemGuid.CompareTo(right.ItemGuid);
+        if (result != 0) return result;
+        result = left.NewItemGuid.CompareTo(right.NewItemGuid);
+        if (result != 0) return result;
+        result = string.Compare(left.SystemId, right.SystemId, StringComparison.Ordinal);
+        if (result != 0) return result;
+        return left.LocalSeq.CompareTo(right.LocalSeq);
     }
 }

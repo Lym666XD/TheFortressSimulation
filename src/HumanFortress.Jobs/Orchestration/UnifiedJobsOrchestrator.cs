@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Configuration;
 
@@ -9,11 +8,11 @@ namespace HumanFortress.Jobs.Orchestration;
 /// </summary>
 internal sealed class UnifiedJobsOrchestrator : ITick
 {
-    private readonly ITick _haulPlanner;
-    private readonly ITick? _constructionMaterialsPlanner;
-    private readonly ITick _miningPlanner;
-    private readonly ITick _constructionPlanner;
-    private readonly ITick? _craftPlanner;
+    private readonly ISequentialCompatibilityStage _haulPlanner;
+    private readonly ISequentialCompatibilityStage? _constructionMaterialsPlanner;
+    private readonly ISequentialCompatibilityStage _miningPlanner;
+    private readonly ISequentialCompatibilityStage _constructionPlanner;
+    private readonly ISequentialCompatibilityStage? _craftPlanner;
 
     private readonly IUnifiedTransportJobExecutor _haulJobs;
     private readonly IUnifiedMiningJobExecutor _miningJobs;
@@ -22,39 +21,40 @@ internal sealed class UnifiedJobsOrchestrator : ITick
 
     private readonly SchedulerTunings _tunings;
     private readonly Action<string>? _log;
-    private readonly Stopwatch _sw = new();
+    private readonly IReadOnlyList<IReadPlanStage> _readPlanStages;
 
     internal record struct LastStats(
         ulong Tick,
-        long PlanMsTotal,
-        long ApplyMsTotal,
+        int PlanStageCount,
+        int ApplyStageCount,
         int IntakeHaul,
         int IntakeMining,
         int IntakeConstruction,
         int IntakeCraft,
-        long HaulPlanMs,
-        long MiningPlanMs,
-        long ConstructionPlanMs,
-        long CraftPlanMs,
-        long HaulApplyMs,
-        long MiningApplyMs,
-        long ConstructionApplyMs,
-        long CraftApplyMs);
+        int HaulPlanStageCount,
+        int MiningPlanStageCount,
+        int ConstructionPlanStageCount,
+        int CraftPlanStageCount,
+        int HaulApplyStageCount,
+        int MiningApplyStageCount,
+        int ConstructionApplyStageCount,
+        int CraftApplyStageCount);
 
     private LastStats _last;
 
     internal UnifiedJobsOrchestrator(
-        ITick haulPlanner,
-        ITick? constructionMaterialsPlanner,
-        ITick miningPlanner,
-        ITick constructionPlanner,
-        ITick? craftPlanner,
+        ISequentialCompatibilityStage haulPlanner,
+        ISequentialCompatibilityStage? constructionMaterialsPlanner,
+        ISequentialCompatibilityStage miningPlanner,
+        ISequentialCompatibilityStage constructionPlanner,
+        ISequentialCompatibilityStage? craftPlanner,
         IUnifiedTransportJobExecutor haulJobs,
         IUnifiedMiningJobExecutor miningJobs,
         IUnifiedConstructionJobExecutor constructionJobs,
         IUnifiedCraftJobExecutor? craftJobs,
         SchedulerTunings tunings,
-        Action<string>? log = null)
+        Action<string>? log = null,
+        IReadOnlyList<IReadPlanStage>? readPlanStages = null)
     {
         _haulPlanner = haulPlanner;
         _constructionMaterialsPlanner = constructionMaterialsPlanner;
@@ -67,6 +67,7 @@ internal sealed class UnifiedJobsOrchestrator : ITick
         _craftJobs = craftJobs;
         _tunings = tunings;
         _log = log;
+        _readPlanStages = readPlanStages ?? Array.Empty<IReadPlanStage>();
     }
 
     internal int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items;
@@ -85,41 +86,32 @@ internal sealed class UnifiedJobsOrchestrator : ITick
 
     internal void ReadTick(ulong tick)
     {
-        _sw.Restart();
-        var t0 = _sw.ElapsedMilliseconds;
-        _miningPlanner.ReadTick(tick);
-        var tMining = _sw.ElapsedMilliseconds;
-        _haulPlanner.ReadTick(tick);
-        var tHaul = _sw.ElapsedMilliseconds;
-        _constructionMaterialsPlanner?.ReadTick(tick);
-        _constructionPlanner.ReadTick(tick);
-        var tConstr = _sw.ElapsedMilliseconds;
-        _craftPlanner?.ReadTick(tick);
-        var tCraft = _sw.ElapsedMilliseconds;
-        var planMs = tCraft - t0;
-
-        _log?.Invoke($"[SCHED][{tick}] Plan: mining={tMining - t0}ms haul={tHaul - tMining}ms construction={tConstr - tHaul}ms craft={tCraft - tConstr}ms total={planMs}ms");
-
-        _last = _last with
+        foreach (var stage in _readPlanStages)
         {
-            Tick = tick,
-            PlanMsTotal = planMs,
-            HaulPlanMs = tHaul - tMining,
-            MiningPlanMs = tMining - t0,
-            ConstructionPlanMs = tConstr - tHaul,
-            CraftPlanMs = tCraft - tConstr
-        };
+            stage.ReadPlan(tick);
+        }
     }
 
     internal void WriteTick(ulong tick)
     {
-        _miningPlanner.WriteTick(tick);
-        _haulPlanner.WriteTick(tick);
-        _constructionMaterialsPlanner?.WriteTick(tick);
-        _constructionPlanner.WriteTick(tick);
-        _craftPlanner?.WriteTick(tick);
+        // These legacy planner families still consume queues and mutate authority.
+        // Keep their old two-pass order, but execute both passes in serialized Write.
+        _miningPlanner.PrepareSequentialCompatibility(tick);
+        _haulPlanner.PrepareSequentialCompatibility(tick);
+        _constructionMaterialsPlanner?.PrepareSequentialCompatibility(tick);
+        _constructionPlanner.PrepareSequentialCompatibility(tick);
+        _craftPlanner?.PrepareSequentialCompatibility(tick);
 
-        var sw = Stopwatch.StartNew();
+        _miningPlanner.ApplySequentialCompatibility(tick);
+        _haulPlanner.ApplySequentialCompatibility(tick);
+        _constructionMaterialsPlanner?.ApplySequentialCompatibility(tick);
+        _constructionPlanner.ApplySequentialCompatibility(tick);
+        _craftPlanner?.ApplySequentialCompatibility(tick);
+
+        var haulPlannerApplyStageCount = 1;
+        var miningPlannerApplyStageCount = 1;
+        var constructionPlannerApplyStageCount = _constructionMaterialsPlanner == null ? 1 : 2;
+        var craftPlannerApplyStageCount = _craftPlanner == null ? 0 : 1;
 
         var hLimits = _tunings.HaulingLimits;
         int miningBacklog = _miningJobs.GetBacklogCount();
@@ -136,37 +128,39 @@ internal sealed class UnifiedJobsOrchestrator : ITick
         }
 
         _haulJobs.ApplySchedulingHints(intakeHint, null, reserve);
-        _haulJobs.ReadTick(tick);
+        _haulJobs.PrepareSequentialCompatibility(tick);
         var haulIntake = _haulJobs.LastIntakeCount;
-        _haulJobs.WriteTick(tick);
-        var haulApplyMs = sw.ElapsedMilliseconds;
+        _haulJobs.ApplySequentialCompatibility(tick);
+        var haulApplyStageCount = haulPlannerApplyStageCount + 1;
 
-        sw.Restart();
-        _miningJobs.ReadTick(tick);
+        _miningJobs.PrepareSequentialCompatibility(tick);
         var miningIntake = _miningJobs.LastIntakeCount;
-        _miningJobs.WriteTick(tick);
-        var miningApplyMs = sw.ElapsedMilliseconds;
+        _miningJobs.ApplySequentialCompatibility(tick);
+        var miningApplyStageCount = miningPlannerApplyStageCount + 1;
 
-        sw.Restart();
-        _constructionJobs.ReadTick(tick);
+        _constructionJobs.PrepareSequentialCompatibility(tick);
         var constructionIntake = _constructionJobs.LastIntakeCount;
-        _constructionJobs.WriteTick(tick);
-        var constructionApplyMs = sw.ElapsedMilliseconds;
+        _constructionJobs.ApplySequentialCompatibility(tick);
+        var constructionApplyStageCount = constructionPlannerApplyStageCount + 1;
 
-        sw.Restart();
         int craftIntake = 0;
-        long craftApplyMs = 0;
+        int craftApplyStageCount = 0;
         if (_craftJobs != null)
         {
-            _craftJobs.ReadTick(tick);
+            _craftJobs.PrepareSequentialCompatibility(tick);
             craftIntake = _craftJobs.LastIntakeCount;
-            _craftJobs.WriteTick(tick);
-            craftApplyMs = sw.ElapsedMilliseconds;
+            _craftJobs.ApplySequentialCompatibility(tick);
+            craftApplyStageCount = craftPlannerApplyStageCount + 1;
         }
 
-        var applyMs = haulApplyMs + miningApplyMs + constructionApplyMs + craftApplyMs;
+        var applyStageCount = haulApplyStageCount
+            + miningApplyStageCount
+            + constructionApplyStageCount
+            + craftApplyStageCount;
 
-        _log?.Invoke($"[SCHED][{tick}] Apply: haul(intake={haulIntake})={haulApplyMs}ms mining(intake={miningIntake})={miningApplyMs}ms construction(intake={constructionIntake})={constructionApplyMs}ms craft(intake={craftIntake})={craftApplyMs}ms total={applyMs}ms");
+        var planStageCount = _readPlanStages.Count;
+        _log?.Invoke($"[SCHED][{tick}] PurePlan: total={planStageCount}");
+        _log?.Invoke($"[SCHED][{tick}] SequentialCompatibilityApply: haul(intake={haulIntake})={haulApplyStageCount} mining(intake={miningIntake})={miningApplyStageCount} construction(intake={constructionIntake})={constructionApplyStageCount} craft(intake={craftIntake})={craftApplyStageCount} total={applyStageCount}");
 
         try
         {
@@ -182,15 +176,21 @@ internal sealed class UnifiedJobsOrchestrator : ITick
 
         _last = _last with
         {
-            ApplyMsTotal = applyMs,
+            Tick = tick,
+            PlanStageCount = planStageCount,
+            ApplyStageCount = applyStageCount,
             IntakeHaul = haulIntake,
             IntakeMining = miningIntake,
             IntakeConstruction = constructionIntake,
             IntakeCraft = craftIntake,
-            HaulApplyMs = haulApplyMs,
-            MiningApplyMs = miningApplyMs,
-            ConstructionApplyMs = constructionApplyMs,
-            CraftApplyMs = craftApplyMs
+            HaulPlanStageCount = 0,
+            MiningPlanStageCount = 0,
+            ConstructionPlanStageCount = 0,
+            CraftPlanStageCount = 0,
+            HaulApplyStageCount = haulApplyStageCount,
+            MiningApplyStageCount = miningApplyStageCount,
+            ConstructionApplyStageCount = constructionApplyStageCount,
+            CraftApplyStageCount = craftApplyStageCount
         };
     }
 }

@@ -1,5 +1,9 @@
 using HumanFortress.Content.Definitions;
+using HumanFortress.Content.Identity;
+using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Content.Identity;
 using HumanFortress.Contracts.Content.Loading;
+using HumanFortress.Contracts.Jobs;
 using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
@@ -14,61 +18,81 @@ internal sealed class FortressContentLoadResult
         ContentPathResolution coreDataPath,
         CoreContentCatalogLoadResult? coreCatalogs,
         bool registriesAlreadyLoaded,
-        IReadOnlyList<FortressContentIssue> issues)
+        IReadOnlyList<FortressContentIssue> issues,
+        MechanicalContentIdentityData? mechanicalIdentity = null,
+        IProfessionRegistry? professions = null,
+        IReadOnlyList<StockpilePresetDefinition>? stockpilePresetDefinitions = null)
         : this(
             contentPath,
             coreDataPath,
+            new StructuredContentRegistry(),
             registries: null,
             coreCatalogs,
             registriesAlreadyLoaded,
-            issues)
+            issues,
+            mechanicalIdentity,
+            professions,
+            stockpilePresetDefinitions)
     {
     }
 
     internal FortressContentLoadResult(
         ContentPathResolution contentPath,
         ContentPathResolution coreDataPath,
+        StructuredContentRegistry structuredRegistry,
         RuntimeContentRegistryLoadResult? registries,
         CoreContentCatalogLoadResult? coreCatalogs,
         bool registriesAlreadyLoaded,
-        IReadOnlyList<FortressContentIssue> issues)
+        IReadOnlyList<FortressContentIssue> issues,
+        MechanicalContentIdentityData? mechanicalIdentity = null,
+        IProfessionRegistry? professions = null,
+        IReadOnlyList<StockpilePresetDefinition>? stockpilePresetDefinitions = null)
     {
         ContentPath = contentPath ?? throw new ArgumentNullException(nameof(contentPath));
         CoreDataPath = coreDataPath ?? throw new ArgumentNullException(nameof(coreDataPath));
+        StructuredRegistry = structuredRegistry ?? throw new ArgumentNullException(nameof(structuredRegistry));
         Registries = registries;
         CoreCatalogs = coreCatalogs;
         RegistriesAlreadyLoaded = registriesAlreadyLoaded;
         Issues = issues?.ToArray() ?? throw new ArgumentNullException(nameof(issues));
+        MechanicalIdentity = mechanicalIdentity;
+        Professions = professions;
+        StockpilePresetDefinitions = Array.AsReadOnly(
+            stockpilePresetDefinitions?.ToArray() ?? Array.Empty<StockpilePresetDefinition>());
     }
 
-    public ContentPathResolution ContentPath { get; }
-    public ContentPathResolution CoreDataPath { get; }
+    internal ContentPathResolution ContentPath { get; }
+    internal ContentPathResolution CoreDataPath { get; }
+    internal StructuredContentRegistry StructuredRegistry { get; }
     internal RuntimeContentRegistryLoadResult? Registries { get; }
     internal CoreContentCatalogLoadResult? CoreCatalogs { get; }
-    public bool RegistriesAlreadyLoaded { get; }
-    public IReadOnlyList<FortressContentIssue> Issues { get; }
-    public bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
-    public int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
-    public int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
-    public string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
-    public bool CoreCatalogsLoaded => CoreCatalogs != null;
-    public int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
-    public int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
-    public int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
-    public int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
-    public int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
-    public int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
-    public int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
-    public int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
-    public bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
-    public bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
+    internal bool RegistriesAlreadyLoaded { get; }
+    internal IReadOnlyList<FortressContentIssue> Issues { get; }
+    internal MechanicalContentIdentityData? MechanicalIdentity { get; }
+    internal IProfessionRegistry? Professions { get; }
+    internal IReadOnlyList<StockpilePresetDefinition> StockpilePresetDefinitions { get; }
+    internal bool StructuredRegistriesLoaded => RegistriesAlreadyLoaded || Registries?.StructuredLoaded == true;
+    internal int StructuredRegistryWarningCount => Registries?.StructuredWarningCount ?? 0;
+    internal int StructuredRegistryErrorCount => Registries?.StructuredErrorCount ?? 0;
+    internal string? StructuredRegistryFailureMessage => Registries?.StructuredFailureMessage;
+    internal bool CoreCatalogsLoaded => CoreCatalogs != null;
+    internal int ItemDefinitionLoadedCount => CoreCatalogs?.Items.LoadedCount ?? 0;
+    internal int ItemDefinitionErrorCount => CoreCatalogs?.Items.ErrorCount ?? 0;
+    internal int CreatureDefinitionLoadedCount => CoreCatalogs?.Creatures.LoadedCount ?? 0;
+    internal int CreatureDefinitionErrorCount => CoreCatalogs?.Creatures.ErrorCount ?? 0;
+    internal int ConstructionDefinitionLoadedCount => CoreCatalogs?.Constructions.LoadedCount ?? 0;
+    internal int ConstructionDefinitionErrorCount => CoreCatalogs?.Constructions.ErrorCount ?? 0;
+    internal int RecipeDefinitionLoadedCount => CoreCatalogs?.Recipes.LoadedCount ?? 0;
+    internal int RecipeDefinitionErrorCount => CoreCatalogs?.Recipes.ErrorCount ?? 0;
+    internal bool HasErrors => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Error);
+    internal bool HasWarnings => Issues.Any(issue => issue.Severity == FortressContentIssueSeverity.Warning);
 
-    public bool IsValid(bool treatWarningsAsErrors = false)
+    internal bool IsValid(bool treatWarningsAsErrors = false)
     {
         return GetBlockingIssues(treatWarningsAsErrors).Count == 0;
     }
 
-    public IReadOnlyList<FortressContentIssue> GetBlockingIssues(bool treatWarningsAsErrors = false)
+    internal IReadOnlyList<FortressContentIssue> GetBlockingIssues(bool treatWarningsAsErrors = false)
     {
         return Issues
             .Where(issue =>
@@ -77,12 +101,12 @@ internal sealed class FortressContentLoadResult
             .ToArray();
     }
 
-    public string FormatBlockingIssues(bool treatWarningsAsErrors = false)
+    internal string FormatBlockingIssues(bool treatWarningsAsErrors = false)
     {
         return string.Join(Environment.NewLine, GetBlockingIssues(treatWarningsAsErrors));
     }
 
-    public void ThrowIfInvalid(bool treatWarningsAsErrors = false)
+    internal void ThrowIfInvalid(bool treatWarningsAsErrors = false)
     {
         var blockingIssues = GetBlockingIssues(treatWarningsAsErrors);
         if (blockingIssues.Count > 0)
@@ -91,7 +115,7 @@ internal sealed class FortressContentLoadResult
         }
     }
 
-    public FortressContentLoadReport ToReport()
+    internal FortressContentLoadReport ToReport()
     {
         return new FortressContentLoadReport(
             ContentPath,
@@ -119,31 +143,36 @@ internal sealed class FortressContentLoadResult
 /// </summary>
 internal static class FortressContentLoader
 {
-    public static FortressContentLoadResult Load(
+    internal static FortressContentLoadResult Load(
         string baseDir,
         bool includeRegistries = true,
         bool includeCoreCatalogs = true,
         bool forceReloadRegistries = false,
-        bool continueOnStructuredRegistryError = true)
+        bool continueOnStructuredRegistryError = true,
+        bool requireSchemaValidation = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
         var contentPath = ResolveContentPath(baseDir);
         var coreDataPath = ResolveCoreDataPath(baseDir);
+        StructuredContentRegistry? structuredRegistry = null;
         RuntimeContentRegistryLoadResult? registries = null;
         var registriesAlreadyLoaded = false;
         var issues = new List<FortressContentIssue>();
 
+        // Isolated session registries always load from their own content root. The
+        // parameter remains for source compatibility with older bootstrap callers.
+        _ = forceReloadRegistries;
+
         if (includeRegistries && contentPath.ResolvedPath != null)
         {
-            registriesAlreadyLoaded = !forceReloadRegistries && AreRegistriesLoaded();
-            if (!registriesAlreadyLoaded)
-            {
-                registries = RuntimeContentRegistryLoader.Load(
-                    contentPath.ResolvedPath,
-                    continueOnStructuredRegistryError);
-            }
+            registries = RuntimeContentRegistryLoader.Load(
+                contentPath.ResolvedPath,
+                continueOnStructuredRegistryError);
+            structuredRegistry = registries.Registry;
         }
+
+        structuredRegistry ??= new StructuredContentRegistry();
 
         CoreContentCatalogLoadResult? coreCatalogs = null;
         if (includeCoreCatalogs && coreDataPath.ResolvedPath != null)
@@ -154,44 +183,119 @@ internal static class FortressContentLoader
         AddRegistryIssues(includeRegistries, contentPath, registries, registriesAlreadyLoaded, issues);
         AddCoreCatalogIssues(includeCoreCatalogs, coreDataPath, coreCatalogs, issues);
 
+        var professions = includeRegistries
+            ? ProfessionRegistryLoader.Load(baseDir)
+            : null;
+        var stockpilePresetDefinitions = includeRegistries
+            ? StockpilePresetLoader.Load(baseDir)
+            : Array.Empty<StockpilePresetDefinition>();
+
+        MechanicalContentIdentityData? mechanicalIdentity = null;
+        if (includeRegistries
+            && includeCoreCatalogs
+            && contentPath.ResolvedPath != null
+            && coreDataPath.ResolvedPath != null)
+        {
+            var sourceSet = MechanicalContentSourceScanner.Scan(
+                contentPath.ResolvedPath,
+                coreDataPath.ResolvedPath);
+            if (requireSchemaValidation)
+            {
+                var gate = MechanicalContentPipelineGate.Evaluate(
+                    sourceSet.MechanicalSources,
+                    sourceSet.Schemas,
+                    new[]
+                    {
+                        GeneratedContentFreshnessChecker.EvaluateMaterials(
+                            contentPath.ResolvedPath)
+                    },
+                    requireSchemaValidation: true,
+                    schemaAdapter: JsonSchemaNetContentValidationAdapter.Instance);
+                mechanicalIdentity = gate.Identity;
+                AddMechanicalIdentityIssues(gate.Issues, issues);
+                if (coreCatalogs != null)
+                {
+                    AddMechanicalIdentityIssues(
+                        MechanicalContentCatalogIdentityValidator.Validate(
+                            structuredRegistry,
+                            coreCatalogs,
+                            professions,
+                            stockpilePresetDefinitions,
+                            mechanicalIdentity),
+                        issues);
+                }
+            }
+            else
+            {
+                mechanicalIdentity = MechanicalContentIdentityCompiler.Compile(
+                    sourceSet.MechanicalSources,
+                    sourceSet.Schemas);
+            }
+        }
+
+        if (requireSchemaValidation)
+            CanonicalizeIssues(issues);
+
         return new FortressContentLoadResult(
             contentPath,
             coreDataPath,
+            structuredRegistry,
             registries,
             coreCatalogs,
             registriesAlreadyLoaded,
-            issues);
+            issues,
+            mechanicalIdentity,
+            professions,
+            stockpilePresetDefinitions);
     }
 
-    public static FortressContentLoadResult LoadStrict(
+    internal static FortressContentLoadResult LoadStrict(
         string baseDir,
         bool includeRegistries = true,
         bool includeCoreCatalogs = true,
         bool forceReloadRegistries = false,
         bool treatWarningsAsErrors = false)
     {
-        var result = Load(
+        var result = LoadStrictResult(
             baseDir,
             includeRegistries,
             includeCoreCatalogs,
-            forceReloadRegistries,
-            continueOnStructuredRegistryError: true);
+            forceReloadRegistries);
 
         result.ThrowIfInvalid(treatWarningsAsErrors);
         return result;
     }
 
-    public static ContentPathResolution ResolveContentPath(string baseDir)
+    /// <summary>
+    /// Runs the complete strict mechanical gate without throwing so Runtime can
+    /// publish one stable report before enforcing the blocking policy.
+    /// </summary>
+    internal static FortressContentLoadResult LoadStrictResult(
+        string baseDir,
+        bool includeRegistries = true,
+        bool includeCoreCatalogs = true,
+        bool forceReloadRegistries = false)
+    {
+        return Load(
+            baseDir,
+            includeRegistries,
+            includeCoreCatalogs,
+            forceReloadRegistries,
+            continueOnStructuredRegistryError: true,
+            requireSchemaValidation: true);
+    }
+
+    internal static ContentPathResolution ResolveContentPath(string baseDir)
     {
         return ResolveChildDirectory(baseDir, "content");
     }
 
-    public static ContentPathResolution ResolveCoreDataPath(string baseDir)
+    internal static ContentPathResolution ResolveCoreDataPath(string baseDir)
     {
         return ResolveChildDirectory(baseDir, Path.Combine("data", "core"));
     }
 
-    public static ContentFileResolution ResolveRegistryFile(string baseDir, string fileName)
+    internal static ContentFileResolution ResolveRegistryFile(string baseDir, string fileName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(fileName);
 
@@ -224,11 +328,6 @@ internal static class FortressContentLoader
             publishedPath,
             developmentPath,
             Directory.Exists(developmentPath) ? developmentPath : null);
-    }
-
-    private static bool AreRegistriesLoaded()
-    {
-        return StructuredContentRegistry.Instance.IsLoaded;
     }
 
     private static void AddRegistryIssues(
@@ -284,6 +383,41 @@ internal static class FortressContentLoader
                 "Content.StructuredRegistryWarnings",
                 $"Structured content registry reported {registries.StructuredWarningCount} warning(s)."));
         }
+    }
+
+    private static void AddMechanicalIdentityIssues(
+        IEnumerable<MechanicalContentIssueData> mechanicalIssues,
+        ICollection<FortressContentIssue> issues)
+    {
+        foreach (var issue in mechanicalIssues
+                     .OrderBy(static value => value.Source, StringComparer.Ordinal)
+                     .ThenBy(static value => value.Path, StringComparer.Ordinal)
+                     .ThenBy(static value => value.Code, StringComparer.Ordinal)
+                     .ThenBy(static value => value.Message, StringComparer.Ordinal)
+                     .ThenBy(static value => value.Severity))
+        {
+            issues.Add(new FortressContentIssue(
+                issue.Severity == MechanicalContentIssueSeverity.Error
+                    ? FortressContentIssueSeverity.Error
+                    : FortressContentIssueSeverity.Warning,
+                issue.Code,
+                $"{issue.Source} {issue.Path}: {issue.Message}"));
+        }
+    }
+
+    private static void CanonicalizeIssues(List<FortressContentIssue> issues)
+    {
+        var canonical = issues
+            .GroupBy(
+                static issue => (issue.Severity, issue.Code, issue.Message),
+                FortressContentIssueKeyComparer.Instance)
+            .Select(static group => group.First())
+            .OrderBy(static issue => issue.Code, StringComparer.Ordinal)
+            .ThenBy(static issue => issue.Message, StringComparer.Ordinal)
+            .ThenBy(static issue => issue.Severity)
+            .ToArray();
+        issues.Clear();
+        issues.AddRange(canonical);
     }
 
     private static void AddCoreCatalogIssues(
@@ -369,5 +503,29 @@ internal static class FortressContentLoader
     private static FortressContentIssue Warning(string code, string message)
     {
         return new FortressContentIssue(FortressContentIssueSeverity.Warning, code, message);
+    }
+
+    private sealed class FortressContentIssueKeyComparer
+        : IEqualityComparer<(FortressContentIssueSeverity Severity, string Code, string Message)>
+    {
+        internal static FortressContentIssueKeyComparer Instance { get; } = new();
+
+        bool IEqualityComparer<(FortressContentIssueSeverity Severity, string Code, string Message)>.Equals(
+            (FortressContentIssueSeverity Severity, string Code, string Message) left,
+            (FortressContentIssueSeverity Severity, string Code, string Message) right)
+        {
+            return left.Severity == right.Severity
+                && string.Equals(left.Code, right.Code, StringComparison.Ordinal)
+                && string.Equals(left.Message, right.Message, StringComparison.Ordinal);
+        }
+
+        int IEqualityComparer<(FortressContentIssueSeverity Severity, string Code, string Message)>.GetHashCode(
+            (FortressContentIssueSeverity Severity, string Code, string Message) value)
+        {
+            return HashCode.Combine(
+                value.Severity,
+                StringComparer.Ordinal.GetHashCode(value.Code),
+                StringComparer.Ordinal.GetHashCode(value.Message));
+        }
     }
 }

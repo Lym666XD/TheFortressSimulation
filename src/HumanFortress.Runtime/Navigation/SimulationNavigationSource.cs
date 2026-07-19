@@ -35,7 +35,16 @@ internal sealed partial class SimulationNavigationSource : INavigationWorldSourc
             return false;
         }
 
-        tile = ToNavigationTile(source.Value);
+        var chunk = _world.GetChunk(new HumanFortress.Simulation.World.ChunkKey(
+            position.X / HumanFortress.Simulation.World.Chunk.SIZE_XY,
+            position.Y / HumanFortress.Simulation.World.Chunk.SIZE_XY,
+            position.Z));
+        var localIndex = HumanFortress.Simulation.World.Chunk.LocalIndex(
+            PositiveModulo(position.X, HumanFortress.Simulation.World.Chunk.SIZE_XY),
+            PositiveModulo(position.Y, HumanFortress.Simulation.World.Chunk.SIZE_XY));
+        tile = ToNavigationTile(
+            source.Value,
+            chunk?.IsFurnitureBlocked(localIndex) == true);
         return true;
     }
 

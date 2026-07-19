@@ -1,5 +1,6 @@
 using HumanFortress.App.Input;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime.Snapshots;
 
 namespace HumanFortress.App.Session;
 
@@ -31,7 +32,7 @@ internal sealed class FortressSessionLoadCoordinator
             : baseDir;
     }
 
-    internal void Load(int currentZ)
+    internal SimulationWorldAvailabilityData Load(int currentZ)
     {
         var loaded = new FortressSessionLoader(
             _runtime,
@@ -39,13 +40,12 @@ internal sealed class FortressSessionLoadCoordinator
             _ui,
             _uiTickProvider,
             InputBindingsService.Instance,
-            OrdersRegistryService.Instance,
             _baseDir).Load(currentZ);
 
         _loadedSession.Apply(loaded);
 
         if (!loaded.HasWorld || loaded.UsedFallbackWorld)
-            return;
+            return loaded.WorldAvailability;
 
         Logger.Log($"[GenerateFortressMap] SUCCESS: Generated fortress map: {_session.FortressSize}x{_session.FortressSize} chunks at {_session.EmbarkLocation}");
         if (loaded.EmbarkSite.HasValue)
@@ -53,5 +53,7 @@ internal sealed class FortressSessionLoadCoordinator
             var embarkSite = loaded.EmbarkSite.Value;
             Logger.Log($"[GenerateFortressMap] Biome: {embarkSite.BiomeName}, Elevation: {embarkSite.Elevation:F2}");
         }
+
+        return loaded.WorldAvailability;
     }
 }

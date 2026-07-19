@@ -6,7 +6,7 @@
 **Prepared for:** HumanFortress / TheFortressSimulation project  
 **Date:** 2026-05-25  
 
-**Current status note (2026-06-12):** This is a historical source review. It has been merged into [ARCHITECTURE_REFACTOR_MASTER_PLAN.md](../../planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md), and several runtime/content/job issues described below have since been partially or fully resolved. Use [GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md) for the current overview.
+**Current status note (2026-07-11):** This is a historical source review. It has been reconciled into [STAGED_REFACTOR_TARGET.md](../../planning/STAGED_REFACTOR_TARGET.md), and several runtime/content/job issues described below have since been partially or fully resolved. Use [GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md) for the current overview.
 
 > This report is based on a code-level review of the current project structure and implementation patterns.  
 > It is intentionally strict and assumes the long-term goal is a large, maintainable simulation game rather than a short-lived prototype.

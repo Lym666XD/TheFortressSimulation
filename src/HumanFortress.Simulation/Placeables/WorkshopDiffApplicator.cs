@@ -6,8 +6,6 @@ namespace HumanFortress.Simulation.Placeables;
 
 internal static class WorkshopDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     internal static void ApplyAll(
         SimulationWorld world,
         IReadOnlyList<WorkshopDiff> diffs,
@@ -29,10 +27,11 @@ internal static class WorkshopDiffApplicator
             catch (Exception ex)
             {
                 SimulationDiagnostics.Error(
-                    LogCallback,
+                    world.Diagnostics,
                     "Simulation.WorkshopDiff",
                     $"[WorkshopDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
                     ex);
+                throw;
             }
         }
     }
@@ -40,13 +39,16 @@ internal static class WorkshopDiffApplicator
     private static void Apply(SimulationWorld world, IConstructionCatalog constructions, WorkshopDiff diff)
     {
         if (!TryGetWorkshopState(world, constructions, diff.WorkshopGuid, out var state))
-            return;
+        {
+            throw new InvalidOperationException(
+                $"Workshop {diff.WorkshopGuid} does not resolve to one owned placeable.");
+        }
 
         switch (diff.Op)
         {
             case WorkshopDiffOp.AddRecipe:
                 if (!string.IsNullOrWhiteSpace(diff.RecipeId))
-                    state.AddEntry(diff.RecipeId, diff.RecipeName, diff.WorkshopGuid, diff.CurrentTick);
+                    state.AddEntry(diff.RecipeId, diff.WorkshopGuid, diff.CurrentTick);
                 break;
 
             case WorkshopDiffOp.RemoveEntry:

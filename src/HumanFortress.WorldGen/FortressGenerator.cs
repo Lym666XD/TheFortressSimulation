@@ -1,4 +1,5 @@
 using System;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.World;
 using SadRogue.Primitives;
 
@@ -18,24 +19,27 @@ namespace HumanFortress.WorldGen.Implementation
         private readonly Point _worldLocation;
         private readonly uint _seed;
         private readonly FortressGenerationContent _content;
+        private readonly IDiagnosticSink? _diagnostics;
 
-        public FortressGenerator(
+        internal FortressGenerator(
             int fortressSize,
             WorldTile homeTile,
             Point worldLocation,
             uint seed,
-            FortressGenerationContent content)
+            FortressGenerationContent content,
+            IDiagnosticSink? diagnostics = null)
         {
             _fortressSize = fortressSize;
             _homeTile = homeTile;
             _worldLocation = worldLocation;
             _seed = seed;
             _content = content ?? throw new ArgumentNullException(nameof(content));
+            _diagnostics = diagnostics;
         }
 
-        public FortressMap Generate()
+        internal FortressMap Generate()
         {
-            var map = new FortressMap(_fortressSize, 50, _content.Geology);
+            var map = new FortressMap(_fortressSize, 50, _content.Geology, _diagnostics);
 
             int tilesPerChunk = 32;
             int totalTiles = _fortressSize * tilesPerChunk;

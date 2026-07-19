@@ -5,44 +5,41 @@ namespace HumanFortress.Simulation.Diagnostics;
 internal static class SimulationDiagnostics
 {
     internal static void Information(
-        Action<string>? callback,
+        IDiagnosticSink sink,
         string category,
         string message,
         ulong? tick = null)
     {
-        Emit(callback, DiagnosticLevel.Information, category, message, exception: null, tick);
+        Emit(sink, DiagnosticLevel.Information, category, message, exception: null, tick);
     }
 
     internal static void Error(
-        Action<string>? callback,
+        IDiagnosticSink sink,
         string category,
         string message,
         Exception? exception = null,
         ulong? tick = null)
     {
-        Emit(callback, DiagnosticLevel.Error, category, message, exception, tick);
+        Emit(sink, DiagnosticLevel.Error, category, message, exception, tick);
     }
 
     private static void Emit(
-        Action<string>? callback,
+        IDiagnosticSink sink,
         DiagnosticLevel level,
         string category,
         string message,
         Exception? exception,
         ulong? tick)
     {
-        if (callback != null)
-        {
-            callback(message);
-            return;
-        }
+        ArgumentNullException.ThrowIfNull(sink);
 
-        if (DiagnosticHub.IsConfigured)
+        try
         {
-            DiagnosticHub.Sink.Write(DiagnosticEvent.Create(level, category, message, exception, tick));
-            return;
+            sink.Write(DiagnosticEvent.Create(level, category, message, exception, tick));
         }
-
-        Console.WriteLine(message);
+        catch
+        {
+            // Diagnostics must never change authoritative mutation outcomes.
+        }
     }
 }

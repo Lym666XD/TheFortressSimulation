@@ -11,21 +11,25 @@ namespace HumanFortress.Simulation.Items;
 /// </summary>
 internal static class ItemsDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     internal static void ApplyAll(World.World world, IReadOnlyList<ItemsDiff> diffs, ulong tick)
     {
-        ApplyPreSimulation(world, diffs);
+        ApplyPreSimulation(world, diffs, tick);
         ApplyAdditions(world, diffs, tick);
     }
 
-    internal static void ApplyPreSimulation(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplyPreSimulation(
+        World.World world,
+        IReadOnlyList<ItemsDiff> diffs,
+        ulong currentTick = 0)
     {
-        ApplyRemovals(world, diffs);
-        ApplySplits(world, diffs);
+        ApplyRemovals(world, diffs, currentTick);
+        ApplySplits(world, diffs, currentTick);
     }
 
-    internal static void ApplyRemovals(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplyRemovals(
+        World.World world,
+        IReadOnlyList<ItemsDiff> diffs,
+        ulong currentTick = 0)
     {
         if (diffs.Count == 0) return;
         foreach (var d in diffs)
@@ -33,11 +37,12 @@ internal static class ItemsDiffApplicator
             if (d.Op != ItemsDiffOp.RemoveItem) continue;
             try
             {
-                ApplyRemoveItem(world, d);
+                ApplyRemoveItem(world, d, currentTick);
             }
             catch (Exception ex)
             {
-                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit(world, $"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                throw;
             }
         }
     }
@@ -54,12 +59,16 @@ internal static class ItemsDiffApplicator
             }
             catch (Exception ex)
             {
-                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit(world, $"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                throw;
             }
         }
     }
 
-    internal static void ApplySplits(World.World world, IReadOnlyList<ItemsDiff> diffs)
+    internal static void ApplySplits(
+        World.World world,
+        IReadOnlyList<ItemsDiff> diffs,
+        ulong currentTick = 0)
     {
         if (diffs.Count == 0) return;
         foreach (var d in diffs)
@@ -67,11 +76,12 @@ internal static class ItemsDiffApplicator
             if (d.Op != ItemsDiffOp.SplitStack) continue;
             try
             {
-                ApplySplitStack(world, d);
+                ApplySplitStack(world, d, currentTick);
             }
             catch (Exception ex)
             {
-                Emit($"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                Emit(world, $"[ItemsDiffApplicator] Failed to apply {d.Op} at {d.Chunk}: {ex.Message}");
+                throw;
             }
         }
     }
@@ -82,33 +92,51 @@ internal static class ItemsDiffApplicator
         int ly = d.LocalIndex / World.Chunk.SIZE_XY;
         int wx = d.Chunk.ChunkX * World.Chunk.SIZE_XY + lx;
         int wy = d.Chunk.ChunkY * World.Chunk.SIZE_XY + ly;
-        world.Items.SpawnItem(d.ItemId, new Point(wx, wy), d.Chunk.Z, d.Quantity, tick);
-    }
-
-    private static void ApplyRemoveItem(World.World world, ItemsDiff d)
-    {
-        if (d.ItemGuid == Guid.Empty || d.Quantity <= 0) return;
-
-        var item = world.Items.GetInstance(d.ItemGuid);
-        if (item == null) return;
-
-        int removed = Math.Min(item.StackCount, d.Quantity);
-        item.StackCount -= removed;
-
-        if (item.StackCount <= 0)
+        var result = world.Items.SpawnItems(d.ItemId, new Point(wx, wy), d.Chunk.Z, d.Quantity, tick);
+        if (!result.Success)
         {
-            world.Items.RemoveInstance(item.Guid);
+            Emit(world, $"[ItemsDiffApplicator] AddItem rejected for '{d.ItemId}': {result.Reason}");
+            throw new InvalidOperationException(result.Reason);
         }
     }
 
-    private static void ApplySplitStack(World.World world, ItemsDiff d)
+    private static void ApplyRemoveItem(World.World world, ItemsDiff d, ulong currentTick)
     {
-        if (d.ItemGuid == Guid.Empty || d.NewItemGuid == Guid.Empty || d.Quantity <= 0) return;
-        world.Items.SplitStackWithGuid(d.ItemGuid, d.Quantity, d.NewItemGuid);
+        if (d.ItemGuid == Guid.Empty || d.Quantity <= 0) return;
+
+        var result = world.Items.RemoveQuantity(d.ItemGuid, d.Quantity, currentTick);
+        if (result.Status == ItemMutationStatus.Rejected)
+        {
+            Emit(world, $"[ItemsDiffApplicator] RemoveItem rejected for {d.ItemGuid}: {result.Reason}");
+            throw new InvalidOperationException(result.Reason);
+        }
     }
 
-    private static void Emit(string message)
+    private static void ApplySplitStack(World.World world, ItemsDiff d, ulong currentTick)
     {
-        SimulationDiagnostics.Error(LogCallback, "Simulation.ItemsDiff", message);
+        if (d.ItemGuid == Guid.Empty || d.NewItemGuid == Guid.Empty || d.Quantity <= 0) return;
+        var result = d.SourceReservation.IsValid || d.StagedReservation.IsValid
+            ? world.Items.SplitReservedStackWithGuid(
+                d.ItemGuid,
+                d.Quantity,
+                d.NewItemGuid,
+                d.SourceReservation,
+                d.StagedReservation,
+                currentTick)
+            : world.Items.SplitStackWithGuid(
+                d.ItemGuid,
+                d.Quantity,
+                d.NewItemGuid,
+                currentTick);
+        if (!result.Success)
+        {
+            Emit(world, $"[ItemsDiffApplicator] SplitStack rejected for {d.ItemGuid}: {result.Reason}");
+            throw new InvalidOperationException(result.Reason);
+        }
+    }
+
+    private static void Emit(World.World world, string message)
+    {
+        SimulationDiagnostics.Error(world.Diagnostics, "Simulation.ItemsDiff", message);
     }
 }

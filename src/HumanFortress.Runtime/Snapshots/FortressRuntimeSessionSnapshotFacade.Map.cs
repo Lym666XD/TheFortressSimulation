@@ -25,6 +25,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
         return FortressRuntimeSnapshotBuilder.FindNavigationDebugPath(
             Navigation(session),
             NavigationTuning(session),
+            NavigationServices(session),
             start,
             startZ,
             destination,

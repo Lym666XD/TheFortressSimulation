@@ -21,7 +21,6 @@ internal sealed class MiningActiveJobRunner
     private readonly MiningJobFinalizer _finalizer;
     private readonly IMiningJobCompletionSink? _completionSink;
     private readonly IMiningJobLogger _logger;
-    private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
     private readonly int _maxFailedReplans;
 
@@ -38,7 +37,6 @@ internal sealed class MiningActiveJobRunner
         MiningJobFinalizer finalizer,
         IMiningJobCompletionSink? completionSink,
         IMiningJobLogger? logger,
-        string systemId,
         int creatureReserveTtlTicks,
         int maxFailedReplans)
     {
@@ -54,7 +52,6 @@ internal sealed class MiningActiveJobRunner
         _finalizer = finalizer ?? throw new ArgumentNullException(nameof(finalizer));
         _completionSink = completionSink;
         _logger = logger ?? NullMiningJobLogger.Instance;
-        _systemId = systemId;
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
         _maxFailedReplans = maxFailedReplans;
     }
@@ -80,12 +77,20 @@ internal sealed class MiningActiveJobRunner
                 continue;
             }
 
-            uint entityId = DiffTargetEncoding.EntityId(worker.Guid);
-            _world.Reservations.TryReserveCreature(job.WorkerId, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"mine:{job.DesignationId}");
+            ulong entityKey = DiffTargetEncoding.EntityKey(worker.Guid);
+            if (!_world.Reservations.TryRenewCreature(
+                    job.CreatureReservation,
+                    tick,
+                    tick + (ulong)_creatureReserveTtlTicks))
+            {
+                Requeue(job, tick);
+                _finalizer.Finish(job, finished);
+                continue;
+            }
 
             if (job.Stage == MiningStage.ToAdj)
             {
-                HandleMoveToAdj(job, entityId, tick, finished);
+                HandleMoveToAdj(job, entityKey, tick, finished);
                 continue;
             }
 
@@ -104,17 +109,30 @@ internal sealed class MiningActiveJobRunner
         }
     }
 
-    private void HandleMoveToAdj(ActiveMiningJob job, uint entityId, ulong tick, List<ActiveMiningJob> finished)
+    private void HandleMoveToAdj(ActiveMiningJob job, ulong entityKey, ulong tick, List<ActiveMiningJob> finished)
     {
-        var update = _move.UpdateMovement(entityId, _navView);
+        var update = _move.UpdateMovement(entityKey, _navView);
         if (update.NeedsReplan)
         {
-            var req = new PathRequest(update.Position, new Point3(job.Adjacent.X, job.Adjacent.Y, job.Z), MoveMode.Walk, PathFlags.AllowDiagonal, MiningPathSeed.From(job.WorkerId, job.Target));
+            job.PathSearchAttempt = update.SearchAttempt;
+            var req = new PathRequest(
+                update.Position,
+                new Point3(job.Adjacent.X, job.Adjacent.Y, job.Z),
+                MoveMode.Walk,
+                PathFlags.AllowDiagonal,
+                MiningPathSeed.From(job.WorkerId, job.Target),
+                job.PathSearchAttempt);
             var path = _paths.Solve(in req, in _navView);
             if (path.Kind == PathResultKind.Found)
             {
-                _move.BeginMovement(entityId, req, path);
+                _move.BeginMovement(entityKey, req, path);
+                job.ReplanFailCount = 0;
                 _logger.Log($"[MINING][{tick}] Replan worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) kind={path.Kind} id={job.DesignationId}");
+            }
+            else if (path.Kind is PathResultKind.Partial or PathResultKind.BudgetExhausted)
+            {
+                _move.BeginMovement(entityKey, req, path);
+                _logger.Log($"[MINING][{tick}] Replan deferred kind={path.Kind} worker={job.WorkerId} to adj=({job.Adjacent.X},{job.Adjacent.Y},{job.Z}) id={job.DesignationId}");
             }
             else
             {
@@ -135,10 +153,11 @@ internal sealed class MiningActiveJobRunner
             return;
         }
 
-        _diffEmitter.MoveCreature(entityId, update.Position);
+        _diffEmitter.MoveCreature(job.WorkerId, update.Position);
 
-        if (update.Status == MovementStatus.Arrived || update.Status == MovementStatus.PathComplete)
+        if (update.Status == MovementStatus.Arrived)
         {
+            job.PathSearchAttempt = 0;
             job.Stage = MiningStage.Digging;
             _logger.Log($"[MINING][{tick}] Start digging by worker={job.WorkerId} at target=({job.Target.X},{job.Target.Y},{job.Z}) id={job.DesignationId} seg={job.Segment}");
             EmitStairwellPreOpen(job);

@@ -30,6 +30,8 @@ internal sealed class FortressRuntimeDependencies
     internal IRecipeCatalog Recipes => Catalogs.Recipes;
     internal IRuntimeGeologyCatalog Geology => Catalogs.Geology;
     internal ICraftRecipeCatalog CraftRecipes => Catalogs.CraftRecipes;
+    internal IReadOnlyDictionary<string, IReadOnlyList<string>> WorkshopCategoryTags =>
+        Catalogs.WorkshopCategoryTags;
     internal ConstructionTuning ConstructionTuning => Tunings.Construction;
     internal NavigationTuning NavigationTuning => Tunings.Navigation;
     internal PlaceableTuning PlaceableTuning => Tunings.Placeable;
@@ -48,11 +50,11 @@ internal sealed class FortressRuntimeDependencies
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        content ??= FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+        content ??= SimulationWorldContentLoader.LoadCoreContent(world, baseDir, log: log);
 
         return new FortressRuntimeDependencies(
             FortressRuntimeCatalogs.FromContent(content),
             FortressRuntimeTunings.FromContent(content, baseDir, log),
-            FortressRuntimeWorkforce.Load(world, baseDir, log));
+            FortressRuntimeWorkforce.FromContent(world, content.Professions, baseDir, log));
     }
 }

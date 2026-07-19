@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using HumanFortress.Contracts.WorldGen;
 
@@ -23,7 +24,7 @@ internal static class WorldGenerationSettingsDefaults
     {
         Span<byte> bytes = stackalloc byte[sizeof(uint)];
         RandomNumberGenerator.Fill(bytes);
-        return BitConverter.ToUInt32(bytes);
+        return BinaryPrimitives.ReadUInt32LittleEndian(bytes);
     }
 
     internal static int RandomSize()

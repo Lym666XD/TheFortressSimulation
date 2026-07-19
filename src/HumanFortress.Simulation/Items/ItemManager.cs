@@ -1,6 +1,8 @@
 using HumanFortress.Contracts.Simulation.Items;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.Diagnostics;
+using HumanFortress.Simulation.Identity;
 
 namespace HumanFortress.Simulation.Items;
 
@@ -18,6 +20,8 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
 
     // Runtime instances (modified during gameplay)
     private readonly Dictionary<Guid, ItemInstance> _instances = new();
+    private readonly LiveEntityIdentityIndex _identityIndex = new();
+    private readonly Dictionary<uint, List<Guid>> _legacyEntityIdIndex = new();
     private readonly object _instanceLock = new();
     private ulong _nextInstanceSequence;
 
@@ -26,15 +30,18 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
 
     // Dependencies
     private HumanFortress.Simulation.World.World? _world;
+    private IDiagnosticSink _diagnostics;
 
-    /// <summary>
-    /// Optional logging callback (set by App layer to write to fortress_debug.log)
-    /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal ItemManager(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
+    }
 
-    public int DefinitionCount => _definitionCatalog.DefinitionCount;
+    internal int DefinitionCount => _definitionCatalog.DefinitionCount;
 
-    public int InstanceCount
+    int IItemDefinitionCatalog.DefinitionCount => DefinitionCount;
+
+    internal int InstanceCount
     {
         get
         {
@@ -45,14 +52,24 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
         }
     }
 
+    internal LiveEntityIdentityAuthoritySnapshot GetIdentityAuthoritySnapshot()
+    {
+        lock (_instanceLock)
+        {
+            return _identityIndex.GetAuthoritySnapshot(_nextInstanceSequence);
+        }
+    }
+
     private Guid CreateNextInstanceGuidLocked()
     {
         Guid guid;
+        EntityIdentityClaimResult validation;
         do
         {
             guid = DeterministicGuidGenerator.GenerateFromSequence(ItemInstanceGuidScope, ++_nextInstanceSequence);
+            validation = _identityIndex.ValidateNew(guid);
         }
-        while (_instances.ContainsKey(guid));
+        while (!validation.Success);
 
         return guid;
     }
@@ -60,15 +77,20 @@ internal sealed partial class ItemManager : IItemDefinitionCatalog
     /// <summary>
     /// Set dependencies (called after initialization)
     /// </summary>
-    public void SetDependencies(HumanFortress.Simulation.World.World world)
+    internal void SetDependencies(HumanFortress.Simulation.World.World world)
     {
         ArgumentNullException.ThrowIfNull(world);
 
         _world = world;
     }
 
-    private static void Emit(string message)
+    internal void SetDiagnostics(IDiagnosticSink diagnostics)
     {
-        SimulationDiagnostics.Information(LogCallback, "Simulation.Items", message);
+        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+    }
+
+    private void Emit(string message)
+    {
+        SimulationDiagnostics.Information(_diagnostics, "Simulation.Items", message);
     }
 }

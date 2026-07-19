@@ -12,12 +12,16 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
 
     internal static SimulationWorkshopDebugData BuildWorkshopSnapshot(FortressRuntimeSession? session)
     {
-        return FortressRuntimeSnapshotBuilder.BuildWorkshopSnapshot(World(session), Constructions(session));
+        return FortressRuntimeSnapshotBuilder.BuildWorkshopSnapshot(World(session), Constructions(session), Recipes(session));
     }
 
     internal static WorkshopSummaryView? FindWorkshopSnapshot(FortressRuntimeSession? session, Guid workshopId)
     {
-        return FortressRuntimeSnapshotBuilder.FindWorkshopSnapshot(World(session), Constructions(session), workshopId);
+        return FortressRuntimeSnapshotBuilder.FindWorkshopSnapshot(
+            World(session),
+            Constructions(session),
+            Recipes(session),
+            workshopId);
     }
 
     internal static string? GetDefaultRecipeForWorkshop(FortressRuntimeSession? session, string? workshopId)

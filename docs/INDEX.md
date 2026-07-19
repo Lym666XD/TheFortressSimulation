@@ -1,6 +1,6 @@
 # HumanFortress Documentation Index
 
-Updated: 2026-06-13
+Updated: 2026-07-19
 Status: current documentation map
 
 This is the entry point for project documentation. The codebase is in an active architecture refactor, so treat source code as authoritative when a document conflicts with implementation.
@@ -19,19 +19,20 @@ Document status terms:
 - [Game State Flow](architecture/GAME_STATE_FLOW.md) - target game-state model with current content/runtime notes.
 - [Update Order](architecture/UPDATE_ORDER.md) - target stage model; current code uses `TickScheduler` read/barrier/write plus Runtime pre/post tick hooks.
 - [Concurrency Model](architecture/CONCURRENCY_MODEL.md) - normative concurrency and determinism model.
-- [Concurrency Research](architecture/CONCURRENCY_RESEARCH.md) - background research, not normative.
 - [Chunk and Data Layout](architecture/CHUNK_AND_DATA_LAYOUT.md)
 - [Diff Log and Merge Strategies](architecture/DIFF_LOG_AND_MERGE_STRATEGIES.md) - target merge contract with current implementation notes.
 - [Chunk Actor Protocol](architecture/CHUNK_ACTOR_PROTOCOL.md)
-- [Runtime Propagation Requirements](architecture/RUNTIME_PROPAGATION_REQUIREMENTS.md) - target TerrainBits/geology propagation checklist.
 - [Simulation LOD Policy](architecture/SIM_LOD_POLICY.md)
 - [Save Format](architecture/SAVE_FORMAT.md)
+- [Save And Replay Architecture](architecture/SAVE_REPLAY_ARCHITECTURE.md) - current Runtime-owned save/replay vertical slice and remaining persistence work.
 - [Error Handling Policy](architecture/ERROR_HANDLING_POLICY.md)
 - [Determinism CI](architecture/DETERMINISM_CI.md)
 
 ## Runtime And Operations
 
 - [Run And Test Guide](operations/README-RUN.md) - current source-run, test, and app argument notes.
+- [Scenario Evidence](../benchmarks/README.md) - versioned determinism/scale
+  profiles, artifact interpretation, reproduction commands, and dated decisions.
 
 ## Simulation Systems
 
@@ -73,9 +74,9 @@ Machine-readable current sources:
 
 ## UI And Input
 
-- [UI System](ui/UI_SYSTEM.md) - current App UI/input/rendering implementation map and known live-read gaps.
+- [UI System](ui/UI_SYSTEM.md) - current App UI/input/rendering implementation map and remaining orchestration/presenter-boundary gaps.
 - [Controls](ui/CONTROLS.md) - current player-facing control summary.
-- [UI And Input Model](ui/UI_AND_INPUT_MODEL.md) - target MVU/snapshot model; some UI paths still read live runtime state.
+- [UI And Input Model](ui/UI_AND_INPUT_MODEL.md) - target MVU/snapshot model; active fortress UI now uses Runtime/Contracts DTOs for ordinary read paths, with remaining work around broader presenter deltas and UI model hardening.
 - [Input Spec](ui/INPUT_SPEC.md) - target input contexts and actions.
 - [UI Spec](ui/UI_SPEC.md) - target SadConsole layout and interaction model.
 - [Rendering Snapshot](ui/RENDERING_SNAPSHOT.md) - target immutable rendering contract.
@@ -93,25 +94,27 @@ Machine-readable current sources:
 
 ## Planning And Refactor Notes
 
-- [Architecture Refactor Master Plan](planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md)
-- [Refactor Batch Progress](planning/REFACTOR_BATCH_PROGRESS.md)
-- [Refactor Pitfalls And Lessons](planning/REFACTOR_PITFALLS_AND_LESSONS.md)
-- [Milestone Plan](planning/MILESTONE.md)
+- [Staged Refactor Target](planning/STAGED_REFACTOR_TARGET.md) - controlling
+  audit ledger, current stage, ordered batches, and acceptance gates.
 - [Project Rules](planning/RULES.md)
 - [Agent Prompt](planning/AGENT_PROMPT.md)
-- [Optimization Suggestions](planning/OPTIMIZATION_SUGGESTION.md)
-
-## Reference
-
-- [Interview Briefing](reference/HUMANFORTRESS_INTERVIEW_BRIEFING.md) - project briefing and talking points; reference only, not the architecture source of truth.
 
 ## Status Snapshots
 
 Historical implementation snapshots are archived, not current operating manuals:
 
-- [Status Snapshot Policy](status/README.md)
 - [Archived Status Snapshots](archive/status/README.md)
 
 ## Archive
 
 Archived files are under [Archive](archive/README.md). Do not use archived documents as current implementation guidance unless a current document explicitly points to them.
+
+Recently archived refactor/reference docs:
+
+- [Archived Milestone Plan](archive/plans/MILESTONE.md) - historical strategic milestone plan; current status lives in the staged refactor target.
+- [Archived 2026-07-07 Audit Report](archive/plans/HumanFortress_审计报告_2026-07-07.md) - historical external audit source; current reconciled status lives in the staged refactor target and architecture overview.
+- [Archived Runtime Propagation Requirements](archive/architecture/RUNTIME_PROPAGATION_REQUIREMENTS.md) - completed/superseded TerrainBits/geology propagation checklist.
+- [Archived Concurrency Research](archive/architecture/CONCURRENCY_RESEARCH.md) - background research; normative rules live in the concurrency model and project rules.
+- [Archived Status Snapshot Pointer](archive/status/STATUS_SNAPSHOT_POINTER.md) - former current-tree pointer moved out of the active documentation set.
+- [Archived Interview Briefing](archive/reference/HUMANFORTRESS_INTERVIEW_BRIEFING.md) - historical June 2026 project briefing; current architecture and ownership have moved on.
+- [Archived Workshop JSON Drafts](archive/other/) - old `docs/other/core_workshop_*.json` copies; current machine-readable workshop data lives in `data/core/workshops`.

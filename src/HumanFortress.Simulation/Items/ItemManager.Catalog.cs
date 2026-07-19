@@ -7,7 +7,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Replace the static item definition catalog with an already-loaded immutable snapshot.
     /// </summary>
-    public void SetDefinitionCatalog(ItemDefinitionCatalogStore catalog)
+    internal void SetDefinitionCatalog(ItemDefinitionCatalogStore catalog)
     {
         _definitionCatalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
     }
@@ -15,7 +15,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get all item definitions
     /// </summary>
-    public IEnumerable<ItemDefinition> GetAllDefinitions()
+    internal IEnumerable<ItemDefinition> GetAllDefinitions()
     {
         return _definitionCatalog.GetAllDefinitions();
     }
@@ -23,7 +23,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get item definitions by kind (resource/weapon/armor/tool/container/consumable)
     /// </summary>
-    public IEnumerable<ItemDefinition> GetByKind(string kind)
+    internal IEnumerable<ItemDefinition> GetByKind(string kind)
     {
         return _definitionCatalog.GetByKind(kind);
     }
@@ -31,7 +31,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get available kinds (for UI category display)
     /// </summary>
-    public IEnumerable<string> GetAvailableKinds()
+    internal IEnumerable<string> GetAvailableKinds()
     {
         return _definitionCatalog.GetAvailableKinds();
     }
@@ -39,7 +39,7 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get item definitions by tag
     /// </summary>
-    public IEnumerable<ItemDefinition> GetByTag(string tag)
+    internal IEnumerable<ItemDefinition> GetByTag(string tag)
     {
         return _definitionCatalog.GetByTag(tag);
     }
@@ -47,8 +47,33 @@ internal sealed partial class ItemManager
     /// <summary>
     /// Get definition by ID
     /// </summary>
-    public ItemDefinition? GetDefinition(string id)
+    internal ItemDefinition? GetDefinition(string id)
     {
         return _definitionCatalog.GetDefinition(id);
+    }
+
+    IEnumerable<ItemDefinition> IItemDefinitionCatalog.GetAllDefinitions()
+    {
+        return GetAllDefinitions();
+    }
+
+    IEnumerable<ItemDefinition> IItemDefinitionCatalog.GetByKind(string kind)
+    {
+        return GetByKind(kind);
+    }
+
+    IEnumerable<string> IItemDefinitionCatalog.GetAvailableKinds()
+    {
+        return GetAvailableKinds();
+    }
+
+    IEnumerable<ItemDefinition> IItemDefinitionCatalog.GetByTag(string tag)
+    {
+        return GetByTag(tag);
+    }
+
+    ItemDefinition? IItemDefinitionCatalog.GetDefinition(string id)
+    {
+        return GetDefinition(id);
     }
 }

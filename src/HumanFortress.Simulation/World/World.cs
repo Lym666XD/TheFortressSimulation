@@ -1,44 +1,52 @@
 using HumanFortress.Core.Commands;
+using HumanFortress.Contracts.Diagnostics;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
-using System.Collections.Concurrent;
 
 namespace HumanFortress.Simulation.World;
 
 /// <summary>
 /// World manager handling chunks and LOD per SIM_LOD_POLICY.md.
-/// Fortress size: N×N chunks, N ∈ [2..8]; chunk = 32×32×Z tiles.
+/// Fortress size: N×N chunks; chunk = 32×32×Z tiles.
 /// </summary>
-internal sealed class World : IWorldReader
+internal sealed partial class World : IWorldReader
 {
-    private readonly ConcurrentDictionary<ChunkKey, Chunk> _chunks;
+    internal const int MinSizeInChunks = FortressSessionSizeLimits.MinFortressSize;
+    internal const int MaxSizeInChunks = FortressSessionSizeLimits.MaxFortressSize;
+
+    private readonly Dictionary<ChunkKey, Chunk> _chunks;
     private readonly int _sizeInChunks;
     private readonly int _maxZ;
     private readonly System.Collections.Generic.HashSet<ChunkKey> _dirtyChunks = new();
+    private readonly object _chunkLock = new();
     private readonly object _dirtyLock = new();
+    private readonly object _topologyLock = new();
+    private IDiagnosticSink _diagnostics;
 
     // Global managers (singleton per world)
-    public CreatureManager Creatures { get; }
-    public ItemManager Items { get; }
-    public HumanFortress.Simulation.Orders.OrdersManager Orders { get; }
-    public HumanFortress.Simulation.Stockpile.StockpileManager Stockpiles { get; }
-    public HumanFortress.Simulation.Jobs.ReservationManager Reservations { get; }
-    public HumanFortress.Simulation.Zones.ZoneCoordinator Zones { get; }
+    internal CreatureManager Creatures { get; }
+    internal ItemManager Items { get; }
+    internal HumanFortress.Simulation.Orders.OrdersManager Orders { get; }
+    internal HumanFortress.Simulation.Stockpile.StockpileManager Stockpiles { get; }
+    internal HumanFortress.Simulation.Jobs.ReservationManager Reservations { get; }
+    internal HumanFortress.Simulation.Zones.ZoneCoordinator Zones { get; }
 
-    public World(int sizeInChunks, int maxZ)
+    internal World(int sizeInChunks, int maxZ, IDiagnosticSink? diagnostics = null)
     {
-        if (sizeInChunks < 2 || sizeInChunks > 8)
-            throw new ArgumentException("Size must be between 2 and 8 chunks", nameof(sizeInChunks));
+        if (sizeInChunks < MinSizeInChunks || sizeInChunks > MaxSizeInChunks)
+            throw new ArgumentException($"Size must be between {MinSizeInChunks} and {MaxSizeInChunks} chunks", nameof(sizeInChunks));
 
         _sizeInChunks = sizeInChunks;
         _maxZ = maxZ;
-        _chunks = new ConcurrentDictionary<ChunkKey, Chunk>();
+        _chunks = new Dictionary<ChunkKey, Chunk>();
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
 
         // Initialize managers
-        Creatures = new CreatureManager();
-        Items = new ItemManager();
-        Orders = new HumanFortress.Simulation.Orders.OrdersManager();
+        Creatures = new CreatureManager(_diagnostics);
+        Items = new ItemManager(_diagnostics);
+        Orders = new HumanFortress.Simulation.Orders.OrdersManager(_diagnostics);
         Stockpiles = new HumanFortress.Simulation.Stockpile.StockpileManager();
         Reservations = new HumanFortress.Simulation.Jobs.ReservationManager();
 
@@ -49,41 +57,71 @@ internal sealed class World : IWorldReader
         Creatures.SetWorld(this);
     }
 
+    internal IDiagnosticSink Diagnostics => _diagnostics;
+
+    /// <summary>
+    /// Serializes validate-and-commit topology transactions. Simulation topology
+    /// writers hold this lock from their first authoritative read through the
+    /// final dirty-set publication, so validation cannot be invalidated by a
+    /// concurrent placeable/door/terrain writer.
+    /// </summary>
+    internal object TopologyLock => _topologyLock;
+
+    internal void SetDiagnostics(IDiagnosticSink diagnostics)
+    {
+        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+        Creatures.SetDiagnostics(diagnostics);
+        Items.SetDiagnostics(diagnostics);
+        Orders.SetDiagnostics(diagnostics);
+    }
+
     /// <summary>
     /// Size of the world in chunks (N for N×N).
     /// </summary>
-    public int SizeInChunks => _sizeInChunks;
+    internal int SizeInChunks => _sizeInChunks;
 
     /// <summary>
     /// Size of the world in tiles.
     /// </summary>
-    public int SizeInTiles => _sizeInChunks * Chunk.SIZE_XY;
+    internal int SizeInTiles => _sizeInChunks * Chunk.SIZE_XY;
 
     /// <summary>
     /// Maximum Z level.
     /// </summary>
-    public int MaxZ => _maxZ;
+    internal int MaxZ => _maxZ;
 
     /// <summary>
     /// Get or create a chunk.
     /// </summary>
-    public Chunk GetOrCreateChunk(ChunkKey key)
+    internal Chunk GetOrCreateChunk(ChunkKey key)
     {
-        return _chunks.GetOrAdd(key, k => new Chunk(k));
+        lock (_chunkLock)
+        {
+            if (!_chunks.TryGetValue(key, out var chunk))
+            {
+                chunk = new Chunk(key);
+                _chunks.Add(key, chunk);
+            }
+
+            return chunk;
+        }
     }
 
     /// <summary>
     /// Get chunk if it exists.
     /// </summary>
-    public Chunk? GetChunk(ChunkKey key)
+    internal Chunk? GetChunk(ChunkKey key)
     {
-        return _chunks.GetValueOrDefault(key);
+        lock (_chunkLock)
+        {
+            return _chunks.GetValueOrDefault(key);
+        }
     }
 
     /// <summary>
     /// Get tile at world coordinates.
     /// </summary>
-    public TileBase? GetTile(int worldX, int worldY, int z)
+    internal TileBase? GetTile(int worldX, int worldY, int z)
     {
         if (!IsValidPosition(worldX, worldY, z))
             return null;
@@ -100,7 +138,7 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Set tile at world coordinates. Must be called only during Write phase.
     /// </summary>
-    public void SetTile(int worldX, int worldY, int z, TileBase tile, ulong tick)
+    internal void SetTile(int worldX, int worldY, int z, TileBase tile, ulong tick)
     {
         if (!IsValidPosition(worldX, worldY, z))
             throw new ArgumentOutOfRangeException();
@@ -117,25 +155,33 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Check if position is valid.
     /// </summary>
-    public bool IsValidPosition(int x, int y, int z)
+    internal bool IsValidPosition(int x, int y, int z)
     {
         return x >= 0 && x < SizeInTiles &&
                y >= 0 && y < SizeInTiles &&
                z >= 0 && z < _maxZ;
     }
 
+    bool IWorldReader.IsValidPosition(int x, int y, int z)
+    {
+        return IsValidPosition(x, y, z);
+    }
+
     /// <summary>
     /// Get all chunks in the world.
     /// </summary>
-    public IEnumerable<Chunk> GetAllChunks()
+    internal IEnumerable<Chunk> GetAllChunks()
     {
-        return _chunks.Values;
+        lock (_chunkLock)
+        {
+            return OrderChunks(_chunks.Values).ToArray();
+        }
     }
 
     /// <summary>
     /// Get chunk at chunk coordinates.
     /// </summary>
-    public Chunk? GetChunkAt(int chunkX, int chunkY, int z)
+    internal Chunk? GetChunkAt(int chunkX, int chunkY, int z)
     {
         return GetChunk(new ChunkKey(chunkX, chunkY, z));
     }
@@ -143,15 +189,18 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Get all active chunks (L0/L1).
     /// </summary>
-    public IEnumerable<Chunk> GetActiveChunks()
+    internal IEnumerable<Chunk> GetActiveChunks()
     {
-        return _chunks.Values.Where(c => c.LODLevel <= 1);
+        lock (_chunkLock)
+        {
+            return OrderChunks(_chunks.Values.Where(static chunk => chunk.LODLevel <= 1)).ToArray();
+        }
     }
 
     /// <summary>
     /// Mark chunk as dirty for navigation rebuild.
     /// </summary>
-    public void MarkChunkDirty(ChunkKey key)
+    internal void MarkChunkDirty(ChunkKey key)
     {
         lock (_dirtyLock)
         {
@@ -166,7 +215,7 @@ internal sealed class World : IWorldReader
     {
         lock (_dirtyLock)
         {
-            var list = new List<ChunkKey>(_dirtyChunks);
+            var list = OrderChunkKeys(_dirtyChunks).ToList();
             _dirtyChunks.Clear();
             return list;
         }
@@ -175,12 +224,12 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Update LOD levels based on player focus per SIM_LOD_POLICY.md.
     /// </summary>
-    public void UpdateLOD(int focusX, int focusY, int focusZ)
+    internal void UpdateLOD(int focusX, int focusY, int focusZ)
     {
         var focusChunkX = focusX / Chunk.SIZE_XY;
         var focusChunkY = focusY / Chunk.SIZE_XY;
 
-        foreach (var chunk in _chunks.Values)
+        foreach (var chunk in GetAllChunks())
         {
             var distX = Math.Abs(chunk.Key.ChunkX - focusChunkX);
             var distY = Math.Abs(chunk.Key.ChunkY - focusChunkY);
@@ -205,7 +254,7 @@ internal sealed class World : IWorldReader
     /// <summary>
     /// Get chunks that need edge-band checking for incidents.
     /// </summary>
-    public IEnumerable<(ChunkKey key, EdgeBand band)> GetEdgeBandChunks()
+    internal IEnumerable<(ChunkKey key, EdgeBand band)> GetEdgeBandChunks()
     {
         for (int z = 0; z < _maxZ; z++)
         {
@@ -233,6 +282,22 @@ internal sealed class World : IWorldReader
                 yield return (new ChunkKey(_sizeInChunks - 1, cy, z), EdgeBand.East);
             }
         }
+    }
+
+    private static IOrderedEnumerable<ChunkKey> OrderChunkKeys(IEnumerable<ChunkKey> keys)
+    {
+        return keys
+            .OrderBy(static key => key.Z)
+            .ThenBy(static key => key.ChunkY)
+            .ThenBy(static key => key.ChunkX);
+    }
+
+    private static IOrderedEnumerable<Chunk> OrderChunks(IEnumerable<Chunk> chunks)
+    {
+        return chunks
+            .OrderBy(static chunk => chunk.Key.Z)
+            .ThenBy(static chunk => chunk.Key.ChunkY)
+            .ThenBy(static chunk => chunk.Key.ChunkX);
     }
 }
 

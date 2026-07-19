@@ -42,6 +42,19 @@ internal sealed partial class RuntimeCommandReplayFactory
         var preferredMaterialId = reader.ReadString();
         var categoryKey = reader.ReadString();
         var tags = ReadStringArray(reader, "construction material tags");
+        var requirementCount = reader.ReadInt32();
+        if (requirementCount < 0 || requirementCount > 4096)
+            throw new InvalidDataException($"Invalid construction material requirement count: {requirementCount}.");
+        var requirements = new MaterialRequirementSpec[requirementCount];
+        for (var i = 0; i < requirementCount; i++)
+        {
+            var tag = reader.ReadString();
+            var definitionId = reader.ReadString();
+            requirements[i] = new MaterialRequirementSpec(
+                string.IsNullOrEmpty(tag) ? null : tag,
+                string.IsNullOrEmpty(definitionId) ? null : definitionId,
+                reader.ReadInt32());
+        }
         var priority = reader.ReadInt32();
 
         return new CreateConstructionOrderCommand(
@@ -54,7 +67,8 @@ internal sealed partial class RuntimeCommandReplayFactory
             {
                 PreferredMaterialId = string.IsNullOrEmpty(preferredMaterialId) ? null : preferredMaterialId,
                 CategoryKey = categoryKey,
-                Tags = tags
+                Tags = tags,
+                Requirements = requirements
             },
             priority);
     }

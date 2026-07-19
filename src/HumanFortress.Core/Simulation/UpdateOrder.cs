@@ -2,7 +2,8 @@ namespace HumanFortress.Core.Simulation;
 
 /// <summary>
 /// Defines the authoritative update order for simulation systems per UPDATE_ORDER.md.
-/// All systems execute in Read phase (parallel), then Write phase (serialized).
+/// Read/Plan is side-effect-free; authoritative and compatibility work executes
+/// in serialized Write. The production scheduler currently keeps Read serial.
 /// </summary>
 public static class UpdateOrder
 {
@@ -11,7 +12,7 @@ public static class UpdateOrder
     /// </summary>
     public static class Priority
     {
-        // Read Phase (can be parallel)
+        // Pure Read/Plan priorities. Parallel execution requires equivalence evidence.
         public const int PathfindingPropose = 100;
         public const int JobPropose = 200;
         public const int AIPlanning = 300;

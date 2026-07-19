@@ -55,11 +55,17 @@ internal sealed partial class StockpileCommandTarget
         cells.Add(cellIndex);
     }
 
-    private static ChunkKey GetHomeChunk(IEnumerable<ChunkKey> chunkKeys)
+    private static ChunkKey GetHomeChunk(IReadOnlyList<KeyValuePair<ChunkKey, List<int>>> cellsByChunkRows)
     {
-        return chunkKeys.OrderBy(static key => key.Z)
-            .ThenBy(static key => key.ChunkY)
-            .ThenBy(static key => key.ChunkX)
-            .First();
+        return cellsByChunkRows[0].Key;
+    }
+
+    private static IOrderedEnumerable<KeyValuePair<ChunkKey, List<int>>> OrderCellsByChunk(
+        IEnumerable<KeyValuePair<ChunkKey, List<int>>> cellsByChunk)
+    {
+        return cellsByChunk
+            .OrderBy(static entry => entry.Key.Z)
+            .ThenBy(static entry => entry.Key.ChunkY)
+            .ThenBy(static entry => entry.Key.ChunkX);
     }
 }

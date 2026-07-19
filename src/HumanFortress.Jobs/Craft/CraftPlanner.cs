@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Core.Time;
@@ -9,16 +8,17 @@ using WorldModel = HumanFortress.Simulation.World.World;
 namespace HumanFortress.Jobs.Craft;
 
 /// <summary>
-/// Planner that inspects workshop queues, requests materials, and produces planned craft jobs.
+/// Serialized compatibility stage that mutates workshop scheduling state,
+/// requests materials, and produces craft jobs.
 /// </summary>
-internal sealed class CraftPlanner : ITick, ICraftJobPlanner
+internal sealed class CraftPlanner : ISequentialCompatibilityStage, ICraftJobPlanner
 {
     private const int RequestRetryTicks = 80;
 
     private readonly CraftWorkshopLocator _workshops;
     private readonly CraftMaterialReadinessChecker _materialReadiness;
     private readonly ICraftRecipeCatalog _recipes;
-    private readonly ConcurrentQueue<PlannedCraftJob> _outbox = new();
+    private readonly Queue<PlannedCraftJob> _outbox = new();
     private readonly int _scanBudgetPerTick;
 
     internal CraftPlanner(
@@ -42,7 +42,7 @@ internal sealed class CraftPlanner : ITick, ICraftJobPlanner
 
     internal string SystemId => "Jobs.CraftPlanner";
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         int scanned = 0;
         foreach (var (placeable, _) in _workshops.EnumerateWorkshops())
@@ -80,9 +80,9 @@ internal sealed class CraftPlanner : ITick, ICraftJobPlanner
         }
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
-        // Planner is read-only.
+        // All legacy mutation currently occurs during compatibility preparation.
     }
 
     internal int DequeuePlannedJobs(int max, IList<PlannedCraftJob> into)
@@ -97,13 +97,11 @@ internal sealed class CraftPlanner : ITick, ICraftJobPlanner
         return n;
     }
 
-    int ITick.Priority => Priority;
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
-
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
-
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     int ICraftJobPlanner.DequeuePlannedJobs(int max, IList<PlannedCraftJob> into) => DequeuePlannedJobs(max, into);
 }

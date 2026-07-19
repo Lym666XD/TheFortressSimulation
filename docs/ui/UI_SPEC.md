@@ -1,11 +1,11 @@
 UI_SPEC v1 — HumanFortress (SadConsole)
 
-Current implementation note (2026-06-12):
+Current implementation note (2026-07-09):
 
 - This document is a target UI specification with partial implementation.
-- Current App UI has `UiStore`, drawers, quick menus, placement controllers, input routers, and render snapshot building.
-- Current rendering/panel paths still read live `World`, `FortressRuntimeAccess`, concrete job systems, and content catalogs in several places.
-- Statements below that say views read only `RenderSnapshot` describe the target boundary, not complete current behavior.
+- Current App UI has `UiStore`, drawers, quick menus, placement controllers, input routers, and Runtime DTO based render/query paths.
+- Active fortress rendering and common panel paths now read Runtime/Contracts snapshot DTOs or query DTOs rather than live `World`, concrete job systems, or direct content catalogs.
+- Statements below that say views read only `RenderSnapshot` describe the target boundary in old terminology. In current code, the concrete active shapes are Runtime/Contracts snapshot DTOs, while broader packed presenter deltas and full MVU cleanup remain target work.
 
 0) Scope & Goals
 

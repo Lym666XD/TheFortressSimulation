@@ -5,12 +5,12 @@ owner: client/rendering
 last_updated: 2025-09-14
 version_policy: semver
 
-Current implementation note (2026-07-02):
+Current implementation note (2026-07-09):
 
 - The old `HumanFortress.Simulation.Rendering.RenderSnapshot` and builder have been removed from active code.
 - Active fortress map, overlay, drawer, debug, workshop, stockpile/zone, tile-inspection, and placement-preview paths consume Runtime-built DTOs from `HumanFortress.Contracts.Runtime.Snapshots`.
 - SadConsole drawing and transient UI state remain App-owned; App reaches Runtime through facade/query ports rather than live `World` or concrete job systems.
-- Treat the schema below as the target versioned presenter contract. The concrete active DTO names are currently the Runtime/Contracts snapshot DTOs rather than the old Simulation rendering DTOs.
+- Frame/overlay aggregate DTOs now carry Runtime-authored presenter-frame identity, frame render DTOs carry map-viewport changed-cell/row/screen-region deltas over final screen-cell values, App.Rendering consumes those map deltas through `FortressMapViewportPresenterCache`, UI overlay DTOs carry section-level deltas over panel/overlay sections, and App.Rendering consumes those section deltas through `FortressUiOverlayPresenterCache`. Treat the broader packed world-chunk schema below as the remaining target presenter contract; the concrete active DTO names are currently the Runtime/Contracts snapshot DTOs rather than the old Simulation rendering DTOs.
 
 0) Scope
 

@@ -7,6 +7,7 @@ using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Content;
 using HumanFortress.Runtime.Diff;
+using HumanFortress.Runtime.Navigation;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.World;
 
@@ -23,12 +24,15 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
     private readonly NavigationTuning _navigationTuning;
     private readonly IRecipeCatalog _recipes;
     private readonly IConstructionCatalog _constructions;
+    private readonly IReadOnlyDictionary<string, IReadOnlyList<string>> _workshopCategoryTags;
     private readonly IRuntimeGeologyCatalog _geology;
     private readonly FortressRuntimeStockpilePresetCatalog _stockpilePresets;
+    private readonly RuntimePathServiceRegistry? _pathServices;
     private readonly SimulationCommandExecutionContext _commandContext;
     private readonly SimulationRuntimeHostCore _core;
     private readonly Func<TSystems> _createSystems;
     private readonly Action<IRuntimeProfessionCommandBindings, TSystems>? _afterSystemsRegistered;
+    private Action<TSystems, ulong>? _afterPostTickCommit;
 
     private TSystems? _systems;
 
@@ -43,7 +47,9 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         IConstructionCatalog? constructions = null,
         IRuntimeGeologyCatalog? geology = null,
         NavigationTuning? navigationTuning = null,
-        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null)
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
+        RuntimePathServiceRegistry? pathServices = null,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? workshopCategoryTags = null)
         : this(
             world,
             services.TickScheduler,
@@ -59,8 +65,18 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
             constructions,
             geology,
             navigationTuning,
-            stockpilePresets)
+            stockpilePresets,
+            pathServices,
+            workshopCategoryTags)
     {
+    }
+
+    internal void SetPostTickCommitHandler(Action<TSystems, ulong>? handler)
+    {
+        if (IsRunning || HasActiveTickThread)
+            throw new InvalidOperationException("Cannot replace the PostTick commit handler while the runtime is running.");
+
+        _afterPostTickCommit = handler;
     }
 
     private SimulationRuntimeHost(
@@ -78,7 +94,9 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         IConstructionCatalog? constructions = null,
         IRuntimeGeologyCatalog? geology = null,
         NavigationTuning? navigationTuning = null,
-        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null)
+        FortressRuntimeStockpilePresetCatalog? stockpilePresets = null,
+        RuntimePathServiceRegistry? pathServices = null,
+        IReadOnlyDictionary<string, IReadOnlyList<string>>? workshopCategoryTags = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         ArgumentNullException.ThrowIfNull(tickScheduler);
@@ -91,6 +109,14 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
         _constructions = constructions ?? throw new ArgumentNullException(nameof(constructions));
         _geology = geology ?? throw new ArgumentNullException(nameof(geology));
         _stockpilePresets = stockpilePresets ?? FortressRuntimeStockpilePresetCatalog.Empty;
+        _workshopCategoryTags = (workshopCategoryTags
+                ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal))
+            .OrderBy(static category => category.Key, StringComparer.Ordinal)
+            .ToDictionary(
+                static category => category.Key,
+                static category => (IReadOnlyList<string>)Array.AsReadOnly(category.Value.ToArray()),
+                StringComparer.Ordinal);
+        _pathServices = pathServices;
         _createSystems = createSystems ?? throw new ArgumentNullException(nameof(createSystems));
         _afterSystemsRegistered = afterSystemsRegistered;
 
@@ -116,7 +142,8 @@ internal sealed partial class SimulationRuntimeHost<TSystems>
             mutationDiffs,
             _constructions,
             navigation,
-            _geology);
+            _geology,
+            pathServices);
     }
 
 }

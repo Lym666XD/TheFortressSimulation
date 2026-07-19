@@ -7,5 +7,6 @@
   "fluids": { "shallow_threshold": 1, "deep_threshold": 6, "wade_cost": 6, "swim_cost": 18 },
   "traffic": { "low": -2, "normal": 0, "high": 2, "restricted": 8 },
   "doors": { "closed_blocks": true, "open_cost": 4 },
-  "budgets": { "max_nodes_per_search": 10000, "max_ms_per_tick_pathing": 3 }
+  "movement": { "step_delay_ticks": 2 },
+  "budgets": { "max_nodes_per_search": 10000, "max_paths_per_tick": 1024 }
 }

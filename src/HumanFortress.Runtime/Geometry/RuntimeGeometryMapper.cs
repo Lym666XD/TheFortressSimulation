@@ -16,4 +16,10 @@ internal static class RuntimeGeometryMapper
         new(rect.X, rect.Y, rect.Width, rect.Height);
 
     internal static RuntimeRect ToRuntimeRect(this Rectangle rect) => new(rect.X, rect.Y, rect.Width, rect.Height);
+
+    internal static Rectangle VisibleWorldRectangle(this RuntimeViewportGeometry viewport)
+    {
+        var rect = RuntimeViewportGeometryMath.VisibleWorldRect(viewport);
+        return rect.ToSadRogueRectangle();
+    }
 }

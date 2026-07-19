@@ -6,9 +6,9 @@
     "Jobs": { "Hauling": "P1", "Mining": "P1", "Construction": "P2" }
   },
   "budgets": {
-    "hauling": { "plan_per_tick": 128, "ms": 2 },
-    "mining": { "plan_per_tick": 128, "ms": 2 },
-    "construction": { "plan_per_tick": 256, "ms": 3 }
+    "hauling": { "plan_per_tick": 128 },
+    "mining": { "plan_per_tick": 128 },
+    "construction": { "plan_per_tick": 256 }
   },
   "backpressure": { "max_carryover_ticks": 8 },
   "logging": { "level": "info", "per_job_stats": true, "debug_panel": true },

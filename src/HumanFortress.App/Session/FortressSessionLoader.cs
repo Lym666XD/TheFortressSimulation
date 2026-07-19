@@ -1,5 +1,6 @@
 using HumanFortress.App.Input;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime.Snapshots;
 
 namespace HumanFortress.App.Session;
 
@@ -10,7 +11,6 @@ internal sealed class FortressSessionLoader
     private readonly UiStore _ui;
     private readonly Func<ulong> _uiTickProvider;
     private readonly InputBindingsService _bindings;
-    private readonly OrdersRegistryService _ordersRegistry;
     private readonly string _baseDir;
 
     internal FortressSessionLoader(
@@ -19,7 +19,6 @@ internal sealed class FortressSessionLoader
         UiStore ui,
         Func<ulong> uiTickProvider,
         InputBindingsService bindings,
-        OrdersRegistryService ordersRegistry,
         string baseDir)
     {
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -27,7 +26,6 @@ internal sealed class FortressSessionLoader
         _ui = ui ?? throw new ArgumentNullException(nameof(ui));
         _uiTickProvider = uiTickProvider ?? throw new ArgumentNullException(nameof(uiTickProvider));
         _bindings = bindings ?? throw new ArgumentNullException(nameof(bindings));
-        _ordersRegistry = ordersRegistry ?? throw new ArgumentNullException(nameof(ordersRegistry));
         _baseDir = string.IsNullOrWhiteSpace(baseDir) ? throw new ArgumentException("Base directory is required.", nameof(baseDir)) : baseDir;
     }
 
@@ -36,9 +34,12 @@ internal sealed class FortressSessionLoader
         try
         {
             var initialization = new FortressSessionInitializer(_runtime, _session).Initialize();
+            var worldAvailability = _runtime.GetWorldAvailabilityData();
 
             if (!initialization.HasWorld || initialization.UsedFallbackWorld)
-                return FromInitialization(initialization);
+                return FromInitialization(initialization, worldAvailability);
+
+            currentZ = ClampZ(currentZ, worldAvailability);
 
             var bindings = FortressSessionRuntimeBootstrapper.Configure(
                 _runtime,
@@ -47,7 +48,6 @@ internal sealed class FortressSessionLoader
                 _session.AutoDig,
                 currentZ,
                 _bindings,
-                _ordersRegistry,
                 _baseDir);
 
             return new FortressSessionLoadResult(
@@ -56,6 +56,7 @@ internal sealed class FortressSessionLoader
                 bindings.NavigationOverlay,
                 bindings.UiServices,
                 initialization.EmbarkSite,
+                worldAvailability,
                 UsedFallbackWorld: false);
         }
         catch (Exception ex)
@@ -63,17 +64,21 @@ internal sealed class FortressSessionLoader
             Logger.Error("UI.GenerateFortressMap", $"[GenerateFortressMap] ERROR: {ex.Message}", ex);
 
             Logger.Log("[GenerateFortressMap] Using runtime World despite error");
+            var worldAvailability = _runtime.GetWorldAvailabilityData();
             return new FortressSessionLoadResult(
-                _runtime.GetWorldAvailabilityData().HasWorld,
+                worldAvailability.HasWorld,
                 false,
                 null,
                 null,
                 null,
+                worldAvailability,
                 UsedFallbackWorld: true);
         }
     }
 
-    private static FortressSessionLoadResult FromInitialization(FortressSessionInitializationResult initialization)
+    private static FortressSessionLoadResult FromInitialization(
+        FortressSessionInitializationResult initialization,
+        SimulationWorldAvailabilityData worldAvailability)
     {
         return new FortressSessionLoadResult(
             initialization.HasWorld,
@@ -81,6 +86,15 @@ internal sealed class FortressSessionLoader
             null,
             null,
             initialization.EmbarkSite,
+            worldAvailability,
             initialization.UsedFallbackWorld);
+    }
+
+    private static int ClampZ(int currentZ, SimulationWorldAvailabilityData availability)
+    {
+        var bounds = availability.WorldBounds;
+        return bounds.IsEmpty
+            ? 0
+            : Math.Clamp(currentZ, bounds.MinZ, bounds.MaxZExclusive - 1);
     }
 }

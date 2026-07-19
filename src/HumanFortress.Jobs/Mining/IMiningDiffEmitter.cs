@@ -6,7 +6,7 @@ namespace HumanFortress.Jobs.Mining;
 
 internal interface IMiningDiffEmitter
 {
-    void MoveCreature(uint entityId, Point3 position);
+    void MoveCreature(Guid creatureId, Point3 position);
 
     void SetTerrain(Point cell, int z, TerrainKind kind, ushort overrideGeology);
 

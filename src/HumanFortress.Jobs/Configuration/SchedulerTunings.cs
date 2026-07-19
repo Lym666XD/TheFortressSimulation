@@ -7,9 +7,9 @@ internal sealed class SchedulerTunings
     internal int Threads { get; init; } = 1; // v1 default
     internal string QueuePolicy { get; init; } = "single"; // v2: work_stealing
 
-    internal Budget Hauling { get; init; } = new(128, 2);
-    internal Budget Mining { get; init; } = new(128, 2);
-    internal Budget Construction { get; init; } = new(256, 3);
+    internal Budget Hauling { get; init; } = new(128);
+    internal Budget Mining { get; init; } = new(128);
+    internal Budget Construction { get; init; } = new(256);
 
     internal bool PerJobStatsLogging { get; init; } = true;
     internal string LogLevel { get; init; } = "info";
@@ -18,7 +18,7 @@ internal sealed class SchedulerTunings
     internal HaulingLimitSettings HaulingLimits { get; init; } = new();
     internal WorkerSelectionStrategy WorkerSelection { get; init; } = WorkerSelectionStrategy.Closest;
 
-    internal readonly record struct Budget(int PlanPerTick, int Ms);
+    internal readonly record struct Budget(int PlanPerTick);
 
     internal sealed class HaulingLimitSettings
     {
@@ -64,22 +64,19 @@ internal sealed class SchedulerTunings
             if (budgets.TryGetProperty("hauling", out var hEl))
             {
                 h = new Budget(
-                    hEl.TryGetProperty("plan_per_tick", out var p) ? p.GetInt32() : h.PlanPerTick,
-                    hEl.TryGetProperty("ms", out var ms) ? ms.GetInt32() : h.Ms);
+                    ReadPositiveInt32(hEl, "plan_per_tick", h.PlanPerTick));
             }
 
             if (budgets.TryGetProperty("mining", out var mEl))
             {
                 m = new Budget(
-                    mEl.TryGetProperty("plan_per_tick", out var p) ? p.GetInt32() : m.PlanPerTick,
-                    mEl.TryGetProperty("ms", out var ms) ? ms.GetInt32() : m.Ms);
+                    ReadPositiveInt32(mEl, "plan_per_tick", m.PlanPerTick));
             }
 
             if (budgets.TryGetProperty("construction", out var cEl))
             {
                 c = new Budget(
-                    cEl.TryGetProperty("plan_per_tick", out var p) ? p.GetInt32() : c.PlanPerTick,
-                    cEl.TryGetProperty("ms", out var ms) ? ms.GetInt32() : c.Ms);
+                    ReadPositiveInt32(cEl, "plan_per_tick", c.PlanPerTick));
             }
         }
 
@@ -148,6 +145,14 @@ internal sealed class SchedulerTunings
             HaulingLimits = haulingLimits,
             WorkerSelection = workerSelection
         };
+    }
+
+    private static int ReadPositiveInt32(JsonElement element, string propertyName, int fallback)
+    {
+        if (!element.TryGetProperty(propertyName, out var property) || !property.TryGetInt32(out var value))
+            return fallback;
+
+        return Math.Max(1, value);
     }
 
     private static WorkerSelectionStrategy ParseStrategy(string? value, WorkerSelectionStrategy fallback)

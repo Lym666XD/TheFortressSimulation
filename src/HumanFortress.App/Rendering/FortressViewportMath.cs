@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Rendering;
@@ -6,29 +7,42 @@ internal sealed record FortressInitialViewport(Point CameraPosition, Point Curso
 
 internal static class FortressViewportMath
 {
-    public static FortressInitialViewport CreateInitial(int fortressSize)
+    public static FortressInitialViewport CreateInitial(
+        RuntimeWorldBounds worldBounds,
+        RuntimeRect surface,
+        int zoomLevel)
     {
-        int centerPos = (fortressSize * 32) / 2;
+        if (worldBounds.IsEmpty)
+            return new FortressInitialViewport(new Point(0, 0), new Point(0, 0));
+
+        int centerX = worldBounds.MinX + (worldBounds.Width / 2);
+        int centerY = worldBounds.MinY + (worldBounds.Height / 2);
+        int visibleWidth = Math.Max(1, (surface.Width + Math.Max(1, zoomLevel) - 1) / Math.Max(1, zoomLevel));
+        int visibleHeight = Math.Max(1, (surface.Height + Math.Max(1, zoomLevel) - 1) / Math.Max(1, zoomLevel));
+        var normalized = RuntimeViewportGeometryMath.Normalize(new RuntimeViewportGeometry(
+            surface,
+            new RuntimePoint(centerX - (visibleWidth / 2), centerY - (visibleHeight / 2)),
+            zoomLevel,
+            worldBounds.MinZ + (worldBounds.Depth / 2),
+            worldBounds));
         return new FortressInitialViewport(
-            new Point(Math.Max(0, centerPos - 40), Math.Max(0, centerPos - 20)),
-            new Point(centerPos, centerPos));
+            new Point(normalized.CameraWorldOrigin.X, normalized.CameraWorldOrigin.Y),
+            new Point(centerX, centerY));
     }
 
     public static Point ClampCamera(
         Point cameraPosition,
-        int fortressSize,
-        int mapSurfaceWidth,
-        int mapSurfaceHeight,
-        int zoomLevel)
+        RuntimeWorldBounds worldBounds,
+        RuntimeRect surface,
+        int zoomLevel,
+        int currentZ)
     {
-        int viewWidth = Math.Max(1, mapSurfaceWidth / zoomLevel);
-        int viewHeight = Math.Max(1, mapSurfaceHeight / zoomLevel);
-        int worldSize = fortressSize * 32;
-        int maxCameraX = Math.Max(0, worldSize - viewWidth);
-        int maxCameraY = Math.Max(0, worldSize - viewHeight);
-
-        return new Point(
-            Math.Max(0, Math.Min(maxCameraX, cameraPosition.X)),
-            Math.Max(0, Math.Min(maxCameraY, cameraPosition.Y)));
+        var normalized = RuntimeViewportGeometryMath.Normalize(new RuntimeViewportGeometry(
+            surface,
+            new RuntimePoint(cameraPosition.X, cameraPosition.Y),
+            zoomLevel,
+            currentZ,
+            worldBounds));
+        return new Point(normalized.CameraWorldOrigin.X, normalized.CameraWorldOrigin.Y);
     }
 }

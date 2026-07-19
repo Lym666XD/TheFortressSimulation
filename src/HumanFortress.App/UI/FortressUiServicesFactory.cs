@@ -6,11 +6,9 @@ internal static class FortressUiServicesFactory
 {
     public static FortressUiServices Create(
         InputBindingsService bindings,
-        OrdersRegistryService ordersRegistry,
         string baseDir)
     {
         ArgumentNullException.ThrowIfNull(bindings);
-        ArgumentNullException.ThrowIfNull(ordersRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
         Logger.Log("[GenerateFortressMap] Wiring UI classes");
@@ -22,7 +20,6 @@ internal static class FortressUiServicesFactory
         var stockpileQuickUI = new StockpileQuickUI();
 
         bindings.Load(baseDir);
-        ordersRegistry.Load(baseDir);
 
         return new FortressUiServices(
             stockpileUI,

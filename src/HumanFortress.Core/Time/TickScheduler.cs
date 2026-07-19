@@ -1,30 +1,46 @@
 using System.Diagnostics;
 using HumanFortress.Contracts.Diagnostics;
+using HumanFortress.Contracts.Time;
 
 namespace HumanFortress.Core.Time;
 
 /// <summary>
 /// Fixed-step tick scheduler implementing the authoritative UPDATE_ORDER.
-/// Runs at 50 TPS (20ms per tick) with read-parallel/write-serialized execution.
+/// Runs at 50 TPS (20ms per tick) with deterministic read and serialized write phases.
 /// </summary>
 public sealed class TickScheduler
 {
     private const int TARGET_TPS = 50;
     private const int MS_PER_TICK = 1000 / TARGET_TPS; // 20ms
+    private const int MAX_CONSECUTIVE_SYSTEM_FAILURES = 3;
 
     private readonly List<ITick> _systems = new();
+    private readonly Dictionary<string, SystemFailureState> _systemFailures = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, long> _systemFailureTotals = new(StringComparer.Ordinal);
     private readonly object _barrierLock = new();
+    private readonly object _stopLock = new();
     private readonly object _stateLock = new();
+    private readonly IDiagnosticSink? _diagnostics;
 
     private ulong _currentTick;
     private bool _isRunning;
     private bool _isPaused;
+    private bool _stopRequested;
     private float _speedMultiplier = 1.0f;
     private Thread? _tickThread;
+    private long _systemFailureCountTotal;
+    private TickSchedulerExecutionPosition _executionPosition = new(
+        0,
+        TickSchedulerExecutionPhase.Stopped);
 
     public event Action<ulong>? PreTick;
     public event Action<ulong>? PostTick;
     public event Action<ulong>? BarrierReached;
+
+    public TickScheduler(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics;
+    }
 
     /// <summary>
     /// Current simulation tick number.
@@ -55,9 +71,67 @@ public sealed class TickScheduler
     }
 
     /// <summary>
+    /// Whether a scheduler thread still exists, including one that outlived a bounded stop request.
+    /// </summary>
+    public bool HasActiveThread
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _tickThread != null;
+            }
+        }
+    }
+
+    /// <summary>
     /// Target ticks per second (fixed at 50).
     /// </summary>
     public int TargetTPS => TARGET_TPS;
+
+    /// <summary>
+    /// Maximum time the compatibility <see cref="Stop"/> call waits for the tick thread.
+    /// </summary>
+    public static TimeSpan DefaultStopTimeout { get; } = TimeSpan.FromSeconds(2);
+
+    /// <summary>
+    /// Last scheduler phase and system observed by the tick thread.
+    /// </summary>
+    public TickSchedulerExecutionPosition ExecutionPosition
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _executionPosition;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Capture failure history for the currently configured scheduler pipeline.
+    /// A successful retry clears current consecutive state but not historical counts.
+    /// </summary>
+    public TickSchedulerHealthSnapshot CaptureHealthSnapshot()
+    {
+        lock (_stateLock)
+        {
+            var systems = _systemFailureTotals
+                .OrderBy(static entry => entry.Key, StringComparer.Ordinal)
+                .Select(entry =>
+                {
+                    _systemFailures.TryGetValue(entry.Key, out var current);
+                    return new TickSchedulerSystemFailureSnapshot(
+                        entry.Key,
+                        entry.Value,
+                        current?.ConsecutiveFailures ?? 0,
+                        current?.Quarantined ?? false);
+                })
+                .ToArray();
+
+            return new TickSchedulerHealthSnapshot(_systemFailureCountTotal, systems);
+        }
+    }
 
     /// <summary>
     /// Whether the simulation is currently paused.
@@ -176,14 +250,21 @@ public sealed class TickScheduler
     public void RegisterSystem(ITick system)
     {
         ArgumentNullException.ThrowIfNull(system);
+        var systemId = system.SystemId;
+        if (string.IsNullOrWhiteSpace(systemId))
+            throw new ArgumentException("Tick systems must provide a non-empty SystemId.", nameof(system));
 
         lock (_stateLock)
         {
-            if (_isRunning)
+            if (_isRunning || _tickThread != null)
                 throw new InvalidOperationException("Cannot register systems while running");
 
+            if (_systems.Any(existing => string.Equals(existing.SystemId, systemId, StringComparison.Ordinal)))
+                throw new InvalidOperationException($"Tick system id '{systemId}' is already registered.");
+
             _systems.Add(system);
-            _systems.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+            _systemFailures.Remove(systemId);
+            _systems.Sort(CompareSystems);
         }
     }
 
@@ -194,10 +275,11 @@ public sealed class TickScheduler
     {
         lock (_stateLock)
         {
-            if (_isRunning)
+            if (_isRunning || _tickThread != null)
                 throw new InvalidOperationException("Cannot clear systems while running");
 
             _systems.Clear();
+            ResetSystemHealthNoLock();
         }
     }
 
@@ -212,9 +294,14 @@ public sealed class TickScheduler
                 throw new InvalidOperationException("Cannot reset scheduler while running");
 
             _systems.Clear();
+            ResetSystemHealthNoLock();
             _currentTick = 0;
             _isPaused = false;
             _speedMultiplier = 1.0f;
+            _executionPosition = new TickSchedulerExecutionPosition(
+                0,
+                TickSchedulerExecutionPhase.Stopped);
+            ResetStopRequest();
         }
     }
 
@@ -229,44 +316,96 @@ public sealed class TickScheduler
             if (_isRunning || _tickThread != null)
                 return;
 
+            ResetStopRequest();
             _isRunning = true;
+            _executionPosition = new TickSchedulerExecutionPosition(
+                _currentTick,
+                TickSchedulerExecutionPhase.Starting);
             tickThread = new Thread(TickLoop)
             {
                 Name = "SimulationTick",
                 IsBackground = true  // Background thread will not prevent process exit
             };
             _tickThread = tickThread;
+            try
+            {
+                tickThread.Start();
+            }
+            catch
+            {
+                _isRunning = false;
+                _tickThread = null;
+                _executionPosition = new TickSchedulerExecutionPosition(
+                    _currentTick,
+                    TickSchedulerExecutionPhase.Stopped);
+                SignalStopRequest();
+                throw;
+            }
         }
-
-        tickThread.Start();
     }
 
     /// <summary>
-    /// Stop the simulation loop after the current tick completes.
+    /// Request simulation shutdown and wait for the bounded default stop budget.
     /// </summary>
     public void Stop()
     {
+        _ = TryStop(DefaultStopTimeout);
+    }
+
+    /// <summary>
+    /// Requests scheduler shutdown and waits up to <paramref name="timeout"/>
+    /// for the tick thread to terminate.
+    /// </summary>
+    public TickSchedulerStopResult TryStop(TimeSpan timeout)
+    {
+        if (timeout < TimeSpan.Zero || timeout.TotalMilliseconds > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(timeout),
+                timeout,
+                $"Stop timeout must be between zero and {int.MaxValue} milliseconds.");
+        }
+
         Thread? threadToJoin;
         lock (_stateLock)
         {
             if (!_isRunning && _tickThread == null)
-                return;
+            {
+                return new TickSchedulerStopResult(
+                    TickSchedulerStopStatus.AlreadyStopped,
+                    _executionPosition);
+            }
 
             _isRunning = false;
             threadToJoin = _tickThread;
         }
 
-        if (threadToJoin != null && threadToJoin != Thread.CurrentThread)
+        SignalStopRequest();
+
+        if (threadToJoin == Thread.CurrentThread)
         {
-            threadToJoin.Join();
-            lock (_stateLock)
-            {
-                if (ReferenceEquals(_tickThread, threadToJoin))
-                {
-                    _tickThread = null;
-                }
-            }
+            return new TickSchedulerStopResult(
+                TickSchedulerStopStatus.SelfStopRequested,
+                ExecutionPosition);
         }
+
+        if (threadToJoin == null)
+        {
+            return new TickSchedulerStopResult(
+                TickSchedulerStopStatus.Stopped,
+                ExecutionPosition);
+        }
+
+        if (!threadToJoin.Join(timeout))
+        {
+            return new TickSchedulerStopResult(
+                TickSchedulerStopStatus.TimedOut,
+                ExecutionPosition);
+        }
+
+        return new TickSchedulerStopResult(
+            TickSchedulerStopStatus.Stopped,
+            ExecutionPosition);
     }
 
     /// <summary>
@@ -280,7 +419,14 @@ public sealed class TickScheduler
                 throw new InvalidOperationException("Cannot execute a single tick while the scheduler is running");
         }
 
-        ExecuteTick();
+        try
+        {
+            _ = ExecuteTick(honorStopRequest: false);
+        }
+        finally
+        {
+            SetExecutionPosition(CurrentTick, TickSchedulerExecutionPhase.Stopped);
+        }
     }
 
     private void TickLoop()
@@ -290,19 +436,22 @@ public sealed class TickScheduler
 
         try
         {
-            while (GetIsRunning())
+            while (!ShouldStop(honorStopRequest: true))
             {
                 // If paused, sleep and skip tick execution
                 if (GetIsPaused())
                 {
-                    Thread.Sleep(50); // Sleep 50ms when paused to reduce CPU usage
+                    SetExecutionPosition(CurrentTick, TickSchedulerExecutionPhase.Paused);
+                    if (WaitForStop(millisecondsTimeout: 50))
+                        break;
                     nextTickTime = frameTimer.ElapsedMilliseconds; // Reset timing when unpaused
                     continue;
                 }
 
                 var startTime = frameTimer.ElapsedMilliseconds;
 
-                ExecuteTick();
+                if (!ExecuteTick(honorStopRequest: true))
+                    break;
 
                 var elapsedMs = frameTimer.ElapsedMilliseconds - startTime;
 
@@ -314,7 +463,9 @@ public sealed class TickScheduler
                 var sleepTime = (int)(nextTickTime - frameTimer.ElapsedMilliseconds);
                 if (sleepTime > 0)
                 {
-                    Thread.Sleep(sleepTime);
+                    SetExecutionPosition(CurrentTick, TickSchedulerExecutionPhase.Sleeping);
+                    if (WaitForStop(sleepTime))
+                        break;
                 }
                 else if (sleepTime < -adjustedMsPerTick * 5)
                 {
@@ -325,9 +476,13 @@ public sealed class TickScheduler
         }
         finally
         {
+            SignalStopRequest();
             lock (_stateLock)
             {
                 _isRunning = false;
+                _executionPosition = new TickSchedulerExecutionPosition(
+                    _currentTick,
+                    TickSchedulerExecutionPhase.Stopped);
                 if (ReferenceEquals(_tickThread, Thread.CurrentThread))
                 {
                     _tickThread = null;
@@ -336,60 +491,106 @@ public sealed class TickScheduler
         }
     }
 
-    private void ExecuteTick()
+    private bool ExecuteTick(bool honorStopRequest)
     {
         var tick = CurrentTick;
         var systems = GetSystemSnapshot();
 
-        PreTick?.Invoke(tick);
+        if (ShouldStop(honorStopRequest))
+            return false;
 
-        // Phase 1: Read (parallel allowed)
-        ExecuteReadPhase(tick, systems);
+        SetExecutionPosition(tick, TickSchedulerExecutionPhase.PreTick);
+        PreTick?.Invoke(tick);
+        if (ShouldStop(honorStopRequest))
+            return false;
+
+        // Phase 1: Read in deterministic registered-system order.
+        var readFailures = new HashSet<ITick>();
+        if (!ExecuteReadPhase(tick, systems, readFailures, honorStopRequest))
+            return false;
 
         // Barrier
+        SetExecutionPosition(tick, TickSchedulerExecutionPhase.Barrier);
         lock (_barrierLock)
         {
             BarrierReached?.Invoke(tick);
         }
+        if (ShouldStop(honorStopRequest))
+            return false;
 
         // Phase 2: Write (serialized)
-        ExecuteWritePhase(tick, systems);
+        if (!ExecuteWritePhase(tick, systems, readFailures, honorStopRequest))
+            return false;
 
+        SetExecutionPosition(tick, TickSchedulerExecutionPhase.PostTick);
         PostTick?.Invoke(tick);
 
+        SetExecutionPosition(tick, TickSchedulerExecutionPhase.AdvancingTick);
         AdvanceTick();
+        return true;
     }
 
-    private void ExecuteReadPhase(ulong tick, IReadOnlyList<ITick> systems)
+    private bool ExecuteReadPhase(
+        ulong tick,
+        IReadOnlyList<ITick> systems,
+        HashSet<ITick> failedSystems,
+        bool honorStopRequest)
     {
-        // Systems can run in parallel during read phase
-        Parallel.ForEach(systems, system =>
+        foreach (var system in systems)
         {
+            if (ShouldStop(honorStopRequest))
+                return false;
+            if (IsSystemQuarantined(system))
+                continue;
+
+            SetExecutionPosition(tick, TickSchedulerExecutionPhase.Read, system.SystemId);
             try
             {
                 system.ReadTick(tick);
             }
             catch (Exception ex)
             {
+                failedSystems.Add(system);
                 HandleSystemError(system, "Read", ex);
             }
-        });
+
+            if (ShouldStop(honorStopRequest))
+                return false;
+        }
+
+        return true;
     }
 
-    private void ExecuteWritePhase(ulong tick, IReadOnlyList<ITick> systems)
+    private bool ExecuteWritePhase(
+        ulong tick,
+        IReadOnlyList<ITick> systems,
+        IReadOnlySet<ITick> readFailures,
+        bool honorStopRequest)
     {
         // Write phase must be serialized
         foreach (var system in systems)
         {
+            if (ShouldStop(honorStopRequest))
+                return false;
+            if (IsSystemQuarantined(system) || readFailures.Contains(system))
+                continue;
+
+            SetExecutionPosition(tick, TickSchedulerExecutionPhase.Write, system.SystemId);
             try
             {
                 system.WriteTick(tick);
+                ClearSystemFailure(system);
             }
             catch (Exception ex)
             {
                 HandleSystemError(system, "Write", ex);
             }
+
+            if (ShouldStop(honorStopRequest))
+                return false;
         }
+
+        return true;
     }
 
     private ITick[] GetSystemSnapshot()
@@ -405,6 +606,59 @@ public sealed class TickScheduler
         lock (_stateLock)
         {
             return _isRunning;
+        }
+    }
+
+    private bool ShouldStop(bool honorStopRequest)
+    {
+        return honorStopRequest && (IsStopRequested() || !GetIsRunning());
+    }
+
+    private bool IsStopRequested()
+    {
+        lock (_stopLock)
+        {
+            return _stopRequested;
+        }
+    }
+
+    private void ResetStopRequest()
+    {
+        lock (_stopLock)
+        {
+            _stopRequested = false;
+        }
+    }
+
+    private void SignalStopRequest()
+    {
+        lock (_stopLock)
+        {
+            _stopRequested = true;
+            Monitor.PulseAll(_stopLock);
+        }
+    }
+
+    private bool WaitForStop(int millisecondsTimeout)
+    {
+        lock (_stopLock)
+        {
+            if (_stopRequested)
+                return true;
+
+            _ = Monitor.Wait(_stopLock, millisecondsTimeout);
+            return _stopRequested;
+        }
+    }
+
+    private void SetExecutionPosition(
+        ulong tick,
+        TickSchedulerExecutionPhase phase,
+        string? systemId = null)
+    {
+        lock (_stateLock)
+        {
+            _executionPosition = new TickSchedulerExecutionPosition(tick, phase, systemId);
         }
     }
 
@@ -432,14 +686,88 @@ public sealed class TickScheduler
         }
     }
 
+    private bool IsSystemQuarantined(ITick system)
+    {
+        lock (_stateLock)
+        {
+            return _systemFailures.TryGetValue(system.SystemId, out var state)
+                && state.Quarantined;
+        }
+    }
+
+    private void ClearSystemFailure(ITick system)
+    {
+        lock (_stateLock)
+        {
+            _systemFailures.Remove(system.SystemId);
+        }
+    }
+
     private void HandleSystemError(ITick system, string phase, Exception ex)
     {
         // Per ERROR_HANDLING_POLICY.md: catch, quarantine, log, continue
-        DiagnosticHub.Error(
+        var state = RecordSystemFailure(system);
+        Diagnostics.Error(
             "Core.TickScheduler",
-            $"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}",
+            state.Quarantined
+                ? $"[ERROR] System {system.SystemId} failed in {phase} phase and was quarantined after {state.ConsecutiveFailures} consecutive failures: {ex.Message}"
+                : $"[ERROR] System {system.SystemId} failed in {phase} phase: {ex.Message}",
             ex,
             CurrentTick);
-        // TODO: Implement quarantine logic
+    }
+
+    private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink;
+
+    private SystemFailureState RecordSystemFailure(ITick system)
+    {
+        lock (_stateLock)
+        {
+            if (!_systemFailures.TryGetValue(system.SystemId, out var state))
+            {
+                state = new SystemFailureState();
+                _systemFailures[system.SystemId] = state;
+            }
+
+            state.ConsecutiveFailures++;
+            _systemFailureCountTotal++;
+            _systemFailureTotals[system.SystemId] =
+                _systemFailureTotals.TryGetValue(system.SystemId, out var total)
+                    ? total + 1
+                    : 1;
+            if (state.ConsecutiveFailures >= MAX_CONSECUTIVE_SYSTEM_FAILURES)
+                state.Quarantined = true;
+
+            return state.Copy();
+        }
+    }
+
+    private void ResetSystemHealthNoLock()
+    {
+        _systemFailures.Clear();
+        _systemFailureTotals.Clear();
+        _systemFailureCountTotal = 0;
+    }
+
+    private static int CompareSystems(ITick a, ITick b)
+    {
+        var priority = a.Priority.CompareTo(b.Priority);
+        return priority != 0
+            ? priority
+            : string.CompareOrdinal(a.SystemId, b.SystemId);
+    }
+
+    private sealed class SystemFailureState
+    {
+        public int ConsecutiveFailures { get; set; }
+        public bool Quarantined { get; set; }
+
+        public SystemFailureState Copy()
+        {
+            return new SystemFailureState
+            {
+                ConsecutiveFailures = ConsecutiveFailures,
+                Quarantined = Quarantined
+            };
+        }
     }
 }

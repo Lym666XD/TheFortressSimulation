@@ -1,10 +1,22 @@
 GAME_STATE_FLOW.md — v1.1+ (Unified, Fortress-only, Merged & Detailed)
 
-Current implementation note (2026-06-12):
+Current implementation note (2026-07-09):
 
 - This document still describes the target state-flow shape.
-- Current content loading uses `FortressContentLoader` over `content/` and `data/core/`; compiled `.cpack` loading is future design, not current implementation.
-- Save/load details are still target architecture unless confirmed by source code.
+- Current content loading enters through Runtime's content-loading facade over
+  the Content-owned loader for `content/` and `data/core/`; compiled `.cpack`
+  loading is future design, not current implementation.
+- Current save/load has a Runtime-owned vertical slice: a save directory with
+  `slot_manifest.json` plus `runtime_snapshot.json`, Runtime validation and
+  compatibility classification, a supported Simulation world payload restore,
+  RNG stream restore, and pending-command replay restore. Chunk-sharded world
+  storage, autosave rings, migrations, missing-content placeholder policy, and
+  complete long-horizon job restore remain target architecture. Contained item
+  restore is supported for payload-local acyclic item container graphs; carried
+  and equipped item restore is supported for payload-local creature owners;
+  installed item restore is supported for valid payload placement anchors; and
+  item-local reservation tokens are supported when claimant/count rows validate
+  against the item payload.
 
 This file merges our current v1.1 fortress-only flow with the useful, more detailed procedures from the previous project’s state-flow document (startup, menus, worldgen stages, map navigation, fortress loop, save/load, testing). Where older content conflicted with v1.1 decisions (e.g., EncounterMap, Adventure), it has been adapted or removed. 
 
@@ -18,7 +30,7 @@ Non-play states (Boot/MainMenu/WorldGen/LoadSave) allow bounded file I/O but do 
 
 Barriered transitions only; deterministic across OS/thread counts.
 
-Fortress size is a square N×N chunks, N ∈ [2..8]; one chunk is 32×32×Z tiles.
+Fortress size is a square N×N chunks, N ∈ [2..16]; one chunk is 32×32×Z tiles.
 
 0) Top-Level State Graph (final)
 [Boot] 
@@ -137,7 +149,7 @@ Storyteller cooldowns & world actors planning may run single-threaded; no local 
 
 6) EmbarkPrep (embark → fortress instance)
 
-Choose world tile; select fortress size N×N chunks, N ∈ [2..8].
+Choose world tile; select fortress size N×N chunks, N ∈ [2..16].
 
 Configure starting party & loadout (placeholder).
 
@@ -205,30 +217,49 @@ Barriered save of fortress delta → unload chunks → update world knowledge & 
 8) Save System Flow (merged & aligned)
 sequenceDiagram
   participant UI
-  participant SaveManager
-  participant Serializer
+  participant RuntimePorts
+  participant RuntimeStore
+  participant RuntimeCodec
   participant FS as FileSystem
-  UI->>SaveManager: RequestSave(name)
-  SaveManager->>Serializer: Snapshot & Serialize (MessagePack)
-  Serializer-->>SaveManager: chunked .mpkz blobs
-  SaveManager->>FS: write temp + CRC
-  FS-->>SaveManager: ok
-  SaveManager->>FS: atomic rename manifest
-  FS-->>SaveManager: done
-  SaveManager-->>UI: Save complete
+  UI->>RuntimePorts: RequestSave(slotDirectory)
+  RuntimePorts->>RuntimeStore: Create/validate Runtime save package
+  RuntimeStore->>RuntimeCodec: Serialize runtime_snapshot.json
+  RuntimeStore->>RuntimeCodec: Serialize slot_manifest.json
+  RuntimeStore->>FS: write temp + replace document
+  RuntimeStore->>FS: write temp + replace slot manifest
+  RuntimePorts-->>UI: Structured save result
 
 
 What we save
 
-Dirty chunks; fortress instance delta; Jobs, Mailboxes, RNG streams; FactionMemory, Artifacts Ledger; world.meta updates if needed; compiled.manifest signature for compatibility.
+Current implementation: a Runtime-owned save directory with `slot_manifest.json`
+and `runtime_snapshot.json`. The snapshot document contains Runtime manifest
+metadata, command replay rows, primitive RNG stream rows, and the supported
+Simulation world payload slices: terrain, ground/contained/carried/equipped
+and installed items with payload-local item/creature/placement owners,
+creatures, global reservations, stockpile zones, owned placeables/workshops,
+and active orders.
+
+Target work: chunk-sharded world storage, autosave rings, migration policy,
+missing-content policy, and complete long-horizon job-state restore. Contained
+item state is supported only when the containing item is present in the same
+acyclic world payload graph; carried/equipped item state is supported only when
+the owning creature is present in the same world payload; installed item state
+is supported only when the placement anchor/z/rotation validates against the
+saved world; item-local reservation-token state is supported only when token
+claimants and reserved counts validate against the item payload.
 
 When we save
 
-Manual (Pause) and autosave ring; always at end-of-tick barrier; single IO worker; atomic replace.
+Current implementation should be triggered through Runtime save ports and should
+capture a Runtime-authored checkpoint. Autosave ring policy and fuller directory
+fsync policy are still target work.
 
 Faults
 
-Any serialize/write error is caught; keep previous save; show localized banner; never crash.
+Validation/write errors should remain structured Runtime save issues for App to
+present. App should not inspect live `World`, job systems, command queues, or
+Runtime-internal save codecs to recover a failed save.
 
 9) Load Game Flow (merged & aligned)
 graph TD
@@ -245,17 +276,23 @@ graph TD
 
 Validation
 
-Check existence, CRC, schema/packset signature; migrate if supported; else fail gracefully.
+Current implementation validates both `slot_manifest.json` and
+`runtime_snapshot.json` through Runtime and reports structured
+`snapshot.document` or `slot.manifest` issues. CRC, full migration, and
+pack/content placeholder policy remain target work.
 
 Restore
 
-Recreate WorldScope (content snapshot, RNG root); load world.meta; if resuming fortress, load required chunks/instance; rebuild derived indices; resume at last_tick + 1.
+Runtime validates the save directory, composes a fresh session, restores the
+supported Simulation world payload, restores RNG streams after session services
+reset, restores pending commands, rebuilds derived navigation/cache state, and
+then resumes play through the normal Runtime/App session boundary.
 
 10) Game Loop Timing (merged diagram)
 graph TD
     T0[Tick Start] --> Paused{Paused?}
     Paused -->|Yes| RenderOnly[Render Only]
-    Paused -->|No| Read[Read (Parallel)]
+    Paused -->|No| Read[Read (deterministic system order)]
     Read --> Barrier[Barrier]
     Barrier --> Write[Write (Serialized)]
     Write --> Events[Events]
@@ -265,7 +302,9 @@ graph TD
     Render --> TEnd[Tick End]
 
 
-Target: 50 TPS (deterministic tick), 60 FPS render; UI virtualized lists to keep frame times under budget.
+Target: 50 TPS deterministic tick, 60 FPS render; UI virtualized lists to keep
+frame times under budget. Future chunk-partitioned read parallelism must remain
+deterministic and non-overlapping.
 
 11) State Transition Matrix (updated)
 From	To	Trigger	Notes
@@ -298,7 +337,7 @@ WorldGen (256×256): < 15s; memory < 500MB.
 
 Gameplay: 50 TPS / 60 FPS; fortress transitions < 100ms (after IO); save/load < 2s typical.
 
-Resource limits (initial): entity cap tuned per profile; fortress size N×N, N∈[2..8]; save size target < 100MB.
+Resource limits (initial): entity cap tuned per profile; fortress size N×N, N∈[2..16]; save size target < 100MB.
 
 14) Testing Checklist (merged & adapted)
 

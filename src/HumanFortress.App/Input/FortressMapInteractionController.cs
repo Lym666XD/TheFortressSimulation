@@ -1,5 +1,6 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -8,7 +9,7 @@ internal readonly record struct FortressMapInteractionContext(
     bool MapSurfaceAvailable,
     UiStore Ui,
     FortressViewportSnapshot Viewport,
-    int FortressSize,
+    RuntimeViewportGeometry Geometry,
     FortressDebugSpawnContext DebugSpawn,
     FortressMapClickControllerContext MapClick,
     FortressPlacementRouterContext Placement);
@@ -30,10 +31,7 @@ internal static class FortressMapInteractionController
 
         if (!FortressMapClickInput.TryResolveWorldPosition(
                 local,
-                context.Viewport.CameraPosition,
-                context.Viewport.ZoomLevel,
-                context.FortressSize,
-                context.Viewport.LastMousePosition,
+                context.Geometry,
                 out var worldPos))
         {
             return;

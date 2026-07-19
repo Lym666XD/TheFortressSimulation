@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-mining.schema.json",
+  "title": "Active mining tuning",
+  "description": "Mechanical contract for geology-specific mining drops, work costs, and tool multipliers.",
+  "type": "object",
+  "required": ["geology_drops", "geology_ticks", "tool_multipliers", "ramp_result_terrain"],
+  "properties": {
+    "geology_drops": {
+      "type": "object",
+      "required": ["default"],
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/definitions/geologyKey" },
+      "additionalProperties": { "$ref": "#/definitions/dropTable" }
+    },
+    "geology_ticks": {
+      "type": "object",
+      "required": ["default"],
+      "minProperties": 1,
+      "propertyNames": { "$ref": "#/definitions/geologyKey" },
+      "additionalProperties": { "$ref": "#/definitions/tickTable" }
+    },
+    "tool_multipliers": {
+      "type": "object",
+      "required": ["none"],
+      "minProperties": 1,
+      "propertyNames": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$" },
+      "additionalProperties": { "type": "number", "exclusiveMinimum": 0 }
+    },
+    "ramp_result_terrain": {
+      "enum": ["OpenWithFloor"]
+    },
+    "_comments": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "contentId": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "geologyKey": {
+      "type": "string",
+      "pattern": "^(default|[A-Za-z][A-Za-z0-9_.-]*)$"
+    },
+    "dropTable": {
+      "type": "object",
+      "required": ["wall", "ramp"],
+      "properties": {
+        "wall": { "$ref": "#/definitions/dropArray" },
+        "ramp": { "$ref": "#/definitions/dropArray" }
+      },
+      "additionalProperties": false
+    },
+    "dropArray": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/drop" }
+    },
+    "drop": {
+      "type": "object",
+      "required": ["item_id", "min", "max", "weight"],
+      "properties": {
+        "item_id": { "$ref": "#/definitions/contentId" },
+        "min": { "type": "integer", "minimum": 0 },
+        "max": { "type": "integer", "minimum": 0 },
+        "weight": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "tickTable": {
+      "type": "object",
+      "required": ["wall", "ramp"],
+      "properties": {
+        "wall": { "type": "integer", "minimum": 1 },
+        "ramp": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

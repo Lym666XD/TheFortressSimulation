@@ -1,6 +1,8 @@
 using HumanFortress.Contracts.Simulation.Creatures;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Core.Random;
 using HumanFortress.Simulation.Diagnostics;
+using HumanFortress.Simulation.Identity;
 using SimulationWorld = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Creatures;
@@ -17,19 +19,24 @@ internal sealed partial class CreatureManager : ICreatureDefinitionCatalog
     private CreatureDefinitionCatalogStore _definitionCatalog = CreatureDefinitionCatalogStore.Empty;
 
     private readonly Dictionary<Guid, CreatureInstance> _instances = new();
+    private readonly LiveEntityIdentityIndex _identityIndex = new();
+    private readonly Dictionary<uint, List<Guid>> _legacyEntityIdIndex = new();
     private readonly object _instanceLock = new();
     private ulong _nextInstanceSequence;
 
     private SimulationWorld? _world;
+    private IDiagnosticSink _diagnostics;
 
-    /// <summary>
-    /// Optional logging callback set by the app diagnostics layer.
-    /// </summary>
-    public static Action<string>? LogCallback { get; set; }
+    internal CreatureManager(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
+    }
 
-    public int DefinitionCount => _definitionCatalog.DefinitionCount;
+    internal int DefinitionCount => _definitionCatalog.DefinitionCount;
 
-    public int InstanceCount
+    int ICreatureDefinitionCatalog.DefinitionCount => DefinitionCount;
+
+    internal int InstanceCount
     {
         get
         {
@@ -40,29 +47,44 @@ internal sealed partial class CreatureManager : ICreatureDefinitionCatalog
         }
     }
 
+    internal LiveEntityIdentityAuthoritySnapshot GetIdentityAuthoritySnapshot()
+    {
+        lock (_instanceLock)
+        {
+            return _identityIndex.GetAuthoritySnapshot(_nextInstanceSequence);
+        }
+    }
+
     /// <summary>
     /// Set world reference (called after World is created)
     /// </summary>
-    public void SetWorld(SimulationWorld world)
+    internal void SetWorld(SimulationWorld world)
     {
         ArgumentNullException.ThrowIfNull(world);
 
         _world = world;
     }
 
-    private static void Emit(string message)
+    internal void SetDiagnostics(IDiagnosticSink diagnostics)
     {
-        SimulationDiagnostics.Information(LogCallback, "Simulation.Creatures", message);
+        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+    }
+
+    private void Emit(string message)
+    {
+        SimulationDiagnostics.Information(_diagnostics, "Simulation.Creatures", message);
     }
 
     private Guid CreateNextInstanceGuidLocked()
     {
         Guid guid;
+        EntityIdentityClaimResult validation;
         do
         {
             guid = DeterministicGuidGenerator.GenerateFromSequence(CreatureInstanceGuidScope, ++_nextInstanceSequence);
+            validation = _identityIndex.ValidateNew(guid);
         }
-        while (_instances.ContainsKey(guid));
+        while (!validation.Success);
 
         return guid;
     }

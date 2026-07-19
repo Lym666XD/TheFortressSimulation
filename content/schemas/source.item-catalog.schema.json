@@ -1,0 +1,236 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.item-catalog.schema.json",
+  "title": "Active item source family",
+  "description": "Authoritative mechanical contract for active data/core/items sources.",
+  "oneOf": [
+    { "$ref": "#/definitions/itemArray" },
+    {
+      "type": "object",
+      "required": ["version", "items"],
+      "properties": {
+        "$schema": { "type": "string", "minLength": 1 },
+        "version": { "type": ["string", "integer"] },
+        "_comment": { "type": "string" },
+        "items": { "$ref": "#/definitions/itemArray" }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "itemArray": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/item" }
+    },
+    "item": {
+      "type": "object",
+      "required": ["id", "name", "tags", "base_volume_ml", "base_mass_g", "stack"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "desc": { "type": "string" },
+        "kind": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "allowed_material_tags": { "$ref": "#/definitions/stringSet" },
+        "fixed_material": { "$ref": "#/definitions/id" },
+        "base_volume_ml": { "type": "integer", "minimum": 1 },
+        "base_mass_g": { "type": "integer", "minimum": 1 },
+        "fixed_mass_g": { "type": "integer", "minimum": 1 },
+        "stack": { "$ref": "#/definitions/stack" },
+        "stack_mode": { "enum": ["none", "count", "charges"] },
+        "max_per_stack": { "type": "integer", "minimum": 1 },
+        "equip": { "$ref": "#/definitions/equip" },
+        "armor": { "$ref": "#/definitions/armor" },
+        "weapon": { "$ref": "#/definitions/weapon" },
+        "ammo": { "$ref": "#/definitions/ammo" },
+        "tool": { "$ref": "#/definitions/tool" },
+        "container": { "$ref": "#/definitions/container" },
+        "use": { "$ref": "#/definitions/use" },
+        "placeable_profile": { "$ref": "#/definitions/placeableProfile" },
+        "storage_capacity": { "$ref": "#/definitions/storageCapacity" },
+        "quality_tier": { "type": "integer", "minimum": -3, "maximum": 3 },
+        "value_mul_fx": { "type": "integer", "minimum": 0 },
+        "value_base": { "type": "integer", "minimum": 0 },
+        "beauty_bonus": { "type": "integer" },
+        "durability_max": { "type": "integer", "minimum": 1 },
+        "hazard": { "$ref": "#/definitions/stringSet" }
+      },
+      "anyOf": [
+        { "required": ["kind"] },
+        { "required": ["category"] }
+      ],
+      "additionalProperties": false
+    },
+    "stack": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["none", "count", "charges"] },
+        "unit": { "type": "string", "minLength": 1 },
+        "max_per_stack": { "type": "integer", "minimum": 1 },
+        "equal_when": { "$ref": "#/definitions/stringSet" },
+        "requires_pristine": { "type": "boolean" },
+        "require_no_mods": { "type": "boolean" },
+        "require_no_enchant": { "type": "boolean" },
+        "requires_empty": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "enum": ["count", "charges"] } } },
+          "then": { "required": ["max_per_stack"] }
+        },
+        {
+          "if": { "properties": { "mode": { "const": "charges" } } },
+          "then": { "required": ["unit"] }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "equip": {
+      "type": "object",
+      "required": ["slot"],
+      "properties": {
+        "slot": { "type": "string", "minLength": 1 },
+        "layer": { "type": "string", "minLength": 1 },
+        "encumbrance_fx": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "armor": {
+      "type": "object",
+      "required": ["coverage", "thickness_tier"],
+      "properties": {
+        "coverage": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "thickness_tier": { "enum": ["LIGHT", "MEDIUM", "HEAVY"] }
+      },
+      "additionalProperties": false
+    },
+    "weapon": {
+      "type": "object",
+      "required": ["speed", "attacks"],
+      "properties": {
+        "speed": { "type": "number", "exclusiveMinimum": 0 },
+        "attacks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/attack" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "attack": {
+      "type": "object",
+      "required": ["type", "base"],
+      "properties": {
+        "type": { "type": "string", "minLength": 1 },
+        "base": { "type": "integer", "minimum": 0 },
+        "verb": { "type": "string", "minLength": 1 },
+        "ranged": { "type": "boolean" },
+        "ammo": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "ammo": {
+      "type": "object",
+      "required": ["ammo_type", "penetration_fx"],
+      "properties": {
+        "ammo_type": { "type": "string", "minLength": 1 },
+        "penetration_fx": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "tool": {
+      "type": "object",
+      "required": ["qualities"],
+      "properties": {
+        "qualities": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_]*$" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "container": {
+      "type": "object",
+      "properties": {
+        "capacity": { "type": "integer", "minimum": 1 },
+        "capacity_ml": { "type": "integer", "minimum": 1 },
+        "accepts": { "$ref": "#/definitions/stringSet" },
+        "allow_tags": { "$ref": "#/definitions/stringSet" },
+        "sealed": { "type": "boolean" }
+      },
+      "anyOf": [
+        { "required": ["capacity"] },
+        { "required": ["capacity_ml"] }
+      ],
+      "additionalProperties": false
+    },
+    "use": {
+      "type": "object",
+      "required": ["use_verb", "charges"],
+      "properties": {
+        "use_verb": { "type": "string", "minLength": 1 },
+        "charges": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "footprint": {
+      "type": "object",
+      "required": ["w", "d", "h"],
+      "properties": {
+        "w": { "type": "integer", "minimum": 1 },
+        "d": { "type": "integer", "minimum": 1 },
+        "h": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "required": ["beauty", "comfort", "light_lumen", "heat_w"],
+      "properties": {
+        "beauty": { "type": "integer" },
+        "comfort": { "type": "integer", "minimum": 0 },
+        "light_lumen": { "type": "integer", "minimum": 0 },
+        "heat_w": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "placeableProfile": {
+      "type": "object",
+      "required": ["footprint", "passability", "requires_floor", "clearance_h", "blocks_light", "tags", "effects"],
+      "properties": {
+        "footprint": { "$ref": "#/definitions/footprint" },
+        "passability": { "enum": ["blocking", "nonblocking", "doorway"] },
+        "requires_floor": { "type": "boolean" },
+        "clearance_h": { "type": "integer", "minimum": 0 },
+        "blocks_light": { "type": "boolean" },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "effects": { "$ref": "#/definitions/effects" }
+      },
+      "additionalProperties": false
+    },
+    "storageCapacity": {
+      "type": "object",
+      "required": ["volume_ml", "slots"],
+      "properties": {
+        "volume_ml": { "type": "integer", "minimum": 1 },
+        "slots": { "type": "integer", "minimum": 1 },
+        "allowed_tags": { "$ref": "#/definitions/stringSet" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

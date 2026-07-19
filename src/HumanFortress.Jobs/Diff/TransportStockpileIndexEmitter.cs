@@ -7,7 +7,7 @@ using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Diff;
 
-internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexEmitter
+internal sealed partial class TransportStockpileIndexEmitter : ITransportStockpileIndexEmitter
 {
     private readonly WorldModel _world;
     private readonly StockpileDiffLog _stockpileDiffs;
@@ -32,7 +32,7 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
             return;
 
         _stockpileDiffs.AddRemoveItem(
-            DiffTargetEncoding.SignedEntityId(itemId),
+            DiffTargetEncoding.EntityKey(itemId),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,
@@ -44,14 +44,14 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
 
     internal void RecordDelivery(Guid itemId, Point3 destination, TransportReason reason)
     {
-        if (!CanWriteStockpileIndex(reason))
+        if (!TransportDestinationValidator.WritesStockpileIndex(reason))
             return;
 
         if (!TryResolveStockpileCell(destination, out var location))
             return;
 
         _stockpileDiffs.AddPlaceItem(
-            DiffTargetEncoding.SignedEntityId(itemId),
+            DiffTargetEncoding.EntityKey(itemId),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,
@@ -63,7 +63,7 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
 
     internal void ReleaseDestinationReservation(Point3 destination, TransportReason reason)
     {
-        if (!CanWriteStockpileIndex(reason))
+        if (!TransportDestinationValidator.WritesStockpileIndex(reason))
             return;
 
         if (!TryResolveStockpileCell(destination, out var location))
@@ -89,15 +89,6 @@ internal sealed class TransportStockpileIndexEmitter : ITransportStockpileIndexE
 
         var definition = _world.Items.GetDefinition(item.DefinitionId);
         return StockpileItemProjection.FromItem(item, definition);
-    }
-
-    private static bool CanWriteStockpileIndex(TransportReason reason)
-    {
-        return reason is TransportReason.ToStockpile
-            or TransportReason.ToWorkshopOutput
-            or TransportReason.FromTradeDepot
-            or TransportReason.ToArmory
-            or TransportReason.ToAmmoCache;
     }
 
     void ITransportStockpileIndexEmitter.RecordPickup(Guid itemId, Point3 source) =>

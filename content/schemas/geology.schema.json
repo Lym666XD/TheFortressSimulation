@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "geology.schema.json",
+  "$id": "https://humanfortress.game/schemas/geology.schema.json",
   "type": "object",
   "required": ["id", "tags", "material", "terrain_bits", "display", "properties"],
   "properties": {
@@ -18,7 +18,7 @@
     },
     "terrain_bits": {
       "type": "object",
-      "required": ["kind", "natural", "support_flag"],
+      "required": ["kind", "natural"],
       "properties": {
         "kind": {
           "type": "string",

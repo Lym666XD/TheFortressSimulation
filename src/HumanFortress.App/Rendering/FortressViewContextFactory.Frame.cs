@@ -12,6 +12,8 @@ internal sealed partial class FortressViewContextFactory
             _diagnostics,
             _loadedSession.Capture(),
             _viewport.Capture(),
+            _view.MapViewportPresenter,
+            _view.UiOverlayPresenter,
             _fortressSizeProvider(),
             _uiTickProvider(),
             _tileInspection);

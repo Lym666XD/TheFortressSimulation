@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Placeables;
@@ -24,33 +25,32 @@ internal sealed partial class ChunkPlaceableData
     private readonly Dictionary<int, Guid> _externalRefs = new();
 
     /// <summary>
-    /// Get placeable at local cell index (resolves both owned and external)
+    /// Get owned placeable at local cell index.
+    /// External references are resolved through PlaceableManager.TryGetPlaceableAt.
     /// </summary>
-    public PlaceableInstance? GetPlaceableAt(int localIndex)
+    internal PlaceableInstance? GetPlaceableAt(int localIndex)
     {
         if (_ownedPlaceables.TryGetValue(localIndex, out var placeable))
             return placeable;
-
-        // TODO: resolve external refs via PlaceableManager when implemented
-        // if (_externalRefs.TryGetValue(localIndex, out var guid))
-        //     return PlaceableManager.GetPlaceable(guid);
 
         return null;
     }
 
     /// <summary>
     /// Add owned placeable at local cell index.
-    /// Caller MUST call SyncToFurnitureCell and BumpConnectivityVersion separately.
+    /// Caller must be the topology transaction that also creates every footprint
+    /// reference and derived furniture cell before publishing the dirty set.
     /// </summary>
-    public void AddPlaceable(int localIndex, PlaceableInstance placeable)
+    internal bool TryAddPlaceable(int localIndex, PlaceableInstance placeable)
     {
-        _ownedPlaceables[localIndex] = placeable;
+        ArgumentNullException.ThrowIfNull(placeable);
+        return _ownedPlaceables.TryAdd(localIndex, placeable);
     }
 
     /// <summary>
     /// Remove owned placeable at local cell index
     /// </summary>
-    public bool RemovePlaceable(int localIndex)
+    internal bool RemovePlaceable(int localIndex)
     {
         return _ownedPlaceables.Remove(localIndex);
     }
@@ -58,34 +58,57 @@ internal sealed partial class ChunkPlaceableData
     /// <summary>
     /// Add external reference to placeable owned by another chunk
     /// </summary>
-    public void AddExternalRef(int localIndex, Guid placeableGuid)
+    internal bool TryAddExternalRef(int localIndex, Guid placeableGuid)
     {
-        _externalRefs[localIndex] = placeableGuid;
+        return _externalRefs.TryAdd(localIndex, placeableGuid);
     }
 
     /// <summary>
     /// Remove external reference at local cell index
     /// </summary>
-    public bool RemoveExternalRef(int localIndex)
+    internal bool RemoveExternalRef(int localIndex)
     {
         return _externalRefs.Remove(localIndex);
     }
 
     /// <summary>
+    /// Try get the external owner GUID stored at a local cell.
+    /// World-level resolution is owned by PlaceableManager so chunk data does not
+    /// depend on manager/global world state.
+    /// </summary>
+    internal bool TryGetExternalRefAt(int localIndex, out Guid placeableGuid)
+    {
+        return _externalRefs.TryGetValue(localIndex, out placeableGuid);
+    }
+
+    /// <summary>
+    /// Get external references with their local storage cell in stable order.
+    /// </summary>
+    internal IReadOnlyList<(int LocalIndex, Guid PlaceableGuid)> GetExternalReferenceSnapshot()
+    {
+        return _externalRefs
+            .OrderBy(static entry => entry.Key)
+            .Select(static entry => (entry.Key, entry.Value))
+            .ToArray();
+    }
+
+    /// <summary>
     /// Get all owned placeables
     /// </summary>
-    public IEnumerable<PlaceableInstance> GetAllOwnedPlaceables()
+    internal IEnumerable<PlaceableInstance> GetAllOwnedPlaceables()
     {
-        return _ownedPlaceables.Values;
+        return GetOwnedPlaceableSnapshot()
+            .Select(static entry => entry.Placeable)
+            .ToArray();
     }
 
     /// <summary>
     /// Get owned placeables with their authoritative local storage cell.
-    /// Snapshot consumers must sort the result before hashing or persistence.
     /// </summary>
     internal IReadOnlyList<(int LocalIndex, PlaceableInstance Placeable)> GetOwnedPlaceableSnapshot()
     {
         return _ownedPlaceables
+            .OrderBy(static entry => entry.Key)
             .Select(static entry => (entry.Key, entry.Value))
             .ToArray();
     }
@@ -93,7 +116,7 @@ internal sealed partial class ChunkPlaceableData
     /// <summary>
     /// Try get owned placeable at local cell index.
     /// </summary>
-    public bool TryGetOwnedAt(int localIndex, out PlaceableInstance placeable)
+    internal bool TryGetOwnedAt(int localIndex, out PlaceableInstance placeable)
     {
         return _ownedPlaceables.TryGetValue(localIndex, out placeable!);
     }
@@ -101,7 +124,7 @@ internal sealed partial class ChunkPlaceableData
     /// <summary>
     /// Check if cell has any placeable (owned or external ref)
     /// </summary>
-    public bool HasPlaceableAt(int localIndex)
+    internal bool HasPlaceableAt(int localIndex)
     {
         return _ownedPlaceables.ContainsKey(localIndex) || _externalRefs.ContainsKey(localIndex);
     }
@@ -109,12 +132,12 @@ internal sealed partial class ChunkPlaceableData
     /// <summary>
     /// Clear all placeable data
     /// </summary>
-    public void Clear()
+    internal void Clear()
     {
         _ownedPlaceables.Clear();
         _externalRefs.Clear();
     }
 
-    public int OwnedCount => _ownedPlaceables.Count;
-    public int ExternalRefCount => _externalRefs.Count;
+    internal int OwnedCount => _ownedPlaceables.Count;
+    internal int ExternalRefCount => _externalRefs.Count;
 }

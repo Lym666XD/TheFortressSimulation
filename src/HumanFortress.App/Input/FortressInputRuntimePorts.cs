@@ -6,10 +6,11 @@ internal sealed class FortressInputRuntimePorts
     {
         Keyboard = new FortressKeyboardRuntimePorts(
             dependencies.BuildCatalog,
+            dependencies.ZoneCatalog,
             dependencies.WorkshopQueries,
             dependencies.WorkshopCommands,
-            dependencies.NavigationDebug,
-            dependencies.SimulationControl);
+            dependencies.SimulationControl,
+            dependencies.UiInput);
         Map = new FortressMapRuntimePorts(
             new FortressPlacementRuntimePorts(
                 dependencies.PlacementQueries,

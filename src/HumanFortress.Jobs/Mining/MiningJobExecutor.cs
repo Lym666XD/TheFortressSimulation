@@ -5,7 +5,7 @@ using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Mining;
 
-internal sealed class MiningJobExecutor
+internal sealed partial class MiningJobExecutor
 {
     internal const string SystemId = "Jobs.MiningJobSystem";
 
@@ -15,6 +15,8 @@ internal sealed class MiningJobExecutor
 
     private readonly WorldModel _world;
     private readonly IPathService _paths;
+    private readonly IWorldNavigationView _navView;
+    private readonly IMovementExecutor _move;
     private readonly IMiningJobLogger _logger;
     private readonly List<ActiveMiningJob> _active = new();
     private readonly List<MiningSystem.PlannedDig> _inboxBuffer = new();
@@ -43,7 +45,8 @@ internal sealed class MiningJobExecutor
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
-        move = move ?? throw new ArgumentNullException(nameof(move));
+        _navView = navView ?? throw new ArgumentNullException(nameof(navView));
+        _move = move ?? throw new ArgumentNullException(nameof(move));
         _logger = logger ?? NullMiningJobLogger.Instance;
 
         var adjacencyFinder = new MiningAdjacencyFinder(world);
@@ -54,8 +57,8 @@ internal sealed class MiningJobExecutor
         var assignmentHandler = new MiningAssignmentHandler(
             world,
             paths,
-            navView,
-            move,
+            _navView,
+            _move,
             dropResolver,
             _reservedTiles,
             workerCandidates,
@@ -75,8 +78,8 @@ internal sealed class MiningJobExecutor
             world,
             planner,
             paths,
-            navView,
-            move,
+            _navView,
+            _move,
             _backlog,
             diffEmitter,
             dropResolver,
@@ -84,7 +87,6 @@ internal sealed class MiningJobExecutor
             finalizer,
             completionSink,
             _logger,
-            SystemId,
             CreatureReserveTtlTicks,
             MaxFailedReplans);
         _statsTracker = new MiningStatsTracker(Math.Max(1, carryoverMaxTicks));
@@ -92,7 +94,7 @@ internal sealed class MiningJobExecutor
 
     internal int LastIntakeCount => _statsTracker.LastIntakeCount;
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _paths.BeginTick();
         int intakeCount = _intakeCoordinator.Fill(tick, _inboxBuffer);
@@ -129,8 +131,9 @@ internal sealed class MiningJobExecutor
         UpdateStats(tick);
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
+        ExpireRecentCompletions(tick);
         if (_active.Count == 0)
         {
             UpdateStats(tick);
@@ -143,15 +146,10 @@ internal sealed class MiningJobExecutor
 
     internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now)
     {
-        for (int i = _recentCompleted.Count - 1; i >= 0; i--)
-        {
-            if (_recentCompleted[i].ExpireTick <= now)
-            {
-                _recentCompleted.RemoveAt(i);
-            }
-        }
-
-        return _recentCompleted.Select(rc => (rc.Cell, rc.Z)).ToList();
+        return _recentCompleted
+            .Where(completion => completion.ExpireTick > now)
+            .Select(static completion => (completion.Cell, completion.Z))
+            .ToList();
     }
 
     internal List<MiningActiveJobView> GetActiveJobsSnapshot()
@@ -193,7 +191,8 @@ internal sealed class MiningJobExecutor
                 job.ReplanFailCount,
                 job.Action,
                 job.Segment,
-                job.DesignationId);
+                job.DesignationId,
+                job.PathSearchAttempt);
         }
 
         var recent = new MiningRecentCompletionSnapshot[_recentCompleted.Count];
@@ -226,5 +225,10 @@ internal sealed class MiningJobExecutor
     private void UpdateStats(ulong tick)
     {
         _statsTracker.Update(tick, _active.Count, _backlog, _deferredStairwells.Count, _reservedTiles.Count);
+    }
+
+    private void ExpireRecentCompletions(ulong tick)
+    {
+        _recentCompleted.RemoveAll(completion => completion.ExpireTick <= tick);
     }
 }

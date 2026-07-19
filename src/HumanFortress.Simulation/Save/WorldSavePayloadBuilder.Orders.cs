@@ -56,6 +56,30 @@ internal static partial class WorldSavePayloadBuilder
         return new WorldSaveMaterialFilterPayloadData(
             filter.PreferredMaterialId,
             filter.CategoryKey,
-            ToSortedArray(filter.Tags));
+            ToSortedArray(filter.Tags),
+            filter.Requirements
+                .Where(static requirement =>
+                    !string.IsNullOrWhiteSpace(requirement.Tag)
+                    || !string.IsNullOrWhiteSpace(requirement.DefinitionId))
+                .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(static requirement => requirement.Count)
+                .Select(static requirement => new WorldSaveMaterialRequirementPayloadData(
+                    requirement.Tag,
+                    requirement.DefinitionId,
+                    requirement.Count))
+                .ToArray());
+    }
+
+    private static string BuildMaterialFilterSortKey(MaterialFilterSpec filter)
+    {
+        return string.Join(
+            '\0',
+            filter.Tags.Order(StringComparer.Ordinal)
+                .Concat(filter.Requirements
+                    .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.Count)
+                    .Select(static requirement => $"{requirement.Tag}|{requirement.DefinitionId}|{requirement.Count}")));
     }
 }

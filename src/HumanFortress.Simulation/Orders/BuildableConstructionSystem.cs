@@ -10,18 +10,18 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Planner for L2 buildable constructions (e.g., workshops).
-/// Drains BuildableConstructionDesignation and places construction sites at anchors.
+/// Serialized compatibility stage for L2 buildable constructions.
+/// Registered ReadTick is a no-op; designation consumption and placement run in Write.
 /// </summary>
-internal sealed class BuildableConstructionSystem : ITick
+internal sealed class BuildableConstructionSystem : ITick, ISequentialCompatibilityStage
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
     private readonly IConstructionCatalog _constructions;
     private readonly int _maxPerTick;
-    private readonly System.Collections.Concurrent.ConcurrentQueue<PlaceableInstance> _outbox = new();
+    private readonly Queue<PlaceableInstance> _outbox = new();
 
-    public BuildableConstructionSystem(
+    internal BuildableConstructionSystem(
         World.World world,
         OrdersManager orders,
         IConstructionCatalog constructions,
@@ -33,10 +33,14 @@ internal sealed class BuildableConstructionSystem : ITick
         _maxPerTick = Math.Max(1, maxPerTick);
     }
 
-    public int Priority => UpdateOrder.Priority.Furniture; // touches L2 layer
-    public string SystemId => "Orders.BuildableConstruction";
+    internal int Priority => UpdateOrder.Priority.Furniture; // touches L2 layer
+    internal string SystemId => "Orders.BuildableConstruction";
 
-    public void ReadTick(ulong tick)
+    int ITick.Priority => Priority;
+
+    string ITick.SystemId => SystemId;
+
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         var desigs = new List<BuildableConstructionDesignation>();
         _orders.DrainBuildableConstructions(desigs, _maxPerTick);
@@ -49,7 +53,7 @@ internal sealed class BuildableConstructionSystem : ITick
                 var def = _constructions.GetConstruction(d.ConstructionId);
                 if (def == null)
                 {
-                    OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=UnknownDef");
+                    _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=UnknownDef");
                     continue;
                 }
 
@@ -57,25 +61,11 @@ internal sealed class BuildableConstructionSystem : ITick
                 // Basic legality checks
                 if (!ValidateFootprint(d.Anchor, d.Z, fp, def.PlaceableProfile.RequiresFloor))
                 {
-                    OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=IllegalFootprint");
+                    _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=IllegalFootprint");
                     continue;
                 }
 
-                // Build materials map (tag -> count). MVP: Tag only
-                var req = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-                foreach (var mc in def.MaterialCosts)
-                {
-                    if (!string.IsNullOrWhiteSpace(mc.Tag))
-                    {
-                        req[mc.Tag!] = req.GetValueOrDefault(mc.Tag!, 0) + Math.Max(1, mc.Count);
-                    }
-                    else if (!string.IsNullOrWhiteSpace(mc.DefId))
-                    {
-                        // TODO: defId support in planner (map to item defs)
-                        // For MVP, ignore defId-specific entries
-                        continue;
-                    }
-                }
+                var req = BuildMaterialRequirements(def);
 
                 // Create site (defer placement to WriteTick)
                 var site = PlaceableFactory.CreateConstructionSite(
@@ -89,16 +79,21 @@ internal sealed class BuildableConstructionSystem : ITick
 
                 _outbox.Enqueue(site);
 
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={def.Id} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) footprint={fp.W}x{fp.D} planned=1");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={def.Id} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) footprint={fp.W}x{fp.D} planned=1");
             }
             catch (Exception ex)
             {
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] ERROR: {ex.Message}");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] ERROR: {ex.Message}");
             }
         }
     }
 
-    public void WriteTick(ulong tick)
+    void ITick.ReadTick(ulong tick)
+    {
+        // This legacy planner is intentionally deferred to serialized Write.
+    }
+
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         int placed = 0;
         while (placed < _maxPerTick && _outbox.TryDequeue(out var site))
@@ -110,10 +105,22 @@ internal sealed class BuildableConstructionSystem : ITick
             }
             catch (Exception ex)
             {
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] place ERR: {ex.Message}");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] place ERR: {ex.Message}");
             }
         }
     }
+
+    void ITick.WriteTick(ulong tick)
+    {
+        PrepareSequentialCompatibility(tick);
+        ApplySequentialCompatibility(tick);
+    }
+
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     private bool ValidateFootprint(Point anchor, int z, Footprint fp, bool requiresFloor)
     {
@@ -138,5 +145,30 @@ internal sealed class BuildableConstructionSystem : ITick
         // Basic collision check with existing placeables
         var coll = PlaceableManager.CheckCollision(_world, anchor, z, fp);
         return coll.CanPlace;
+    }
+
+    internal static Dictionary<string, int> BuildMaterialRequirements(ConstructionDefinition definition)
+    {
+        var requirements = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        foreach (var cost in definition.MaterialCosts)
+        {
+            var requirementId = ToRequirementId(cost);
+            if (string.IsNullOrWhiteSpace(requirementId))
+                continue;
+
+            requirements[requirementId] = requirements.GetValueOrDefault(requirementId) + Math.Max(1, cost.Count);
+        }
+
+        return requirements;
+    }
+
+    private static string ToRequirementId(MaterialCost cost)
+    {
+        if (!string.IsNullOrWhiteSpace(cost.Tag))
+            return ConstructionMaterialRequirement.ForTag(cost.Tag!);
+
+        return !string.IsNullOrWhiteSpace(cost.DefId)
+            ? ConstructionMaterialRequirement.ForDefinition(cost.DefId!)
+            : string.Empty;
     }
 }

@@ -16,7 +16,7 @@ internal sealed class CraftJobFinalizer
 
     internal void Finish(ActiveCraftJob job, CraftJobFinishReason reason)
     {
-        _world.Reservations.ReleaseCreature(job.WorkerId);
+        _world.Reservations.TryReleaseCreature(job.CreatureReservation);
 
         if (!_workshops.TryFind(job.WorkshopGuid, out _, out var state) || state == null)
         {
@@ -39,7 +39,7 @@ internal sealed class CraftJobFinalizer
             return;
         }
 
-        if (reason == CraftJobFinishReason.WorkerMissing)
+        if (reason is CraftJobFinishReason.WorkerMissing or CraftJobFinishReason.ReservationLost)
         {
             entry.Status = CraftQueueStatus.Pending;
             entry.BlockingReason = null;

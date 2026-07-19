@@ -17,7 +17,12 @@ internal static partial class FortressKeyboardInputRouter
         ref int currentZ)
     {
         int previousZ = currentZ;
-        var navigationInput = FortressKeyboardNavigationInput.Handle(keyboard, cameraPosition, currentZ, context.SelectionTool);
+        var navigationInput = FortressKeyboardNavigationInput.Handle(
+            keyboard,
+            cameraPosition,
+            currentZ,
+            context.Viewport.WorldBounds,
+            context.SelectionTool);
         cameraPosition = navigationInput.CameraPosition;
         currentZ = navigationInput.CurrentZ;
 

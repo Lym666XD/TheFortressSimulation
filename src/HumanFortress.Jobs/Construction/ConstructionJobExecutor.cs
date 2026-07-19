@@ -43,7 +43,7 @@ internal sealed class ConstructionJobExecutor
 
     internal int LastIntakeCount { get; private set; }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (!_diffEmitter.CanEmitWorldDiffs)
         {

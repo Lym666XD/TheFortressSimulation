@@ -12,6 +12,7 @@ public sealed class ConstructionDefinition
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public int BuildTimeTicks { get; set; }
+    public string? ResultMaterialId { get; set; }
 
 #pragma warning disable CA1819 // JSON DTO compatibility
     public MaterialCost[] MaterialCosts { get; set; } = Array.Empty<MaterialCost>();

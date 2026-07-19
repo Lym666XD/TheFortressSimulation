@@ -28,7 +28,7 @@ namespace HumanFortress.Simulation.World
         private const ulong HEAT_COLD = 20;
         private const ulong HEAT_DECAY_RATE = 1;
         
-        public ChunkLifecycleManager(World world)
+        internal ChunkLifecycleManager(World world)
         {
             _world = world;
         }
@@ -36,7 +36,7 @@ namespace HumanFortress.Simulation.World
         /// <summary>
         /// Update LOD levels based on camera and heat per section 1.
         /// </summary>
-        public void UpdateLODLevels(int cameraX, int cameraY, int cameraZ, ulong tick)
+        internal void UpdateLODLevels(int cameraX, int cameraY, int cameraZ, ulong tick)
         {
             var cameraChunkX = cameraX / Chunk.SIZE_XY;
             var cameraChunkY = cameraY / Chunk.SIZE_XY;
@@ -212,7 +212,7 @@ namespace HumanFortress.Simulation.World
         private void DecayHeatScores()
         {
             // Decay heat scores per tick
-            var keys = _heatScores.Keys.ToList();
+            var keys = OrderChunkKeys(_heatScores.Select(static entry => entry.Key)).ToArray();
             foreach (var key in keys)
             {
                 var heat = _heatScores[key];
@@ -226,7 +226,7 @@ namespace HumanFortress.Simulation.World
         /// <summary>
         /// Add heat to a chunk (combat, fire, etc).
         /// </summary>
-        public void AddHeat(ChunkKey key, ulong amount)
+        internal void AddHeat(ChunkKey key, ulong amount)
         {
             _heatScores[key] = _heatScores.GetValueOrDefault(key) + amount;
         }
@@ -234,7 +234,7 @@ namespace HumanFortress.Simulation.World
         /// <summary>
         /// Pin a chunk for a reason (UI focus, etc).
         /// </summary>
-        public void PinChunk(ChunkKey key, PinReason reason)
+        internal void PinChunk(ChunkKey key, PinReason reason)
         {
             if (!_pinnedChunks.TryGetValue(key, out var reasons))
             {
@@ -247,7 +247,7 @@ namespace HumanFortress.Simulation.World
         /// <summary>
         /// Unpin a chunk.
         /// </summary>
-        public void UnpinChunk(ChunkKey key, PinReason reason)
+        internal void UnpinChunk(ChunkKey key, PinReason reason)
         {
             if (_pinnedChunks.TryGetValue(key, out var reasons))
             {
@@ -294,12 +294,20 @@ namespace HumanFortress.Simulation.World
             
             return chunks;
         }
+
+        private static IOrderedEnumerable<ChunkKey> OrderChunkKeys(IEnumerable<ChunkKey> keys)
+        {
+            return keys
+                .OrderBy(static key => key.Z)
+                .ThenBy(static key => key.ChunkY)
+                .ThenBy(static key => key.ChunkX);
+        }
         
         private class ChunkState
         {
-            public LODLevel LOD { get; set; }
-            public ulong LastTransitionTick { get; set; }
-            public ulong SleepAccumTicks { get; set; }
+            internal LODLevel LOD { get; set; }
+            internal ulong LastTransitionTick { get; set; }
+            internal ulong SleepAccumTicks { get; set; }
         }
     }
     

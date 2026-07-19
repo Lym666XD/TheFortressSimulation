@@ -49,7 +49,7 @@ public sealed class ConstructionCatalogStore : IConstructionCatalog
         var byId = new Dictionary<string, ConstructionDefinition>(StringComparer.Ordinal);
         var byCategory = new Dictionary<string, List<ConstructionDefinition>>(StringComparer.Ordinal);
 
-        foreach (var construction in constructions)
+        foreach (var construction in constructions.OrderBy(static construction => construction.Id, StringComparer.Ordinal))
         {
             construction.Validate();
             if (byId.ContainsKey(construction.Id))
@@ -68,9 +68,11 @@ public sealed class ConstructionCatalogStore : IConstructionCatalog
         }
 
         var frozenCategories = new Dictionary<string, ConstructionDefinition[]>(byCategory.Count, StringComparer.Ordinal);
-        foreach (var (category, definitions) in byCategory)
+        foreach (var (category, definitions) in byCategory.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
         {
-            frozenCategories[category] = definitions.ToArray();
+            frozenCategories[category] = definitions
+                .OrderBy(static definition => definition.Id, StringComparer.Ordinal)
+                .ToArray();
         }
 
         return new ConstructionCatalogStore(byId, frozenCategories);
@@ -90,11 +92,13 @@ public sealed class ConstructionCatalogStore : IConstructionCatalog
 
     public IEnumerable<ConstructionDefinition> GetAllConstructions()
     {
-        return _constructionsById.Values;
+        return _constructionsById.Values
+            .OrderBy(static construction => construction.Id, StringComparer.Ordinal);
     }
 
     public IEnumerable<string> GetAllCategories()
     {
-        return _constructionsByCategory.Keys;
+        return _constructionsByCategory.Keys
+            .OrderBy(static category => category, StringComparer.Ordinal);
     }
 }

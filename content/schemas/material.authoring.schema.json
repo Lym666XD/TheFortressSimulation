@@ -40,31 +40,31 @@
       "hardness_edge": {
         "type": "number",
         "minimum": 0,
-        "maximum": 100,
-        "description": "Edge/cutting hardness (0-100%)"
+        "maximum": 1000,
+        "description": "Relative edge/cutting hardness"
       },
       "toughness_frac": {
         "type": "number",
         "minimum": 0,
-        "maximum": 100,
-        "description": "Fracture toughness (0-100%)"
+        "maximum": 1000,
+        "description": "Relative fracture toughness"
       },
       "rigidity": {
         "type": "number",
         "minimum": 0,
-        "maximum": 100,
-        "description": "Material rigidity (0-100%)"
+        "maximum": 1000,
+        "description": "Relative material rigidity"
       },
       "electric_category": {
         "type": "string",
-        "enum": ["conductor", "semiconductor", "insulator"],
+        "enum": ["conductor", "semi", "semiconductor", "insulator"],
         "description": "Electrical conductivity category"
       },
       "mana_conductivity": {
         "type": "number",
         "minimum": 0,
-        "maximum": 100,
-        "description": "Magical conductivity (0-100%)"
+        "maximum": 1000,
+        "description": "Relative magical conductivity"
       },
       "value_mul": {
         "type": "number",
@@ -110,6 +110,16 @@
             "type": "number",
             "minimum": 0,
             "description": "Friction multiplier"
+          },
+          "hazard_level": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Relative navigation hazard severity"
+          },
+          "hazard_type": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable symbolic navigation hazard category"
           }
         },
         "additionalProperties": false

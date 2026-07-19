@@ -9,35 +9,43 @@ namespace HumanFortress.Content.Definitions;
 
 internal static partial class CoreDataRegistryLoader
 {
-    private static ConstructionContentLoadResult LoadBuildableConstructions(string workshopsDir)
+    private static ConstructionContentLoadResult LoadBuildableConstructions(string coreDataPath)
     {
         var messages = new List<string>();
         var files = new List<string>();
+        var workshopsDir = Path.Combine(coreDataPath, "workshops");
         if (!Directory.Exists(workshopsDir))
         {
             messages.Add($"workshops dir not found: {workshopsDir}");
-            return new ConstructionContentLoadResult(
-                ConstructionCatalogStore.Empty,
-                0,
-                0,
-                0,
-                Array.Empty<string>(),
-                messages);
+        }
+        else
+        {
+            foreach (var file in Directory.GetFiles(workshopsDir, "core_workshop_*.json", SearchOption.TopDirectoryOnly))
+            {
+                files.Add(file);
+            }
         }
 
-        foreach (var file in Directory.GetFiles(workshopsDir, "core_workshop_*.json", SearchOption.TopDirectoryOnly))
+        var legacyWorkshopPath = Path.Combine(coreDataPath, "placeable", "workshops.json");
+        if (files.Count == 0 && File.Exists(legacyWorkshopPath))
         {
-            files.Add(file);
-        }
-
-        var legacyPath = Path.Combine(Path.GetDirectoryName(workshopsDir) ?? string.Empty, "placeable", "workshops.json");
-        if (File.Exists(legacyPath))
-        {
-            files.Add(legacyPath);
+            files.Add(legacyWorkshopPath);
             messages.Add("loading legacy workshops.json from placeable dir");
         }
 
-        files.Sort(StringComparer.OrdinalIgnoreCase);
+        var placeableDirectory = Path.Combine(coreDataPath, "placeable");
+        if (Directory.Exists(placeableDirectory))
+        {
+            files.AddRange(Directory.GetFiles(
+                placeableDirectory,
+                "constructions*.json",
+                SearchOption.TopDirectoryOnly));
+        }
+
+        files = files
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static file => file, StringComparer.Ordinal)
+            .ToList();
 
         var definitionsById = new Dictionary<string, ConstructionDefinition>(StringComparer.OrdinalIgnoreCase);
         var errors = 0;
@@ -57,7 +65,8 @@ internal static partial class CoreDataRegistryLoader
                     if (definitionsById.ContainsKey(definition.Id))
                     {
                         duplicatesSkipped++;
-                        messages.Add($"duplicate skipped: {definition.Id} from {Path.GetFileName(file)}");
+                        errors++;
+                        messages.Add($"duplicate or case-ambiguous construction rejected: {definition.Id} from {Path.GetFileName(file)}");
                         continue;
                     }
 
@@ -74,7 +83,8 @@ internal static partial class CoreDataRegistryLoader
         var catalog = ConstructionCatalogStore.Empty;
         try
         {
-            catalog = ConstructionCatalogStore.FromDefinitions(definitionsById.Values);
+            catalog = ConstructionCatalogStore.FromDefinitions(definitionsById.Values
+                .OrderBy(static definition => definition.Id, StringComparer.Ordinal));
         }
         catch (Exception ex)
         {
@@ -120,12 +130,14 @@ internal static partial class CoreDataRegistryLoader
 
         foreach (var element in constructionsArray.EnumerateArray())
         {
-            var hasProfile = element.TryGetProperty("placeable_profile", out var profileElement)
-                             && profileElement.ValueKind == JsonValueKind.Object;
-            if (!hasProfile)
-            {
+            var hasNestedProfile = element.TryGetProperty("placeable_profile", out var profileElement)
+                                   && profileElement.ValueKind == JsonValueKind.Object;
+            if (!hasNestedProfile)
+                profileElement = element;
+
+            if (!profileElement.TryGetProperty("footprint", out var footprintElement)
+                || footprintElement.ValueKind != JsonValueKind.Object)
                 continue;
-            }
 
             var definition = new ConstructionDefinition
             {
@@ -135,7 +147,9 @@ internal static partial class CoreDataRegistryLoader
                 BuildTimeTicks = element.TryGetProperty("build_time_ticks", out var buildTimeElement)
                     ? buildTimeElement.GetInt32()
                     : 1000,
-                SkillRequired = ParseOptionalString(element, "skill_required"),
+                ResultMaterialId = ParseOptionalString(element, "result_material_id"),
+                SkillRequired = ParseOptionalString(element, "skill_required")
+                                ?? ParseOptionalString(element, "required_skill"),
                 MaterialCosts = ParseMaterialCosts(element),
                 PlaceableProfile = ParsePlaceableProfile(profileElement)
             };
@@ -177,7 +191,11 @@ internal static partial class CoreDataRegistryLoader
             AddMaterialCosts(costs, materialsArray);
         }
 
-        return costs.ToArray();
+        return costs
+            .OrderBy(static cost => cost.Tag ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static cost => cost.DefId ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static cost => cost.Count)
+            .ToArray();
     }
 
     private static void AddMaterialCosts(List<MaterialCost> into, JsonElement materialsArray)
@@ -291,6 +309,8 @@ internal static partial class CoreDataRegistryLoader
             attachments.Add(attachment);
         }
 
-        return attachments.ToArray();
+        return attachments
+            .OrderBy(static attachment => attachment.Id, StringComparer.Ordinal)
+            .ToArray();
     }
 }

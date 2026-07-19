@@ -1,11 +1,10 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Concurrent;
 using HumanFortress.Contracts.Content.Registry;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Craft;
 
-internal sealed class CraftJobExecutor
+internal sealed partial class CraftJobExecutor
 {
     internal const string SystemId = "Jobs.Craft";
 
@@ -13,14 +12,18 @@ internal sealed class CraftJobExecutor
 
     private readonly WorldModel _world;
     private readonly ICraftJobPlanner _planner;
+    private readonly ICraftRecipeCatalog _recipes;
+    private readonly CraftWorkshopLocator _workshops;
     private readonly CraftJobFinalizer _finalizer;
     private readonly CraftAssignmentHandler _assignmentHandler;
     private readonly CraftActiveJobRunner _activeJobRunner;
     private readonly IPathService _paths;
+    private readonly IWorldNavigationView _navView;
+    private readonly IMovementExecutor _move;
     private readonly CraftStatsTracker _stats = new();
 
     private readonly List<PlannedCraftJob> _inbox = new();
-    private readonly ConcurrentQueue<PlannedCraftJob> _backlog = new();
+    private readonly Queue<PlannedCraftJob> _backlog = new();
     private readonly List<ActiveCraftJob> _active = new();
 
     internal CraftJobExecutor(
@@ -36,38 +39,38 @@ internal sealed class CraftJobExecutor
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _planner = planner ?? throw new ArgumentNullException(nameof(planner));
-        recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
+        _recipes = recipes ?? throw new ArgumentNullException(nameof(recipes));
         _paths = paths ?? throw new ArgumentNullException(nameof(paths));
-        move = move ?? throw new ArgumentNullException(nameof(move));
+        _navView = navView ?? throw new ArgumentNullException(nameof(navView));
+        _move = move ?? throw new ArgumentNullException(nameof(move));
 
-        var workshops = new CraftWorkshopLocator(world, constructions);
-        var materialConsumer = new CraftMaterialConsumer(world, workshops, recipes, diffEmitter);
-        var outputEmitter = new CraftOutputEmitter(recipes, diffEmitter);
-        _finalizer = new CraftJobFinalizer(world, workshops);
+        _workshops = new CraftWorkshopLocator(world, constructions);
+        var materialConsumer = new CraftMaterialConsumer(world, _workshops, _recipes, diffEmitter);
+        var outputEmitter = new CraftOutputEmitter(_recipes, diffEmitter);
+        _finalizer = new CraftJobFinalizer(world, _workshops);
         _assignmentHandler = new CraftAssignmentHandler(
             world,
-            workshops,
+            _workshops,
             paths,
-            navView,
-            move,
-            recipes,
+            _navView,
+            _move,
+            _recipes,
             workerCandidates,
             SystemId,
             CreatureReserveTtlTicks);
         _activeJobRunner = new CraftActiveJobRunner(
             world,
             paths,
-            navView,
-            move,
+            _navView,
+            _move,
             materialConsumer,
             outputEmitter,
-            SystemId,
             CreatureReserveTtlTicks);
     }
 
     internal int LastIntakeCount { get; private set; }
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _paths.BeginTick();
         _inbox.Clear();
@@ -101,12 +104,21 @@ internal sealed class CraftJobExecutor
             {
                 _backlog.Enqueue(job);
             }
+            else if (result == CraftAssignmentResult.RetryablePath)
+            {
+                _backlog.Enqueue(job with
+                {
+                    PathSearchAttempt = job.PathSearchAttempt >= PathRequest.MaxSearchAttempt
+                        ? PathRequest.MaxSearchAttempt
+                        : (byte)(job.PathSearchAttempt + 1)
+                });
+            }
         }
 
         _stats.RecordRead(LastIntakeCount, _active.Count, _backlog.Count);
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (_active.Count == 0)
         {
@@ -161,7 +173,8 @@ internal sealed class CraftJobExecutor
                 job.Stage,
                 job.WorkTicksRemaining,
                 job.Anchor,
-                job.Z);
+                job.Z,
+                job.PathSearchAttempt);
         }
 
         var backlogJobs = _backlog.ToArray();

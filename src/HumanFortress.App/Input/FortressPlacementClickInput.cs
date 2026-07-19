@@ -1,6 +1,7 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -11,7 +12,7 @@ internal static class FortressPlacementClickInput
         UiStore ui,
         Point worldPosition,
         int currentZ,
-        int fortressSize,
+        RuntimeWorldBounds worldBounds,
         ulong uiTick,
         ISelectionTool? selectionTool)
     {
@@ -32,7 +33,7 @@ internal static class FortressPlacementClickInput
                 return true;
 
             case PlacementMode.MiningFirstCorner:
-                var miningCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, fortressSize);
+                var miningCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, worldBounds);
                 ui.PlaceFirstCorner = miningCorner;
                 ui.PlaceZMin = currentZ;
                 ui.PlaceZMax = currentZ;
@@ -42,19 +43,19 @@ internal static class FortressPlacementClickInput
                 return true;
 
             case PlacementMode.ZoneFirstCorner:
-                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, fortressSize);
+                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, worldBounds);
                 ui.PlaceMode = PlacementMode.ZoneSecondCorner;
                 ui.AddToast("Select second corner", uiTick + 100);
                 return true;
 
             case PlacementMode.ConstructionFirstCorner:
-                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, fortressSize);
+                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, worldBounds);
                 ui.PlaceMode = PlacementMode.ConstructionSecondCorner;
                 ui.AddToast("[BUILD] Select opposite corner", uiTick + 100);
                 return true;
 
             case PlacementMode.BuildableFirstAnchor:
-                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, fortressSize);
+                ui.PlaceFirstCorner = FortressPlacementGeometry.ClampToWorld(worldPosition, worldBounds);
                 ui.PlaceMode = PlacementMode.BuildableConfirmAnchor;
                 ui.AddToast("[WORKSHOP] Click to confirm", uiTick + 100);
                 return true;

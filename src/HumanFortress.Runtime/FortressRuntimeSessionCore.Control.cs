@@ -11,7 +11,7 @@ internal sealed partial class FortressRuntimeSessionCore
         _services.TickScheduler.IsPaused,
         _services.TickScheduler.SpeedMultiplier);
 
-    SimulationStatus IFortressRuntimeSessionReadPort.SimulationStatus => CurrentSimulationStatus;
+    SimulationStatus IFortressRuntimeSessionSnapshotPort.SimulationStatus => CurrentSimulationStatus;
 
     private void EnqueueCurrentTickCommand(Func<ulong, ICommand> commandFactory)
     {

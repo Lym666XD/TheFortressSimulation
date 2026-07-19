@@ -50,6 +50,7 @@ internal static partial class CreatureDefinitionCatalogLoader
         Array.Sort(files, StringComparer.OrdinalIgnoreCase);
         int loaded = 0;
         int failed = 0;
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var file in files)
         {
@@ -67,6 +68,12 @@ internal static partial class CreatureDefinitionCatalogLoader
                     try
                     {
                         ValidateDefinition(def);
+                        if (!seenIds.Add(def.Id))
+                        {
+                            messages.Add($"[CreatureManager] ERROR: Duplicate or case-ambiguous definition '{def.Id}' in {Path.GetFileName(file)}");
+                            failed++;
+                            continue;
+                        }
                         definitions.Add(def);
                         loaded++;
                     }

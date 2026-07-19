@@ -6,16 +6,19 @@ namespace HumanFortress.Contracts.Navigation;
 public enum PathResultKind : byte
 {
     /// <summary>Complete path found to destination.</summary>
-    Found,
+    Found = 0,
 
-    /// <summary>Partial path found (node limit or time limit reached).</summary>
-    Partial,
+    /// <summary>Partial path found because the deterministic node budget was exhausted.</summary>
+    Partial = 1,
 
     /// <summary>No path exists to destination.</summary>
-    NoPath,
+    NoPath = 2,
 
     /// <summary>Invalid request (bad coordinates, sleeping zone, etc).</summary>
-    Invalid,
+    Invalid = 3,
+
+    /// <summary>The per-tick request budget was exhausted before search started.</summary>
+    BudgetExhausted = 4,
 }
 
 /// <summary>
@@ -26,8 +29,22 @@ public readonly record struct PathRequest(
     Point3 Destination,
     MoveMode Mode,
     PathFlags Flags,
-    uint Seed)
+    uint Seed,
+    byte SearchAttempt = 0)
 {
+    /// <summary>
+    /// Maximum deterministic retry tier. With the current exponential policy this
+    /// caps one search at 64 times the base node budget.
+    /// </summary>
+    public const byte MaxSearchAttempt = 6;
+
+    /// <summary>
+    /// Retry tier after applying the public deterministic cap.
+    /// </summary>
+    public byte EffectiveSearchAttempt => SearchAttempt > MaxSearchAttempt
+        ? MaxSearchAttempt
+        : SearchAttempt;
+
     /// <summary>
     /// Generate a deterministic hash for caching.
     /// </summary>
@@ -45,8 +62,22 @@ public readonly record struct PathRequest(
             hash = hash * 31 + (uint)Mode;
             hash = hash * 31 + (uint)Flags;
             hash = hash * 31 + Seed;
+            hash = hash * 31 + EffectiveSearchAttempt;
             return hash;
         }
+    }
+
+    /// <summary>
+    /// Return the same semantic request with a larger deterministic search budget.
+    /// </summary>
+    public PathRequest NextSearchAttempt()
+    {
+        return this with
+        {
+            SearchAttempt = EffectiveSearchAttempt >= MaxSearchAttempt
+                ? MaxSearchAttempt
+                : (byte)(EffectiveSearchAttempt + 1)
+        };
     }
 }
 
@@ -101,6 +132,26 @@ public readonly record struct Path(
     /// Invalid path request.
     /// </summary>
     public static readonly Path Invalid = new(PathResultKind.Invalid, 0, 0, 0, ReadOnlyMemory<PathNode>.Empty);
+
+    /// <summary>
+    /// Search did not start because the deterministic per-tick request budget was exhausted.
+    /// </summary>
+    public static readonly Path BudgetExhausted = new(
+        PathResultKind.BudgetExhausted,
+        0,
+        0,
+        0,
+        ReadOnlyMemory<PathNode>.Empty);
+
+    /// <summary>
+    /// True only for a complete path whose final node is the requested destination.
+    /// </summary>
+    public bool ReachesDestination(Point3 destination)
+    {
+        return Kind == PathResultKind.Found
+            && Steps.Length > 0
+            && Steps.Span[^1].Position == destination;
+    }
 }
 
 /// <summary>

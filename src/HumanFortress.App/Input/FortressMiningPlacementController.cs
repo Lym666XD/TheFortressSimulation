@@ -1,6 +1,7 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -9,7 +10,7 @@ internal readonly record struct FortressMiningPlacementContext(
     UiStore Ui,
     FortressPlacementRuntimePorts Runtime,
     ISelectionTool? SelectionTool,
-    int FortressSize,
+    RuntimeWorldBounds WorldBounds,
     int CurrentZ,
     ulong UiTick,
     Action Redraw);
@@ -21,7 +22,7 @@ internal static class FortressMiningPlacementController
         Point worldPos)
     {
         var ui = context.Ui;
-        var clampedWorldPos = FortressPlacementGeometry.ClampToWorld(worldPos, context.FortressSize);
+        var clampedWorldPos = FortressPlacementGeometry.ClampToWorld(worldPos, context.WorldBounds);
         if (ui.PlaceFirstCorner.HasValue && clampedWorldPos != ui.PlaceFirstCorner.Value)
         {
             ui.PlaceSecondCorner = clampedWorldPos;

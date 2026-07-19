@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using HumanFortress.Contracts.Runtime;
 
 namespace HumanFortress.App.UI;
 
@@ -10,13 +11,13 @@ internal sealed partial class UiStore
     public string? SelectedWorkshopCategory { get; set; } = null;
     public bool WorkshopBrowsingItems { get; set; } = false;
     public bool ConstructionMaterialDialogOpen { get; set; } = false;
-    public List<string> ConstructionSelectedTags { get; } = new();
-    public string? ConstructionPreferredMaterialId { get; set; } = null;
+    public List<RuntimeConstructionMaterialRequirement> ConstructionMaterialRequirements { get; } = new();
+    public string? ConstructionResultMaterialId { get; set; } = null;
 
     public void ResetConstructionSelection()
     {
-        ConstructionSelectedTags.Clear();
-        ConstructionPreferredMaterialId = null;
+        ConstructionMaterialRequirements.Clear();
+        ConstructionResultMaterialId = null;
     }
 
     public void ResetBuildableSelection()

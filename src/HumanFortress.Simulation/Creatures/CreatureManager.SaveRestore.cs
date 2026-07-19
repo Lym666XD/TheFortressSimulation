@@ -23,27 +23,43 @@ internal sealed partial class CreatureManager
         if (issues.Count > 0)
             return issues;
 
+        var restored = creatures
+            .OrderBy(static creature => creature.Guid)
+            .Select(payload => new CreatureInstance(
+                payload.Guid,
+                payload.DefinitionId,
+                payload.FactionId,
+                new Point(payload.Position.X, payload.Position.Y),
+                payload.Z,
+                payload.MaxHP,
+                payload.SpawnedAtTick)
+            {
+                HP = payload.HP,
+                MaxHP = payload.MaxHP
+            })
+            .ToArray();
+
         lock (_instanceLock)
         {
-            _instances.Clear();
-            foreach (var payload in creatures.OrderBy(creature => creature.Guid))
+            var identityReplacement = _identityIndex.TryReplace(
+                restored.Select(static creature => creature.Guid).ToArray());
+            if (!identityReplacement.Success)
             {
-                var instance = new CreatureInstance(
-                    payload.Guid,
-                    payload.DefinitionId,
-                    payload.FactionId,
-                    new Point(payload.Position.X, payload.Position.Y),
-                    payload.Z,
-                    payload.MaxHP,
-                    payload.SpawnedAtTick)
+                return new[]
                 {
-                    HP = payload.HP,
-                    MaxHP = payload.MaxHP
+                    $"World creature identity preflight failed: {identityReplacement.Describe("creature")}"
                 };
-                _instances[instance.Guid] = instance;
             }
 
-            _nextInstanceSequence = (ulong)_instances.Count;
+            _instances.Clear();
+            _legacyEntityIdIndex.Clear();
+            foreach (var instance in restored)
+            {
+                _instances.Add(instance.Guid, instance);
+                LegacyEntityIdIndexAdd(instance.Guid);
+            }
+
+            _nextInstanceSequence = Math.Max(_nextInstanceSequence, (ulong)_instances.Count);
         }
 
         return Array.Empty<string>();

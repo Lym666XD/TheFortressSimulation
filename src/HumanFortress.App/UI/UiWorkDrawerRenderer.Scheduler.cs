@@ -20,7 +20,7 @@ internal static partial class UiWorkDrawerRenderer
         if (sched.HasValue)
         {
             var s = sched.Value;
-            surf.Print(area.X + 1, line++, $"Plan: {s.PlanMsTotal} ms  Apply: {s.ApplyMsTotal} ms", Color.Cyan);
+            surf.Print(area.X + 1, line++, $"Stages P:{s.PlanStageCount} A:{s.ApplyStageCount}", Color.Cyan);
             surf.Print(area.X + 1, line++, $"Intake H:{s.IntakeHaul} M:{s.IntakeMining} C:{s.IntakeConstruction} Cr:{s.IntakeCraft}", Color.Gray);
             line++;
         }
@@ -60,7 +60,7 @@ internal static partial class UiWorkDrawerRenderer
 
             if (tdbg.ShardCounts.Count > 0)
             {
-                var shardLine = string.Join(" ", tdbg.ShardCounts.Take(3).Select(kv => $"{kv.Key}:{kv.Value}"));
+                var shardLine = string.Join(" ", tdbg.ShardCounts.Take(3).Select(shard => $"{shard.ShardId}:{shard.Count}"));
                 surf.Print(area.X + 1, line++, $"Shards: {shardLine}", Color.DarkGray);
             }
         }

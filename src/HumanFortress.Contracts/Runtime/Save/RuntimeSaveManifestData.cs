@@ -5,7 +5,7 @@ namespace HumanFortress.Contracts.Runtime.Save;
 
 public static class RuntimeSaveFormat
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 6;
 }
 
 public readonly record struct RuntimeSaveManifestData(
@@ -13,6 +13,7 @@ public readonly record struct RuntimeSaveManifestData(
     string EngineBuild,
     SimulationSnapshotMetadata Metadata,
     RuntimeSaveContentSignatureData Content,
+    RuntimeSaveContentCatalogSummaryData ContentCatalog,
     RuntimeReplayCheckpointData Checkpoint,
     IReadOnlyList<RuntimeSaveManifestSectionData> Sections);
 

@@ -11,11 +11,16 @@ internal sealed partial class FortressRuntimeAccess
         Point destination,
         int destinationZ)
     {
-        return _snapshots.FindNavigationDebugPath(
+        var request = new SimulationNavigationPathRequestData(
             start.ToRuntimePoint(),
             startZ,
             destination.ToRuntimePoint(),
             destinationZ);
+        return TryGetCommittedFrame(out var committed)
+            && committed.Frame.NavigationPath.IsAvailable
+            && committed.Frame.NavigationPath.Request == request
+                ? committed.Frame.NavigationPath.Path
+                : SimulationNavigationPathData.Unavailable;
     }
 
     SimulationNavigationPathData IFortressRuntimeNavigationDebugAccess.FindNavigationDebugPath(

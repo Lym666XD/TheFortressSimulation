@@ -13,7 +13,7 @@ internal static class RuntimeContentRegistryLoader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(contentPath);
 
-        var structuredRegistry = StructuredContentRegistry.Instance;
+        var structuredRegistry = new StructuredContentRegistry();
         var structuredLoaded = false;
         string? structuredFailure = null;
 
@@ -28,6 +28,7 @@ internal static class RuntimeContentRegistryLoader
         }
 
         return new RuntimeContentRegistryLoadResult(
+            structuredRegistry,
             structuredLoaded,
             structuredRegistry.ValidationResult.Warnings.Count,
             structuredRegistry.ValidationResult.Errors.Count,
@@ -38,20 +39,23 @@ internal static class RuntimeContentRegistryLoader
 internal sealed class RuntimeContentRegistryLoadResult
 {
     internal RuntimeContentRegistryLoadResult(
+        StructuredContentRegistry registry,
         bool structuredLoaded,
         int structuredWarningCount,
         int structuredErrorCount,
         string? structuredFailureMessage)
     {
+        Registry = registry ?? throw new ArgumentNullException(nameof(registry));
         StructuredLoaded = structuredLoaded;
         StructuredWarningCount = structuredWarningCount;
         StructuredErrorCount = structuredErrorCount;
         StructuredFailureMessage = structuredFailureMessage;
     }
 
-    public bool StructuredLoaded { get; }
-    public int StructuredWarningCount { get; }
-    public int StructuredErrorCount { get; }
-    public string? StructuredFailureMessage { get; }
-    public bool HasErrors => StructuredErrorCount > 0 || StructuredFailureMessage != null;
+    internal StructuredContentRegistry Registry { get; }
+    internal bool StructuredLoaded { get; }
+    internal int StructuredWarningCount { get; }
+    internal int StructuredErrorCount { get; }
+    internal string? StructuredFailureMessage { get; }
+    internal bool HasErrors => StructuredErrorCount > 0 || StructuredFailureMessage != null;
 }

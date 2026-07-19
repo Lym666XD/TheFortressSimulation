@@ -18,7 +18,12 @@ internal static partial class FortressKeyboardInputRouter
 
         if (context.Ui.ConstructionMaterialDialogOpen)
         {
-            bool dialogChanged = FortressConstructionMaterialDialogInput.Handle(keyboard, context.Ui, context.Viewport.CurrentZ, context.UiTick);
+            bool dialogChanged = FortressConstructionMaterialDialogInput.Handle(
+                keyboard,
+                context.Ui,
+                context.Viewport.CurrentZ,
+                context.UiTick,
+                context.Runtime.BuildCatalog.GetBuildCatalogData());
             return new FortressKeyboardInputResult(true, dialogChanged, context.Viewport.CameraPosition, context.Viewport.CurrentZ);
         }
 
@@ -38,7 +43,6 @@ internal static partial class FortressKeyboardInputRouter
         {
             changed |= context.NavigationDebug.HandleKeyboard(
                 keyboard,
-                context.Runtime.NavigationDebug,
                 context.NavigationOverlay,
                 context.Viewport.CursorPosition,
                 currentZ,
@@ -49,11 +53,12 @@ internal static partial class FortressKeyboardInputRouter
         changed |= FortressContextKeyboardInput.Handle(new FortressContextKeyboardInputContext(
             keyboard,
             context.Ui,
-            context.UiServices?.ZonesUI,
             context.UiServices?.StockpileUI,
             currentZ,
             context.UiTick,
             context.Runtime.BuildCatalog.GetBuildCatalogData(),
+            context.Runtime.ZoneCatalog.GetZoneCatalogData(),
+            context.Runtime.UiInput.GetDebugMenuData(),
             context.TileInspectionOpen,
             context.HideTilePanel,
             context.CreateStockpile));

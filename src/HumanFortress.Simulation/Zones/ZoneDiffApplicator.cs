@@ -5,8 +5,6 @@ namespace HumanFortress.Simulation.Zones;
 
 internal static class ZoneDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     internal static void ApplyAll(SimulationWorld world, IReadOnlyList<ZoneDiff> diffs)
     {
         ArgumentNullException.ThrowIfNull(world);
@@ -24,16 +22,23 @@ internal static class ZoneDiffApplicator
             catch (Exception ex)
             {
                 SimulationDiagnostics.Error(
-                    LogCallback,
+                    world.Diagnostics,
                     "Simulation.ZoneDiff",
                     $"[ZoneDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
                     ex);
+                throw;
             }
         }
     }
 
     private static void Apply(SimulationWorld world, ZoneDiff diff)
     {
+        if (diff.Op != ZoneDiffOp.CreateZone
+            && world.Zones.Manager.GetZone(diff.ZoneId) == null)
+        {
+            throw new InvalidOperationException($"Zone {diff.ZoneId} does not exist.");
+        }
+
         switch (diff.Op)
         {
             case ZoneDiffOp.CreateZone:

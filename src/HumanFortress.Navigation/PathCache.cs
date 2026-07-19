@@ -1,18 +1,18 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Concurrent;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation.Implementation;
 
 /// <summary>
 /// LRU cache for computed paths.
-/// Thread-safe for concurrent reads.
+/// Lock-owned cache state; pathfinding may query it from multiple runtime services,
+/// but cache eviction and chunk indexes must remain deterministic.
 /// </summary>
 internal sealed class PathCache
 {
     private readonly int _maxSize;
-    private readonly ConcurrentDictionary<ulong, CacheEntry> _cache;
-    private readonly ConcurrentDictionary<ChunkKey, HashSet<ulong>> _chunkIndex;
+    private readonly Dictionary<ulong, CacheEntry> _cache;
+    private readonly Dictionary<ChunkKey, HashSet<ulong>> _chunkIndex;
     private readonly object _lockObj = new();
     private long _hits;
     private long _misses;
@@ -21,38 +21,74 @@ internal sealed class PathCache
     internal PathCache(int maxSize)
     {
         _maxSize = maxSize;
-        _cache = new ConcurrentDictionary<ulong, CacheEntry>();
-        _chunkIndex = new ConcurrentDictionary<ChunkKey, HashSet<ulong>>();
+        _cache = new Dictionary<ulong, CacheEntry>();
+        _chunkIndex = new Dictionary<ChunkKey, HashSet<ulong>>();
     }
 
-    internal int Count => _cache.Count;
-    internal long Hits => _hits;
-    internal long Misses => _misses;
+    internal int Count
+    {
+        get
+        {
+            lock (_lockObj)
+            {
+                return _cache.Count;
+            }
+        }
+    }
+
+    internal long Hits
+    {
+        get
+        {
+            lock (_lockObj)
+            {
+                return _hits;
+            }
+        }
+    }
+
+    internal long Misses
+    {
+        get
+        {
+            lock (_lockObj)
+            {
+                return _misses;
+            }
+        }
+    }
 
     internal bool TryGet(ulong key, out NavPath path)
     {
-        if (_cache.TryGetValue(key, out var entry))
+        lock (_lockObj)
         {
-            // Update access time
-            lock (_lockObj)
+            if (_cache.TryGetValue(key, out var entry))
             {
                 entry.LastAccess = ++_timestamp;
+                _hits++;
+                path = entry.Path;
+                return true;
             }
 
-            Interlocked.Increment(ref _hits);
-            path = entry.Path;
-            return true;
+            _misses++;
+            path = default;
+            return false;
         }
-
-        Interlocked.Increment(ref _misses);
-        path = default;
-        return false;
     }
 
     internal void Add(ulong key, NavPath path)
     {
         lock (_lockObj)
         {
+            if (_cache.TryGetValue(key, out var existing))
+            {
+                existing.Path = path;
+                existing.LastAccess = ++_timestamp;
+                RemoveFromIndex(key);
+                IndexPath(key, path);
+                return;
+            }
+
             // Check if we need to evict
             if (_cache.Count >= _maxSize)
             {
@@ -65,11 +101,8 @@ internal sealed class PathCache
                 LastAccess = ++_timestamp,
             };
 
-            if (_cache.TryAdd(key, entry))
-            {
-                // Index by chunks
-                IndexPath(key, path);
-            }
+            _cache.Add(key, entry);
+            IndexPath(key, path);
         }
     }
 
@@ -77,11 +110,12 @@ internal sealed class PathCache
     {
         lock (_lockObj)
         {
-            if (_chunkIndex.TryRemove(chunk, out var keys))
+            if (_chunkIndex.Remove(chunk, out var keys))
             {
                 foreach (var key in keys)
                 {
-                    _cache.TryRemove(key, out _);
+                    _cache.Remove(key);
+                    RemoveFromIndex(key);
                 }
             }
         }
@@ -105,7 +139,7 @@ internal sealed class PathCache
         ulong oldestKey = 0;
         ulong oldestTime = ulong.MaxValue;
 
-        foreach (var kvp in _cache)
+        foreach (var kvp in _cache.OrderBy(static kvp => kvp.Key))
         {
             if (kvp.Value.LastAccess < oldestTime)
             {
@@ -116,7 +150,7 @@ internal sealed class PathCache
 
         if (oldestKey != 0)
         {
-            _cache.TryRemove(oldestKey, out _);
+            _cache.Remove(oldestKey);
             // Also remove from chunk index
             RemoveFromIndex(oldestKey);
         }
@@ -155,23 +189,27 @@ internal sealed class PathCache
 
     private void AddToChunkIndex(ChunkKey chunk, ulong key)
     {
-        _chunkIndex.AddOrUpdate(chunk,
-            _ => new HashSet<ulong> { key },
-            (_, set) =>
-            {
-                set.Add(key);
-                return set;
-            });
+        if (!_chunkIndex.TryGetValue(chunk, out var keys))
+        {
+            keys = new HashSet<ulong>();
+            _chunkIndex.Add(chunk, keys);
+        }
+
+        keys.Add(key);
     }
 
     private void RemoveFromIndex(ulong key)
     {
-        foreach (var kvp in _chunkIndex)
+        foreach (var kvp in _chunkIndex
+                     .OrderBy(static kvp => kvp.Key.Z)
+                     .ThenBy(static kvp => kvp.Key.ChunkY)
+                     .ThenBy(static kvp => kvp.Key.ChunkX)
+                     .ToArray())
         {
             kvp.Value.Remove(key);
             if (kvp.Value.Count == 0)
             {
-                _chunkIndex.TryRemove(kvp.Key, out _);
+                _chunkIndex.Remove(kvp.Key);
             }
         }
     }

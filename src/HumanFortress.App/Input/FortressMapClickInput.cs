@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -6,30 +7,19 @@ internal static class FortressMapClickInput
 {
     public static bool TryResolveWorldPosition(
         Point localMousePosition,
-        Point cameraPosition,
-        int zoomLevel,
-        int fortressSize,
-        Point? lastMousePosition,
+        RuntimeViewportGeometry viewport,
         out Point worldPosition)
     {
-        if (lastMousePosition.HasValue)
-        {
-            worldPosition = lastMousePosition.Value;
-            return true;
-        }
-
-        int safeZoom = Math.Max(1, zoomLevel);
-        int worldX = cameraPosition.X + (localMousePosition.X / safeZoom);
-        int worldY = cameraPosition.Y + (localMousePosition.Y / safeZoom);
-        int maxPosition = fortressSize * 32 - 1;
-
-        if (worldX < 0 || worldY < 0 || worldX > maxPosition || worldY > maxPosition)
+        if (!RuntimeViewportGeometryMath.TryLocalToWorld(
+                viewport,
+                new RuntimePoint(localMousePosition.X, localMousePosition.Y),
+                out var resolved))
         {
             worldPosition = default;
             return false;
         }
 
-        worldPosition = new Point(worldX, worldY);
+        worldPosition = new Point(resolved.X, resolved.Y);
         return true;
     }
 }

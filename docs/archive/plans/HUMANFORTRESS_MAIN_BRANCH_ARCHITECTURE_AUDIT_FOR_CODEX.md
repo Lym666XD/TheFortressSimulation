@@ -6,7 +6,7 @@
 **Purpose:** Architecture context and refactor guidance for Codex / Claude Code  
 **Date:** 2026-06-12  
 
-**Current status note (2026-06-12):** This is a source audit snapshot, not the current architecture overview. It has been reconciled into [ARCHITECTURE_REFACTOR_MASTER_PLAN.md](../../planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md). Some findings were resolved after the audit text was written; for current runtime/content boundaries, read [GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md) and [CONTENT_SYSTEM.md](../../content/CONTENT_SYSTEM.md).
+**Current status note (2026-07-11):** This is a source audit snapshot, not the current architecture overview. It has been reconciled into [STAGED_REFACTOR_TARGET.md](../../planning/STAGED_REFACTOR_TARGET.md). Some findings were resolved after the audit text was written; for current runtime/content boundaries, read [GAME_ARCHITECTURE.md](../../architecture/GAME_ARCHITECTURE.md) and [CONTENT_SYSTEM.md](../../content/CONTENT_SYSTEM.md).
 
 > This document summarizes a strict code-level architecture audit of the current `main` branch.  
 > It is intended to help future coding agents understand the project’s current state, the intended direction, and the risks of making broad changes without respecting architectural boundaries.

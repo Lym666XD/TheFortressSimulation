@@ -62,7 +62,7 @@ internal sealed class CraftDiffEmitter : ICraftDiffEmitter
             return;
 
         _stockpileDiffs.AddRemoveItem(
-            DiffTargetEncoding.SignedEntityId(itemGuid),
+            DiffTargetEncoding.EntityKey(itemGuid),
             location.ChunkKey,
             location.CellIndex,
             location.ZoneId,

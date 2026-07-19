@@ -47,9 +47,9 @@ internal readonly struct StockpileDiff
     internal int CellIndex { get; init; }
 
     /// <summary>
-    /// Item handle (0 if N/A).
+    /// Item entity key (0 if N/A).
     /// </summary>
-    internal int ItemHandle { get; init; }
+    internal ulong ItemHandle { get; init; }
 
     /// <summary>
     /// Quantity for operations involving amounts.
@@ -102,8 +102,8 @@ internal readonly struct StockpileDiff
     }
 
     /// <summary>
-    /// Create a deterministic sort key for merge ordering.
-    /// Per STOCKPILE_SPEC: cellIndex → priority(desc) → op → zoneId → itemHandle → systemId → localSeq
+    /// Create a coarse deterministic sort key for diagnostics and broad merge grouping.
+    /// Authoritative merge ordering is implemented by <see cref="CompareDeterministic"/>.
     /// </summary>
     internal long GetSortKey()
     {
@@ -113,5 +113,28 @@ internal readonly struct StockpileDiff
             (int)Op,
             ZoneId,
             LocalSeq);
+    }
+
+    internal static int CompareDeterministic(StockpileDiff left, StockpileDiff right)
+    {
+        int result = left.CellIndex.CompareTo(right.CellIndex);
+        if (result != 0) return result;
+
+        result = left.Priority.CompareTo(right.Priority);
+        if (result != 0) return result;
+
+        result = left.Op.CompareTo(right.Op);
+        if (result != 0) return result;
+
+        result = left.ZoneId.CompareTo(right.ZoneId);
+        if (result != 0) return result;
+
+        result = left.ItemHandle.CompareTo(right.ItemHandle);
+        if (result != 0) return result;
+
+        result = string.Compare(left.SystemId, right.SystemId, StringComparison.Ordinal);
+        if (result != 0) return result;
+
+        return left.LocalSeq.CompareTo(right.LocalSeq);
     }
 }

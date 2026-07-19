@@ -1,7 +1,6 @@
 using HumanFortress.App.Runtime;
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
-using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
 
@@ -9,24 +8,54 @@ internal sealed class FortressKeyboardRuntimePorts
 {
     internal FortressKeyboardRuntimePorts(
         IFortressRuntimeBuildCatalogAccess buildCatalog,
+        IFortressRuntimeZoneCatalogAccess zoneCatalog,
         IFortressRuntimeWorkshopPanelQueryAccess workshopQueries,
         IFortressRuntimeWorkshopPanelCommandAccess workshopCommands,
-        IFortressRuntimeNavigationDebugAccess navigationDebug,
-        IFortressRuntimeSimulationControlAccess simulationControl)
+        IFortressRuntimeSimulationControlAccess simulationControl,
+        IFortressRuntimeUiInputAccess uiInput)
     {
         BuildCatalog = new FortressBuildCatalogRuntimePorts(buildCatalog);
+        ZoneCatalog = new FortressZoneCatalogRuntimePorts(zoneCatalog);
         WorkshopPanel = new FortressWorkshopPanelRuntimePorts(workshopQueries, workshopCommands);
-        NavigationDebug = new FortressNavigationDebugRuntimePorts(navigationDebug);
         SimulationControl = new FortressSimulationControlRuntimePorts(simulationControl);
+        UiInput = new FortressUiInputRuntimePorts(uiInput);
     }
 
     internal FortressBuildCatalogRuntimePorts BuildCatalog { get; }
 
+    internal FortressZoneCatalogRuntimePorts ZoneCatalog { get; }
+
     internal FortressWorkshopPanelRuntimePorts WorkshopPanel { get; }
 
-    internal FortressNavigationDebugRuntimePorts NavigationDebug { get; }
-
     internal FortressSimulationControlRuntimePorts SimulationControl { get; }
+
+    internal FortressUiInputRuntimePorts UiInput { get; }
+}
+
+internal sealed class FortressUiInputRuntimePorts
+{
+    private readonly IFortressRuntimeUiInputAccess _runtime;
+
+    internal FortressUiInputRuntimePorts(IFortressRuntimeUiInputAccess runtime)
+    {
+        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+    }
+
+    internal SimulationDebugMenuData GetDebugMenuData() =>
+        _runtime.GetDebugMenuData();
+}
+
+internal sealed class FortressZoneCatalogRuntimePorts
+{
+    private readonly IFortressRuntimeZoneCatalogAccess _runtime;
+
+    internal FortressZoneCatalogRuntimePorts(IFortressRuntimeZoneCatalogAccess runtime)
+    {
+        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+    }
+
+    internal SimulationZoneCatalogData GetZoneCatalogData() =>
+        _runtime.GetZoneCatalogData();
 }
 
 internal sealed class FortressBuildCatalogRuntimePorts
@@ -78,23 +107,6 @@ internal sealed class FortressWorkshopPanelRuntimePorts
 
     internal void QueueToggleWorkshopAutoStockpile(Guid workshopId) =>
         _commands.QueueToggleWorkshopAutoStockpile(workshopId);
-}
-
-internal sealed class FortressNavigationDebugRuntimePorts
-{
-    private readonly IFortressRuntimeNavigationDebugAccess _runtime;
-
-    internal FortressNavigationDebugRuntimePorts(IFortressRuntimeNavigationDebugAccess runtime)
-    {
-        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
-    }
-
-    internal SimulationNavigationPathData FindNavigationDebugPath(
-        Point start,
-        int startZ,
-        Point destination,
-        int destinationZ) =>
-        _runtime.FindNavigationDebugPath(start, startZ, destination, destinationZ);
 }
 
 internal sealed class FortressSimulationControlRuntimePorts

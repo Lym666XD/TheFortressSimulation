@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
 
@@ -19,7 +20,11 @@ internal sealed partial class BuildUI
         surface.Print(x + 2, y + 6, "[,] Cancel", Color.Gray);
     }
 
-    private void DrawWorkshopMenu(ScreenSurface surface, int x, int y)
+    private void DrawWorkshopMenu(
+        ScreenSurface surface,
+        int x,
+        int y,
+        SimulationBuildCatalogData? buildCatalog)
     {
         var bg = new Color(0, 0, 0, 200);
         var fg = Color.White;
@@ -27,11 +32,20 @@ internal sealed partial class BuildUI
         DrawBox(surface, x, y, 46, 12, fg, bg);
         surface.Print(x + 1, y, " WORKSHOPS ", highlight);
 
-        surface.Print(x + 2, y + 2, "[Z] Mining", fg);
-        surface.Print(x + 2, y + 3, "[X] Industry", fg);
-        surface.Print(x + 2, y + 4, "[C] Farming", fg);
-        surface.Print(x + 2, y + 5, "[V] Lumbering", fg);
-        surface.Print(x + 2, y + 6, "[F] Crafts", fg);
+        var categories = buildCatalog.HasValue
+            ? WorkshopCategoryPresentation.GetCategories(buildCatalog.Value)
+            : Array.Empty<WorkshopCategoryView>();
+        int count = Math.Min(5, categories.Count);
+        for (int i = 0; i < count; i++)
+        {
+            surface.Print(
+                x + 2,
+                y + 2 + i,
+                $"[{WorkshopCategoryPresentation.GetShortcutLabel(i)}] {categories[i].DisplayName}",
+                fg);
+        }
+        if (count == 0)
+            surface.Print(x + 2, y + 2, "No workshop categories", Color.Gray);
         surface.Print(x + 2, y + 8, "[,] Back   ESC Cancel", Color.Gray);
     }
 }

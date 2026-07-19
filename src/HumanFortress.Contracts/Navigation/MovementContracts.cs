@@ -7,15 +7,32 @@ namespace HumanFortress.Contracts.Navigation;
 /// </summary>
 public interface IMovementExecutor
 {
-    void BeginMovement(uint entityId, PathRequest request, Path path);
+    IMovementMutationScope BeginMutationScope();
 
-    MovementUpdate UpdateMovement(uint entityId, IWorldNavigationView world);
+    void BeginMovement(ulong entityKey, PathRequest request, Path path);
 
-    void CancelMovement(uint entityId);
+    MovementUpdate UpdateMovement(ulong entityKey, IWorldNavigationView world);
 
-    bool HasMovement(uint entityId);
+    MovementProposalData PlanMovement(ulong entityKey, IWorldNavigationView world);
 
-    float GetProgress(uint entityId);
+    bool TryCommitMovement(MovementProposalData proposal);
+
+    MovementCursorData? GetCursorSnapshot(ulong entityKey);
+
+    void CancelMovement(ulong entityKey);
+
+    bool HasMovement(ulong entityKey);
+
+    float GetProgress(ulong entityKey);
+}
+
+/// <summary>
+/// Failure-atomic scope for a serialized movement commit. Disposing an
+/// uncommitted scope restores every cursor to its entry state.
+/// </summary>
+public interface IMovementMutationScope : IDisposable
+{
+    void Commit();
 }
 
 /// <summary>
@@ -55,4 +72,31 @@ public readonly record struct MovementUpdate(
     MovementStatus Status,
     Point3 Position,
     bool NeedsReplan,
-    Point3? LookAhead);
+    Point3? LookAhead,
+    byte SearchAttempt = 0);
+
+/// <summary>
+/// Immutable movement authority for one entity. Revision is a per-entity CAS
+/// generation; path steps are owned copies at implementation boundaries.
+/// </summary>
+public readonly record struct MovementCursorData(
+    ulong EntityKey,
+    ulong Revision,
+    PathRequest Request,
+    Path Path,
+    int CurrentStep,
+    Point3 Position,
+    int StuckTicks,
+    int LastProgress,
+    int LastConnectivityVersion,
+    int StepWait);
+
+/// <summary>
+/// Pure result of planning one movement update. Authority changes only when
+/// TryCommitMovement accepts ExpectedRevision.
+/// </summary>
+public readonly record struct MovementProposalData(
+    ulong EntityKey,
+    ulong ExpectedRevision,
+    MovementCursorData? NextCursor,
+    MovementUpdate Update);

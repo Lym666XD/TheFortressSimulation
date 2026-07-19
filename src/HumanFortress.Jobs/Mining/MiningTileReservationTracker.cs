@@ -38,6 +38,13 @@ internal sealed class MiningTileReservationTracker
             .Select(tile => new MiningReservedTileSnapshot(tile.X, tile.Y, tile.Z))
             .ToArray();
     }
+
+    internal void RestoreStateSnapshot(IEnumerable<MiningReservedTileSnapshot> tiles)
+    {
+        _reservedTiles.Clear();
+        foreach (var tile in tiles)
+            _reservedTiles.Add((tile.X, tile.Y, tile.Z));
+    }
 }
 
 internal readonly record struct MiningReservedTileSnapshot(int X, int Y, int Z);

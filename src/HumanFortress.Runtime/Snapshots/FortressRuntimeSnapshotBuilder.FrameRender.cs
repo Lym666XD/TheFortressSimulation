@@ -1,5 +1,7 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Geometry;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -13,13 +15,8 @@ internal static partial class FortressRuntimeSnapshotBuilder
         NavigationManager? navigation,
         NavigationTuning? tuning,
         bool includeMapViewport,
-        int fortressSize,
-        Point cameraPosition,
+        RuntimeViewportGeometry viewport,
         Point cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph,
         SimulationNavigationOverlayMode navigationMode,
         Point? selectedNavigationTarget,
@@ -27,27 +24,22 @@ internal static partial class FortressRuntimeSnapshotBuilder
         int tileInspectionZ,
         SimulationSnapshotMetadata metadata)
     {
-        var viewport = new Rectangle(cameraPosition.X, cameraPosition.Y, viewWidth, viewHeight);
+        var worldViewport = viewport.VisibleWorldRectangle();
         return new SimulationFrameRenderData(
             includeMapViewport
                 ? BuildMapViewportSnapshot(
                     world,
                     geologyCatalog,
-                    fortressSize,
-                    cameraPosition,
+                    viewport,
                     cursorPosition,
-                    currentZ,
-                    zoomLevel,
-                    viewWidth,
-                    viewHeight,
                     cursorGlyph)
                 : SimulationMapViewportData.Unavailable,
             BuildNavigationOverlaySnapshot(
                 navigation,
                 tuning,
                 navigationMode,
-                currentZ,
-                viewport,
+                viewport.CurrentZ,
+                worldViewport,
                 selectedNavigationTarget),
             BuildTileInspectionSnapshot(
                 world,

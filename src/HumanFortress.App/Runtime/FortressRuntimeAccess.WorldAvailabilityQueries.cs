@@ -6,7 +6,7 @@ internal sealed partial class FortressRuntimeAccess
 {
     internal SimulationWorldAvailabilityData GetWorldAvailabilityData()
     {
-        return _snapshots.GetWorldAvailabilityData();
+        return _catalog.GetWorldAvailabilityData();
     }
 
     SimulationWorldAvailabilityData IFortressRuntimeBootstrapAccess.GetWorldAvailabilityData() =>

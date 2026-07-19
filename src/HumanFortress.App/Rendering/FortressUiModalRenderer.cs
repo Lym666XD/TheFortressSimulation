@@ -31,7 +31,10 @@ internal static class FortressUiModalRenderer
 
         if (ui.ConstructionMaterialDialogOpen && context.UiServices?.BuildUI != null)
         {
-            context.UiServices.BuildUI.DrawConstructionMaterialDialog(uiSurface, ui);
+            context.UiServices.BuildUI.DrawConstructionMaterialDialog(
+                uiSurface,
+                ui,
+                overlayData.BuildCatalog);
         }
 
         UiWorkshopPanelRenderer.Draw(uiSurface, ui, overlayData.Workshops);

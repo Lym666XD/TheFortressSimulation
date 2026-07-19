@@ -1,4 +1,6 @@
 using System;
+using HumanFortress.App.Rendering;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -10,7 +12,7 @@ internal sealed partial class OrdersUI
     public void RenderPlacementPreview(
         MapScreenSurface mapSurface,
         SimulationPlacementPreviewData preview,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         bool show,
         bool showEligibleHint)
     {
@@ -20,18 +22,17 @@ internal sealed partial class OrdersUI
 
         foreach (var cell in preview.Cells)
         {
-            int sx = cell.X - viewport.X;
-            int sy = cell.Y - viewport.Y;
-            if (sx >= 0 && sx < surf.Width && sy >= 0 && sy < surf.Height)
-                surf.SetGlyph(sx, sy, '.', gold, Color.Transparent);
+            FortressViewportDrawing.SetWorldCellGlyph(surf, viewport, cell.X, cell.Y, '.', gold);
         }
 
         if (!showEligibleHint)
             return;
 
-        int labelX = preview.X - viewport.X;
-        int labelY = preview.Y - viewport.Y - 1;
-        if (labelY < 0) labelY = preview.Y - viewport.Y + preview.Height;
+        if (!FortressViewportDrawing.TryGetLocalPosition(viewport, preview.X, preview.Y, out var local))
+            return;
+        int labelX = local.X;
+        int labelY = local.Y - 1;
+        if (labelY < 0) labelY = local.Y + (preview.Height * viewport.ZoomLevel);
         if (labelX < 0) labelX = 0;
         if (labelX + 14 < surf.Width && labelY >= 0 && labelY < surf.Height)
             surf.Print(labelX, labelY, $"{preview.EligibleCells}/{preview.TotalCells} eligible", Color.Cyan);

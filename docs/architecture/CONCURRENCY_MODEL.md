@@ -10,7 +10,7 @@ Deterministic & replayable across OS/CPU: same seed + inputs ⇒ same world/snap
 
 UPDATE_ORDER
 
-Safe parallelism: exploit multi-core via read-parallel work, intra-chunk merges, and inter-chunk messages; one commit barrier per tick. 
+Safe parallelism target: exploit multi-core through deterministic chunk-partitioned read work, intra-chunk merges, and inter-chunk messages; one commit barrier per tick. The current coarse scheduler executes registered systems in stable order during read phase until chunk-level scheduling is implemented.
 
 UPDATE_ORDER
 
@@ -23,6 +23,15 @@ Data-oriented: chunked SoA base, sparse overlays, derived caches, dirty-scoped r
 DATA_LAYOUT
 
 The CPU simulation core owns authoritative state. GPU, UI, renderer, audio, and background workers may consume snapshots, produce derived data, or precompute proposals, but they must not commit authoritative state outside the deterministic simulation pipeline.
+
+Current implementation note: until chunk-partitioned schedulers and declared
+merge contracts exist, behavior-affecting owner state uses ordinary collections
+behind the owning module's lock or tick-stage boundary. This includes world
+chunk storage, command queues, order/job backlogs, RNG stream registries,
+EventBus handler lists, and Navigation path/nav-data caches. Concurrent
+collections are allowed only for future isolated workers with an explicit
+deterministic snapshot/merge contract; they are not an ordering contract for
+save/replay/hash authority.
 
 2) Terminology (Normative)
 

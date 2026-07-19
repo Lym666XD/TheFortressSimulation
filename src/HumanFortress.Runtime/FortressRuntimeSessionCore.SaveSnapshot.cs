@@ -25,12 +25,22 @@ internal sealed partial class FortressRuntimeSessionCore
         return RuntimeSaveSnapshotDocumentStore.Read(directory);
     }
 
+    RuntimeSaveSlotInspectionData IFortressRuntimeSessionSaveSnapshotPort.InspectSaveSnapshotDirectory(string directory)
+    {
+        return RuntimeSaveSnapshotDocumentStore.InspectDirectory(directory, _runtimeContentSnapshot);
+    }
+
+    RuntimeSaveSlotMigrationResultData IFortressRuntimeSessionSaveSnapshotPort.MigrateSaveSnapshotDirectory(
+        string sourceDirectory,
+        string targetDirectory)
+    {
+        return RuntimeSaveSlotMigrator.MigrateDirectory(sourceDirectory, targetDirectory);
+    }
+
     RuntimeSaveSnapshotDocumentValidationResultData IFortressRuntimeSessionSaveSnapshotPort.ValidateSaveSnapshotDirectory(
         string directory)
     {
-        return TryReadUncheckedSaveSnapshotDocument(directory, out var document, out var failure)
-            ? RuntimeSaveSnapshotDocumentVerifier.Validate(document)
-            : failure;
+        return RuntimeSaveSnapshotDocumentStore.ValidateDirectory(directory);
     }
 
     RuntimeSaveSnapshotDocumentValidationResultData IFortressRuntimeSessionSaveSnapshotPort.ValidateSaveSnapshotDocument(
@@ -42,7 +52,7 @@ internal sealed partial class FortressRuntimeSessionCore
     RuntimeSaveSnapshotRestoreResultData IFortressRuntimeSessionSaveSnapshotPort.RestorePendingCommandsFromSaveSnapshotDocument(
         RuntimeSaveSnapshotDocumentData document)
     {
-        return RuntimeSaveSnapshotReplayRestorer.RestorePendingCommands(_services, document);
+        return RestorePendingCommandsFromSaveSnapshotDocumentCore(document);
     }
 
     RuntimeSaveSnapshotRestoreResultData IFortressRuntimeSessionSaveSnapshotPort.RestorePendingCommandsFromSaveSnapshotDirectory(
@@ -59,9 +69,9 @@ internal sealed partial class FortressRuntimeSessionCore
                 RestoreIssues: Array.Empty<RuntimeSaveSnapshotDocumentIssueData>());
         }
 
-        return RuntimeSaveSnapshotReplayRestorer.RestorePendingCommands(
-            _services,
-            document);
+        return RestorePendingCommandsFromSaveSnapshotDocumentCore(
+            document,
+            failure);
     }
 
     RuntimeSaveWorldSnapshotRestoreResultData IFortressRuntimeSessionSaveSnapshotPort.RestoreWorldFromSaveSnapshotDocument(

@@ -1,5 +1,6 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using SadConsole;
 using SadConsole.Input;
 using SadRogue.Primitives;
@@ -47,9 +48,10 @@ internal sealed partial class FortressStateInputController
 
     private void ClampCameraToWorld()
     {
-        _viewport.ClampCamera(
-            _fortressSizeProvider(),
+        _viewport.ClampCamera(new RuntimeRect(
+            _view.MapPositionOr(new Point(0, 0)).X,
+            _view.MapPositionOr(new Point(0, 0)).Y,
             _view.MapWidthOr(80),
-            _view.MapHeightOr(40));
+            _view.MapHeightOr(40)));
     }
 }

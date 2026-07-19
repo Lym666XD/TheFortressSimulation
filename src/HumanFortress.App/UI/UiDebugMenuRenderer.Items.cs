@@ -40,19 +40,6 @@ internal static partial class UiDebugMenuRenderer
         surf.Print(x0 + 2, listY + 3, "Click map to spawn at mouse position", Color.Green);
     }
 
-    private static string GetItemName(string id)
-    {
-        return id switch
-        {
-            "core_item_boulder_granite" => "Stone",
-            "core_item_ingot_iron_wrought" => "Iron Ingot",
-            "core_item_log_oak" => "Wood Log",
-            "core_tool_mining_pickaxe" => "Pickaxe",
-            "core_weapon_sword_short" => "Short Sword",
-            _ => "Unknown"
-        };
-    }
-
     private static string GetItemNameOrId(SimulationDebugMenuData debugMenu, string id)
     {
         var item = debugMenu.ItemCategories?
@@ -61,8 +48,7 @@ internal static partial class UiDebugMenuRenderer
         if (!string.IsNullOrWhiteSpace(item.Id))
             return item.DisplayName;
 
-        var name = GetItemName(id);
-        return name == "Unknown" ? id : name;
+        return id;
     }
 
     private static IReadOnlyList<DebugItemView> GetDebugItemsForCategory(SimulationDebugMenuData debugMenu, DebugItemCategory category)

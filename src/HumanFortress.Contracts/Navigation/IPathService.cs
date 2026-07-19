@@ -16,11 +16,6 @@ public interface IPathService
     void BeginTick();
 
     /// <summary>
-    /// Process queued requests.
-    /// </summary>
-    void ProcessQueuedRequests(IWorldNavigationView world);
-
-    /// <summary>
     /// Invalidate cache for a chunk.
     /// </summary>
     void InvalidateChunk(ChunkKey chunk);

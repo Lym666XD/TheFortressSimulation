@@ -111,32 +111,6 @@ public class MaterialDistribution
     public string Type { get; set; } = "weighted";
     public List<MaterialWeight> Materials { get; set; } = new();
     public int? Seed { get; set; }
-
-    public string SelectMaterial(System.Random rng)
-    {
-        if (Materials.Count == 0)
-            return "";
-
-        if (Type == "weighted")
-        {
-            float totalWeight = 0;
-            foreach (var mat in Materials)
-                totalWeight += mat.Weight;
-
-            float roll = (float)rng.NextDouble() * totalWeight;
-            float current = 0;
-
-            foreach (var mat in Materials)
-            {
-                current += mat.Weight;
-                if (roll <= current)
-                    return mat.Name;
-            }
-        }
-
-        // Fallback
-        return Materials[0].Name;
-    }
 }
 
 public class MaterialWeight

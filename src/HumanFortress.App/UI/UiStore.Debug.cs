@@ -11,8 +11,8 @@ internal sealed partial class UiStore
     public readonly List<(Point pos, int z)> DebugDwarfs = new();
 
     public int DebugMenuTab { get; set; } = 0;
-    public string DebugSelectedCreature { get; set; } = "core_race_dwarf";
-    public string DebugSelectedItem { get; set; } = "core_item_boulder_granite";
+    public string DebugSelectedCreature { get; set; } = string.Empty;
+    public string DebugSelectedItem { get; set; } = string.Empty;
     public DebugItemCategory DebugItemCat { get; set; } = DebugItemCategory.Boulders;
     public int DebugItemPage { get; set; } = 0;
 

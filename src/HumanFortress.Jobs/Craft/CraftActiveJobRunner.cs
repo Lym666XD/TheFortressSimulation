@@ -12,7 +12,6 @@ internal sealed class CraftActiveJobRunner
     private readonly IMovementExecutor _move;
     private readonly CraftMaterialConsumer _materialConsumer;
     private readonly CraftOutputEmitter _outputEmitter;
-    private readonly string _systemId;
     private readonly int _creatureReserveTtlTicks;
 
     internal CraftActiveJobRunner(
@@ -22,7 +21,6 @@ internal sealed class CraftActiveJobRunner
         IMovementExecutor move,
         CraftMaterialConsumer materialConsumer,
         CraftOutputEmitter outputEmitter,
-        string systemId,
         int creatureReserveTtlTicks)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
@@ -31,7 +29,6 @@ internal sealed class CraftActiveJobRunner
         _move = move ?? throw new ArgumentNullException(nameof(move));
         _materialConsumer = materialConsumer ?? throw new ArgumentNullException(nameof(materialConsumer));
         _outputEmitter = outputEmitter ?? throw new ArgumentNullException(nameof(outputEmitter));
-        _systemId = systemId ?? throw new ArgumentNullException(nameof(systemId));
         _creatureReserveTtlTicks = creatureReserveTtlTicks;
     }
 
@@ -46,15 +43,23 @@ internal sealed class CraftActiveJobRunner
             return true;
         }
 
-        uint entityId = DiffTargetEncoding.EntityId(job.WorkerId);
-        _world.Reservations.TryReserveCreature(job.WorkerId, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}");
+        ulong entityKey = DiffTargetEncoding.EntityKey(job.WorkerId);
+        if (!_world.Reservations.TryRenewCreature(
+                job.CreatureReservation,
+                tick,
+                tick + (ulong)_creatureReserveTtlTicks))
+        {
+            finishReason = CraftJobFinishReason.ReservationLost;
+            return true;
+        }
 
         if (job.Stage == CraftJobStage.ToWorkshop)
         {
-            var update = _move.UpdateMovement(entityId, _navView);
+            var update = _move.UpdateMovement(entityKey, _navView);
             if (update.Status == MovementStatus.Arrived)
             {
-                if (!_materialConsumer.TryConsumeInputs(job))
+                job.PathSearchAttempt = 0;
+                if (!_materialConsumer.TryConsumeInputs(job, tick))
                 {
                     finishReason = CraftJobFinishReason.InputsUnavailable;
                     return true;
@@ -64,7 +69,8 @@ internal sealed class CraftActiveJobRunner
             }
             else if (update.NeedsReplan)
             {
-                Replan(job, entityId, update.Position);
+                job.PathSearchAttempt = update.SearchAttempt;
+                Replan(job, entityKey, update.Position);
             }
 
             return false;
@@ -84,18 +90,26 @@ internal sealed class CraftActiveJobRunner
         return false;
     }
 
-    private void Replan(ActiveCraftJob job, uint entityId, Point3 currentPosition)
+    private void Replan(
+        ActiveCraftJob job,
+        ulong entityKey,
+        Point3 currentPosition)
     {
         var request = new PathRequest(
             currentPosition,
             new Point3(job.Anchor.X, job.Anchor.Y, job.Z),
             MoveMode.Walk,
             PathFlags.None,
-            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid));
+            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid),
+            job.PathSearchAttempt);
         var path = _paths.Solve(in request, in _navView);
         if (path.Kind == PathResultKind.Found)
         {
-            _move.BeginMovement(entityId, request, path);
+            _move.BeginMovement(entityKey, request, path);
+        }
+        else if (path.Kind is PathResultKind.Partial or PathResultKind.BudgetExhausted)
+        {
+            _move.BeginMovement(entityKey, request, path);
         }
     }
 }

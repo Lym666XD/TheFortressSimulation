@@ -81,7 +81,7 @@ internal sealed class WorldNavigationView : IWorldNavigationView
         // Prefer capabilities; fall back to tile kind
         var caps = GetCapabilities(position);
         if ((caps & NavCapability.Standable) != 0) return true;
-        return _source.TryGetTile(position, out var tile) && tile.Kind == NavigationTileKind.OpenWithFloor;
+        return _source.TryGetTile(position, out var tile) && tile.IsStandable;
     }
 
     internal bool TryGetDownRampDirection(Point3 position, out byte rampDirection)

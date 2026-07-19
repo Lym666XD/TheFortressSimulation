@@ -76,6 +76,22 @@ internal sealed class CreateConstructionOrderCommand : ICommand
             bw.Write(tag);
         }
 
+        var requirements = _filter.Requirements
+            .Where(static requirement =>
+                !string.IsNullOrWhiteSpace(requirement.Tag)
+                || !string.IsNullOrWhiteSpace(requirement.DefinitionId))
+            .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+            .ThenBy(static requirement => requirement.Count)
+            .ToArray();
+        bw.Write(requirements.Length);
+        foreach (var requirement in requirements)
+        {
+            bw.Write(requirement.Tag ?? string.Empty);
+            bw.Write(requirement.DefinitionId ?? string.Empty);
+            bw.Write(requirement.Count);
+        }
+
         bw.Write(_priority);
         return ms.ToArray();
     }

@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace HumanFortress.Contracts.Simulation.Creatures;
 
 /// <summary>
@@ -25,7 +29,7 @@ public sealed class CreatureDefinitionCatalogStore : ICreatureDefinitionCatalog
     public static CreatureDefinitionCatalogStore FromDefinitions(IEnumerable<CreatureDefinition> definitions)
     {
         var definitionMap = new Dictionary<string, CreatureDefinition>(StringComparer.Ordinal);
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             definitionMap[definition.Id] = definition;
         }
@@ -40,7 +44,8 @@ public sealed class CreatureDefinitionCatalogStore : ICreatureDefinitionCatalog
 
     public IEnumerable<CreatureDefinition> GetAllDefinitions()
     {
-        return _definitions.Values;
+        return _definitions.Values
+            .OrderBy(static definition => definition.Id, StringComparer.Ordinal);
     }
 
     public IEnumerable<CreatureDefinition> GetByTag(string tag)
@@ -53,7 +58,7 @@ public sealed class CreatureDefinitionCatalogStore : ICreatureDefinitionCatalog
     private static Dictionary<string, string[]> BuildTagIndex(IEnumerable<CreatureDefinition> definitions)
     {
         var index = new Dictionary<string, List<string>>(StringComparer.Ordinal);
-        foreach (var definition in definitions)
+        foreach (var definition in definitions.OrderBy(static definition => definition.Id, StringComparer.Ordinal))
         {
             foreach (var tag in definition.Tags)
             {
@@ -68,9 +73,11 @@ public sealed class CreatureDefinitionCatalogStore : ICreatureDefinitionCatalog
         }
 
         var frozen = new Dictionary<string, string[]>(index.Count, StringComparer.Ordinal);
-        foreach (var (key, ids) in index)
+        foreach (var (key, ids) in index.OrderBy(static entry => entry.Key, StringComparer.Ordinal))
         {
-            frozen[key] = ids.ToArray();
+            frozen[key] = ids
+                .OrderBy(static id => id, StringComparer.Ordinal)
+                .ToArray();
         }
 
         return frozen;

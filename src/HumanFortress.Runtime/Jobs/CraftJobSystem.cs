@@ -18,9 +18,10 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned craft executor.
 /// </summary>
-internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
+internal sealed class CraftJobSystem : IUnifiedCraftJobExecutor
 {
     private readonly CraftJobExecutor _executor;
+    private readonly IPathService _paths;
 
     internal CraftJobSystem(
         World world,
@@ -32,14 +33,13 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
         ProfessionAssignments? professions,
         WorkerSelectionStrategy workerStrategy,
         NavigationTuning? navigationTuning = null,
+        RuntimeNavigationServices? navigationServices = null,
         StockpileDiffLog? stockpileDiffLog = null)
     {
         var tuning = navigationTuning ?? NavigationTuning.Default;
         var navigation = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
-        var paths = new PathService(tuning);
-        var navView = new WorldNavigationView(navigation);
-        IWorldNavigationView navViewInterface = navView;
-        var move = new MovementExecutor(paths);
+        var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(navigation);
+        _paths = jobNavigation.PathService;
         var diffEmitter = new CraftDiffEmitter(itemsDiffLog, Priority, SystemId, world, stockpileDiffLog);
         ICraftWorkerCandidateSource? workerCandidates = professions == null
             ? null
@@ -49,9 +49,9 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
             planner,
             recipes,
             constructions,
-            paths,
-            navViewInterface,
-            move,
+            jobNavigation.PathService,
+            jobNavigation.WorldView,
+            jobNavigation.Movement,
             diffEmitter,
             workerCandidates);
     }
@@ -62,23 +62,25 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
 
     internal string SystemId => CraftJobExecutor.SystemId;
 
+    internal IPathService PathService => _paths;
+
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
+    internal void PrepareSequentialCompatibility(ulong tick) => _executor.PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
-
-    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
-
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
 
     internal CraftJobReplaySnapshot GetReplaySnapshot() => _executor.GetReplaySnapshot();
+
+    internal CraftJobRestoreResult RestoreReplaySnapshot(CraftJobReplaySnapshot snapshot) => _executor.RestoreReplaySnapshot(snapshot);
 
     internal CraftJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
 }

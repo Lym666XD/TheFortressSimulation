@@ -10,15 +10,15 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 internal sealed class ConstructionDesignation
 {
-    public readonly Rectangle WorldRect;
-    public readonly int ZMin;
-    public readonly int ZMax;
-    public readonly ConstructionShape Shape;
-    public readonly MaterialFilterSpec Filter; // reusable filtering/cache key
-    public readonly int Priority; // 0..100
-    public readonly ulong CreatedTick;
+    internal readonly Rectangle WorldRect;
+    internal readonly int ZMin;
+    internal readonly int ZMax;
+    internal readonly ConstructionShape Shape;
+    internal readonly MaterialFilterSpec Filter; // reusable filtering/cache key
+    internal readonly int Priority; // 0..100
+    internal readonly ulong CreatedTick;
 
-    public ConstructionDesignation(
+    internal ConstructionDesignation(
         Rectangle worldRect,
         int zMin,
         int zMax,
@@ -50,7 +50,7 @@ internal enum ConstructionShape : byte
 }
 
 /// <summary>
-/// Planned build DTO emitted by ConstructionSystem.ReadTick.
+/// Planned build DTO emitted during ConstructionSystem compatibility preparation.
 /// Carries final target kind and optional geology handle selected by material resolver.
 /// </summary>
 internal readonly record struct PlannedBuild(
@@ -60,8 +60,14 @@ internal readonly record struct PlannedBuild(
     ushort GeologyHandle,
     ConstructionShape Shape,
     string[] RequiredTags,
+    MaterialRequirementSpec[] Requirements,
     int Priority,
     ulong Seed);
+
+internal readonly record struct MaterialRequirementSpec(
+    string? Tag,
+    string? DefinitionId,
+    int Count);
 
 /// <summary>
 /// Filter specification for selecting materials/items for construction.
@@ -72,15 +78,17 @@ internal sealed class MaterialFilterSpec
     /// <summary>
     /// Optional concrete material ID (e.g., "core_mat_stone_granite"). If set, takes precedence.
     /// </summary>
-    public string? PreferredMaterialId { get; init; }
+    internal string? PreferredMaterialId { get; init; }
 
     /// <summary>
     /// Tag filters (e.g., ["construction","block","stone"]).
     /// </summary>
-    public string[] Tags { get; init; } = Array.Empty<string>();
+    internal string[] Tags { get; init; } = Array.Empty<string>();
+
+    internal MaterialRequirementSpec[] Requirements { get; init; } = Array.Empty<MaterialRequirementSpec>();
 
     /// <summary>
     /// Optional UI/cache category key (e.g., "l0.floor", "l0.wall").
     /// </summary>
-    public string CategoryKey { get; init; } = "l0.unknown";
+    internal string CategoryKey { get; init; } = "l0.unknown";
 }

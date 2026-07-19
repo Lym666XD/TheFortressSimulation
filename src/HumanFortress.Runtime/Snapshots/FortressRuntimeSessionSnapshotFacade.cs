@@ -6,12 +6,19 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
 {
     internal static SimulationBuildCatalogData BuildCatalogSnapshot(FortressRuntimeSession? session)
     {
-        return FortressRuntimeSnapshotBuilder.BuildCatalogSnapshot(Constructions(session));
+        return FortressRuntimeSnapshotBuilder.BuildCatalogSnapshot(
+            Constructions(session),
+            WorkshopCategoryTags(session));
     }
 
     internal static SimulationDebugMenuData BuildDebugMenuSnapshot(FortressRuntimeSession? session)
     {
         return FortressRuntimeSnapshotBuilder.BuildDebugMenuSnapshot(World(session));
+    }
+
+    internal static SimulationZoneCatalogData BuildZoneCatalogSnapshot(FortressRuntimeSession? session)
+    {
+        return FortressRuntimeSnapshotBuilder.BuildZoneCatalogSnapshot(World(session));
     }
 
     internal static SimulationDebugSpawnData BuildDebugSpawnSnapshot(FortressRuntimeSession? session)

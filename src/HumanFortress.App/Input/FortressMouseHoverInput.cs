@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -6,32 +7,19 @@ internal static class FortressMouseHoverInput
 {
     public static FortressMouseHoverResult Handle(
         Point localMousePosition,
-        int mapWidth,
-        int mapHeight,
-        Point cameraPosition,
-        int zoomLevel,
-        int fortressSize,
-        int currentZ,
-        Point? currentLastMousePosition,
+        RuntimeViewportGeometry viewport,
         Point currentCursorPosition)
     {
-        if (localMousePosition.X < 0
-            || localMousePosition.X >= mapWidth
-            || localMousePosition.Y < 0
-            || localMousePosition.Y >= mapHeight)
+        if (!RuntimeViewportGeometryMath.TryLocalToWorld(
+                viewport,
+                new RuntimePoint(localMousePosition.X, localMousePosition.Y),
+                out var worldPoint))
         {
             return new FortressMouseHoverResult(false, null, currentCursorPosition);
         }
 
-        int worldX = cameraPosition.X + (localMousePosition.X / zoomLevel);
-        int worldY = cameraPosition.Y + (localMousePosition.Y / zoomLevel);
-        int maxPos = fortressSize * 32 - 1;
-
-        if (worldX < 0 || worldX > maxPos || worldY < 0 || worldY > maxPos)
-            return new FortressMouseHoverResult(false, currentLastMousePosition, currentCursorPosition);
-
-        var worldPosition = new Point(worldX, worldY);
-        Logger.Log($"[MOUSE] Hover tile world=({worldPosition.X},{worldPosition.Y},{currentZ})");
+        var worldPosition = new Point(worldPoint.X, worldPoint.Y);
+        Logger.Log($"[MOUSE] Hover tile world=({worldPosition.X},{worldPosition.Y},{viewport.CurrentZ})");
         return new FortressMouseHoverResult(true, worldPosition, worldPosition);
     }
 }

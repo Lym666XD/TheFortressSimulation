@@ -14,12 +14,39 @@ internal sealed partial class FortressRuntimeSessionCore
     {
         var commandQueueSnapshot = _services.CommandQueue.GetReplaySnapshot();
         var rngStreamSnapshot = _services.RngStreams.GetStateSnapshot();
-        WorldSavePayloadData? worldPayload = _runtimeSession == null
-            ? null
-            : WorldSavePayloadBuilder.Build(_runtimeSession.World);
+        var runtimeSession = _runtimeSession;
+        WorldSavePayloadData? worldPayload = null;
+        RuntimeSaveMiningJobsData? miningJobs = null;
+        RuntimeSaveTransportJobsData? transportJobs = null;
+        RuntimeSaveCraftJobsData? craftJobs = null;
+        if (runtimeSession != null)
+        {
+            worldPayload = WorldSavePayloadBuilder.Build(runtimeSession.World);
+            var systems = runtimeSession.Host.Systems;
+            if (systems == null)
+            {
+                miningJobs = RuntimeSaveSnapshotEmptyJobState.CreateMiningDocumentData();
+                transportJobs = RuntimeSaveSnapshotEmptyJobState.CreateTransportDocumentData();
+                craftJobs = RuntimeSaveSnapshotEmptyJobState.CreateCraftDocumentData();
+            }
+            else
+            {
+                miningJobs = RuntimeSaveSnapshotDocumentMiningMapper.ToDocumentData(
+                    systems.MiningJobs.GetReplaySnapshot());
+                transportJobs = RuntimeSaveSnapshotDocumentTransportMapper.ToDocumentData(
+                    systems.TransportQueue.GetStateSnapshot(),
+                    systems.TransportJobs.GetReplaySnapshot());
+                craftJobs = RuntimeSaveSnapshotDocumentCraftMapper.ToDocumentData(
+                    systems.CraftJobs.GetReplaySnapshot());
+            }
+        }
+
         var snapshot = new RuntimeSaveSnapshotData(
             BuildSaveManifestData(commandQueueSnapshot, rngStreamSnapshot),
             worldPayload,
+            miningJobs,
+            transportJobs,
+            craftJobs,
             rngStreamSnapshot,
             commandQueueSnapshot.ExecutedRecords,
             commandQueueSnapshot.PendingRecords);
@@ -35,9 +62,10 @@ internal sealed partial class FortressRuntimeSessionCore
             _runtimeSession,
             commandQueueSnapshot,
             rngStreamSnapshot);
-        var worldSnapshot = _runtimeSession == null
+        var runtimeSession = _runtimeSession;
+        var worldSnapshot = runtimeSession == null
             ? (WorldSaveSnapshot?)null
-            : WorldSaveSnapshotBuilder.Build(_runtimeSession.World);
+            : WorldSaveSnapshotBuilder.Build(runtimeSession.World);
         return RuntimeSaveManifestBuilder.Build(checkpoint, _runtimeContentSnapshot, worldSnapshot);
     }
 }

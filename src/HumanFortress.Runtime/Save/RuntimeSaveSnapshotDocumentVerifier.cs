@@ -18,45 +18,211 @@ internal static partial class RuntimeSaveSnapshotDocumentVerifier
                 $"Unsupported save format version {document.Manifest.FormatVersion}."));
         }
 
+        ValidateContentCatalog(document.Manifest.Content, document.Manifest.ContentCatalog, issues);
+        ValidateManifestSections(document, issues);
         ValidateWorldPayload(document, issues);
         ValidateRngStreams(document, issues);
+        ValidateMiningJobs(document, issues);
+        ValidateTransportJobs(document, issues);
+        ValidateCraftJobs(document, issues);
 
         var executedRecords = MapRecords(
             document,
             map: RuntimeSaveSnapshotDocumentCommandMapper.ToExecutedCommandReplayRecords,
-            "commands.executed",
+            RuntimeSaveManifestSections.CommandsExecuted,
             issues);
         var pendingRecords = MapRecords(
             document,
             map: RuntimeSaveSnapshotDocumentCommandMapper.ToPendingCommandReplayRecords,
-            "commands.pending",
+            RuntimeSaveManifestSections.CommandsPending,
             issues);
 
         if (executedRecords != null)
         {
             ValidateCommandJournal(
-                "commands.executed",
+                RuntimeSaveManifestSections.CommandsExecuted,
                 executedRecords,
                 document.Manifest.Checkpoint.CommandLogHash,
                 document.Manifest.Checkpoint.CommandLogRecordCount,
-                FindSection(document, "commands.executed"),
+                FindSection(document, RuntimeSaveManifestSections.CommandsExecuted),
                 issues);
         }
 
         if (pendingRecords != null)
         {
             ValidateCommandJournal(
-                "commands.pending",
+                RuntimeSaveManifestSections.CommandsPending,
                 pendingRecords,
                 document.Manifest.Checkpoint.PendingCommandLogHash,
                 document.Manifest.Checkpoint.PendingCommandLogRecordCount,
-                FindSection(document, "commands.pending"),
+                FindSection(document, RuntimeSaveManifestSections.CommandsPending),
                 issues);
         }
 
         return issues.Count == 0
             ? RuntimeSaveSnapshotDocumentValidationResultData.Valid
             : new RuntimeSaveSnapshotDocumentValidationResultData(false, issues.ToArray());
+    }
+
+    private static void ValidateContentCatalog(
+        RuntimeSaveContentSignatureData signature,
+        RuntimeSaveContentCatalogSummaryData catalog,
+        ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
+    {
+        if (!catalog.HasCatalog)
+            return;
+
+        ValidateContentCatalogKeys("material names", catalog.MaterialNames, signature.MaterialCount, issues);
+        ValidateContentCatalogKeys("terrain kind names", catalog.TerrainKindNames, signature.TerrainKindCount, issues);
+        ValidateContentCatalogKeys("construction ids", catalog.ConstructionIds, signature.ConstructionCount, issues);
+        ValidateContentCatalogKeys("recipe ids", catalog.RecipeIds, signature.RecipeCount, issues);
+        ValidateContentCatalogKeys("geology ids", catalog.GeologyIds, signature.GeologyCount, issues);
+        ValidateContentCatalogKeys("zone ids", catalog.ZoneIds, signature.ZoneCount, issues);
+    }
+
+    private static void ValidateContentCatalogKeys(
+        string label,
+        string[]? keys,
+        int expectedCount,
+        ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
+    {
+        if (keys == null)
+        {
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                "manifest.content_catalog",
+                null,
+                $"Content catalog {label} are missing."));
+            return;
+        }
+
+        if (keys.Length != expectedCount)
+        {
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                "manifest.content_catalog",
+                null,
+                $"Content catalog {label} count {keys.Length} does not match manifest signature count {expectedCount}."));
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < keys.Length; i++)
+        {
+            var key = keys[i];
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.content_catalog",
+                    i,
+                    $"Content catalog {label} contains a blank key."));
+                continue;
+            }
+
+            if (!seen.Add(key))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.content_catalog",
+                    i,
+                    $"Content catalog {label} duplicate key '{key}'."));
+            }
+        }
+    }
+
+    private static void ValidateManifestSections(
+        RuntimeSaveSnapshotDocumentData document,
+        ICollection<RuntimeSaveSnapshotDocumentIssueData> issues)
+    {
+        if (document.Manifest.Sections == null)
+        {
+            issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                "manifest.sections",
+                null,
+                "Manifest sections are missing."));
+            return;
+        }
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        for (var i = 0; i < document.Manifest.Sections.Count; i++)
+        {
+            var section = document.Manifest.Sections[i];
+            if (string.IsNullOrWhiteSpace(section.Name))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    i,
+                    "Manifest section name is blank."));
+                continue;
+            }
+
+            if (!RuntimeSaveManifestSections.TryGetRequirement(section.Name, out var expectedRequiredForFortressMode))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    i,
+                    $"Manifest section '{section.Name}' is not recognized by this runtime."));
+            }
+            else if (section.RequiredForFortressMode != expectedRequiredForFortressMode)
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    i,
+                    $"Manifest section '{section.Name}' has an unexpected fortress-mode requirement flag."));
+            }
+
+            if (section.RecordCount.HasValue && section.RecordCount.Value < 0)
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    i,
+                    $"Manifest section '{section.Name}' has a negative record count."));
+            }
+
+            if (section.Present)
+            {
+                if (string.IsNullOrWhiteSpace(section.Hash))
+                {
+                    issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                        "manifest.sections",
+                        i,
+                        $"Manifest section '{section.Name}' is present but has a blank hash."));
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrWhiteSpace(section.Hash))
+                {
+                    issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                        "manifest.sections",
+                        i,
+                        $"Manifest section '{section.Name}' is absent but still has a hash."));
+                }
+
+                if (section.RecordCount.HasValue)
+                {
+                    issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                        "manifest.sections",
+                        i,
+                        $"Manifest section '{section.Name}' is absent but still has a record count."));
+                }
+            }
+
+            if (!seen.Add(section.Name))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    i,
+                    $"Manifest section duplicates '{section.Name}'."));
+            }
+        }
+
+        foreach (var sectionName in RuntimeSaveManifestSections.OrderedNames)
+        {
+            if (!seen.Contains(sectionName))
+            {
+                issues.Add(new RuntimeSaveSnapshotDocumentIssueData(
+                    "manifest.sections",
+                    null,
+                    $"Manifest section '{sectionName}' is missing."));
+            }
+        }
     }
 
     private static IReadOnlyList<CommandReplayRecord>? MapRecords(

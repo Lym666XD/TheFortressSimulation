@@ -1,4 +1,5 @@
 using HumanFortress.Content.Definitions;
+using HumanFortress.Contracts.Jobs;
 using HumanFortress.Jobs.Profession;
 using HumanFortress.Simulation.World;
 
@@ -13,12 +14,16 @@ internal sealed class FortressRuntimeWorkforce
 
     internal ProfessionAssignments ProfessionAssignments { get; }
 
-    internal static FortressRuntimeWorkforce Load(World world, string baseDir, Action<string>? log = null)
+    internal static FortressRuntimeWorkforce FromContent(
+        World world,
+        IProfessionRegistry? professions,
+        string baseDir,
+        Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
-        var professionRegistry = ProfessionRegistryLoader.Load(baseDir, log);
+        var professionRegistry = professions ?? ProfessionRegistryLoader.Load(baseDir, log);
         return new FortressRuntimeWorkforce(new ProfessionAssignments(professionRegistry, world.Creatures));
     }
 }

@@ -1,5 +1,6 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.Session;
+using HumanFortress.Contracts.Runtime;
 using SadConsole;
 
 namespace HumanFortress.App.States;
@@ -59,10 +60,15 @@ internal sealed class FortressStateInitializer
             int fortressSize = _fortressSizeProvider();
             Logger.Log($"[FortressState] FortressSize = {fortressSize}");
 
-            _viewport.Initialize(fortressSize);
+            var worldAvailability = _sessionLoadCoordinator.Load(_viewport.CurrentZ);
+            var surface = new RuntimeRect(
+                bootstrappedView.MapSurface.Position.X,
+                bootstrappedView.MapSurface.Position.Y,
+                bootstrappedView.MapSurface.Surface.Width,
+                bootstrappedView.MapSurface.Surface.Height);
+            _viewport.Initialize(worldAvailability.WorldBounds, surface);
+            bootstrappedView.SelectionTool.SetWorldBounds(worldAvailability.WorldBounds);
             Logger.Log($"[FortressState] Camera position set to {_viewport.CameraPosition}, cursor at {_viewport.CursorPosition}");
-
-            _sessionLoadCoordinator.Load(_viewport.CurrentZ);
             _drawUi();
 
             Logger.Log("[FortressState] Initialize completed successfully");

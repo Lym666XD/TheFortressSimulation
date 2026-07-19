@@ -13,14 +13,12 @@ internal static class FortressSessionRuntimeBootstrapper
         bool autoDig,
         int currentZ,
         InputBindingsService bindings,
-        OrdersRegistryService ordersRegistry,
         string baseDir)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(ui);
         ArgumentNullException.ThrowIfNull(uiTickProvider);
         ArgumentNullException.ThrowIfNull(bindings);
-        ArgumentNullException.ThrowIfNull(ordersRegistry);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
 
         BindWorkshopCompletionNotifications(runtime, ui, uiTickProvider);
@@ -33,10 +31,7 @@ internal static class FortressSessionRuntimeBootstrapper
             runtime.EnqueueStartupAutoDig(currentZ);
         }
 
-        var uiServices = FortressUiServicesFactory.Create(
-            bindings,
-            ordersRegistry,
-            baseDir);
+        var uiServices = FortressUiServicesFactory.Create(bindings, baseDir);
 
         return new FortressSessionRuntimeBindings(
             navigationOverlay,

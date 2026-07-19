@@ -1,3 +1,5 @@
+using HumanFortress.App.Rendering;
+using HumanFortress.Contracts.Runtime;
 using SadConsole;
 using SadRogue.Primitives;
 
@@ -45,7 +47,7 @@ internal sealed partial class ZonesUI
     /// <summary>
     /// Render placement preview on map (only when zone menu is open).
     /// </summary>
-    public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, Rectangle viewport, bool show)
+    public void RenderPlacementPreview(MapScreenSurface mapSurface, Point first, Point second, RuntimeViewportGeometry viewport, bool show)
     {
         if (!show) return;
 
@@ -55,13 +57,13 @@ internal sealed partial class ZonesUI
         {
             for (int wy = rect.Y; wy < rect.Y + rect.Height; wy++)
             {
-                if (wx >= viewport.X && wx < viewport.X + viewport.Width &&
-                    wy >= viewport.Y && wy < viewport.Y + viewport.Height)
-                {
-                    int sx = wx - viewport.X;
-                    int sy = wy - viewport.Y;
-                    mapSurface.Surface.SetGlyph(sx, sy, '.', gold, Color.Transparent);
-                }
+                FortressViewportDrawing.SetWorldCellGlyph(
+                    mapSurface.Surface,
+                    viewport,
+                    wx,
+                    wy,
+                    '.',
+                    gold);
             }
         }
     }

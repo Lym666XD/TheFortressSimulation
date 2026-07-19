@@ -48,6 +48,7 @@ internal sealed class CraftAssignmentHandler
         out ActiveCraftJob? activeJob)
     {
         activeJob = null;
+        bool increasePathSearchAttempt = false;
 
         if (!_workshops.TryFind(job.WorkshopGuid, out _, out var state))
         {
@@ -84,22 +85,37 @@ internal sealed class CraftAssignmentHandler
                 continue;
             }
 
-            if (!_world.Reservations.TryReserveCreature(worker.Guid, _systemId, tick, tick + (ulong)_creatureReserveTtlTicks, jobId: $"craft:{job.RecipeId}"))
+            string jobId = $"craft:{job.QueueEntryId}";
+            if (!_world.Reservations.TryAcquireCreature(
+                    worker.Guid,
+                    _systemId,
+                    jobId,
+                    tick,
+                    tick + (ulong)_creatureReserveTtlTicks,
+                    out var creatureReservation))
             {
                 continue;
             }
 
             var start = new Point3(worker.Position.X, worker.Position.Y, worker.Z);
             var dest = new Point3(job.Anchor.X, job.Anchor.Y, job.Z);
-            var request = new PathRequest(start, dest, MoveMode.Walk, PathFlags.None, CraftPathSeed.From(worker.Guid, job.WorkshopGuid));
+            var request = new PathRequest(
+                start,
+                dest,
+                MoveMode.Walk,
+                PathFlags.None,
+                CraftPathSeed.From(worker.Guid, job.WorkshopGuid),
+                job.PathSearchAttempt);
             var path = _paths.Solve(in request, in _navView);
             if (path.Kind != PathResultKind.Found)
             {
-                _world.Reservations.ReleaseCreature(worker.Guid);
+                if (path.Kind == PathResultKind.Partial)
+                    increasePathSearchAttempt = true;
+                _world.Reservations.TryReleaseCreature(creatureReservation);
                 continue;
             }
 
-            _move.BeginMovement(DiffTargetEncoding.EntityId(worker.Guid), request, path);
+            _move.BeginMovement(DiffTargetEncoding.EntityKey(worker.Guid), request, path);
 
             activeJob = new ActiveCraftJob
             {
@@ -110,7 +126,9 @@ internal sealed class CraftAssignmentHandler
                 Stage = CraftJobStage.ToWorkshop,
                 WorkTicksRemaining = job.DurationTicks,
                 Anchor = job.Anchor,
-                Z = job.Z
+                Z = job.Z,
+                PathSearchAttempt = request.EffectiveSearchAttempt,
+                CreatureReservation = creatureReservation
             };
 
             busy.Add(worker.Guid);
@@ -120,6 +138,8 @@ internal sealed class CraftAssignmentHandler
             return CraftAssignmentResult.Assigned;
         }
 
-        return CraftAssignmentResult.Backlog;
+        return increasePathSearchAttempt
+            ? CraftAssignmentResult.RetryablePath
+            : CraftAssignmentResult.Backlog;
     }
 }

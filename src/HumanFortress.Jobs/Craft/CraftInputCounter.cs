@@ -12,7 +12,7 @@ internal sealed class CraftInputCounter
         _world = world ?? throw new ArgumentNullException(nameof(world));
     }
 
-    internal Dictionary<string, int> CountAvailableInputs(PlaceableInstance workshop)
+    internal Dictionary<string, int> CountAvailableInputs(PlaceableInstance workshop, ulong currentTick)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var inputCells = CraftWorkshopLocator.EnumerateFootprintAndRing(workshop).ToHashSet();
@@ -25,6 +25,11 @@ internal sealed class CraftInputCounter
             }
 
             if (!inputCells.Contains((item.Position.X, item.Position.Y)))
+            {
+                continue;
+            }
+
+            if (_world.Reservations.IsItemReserved(item.Guid, currentTick))
             {
                 continue;
             }

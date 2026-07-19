@@ -1,5 +1,5 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Concurrent;
+using HumanFortress.Contracts.Diagnostics;
 
 namespace HumanFortress.Navigation.Implementation;
 
@@ -9,20 +9,21 @@ namespace HumanFortress.Navigation.Implementation;
 /// </summary>
 internal sealed class NavigationManager
 {
-    private readonly ConcurrentDictionary<ChunkKey, ChunkNavData> _navData;
+    private readonly Dictionary<ChunkKey, ChunkNavData> _navData;
     private readonly INavigationWorldSource _source;
     private readonly NavigationTuning _tuning;
+    private readonly IDiagnosticSink _diagnostics;
+    private readonly object _sync = new();
 
-    /// <summary>
-    /// Optional logging callback (set by App layer to write to fortress_debug.log)
-    /// </summary>
-    internal static Action<string>? LogCallback { get; set; }
-
-    internal NavigationManager(INavigationWorldSource source, NavigationTuning? tuning = null)
+    internal NavigationManager(
+        INavigationWorldSource source,
+        NavigationTuning? tuning = null,
+        IDiagnosticSink? diagnostics = null)
     {
         _source = source ?? throw new ArgumentNullException(nameof(source));
-        _navData = new ConcurrentDictionary<ChunkKey, ChunkNavData>();
+        _navData = new Dictionary<ChunkKey, ChunkNavData>();
         _tuning = tuning ?? NavigationTuning.Default;
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
     }
 
     internal INavigationWorldSource Source => _source;
@@ -32,7 +33,16 @@ internal sealed class NavigationManager
     /// </summary>
     internal ChunkNavData GetOrCreateNavData(ChunkKey key)
     {
-        return _navData.GetOrAdd(key, k => new ChunkNavData(k));
+        lock (_sync)
+        {
+            if (!_navData.TryGetValue(key, out var navData))
+            {
+                navData = new ChunkNavData(key);
+                _navData.Add(key, navData);
+            }
+
+            return navData;
+        }
     }
 
     /// <summary>
@@ -40,7 +50,10 @@ internal sealed class NavigationManager
     /// </summary>
     internal ChunkNavData? GetNavData(ChunkKey key)
     {
-        return _navData.GetValueOrDefault(key);
+        lock (_sync)
+        {
+            return _navData.GetValueOrDefault(key);
+        }
     }
 
     /// <summary>
@@ -76,7 +89,7 @@ internal sealed class NavigationManager
         navData.RebuildFromTiles(tiles, _tuning);
         navData.SourceConnectivityVersion = chunk.ConnectivityVersion;
         var newVersion = navData.ConnectivityVersion;
-        LogCallback?.Invoke($"[NAV] RebuildChunkNavData chunk=({chunk.Key.ChunkX},{chunk.Key.ChunkY},{chunk.Key.Z}) version:{oldVersion}→{newVersion}");
+        Emit($"[NAV] RebuildChunkNavData chunk=({chunk.Key.ChunkX},{chunk.Key.ChunkY},{chunk.Key.Z}) version:{oldVersion}→{newVersion}");
 
         // Precompute ramp connectivity flags for O(1) neighbor expansion
         // UpRampMask: for ramp base at (x,y,z), bits 0..7 allow ascend to standable tiles at z+1 around (x,y)
@@ -163,6 +176,18 @@ internal sealed class NavigationManager
         foreach (var chunk in _source.GetAllChunks())
         {
             RebuildChunkNavData(chunk);
+        }
+    }
+
+    private void Emit(string message)
+    {
+        try
+        {
+            _diagnostics.Information("Navigation.Manager", message);
+        }
+        catch
+        {
+            // Diagnostics must not affect navigation rebuild outcomes.
         }
     }
 

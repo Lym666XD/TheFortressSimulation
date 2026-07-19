@@ -20,6 +20,8 @@ internal static partial class JobsDebugSnapshotBuilder
                     string.IsNullOrWhiteSpace(req.Reason.ToString()) ? "Request" : req.Reason.ToString(),
                     new JobPoint3(req.To.X, req.To.Y, req.ToZ)))
                 .ToList(),
-            new Dictionary<int, int>(debug.ShardCounts));
+            debug.ShardCounts
+                .Select(shard => new TransportShardCountView(shard.ShardId, shard.Count))
+                .ToList());
     }
 }

@@ -18,32 +18,13 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal void EnqueueMiningAdvanced(Rectangle worldRect, int zMin, int zMax, MiningAction action, int priority, ulong createdTick)
     {
-        // === Z-AXIS INVERSION FOR STAIRWELLS ===
-        // Game internal: Z increases upward (z=25 is ground, z=32 is higher)
-        // Player perception: Higher Z values = deeper underground
-        //
-        // When player scrolls "up" from z=25 to z=32, they expect to dig DOWN into the earth.
-        // But internally, we're moving UP in Z. So we need to invert the range for stairwells.
-        //
-        // Example: Player at z=25 (surface) scrolls to z=32 (wants to dig 7 layers deep)
-        //   UI input: zMin=25, zMax=32 (scroll direction: up)
-        //   Converted: zMin=18, zMax=25 (actual digging: down into lower Z values)
-        //
-        // TODO: Long-term fix should align game Z-axis with player perception
+        var mappedRange = MiningZRangeMapper.ToSimulationRange(zMin, zMax, action);
+        var actualZMin = mappedRange.ZMin;
+        var actualZMax = mappedRange.ZMax;
 
-        var actualZMin = zMin;
-        var actualZMax = zMax;
-
-        if (action == MiningAction.DigStairwell && zMax > zMin)
+        if (mappedRange.WasInverted)
         {
-            var startZ = zMin;  // Player's starting position (e.g., z=25 surface)
-            var layerCount = zMax - zMin;  // How many layers player selected (e.g., 7 layers)
-
-            // Invert: dig DOWN from starting point (decrease Z values)
-            actualZMin = Math.Max(0, startZ - layerCount);  // e.g., 25-7=18 (deepest point)
-            actualZMax = startZ;  // e.g., 25 (surface, starting point)
-
-            var msgConvert = $"[ORDERS] Stairwell Z-inversion: UI z={zMin}..{zMax} ({layerCount} layers) → actual dig z={actualZMin}..{actualZMax} (down from surface)";
+            var msgConvert = $"[ORDERS] Stairwell Z-inversion: UI z={zMin}..{zMax} ({mappedRange.LayerCount} layers) -> actual dig z={actualZMin}..{actualZMax} (down from surface)";
             Log(msgConvert);
         }
 
@@ -53,16 +34,22 @@ internal sealed partial class OrdersManager
         // Unified path: either add designation or emit cancellation region
         if (action == MiningAction.RemoveDigging)
         {
-            _miningCancel.Enqueue(new MiningCancelRegion(worldRect, actualZMin, actualZMax, MiningCancelKind.AllMining));
+            lock (_sync)
+            {
+                _miningCancel.Enqueue(new MiningCancelRegion(worldRect, actualZMin, actualZMax, MiningCancelKind.AllMining));
+            }
         }
         else
         {
-            var id = System.Threading.Interlocked.Increment(ref _nextMiningId);
-            var d = new MiningDesignation(id, worldRect, actualZMin, actualZMax, action, priority, createdTick);
-            _miningAdd.Enqueue(d);
-            _recentMining.Enqueue(d);
-            _activeMining.Add(d);
-            while (_recentMining.Count > RecentCapacity && _recentMining.TryDequeue(out _)) { }
+            lock (_sync)
+            {
+                var id = ++_nextMiningId;
+                var d = new MiningDesignation(id, worldRect, actualZMin, actualZMax, action, priority, createdTick);
+                _miningAdd.Enqueue(d);
+                _recentMining.Enqueue(d);
+                _activeMining.Add(d);
+                TrimRecentQueue(_recentMining);
+            }
         }
     }
 
@@ -71,14 +58,7 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal int DrainMiningAdds(ICollection<MiningDesignation> into, int maxCount)
     {
-        var drained = 0;
-        while (drained < maxCount && _miningAdd.TryDequeue(out var d))
-        {
-            into.Add(d);
-            drained++;
-        }
-
-        return drained;
+        return DrainQueue(_miningAdd, into, maxCount);
     }
 
     /// <summary>
@@ -86,20 +66,25 @@ internal sealed partial class OrdersManager
     /// </summary>
     internal int DrainMiningCancels(ICollection<MiningCancelRegion> into, int maxCount)
     {
-        var drained = 0;
-        while (drained < maxCount && _miningCancel.TryDequeue(out var d))
-        {
-            into.Add(d);
-            drained++;
-        }
-
-        return drained;
+        return DrainQueue(_miningCancel, into, maxCount);
     }
 
     // V2 snapshots for UI/debug
-    internal List<MiningDesignation> GetRecentMining() => _recentMining.ToList();
+    internal List<MiningDesignation> GetRecentMining()
+    {
+        lock (_sync)
+        {
+            return _recentMining.ToList();
+        }
+    }
 
-    internal List<MiningDesignation> GetActiveMiningSnapshot() => _activeMining.ToList();
+    internal List<MiningDesignation> GetActiveMiningSnapshot()
+    {
+        lock (_sync)
+        {
+            return OrderMining(_activeMining).ToList();
+        }
+    }
 
     // Unified mining designation contract
     internal readonly record struct MiningDesignation(int Id, Rectangle Rect, int ZMin, int ZMax, MiningAction Action, int Priority, ulong CreatedTick);

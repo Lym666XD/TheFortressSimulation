@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "stage6-flat-scale-journal-v1",
+  "hashAlgorithm": "sha256-v1",
+  "journalHash": "510bc1ffaf817e67074896d7e68df816227313446aec1a397053aa6d097ef1c4",
+  "records": [
+    {
+      "tick": 1,
+      "commandId": "509e162a-8cde-ea64-a0b1-ba1fa8ec6963",
+      "commandType": "debug.spawn.item",
+      "commandIdentitySequence": 1,
+      "payloadBase64": "AQAAABxjb3JlX2l0ZW1faW5nb3RfaXJvbl93cm91Z2h0AwAAAAMAAAABAAAAAQAAAA=="
+    }
+  ]
+}

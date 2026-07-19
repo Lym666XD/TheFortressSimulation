@@ -6,12 +6,17 @@ internal sealed partial class FortressRuntimeAccess
 {
     internal WorkshopSummaryView? GetWorkshopPanelData(Guid workshopId)
     {
-        return _snapshots.GetWorkshopPanelData(workshopId);
+        if (!TryGetCommittedFrame(out var committed))
+            return null;
+
+        var workshop = committed.Frame.UiOverlay.Workshops.Workshops
+            .FirstOrDefault(candidate => candidate.WorkshopGuid == workshopId);
+        return workshop.WorkshopGuid == Guid.Empty ? null : workshop;
     }
 
     internal string? GetDefaultRecipeForWorkshop(string? workshopId)
     {
-        return _snapshots.GetDefaultRecipeForWorkshop(workshopId);
+        return _catalog.GetDefaultRecipeForWorkshop(workshopId);
     }
 
     WorkshopSummaryView? IFortressRuntimeWorkshopPanelQueryAccess.GetWorkshopPanelData(Guid workshopId) =>

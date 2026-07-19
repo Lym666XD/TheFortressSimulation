@@ -1,3 +1,6 @@
+using HumanFortress.Contracts.Time;
+using HumanFortress.Core.Time;
+
 namespace HumanFortress.Runtime.Host;
 
 internal sealed partial class SimulationRuntimeHostCore
@@ -5,23 +8,31 @@ internal sealed partial class SimulationRuntimeHostCore
     internal TSystems Start<TSystems>(
         Func<TSystems> createSystems,
         Action<TSystems>? afterSystemsRegistered = null,
-        Action<TSystems>? afterPipelineAttached = null)
+        Action<TSystems>? afterPipelineAttached = null,
+        Action<TSystems, ulong>? afterPostTickCommit = null)
         where TSystems : class, IRuntimeTickSystems
     {
-        var systems = Configure(createSystems, afterSystemsRegistered, afterPipelineAttached);
+        var systems = Configure(
+            createSystems,
+            afterSystemsRegistered,
+            afterPipelineAttached,
+            afterPostTickCommit);
         _tickScheduler.Start();
         return systems;
     }
 
-    internal void Stop()
+    internal TickSchedulerStopResult Stop()
     {
-        StopScheduler();
-        DetachPipeline();
+        return Stop(TickScheduler.DefaultStopTimeout);
     }
 
-    private void StopScheduler()
+    internal TickSchedulerStopResult Stop(TimeSpan timeout)
     {
-        _tickScheduler.Stop();
+        var result = _tickScheduler.TryStop(timeout);
+        if (result.HasStopped && !_tickScheduler.HasActiveThread)
+            DetachPipeline();
+
+        return result;
     }
 
     private void DetachPipeline()

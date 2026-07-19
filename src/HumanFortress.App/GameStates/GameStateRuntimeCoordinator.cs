@@ -7,7 +7,7 @@ using HumanFortress.Runtime;
 
 namespace HumanFortress.App.GameStates;
 
-internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost
+internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost, IDisposable
 {
     private readonly IFortressRuntimeAppSessionPorts _runtimeSession;
 
@@ -37,10 +37,11 @@ internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost
     {
         return new FortressInputRuntimePortDependencies(
             BuildCatalog: runtime,
+            ZoneCatalog: runtime,
             WorkshopQueries: runtime,
             WorkshopCommands: runtime,
-            NavigationDebug: runtime,
             SimulationControl: runtime,
+            UiInput: runtime,
             PlacementQueries: runtime,
             PlacementCommands: runtime,
             DebugSpawnQueries: runtime,
@@ -62,6 +63,13 @@ internal sealed class GameStateRuntimeCoordinator : IFortressPlayRuntimeHost
     {
         return _runtimeSession.StopIfRunning();
     }
+
+    internal void Dispose()
+    {
+        _runtimeSession.Dispose();
+    }
+
+    void IDisposable.Dispose() => Dispose();
 
     FortressStateRuntimePorts IFortressPlayRuntimeHost.CreateRuntimePorts() => CreateRuntimePorts();
 

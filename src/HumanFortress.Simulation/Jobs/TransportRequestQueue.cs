@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using HumanFortress.Core.Simulation;
 using SadRogue.Primitives;
 
@@ -69,7 +68,8 @@ namespace HumanFortress.Simulation.Jobs
         int Priority,
         string RequestorId,
         ulong CreatedTick,
-        uint Seed);
+        uint Seed,
+        byte PathSearchAttempt = 0);
 
     /// <summary>
     /// Intake interface for producers (construction/workshop/install/stockpile planners).
@@ -93,6 +93,13 @@ namespace HumanFortress.Simulation.Jobs
         IReadOnlyList<TransportRequest> Peek(int max);
         /// <summary>Get all pending requests in stable order without dequeuing.</summary>
         TransportRequestQueueStateSnapshot GetStateSnapshot();
+        /// <summary>
+        /// Remove exactly the request observed by a prior planning snapshot.
+        /// Returns false when a producer changed or replaced it before commit.
+        /// </summary>
+        bool TryConsume(in TransportRequest expected);
+        /// <summary>Restore pending requests from a validated replay/save snapshot.</summary>
+        void RestoreStateSnapshot(TransportRequestQueueStateSnapshot snapshot);
         /// <summary>Get current shard counts keyed by encoded chunk id.</summary>
         IReadOnlyDictionary<int, int> GetShardCountsSnapshot();
         int Count { get; }
@@ -103,16 +110,21 @@ namespace HumanFortress.Simulation.Jobs
 
     internal sealed class TransportRequestComparer : IComparer<TransportRequest>
     {
-        public int Compare(TransportRequest a, TransportRequest b)
+        internal int Compare(TransportRequest a, TransportRequest b)
         {
-            // Stable order: CreatedTick → Priority (asc) → RequestorId → ItemGuid
-            int c = a.CreatedTick.CompareTo(b.CreatedTick);
+            // Lower numeric priority is authoritative, followed by age and full identity.
+            int c = a.Priority.CompareTo(b.Priority);
             if (c != 0) return c;
-            c = a.Priority.CompareTo(b.Priority);
+            c = a.CreatedTick.CompareTo(b.CreatedTick);
             if (c != 0) return c;
             c = string.CompareOrdinal(a.RequestorId, b.RequestorId);
             if (c != 0) return c;
             return a.ItemGuid.CompareTo(b.ItemGuid);
+        }
+
+        int IComparer<TransportRequest>.Compare(TransportRequest a, TransportRequest b)
+        {
+            return Compare(a, b);
         }
     }
 
@@ -132,12 +144,14 @@ namespace HumanFortress.Simulation.Jobs
         private int _enqueuedTotal;
         private int _droppedTotal;
 
-        public int Count
+        internal int Count
         {
             get { lock (_lock) return _pending.Count; }
         }
 
-        public bool Enqueue(in TransportRequest request)
+        int ITransportRequestQueue.Count => Count;
+
+        internal bool Enqueue(in TransportRequest request)
         {
             lock (_lock)
             {
@@ -163,7 +177,8 @@ namespace HumanFortress.Simulation.Jobs
                             System.Math.Min(r.Priority, request.Priority),
                             r.RequestorId,
                             r.CreatedTick,
-                            r.Seed);
+                            r.Seed,
+                            r.PathSearchAttempt);
                         ReplaceShardRequest(r, merged);
                         _pending[i] = merged;
                         _droppedTotal++;
@@ -182,12 +197,17 @@ namespace HumanFortress.Simulation.Jobs
                     _shards[shardId] = list;
                 }
                 list.Add(request);
-                Interlocked.Increment(ref _enqueuedTotal);
+                _enqueuedTotal++;
                 return true;
             }
         }
 
-        public int Drain(int max, IList<TransportRequest> into)
+        bool ITransportIntake.Enqueue(in TransportRequest request)
+        {
+            return Enqueue(in request);
+        }
+
+        internal int Drain(int max, IList<TransportRequest> into)
         {
             if (max <= 0) return 0;
             lock (_lock)
@@ -216,7 +236,39 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        public IReadOnlyList<TransportRequest> Peek(int max)
+        int ITransportRequestQueue.Drain(int max, IList<TransportRequest> into)
+        {
+            return Drain(max, into);
+        }
+
+        internal bool TryConsume(in TransportRequest expected)
+        {
+            var expectedValue = expected;
+            lock (_lock)
+            {
+                int index = _pending.FindIndex(request => request.Equals(expectedValue));
+                if (index < 0)
+                    return false;
+
+                _pending.RemoveAt(index);
+                int shardId = EncodeChunkIdFromTo(expectedValue.To.X, expectedValue.To.Y, expectedValue.ToZ);
+                if (_shards.TryGetValue(shardId, out var shard))
+                {
+                    int shardIndex = shard.FindIndex(request => request.Equals(expectedValue));
+                    if (shardIndex >= 0)
+                        shard.RemoveAt(shardIndex);
+                    if (shard.Count == 0)
+                        _shards.Remove(shardId);
+                }
+
+                return true;
+            }
+        }
+
+        bool ITransportRequestQueue.TryConsume(in TransportRequest expected) =>
+            TryConsume(in expected);
+
+        internal IReadOnlyList<TransportRequest> Peek(int max)
         {
             if (max <= 0) return Array.Empty<TransportRequest>();
             lock (_lock)
@@ -229,7 +281,12 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        public TransportRequestQueueStateSnapshot GetStateSnapshot()
+        IReadOnlyList<TransportRequest> ITransportRequestQueue.Peek(int max)
+        {
+            return Peek(max);
+        }
+
+        internal TransportRequestQueueStateSnapshot GetStateSnapshot()
         {
             lock (_lock)
             {
@@ -242,12 +299,51 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        public IReadOnlyDictionary<int, int> GetShardCountsSnapshot()
+        TransportRequestQueueStateSnapshot ITransportRequestQueue.GetStateSnapshot()
+        {
+            return GetStateSnapshot();
+        }
+
+        internal void RestoreStateSnapshot(TransportRequestQueueStateSnapshot snapshot)
+        {
+            lock (_lock)
+            {
+                _pending.Clear();
+                _shards.Clear();
+                _enqueuedTotal = 0;
+                _droppedTotal = 0;
+
+                var pending = snapshot.PendingRequests ?? Array.Empty<TransportRequest>();
+                foreach (var request in pending.OrderBy(static request => request.Priority)
+                             .ThenBy(static request => request.CreatedTick)
+                             .ThenBy(static request => request.RequestorId, StringComparer.Ordinal)
+                             .ThenBy(static request => request.ItemGuid))
+                {
+                    _pending.Add(request);
+                    int shardId = EncodeChunkIdFromTo(request.To.X, request.To.Y, request.ToZ);
+                    if (!_shards.TryGetValue(shardId, out var list))
+                    {
+                        list = new List<TransportRequest>();
+                        _shards[shardId] = list;
+                    }
+
+                    list.Add(request);
+                    _enqueuedTotal++;
+                }
+            }
+        }
+
+        void ITransportRequestQueue.RestoreStateSnapshot(TransportRequestQueueStateSnapshot snapshot)
+        {
+            RestoreStateSnapshot(snapshot);
+        }
+
+        internal IReadOnlyDictionary<int, int> GetShardCountsSnapshot()
         {
             lock (_lock)
             {
                 var dict = new Dictionary<int, int>(_shards.Count);
-                foreach (var kv in _shards)
+                foreach (var kv in _shards.OrderBy(static kv => kv.Key))
                 {
                     dict[kv.Key] = kv.Value.Count;
                 }
@@ -255,16 +351,24 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
+        IReadOnlyDictionary<int, int> ITransportRequestQueue.GetShardCountsSnapshot()
+        {
+            return GetShardCountsSnapshot();
+        }
+
         // === Chunk-sharding helpers (v2; not used by executor yet) ===
-        public int[] GetActiveShardIds()
+        internal int[] GetActiveShardIds()
         {
             lock (_lock)
             {
-                return _shards.Keys.ToArray();
+                return _shards
+                    .OrderBy(static kv => kv.Key)
+                    .Select(static kv => kv.Key)
+                    .ToArray();
             }
         }
 
-        public int GetShardCount(int shardId)
+        internal int GetShardCount(int shardId)
         {
             lock (_lock)
             {
@@ -272,7 +376,7 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        public int DrainByShard(int shardId, int max, IList<TransportRequest> into)
+        internal int DrainByShard(int shardId, int max, IList<TransportRequest> into)
         {
             lock (_lock)
             {

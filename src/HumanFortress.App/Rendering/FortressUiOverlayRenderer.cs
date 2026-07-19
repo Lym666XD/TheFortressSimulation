@@ -1,4 +1,6 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
 
@@ -6,35 +8,30 @@ namespace HumanFortress.App.Rendering;
 
 internal static class FortressUiOverlayRenderer
 {
-    public static void Render(FortressUiOverlayRenderContext context)
+    public static void Render(
+        FortressUiOverlayRenderContext context,
+        SimulationUiOverlayFrameData overlayData,
+        SimulationPlacementPreviewFrameData placementPreviews,
+        SimulationStatus simulationStatus)
     {
         ArgumentNullException.ThrowIfNull(context);
 
         var uiSurface = context.UiSurface;
         var ui = context.Ui;
-        var viewport = CreateViewport(context);
-        var runtime = context.Runtime.Read;
-        var overlayData = runtime.GetUiOverlayFrameData(
-            context.CurrentZ,
-            viewport,
-            showZoneOverlay: ui.QuickMenu == QuickMenuKind.Zones,
-            includeManagementDrawer: NeedsManagementDrawerData(ui.OpenDrawer),
-            includeWorkDrawer: ui.OpenDrawer == DrawerId.Work,
-            includeDebugMenu: ui.DebugOpen,
-            stockpileDetailZoneId: context.UiServices?.StockpileUI?.EditingZoneId,
-            zoneDetailId: context.UiServices?.ZonesUI?.DetailPopupZoneId);
-        context.UiServices?.StockpileUI?.ApplyPresetMenu(overlayData.StockpilePresets);
+        var viewport = context.ViewportGeometry;
+        var presentedOverlayData = context.UiOverlayPresenter.Present(overlayData);
+        context.UiServices?.StockpileUI?.ApplyPresetMenu(presentedOverlayData.StockpilePresets);
 
-        ClearOverlaySurface(uiSurface);
-        UiChromeRenderer.DrawTopBar(uiSurface, runtime.SimulationStatus);
+        Clear(uiSurface);
+        UiChromeRenderer.DrawTopBar(uiSurface, simulationStatus);
         UiChromeRenderer.DrawDock(uiSurface, ui);
         UiChromeRenderer.DrawQuickIcons(uiSurface, ui);
         UiManagementDrawerRenderer.DrawDrawer(
             uiSurface,
             ui,
             context.UiTick,
-            overlayData.ManagementDrawer,
-            overlayData.WorkDrawer);
+            presentedOverlayData.ManagementDrawer,
+            presentedOverlayData.WorkDrawer);
         UiQuickMenuRenderer.Draw(
             uiSurface,
             ui,
@@ -42,23 +39,19 @@ internal static class FortressUiOverlayRenderer
             context.UiServices?.ZonesUI,
             context.UiServices?.BuildUI,
             context.UiServices?.StockpileQuickUI,
-            buildCatalog: overlayData.BuildCatalog);
+            buildCatalog: presentedOverlayData.BuildCatalog,
+            zoneCatalog: presentedOverlayData.ZoneCatalog);
 
-        FortressMapOverlayRenderer.Render(context, overlayData, viewport);
-        FortressToolOverlayRenderer.Render(context, overlayData);
-        FortressUiModalRenderer.Render(context, overlayData);
+        FortressMapOverlayRenderer.Render(
+            context,
+            presentedOverlayData,
+            placementPreviews,
+            viewport);
+        FortressToolOverlayRenderer.Render(context, presentedOverlayData, placementPreviews);
+        FortressUiModalRenderer.Render(context, presentedOverlayData);
     }
 
-    private static Rectangle CreateViewport(FortressUiOverlayRenderContext context)
-    {
-        return new Rectangle(
-            context.CameraPosition.X,
-            context.CameraPosition.Y,
-            context.MapSurface.Surface.Width,
-            context.MapSurface.Surface.Height);
-    }
-
-    private static void ClearOverlaySurface(UiOverlaySurface uiSurface)
+    internal static void Clear(UiOverlaySurface uiSurface)
     {
         var surface = uiSurface.Surface;
         for (int y = 0; y < surface.Height; y++)
@@ -70,8 +63,4 @@ internal static class FortressUiOverlayRenderer
         }
     }
 
-    private static bool NeedsManagementDrawerData(DrawerId drawer)
-    {
-        return drawer is DrawerId.Creature or DrawerId.Stock or DrawerId.PlacementManagement;
-    }
 }

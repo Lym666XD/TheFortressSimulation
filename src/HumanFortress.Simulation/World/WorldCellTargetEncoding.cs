@@ -5,22 +5,30 @@ namespace HumanFortress.Simulation.World;
 
 internal readonly struct WorldCellTarget
 {
-    public WorldCellTarget(ChunkKey chunkKey, int localIndex)
+    internal WorldCellTarget(ChunkKey chunkKey, int localIndex)
     {
         ChunkKey = chunkKey;
         LocalIndex = localIndex;
     }
 
-    public ChunkKey ChunkKey { get; }
+    internal ChunkKey ChunkKey { get; }
 
-    public int LocalIndex { get; }
+    internal int LocalIndex { get; }
 
-    public DiffTarget ToDiffTarget(int entityId = -1)
+    internal DiffTarget ToDiffTarget(int entityId = -1)
     {
-        return new DiffTarget(
+        return DiffTargetEncoding.ForEncodedTarget(
             DiffTargetEncoding.EncodeChunkId(ChunkKey.ChunkX, ChunkKey.ChunkY, ChunkKey.Z),
             LocalIndex,
             entityId);
+    }
+
+    internal DiffTarget ToDiffTarget(Guid entityGuid)
+    {
+        return DiffTargetEncoding.ForEncodedTarget(
+            DiffTargetEncoding.EncodeChunkId(ChunkKey.ChunkX, ChunkKey.ChunkY, ChunkKey.Z),
+            LocalIndex,
+            entityGuid);
     }
 }
 

@@ -35,7 +35,7 @@ internal sealed class SimulationRuntimeSessionFactory<THost>
         if (maxZ <= 0)
             throw new ArgumentOutOfRangeException(nameof(maxZ), "Session max Z must be positive.");
 
-        var world = new World(sizeInChunks, maxZ);
+        var world = new World(sizeInChunks, maxZ, _services.Diagnostics);
         return CreateFromWorld(world, rebuildNavigation: false);
     }
 
@@ -43,6 +43,7 @@ internal sealed class SimulationRuntimeSessionFactory<THost>
     {
         ArgumentNullException.ThrowIfNull(world);
 
+        world.SetDiagnostics(_services.Diagnostics);
         _services.ResetForNewSession();
         _loadContent(world);
         var navigation = SimulationNavigationFactory.Create(
