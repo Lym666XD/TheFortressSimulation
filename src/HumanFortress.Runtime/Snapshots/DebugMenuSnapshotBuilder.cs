@@ -10,7 +10,8 @@ internal static partial class DebugMenuSnapshotBuilder
         {
             return new SimulationDebugMenuData(
                 new DebugWorldStatusView(false, 0, 0, 0, 0, 0),
-                Array.Empty<DebugItemCategoryView>());
+                Array.Empty<DebugItemCategoryView>(),
+                Array.Empty<DebugCreatureView>());
         }
 
         var itemDefinitions = world.Items.GetAllDefinitions().ToList();
@@ -24,7 +25,14 @@ internal static partial class DebugMenuSnapshotBuilder
 
         return new SimulationDebugMenuData(
             status,
-            CreateItemCategories(itemDefinitions));
+            CreateItemCategories(itemDefinitions),
+            world.Creatures.GetAllDefinitions()
+                .Where(static definition => !string.IsNullOrWhiteSpace(definition.Id))
+                .OrderBy(static definition => definition.Id, StringComparer.Ordinal)
+                .Select(static definition => new DebugCreatureView(
+                    definition.Id,
+                    string.IsNullOrWhiteSpace(definition.Name) ? definition.Id : definition.Name))
+                .ToArray());
     }
 
     internal static SimulationDebugSpawnData BuildSpawnData(World? world)

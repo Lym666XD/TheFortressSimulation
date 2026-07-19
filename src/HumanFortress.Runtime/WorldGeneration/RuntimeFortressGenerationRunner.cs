@@ -67,7 +67,8 @@ internal static class RuntimeFortressGenerationRunner
 
     private static uint CreateFortressSeed(RuntimeFortressGenerationRequest request)
     {
-        return (uint)(request.EmbarkX * 1000 + request.EmbarkY);
+        return request.GenerationSeed
+            ?? unchecked((uint)(request.EmbarkX * 1000 + request.EmbarkY));
     }
 
     private static FortressGenerationContent CreateFortressGenerationContent(FortressRuntimeContentSnapshot content)

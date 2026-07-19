@@ -13,7 +13,8 @@ internal sealed partial class FortressStateInputController
             _ui,
             _view.SelectionTool,
             _viewport.ZoomLevel,
-            _viewport.CurrentZ);
+            _viewport.CurrentZ,
+            _viewport.WorldBounds);
 
         if (!wheel.Changed)
             return false;

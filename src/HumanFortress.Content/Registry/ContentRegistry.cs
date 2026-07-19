@@ -24,9 +24,6 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    private static ContentRegistry? _instance;
-    internal static ContentRegistry Instance => _instance ??= new ContentRegistry();
-
     private readonly MaterialRegistry _materials = new();
     private readonly TerrainKindRegistry _terrainKinds = new();
     private readonly GeologyRegistry _geology = new();
@@ -39,6 +36,7 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
 
     private readonly Dictionary<string, RuntimeGeologyData> _geologyEntries = new();
     private readonly Dictionary<string, RuntimeZoneDefinitionData> _zones = new();
+    private readonly Dictionary<string, string[]> _workshopCategoryTags = new(StringComparer.Ordinal);
     private readonly Dictionary<string, JObject> _tuning = new();
     private readonly Dictionary<string, ushort> _geologyHandles = new();
     private readonly Dictionary<ushort, string> _handleToGeologyId = new();
@@ -48,6 +46,7 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
 
     internal IReadOnlyDictionary<string, RuntimeGeologyData> GeologyEntries => _geologyEntries;
     internal IReadOnlyDictionary<string, RuntimeZoneDefinitionData> Zones => _zones;
+    internal IReadOnlyDictionary<string, string[]> WorkshopCategoryTags => _workshopCategoryTags;
 
     internal ContentVersion Version { get; private set; }
     internal string ContentPath { get; private set; } = "";
@@ -57,7 +56,7 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
     // Validation statistics
     internal ContentValidationResult ValidationResult { get; private set; } = new();
 
-    private ContentRegistry() { }
+    internal ContentRegistry() { }
 
     /// <summary>
     /// Load all content from the specified path
@@ -115,6 +114,7 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
             _ = await LoadGeologyAsync(geologyFile, schemas);
 
             LoadZones(Path.Combine(registriesPath, "zones.json"));
+            LoadWorkshopCategories(Path.Combine(registriesPath, "ui.workshop_categories.json"));
 
             // Load and validate biome templates
             var biomesPath = Path.Combine(contentPath, "templates", "biomes");
@@ -277,6 +277,7 @@ internal sealed partial class ContentRegistry : IRuntimeGeologyCatalog
     {
         _geologyEntries.Clear();
         _zones.Clear();
+        _workshopCategoryTags.Clear();
         _tuning.Clear();
         _geologyHandles.Clear();
         _handleToGeologyId.Clear();

@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.geology-catalog.schema.json",
+  "title": "Active geology source family",
+  "type": "array",
+  "items": { "$ref": "geology.schema.json" }
+}

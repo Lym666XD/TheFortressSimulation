@@ -28,13 +28,18 @@ internal sealed class ConstructionMaterialTracker
         _logger = logger ?? NullConstructionJobLogger.Instance;
     }
 
-    internal Dictionary<string, int> CountDelivered(PlaceableInstance site)
+    internal Dictionary<string, int> CountDelivered(PlaceableInstance site, ulong currentTick)
     {
         var delivered = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         foreach (var cell in _cells.EnumerateFootprintAndRing(site))
         {
             foreach (var item in _world.Items.GetGroundItemsAt(cell, site.Z))
             {
+                if (_world.Reservations.IsItemReserved(item.Guid, currentTick))
+                {
+                    continue;
+                }
+
                 var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {
@@ -55,7 +60,10 @@ internal sealed class ConstructionMaterialTracker
         return delivered;
     }
 
-    internal bool TryConsume(PlaceableInstance site, Dictionary<string, int> toConsume)
+    internal bool TryConsume(
+        PlaceableInstance site,
+        Dictionary<string, int> toConsume,
+        ulong currentTick)
     {
         var removals = new List<PlannedItemRemoval>();
         var plannedByItem = new Dictionary<Guid, int>();
@@ -69,6 +77,11 @@ internal sealed class ConstructionMaterialTracker
 
             foreach (var item in itemsAtCell)
             {
+                if (_world.Reservations.IsItemReserved(item.Guid, currentTick))
+                {
+                    continue;
+                }
+
                 var def = _itemDefinitions.GetDefinition(item.DefinitionId);
                 if (def == null || def.Tags == null)
                 {

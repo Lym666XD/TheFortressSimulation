@@ -1,5 +1,6 @@
 using System;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -11,7 +12,7 @@ internal static partial class FortressMapOverlayGlyphRenderer
     public static void DrawOrderHighlights(
         ScreenSurface mapSurface,
         UiStore ui,
-        Point camera,
+        RuntimeViewportGeometry viewport,
         int currentZ,
         ulong tick,
         Func<Point, Point, SimulationPlacementPreviewMode, SimulationPlacementPreviewData> placementPreviewProvider)
@@ -24,10 +25,15 @@ internal static partial class FortressMapOverlayGlyphRenderer
         {
             if (currentZ < h.ZMin || currentZ > h.ZMax) continue;
             bool isMining = h.Kind.StartsWith("mining", StringComparison.OrdinalIgnoreCase);
-            int x0 = h.Rect.X - camera.X;
-            int y0 = h.Rect.Y - camera.Y;
-            int x1 = x0 + h.Rect.Width - 1;
-            int y1 = y0 + h.Rect.Height - 1;
+            if (!RuntimeViewportGeometryMath.TryGetWorldCellLocalRect(
+                    viewport,
+                    new RuntimePoint(h.Rect.X, h.Rect.Y),
+                    out var firstCell))
+                continue;
+            int x0 = firstCell.X;
+            int y0 = firstCell.Y;
+            int x1 = x0 + (h.Rect.Width * viewport.ZoomLevel) - 1;
+            int y1 = y0 + (h.Rect.Height * viewport.ZoomLevel) - 1;
             if (!isMining)
             {
                 DrawOrderHighlightBorder(surf, x0, y0, x1, y1, flash);
@@ -35,12 +41,12 @@ internal static partial class FortressMapOverlayGlyphRenderer
 
             if (isMining)
             {
-                DrawMiningHighlight(surf, camera, currentZ, h, x0, y0, placementPreviewProvider);
+                DrawMiningHighlight(surf, viewport, currentZ, h, x0, y0, placementPreviewProvider);
             }
 
             if (h.Kind.StartsWith("construction", StringComparison.OrdinalIgnoreCase))
             {
-                DrawConstructionHighlight(surf, camera, h, placementPreviewProvider);
+                DrawConstructionHighlight(surf, viewport, h, placementPreviewProvider);
             }
         }
     }

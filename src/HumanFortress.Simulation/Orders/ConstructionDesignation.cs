@@ -50,7 +50,7 @@ internal enum ConstructionShape : byte
 }
 
 /// <summary>
-/// Planned build DTO emitted by ConstructionSystem.ReadTick.
+/// Planned build DTO emitted during ConstructionSystem compatibility preparation.
 /// Carries final target kind and optional geology handle selected by material resolver.
 /// </summary>
 internal readonly record struct PlannedBuild(
@@ -60,8 +60,14 @@ internal readonly record struct PlannedBuild(
     ushort GeologyHandle,
     ConstructionShape Shape,
     string[] RequiredTags,
+    MaterialRequirementSpec[] Requirements,
     int Priority,
     ulong Seed);
+
+internal readonly record struct MaterialRequirementSpec(
+    string? Tag,
+    string? DefinitionId,
+    int Count);
 
 /// <summary>
 /// Filter specification for selecting materials/items for construction.
@@ -78,6 +84,8 @@ internal sealed class MaterialFilterSpec
     /// Tag filters (e.g., ["construction","block","stone"]).
     /// </summary>
     internal string[] Tags { get; init; } = Array.Empty<string>();
+
+    internal MaterialRequirementSpec[] Requirements { get; init; } = Array.Empty<MaterialRequirementSpec>();
 
     /// <summary>
     /// Optional UI/cache category key (e.g., "l0.floor", "l0.wall").

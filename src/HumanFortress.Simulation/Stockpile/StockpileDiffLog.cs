@@ -2,7 +2,7 @@ using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Simulation.Stockpile;
 
-internal sealed class StockpileDiffLog
+internal sealed partial class StockpileDiffLog
 {
     private readonly List<StockpileDiff> _ops = new();
     private readonly object _lock = new();

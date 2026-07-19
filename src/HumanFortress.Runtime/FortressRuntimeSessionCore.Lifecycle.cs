@@ -1,6 +1,6 @@
+using HumanFortress.Contracts.Time;
 using HumanFortress.Runtime.Composition;
 using HumanFortress.Runtime.Host;
-using HumanFortress.Runtime.Session;
 using HumanFortress.Runtime.Startup;
 using HumanFortress.Simulation.World;
 
@@ -8,9 +8,19 @@ namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore
 {
+    void IDisposable.Dispose()
+    {
+        _lifecycle.Dispose();
+    }
+
     void IFortressRuntimeSessionLifecyclePort.InitializeWorld(int sizeInChunks, int maxZ)
     {
         InitializeWorldCore(sizeInChunks, maxZ);
+    }
+
+    TickSchedulerStopResult IFortressRuntimeSessionLifecyclePort.Stop(TimeSpan timeout)
+    {
+        return StopRuntimeCore(timeout);
     }
 
     bool IFortressRuntimeSessionLifecyclePort.StopIfRunning()
@@ -25,37 +35,32 @@ internal sealed partial class FortressRuntimeSessionCore
 
     private void InitializeWorldCore(int sizeInChunks, int maxZ)
     {
-        StopIfRunningCore();
-        _workshopCompletionNotifier.SetHandler(null);
-        _runtimeSession = new FortressRuntimeSession(_runtimeSessionFactory.CreateNew(sizeInChunks, maxZ));
-        InvalidateFrameSnapshots();
+        _lifecycle.InitializeWorld(
+            sizeInChunks,
+            maxZ,
+            ActivateCheckpointGeneration);
     }
 
     private bool StopIfRunningCore()
     {
-        var runtime = RuntimeHost;
-        if (runtime?.IsRunning != true)
-        {
-            _workshopCompletionNotifier.SetHandler(null);
-            return false;
-        }
+        return _lifecycle.StopIfRunning();
+    }
 
-        runtime.Stop();
-        _workshopCompletionNotifier.SetHandler(null);
-        return true;
+    private TickSchedulerStopResult StopRuntimeCore(TimeSpan timeout)
+    {
+        return _lifecycle.Stop(timeout);
     }
 
     private void StartFortressPlayCore(bool enqueueAutoDig)
     {
-        var runtime = RequireRuntimeHost();
-        FortressRuntimeStartup.Start(
-            runtime,
-            enqueueAutoDig,
-            _services.CommandQueue,
-            _services.TickScheduler,
-            (world, queue, tick) => RuntimeAutoDigSeeder.EnqueueIfPossible(world, queue, tick, _log),
-            _log);
-        InvalidateFrameSnapshots();
+        _lifecycle.Start((runtime, services) =>
+            FortressRuntimeStartup.Start(
+                runtime,
+                enqueueAutoDig,
+                services.CommandQueue,
+                services.TickScheduler,
+                (world, queue, tick) => RuntimeAutoDigSeeder.EnqueueIfPossible(world, queue, tick, _log),
+                _log));
     }
 
     private World? World => _runtimeSession?.World;

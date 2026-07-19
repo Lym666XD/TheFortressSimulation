@@ -1,13 +1,17 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
 
 internal static class FortressConstructionMaterialDialogInput
 {
-    private static readonly string[] RampMaterialTags = { "stone_block", "wood_plank" };
-
-    public static bool Handle(Keyboard keyboard, UiStore ui, int currentZ, ulong uiTick)
+    public static bool Handle(
+        Keyboard keyboard,
+        UiStore ui,
+        int currentZ,
+        ulong uiTick,
+        SimulationBuildCatalogData buildCatalog)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
         ArgumentNullException.ThrowIfNull(ui);
@@ -15,59 +19,57 @@ internal static class FortressConstructionMaterialDialogInput
         if (!ui.ConstructionMaterialDialogOpen)
             return false;
 
-        var shape = ui.SelectedConstructionShape;
         if (keyboard.IsKeyPressed(Keys.Escape))
         {
             ui.ConstructionMaterialDialogOpen = false;
             return true;
         }
 
-        if (shape == UiConstructionShape.Wall)
-        {
-            if (keyboard.IsKeyPressed(Keys.Z))
-                return SelectMaterial(ui, currentZ, uiTick, "stone_block", "Wall: Stone Block");
-
-            if (keyboard.IsKeyPressed(Keys.X))
-                return SelectMaterial(ui, currentZ, uiTick, "wood_log", "Wall: Wood Log");
-        }
-        else if (shape == UiConstructionShape.Floor)
-        {
-            if (keyboard.IsKeyPressed(Keys.Z))
-                return SelectMaterial(ui, currentZ, uiTick, "stone_block", "Floor: Stone Block");
-
-            if (keyboard.IsKeyPressed(Keys.X))
-                return SelectMaterial(ui, currentZ, uiTick, "wood_plank", "Floor: Wood Plank");
-        }
-        else if (shape == UiConstructionShape.Ramp)
-        {
-            if (keyboard.IsKeyPressed(Keys.Enter) || keyboard.IsKeyPressed(Keys.Z))
-                return SelectMaterials(ui, currentZ, uiTick, RampMaterialTags, "Ramp: Stone+Plank");
-        }
+        var options = ConstructionMaterialOptionPresentation.GetOptions(
+            buildCatalog,
+            ui.SelectedConstructionShape);
+        int selectedIndex = GetSelectedOptionIndex(keyboard, options.Count);
+        if (selectedIndex >= 0)
+            return ApplySelection(ui, currentZ, uiTick, options[selectedIndex]);
 
         return false;
     }
 
-    private static bool SelectMaterial(UiStore ui, int currentZ, ulong uiTick, string tag, string toast)
+    internal static bool ApplySelection(
+        UiStore ui,
+        int currentZ,
+        ulong uiTick,
+        ConstructionMaterialOptionView option)
     {
-        ui.ConstructionSelectedTags.Clear();
-        ui.ConstructionSelectedTags.Add(tag);
-        Logger.Log($"[BUILD.UI] Selected tags=[{tag}]");
+        ArgumentNullException.ThrowIfNull(ui);
+
+        ui.ConstructionMaterialRequirements.Clear();
+        foreach (var requirement in option.Requirements)
+            ui.ConstructionMaterialRequirements.Add(requirement);
+
+        ui.ConstructionResultMaterialId = option.ResultMaterialId;
+        Logger.Log($"[BUILD.UI] Selected construction option={option.Id}");
         ui.ConstructionMaterialDialogOpen = false;
         ui.StartPlacement(PlacementMode.ConstructionFirstCorner, currentZ);
-        ui.AddToast(toast, uiTick + 100);
+        ui.AddToast(option.Name, uiTick + 100);
         return true;
     }
 
-    private static bool SelectMaterials(UiStore ui, int currentZ, ulong uiTick, IReadOnlyList<string> tags, string toast)
+    private static int GetSelectedOptionIndex(Keyboard keyboard, int optionCount)
     {
-        ui.ConstructionSelectedTags.Clear();
-        foreach (var tag in tags)
-            ui.ConstructionSelectedTags.Add(tag);
+        if (optionCount == 1 && keyboard.IsKeyPressed(Keys.Enter))
+            return 0;
+        if (optionCount > 0 && keyboard.IsKeyPressed(Keys.Z))
+            return 0;
+        if (optionCount > 1 && keyboard.IsKeyPressed(Keys.X))
+            return 1;
+        if (optionCount > 2 && keyboard.IsKeyPressed(Keys.C))
+            return 2;
+        if (optionCount > 3 && keyboard.IsKeyPressed(Keys.V))
+            return 3;
+        if (optionCount > 4 && keyboard.IsKeyPressed(Keys.F))
+            return 4;
 
-        Logger.Log($"[BUILD.UI] Selected tags=[{string.Join("|", tags)}]");
-        ui.ConstructionMaterialDialogOpen = false;
-        ui.StartPlacement(PlacementMode.ConstructionFirstCorner, currentZ);
-        ui.AddToast(toast, uiTick + 100);
-        return true;
+        return -1;
     }
 }

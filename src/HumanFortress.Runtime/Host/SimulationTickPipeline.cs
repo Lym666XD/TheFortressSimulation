@@ -6,6 +6,7 @@ using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Commands;
 using HumanFortress.Runtime.Diff;
 using HumanFortress.Runtime.Navigation;
+using HumanFortress.Runtime.Diagnostics;
 using HumanFortress.Simulation.Diff;
 using HumanFortress.Simulation.World;
 
@@ -24,6 +25,10 @@ internal sealed partial class SimulationTickPipeline
     private readonly NavigationManager? _navigation;
     private readonly IRuntimeGeologyCatalog? _geology;
     private readonly RuntimePathServiceRegistry? _pathServices;
+    private readonly Action<ulong>? _afterPostTickCommit;
+    private readonly TickMutationCommitTransaction _mutationCommit;
+    private long _dirtyChunksProcessed;
+    private long _navigationChunkRebuilds;
 
     internal SimulationTickPipeline(
         World world,
@@ -35,7 +40,9 @@ internal sealed partial class SimulationTickPipeline
         IConstructionCatalog constructions,
         NavigationManager? navigation,
         IRuntimeGeologyCatalog? geology = null,
-        RuntimePathServiceRegistry? pathServices = null)
+        RuntimePathServiceRegistry? pathServices = null,
+        Action<ulong>? afterPostTickCommit = null,
+        Action<TickMutationCommitStage>? afterMutationCommitStage = null)
     {
         _world = world ?? throw new ArgumentNullException(nameof(world));
         _commandStage = new SimulationCommandStage(commandQueue, clockContext, commandContext);
@@ -45,6 +52,14 @@ internal sealed partial class SimulationTickPipeline
         _navigation = navigation;
         _geology = geology;
         _pathServices = pathServices;
+        _afterPostTickCommit = afterPostTickCommit;
+        _mutationCommit = new TickMutationCommitTransaction(
+            _world,
+            _diffLog,
+            _mutationDiffs,
+            _constructions,
+            _geology,
+            afterMutationCommitStage);
     }
 
     internal SimulationTickPipeline(
@@ -56,7 +71,9 @@ internal sealed partial class SimulationTickPipeline
         RuntimeMutationDiffLogs mutationDiffs,
         NavigationManager? navigation,
         IRuntimeGeologyCatalog? geology = null,
-        RuntimePathServiceRegistry? pathServices = null)
+        RuntimePathServiceRegistry? pathServices = null,
+        Action<ulong>? afterPostTickCommit = null,
+        Action<TickMutationCommitStage>? afterMutationCommitStage = null)
         : this(
             world,
             commandQueue,
@@ -67,7 +84,9 @@ internal sealed partial class SimulationTickPipeline
             ConstructionCatalogStore.Empty,
             navigation,
             geology,
-            pathServices)
+            pathServices,
+            afterPostTickCommit,
+            afterMutationCommitStage)
     {
     }
 
@@ -90,5 +109,12 @@ internal sealed partial class SimulationTickPipeline
     private void ExecutePreTick(ulong tick)
     {
         _commandStage.Execute(tick);
+    }
+
+    internal RuntimeTopologyMetricsSnapshot CaptureTopologyMetrics()
+    {
+        return new RuntimeTopologyMetricsSnapshot(
+            Interlocked.Read(ref _dirtyChunksProcessed),
+            Interlocked.Read(ref _navigationChunkRebuilds));
     }
 }

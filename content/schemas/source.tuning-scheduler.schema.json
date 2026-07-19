@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-scheduler.schema.json",
+  "title": "Active jobs scheduler tuning",
+  "description": "Mechanical contract for deterministic job budgets, backpressure, and worker selection.",
+  "type": "object",
+  "required": [
+    "version",
+    "threads",
+    "queue_policy",
+    "priorities",
+    "budgets",
+    "backpressure",
+    "logging",
+    "worker_selection",
+    "hauling_limits"
+  ],
+  "properties": {
+    "version": { "type": "integer", "minimum": 1 },
+    "threads": { "type": "integer", "minimum": 1 },
+    "queue_policy": { "enum": ["single", "work_stealing"] },
+    "priorities": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/definitions/priorityGroup" }
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["hauling", "mining", "construction"],
+      "properties": {
+        "hauling": { "$ref": "#/definitions/budget" },
+        "mining": { "$ref": "#/definitions/budget" },
+        "construction": { "$ref": "#/definitions/budget" }
+      },
+      "additionalProperties": false
+    },
+    "backpressure": {
+      "type": "object",
+      "required": ["max_carryover_ticks"],
+      "properties": {
+        "max_carryover_ticks": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "logging": {
+      "type": "object",
+      "required": ["level", "per_job_stats", "debug_panel"],
+      "properties": {
+        "level": { "enum": ["trace", "debug", "info", "warning", "error", "critical", "none"] },
+        "per_job_stats": { "type": "boolean" },
+        "debug_panel": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "worker_selection": {
+      "oneOf": [
+        { "$ref": "#/definitions/workerSelectionStrategy" },
+        {
+          "type": "object",
+          "required": ["strategy"],
+          "properties": {
+            "strategy": { "$ref": "#/definitions/workerSelectionStrategy" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "hauling_limits": {
+      "type": "object",
+      "required": [
+        "max_active",
+        "reserve_for_mining",
+        "reserve_backlog_threshold",
+        "backlog_intake_cap",
+        "backlog_intake_threshold"
+      ],
+      "properties": {
+        "max_active": { "type": "integer", "minimum": 0 },
+        "reserve_for_mining": { "type": "integer", "minimum": 0 },
+        "reserve_backlog_threshold": { "type": "integer", "minimum": 0 },
+        "backlog_intake_cap": { "type": "integer", "minimum": 0 },
+        "backlog_intake_threshold": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "priorityGroup": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "type": "string", "minLength": 1 },
+      "additionalProperties": { "type": "string", "pattern": "^P[0-9]+$" }
+    },
+    "budget": {
+      "type": "object",
+      "required": ["plan_per_tick"],
+      "properties": {
+        "plan_per_tick": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "workerSelectionStrategy": {
+      "enum": ["closest", "idle", "idle_first", "skill", "highest_skill"]
+    }
+  }
+}

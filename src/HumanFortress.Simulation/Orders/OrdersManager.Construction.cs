@@ -35,7 +35,7 @@ internal sealed partial class OrdersManager
     }
 
     /// <summary>
-    /// Drain construction designations into provided list (Read phase).
+    /// Drain construction designations from serialized compatibility or commit.
     /// </summary>
     internal int DrainConstructionDesignations(ICollection<ConstructionDesignation> into, int maxCount)
     {

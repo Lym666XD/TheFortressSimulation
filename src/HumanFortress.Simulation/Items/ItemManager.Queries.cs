@@ -38,7 +38,7 @@ internal sealed partial class ItemManager
     {
         lock (_instanceLock)
         {
-            return _entityKeyIndex.TryGetValue(entityKey, out var guid)
+            return _identityIndex.TryResolve(entityKey, out var guid)
                 ? _instances.GetValueOrDefault(guid)
                 : null;
         }

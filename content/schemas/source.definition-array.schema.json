@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.definition-array.schema.json",
+  "title": "Manifest-classified definition array",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": ["id"],
+    "properties": {
+      "id": { "type": "string", "minLength": 1 }
+    },
+    "additionalProperties": true
+  }
+}

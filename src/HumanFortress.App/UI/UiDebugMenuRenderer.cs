@@ -19,6 +19,7 @@ internal static partial class UiDebugMenuRenderer
         DiagnosticSnapshot? diagnostics = null)
     {
         if (!ui.DebugOpen) return;
+        DebugSelectionPolicy.EnsureValidSelections(ui, debugMenu);
         var surf = mapSurface.Surface;
         int width = Math.Min((int)(surf.Width * 0.7), surf.Width - 4);
         int height = Math.Min((int)(surf.Height * 0.6), surf.Height - 4);
@@ -62,7 +63,7 @@ internal static partial class UiDebugMenuRenderer
         }
         else if (ui.DebugMenuTab == 1)
         {
-            DrawCreaturesTab(surf, x0, y0, ui);
+            DrawCreaturesTab(surf, x0, y0, ui, debugMenu);
         }
         else
         {

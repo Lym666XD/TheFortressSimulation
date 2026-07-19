@@ -1,6 +1,7 @@
 using HumanFortress.App.Rendering;
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -9,7 +10,6 @@ internal readonly record struct FortressMouseHoverControllerContext(
     FortressViewState View,
     MapScreenSurface? MapSurface,
     FortressViewportSnapshot Viewport,
-    int FortressSize,
     ISelectionTool? SelectionTool,
     ulong UiTick);
 
@@ -52,13 +52,11 @@ internal static class FortressMouseHoverController
 
         var hover = FortressMouseHoverInput.Handle(
             mapLocal,
-            mapSurface.Surface.Width,
-            mapSurface.Surface.Height,
-            context.Viewport.CameraPosition,
-            context.Viewport.ZoomLevel,
-            context.FortressSize,
-            context.Viewport.CurrentZ,
-            context.Viewport.LastMousePosition,
+            context.Viewport.CreateGeometry(new RuntimeRect(
+                0,
+                0,
+                mapSurface.Surface.Width,
+                mapSurface.Surface.Height)),
             context.Viewport.CursorPosition);
 
         if (hover.Changed)

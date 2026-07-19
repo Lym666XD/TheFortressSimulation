@@ -11,18 +11,27 @@ namespace HumanFortress.Runtime.Session;
 
 internal sealed class RuntimeSessionServices
 {
-    private const ulong DefaultRngSeed = 0x4855464f52545245UL;
+    internal const ulong DefaultRngSeed = 0x4855464f52545245UL;
 
     private long _nextCommandIdentitySequence;
     private readonly object _identitySequenceLock = new();
 
     internal RuntimeSessionServices()
+        : this(DiagnosticHub.Sink)
+    {
+    }
+
+    internal RuntimeSessionServices(
+        IDiagnosticSink diagnostics,
+        ulong rngSeed = DefaultRngSeed)
         : this(
-            new TickScheduler(DiagnosticHub.Sink),
-            new CommandQueue(DiagnosticHub.Sink),
-            new EventBus(DiagnosticHub.Sink),
+            new TickScheduler(diagnostics),
+            new CommandQueue(diagnostics),
+            new EventBus(diagnostics),
             new DiffLog(),
-            new ItemsDiffLog())
+            new ItemsDiffLog(),
+            rngStreams: new RngStreamManager(rngSeed),
+            diagnostics: diagnostics)
     {
     }
 
@@ -36,7 +45,8 @@ internal sealed class RuntimeSessionServices
             commandQueue,
             new EventBus(DiagnosticHub.Sink),
             diffLog,
-            itemsDiffLog)
+            itemsDiffLog,
+            diagnostics: DiagnosticHub.Sink)
     {
     }
 
@@ -46,13 +56,15 @@ internal sealed class RuntimeSessionServices
         IEventBus eventBus,
         DiffLog diffLog,
         ItemsDiffLog itemsDiffLog,
-        RngStreamManager? rngStreams = null)
+        RngStreamManager? rngStreams = null,
+        IDiagnosticSink? diagnostics = null)
     {
         TickScheduler = tickScheduler ?? throw new ArgumentNullException(nameof(tickScheduler));
         CommandQueue = commandQueue ?? throw new ArgumentNullException(nameof(commandQueue));
         EventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         DiffLog = diffLog ?? throw new ArgumentNullException(nameof(diffLog));
         ItemsDiffLog = itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog));
+        Diagnostics = diagnostics ?? DiagnosticHub.Sink;
         RngStreams = rngStreams ?? new RngStreamManager(DefaultRngSeed);
         MutationDiffs = new RuntimeMutationDiffLogs(items: ItemsDiffLog);
     }
@@ -62,6 +74,7 @@ internal sealed class RuntimeSessionServices
     internal IEventBus EventBus { get; }
     internal DiffLog DiffLog { get; }
     internal ItemsDiffLog ItemsDiffLog { get; }
+    internal IDiagnosticSink Diagnostics { get; }
     internal RngStreamManager RngStreams { get; }
     internal RuntimeMutationDiffLogs MutationDiffs { get; }
 

@@ -58,6 +58,7 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.StockpileDetail, frame.StockpileDetail),
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.ZoneOverlay, frame.ZoneOverlay),
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.ZoneDetail, frame.ZoneDetail),
+            BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.ZoneCatalog, frame.ZoneCatalog),
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.ManagementDrawer, frame.ManagementDrawer),
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.WorkDrawer, frame.WorkDrawer),
             BuildUiOverlaySectionHash(SimulationUiOverlayFrameSection.DebugMenu, frame.DebugMenu)

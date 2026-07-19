@@ -122,4 +122,26 @@ internal sealed class ZoneInstance
     {
         Generation++;
     }
+
+    internal ZoneInstance CloneForMutationMemento()
+    {
+        var clone = new ZoneInstance(ZoneId, DefId, Name, HomeChunk, CreatedTick)
+        {
+            Priority = Priority,
+            Subtype = Subtype,
+            ZMode = ZMode,
+            MemberChunks = MemberChunks,
+            TotalCells = TotalCells,
+            Policies = Policies == null
+                ? null
+                : new ZonePolicies
+                {
+                    NavCostMode = Policies.NavCostMode,
+                    AllowsActions = new List<string>(Policies.AllowsActions)
+                },
+            Enabled = Enabled,
+            Generation = Generation
+        };
+        return clone;
+    }
 }

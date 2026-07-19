@@ -49,6 +49,9 @@ internal sealed class FortressRuntimeTunings
             PlaceableTuning.LoadFromJson(content.PlaceableTuningJson),
             SchedulerTunings.LoadFromJson(content.SchedulerTuningJson, "runtime content snapshot", log),
             WorkshopTunings.LoadFromJson(content.WorkshopTuningJson, "runtime content snapshot", log),
-            FortressRuntimeStockpilePresetCatalog.Load(baseDir, log));
+            FortressRuntimeStockpilePresetCatalog.FromDefinitions(
+                content.StockpilePresetDefinitions,
+                "runtime content snapshot",
+                log));
     }
 }

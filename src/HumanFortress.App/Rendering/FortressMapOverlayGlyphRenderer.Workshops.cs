@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -11,7 +12,7 @@ internal static partial class FortressMapOverlayGlyphRenderer
         MapScreenSurface mapSurface,
         SimulationWorkshopDebugData workshops,
         int currentZ,
-        Rectangle viewport)
+        RuntimeViewportGeometry viewport)
     {
         var border = new Color(255, 230, 0);
         var fill = new Color(255, 230, 0, 90);
@@ -29,46 +30,37 @@ internal static partial class FortressMapOverlayGlyphRenderer
             {
                 for (int dx = 0; dx < workshop.FootprintW; dx++)
                 {
-                    int sx = workshop.X + dx - viewport.X;
-                    int sy = workshop.Y + dy - viewport.Y;
-                    if (sx >= 0 && sx < mapSurface.Width && sy >= 0 && sy < mapSurface.Height)
-                    {
-                        mapSurface.SetGlyph(sx, sy, '.', fillColor, Color.Transparent);
-                    }
+                    FortressViewportDrawing.SetWorldCellGlyph(
+                        surf,
+                        viewport,
+                        workshop.X + dx,
+                        workshop.Y + dy,
+                        '.',
+                        fillColor);
                 }
             }
 
             for (int dx = 0; dx < workshop.FootprintW; dx++)
             {
-                int sx = workshop.X + dx - viewport.X;
-                int sy1 = workshop.Y - viewport.Y;
-                int sy2 = workshop.Y + workshop.FootprintD - 1 - viewport.Y;
-                if (sx >= 0 && sx < mapSurface.Width)
-                {
-                    if (sy1 >= 0 && sy1 < mapSurface.Height) mapSurface.SetGlyph(sx, sy1, '-', borderColor, Color.Transparent);
-                    if (sy2 >= 0 && sy2 < mapSurface.Height) mapSurface.SetGlyph(sx, sy2, '-', borderColor, Color.Transparent);
-                }
+                FortressViewportDrawing.SetWorldCellGlyph(surf, viewport, workshop.X + dx, workshop.Y, '-', borderColor);
+                FortressViewportDrawing.SetWorldCellGlyph(surf, viewport, workshop.X + dx, workshop.Y + workshop.FootprintD - 1, '-', borderColor);
             }
 
             for (int dy = 0; dy < workshop.FootprintD; dy++)
             {
-                int sy = workshop.Y + dy - viewport.Y;
-                int sx1 = workshop.X - viewport.X;
-                int sx2 = workshop.X + workshop.FootprintW - 1 - viewport.X;
-                if (sy >= 0 && sy < mapSurface.Height)
-                {
-                    if (sx1 >= 0 && sx1 < mapSurface.Width) mapSurface.SetGlyph(sx1, sy, '|', borderColor, Color.Transparent);
-                    if (sx2 >= 0 && sx2 < mapSurface.Width) mapSurface.SetGlyph(sx2, sy, '|', borderColor, Color.Transparent);
-                }
+                FortressViewportDrawing.SetWorldCellGlyph(surf, viewport, workshop.X, workshop.Y + dy, '|', borderColor);
+                FortressViewportDrawing.SetWorldCellGlyph(surf, viewport, workshop.X + workshop.FootprintW - 1, workshop.Y + dy, '|', borderColor);
             }
 
             if (workshop.IsSite && !string.IsNullOrWhiteSpace(workshop.SiteMaterialProgressText))
             {
                 string text = workshop.SiteMaterialProgressText;
-                int tx = workshop.X - viewport.X;
-                int ty = workshop.Y - viewport.Y - 1;
+                if (!FortressViewportDrawing.TryGetLocalPosition(viewport, workshop.X, workshop.Y, out var local))
+                    continue;
+                int tx = local.X;
+                int ty = local.Y - 1;
                 if (ty < 0)
-                    ty = workshop.Y - viewport.Y;
+                    ty = local.Y;
 
                 if (tx >= 0 && ty >= 0 && tx + text.Length < surf.Width && ty < surf.Height)
                 {

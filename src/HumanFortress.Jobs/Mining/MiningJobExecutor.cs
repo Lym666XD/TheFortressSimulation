@@ -87,7 +87,6 @@ internal sealed partial class MiningJobExecutor
             finalizer,
             completionSink,
             _logger,
-            SystemId,
             CreatureReserveTtlTicks,
             MaxFailedReplans);
         _statsTracker = new MiningStatsTracker(Math.Max(1, carryoverMaxTicks));
@@ -95,7 +94,7 @@ internal sealed partial class MiningJobExecutor
 
     internal int LastIntakeCount => _statsTracker.LastIntakeCount;
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _paths.BeginTick();
         int intakeCount = _intakeCoordinator.Fill(tick, _inboxBuffer);
@@ -132,8 +131,9 @@ internal sealed partial class MiningJobExecutor
         UpdateStats(tick);
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
+        ExpireRecentCompletions(tick);
         if (_active.Count == 0)
         {
             UpdateStats(tick);
@@ -146,15 +146,10 @@ internal sealed partial class MiningJobExecutor
 
     internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now)
     {
-        for (int i = _recentCompleted.Count - 1; i >= 0; i--)
-        {
-            if (_recentCompleted[i].ExpireTick <= now)
-            {
-                _recentCompleted.RemoveAt(i);
-            }
-        }
-
-        return _recentCompleted.Select(rc => (rc.Cell, rc.Z)).ToList();
+        return _recentCompleted
+            .Where(completion => completion.ExpireTick > now)
+            .Select(static completion => (completion.Cell, completion.Z))
+            .ToList();
     }
 
     internal List<MiningActiveJobView> GetActiveJobsSnapshot()
@@ -196,7 +191,8 @@ internal sealed partial class MiningJobExecutor
                 job.ReplanFailCount,
                 job.Action,
                 job.Segment,
-                job.DesignationId);
+                job.DesignationId,
+                job.PathSearchAttempt);
         }
 
         var recent = new MiningRecentCompletionSnapshot[_recentCompleted.Count];
@@ -229,5 +225,10 @@ internal sealed partial class MiningJobExecutor
     private void UpdateStats(ulong tick)
     {
         _statsTracker.Update(tick, _active.Count, _backlog, _deferredStairwells.Count, _reservedTiles.Count);
+    }
+
+    private void ExpireRecentCompletions(ulong tick)
+    {
+        _recentCompleted.RemoveAll(completion => completion.ExpireTick <= tick);
     }
 }

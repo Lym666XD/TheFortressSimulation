@@ -56,9 +56,26 @@ internal readonly struct CreaturesDiff
             Priority,
             LocalSeq);
     }
+
+    internal static int CompareDeterministic(CreaturesDiff left, CreaturesDiff right)
+    {
+        int result = left.Z.CompareTo(right.Z);
+        if (result != 0) return result;
+        result = left.WorldPos.Y.CompareTo(right.WorldPos.Y);
+        if (result != 0) return result;
+        result = left.WorldPos.X.CompareTo(right.WorldPos.X);
+        if (result != 0) return result;
+        result = left.Priority.CompareTo(right.Priority);
+        if (result != 0) return result;
+        result = left.Op.CompareTo(right.Op);
+        if (result != 0) return result;
+        result = string.Compare(left.SystemId, right.SystemId, StringComparison.Ordinal);
+        if (result != 0) return result;
+        return left.LocalSeq.CompareTo(right.LocalSeq);
+    }
 }
 
-internal sealed class CreaturesDiffLog
+internal sealed partial class CreaturesDiffLog
 {
     private readonly List<CreaturesDiff> _ops = new();
     private readonly object _lock = new();
@@ -84,7 +101,7 @@ internal sealed class CreaturesDiffLog
     {
         lock (_lock)
         {
-            _ops.Sort((a, b) => a.GetSortKey().CompareTo(b.GetSortKey()));
+            _ops.Sort(CreaturesDiff.CompareDeterministic);
             return _ops.ToList();
         }
     }

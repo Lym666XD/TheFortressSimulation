@@ -2096,5 +2096,158 @@
       "carveable": false,
       "process_difficulty_mul": 1.3
     }
+  },
+  {
+    "id": "core_mat_mineral_clay",
+    "aliases": [
+      "clay"
+    ],
+    "tags": [
+      "mineral",
+      "soil",
+      "ceramic",
+      "soft"
+    ],
+    "density_solid": 1760,
+    "hardness_edge": 4,
+    "toughness_frac": 8,
+    "rigidity": 3,
+    "electric_category": "insulator",
+    "mana_conductivity": 55,
+    "value_mul": 0.2,
+    "beauty_mul": 0.3,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.3
+    }
+  },
+  {
+    "id": "core_mat_mineral_gravel",
+    "aliases": [
+      "gravel"
+    ],
+    "tags": [
+      "mineral",
+      "stone",
+      "granular",
+      "loose"
+    ],
+    "density_solid": 1680,
+    "hardness_edge": 30,
+    "toughness_frac": 18,
+    "rigidity": 12,
+    "electric_category": "insulator",
+    "mana_conductivity": 35,
+    "value_mul": 0.15,
+    "beauty_mul": 0.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.4
+    }
+  },
+  {
+    "id": "core_mat_mineral_sand_silica",
+    "aliases": [
+      "silica_sand"
+    ],
+    "tags": [
+      "mineral",
+      "silica",
+      "granular",
+      "glass"
+    ],
+    "density_solid": 1600,
+    "hardness_edge": 7,
+    "toughness_frac": 3,
+    "rigidity": 1,
+    "electric_category": "insulator",
+    "mana_conductivity": 45,
+    "value_mul": 0.2,
+    "beauty_mul": 0.35,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": false,
+      "process_difficulty_mul": 0.2
+    }
+  },
+  {
+    "id": "core_mat_wood_ash",
+    "aliases": [
+      "ash_wood"
+    ],
+    "tags": [
+      "wood",
+      "hardwood",
+      "organic"
+    ],
+    "density_solid": 680,
+    "hardness_edge": 19,
+    "toughness_frac": 62,
+    "rigidity": 52,
+    "electric_category": "insulator",
+    "mana_conductivity": 82,
+    "value_mul": 1.3,
+    "beauty_mul": 1.15,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.55
+    }
+  },
+  {
+    "id": "core_mat_wood_birch",
+    "aliases": [
+      "birch_wood"
+    ],
+    "tags": [
+      "wood",
+      "hardwood",
+      "organic"
+    ],
+    "density_solid": 650,
+    "hardness_edge": 18,
+    "toughness_frac": 55,
+    "rigidity": 48,
+    "electric_category": "insulator",
+    "mana_conductivity": 88,
+    "value_mul": 1.2,
+    "beauty_mul": 1.2,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.5
+    }
+  },
+  {
+    "id": "core_mat_wood_willow",
+    "aliases": [
+      "willow_wood"
+    ],
+    "tags": [
+      "wood",
+      "softwood",
+      "organic"
+    ],
+    "density_solid": 450,
+    "hardness_edge": 12,
+    "toughness_frac": 48,
+    "rigidity": 35,
+    "electric_category": "insulator",
+    "mana_conductivity": 95,
+    "value_mul": 1.0,
+    "beauty_mul": 1.1,
+    "work": {
+      "forgeable": false,
+      "weldable": false,
+      "carveable": true,
+      "process_difficulty_mul": 0.35
+    }
   }
 ]

@@ -287,6 +287,88 @@ PostTick
   and navigation rebuilds for dirty chunks.
 ```
 
+### Maintained execution sequences
+
+These diagrams describe ownership and ordering contracts. They intentionally do
+not describe the deferred player save/load milestone.
+
+Semantic command admission:
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant Runtime as Runtime command port
+    participant Queue as Session command queue
+    participant PreTick as PreTick command stage
+    participant Logs as Typed mutation logs
+    App->>Runtime: semantic command DTO
+    Runtime->>Runtime: validate shape and assign session sequence
+    Runtime->>Queue: enqueue(target tick, sequence, payload)
+    PreTick->>Queue: drain current tick in canonical order
+    PreTick->>Logs: emit validated mutations
+    Note over App,Logs: App never receives World or mutable manager authority
+```
+
+One committed tick and checkpoint publication:
+
+```mermaid
+sequenceDiagram
+    participant Scheduler
+    participant Pipeline as SimulationTickPipeline
+    participant Owners as Simulation and Jobs owners
+    participant Nav as Navigation derivation
+    participant Checkpoint as Checkpoint owner
+    participant Consumers as UI / replay / diagnostics
+    Scheduler->>Pipeline: PreTick / Read / Barrier / Write
+    Pipeline->>Owners: validate and apply mutation families
+    Pipeline->>Nav: rebuild committed dirty topology
+    Pipeline->>Checkpoint: publish(committed generation, tick)
+    Checkpoint->>Checkpoint: build immutable sections and hashes
+    Checkpoint-->>Consumers: atomic retained checkpoint identity
+    Note over Scheduler,Consumers: Tick advances only after publication callback returns
+```
+
+Latest-wins presentation request:
+
+```mermaid
+sequenceDiagram
+    participant App
+    participant Mailbox as Capacity-one request mailbox
+    participant Tick as PostTick publisher
+    participant Store as Committed frame store
+    App->>Mailbox: replace with latest viewport/query request
+    App->>Store: read exact-request frame
+    alt matching committed request exists
+        Store-->>App: immutable frame + checkpoint identity
+    else no exact match yet
+        Store-->>App: unavailable
+    end
+    Tick->>Mailbox: take latest request
+    Tick->>Tick: project from just-committed authority
+    Tick->>Store: atomic publish(frame, checkpoint identity)
+    Note over App,Store: App never falls back to a caller-thread live World read
+```
+
+Transport's Stage 4 target transaction (not current behavior until its stage
+gate passes):
+
+```mermaid
+sequenceDiagram
+    participant Snapshot as Immutable transport read snapshot
+    participant Planner as Pure planner (1 or N workers)
+    participant Resolver as Deterministic resolver
+    participant Commit as Simulation transaction owner
+    participant Owners as Item / creature / stockpile / reservation owners
+    Snapshot->>Planner: canonical pending work and authority rows
+    Planner-->>Resolver: immutable intents
+    Resolver->>Resolver: sort and resolve stable conflicts
+    Resolver->>Commit: accepted intents + explicit rejections
+    Commit->>Commit: validate complete write set
+    Commit->>Owners: apply one failure-atomic transaction
+    Commit-->>Resolver: committed result / invariant fault
+    Note over Snapshot,Commit: Worker completion order cannot change accepted intents or hashes
+```
+
 This is not yet the full nine-stage `UPDATE_ORDER.md` model. The important current invariant is:
 
 - commands execute before read systems;
@@ -484,9 +566,8 @@ The old `.cpack` content build pipeline remains a future design archived at `doc
 
 ## High-Signal References
 
-- `../planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md`
-- `../planning/REFACTOR_BATCH_PROGRESS.md`
-- `../planning/REFACTOR_PITFALLS_AND_LESSONS.md`
+- `../planning/STAGED_REFACTOR_TARGET.md`
+- `../planning/RULES.md`
 - `../content/CONTENT_SYSTEM.md`
 - `../simulation/WORK_AND_JOBS_SYSTEM.md`
 - `../simulation/TRANSPORT_SYSTEM.md`

@@ -29,7 +29,7 @@ internal sealed partial class WorkshopQueueCommandTarget : IWorkshopQueueCommand
         var recipe = _recipes.GetRecipe(recipeId);
         if (recipe == null) return false;
 
-        _workshopDiffLog.AddRecipe(workshopGuid, recipe.Id, recipe.Name, currentTick, CommandPriority, SystemId);
+        _workshopDiffLog.AddRecipe(workshopGuid, recipe.Id, currentTick, CommandPriority, SystemId);
         _log?.Invoke($"[WORKSHOP] Queued add recipe workshop={workshopGuid} recipe={recipe.Id}");
         return true;
     }

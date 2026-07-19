@@ -33,7 +33,7 @@ internal sealed partial class PlaceableManager
         if (!data.TryGetExternalRefAt(localIndex, out var ownerGuid))
             return false;
 
-        return TryGetOwnedPlaceableByGuid(world, ownerGuid, out placeable);
+        return TryGetUniqueOwnedPlaceableByGuid(world, ownerGuid, out placeable);
     }
 
     internal static bool TryGetOwnedPlaceableByGuid(
@@ -59,6 +59,35 @@ internal sealed partial class PlaceableManager
 
         placeable = null;
         return false;
+    }
+
+    internal static bool TryGetUniqueOwnedPlaceableByGuid(
+        WorldClass world,
+        Guid placeableGuid,
+        out PlaceableInstance? placeable)
+    {
+        placeable = null;
+        foreach (var chunk in world.GetAllChunks())
+        {
+            var data = chunk.GetPlaceableData();
+            if (data == null)
+                continue;
+
+            foreach (var entry in data.GetOwnedPlaceableSnapshot())
+            {
+                if (entry.Placeable.Guid != placeableGuid)
+                    continue;
+                if (placeable != null)
+                {
+                    placeable = null;
+                    return false;
+                }
+
+                placeable = entry.Placeable;
+            }
+        }
+
+        return placeable != null;
     }
 
     private static Chunk? GetChunkForCell(

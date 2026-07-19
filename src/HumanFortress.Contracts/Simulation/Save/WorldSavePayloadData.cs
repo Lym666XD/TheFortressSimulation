@@ -176,7 +176,13 @@ public readonly record struct WorldSaveStockpileZonePayloadData(
 public readonly record struct WorldSaveMaterialFilterPayloadData(
     string? PreferredMaterialId,
     string CategoryKey,
-    string[] Tags);
+    string[] Tags,
+    WorldSaveMaterialRequirementPayloadData[]? Requirements = null);
+
+public readonly record struct WorldSaveMaterialRequirementPayloadData(
+    string? Tag,
+    string? DefinitionId,
+    int Count);
 
 public readonly record struct WorldSaveFootprintData(
     int W,

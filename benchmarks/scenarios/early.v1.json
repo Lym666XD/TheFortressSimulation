@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "early-colony-v1",
+  "description": "Early-colony scale evidence with the declared 50 workers, 10000 items, and 500 transport jobs.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "flat",
+    "sizeInChunks": 4,
+    "maxZ": 8,
+    "standableZ": 1,
+    "generationSeed": 12648430
+  },
+  "workload": {
+    "initialCreatures": 50,
+    "itemInstances": 10000,
+    "transportRequests": 500,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 10,
+  "measuredTicks": 190,
+  "checkpointInterval": 20,
+  "commandJournal": "journals/flat-scale.v1.json"
+}

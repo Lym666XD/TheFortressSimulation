@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.UI.Placement;
@@ -13,11 +14,13 @@ internal static class FortressPlacementGeometry
         return new Rectangle(x, y, width, height);
     }
 
-    public static Point ClampToWorld(Point point, int fortressSize)
+    public static Point ClampToWorld(Point point, RuntimeWorldBounds worldBounds)
     {
-        int max = fortressSize * 32 - 1;
-        int x = Math.Clamp(point.X, 0, max);
-        int y = Math.Clamp(point.Y, 0, max);
+        if (worldBounds.IsEmpty)
+            return point;
+
+        int x = Math.Clamp(point.X, worldBounds.MinX, worldBounds.MaxXExclusive - 1);
+        int y = Math.Clamp(point.Y, worldBounds.MinY, worldBounds.MaxYExclusive - 1);
         return new Point(x, y);
     }
 }

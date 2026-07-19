@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "determinism-ci-v1",
+  "description": "Fast production-composition lane for 2000-tick process, cache, GC, JIT, and worker-count equivalence.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "flat",
+    "sizeInChunks": 2,
+    "maxZ": 3,
+    "standableZ": 1,
+    "generationSeed": 12648430
+  },
+  "workload": {
+    "initialCreatures": 8,
+    "itemInstances": 256,
+    "transportRequests": 64,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 0,
+  "measuredTicks": 2000,
+  "checkpointInterval": 100,
+  "commandJournal": "journals/determinism.v1.json"
+}

@@ -1,5 +1,6 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Placement;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -7,7 +8,7 @@ namespace HumanFortress.App.Input;
 internal readonly record struct FortressConstructionPlacementContext(
     UiStore Ui,
     FortressPlacementRuntimePorts Runtime,
-    int FortressSize,
+    RuntimeWorldBounds WorldBounds,
     int CurrentZ,
     ulong UiTick,
     Action Redraw);
@@ -19,7 +20,7 @@ internal static class FortressConstructionPlacementController
         Point worldPos)
     {
         var ui = context.Ui;
-        var clampedWorldPos = FortressPlacementGeometry.ClampToWorld(worldPos, context.FortressSize);
+        var clampedWorldPos = FortressPlacementGeometry.ClampToWorld(worldPos, context.WorldBounds);
         if (!ui.PlaceFirstCorner.HasValue || clampedWorldPos == ui.PlaceFirstCorner.Value)
             return true;
 
@@ -32,12 +33,12 @@ internal static class FortressConstructionPlacementController
             zMin,
             zMax,
             FortressPlacementRequestFactory.ToRuntimeConstructionShape(ui.SelectedConstructionShape),
-            ui.ConstructionPreferredMaterialId,
-            ui.ConstructionSelectedTags.ToArray(),
+            ui.ConstructionResultMaterialId,
+            ui.ConstructionMaterialRequirements.ToArray(),
             priority: 50);
 
         Logger.Log($"[BUILD.UI] First=({ui.PlaceFirstCorner.Value.X},{ui.PlaceFirstCorner.Value.Y}) Second=({clampedWorldPos.X},{clampedWorldPos.Y}) Rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) Z={zMin}..{zMax}");
-        Logger.Log($"[BUILD.UI] Enqueue construction shape={ui.SelectedConstructionShape} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} tags=[{string.Join('|', ui.ConstructionSelectedTags)}]");
+        Logger.Log($"[BUILD.UI] Enqueue construction shape={ui.SelectedConstructionShape} rect=({rect.X},{rect.Y},{rect.Width}x{rect.Height}) z={zMin}..{zMax} requirements={ui.ConstructionMaterialRequirements.Count}");
         ui.AddToast($"[BUILD] Enqueued {ui.SelectedConstructionShape} {rect.Width}x{rect.Height} at z={context.CurrentZ}", context.UiTick + 150);
         ui.CancelPlacement();
         context.Redraw();

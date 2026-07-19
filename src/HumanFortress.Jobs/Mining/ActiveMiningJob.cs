@@ -1,6 +1,7 @@
 using System;
 using HumanFortress.Simulation.Orders;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Jobs;
 using SadRogue.Primitives;
 
 namespace HumanFortress.Jobs.Mining;
@@ -22,4 +23,6 @@ internal sealed class ActiveMiningJob
     internal MiningAction Action { get; init; }
     internal MiningSegment Segment { get; init; }
     internal int DesignationId { get; init; }
+    internal byte PathSearchAttempt { get; set; }
+    internal ReservationManager.CreatureToken CreatureReservation { get; set; }
 }

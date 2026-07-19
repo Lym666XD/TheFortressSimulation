@@ -11,7 +11,9 @@ internal readonly record struct TransportActiveJobStateSnapshot(
     JobStage Stage,
     int Quantity,
     int InvalidReplanCount,
-    TransportReason Reason);
+    TransportReason Reason,
+    byte PathSearchAttempt = 0,
+    MovementCursorData? MovementCursor = null);
 
 internal readonly record struct TransportJobReplaySnapshot(
     int? IntakeCapHint,

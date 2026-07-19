@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-navigation.schema.json",
+  "title": "Active navigation tuning",
+  "description": "Mechanical contract for path costs, movement rules, fluid traversal, doors, and deterministic search budgets.",
+  "type": "object",
+  "required": [
+    "allow_diagonals",
+    "ramp_vertical_alignment_mode",
+    "ramp_requires_highside_support",
+    "diagonal_rules",
+    "cost",
+    "fluids",
+    "traffic",
+    "doors",
+    "movement",
+    "budgets"
+  ],
+  "properties": {
+    "allow_diagonals": { "type": "boolean" },
+    "ramp_vertical_alignment_mode": { "enum": ["df"] },
+    "ramp_requires_highside_support": { "type": "boolean" },
+    "diagonal_rules": {
+      "type": "object",
+      "required": ["corner_check"],
+      "properties": {
+        "corner_check": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "cost": {
+      "type": "object",
+      "required": ["base", "orthogonal", "diagonal", "ramp_delta", "stair_delta"],
+      "properties": {
+        "base": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "orthogonal": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "diagonal": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "ramp_delta": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "stair_delta": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      },
+      "additionalProperties": false
+    },
+    "fluids": {
+      "type": "object",
+      "required": ["shallow_threshold", "deep_threshold", "wade_cost", "swim_cost"],
+      "properties": {
+        "shallow_threshold": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "deep_threshold": { "type": "integer", "minimum": 0, "maximum": 255 },
+        "wade_cost": { "type": "integer", "minimum": 0, "maximum": 65535 },
+        "swim_cost": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      },
+      "additionalProperties": false
+    },
+    "traffic": {
+      "type": "object",
+      "required": ["low", "normal", "high", "restricted"],
+      "properties": {
+        "low": { "type": "integer", "minimum": -32768, "maximum": 32767 },
+        "normal": { "type": "integer", "minimum": -32768, "maximum": 32767 },
+        "high": { "type": "integer", "minimum": -32768, "maximum": 32767 },
+        "restricted": { "type": "integer", "minimum": -32768, "maximum": 32767 }
+      },
+      "additionalProperties": false
+    },
+    "doors": {
+      "type": "object",
+      "required": ["closed_blocks", "open_cost"],
+      "properties": {
+        "closed_blocks": { "type": "boolean" },
+        "open_cost": { "type": "integer", "minimum": 0, "maximum": 65535 }
+      },
+      "additionalProperties": false
+    },
+    "movement": {
+      "type": "object",
+      "required": ["step_delay_ticks"],
+      "properties": {
+        "step_delay_ticks": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["max_nodes_per_search", "max_paths_per_tick"],
+      "properties": {
+        "max_nodes_per_search": { "type": "integer", "minimum": 1, "maximum": 2147483647 },
+        "max_paths_per_tick": { "type": "integer", "minimum": 1, "maximum": 2147483647 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

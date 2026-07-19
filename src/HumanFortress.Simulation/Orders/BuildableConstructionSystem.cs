@@ -10,10 +10,10 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Planner for L2 buildable constructions (e.g., workshops).
-/// Drains BuildableConstructionDesignation and places construction sites at anchors.
+/// Serialized compatibility stage for L2 buildable constructions.
+/// Registered ReadTick is a no-op; designation consumption and placement run in Write.
 /// </summary>
-internal sealed class BuildableConstructionSystem : ITick
+internal sealed class BuildableConstructionSystem : ITick, ISequentialCompatibilityStage
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
@@ -40,7 +40,7 @@ internal sealed class BuildableConstructionSystem : ITick
 
     string ITick.SystemId => SystemId;
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         var desigs = new List<BuildableConstructionDesignation>();
         _orders.DrainBuildableConstructions(desigs, _maxPerTick);
@@ -53,7 +53,7 @@ internal sealed class BuildableConstructionSystem : ITick
                 var def = _constructions.GetConstruction(d.ConstructionId);
                 if (def == null)
                 {
-                    OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=UnknownDef");
+                    _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=UnknownDef");
                     continue;
                 }
 
@@ -61,7 +61,7 @@ internal sealed class BuildableConstructionSystem : ITick
                 // Basic legality checks
                 if (!ValidateFootprint(d.Anchor, d.Z, fp, def.PlaceableProfile.RequiresFloor))
                 {
-                    OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=IllegalFootprint");
+                    _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={d.ConstructionId} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) SKIP reason=IllegalFootprint");
                     continue;
                 }
 
@@ -79,21 +79,21 @@ internal sealed class BuildableConstructionSystem : ITick
 
                 _outbox.Enqueue(site);
 
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] id={def.Id} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) footprint={fp.W}x{fp.D} planned=1");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] id={def.Id} anchor=({d.Anchor.X},{d.Anchor.Y},{d.Z}) footprint={fp.W}x{fp.D} planned=1");
             }
             catch (Exception ex)
             {
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] ERROR: {ex.Message}");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] ERROR: {ex.Message}");
             }
         }
     }
 
     void ITick.ReadTick(ulong tick)
     {
-        ReadTick(tick);
+        // This legacy planner is intentionally deferred to serialized Write.
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         int placed = 0;
         while (placed < _maxPerTick && _outbox.TryDequeue(out var site))
@@ -105,15 +105,22 @@ internal sealed class BuildableConstructionSystem : ITick
             }
             catch (Exception ex)
             {
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.BUILDABLE] place ERR: {ex.Message}");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.BUILDABLE] place ERR: {ex.Message}");
             }
         }
     }
 
     void ITick.WriteTick(ulong tick)
     {
-        WriteTick(tick);
+        PrepareSequentialCompatibility(tick);
+        ApplySequentialCompatibility(tick);
     }
+
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     private bool ValidateFootprint(Point anchor, int z, Footprint fp, bool requiresFloor)
     {

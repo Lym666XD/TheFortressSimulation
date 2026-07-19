@@ -20,7 +20,8 @@ internal readonly record struct MiningActiveJobStateSnapshot(
     int ReplanFailCount,
     MiningAction Action,
     MiningSegment Segment,
-    int DesignationId);
+    int DesignationId,
+    byte PathSearchAttempt = 0);
 
 internal readonly record struct MiningRecentCompletionSnapshot(
     int Order,

@@ -35,9 +35,7 @@ internal sealed class GameStateRuntimeLifecycle
 
     internal void Shutdown()
     {
-        if (_runtimeCoordinator.StopIfRunning())
-        {
-            Logger.Log("[GameStateManager] Stopping tick scheduler");
-        }
+        Logger.Log("[GameStateManager] Disposing runtime session");
+        _runtimeCoordinator.Dispose();
     }
 }

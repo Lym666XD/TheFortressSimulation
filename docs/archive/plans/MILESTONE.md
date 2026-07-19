@@ -1,13 +1,13 @@
 # Milestone Plan
 
-Archived: superseded by `docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md`
-and `docs/planning/REFACTOR_BATCH_PROGRESS.md` for current status.
+Archived: superseded by `docs/planning/STAGED_REFACTOR_TARGET.md` for current
+status, stages, and acceptance gates.
 
 Current implementation note (2026-06-12):
 
 - This is a historical/strategic milestone plan, not a precise status report.
 - The `.cpack` content pipeline mentioned below is a future target; current content loading is direct JSON through `HumanFortress.Content.Loading.FortressContentLoader`.
-- The current architecture refactor status is tracked in `ARCHITECTURE_REFACTOR_MASTER_PLAN.md` and `REFACTOR_BATCH_PROGRESS.md`.
+- The current architecture refactor status is tracked in `STAGED_REFACTOR_TARGET.md`.
 
 1) System-Independence Principles (Hard Rules)
 

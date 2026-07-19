@@ -2,6 +2,10 @@ namespace HumanFortress.Jobs.Transport;
 
 internal sealed partial class TransportJobExecutor
 {
+    internal HumanFortress.Contracts.Navigation.MovementCursorData? GetMovementCursorSnapshot(
+        Guid creatureId) => _move.GetCursorSnapshot(
+            HumanFortress.Core.Simulation.DiffTargetEncoding.EntityKey(creatureId));
+
     internal List<TransportActiveJobView> GetActiveJobsSnapshot()
     {
         var list = new List<TransportActiveJobView>(_active.Count);
@@ -61,7 +65,10 @@ internal sealed partial class TransportJobExecutor
                 job.Stage,
                 job.Quantity,
                 job.InvalidReplanCount,
-                job.Reason);
+                job.Reason,
+                job.PathSearchAttempt,
+                _move.GetCursorSnapshot(
+                    HumanFortress.Core.Simulation.DiffTargetEncoding.EntityKey(job.CreatureId)));
         }
 
         return new TransportJobReplaySnapshot(

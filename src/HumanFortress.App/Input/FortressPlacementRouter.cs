@@ -1,5 +1,6 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 
 namespace HumanFortress.App.Input;
@@ -9,7 +10,7 @@ internal readonly record struct FortressPlacementRouterContext(
     FortressPlacementRuntimePorts Runtime,
     FortressUiServices? UiServices,
     ISelectionTool? SelectionTool,
-    int FortressSize,
+    RuntimeWorldBounds WorldBounds,
     int CurrentZ,
     ulong UiTick,
     Action Redraw);
@@ -22,7 +23,13 @@ internal static class FortressPlacementRouter
         if (ui.Context != UiContext.PlacingTool)
             return false;
 
-        if (FortressPlacementClickInput.TryHandleFirstCorner(ui, worldPos, context.CurrentZ, context.FortressSize, context.UiTick, context.SelectionTool))
+        if (FortressPlacementClickInput.TryHandleFirstCorner(
+                ui,
+                worldPos,
+                context.CurrentZ,
+                context.WorldBounds,
+                context.UiTick,
+                context.SelectionTool))
         {
             context.Redraw();
             return true;
@@ -66,7 +73,7 @@ internal static class FortressPlacementRouter
             context.Ui,
             context.Runtime,
             context.SelectionTool,
-            context.FortressSize,
+            context.WorldBounds,
             context.CurrentZ,
             context.UiTick,
             context.Redraw);
@@ -77,7 +84,7 @@ internal static class FortressPlacementRouter
         return new FortressConstructionPlacementContext(
             context.Ui,
             context.Runtime,
-            context.FortressSize,
+            context.WorldBounds,
             context.CurrentZ,
             context.UiTick,
             context.Redraw);

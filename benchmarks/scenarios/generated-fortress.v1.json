@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "generated-fortress-v1",
+  "description": "Explicit-seed production fortress generation and Runtime integration evidence.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "generated-fortress",
+    "sizeInChunks": 2,
+    "maxZ": 50,
+    "standableZ": 25,
+    "generationSeed": 305419896
+  },
+  "workload": {
+    "initialCreatures": 10,
+    "itemInstances": 100,
+    "transportRequests": 25,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 1,
+  "measuredTicks": 9,
+  "checkpointInterval": 1,
+  "commandJournal": "journals/generated-fortress.v1.json"
+}

@@ -1,0 +1,247 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-placeable.schema.json",
+  "title": "Active placeable system tuning",
+  "description": "Mechanical contract for construction, installation, passability, durability, collision, storage, and workshop behavior.",
+  "type": "object",
+  "required": [
+    "$schema",
+    "version",
+    "quality",
+    "passability",
+    "installation",
+    "construction",
+    "clearance",
+    "orientation",
+    "effects",
+    "storage",
+    "doors",
+    "durability",
+    "collision",
+    "workshops"
+  ],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "_comment": { "type": "string" },
+    "quality": {
+      "type": "object",
+      "required": ["beauty_per_tier", "comfort_per_tier", "min_tier", "max_tier"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "beauty_per_tier": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "comfort_per_tier": { "type": "integer", "minimum": -100, "maximum": 100 },
+        "min_tier": { "type": "integer", "minimum": -3, "maximum": 3 },
+        "max_tier": { "type": "integer", "minimum": -3, "maximum": 3 }
+      },
+      "additionalProperties": false
+    },
+    "passability": {
+      "type": "object",
+      "required": ["blocking", "nonblocking", "doorway"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "blocking": {
+          "type": "object",
+          "required": ["walkable", "blocks_los"],
+          "properties": {
+            "walkable": { "type": "boolean" },
+            "blocks_los": { "type": "boolean" },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "nonblocking": {
+          "type": "object",
+          "required": ["walkable", "blocks_los"],
+          "properties": {
+            "walkable": { "type": "boolean" },
+            "blocks_los": { "type": "boolean" },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "doorway": {
+          "type": "object",
+          "required": ["walkable_when_open", "blocks_los_when_closed", "requires_door_state"],
+          "properties": {
+            "walkable_when_open": { "type": "boolean" },
+            "blocks_los_when_closed": { "type": "boolean" },
+            "requires_door_state": { "type": "boolean" },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "installation": {
+      "type": "object",
+      "required": [
+        "install_time_base_ticks",
+        "deconstruct_time_base_ticks",
+        "material_recovery_rate",
+        "preserve_item_on_uninstall"
+      ],
+      "properties": {
+        "_comment": { "type": "string" },
+        "install_time_base_ticks": { "type": "integer", "minimum": 0 },
+        "deconstruct_time_base_ticks": { "type": "integer", "minimum": 0 },
+        "material_recovery_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "preserve_item_on_uninstall": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "construction": {
+      "type": "object",
+      "required": ["material_recovery_rate", "quality_tier_always_zero", "skill_xp_per_build_tick"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "material_recovery_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "quality_tier_always_zero": { "type": "boolean" },
+        "skill_xp_per_build_tick": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "clearance": {
+      "type": "object",
+      "required": ["check_above_footprint", "allow_overlap_nonblocking"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "check_above_footprint": { "type": "boolean" },
+        "allow_overlap_nonblocking": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "orientation": {
+      "type": "object",
+      "required": ["rotation_degrees", "default_rotation"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "rotation_degrees": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "type": "integer", "minimum": 0, "maximum": 359 }
+        },
+        "default_rotation": { "type": "integer", "minimum": 0, "maximum": 3 }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "required": ["beauty_range", "comfort_range", "light_lumen_max", "heat_w_max"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "beauty_range": { "$ref": "#/definitions/signedRange" },
+        "comfort_range": { "$ref": "#/definitions/nonNegativeRange" },
+        "light_lumen_max": { "type": "integer", "minimum": 0 },
+        "heat_w_max": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "storage": {
+      "type": "object",
+      "required": ["default_max_volume_ml", "default_max_slots", "allow_unrestricted_storage"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "default_max_volume_ml": { "type": "integer", "minimum": 0 },
+        "default_max_slots": { "type": "integer", "minimum": 0 },
+        "allow_unrestricted_storage": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "doors": {
+      "type": "object",
+      "required": [
+        "default_locked",
+        "default_open",
+        "open_cost_ticks",
+        "close_cost_ticks",
+        "closed_blocks_movement",
+        "requires_passability_doorway"
+      ],
+      "properties": {
+        "_comment": { "type": "string" },
+        "default_locked": { "type": "boolean" },
+        "default_open": { "type": "boolean" },
+        "open_cost_ticks": { "type": "integer", "minimum": 0 },
+        "close_cost_ticks": { "type": "integer", "minimum": 0 },
+        "closed_blocks_movement": { "type": "boolean" },
+        "requires_passability_doorway": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "durability": {
+      "type": "object",
+      "required": ["default_max_hp", "hp_per_volume_ml", "material_hp_multiplier", "condition_thresholds"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "default_max_hp": { "type": "integer", "minimum": 1 },
+        "hp_per_volume_ml": { "type": "number", "minimum": 0 },
+        "material_hp_multiplier": {
+          "type": "object",
+          "required": ["stone", "metal", "wood", "default"],
+          "additionalProperties": { "type": "number", "minimum": 0 }
+        },
+        "condition_thresholds": {
+          "type": "object",
+          "required": ["pristine", "good", "worn", "damaged", "poor", "terrible"],
+          "properties": {
+            "pristine": { "$ref": "#/definitions/unitInterval" },
+            "good": { "$ref": "#/definitions/unitInterval" },
+            "worn": { "$ref": "#/definitions/unitInterval" },
+            "damaged": { "$ref": "#/definitions/unitInterval" },
+            "poor": { "$ref": "#/definitions/unitInterval" },
+            "terrible": { "$ref": "#/definitions/unitInterval" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "collision": {
+      "type": "object",
+      "required": [
+        "check_full_footprint",
+        "require_walkable_tiles",
+        "allow_overlap_external_refs",
+        "cross_chunk_validation"
+      ],
+      "properties": {
+        "_comment": { "type": "string" },
+        "check_full_footprint": { "type": "boolean" },
+        "require_walkable_tiles": { "type": "boolean" },
+        "allow_overlap_external_refs": { "type": "boolean" },
+        "cross_chunk_validation": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "workshops": {
+      "type": "object",
+      "required": ["workers_per_workshop_max"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "workers_per_workshop_max": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "unitInterval": { "type": "number", "minimum": 0, "maximum": 1 },
+    "signedRange": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 }
+    },
+    "nonNegativeRange": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": { "type": "integer", "minimum": 0, "maximum": 2147483647 }
+    }
+  }
+}

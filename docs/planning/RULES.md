@@ -1,11 +1,16 @@
 # HumanFortress Engineering Rules
 Status: Active engineering policy
-Last rewritten: 2026-07-11
+Last consolidated: 2026-07-11
 
 ## 0. How To Read This Document
-This document defines the rules used to review and change HumanFortress.
+This document defines the rules used to review and change HumanFortress. It also
+retains the durable review lessons and optimization admission policy from the
+former planning documents. Current priority and evidence live only in
+`STAGED_REFACTOR_TARGET.md`.
 Rule labels are intentional:
-- **Current Normative** describes a boundary or invariant that the current codebase supports and must not regress.
+- **Current Normative** describes an enforced boundary or rule that current
+  changes must respect. Any known current violation is called out separately as
+  a Current Limitation.
 - **Current Limitation** records an observed gap. It is not permission to expand the gap.
 - **Target Normative** describes the required end state. It is a delivery target, not a claim that the implementation already satisfies it.
 - **Informative** explains rationale or gives examples.
@@ -14,7 +19,8 @@ When documents disagree:
 1. Current source behavior and executable tests establish what exists.
 2. Current Normative rules establish what new changes may do.
 3. Target Normative rules establish the refactor direction.
-4. Progress logs and archived documents are historical evidence only.
+4. The staged target records current execution evidence; archived documents are
+   historical evidence only.
 Do not weaken a behavior test merely to make an architecture claim pass.
 First determine whether the test found a runtime defect or only a stale textual guard.
 
@@ -30,8 +36,7 @@ First determine whether the test found a runtime defect or only a stale textual 
 ### Target Normative
 - Every tick produces one immutable committed state boundary.
 - Simulation work follows `ReadSnapshot -> Intent -> Resolve -> Commit` where parallel work is useful.
-- UI, save, replay hash, and diagnostics read committed data rather than a live mutable `World`.
-- A loaded save is a deterministic continuation, not merely a visually similar reconstruction.
+- UI, replay hash, and diagnostics read committed data rather than a live mutable `World`.
 
 ## 2. Module Boundaries
 ### Current Normative
@@ -73,7 +78,9 @@ First determine whether the test found a runtime defect or only a stale textual 
 `HumanFortress.App`
 - Owns SadConsole/MonoGame presentation, input mapping, layout, view state, startup shell, and user-facing diagnostics.
 - References only Contracts and Runtime projects.
-- Chooses content/save directories and presents Runtime-authored results.
+- Chooses content directories and presents Runtime-authored results.
+- Currently exposes no player save/load workflow and cannot access Runtime's
+  internal experimental persistence ports.
 - Must not perform save IO, decode save files, compare content signatures, mutate `World`, execute jobs, or implement gameplay rules.
 ### Current Limitation
 - `InternalsVisibleTo` is still used as migration scaffolding between lower implementation modules and Runtime/tests.
@@ -145,7 +152,8 @@ First determine whether the test found a runtime defect or only a stale textual 
 - Equal priority is resolved by explicit system order, ordinal stable ID, local sequence, or a domain-specific canonical tuple.
 - Documentation and UI labels must not describe a larger number as higher execution/conflict priority.
 ### Target Normative
-- Determinism tests cover long-running sessions, save/load continuation, and different scheduling configurations.
+- Determinism tests cover long-running sessions, cache temperature, worker counts,
+  process restarts, and supported runtime/platform configurations.
 - Replay checkpoint sections identify divergence by authority owner.
 - All behavior-affecting derived state is either included in the checkpoint or proven canonical when rebuilt.
 
@@ -240,15 +248,20 @@ First determine whether the test found a runtime defect or only a stale textual 
 ### Target Normative
 - The simulation thread publishes an immutable committed-state handle after post-tick commit.
 - Publication includes tick, schema version, session generation, sequence, and stable content/session identity.
-- UI, save, replay hash, and diagnostics derive their own DTOs from the same committed tick handle.
+- UI, replay hash, and diagnostics derive their own DTOs from the same committed tick handle.
 - Presentation polling never holds a simulation owner lock for expensive mapping.
 - A full snapshot is always available after delta-base loss or schema mismatch.
 
 ## 11. Save, Replay, And Content Binding
 ### Current Normative
-- Runtime owns save snapshot creation, slot manifests, codecs, directory IO, compatibility classification, migration, validation, restore plans, and restore execution.
-- App selects a directory and displays Runtime-authored DTOs; App never reads or patches `slot_manifest.json` or `runtime_snapshot.json`.
-- Save writes enter Runtime's durable temp-file/document writer. The current two-file slot slice is not a whole-slot atomic generation commit and must not be described as one.
+- Runtime owns an internal experimental snapshot export/restore substrate:
+  documents, manifests, codecs, directory IO, validation, development migration,
+  restore planning, and partial staged restore.
+- App has no save/load entry point, public save port, slot selection, manual save,
+  or autosave. Tests reach the substrate only through internal friend access.
+- Internal export writes enter Runtime's durable temp-file/document writer. The
+  current two-file package is not a player save slot or a whole-generation atomic
+  commit and must not be described as either.
 - Restore preflights and validates all supplied sections before committing a new active session.
 - Full restore is staged; a failed world, jobs, RNG, command, or content step leaves the current session unchanged.
 - Unknown, malformed, future, unsupported, or mechanically incompatible content fails closed with structured issues.
@@ -260,12 +273,17 @@ First determine whether the test found a runtime defect or only a stale textual 
 - Mechanical content compatibility decisions are Runtime-owned.
 - Numeric catalog IDs are not assumed stable across content sets without a verified binding/remap policy.
 - Empty job sections may restore as empty only when manifest counts and payload policy agree.
+- Current document versions are development-only and carry no backward-
+  compatibility promise.
+- Player save/load, autosave, persistence migration, and compatibility work are
+  explicitly outside the current refactor goal. Do not expand this substrate
+  until a future persistence milestone is activated.
 ### Current Limitation
 - Current full restore does not yet prove complete deterministic continuation for every authority field.
 - Tick, allocator high-water state, ordinary zones/profession state, exact movement state, and executed journal semantics require explicit closure or proof.
 - Current content signatures do not yet cover every mechanical property.
 - Some payload fields still bind to numeric material/catalog identifiers.
-### Target Normative
+### Deferred Target Normative
 - A save captures one committed tick and every field that can affect future simulation.
 - Restore reinstates tick, RNG, queues, cursors, allocator/generation state, jobs, reservations, and content bindings exactly.
 - A post-restore checkpoint hash equals the saved checkpoint before simulation resumes.
@@ -279,14 +297,23 @@ First determine whether the test found a runtime defect or only a stale textual 
 - UI actions map to semantic Runtime commands/facade calls.
 - App does not mutate Simulation managers, job executors, queues, or content registries.
 - App-local state is limited to presentation concerns such as selection, camera, drawers, focus, and transient interaction state.
-- The same world-to-screen transform is used for terrain, entities, overlays, hit testing, and selection.
-- Input handlers use the current event coordinates, not stale cached mouse coordinates.
 - UI cannot infer save compatibility, migration transforms, content remaps, or restore support.
 - UI may degrade gracefully when an optional read model is unavailable.
 - Debug actions that alter gameplay follow the same Runtime command boundary as normal actions.
 - App startup remains thin; parsing, native preload, strict content gate, headless init, and lifetime helpers stay focused.
+### Current Limitation
+- Terrain, entities, overlays, hover, hit testing, and selection do not yet share
+  one canonical world/screen transform at every zoom level.
+- Some click handling can prefer stale cached mouse/world state over the current
+  input event.
+- Some App configuration still encodes world-bound or content/gameplay policy
+  that should be authored by Runtime or Content.
 ### Target Normative
 - Every gameplay screen renders only immutable Runtime snapshots.
+- The same world-to-screen transform is used for terrain, entities, overlays,
+  hit testing, and selection.
+- Input handlers use the current event coordinates, not stale cached mouse
+  coordinates.
 - UI commands carry the snapshot tick/session generation needed to detect stale intents where relevant.
 - Rendering cadence and dropped frames cannot affect simulation results.
 - Coordinate transform behavior has desktop/mobile/zoom regression coverage appropriate to the App technology.
@@ -297,12 +324,13 @@ First determine whether the test found a runtime defect or only a stale textual 
 - Starting a new session resets all session-owned queues, logs, counters, RNG streams, caches, and publisher state together.
 - Stopping detaches tick handlers and background work before owned state is discarded.
 - A staged restore is not visible until every required section validates and restores successfully.
-- Session-owned data must not be stored in mutable statics.
-- Background work from an old session must not publish into a new session.
+- New session-owned data must not be stored in mutable statics.
 - Public session facades reject operations when no compatible active session exists.
 ### Current Limitation
 - The structured content registry and several logging callbacks still use process-global mutable/static compatibility paths; staging and multi-session tests must treat them as isolation debt.
 - Scheduler shutdown still uses an unbounded join without a system cancellation contract.
+- There is not yet one general session-generation token proving that every late
+  command, callback, or background result from an old session is rejected.
 ### Target Normative
 - Every session receives a generation token carried by commands, snapshots, async results, and save staging work.
 - Late work with an old generation is discarded deterministically.
@@ -352,42 +380,43 @@ Invariant breaches must:
 - Do not use the background scheduler thread for deterministic behavior tests.
 - Save/restore tests cover malformed input, atomic failure, hash round trip, and current-session preservation.
 - Item/reservation/topology fixes require focused behavior tests, not only source scans.
-- CI runs on supported platforms and treats warnings/errors consistently with repository policy.
-- Never claim full tests are green unless the complete harness completed successfully in the current verification context.
-Required local verification sequence:
+- CI runs on the repository's currently declared matrix and treats
+  warnings/errors consistently with repository policy.
+- Standard MSTest categories provide independently filterable `content-identity`,
+  `discoverable`, `end-to-end`, and `stage6-determinism` gates with TRX output.
+- Never claim full tests are green unless the required standard categories
+  completed successfully in the current verification context.
+- The canonical local commands and their current results live in Section 21 of
+  `STAGED_REFACTOR_TARGET.md`; do not fork another command list here.
+- Verification claims name the exact commands, commit, date, and result.
 
-```sh
-git status --short
-git diff --check
-/opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
-/opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
-/opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
-```
+**Dotnet execution rules:**
 
-Dotnet execution rules:
 - Do not run multiple build/test/App dotnet commands in parallel.
 - Wait for each dotnet process to exit before starting the next.
-- If a dotnet command has no output for about 30 seconds, inspect processes first:
-
-```sh
-pgrep -fl "dotnet|msbuild|VBCSCompiler|HumanFortress"
-```
-
+- If a dotnet command has no output for about 30 seconds, inspect processes with
+  the canonical diagnostic command before starting another.
 - VS Code Roslyn language-service processes alone do not prove the build is stuck.
 - Do not kill processes or rerun concurrently until the owning process is identified.
 ### Target Normative
-- Replace the custom smoke executable with standard discoverable/filterable test projects without losing current coverage.
-- Add long-horizon deterministic continuation tests and performance baselines.
-- Run architecture, behavior, determinism, content, and save compatibility suites as distinct CI gates.
+- Preserve standard discoverable/filterable tests and durable result artifacts
+  without losing the canonical ordered smoke lane.
+- Add longer repeated-process/nightly determinism and measured performance lanes
+  only when CI capacity and reference budgets are explicit.
+- Run architecture, behavior, determinism, and content suites as distinct CI
+  gates. Player save compatibility remains deferred with persistence.
 
 ## 16. Documentation And Refactor Workflow
 ### Current Normative
 - `RULES.md` records engineering policy, not batch-by-batch accomplishment claims.
-- `ARCHITECTURE_REFACTOR_MASTER_PLAN.md` records outcomes, workstreams, gates, and priority.
-- `REFACTOR_BATCH_PROGRESS.md` records verified evidence and current status.
+- `STAGED_REFACTOR_TARGET.md` is the sole owner of audit reconciliation,
+  execution priority, evidence, the B0 ledger, stages, and acceptance gates.
+- `AGENT_PROMPT.md` is a short session bootstrap and must not duplicate a
+  separate backlog or status ledger.
 - Architecture documents describe the current system and clearly label future design.
 - Historical status snapshots and obsolete plans move to `docs/archive`; do not rewrite them as current truth.
-- A progress percentage must be backed by explicit exit criteria. Avoid impressionistic `98%` or `99%` claims.
+- Do not publish a global completion percentage. Use contract states and
+  executable exit criteria.
 - Each audit finding is recorded as `reproduced`, `partially fixed`, `fixed + behavior-tested`, or `intentionally unsupported`.
 - Source-only work is labeled source-only until build/test verification finishes.
 - Documentation updates do not upgrade an implementation target to completed status.
@@ -401,11 +430,12 @@ pgrep -fl "dotnet|msbuild|VBCSCompiler|HumanFortress"
 4. Make the smallest coherent implementation change.
 5. Add or update behavior coverage.
 6. Run `git diff --check` and the narrowest relevant test.
-7. Run the required build/full harness/content gate when the batch is ready.
+7. Run the required build, standard behavior, content, and determinism gates when
+   the batch is ready.
 8. Update active planning documents with actual verification evidence.
 ### Target Normative
 - Planning is organized around authority contracts and executable gates, not file counts.
-- Completed goals are removed from active plans or summarized briefly; detailed history lives in the archive/progress log.
+- Completed goals are summarized in place; detailed history lives in Git and the archive.
 - Large refactors ship as vertical slices that leave the repository buildable and behavior-tested.
 
 ## 17. Review Checklist
@@ -429,14 +459,151 @@ Before approving a gameplay or architecture change, verify:
 - Architecture guards test durable seams rather than formatting.
 - Verification claims name the commands that actually completed.
 
-## 18. Immediate Architecture Priorities
-These are Target Normative delivery priorities, not current completion claims.
-1. Restore a green full harness and classify each audit finding with behavior evidence.
-2. Fix stack compatibility/index conservation, partial-path classification/cache policy, and App coordinate/input defects.
-3. Establish unified topology mutation and owner/generation reservation tokens.
-4. Close deterministic save continuation fields or return explicit `Unsupported` for incomplete modes.
-5. Publish immutable committed tick state and derive UI/save/replay reads from it.
-6. Introduce the first `ReadSnapshot -> Intent -> Resolve -> Commit` vertical slice for transport/item/reservation work.
-7. Complete canonical mechanical content hashing, schema validation, standard test discovery, and performance baselines.
-Do not introduce ECS, actor-model infrastructure, or broad parallel scheduling merely to satisfy a target diagram.
-Adopt them only if measured workload and ownership boundaries justify the added complexity.
+## 18. Execution Priority
+
+`STAGED_REFACTOR_TARGET.md` owns the current stage, ordered batches, B0 state,
+verification baseline, and foundation exit gate. Do not copy that list here.
+
+When a conflict exists, preserve the stable rules in this document and correct
+the staged work item. A plan may schedule how to close a Current Limitation; it
+may not waive a Current Normative boundary without an explicit architecture
+decision and corresponding policy change.
+
+## 19. Review Heuristics And Reusable Lessons
+
+### Informative
+
+Use these heuristics to detect architecture claims that are stronger than their
+implementation:
+
+- **Naming is not evidence.** A type named snapshot, deterministic, full,
+  transaction, or owner does not satisfy that contract by name.
+- **A partial-class split is not an ownership split.** Count mutable fields,
+  dependencies, lifecycle responsibilities, and call paths. Moving methods among
+  files can leave the same God Object intact while increasing navigation cost.
+- **A project graph is necessary, not sufficient.** App can still author gameplay
+  policy through hardcoded limits or category mappings without referencing a
+  lower project.
+- **Read means read.** Draining queues, advancing movement progress, changing
+  workshop entries, or renewing reservations during Read/Plan is authoritative
+  mutation even when a concurrent container makes it race-free.
+- **Failure isolation is not transactionality.** Catching or quarantining one
+  system does not roll back earlier logs or prove later writes are safe.
+- **A DTO copy is not a tick snapshot.** Locks can prevent a collection exception
+  while sections still describe different ticks. Coherence requires one
+  committed checkpoint identity.
+- **Save needs a barrier.** Sequentially capturing commands, RNG, jobs, World,
+  and hashes can produce a package that never existed at one tick.
+- **Restore success means continuation.** Reconstructing visible entities while
+  dropping tick, allocator, cursor, journal, reservation, or movement progress is
+  partial import, not full restore.
+- **Staging is not isolated when globals mutate.** A staging session that changes
+  process-global content or logging callbacks can affect the active session
+  before the final swap.
+- **Identity projections need collision policy.** Wider hashes reduce probability
+  but do not create uniqueness. Duplicate insertion must fail before overwrite.
+- **Stack merge is a conservation transaction.** Compatibility, surviving IDs,
+  quantities, containment, reservations, and every index change together.
+- **Reservation release is compare-and-remove.** Resource identity alone cannot
+  prove that cleanup from an old job owns the current reservation.
+- **Topology has one mutation contract.** Terrain, doors, placeables, construction,
+  versions, dirty sets, navigation rebuilds, and caches must observe one commit.
+- **Partial path is a different result.** Budget exhaustion is neither arrival nor
+  permanent no-path and must never enter a complete-route cache.
+- **Deterministic sorting is not fairness.** Bounded planners need persistent
+  cursor/age/retry state, which is save/replay authority.
+- **Schema loading is not schema validation.** Reproducible validation requires a
+  pinned validator, reference resolution, semantic checks, stable diagnostics,
+  and canonical mechanical hashes.
+- **Shutdown is an architecture contract.** An unbounded join can hang tests,
+  session replacement, and application exit even when gameplay logic is correct.
+- **Source guards are supplementary.** Use project metadata or analyzers for
+  dependency shape, behavior tests for runtime invariants, and continuation/hash
+  scenarios for determinism. Do not match incidental LINQ spelling or indentation.
+- **One fact needs one document owner.** Duplicated status, priority, or completion
+  prose inevitably drifts.
+
+## 20. Optimization Admission And Measurement
+
+### Current Normative
+
+An optimization may enter implementation only when:
+
+1. Its authoritative owner and mutation/read phase are explicit.
+2. A behavior, conservation, replay, or continuation test protects correctness.
+3. A deterministic, versioned workload demonstrates the bottleneck.
+4. A measurable budget and before/after result are recorded.
+5. Equivalent inputs produce the same authoritative result and hashes.
+
+An optimization must not:
+
+- add live World reads to App, save, rendering, or diagnostics;
+- use wall-clock values to decide simulation-visible work;
+- depend on dictionary order, thread completion order, or unstable hashes;
+- bypass command, intent/resolver, transaction, or commit ownership;
+- persist rebuildable navigation/render/spatial/presenter caches;
+- introduce another per-job path, reservation, or movement authority;
+- hide unsupported save/content state behind success;
+- make identity, content handles, or save migration less explicit.
+
+### Measurement policy
+
+The staged target owns current workload tiers. At minimum, measurements record:
+
+- tick p50/p95/p99/max and per-stage deterministic work counts;
+- allocation bytes per tick and committed publication;
+- path expansions, partials, cache events, and topology rebuilds;
+- planner scanned/accepted/deferred/starved counts and oldest wait;
+- snapshot bytes, presenter redraw scope, and peak working set;
+- final checkpoint hashes for every compared configuration.
+
+Counters are diagnostic and can be disabled without changing results. Wall-clock
+metrics never feed work budgets, backoff, ordering, or success decisions.
+
+### Informative candidates
+
+Only after the owning correctness contract and measurements exist, consider:
+
+- item/resource/tag indexes with deterministic rebuild and invalidation;
+- path-cache reverse-index and LRU maintenance;
+- owner queues and persistent fairness cursors instead of repeated global scans;
+- dirty committed read-model projections and virtualized presentation lists;
+- one Runtime-wide movement authority;
+- hierarchical navigation with exact A* fallback;
+- targeted hot/cold layout or pooled scratch buffers;
+- stage DAG or chunk-parallel resolve with declared read/write sets;
+- WorldGen algorithm and storage work backed by seed/hash/quality fixtures.
+
+ECS, Actor-per-chunk, GPU simulation, unsafe/SIMD-first rewrites, and parallel
+authoritative writes remain non-goals unless later evidence and an explicit ADR
+change that decision.
+
+## 21. Change Templates
+
+Architecture or correctness batch:
+
+```text
+Contract/B0:
+Problem reproduced:
+Authoritative owner before/after:
+Current mutation/read path:
+Target contract:
+Behavior tests added first:
+Save/replay/content impact:
+Verification commands and results:
+Known unsupported cases:
+Follow-up intentionally deferred:
+```
+
+Optimization batch:
+
+```text
+Owner and authoritative source:
+Derived state/index:
+Invalidation/rebuild path:
+Workload, seed, and target environment:
+Before measurement:
+After measurement:
+Correctness and replay tests:
+Fallback/rollback:
+```

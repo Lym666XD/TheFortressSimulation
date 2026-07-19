@@ -114,7 +114,7 @@ internal sealed partial class PlaceableInstance
     /// <summary>
     /// Door state (only if passability=doorway)
     /// </summary>
-    internal DoorState? DoorState { get; set; }
+    internal DoorState? DoorState { get; private set; }
 
     // === OWNERSHIP ===
     /// <summary>
@@ -149,7 +149,8 @@ internal sealed partial class PlaceableInstance
         string definitionId,
         Point position,
         int z,
-        Footprint footprint)
+        Footprint footprint,
+        DoorState? doorState = null)
     {
         Guid = guid;
         Kind = kind;
@@ -157,5 +158,15 @@ internal sealed partial class PlaceableInstance
         Position = position;
         Z = z;
         Footprint = footprint;
+        DoorState = doorState;
+    }
+
+    /// <summary>
+    /// Called only by the Simulation topology transaction after the footprint's
+    /// derived occupancy has been validated for the same committed state.
+    /// </summary>
+    internal void ApplyCommittedDoorState(DoorState doorState)
+    {
+        DoorState = doorState ?? throw new ArgumentNullException(nameof(doorState));
     }
 }

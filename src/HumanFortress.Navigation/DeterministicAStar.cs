@@ -26,7 +26,7 @@ internal sealed class DeterministicAStar
     /// <summary>
     /// Find path from source to destination.
     /// </summary>
-    internal NavPath FindPath(PathRequest request, IWorldNavigationView world)
+    internal NavPath FindPath(PathRequest request, IWorldNavigationView world, int nodeBudget)
     {
         // Reset state
         _openSet.Clear();
@@ -67,20 +67,28 @@ internal sealed class DeterministicAStar
         // A* main loop
         while (_openSet.Count > 0)
         {
-            // Check limits
-            if (_nodesExpanded >= _tuning.MaxNodesPerSearch)
-            {
-                return BuildPartialPath(request, world);
-            }
-
             // Pop best node
             var current = _openSet.Pop();
-            var currentNode = _nodeMap[current.Key];
+            if (_closedSet.Contains(current.Key)
+                || !_nodeMap.TryGetValue(current.Key, out var currentNode)
+                || current.F != currentNode.F
+                || current.H != currentNode.H
+                || current.G != currentNode.G)
+            {
+                continue;
+            }
 
             // Check if we reached the goal
             if (currentNode.Position == request.Destination)
             {
-                return BuildCompletePath(request, current.Key, world);
+                return BuildPath(PathResultKind.Found, current.Key, world);
+            }
+
+            // The goal check is deliberately first: reaching the destination does
+            // not require expanding it and must succeed at the exact budget edge.
+            if (_nodesExpanded >= nodeBudget)
+            {
+                return BuildPath(PathResultKind.Partial, current.Key, world);
             }
 
             // Move to closed set
@@ -319,7 +327,7 @@ internal sealed class DeterministicAStar
         }
     }
 
-    private NavPath BuildCompletePath(PathRequest request, ulong goalKey, IWorldNavigationView world)
+    private NavPath BuildPath(PathResultKind kind, ulong goalKey, IWorldNavigationView world)
     {
         var path = new List<PathNode>();
         var current = goalKey;
@@ -340,28 +348,7 @@ internal sealed class DeterministicAStar
         // Calculate path hash for determinism verification
         var hash = CalculatePathHash(path);
         var total = _nodeMap[goalKey].G; // scaled by FP
-        return new NavPath(PathResultKind.Found, path.Count, total, hash, path.ToArray());
-    }
-
-    private NavPath BuildPartialPath(PathRequest request, IWorldNavigationView world)
-    {
-        // Find the best frontier node (lowest F)
-        ulong bestKey = 0;
-        uint bestF = uint.MaxValue;
-
-        foreach (var entry in _openSet.GetAll())
-        {
-            if (entry.F < bestF)
-            {
-                bestF = entry.F;
-                bestKey = entry.Key;
-            }
-        }
-
-        if (bestKey == 0 || !_nodeMap.ContainsKey(bestKey))
-            return NavPath.Failed;
-
-        return BuildCompletePath(request, bestKey, world);
+        return new NavPath(kind, path.Count, total, hash, path.ToArray());
     }
 
     private static ulong PointToKey(Point3 point)

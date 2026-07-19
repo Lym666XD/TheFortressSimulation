@@ -1,3 +1,5 @@
+using HumanFortress.Contracts.Runtime;
+
 namespace HumanFortress.Contracts.Runtime.Snapshots;
 
 public readonly record struct MapViewportCellView(
@@ -98,7 +100,8 @@ public readonly record struct SimulationMapViewportData(
     int CameraY,
     int CurrentZ,
     IReadOnlyList<MapViewportCellView> Cells,
-    SimulationMapViewportDeltaData Delta = default)
+    SimulationMapViewportDeltaData Delta = default,
+    RuntimeViewportGeometry Viewport = default)
 {
     public static SimulationMapViewportData Unavailable { get; } = new(
         false,
@@ -109,5 +112,6 @@ public readonly record struct SimulationMapViewportData(
         0,
         0,
         Array.Empty<MapViewportCellView>(),
-        SimulationMapViewportDeltaData.Unavailable);
+        SimulationMapViewportDeltaData.Unavailable,
+        RuntimeViewportGeometry.Empty);
 }

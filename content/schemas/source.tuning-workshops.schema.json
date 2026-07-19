@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-workshops.schema.json",
+  "title": "Active workshop tuning",
+  "description": "Mechanical contract for craft queues, work duration scaling, workers, IO scanning, and attachment checks.",
+  "type": "object",
+  "required": [
+    "max_queued_recipes_default",
+    "craft_ticks_per_volume",
+    "workers_per_workshop",
+    "io_scan_radius",
+    "check_attachments"
+  ],
+  "properties": {
+    "_comment": { "type": "string" },
+    "max_queued_recipes_default": { "type": "integer", "minimum": 0 },
+    "craft_ticks_per_volume": { "type": "integer", "minimum": 1 },
+    "workers_per_workshop": { "type": "integer", "minimum": 1, "maximum": 8 },
+    "io_scan_radius": { "type": "integer", "minimum": 0, "maximum": 8 },
+    "check_attachments": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

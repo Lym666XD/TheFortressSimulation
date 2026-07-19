@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "transport-backlog-stress-v1",
+  "description": "Path and backlog stress fixture with dense competing transport requests over a multi-chunk flat topology.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "flat",
+    "sizeInChunks": 4,
+    "maxZ": 8,
+    "standableZ": 1,
+    "generationSeed": 3735928559
+  },
+  "workload": {
+    "initialCreatures": 100,
+    "itemInstances": 20000,
+    "transportRequests": 2000,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 5,
+  "measuredTicks": 95,
+  "checkpointInterval": 10,
+  "commandJournal": "journals/flat-scale.v1.json"
+}

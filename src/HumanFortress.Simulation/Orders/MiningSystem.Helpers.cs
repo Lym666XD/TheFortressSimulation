@@ -4,9 +4,9 @@ namespace HumanFortress.Simulation.Orders;
 
 internal sealed partial class MiningSystem
 {
-    private static void Log(string message)
+    private void Log(string message)
     {
-        SimulationDiagnostics.Information(LogCallback, "Jobs.Mining", message);
+        SimulationDiagnostics.Information(_world.Diagnostics, "Jobs.Mining", message);
     }
 
     private bool HasStandableAdjacency(int x, int y, int z)

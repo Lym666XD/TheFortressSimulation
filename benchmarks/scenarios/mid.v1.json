@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "mid-colony-v1",
+  "description": "Mid-colony scale evidence with the declared 250 workers, 50000 items, and 3000 transport jobs.",
+  "runtimeSeed": 5207652434759569989,
+  "world": {
+    "mode": "flat",
+    "sizeInChunks": 8,
+    "maxZ": 12,
+    "standableZ": 1,
+    "generationSeed": 12648430
+  },
+  "workload": {
+    "initialCreatures": 250,
+    "itemInstances": 50000,
+    "transportRequests": 3000,
+    "itemDefinitionId": "core_item_ingot_iron_wrought"
+  },
+  "warmupTicks": 5,
+  "measuredTicks": 45,
+  "checkpointInterval": 5,
+  "commandJournal": "journals/flat-scale.v1.json"
+}

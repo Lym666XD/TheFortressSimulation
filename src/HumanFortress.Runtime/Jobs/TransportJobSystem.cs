@@ -19,11 +19,12 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned transport executor.
 /// </summary>
-internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
+internal sealed class TransportJobSystem : IUnifiedTransportJobExecutor, IReadPlanStage
 {
     private readonly NavigationManager _nav;
     private readonly TransportJobExecutor _executor;
     private readonly IPathService _paths;
+    private readonly int _planningWorkerCount;
 
     internal TransportJobSystem(
         HumanFortress.Simulation.World.World world,
@@ -40,8 +41,13 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         IPathService? pathService = null,
         NavigationTuning? navigationTuning = null,
         RuntimeNavigationServices? navigationServices = null,
-        Action<string>? log = null)
+        Action<string>? log = null,
+        int planningWorkerCount = 1)
     {
+        if (planningWorkerCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(planningWorkerCount));
+
+        _planningWorkerCount = planningWorkerCount;
         var tuning = navigationTuning ?? NavigationTuning.Default;
         _nav = sharedNav ?? SimulationNavigationFactory.Create(world, rebuildAll: true, tuning);
         var jobNavigation = (navigationServices ?? new RuntimeNavigationServices(null, tuning)).CreateJobServices(_nav, pathService);
@@ -50,21 +56,28 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
         ITransportWorkerCandidateSource? workerCandidates = professions == null
             ? null
             : new TransportProfessionCandidateSource(professions, workerStrategy);
-        ITransportJobCompletionSink? completionSink = professions == null
+        TransportProfessionCompletionSink? professionCompletionSink = professions == null
             ? null
             : new TransportProfessionCompletionSink(professions, "hauling");
+        ITransportJobCompletionSink? completionSink = professionCompletionSink;
         var diffEmitter = new TransportDiffEmitter(
             diffLog,
             itemsDiffLog ?? throw new ArgumentNullException(nameof(itemsDiffLog), "TransportJobSystem requires ItemsDiffLog for deterministic split-stack hauling."),
             UpdateOrder.Priority.Jobs,
             TransportJobExecutor.SystemId);
-        ITransportStockpileIndexEmitter? stockpileIndexEmitter = stockpileDiffLog == null
+        TransportStockpileIndexEmitter? stockpileIndexEmitter = stockpileDiffLog == null
             ? null
             : new TransportStockpileIndexEmitter(
                 world,
                 stockpileDiffLog,
                 UpdateOrder.Priority.Jobs,
                 TransportJobExecutor.SystemId);
+        var commitParticipants = new List<ITransportCommitMutationParticipant> { diffEmitter };
+        if (stockpileIndexEmitter != null)
+            commitParticipants.Add(stockpileIndexEmitter);
+        if (professionCompletionSink != null)
+            commitParticipants.Add(professionCompletionSink);
+        var commitMutations = new TransportCommitMutationCoordinator(commitParticipants.ToArray());
 
         _executor = new TransportJobExecutor(
             world,
@@ -77,6 +90,7 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
             stockpileIndexEmitter,
             workerCandidates,
             completionSink,
+            commitMutations,
             logger,
             intakeBudget,
             carryoverMaxTicks,
@@ -84,6 +98,8 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
     }
 
     internal int LastIntakeCount => _executor.LastIntakeCount;
+
+    internal int PlanningWorkerCountConfigured => _planningWorkerCount;
 
     internal int Priority => UpdateOrder.Priority.Jobs;
 
@@ -95,17 +111,24 @@ internal sealed class TransportJobSystem : ITick, IUnifiedTransportJobExecutor
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
+    internal void PrepareSequentialCompatibility(ulong tick) => _executor.PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
-    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
+    void IReadPlanStage.ReadPlan(ulong tick) => _executor.ReadPlan(tick, _planningWorkerCount);
 
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    internal void ReadPlan(ulong tick, int workerCount = 1) => _executor.ReadPlan(tick, workerCount);
+
+    internal void SetCommitProbe(Action<TransportCommitStage>? probe) => _executor.SetCommitProbe(probe);
+
+    internal MovementCursorData? GetMovementCursorSnapshot(Guid creatureId) =>
+        _executor.GetMovementCursorSnapshot(creatureId);
 
     internal TransportJobStatsSnapshot GetLastStatsSnapshot() => _executor.GetLastStatsSnapshot();
 

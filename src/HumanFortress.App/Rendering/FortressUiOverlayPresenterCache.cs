@@ -13,6 +13,7 @@ internal sealed class FortressUiOverlayPresenterCache
     private SimulationStockpileDetailData? _stockpileDetail;
     private SimulationZoneOverlayData _zoneOverlay;
     private SimulationZoneDetailData? _zoneDetail;
+    private SimulationZoneCatalogData _zoneCatalog;
     private SimulationManagementDrawerData? _managementDrawer;
     private SimulationWorkDrawerData? _workDrawer;
     private SimulationDebugMenuData? _debugMenu;
@@ -42,6 +43,7 @@ internal sealed class FortressUiOverlayPresenterCache
         _stockpileDetail = null;
         _zoneOverlay = default;
         _zoneDetail = null;
+        _zoneCatalog = default;
         _managementDrawer = null;
         _workDrawer = null;
         _debugMenu = null;
@@ -70,6 +72,7 @@ internal sealed class FortressUiOverlayPresenterCache
         _stockpileDetail = overlayData.StockpileDetail;
         _zoneOverlay = overlayData.ZoneOverlay;
         _zoneDetail = overlayData.ZoneDetail;
+        _zoneCatalog = overlayData.ZoneCatalog;
         _managementDrawer = overlayData.ManagementDrawer;
         _workDrawer = overlayData.WorkDrawer;
         _debugMenu = overlayData.DebugMenu;
@@ -107,6 +110,9 @@ internal sealed class FortressUiOverlayPresenterCache
                 case SimulationUiOverlayFrameSection.ZoneDetail:
                     _zoneDetail = overlayData.ZoneDetail;
                     break;
+                case SimulationUiOverlayFrameSection.ZoneCatalog:
+                    _zoneCatalog = overlayData.ZoneCatalog;
+                    break;
                 case SimulationUiOverlayFrameSection.ManagementDrawer:
                     _managementDrawer = overlayData.ManagementDrawer;
                     break;
@@ -132,6 +138,7 @@ internal sealed class FortressUiOverlayPresenterCache
             StockpileDetail = _stockpileDetail,
             ZoneOverlay = _zoneOverlay,
             ZoneDetail = _zoneDetail,
+            ZoneCatalog = _zoneCatalog,
             ManagementDrawer = _managementDrawer,
             WorkDrawer = _workDrawer,
             DebugMenu = _debugMenu

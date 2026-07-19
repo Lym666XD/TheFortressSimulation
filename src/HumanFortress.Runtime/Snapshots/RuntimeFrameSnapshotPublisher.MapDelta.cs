@@ -221,7 +221,7 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
     {
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("runtime.frame.map-viewport.payload.v1");
+            hash.AddString("runtime.frame.map-viewport.payload.v2");
             hash.AddBoolean(mapViewport.IsAvailable);
             hash.AddBoolean(mapViewport.HasWorld);
             hash.AddInt32(mapViewport.Width);
@@ -229,6 +229,7 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
             hash.AddInt32(mapViewport.CameraX);
             hash.AddInt32(mapViewport.CameraY);
             hash.AddInt32(mapViewport.CurrentZ);
+            AddViewport(hash, mapViewport.Viewport);
             hash.AddInt32(finalCells.Count);
             foreach (var cell in finalCells)
                 AddMapViewportCell(hash, cell);

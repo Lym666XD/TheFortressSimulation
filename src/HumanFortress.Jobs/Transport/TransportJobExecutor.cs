@@ -2,6 +2,7 @@ using HumanFortress.Contracts.Navigation;
 using System;
 using System.Collections.Generic;
 using HumanFortress.Simulation.Jobs;
+using HumanFortress.Jobs.Transport.Planning;
 using WorldModel = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Jobs.Transport;
@@ -22,11 +23,13 @@ internal sealed partial class TransportJobExecutor
     private readonly TransportIntakeFilter _intakeFilter;
     private readonly TransportAssignmentHandler _assignmentHandler;
     private readonly TransportActiveJobRunner _activeJobRunner;
+    private readonly TransportCommitMutationCoordinator _commitMutations;
     private readonly TransportStatsTracker _statsTracker = new();
 
     private readonly List<TransportRequest> _inboxBuffer = new();
     private readonly TransportBacklogBuffer _backlog = new();
     private readonly List<ActiveJob> _active = new();
+    private PreparedTransportTick? _preparedTick;
 
     private readonly int _configuredIntakePerTick;
     private readonly int _configuredMaxActive;
@@ -46,6 +49,7 @@ internal sealed partial class TransportJobExecutor
         ITransportStockpileIndexEmitter? stockpileIndexEmitter,
         ITransportWorkerCandidateSource? workerCandidates,
         ITransportJobCompletionSink? completionSink,
+        TransportCommitMutationCoordinator commitMutations,
         ITransportJobLogger? logger,
         int intakeBudget,
         int carryoverMaxTicks,
@@ -57,6 +61,7 @@ internal sealed partial class TransportJobExecutor
         _navView = navView ?? throw new ArgumentNullException(nameof(navView));
         move = move ?? throw new ArgumentNullException(nameof(move));
         _move = move;
+        _commitMutations = commitMutations ?? throw new ArgumentNullException(nameof(commitMutations));
         _logger = logger ?? NullTransportJobLogger.Instance;
         _intakeFilter = new TransportIntakeFilter(world);
         stockpileIndexEmitter ??= NullTransportStockpileIndexEmitter.Instance;
@@ -108,7 +113,6 @@ internal sealed partial class TransportJobExecutor
             jobFinalizer,
             pickupHandler,
             deliveryHandler,
-            SystemId,
             CreatureReserveTtlTicks);
 
         _configuredIntakePerTick = Math.Max(1, intakeBudget);

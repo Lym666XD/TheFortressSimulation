@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Navigation;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Orders;
 using SadRogue.Primitives;
@@ -64,14 +65,29 @@ internal sealed class MiningReadJobProcessor
             return;
         }
 
-        var job = _assignmentHandler.TryAssign(dig, new Point(adjacent.Value.X, adjacent.Value.Y), creatures, busy, tick, middleAlreadySatisfied);
+        var job = _assignmentHandler.TryAssign(
+            dig,
+            new Point(adjacent.Value.X, adjacent.Value.Y),
+            creatures,
+            busy,
+            tick,
+            middleAlreadySatisfied,
+            out bool increasePathSearchAttempt);
         if (job != null)
         {
             active.Add(job);
             return;
         }
 
-        RequeueIfActive(dig, tick);
+        var retry = increasePathSearchAttempt
+            ? dig with
+            {
+                PathSearchAttempt = dig.PathSearchAttempt >= PathRequest.MaxSearchAttempt
+                    ? PathRequest.MaxSearchAttempt
+                    : (byte)(dig.PathSearchAttempt + 1)
+            }
+            : dig;
+        RequeueIfActive(retry, tick);
         _logger.Log($"[MINING][{tick}] No worker for target=({dig.Cell.X},{dig.Cell.Y},{dig.Z}) id={dig.DesignationId}");
     }
 

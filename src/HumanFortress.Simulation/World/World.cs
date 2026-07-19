@@ -1,4 +1,5 @@
 using HumanFortress.Core.Commands;
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.Tiles;
 using HumanFortress.Simulation.Creatures;
@@ -10,7 +11,7 @@ namespace HumanFortress.Simulation.World;
 /// World manager handling chunks and LOD per SIM_LOD_POLICY.md.
 /// Fortress size: N×N chunks; chunk = 32×32×Z tiles.
 /// </summary>
-internal sealed class World : IWorldReader
+internal sealed partial class World : IWorldReader
 {
     internal const int MinSizeInChunks = FortressSessionSizeLimits.MinFortressSize;
     internal const int MaxSizeInChunks = FortressSessionSizeLimits.MaxFortressSize;
@@ -21,6 +22,8 @@ internal sealed class World : IWorldReader
     private readonly System.Collections.Generic.HashSet<ChunkKey> _dirtyChunks = new();
     private readonly object _chunkLock = new();
     private readonly object _dirtyLock = new();
+    private readonly object _topologyLock = new();
+    private IDiagnosticSink _diagnostics;
 
     // Global managers (singleton per world)
     internal CreatureManager Creatures { get; }
@@ -30,7 +33,7 @@ internal sealed class World : IWorldReader
     internal HumanFortress.Simulation.Jobs.ReservationManager Reservations { get; }
     internal HumanFortress.Simulation.Zones.ZoneCoordinator Zones { get; }
 
-    internal World(int sizeInChunks, int maxZ)
+    internal World(int sizeInChunks, int maxZ, IDiagnosticSink? diagnostics = null)
     {
         if (sizeInChunks < MinSizeInChunks || sizeInChunks > MaxSizeInChunks)
             throw new ArgumentException($"Size must be between {MinSizeInChunks} and {MaxSizeInChunks} chunks", nameof(sizeInChunks));
@@ -38,11 +41,12 @@ internal sealed class World : IWorldReader
         _sizeInChunks = sizeInChunks;
         _maxZ = maxZ;
         _chunks = new Dictionary<ChunkKey, Chunk>();
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
 
         // Initialize managers
-        Creatures = new CreatureManager();
-        Items = new ItemManager();
-        Orders = new HumanFortress.Simulation.Orders.OrdersManager();
+        Creatures = new CreatureManager(_diagnostics);
+        Items = new ItemManager(_diagnostics);
+        Orders = new HumanFortress.Simulation.Orders.OrdersManager(_diagnostics);
         Stockpiles = new HumanFortress.Simulation.Stockpile.StockpileManager();
         Reservations = new HumanFortress.Simulation.Jobs.ReservationManager();
 
@@ -51,6 +55,24 @@ internal sealed class World : IWorldReader
 
         // Set self-reference
         Creatures.SetWorld(this);
+    }
+
+    internal IDiagnosticSink Diagnostics => _diagnostics;
+
+    /// <summary>
+    /// Serializes validate-and-commit topology transactions. Simulation topology
+    /// writers hold this lock from their first authoritative read through the
+    /// final dirty-set publication, so validation cannot be invalidated by a
+    /// concurrent placeable/door/terrain writer.
+    /// </summary>
+    internal object TopologyLock => _topologyLock;
+
+    internal void SetDiagnostics(IDiagnosticSink diagnostics)
+    {
+        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+        Creatures.SetDiagnostics(diagnostics);
+        Items.SetDiagnostics(diagnostics);
+        Orders.SetDiagnostics(diagnostics);
     }
 
     /// <summary>

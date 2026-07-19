@@ -2,7 +2,7 @@ namespace HumanFortress.Contracts.Runtime.Snapshots;
 
 public static class SimulationUiOverlayFrameDeltaSchema
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 }
 
 public static class SimulationUiOverlayFrameSection
@@ -15,6 +15,7 @@ public static class SimulationUiOverlayFrameSection
     public const string StockpileDetail = "stockpile-detail";
     public const string ZoneOverlay = "zone-overlay";
     public const string ZoneDetail = "zone-detail";
+    public const string ZoneCatalog = "zone-catalog";
     public const string ManagementDrawer = "management-drawer";
     public const string WorkDrawer = "work-drawer";
     public const string DebugMenu = "debug-menu";
@@ -93,4 +94,5 @@ public readonly record struct SimulationUiOverlayFrameData(
     SimulationSnapshotMetadata Metadata = default,
     SimulationSnapshotPublicationData Publication = default,
     SimulationSnapshotPresenterFrameData PresenterFrame = default,
-    SimulationUiOverlayFrameDeltaData Delta = default);
+    SimulationUiOverlayFrameDeltaData Delta = default,
+    SimulationZoneCatalogData ZoneCatalog = default);

@@ -18,7 +18,10 @@ internal static partial class WorldSavePayloadRestorer
             payload.DefinitionId,
             ToPoint(payload.Position),
             payload.Z,
-            new Footprint(payload.Footprint.W, payload.Footprint.D, payload.Footprint.H))
+            new Footprint(payload.Footprint.W, payload.Footprint.D, payload.Footprint.H),
+            payload.DoorState.HasValue
+                ? new DoorState(payload.DoorState.Value.IsOpen, payload.DoorState.Value.IsLocked)
+                : null)
         {
             SourceItemGuid = payload.SourceItemGuid,
             SourceItemMaterial = payload.SourceItemMaterial,
@@ -37,13 +40,6 @@ internal static partial class WorldSavePayloadRestorer
             ConstructionSite = ToConstructionSite(payload.ConstructionSite),
             Workshop = payload.Workshop.HasValue
                 ? WorkshopState.RestoreSnapshot(payload.Workshop.Value)
-                : null,
-            DoorState = payload.DoorState.HasValue
-                ? new DoorState
-                {
-                    IsOpen = payload.DoorState.Value.IsOpen,
-                    IsLocked = payload.DoorState.Value.IsLocked
-                }
                 : null,
             OwnerFactionId = payload.OwnerFactionId,
             OwnerCreatureGuid = payload.OwnerCreatureGuid,

@@ -11,7 +11,8 @@ internal readonly record struct CraftActiveJobStateSnapshot(
     CraftJobStage Stage,
     int WorkTicksRemaining,
     Point Anchor,
-    int Z);
+    int Z,
+    byte PathSearchAttempt = 0);
 
 internal readonly record struct CraftBacklogEntrySnapshot(
     int Order,

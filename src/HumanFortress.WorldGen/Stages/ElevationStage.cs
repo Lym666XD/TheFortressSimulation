@@ -1,5 +1,4 @@
 using System;
-using HumanFortress.Core.Random;
 using HumanFortress.Core.World;
 
 namespace HumanFortress.WorldGen.Implementation.Stages
@@ -13,7 +12,6 @@ namespace HumanFortress.WorldGen.Implementation.Stages
         internal void Execute(WorldGenContext context)
         {
             var seed = context.GetStageSeed(Name);
-            var rng = new DeterministicRng(seed);
 
             for (int x = 0; x < context.Width; x++)
             {
@@ -35,17 +33,17 @@ namespace HumanFortress.WorldGen.Implementation.Stages
             float nx = (float)x / width;
             float ny = (float)y / height;
 
-            float ridged = RidgedNoise(nx * 4, ny * 4, seed);
-            float simplex = SimplexNoise(nx * 8, ny * 8, seed + 1000);
+            float ridgedHash = RidgedFractalCoordinateHash(nx * 4, ny * 4, seed);
+            float normalizedHash = NormalizedFractalCoordinateHash(nx * 8, ny * 8, seed + 1000);
             
-            float elevation = (ridged * 0.7f + simplex * 0.3f);
+            float elevation = (ridgedHash * 0.7f + normalizedHash * 0.3f);
             
             elevation = Math.Max(0, Math.Min(1, elevation));
             
             return elevation;
         }
         
-        private float RidgedNoise(float x, float y, uint seed)
+        private static float RidgedFractalCoordinateHash(float x, float y, uint seed)
         {
             float value = 0;
             float amplitude = 1;
@@ -54,7 +52,7 @@ namespace HumanFortress.WorldGen.Implementation.Stages
             
             for (int i = 0; i < 4; i++)
             {
-                float n = 1 - Math.Abs(PseudoRandom(x * frequency + seed, y * frequency + seed));
+                float n = 1 - Math.Abs(CoordinateHashValue(x * frequency, y * frequency, seed));
                 n = n * n;
                 value += n * amplitude;
                 maxValue += amplitude;
@@ -65,7 +63,7 @@ namespace HumanFortress.WorldGen.Implementation.Stages
             return value / maxValue;
         }
         
-        private float SimplexNoise(float x, float y, uint seed)
+        private static float NormalizedFractalCoordinateHash(float x, float y, uint seed)
         {
             float value = 0;
             float amplitude = 1;
@@ -74,7 +72,7 @@ namespace HumanFortress.WorldGen.Implementation.Stages
             
             for (int i = 0; i < 3; i++)
             {
-                value += PseudoRandom(x * frequency + seed, y * frequency + seed) * amplitude;
+                value += CoordinateHashValue(x * frequency, y * frequency, seed) * amplitude;
                 maxValue += amplitude;
                 amplitude *= 0.5f;
                 frequency *= 2;
@@ -83,11 +81,16 @@ namespace HumanFortress.WorldGen.Implementation.Stages
             return (value / maxValue + 1) * 0.5f;
         }
         
-        private float PseudoRandom(float x, float y)
+        private static float CoordinateHashValue(float x, float y, uint seed)
         {
-            int n = (int)(x * 1619 + y * 31337);
+            // Mix the seed after quantizing the coordinates. Adding a 32-bit
+            // seed to float coordinates erases their fractional differences.
+            int coordinate = (int)(x * 1619 + y * 31337);
+            int n = coordinate ^ unchecked((int)(seed * 6971u));
             n = (n << 13) ^ n;
-            return (1.0f - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0f);
+            return 1.0f - unchecked(
+                (n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff)
+                / 1073741824.0f;
         }
     }
 }

@@ -18,7 +18,6 @@ internal readonly record struct WorkshopDiff
     internal WorkshopDiffOp Op { get; init; }
     internal Guid WorkshopGuid { get; init; }
     internal string RecipeId { get; init; }
-    internal string RecipeName { get; init; }
     internal Guid? EntryId { get; init; }
     internal int IntValue { get; init; }
     internal int MoveOffset { get; init; }

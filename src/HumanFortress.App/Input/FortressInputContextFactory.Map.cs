@@ -1,3 +1,5 @@
+using HumanFortress.Contracts.Runtime;
+
 namespace HumanFortress.App.Input;
 
 internal sealed partial class FortressInputContextFactory
@@ -8,7 +10,6 @@ internal sealed partial class FortressInputContextFactory
             _view,
             _view.MapSurface,
             _viewport.Capture(),
-            _fortressSizeProvider(),
             _view.SelectionTool,
             _uiTickProvider());
     }
@@ -19,10 +20,19 @@ internal sealed partial class FortressInputContextFactory
             _view.HasMapSurface,
             _ui,
             _viewport.Capture(),
-            _fortressSizeProvider(),
+            CreateMapViewportGeometry(),
             CreateDebugSpawn(),
             CreateMapClick(),
             CreatePlacement());
+    }
+
+    private RuntimeViewportGeometry CreateMapViewportGeometry()
+    {
+        return _viewport.Capture().CreateGeometry(new RuntimeRect(
+            0,
+            0,
+            _view.MapWidthOr(0),
+            _view.MapHeightOr(0)));
     }
 
     private FortressPlacementRouterContext CreatePlacement()
@@ -32,7 +42,7 @@ internal sealed partial class FortressInputContextFactory
             _mapRuntime.Placement,
             _loadedSession.UiServices,
             _view.SelectionTool,
-            _fortressSizeProvider(),
+            _viewport.WorldBounds,
             _viewport.CurrentZ,
             _uiTickProvider(),
             _drawUi);

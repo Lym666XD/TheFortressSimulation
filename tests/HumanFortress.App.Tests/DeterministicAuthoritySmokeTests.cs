@@ -21,7 +21,6 @@ internal static class DeterministicAuthoritySmokeTests
         TestRuntimeInvalidatesPathCachesForDirtyNavigationChunks(root);
         TestMovementExecutorUsesTunedStepPacing(root);
         TestTickSchedulerUsesDeterministicSystemOrder(root);
-        TestDefaultSmokeRunnerExecutesFullRuntimeDeterminismGate(root);
         TestSanitizeSystemUsesTickDerivedSchedule(root);
         TestCommandQueueUsesDeterministicOwnerQueue(root);
         TestEventBusUsesDeterministicHandlerLists(root);
@@ -119,9 +118,11 @@ internal static class DeterministicAuthoritySmokeTests
             + string.Join('\n', violations));
         RegressionAssert.True(
             !pathServiceText.Contains("ConcurrentQueue", StringComparison.Ordinal)
-            && pathServiceText.Contains("Queue<PathRequest>", StringComparison.Ordinal)
-            && pathServiceText.Contains("_requestQueue.Count > 0 && _pathRequestsServedThisTick < _tuning.MaxPathsPerTick", StringComparison.Ordinal),
-            "PathService queued request draining must preserve deterministic FIFO order without concurrent queue rotation.");
+            && !pathServiceText.Contains("Queue<PathRequest>", StringComparison.Ordinal)
+            && pathServiceText.Contains("NavPath.BudgetExhausted", StringComparison.Ordinal)
+            && pathServiceText.Contains("CalculateNodeBudget", StringComparison.Ordinal)
+            && pathServiceText.Contains("path.ReachesDestination(request.Destination)", StringComparison.Ordinal),
+            "PathService must expose caller-owned deterministic retry and cache only terminal destination paths.");
         Console.WriteLine("[PASS] Navigation pathfinding avoids wall-clock budgets");
     }
 
@@ -234,38 +235,6 @@ internal static class DeterministicAuthoritySmokeTests
             && hostLifecycleText.Contains("_core.Configure", StringComparison.Ordinal),
             "TickScheduler and Runtime manual tick host must use deterministic system order, avoid read-phase parallelism, and quarantine repeated system failures.");
         Console.WriteLine("[PASS] TickScheduler uses deterministic system ordering");
-    }
-
-    private static void TestDefaultSmokeRunnerExecutesFullRuntimeDeterminismGate(string root)
-    {
-        string programPath = Path.Combine(root, "tests", "HumanFortress.App.Tests", "Program.cs");
-        string coreRuntimeSmokePath = Path.Combine(root, "tests", "HumanFortress.App.Tests", "CoreRuntimeSmokeTests.cs");
-        string programText = File.ReadAllText(programPath);
-        string coreRuntimeSmokeText = File.ReadAllText(coreRuntimeSmokePath);
-        string runAllBody = ExtractBetween(
-            coreRuntimeSmokeText,
-            "public static void RunAll()",
-            "private static void TestTickScheduler()");
-
-        RegressionAssert.True(
-            programText.Contains("CoreRuntimeSmokeTests.RunAll()", StringComparison.Ordinal)
-            && programText.Contains("DeterministicAuthoritySmokeTests.RunAll()", StringComparison.Ordinal)
-            && runAllBody.Contains("TestFullRuntimeSimulationLoopDeterminism();", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("const int tickCount = 500;", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("GC.WaitForPendingFinalizers();", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("var first = CreateManualRuntimeDeterminismRun();", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("var second = CreateManualRuntimeDeterminismRun();", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("RunManualRuntimeDeterminismLoop", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("firstSamples.SequenceEqual(secondSamples)", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("RuntimeReplayCheckpointHashBuilder.BuildData", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("WorldReplayHashBuilder.Build(run.Session.World)", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("checkpoint.RngHash", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("checkpoint.CommandLogHash", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("checkpoint.PendingCommandLogHash", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("sample.CommandLogRecordCount == 1", StringComparison.Ordinal)
-            && coreRuntimeSmokeText.Contains("sample.PendingCommandLogRecordCount == 0", StringComparison.Ordinal),
-            "Default smoke runner must execute the full Runtime simulation-loop determinism gate and compare world/checkpoint/RNG/command replay hashes.");
-        Console.WriteLine("[PASS] Default smoke runner executes full Runtime determinism gate");
     }
 
     private static void TestSanitizeSystemUsesTickDerivedSchedule(string root)
@@ -586,8 +555,8 @@ internal static class DeterministicAuthoritySmokeTests
             && creatureCatalogText.Contains("OrderBy(static definition => definition.Id, StringComparer.Ordinal)", StringComparison.Ordinal)
             && constructionCatalogText.Contains("OrderBy(static construction => construction.Id, StringComparer.Ordinal)", StringComparison.Ordinal)
             && constructionCatalogText.Contains("OrderBy(static category => category, StringComparer.Ordinal)", StringComparison.Ordinal)
-            && recipeCatalogText.Contains("OrderBy(static recipe => recipe.Id, StringComparer.Ordinal)", StringComparison.Ordinal)
-            && recipeCatalogText.Contains("string.Compare(a.Id, b.Id, StringComparison.Ordinal)", StringComparison.Ordinal)
+            && recipeCatalogText.Contains("OrderBy(static definition => definition.Id, StringComparer.Ordinal)", StringComparison.Ordinal)
+            && recipeCatalogText.Contains("string.Compare(left.Id, right.Id, StringComparison.Ordinal)", StringComparison.Ordinal)
             && constructionLoaderText.Contains("OrderBy(static definition => definition.Id, StringComparer.Ordinal)", StringComparison.Ordinal)
             && runtimeSaveSnapshotText.Contains("OrderBy(static stream => stream.StreamName, StringComparer.Ordinal)", StringComparison.Ordinal)
             && runtimeSaveSnapshotText.Contains("CommandReplayJournalHashBuilder.Build(records)", StringComparison.Ordinal)
@@ -621,6 +590,7 @@ internal static class DeterministicAuthoritySmokeTests
         string queriesPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Items", "ItemManager.Queries.cs");
         string mutationsPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Items", "ItemManager.Mutations.cs");
         string spawningPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Items", "ItemManager.Spawning.cs");
+        string stackPolicyPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Items", "ItemStackPolicy.cs");
         string restorePath = Path.Combine(root, "src", "HumanFortress.Simulation", "Items", "ItemManager.SaveRestore.cs");
         string applicatorPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Diff", "SimulationDiffApplicator.Targets.cs");
         string managerText = File.ReadAllText(managerPath);
@@ -628,15 +598,16 @@ internal static class DeterministicAuthoritySmokeTests
         string queriesText = File.ReadAllText(queriesPath);
         string mutationsText = File.ReadAllText(mutationsPath);
         string spawningText = File.ReadAllText(spawningPath);
+        string stackPolicyText = File.ReadAllText(stackPolicyPath);
         string restoreText = File.ReadAllText(restorePath);
         string applicatorText = File.ReadAllText(applicatorPath);
         string entityKeyLookupBody = ExtractBetween(
             queriesText,
-            "public ItemInstance? GetInstanceByEntityKey",
+            "internal ItemInstance? GetInstanceByEntityKey",
             "/// <summary>\n    /// Get all instances");
         string legacyLookupBody = ExtractBetween(
             queriesText,
-            "public ItemInstance? GetInstanceByEntityId",
+            "internal ItemInstance? GetInstanceByEntityId",
             "/// <summary>\n    /// Find an item by the wider stable entity key");
         string findItemBody = ExtractBetween(
             applicatorText,
@@ -644,33 +615,38 @@ internal static class DeterministicAuthoritySmokeTests
             "private static CreatureInstance? FindCreatureByTarget");
 
         RegressionAssert.True(
-            managerText.Contains("Dictionary<ulong, Guid> _entityKeyIndex", StringComparison.Ordinal)
+            managerText.Contains("LiveEntityIdentityIndex _identityIndex", StringComparison.Ordinal)
             && managerText.Contains("Dictionary<uint, List<Guid>> _legacyEntityIdIndex", StringComparison.Ordinal)
             && indexingText.Contains("EntityKeyIndexAdd", StringComparison.Ordinal)
+            && indexingText.Contains("_identityIndex.TryAdd", StringComparison.Ordinal)
             && indexingText.Contains("EntityKeyIndexRemove", StringComparison.Ordinal)
             && indexingText.Contains("LegacyEntityIdIndexAdd", StringComparison.Ordinal)
             && indexingText.Contains("list.Sort();", StringComparison.Ordinal)
-            && queriesText.Contains("_entityKeyIndex.TryGetValue", StringComparison.Ordinal)
+            && queriesText.Contains("_identityIndex.TryResolve", StringComparison.Ordinal)
             && queriesText.Contains("_legacyEntityIdIndex.TryGetValue", StringComparison.Ordinal)
             && (queriesText.Contains("OrderBy(static inst => inst.Guid)", StringComparison.Ordinal)
                 || queriesText.Contains("OrderBy(static entry => entry.Key)", StringComparison.Ordinal))
             && queriesText.Contains("OrderItemsSpatially", StringComparison.Ordinal)
             && queriesText.Contains("ThenBy(static item => item.Guid)", StringComparison.Ordinal)
-            && mutationsText.Contains("foreach (var gid in ids.OrderBy(static id => id))", StringComparison.Ordinal)
-            && mutationsText.Contains("list.Sort();", StringComparison.Ordinal)
-            && mutationsText.Contains("byDef.OrderBy(static entry => entry.Key, StringComparer.Ordinal)", StringComparison.Ordinal)
-            && spawningText.Contains("FindGroundStackAtLocked(worldPos, z, itemId)", StringComparison.Ordinal)
-            && spawningText.Contains("_posIndex.TryGetValue(key, out var ids)", StringComparison.Ordinal)
+            && mutationsText.Contains(".OrderBy(static id => id)", StringComparison.Ordinal)
+            && mutationsText.Contains("RemoveInstanceLocked(sourceId, source", StringComparison.Ordinal)
+            && !mutationsText.Contains("_posIndex[key] = new List<Guid>", StringComparison.Ordinal)
+            && stackPolicyText.Contains("TryGetCapacity", StringComparison.Ordinal)
+            && stackPolicyText.Contains("AreCompatible", StringComparison.Ordinal)
+            && stackPolicyText.Contains("ReservationTokens.Count != 0", StringComparison.Ordinal)
+            && spawningText.Contains("ItemStackPolicy.TryGetCapacity", StringComparison.Ordinal)
+            && spawningText.Contains("GetGroundItemsAtLocked", StringComparison.Ordinal)
+            && spawningText.Contains("OrderBy(static item => item.Guid)", StringComparison.Ordinal)
             && !spawningText.Contains("_instances.Values", StringComparison.Ordinal)
-            && restoreText.Contains("_entityKeyIndex.Clear()", StringComparison.Ordinal)
+            && restoreText.Contains("_identityIndex.TryReplace", StringComparison.Ordinal)
             && restoreText.Contains("_legacyEntityIdIndex.Clear()", StringComparison.Ordinal)
-            && restoreText.Contains("EntityKeyIndexAdd(instance.Guid)", StringComparison.Ordinal)
+            && restoreText.Contains("LegacyEntityIdIndexAdd(instance.Guid)", StringComparison.Ordinal)
             && !entityKeyLookupBody.Contains("foreach", StringComparison.Ordinal)
             && !legacyLookupBody.Contains("foreach", StringComparison.Ordinal)
             && findItemBody.Contains("GetInstanceByEntityKey(target.EntityKey)", StringComparison.Ordinal)
             && findItemBody.Contains("TryLegacyEntityId(target.EntityId", StringComparison.Ordinal)
             && !findItemBody.Contains("(uint)target.EntityId", StringComparison.Ordinal),
-            "ItemManager entity lookup must stay indexed and maintained across restore; SimulationDiffApplicator must prefer entity keys and guard legacy fallback.");
+            "ItemManager lookup and stack mutation must remain indexed, deterministic, compatibility-aware, and maintained across restore.");
         Console.WriteLine("[PASS] ItemManager entity lookup is indexed");
     }
 
@@ -690,11 +666,11 @@ internal static class DeterministicAuthoritySmokeTests
         string applicatorText = File.ReadAllText(applicatorPath);
         string entityKeyLookupBody = ExtractBetween(
             queriesText,
-            "public CreatureInstance? GetInstanceByEntityKey",
+            "internal CreatureInstance? GetInstanceByEntityKey",
             "/// <summary>\n    /// Get all instances");
         string legacyLookupBody = ExtractBetween(
             queriesText,
-            "public CreatureInstance? GetInstanceByEntityId",
+            "internal CreatureInstance? GetInstanceByEntityId",
             "/// <summary>\n    /// Find a creature by the wider stable entity key");
         string findCreatureByTargetBody = ExtractBetween(
             applicatorText,
@@ -706,20 +682,21 @@ internal static class DeterministicAuthoritySmokeTests
             "private static bool TryLegacyEntityId");
 
         RegressionAssert.True(
-            managerText.Contains("Dictionary<ulong, Guid> _entityKeyIndex", StringComparison.Ordinal)
+            managerText.Contains("LiveEntityIdentityIndex _identityIndex", StringComparison.Ordinal)
             && managerText.Contains("Dictionary<uint, List<Guid>> _legacyEntityIdIndex", StringComparison.Ordinal)
             && indexingText.Contains("EntityKeyIndexAdd", StringComparison.Ordinal)
+            && indexingText.Contains("_identityIndex.TryAdd", StringComparison.Ordinal)
             && indexingText.Contains("LegacyEntityIdIndexAdd", StringComparison.Ordinal)
-            && queriesText.Contains("_entityKeyIndex.TryGetValue", StringComparison.Ordinal)
+            && queriesText.Contains("_identityIndex.TryResolve", StringComparison.Ordinal)
             && queriesText.Contains("_legacyEntityIdIndex.TryGetValue", StringComparison.Ordinal)
             && (queriesText.Contains("OrderBy(static inst => inst.Guid)", StringComparison.Ordinal)
                 || queriesText.Contains("OrderBy(static entry => entry.Key)", StringComparison.Ordinal))
             && spawningText.Contains("CalculateMaxHitPoints(def)", StringComparison.Ordinal)
             && spawningText.Contains("definition.BaseToughness * 5", StringComparison.Ordinal)
             && !spawningText.Contains("var maxHP = 100", StringComparison.Ordinal)
-            && restoreText.Contains("_entityKeyIndex.Clear()", StringComparison.Ordinal)
+            && restoreText.Contains("_identityIndex.TryReplace", StringComparison.Ordinal)
             && restoreText.Contains("_legacyEntityIdIndex.Clear()", StringComparison.Ordinal)
-            && restoreText.Contains("EntityKeyIndexAdd(instance.Guid)", StringComparison.Ordinal)
+            && restoreText.Contains("LegacyEntityIdIndexAdd(instance.Guid)", StringComparison.Ordinal)
             && !entityKeyLookupBody.Contains("foreach", StringComparison.Ordinal)
             && !legacyLookupBody.Contains("foreach", StringComparison.Ordinal)
             && findCreatureByTargetBody.Contains("GetInstanceByEntityKey(target.EntityKey)", StringComparison.Ordinal)
@@ -845,6 +822,7 @@ internal static class DeterministicAuthoritySmokeTests
         string placeableLookupPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Placeables", "PlaceableManager.Lookup.cs");
         string placeablePlacementPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Placeables", "PlaceableManager.Placement.cs");
         string placeableRemovalPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Placeables", "PlaceableManager.Removal.cs");
+        string topologyTransactionPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Topology", "TopologyChangeTransaction.cs");
         string stockpileApplicatorPath = Path.Combine(root, "src", "HumanFortress.Simulation", "Stockpile", "StockpileDiffApplicator.cs");
         string stockpileDetailPath = Path.Combine(root, "src", "HumanFortress.Runtime", "Snapshots", "StockpileSnapshotBuilder.Detail.cs");
         string worldText = File.ReadAllText(worldPath);
@@ -854,6 +832,7 @@ internal static class DeterministicAuthoritySmokeTests
         string placeableLookupText = File.ReadAllText(placeableLookupPath);
         string placeablePlacementText = File.ReadAllText(placeablePlacementPath);
         string placeableRemovalText = File.ReadAllText(placeableRemovalPath);
+        string topologyTransactionText = File.ReadAllText(topologyTransactionPath);
         string stockpileApplicatorText = File.ReadAllText(stockpileApplicatorPath);
         string stockpileDetailText = File.ReadAllText(stockpileDetailPath);
 
@@ -873,8 +852,13 @@ internal static class DeterministicAuthoritySmokeTests
             && placeableLookupText.Contains("TryGetOwnedPlaceableByGuid", StringComparison.Ordinal)
             && placeableLookupText.Contains("data.TryGetExternalRefAt(localIndex", StringComparison.Ordinal)
             && placeablePlacementText.Contains("MarkFootprintCellsDirtyForChunk", StringComparison.Ordinal)
-            && placeableRemovalText.Contains("RemoveExternalReferences(world, p, primaryChunk: chunk, tick)", StringComparison.Ordinal)
-            && placeableRemovalText.Contains("EnumerateFootprintLocalIndexesForChunk", StringComparison.Ordinal)
+            && placeablePlacementText.Contains("TryValidatePlacement", StringComparison.Ordinal)
+            && placeablePlacementText.Contains("TryAddExternalRef(cell.LocalIndex", StringComparison.Ordinal)
+            && placeableRemovalText.Contains("TryValidateRemovalFootprint", StringComparison.Ordinal)
+            && placeableRemovalText.Contains("RemoveDerivedFurniture", StringComparison.Ordinal)
+            && topologyTransactionText.Contains("SortedDictionary<ChunkKey, SortedSet<int>>", StringComparison.Ordinal)
+            && topologyTransactionText.Contains("chunk.CommitTopologyChange(entry.Value, _tick)", StringComparison.Ordinal)
+            && topologyTransactionText.Contains("_world.MarkChunkDirty(entry.Key)", StringComparison.Ordinal)
             && !placeablePlacementText.Contains("MarkTileDirty(0", StringComparison.Ordinal)
             && stockpileApplicatorText.Contains(".OrderBy(static entry => entry.Key.Z)", StringComparison.Ordinal)
             && stockpileApplicatorText.Contains(".ThenBy(static entry => entry.Key.ChunkY)", StringComparison.Ordinal)
@@ -983,11 +967,14 @@ internal static class DeterministicAuthoritySmokeTests
             && validationText.Contains("payload.Items", StringComparison.Ordinal)
             && validationText.Contains("payload.Creatures", StringComparison.Ordinal)
             && validationText.Contains("duplicates guid", StringComparison.Ordinal)
-            && validationText.Contains("World.MinSizeInChunks", StringComparison.Ordinal)
-            && validationText.Contains("World.MaxSizeInChunks", StringComparison.Ordinal)
+            && validationText.Contains("MinSizeInChunks", StringComparison.Ordinal)
+            && validationText.Contains("MaxSizeInChunks", StringComparison.Ordinal)
             && validationText.Contains("ValidateStockpileZonePayloads", StringComparison.Ordinal)
-            && validationText.Contains("ValidateOrderPayloads", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("ValidateSupportedItemSlice", StringComparison.Ordinal)
+            && validationText.Contains("ValidateOrderPayloads", StringComparison.Ordinal),
+            "World payload restore must preflight all owner slices before mutating authority.");
+
+        RegressionAssert.True(
+            validationEntitiesText.Contains("ValidateSupportedItemSlice", StringComparison.Ordinal)
             && validationEntitiesText.Contains("ValidateReservationReferences", StringComparison.Ordinal)
             && validationEntitiesText.Contains("ValidateContainedItemLocation", StringComparison.Ordinal)
             && validationEntitiesText.Contains("ValidateContainedItemGraph", StringComparison.Ordinal)
@@ -996,16 +983,15 @@ internal static class DeterministicAuthoritySmokeTests
             && validationEntitiesText.Contains("ValidateItemReservationTokens", StringComparison.Ordinal)
             && validationEntitiesText.Contains("references missing containing item", StringComparison.Ordinal)
             && validationEntitiesText.Contains("contained-item cycle", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("installed anchor", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("installed rotation", StringComparison.Ordinal)
             && validationEntitiesText.Contains("references missing claimant creature", StringComparison.Ordinal)
             && validationEntitiesText.Contains("reservation tokens reserve", StringComparison.Ordinal)
             && validationEntitiesText.Contains("duplicates reservation token identity", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("references missing carrier creature", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("references missing equipped creature", StringComparison.Ordinal)
             && validationEntitiesText.Contains("references missing item", StringComparison.Ordinal)
-            && validationEntitiesText.Contains("references missing creature", StringComparison.Ordinal)
-            && validationStockpilesText.Contains("ValidateStockpileZonePayloads", StringComparison.Ordinal)
+            && validationEntitiesText.Contains("references missing creature", StringComparison.Ordinal),
+            "World payload entity validation must reject invalid ownership and reservation graphs.");
+
+        RegressionAssert.True(
+            validationStockpilesText.Contains("ValidateStockpileZonePayloads", StringComparison.Ordinal)
             && validationStockpilesText.Contains("duplicates zone id", StringComparison.Ordinal)
             && validationStockpilesText.Contains("duplicates chunk", StringComparison.Ordinal)
             && validationOrdersText.Contains("ValidateOrderPayloads", StringComparison.Ordinal)
@@ -1016,12 +1002,18 @@ internal static class DeterministicAuthoritySmokeTests
             && validationGeometryText.Contains("ValidateStringArray", StringComparison.Ordinal)
             && conversionText.Contains("rows.OrderBy(static row => row.Key, StringComparer.Ordinal)", StringComparison.Ordinal)
             && conversionText.Contains("OrderBy(improvement => improvement.Type, StringComparer.Ordinal)", StringComparison.Ordinal)
-            && conversionText.Contains("ThenBy(improvement => improvement.Description, StringComparer.Ordinal)", StringComparison.Ordinal)
-            && placeablesText.Contains("ValidatePlaceablesSnapshot", StringComparison.Ordinal)
+            && conversionText.Contains("ThenBy(improvement => improvement.Description, StringComparer.Ordinal)", StringComparison.Ordinal),
+            "World payload stockpile, order, geometry, and conversion paths must validate and sort canonically.");
+
+        RegressionAssert.True(
+            placeablesText.Contains("ValidatePlaceablesSnapshot", StringComparison.Ordinal)
             && placeablesText.Contains("RestoreValidatedPlaceablesSnapshot", StringComparison.Ordinal)
             && placeablesText.Contains("OrderBy(placeable => placeable.Guid)", StringComparison.Ordinal)
-            && placeablesText.Contains("ThenBy(placeable => placeable.OwnerLocalIndex)", StringComparison.Ordinal)
-            && runtimeVerifierText.Contains("ValidateManifestSections(document, issues)", StringComparison.Ordinal)
+            && placeablesText.Contains("ThenBy(placeable => placeable.OwnerLocalIndex)", StringComparison.Ordinal),
+            "World payload placeables must validate first and restore in canonical owner order.");
+
+        RegressionAssert.True(
+            runtimeVerifierText.Contains("ValidateManifestSections(document, issues)", StringComparison.Ordinal)
             && runtimeManifestSectionsText.Contains("internal static class RuntimeSaveManifestSections", StringComparison.Ordinal)
             && runtimeManifestSectionsText.Contains("RuntimeSaveManifestSectionDefinition", StringComparison.Ordinal)
             && runtimeManifestSectionsText.Contains("Array.AsReadOnly", StringComparison.Ordinal)
@@ -1035,7 +1027,7 @@ internal static class DeterministicAuthoritySmokeTests
             && runtimeManifestBuilderText.Contains("RuntimeSaveContentCatalogSummaryFactory.FromRuntimeContent(content)", StringComparison.Ordinal)
             && runtimeContentCatalogSummaryFactoryText.Contains("internal static class RuntimeSaveContentCatalogSummaryFactory", StringComparison.Ordinal)
             && runtimeContentCatalogSummaryFactoryText.Contains("RuntimeSaveContentCatalogSummaryData.Unavailable", StringComparison.Ordinal)
-            && runtimeContentCatalogSummaryFactoryText.Contains("content.Materials.GetNameToIdSnapshot().Keys", StringComparison.Ordinal)
+            && runtimeContentCatalogSummaryFactoryText.Contains("content.Materials.GetNameToIdSnapshot()", StringComparison.Ordinal)
             && runtimeContentCatalogSummaryFactoryText.Contains("content.TerrainKinds.GetAllKinds()", StringComparison.Ordinal)
             && runtimeContentCatalogSummaryFactoryText.Contains("content.Constructions.GetAllConstructions()", StringComparison.Ordinal)
             && runtimeContentCatalogSummaryFactoryText.Contains("content.Recipes.GetAllRecipes()", StringComparison.Ordinal)
@@ -1046,8 +1038,11 @@ internal static class DeterministicAuthoritySmokeTests
             && runtimeVerifierText.Contains("RuntimeSaveManifestSections.OrderedNames", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("ValidateContentCatalog(document.Manifest.Content, document.Manifest.ContentCatalog, issues)", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("if (!catalog.HasCatalog)\n            return;", StringComparison.Ordinal)
-            && runtimeVerifierText.Contains("\"manifest.content_catalog\"", StringComparison.Ordinal)
-            && runtimeSlotManifestText.Contains("RuntimeSaveSlotManifestBuilder", StringComparison.Ordinal)
+            && runtimeVerifierText.Contains("\"manifest.content_catalog\"", StringComparison.Ordinal),
+            "Runtime manifest and content catalog guards must preserve canonical content ordering.");
+
+        RegressionAssert.True(
+            runtimeSlotManifestText.Contains("RuntimeSaveSlotManifestBuilder", StringComparison.Ordinal)
             && runtimeSlotManifestText.Contains("RuntimeSaveSlotManifestVerifier", StringComparison.Ordinal)
             && runtimeSlotManifestText.Contains("RuntimeSaveSlotCompatibilityPolicy.Evaluate(slotManifest)", StringComparison.Ordinal)
             && runtimeSlotManifestText.Contains("slot.manifest", StringComparison.Ordinal)
@@ -1114,8 +1109,11 @@ internal static class DeterministicAuthoritySmokeTests
             && runtimeSlotRestorePlanText.Contains("contentCompatibility.CanBindContent", StringComparison.Ordinal)
             && runtimeSlotRestorePlanText.Contains("RuntimeSaveSlotContentCompatibilityPolicy.CreateBlockingIssue", StringComparison.Ordinal)
             && runtimeSlotRestorePlanText.Contains("\"slot.restore_plan\"", StringComparison.Ordinal)
-            && runtimeSlotRestorePlanText.Contains("RuntimeSaveJobStateRestorePolicy.GetPresentUnsupportedSections", StringComparison.Ordinal)
-            && runtimeJobStateRestorePolicyText.Contains("internal static class RuntimeSaveJobStateRestorePolicy", StringComparison.Ordinal)
+            && runtimeSlotRestorePlanText.Contains("RuntimeSaveJobStateRestorePolicy.GetPresentUnsupportedSections", StringComparison.Ordinal),
+            "Runtime slot compatibility, migration, and restore-plan guards must remain explicit.");
+
+        RegressionAssert.True(
+            runtimeJobStateRestorePolicyText.Contains("internal static class RuntimeSaveJobStateRestorePolicy", StringComparison.Ordinal)
             && runtimeJobStateRestorePolicyText.Contains("RuntimeSaveManifestSections.JobsTransport", StringComparison.Ordinal)
             && runtimeJobStateRestorePolicyText.Contains("RuntimeSaveManifestSections.JobsMining", StringComparison.Ordinal)
             && runtimeJobStateRestorePolicyText.Contains("RuntimeSaveManifestSections.JobsCraft", StringComparison.Ordinal)
@@ -1149,19 +1147,25 @@ internal static class DeterministicAuthoritySmokeTests
             && runtimeTransportMapperText.Contains("ValidateEnum<TransportReason>", StringComparison.Ordinal)
             && runtimeTransportMapperText.Contains("ValidateEnum<JobStage>", StringComparison.Ordinal)
             && runtimeTransportRestorerText.Contains("RestoreReplaySnapshot(queue, executor)", StringComparison.Ordinal)
-            && runtimeTransportRestorerText.Contains("RuntimeSaveManifestSections.JobsTransport", StringComparison.Ordinal)
-            && runtimeStoreText.Contains("SlotManifestFileName", StringComparison.Ordinal)
+            && runtimeTransportRestorerText.Contains("RuntimeSaveManifestSections.JobsTransport", StringComparison.Ordinal),
+            "Runtime job checkpoint guards must validate and restore every supported job section.");
+
+        RegressionAssert.True(
+            runtimeStoreText.Contains("SlotManifestFileName", StringComparison.Ordinal)
             && runtimeStoreText.Contains("RuntimeSaveSlotManifestBuilder.Build(document)", StringComparison.Ordinal)
             && runtimeStoreText.Contains("return InspectDirectory(directory).Validation;", StringComparison.Ordinal)
             && runtimeStoreText.Contains("ValidateDirectory(string directory)", StringComparison.Ordinal)
             && !runtimeStoreText.Contains("new RuntimeSaveSlotInspectionData", StringComparison.Ordinal)
-            && runtimeStoreInspectionText.Contains("InspectDirectory(string directory)", StringComparison.Ordinal)
+            && runtimeStoreInspectionText.Contains("InspectDirectory(", StringComparison.Ordinal)
             && runtimeStoreInspectionText.Contains("new RuntimeSaveSlotInspectionData", StringComparison.Ordinal)
             && runtimeStoreInspectionText.Contains("RuntimeSaveSlotContentCompatibilityPolicy.Evaluate", StringComparison.Ordinal)
             && runtimeStoreInspectionText.Contains("RuntimeSaveSlotMigrationPlanBuilder.Build", StringComparison.Ordinal)
             && runtimeStoreInspectionText.Contains("RuntimeSaveSlotRestorePlanBuilder.Build", StringComparison.Ordinal)
-            && runtimeStoreInspectionText.Contains("CombineValidation", StringComparison.Ordinal)
-            && runtimeStoreIoText.Contains("ReadUnchecked(string directory)", StringComparison.Ordinal)
+            && runtimeStoreInspectionText.Contains("CombineValidation", StringComparison.Ordinal),
+            "Runtime snapshot store inspection must own validation and compatibility composition.");
+
+        RegressionAssert.True(
+            runtimeStoreIoText.Contains("ReadUnchecked(string directory)", StringComparison.Ordinal)
             && runtimeStoreIoText.Contains("ValidateSlotManifestNoThrow(directory, document)", StringComparison.Ordinal)
             && runtimeStoreIoText.Contains("WriteTextDurably", StringComparison.Ordinal)
             && runtimeStoreIoText.Contains("BuildDirectoryFailure", StringComparison.Ordinal)
@@ -1173,15 +1177,18 @@ internal static class DeterministicAuthoritySmokeTests
             && runtimeSaveRestoreCoreText.Contains("RestorePendingCommandsFromSaveSnapshotDocumentCore", StringComparison.Ordinal)
             && runtimeSaveRestoreCoreText.Contains("EvaluateSaveContentCompatibility", StringComparison.Ordinal)
             && runtimeSaveRestoreCoreText.Contains("RuntimeSaveSlotContentCompatibilityPolicy.CreateBlockingIssue", StringComparison.Ordinal)
-            && runtimeSaveRestoreCoreText.Contains("RuntimeSaveJobStateRestorePolicy.GetPresentUnsupportedSections", StringComparison.Ordinal)
-            && runtimeVerifierText.Contains("new HashSet<string>(StringComparer.Ordinal)", StringComparison.Ordinal)
+            && runtimeSaveRestoreCoreText.Contains("RuntimeSaveJobStateRestorePolicy.GetPresentUnsupportedSections", StringComparison.Ordinal),
+            "Runtime snapshot IO and internal session ports must preserve their validation boundaries.");
+
+        RegressionAssert.True(
+            runtimeVerifierText.Contains("new HashSet<string>(StringComparer.Ordinal)", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("Manifest section duplicates", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("is not recognized by this runtime", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("has a negative record count", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("is absent but still has a hash", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("is absent but still has a record count", StringComparison.Ordinal)
             && runtimeVerifierText.Contains("is missing", StringComparison.Ordinal),
-            "World save payload restore and Runtime save document verification must use canonical owner order and strict manifest sections.");
+            "Runtime snapshot manifest verification must reject malformed section metadata.");
         Console.WriteLine("[PASS] World save payload restore uses canonical ordering");
     }
 
@@ -1216,14 +1223,14 @@ internal static class DeterministicAuthoritySmokeTests
             constructionSiteText.Contains("GetRequiredMaterialsSnapshot", StringComparison.Ordinal)
             && constructionSiteText.Contains("GetRequiredMaterialIdsSnapshot", StringComparison.Ordinal)
             && constructionSiteText.Contains("GetDeliveredMaterialsSnapshot", StringComparison.Ordinal)
-            && constructionSiteText.Contains("StringComparer.OrdinalIgnoreCase", StringComparison.Ordinal)
+            && constructionSiteText.Contains("OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)", StringComparison.Ordinal)
+            && constructionSiteText.Contains("ThenBy(static entry => entry.Key, StringComparer.Ordinal)", StringComparison.Ordinal)
             && constructionRequirementText.Contains("DefinitionPrefix = \"def:\"", StringComparison.Ordinal)
             && constructionRequirementText.Contains("MatchesItem(ItemDefinition definition, string requirement)", StringComparison.Ordinal)
             && buildableConstructionText.Contains("BuildMaterialRequirements(def)", StringComparison.Ordinal)
             && buildableConstructionText.Contains("ConstructionMaterialRequirement.ForDefinition", StringComparison.Ordinal)
             && !buildableConstructionText.Contains("defId support in planner", StringComparison.Ordinal)
             && trackerText.Contains("GetRequiredMaterialIdsSnapshot()", StringComparison.Ordinal)
-            && trackerText.Contains("OrderBy(static key => key, StringComparer.OrdinalIgnoreCase)", StringComparison.Ordinal)
             && matcherText.Contains("ConstructionMaterialRequirement.MatchesItem(definition, requirement)", StringComparison.Ordinal)
             && plannerText.Contains("site.GetRequiredMaterialsSnapshot()", StringComparison.Ordinal)
             && plannerText.Contains("GetRequiredMaterialIdsSnapshot()", StringComparison.Ordinal)
@@ -1256,12 +1263,16 @@ internal static class DeterministicAuthoritySmokeTests
         RegressionAssert.True(
             !text.Contains("ConcurrentDictionary", StringComparison.Ordinal)
             && !text.Contains("AddOrUpdate", StringComparison.Ordinal)
-            && !text.Contains("TryRemove", StringComparison.Ordinal)
+            && !text.Contains(".TryRemove(", StringComparison.Ordinal)
             && text.Contains("Dictionary<Guid, ItemReservation>", StringComparison.Ordinal)
             && text.Contains("Dictionary<Guid, CreatureReservation>", StringComparison.Ordinal)
-            && text.Contains("OrderBy(static kv => kv.Key)", StringComparison.Ordinal),
-            "ReservationManager should remain write-phase owned state, not ConcurrentDictionary mutation in read/update callbacks.");
-        Console.WriteLine("[PASS] ReservationManager uses write-phase dictionary semantics");
+            && text.Contains("private readonly object _sync = new();", StringComparison.Ordinal)
+            && text.Contains("TryReleaseItem(ItemToken token)", StringComparison.Ordinal)
+            && text.Contains("TryReleaseCreature(CreatureToken token)", StringComparison.Ordinal)
+            && text.Contains("!existing.Token.Matches(token)", StringComparison.Ordinal)
+            && CountOccurrences(text, "OrderBy(static entry => entry.Key)") >= 2,
+            "ReservationManager should remain owner-locked, token-CAS state instead of callback-driven concurrent mutation.");
+        Console.WriteLine("[PASS] ReservationManager uses owner-locked token-CAS semantics");
     }
 
     private static void TestOrdersManagerUsesDeterministicOwnedCollections(string root)

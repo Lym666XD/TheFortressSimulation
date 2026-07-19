@@ -19,8 +19,8 @@ internal interface IFortressRuntimePlacementCommandAccess
         int zMin,
         int zMax,
         RuntimeConstructionShape shape,
-        string? preferredMaterialId,
-        string[] materialTags,
+        string? resultMaterialId,
+        RuntimeConstructionMaterialRequirement[] materialRequirements,
         int priority = 50);
 
     void QueueBuildableConstructionOrder(string constructionId, Point anchor, int z, int priority = 50);

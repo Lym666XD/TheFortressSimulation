@@ -38,11 +38,13 @@ internal sealed partial class ChunkPlaceableData
 
     /// <summary>
     /// Add owned placeable at local cell index.
-    /// Caller MUST call SyncToFurnitureCell and BumpConnectivityVersion separately.
+    /// Caller must be the topology transaction that also creates every footprint
+    /// reference and derived furniture cell before publishing the dirty set.
     /// </summary>
-    internal void AddPlaceable(int localIndex, PlaceableInstance placeable)
+    internal bool TryAddPlaceable(int localIndex, PlaceableInstance placeable)
     {
-        _ownedPlaceables[localIndex] = placeable;
+        ArgumentNullException.ThrowIfNull(placeable);
+        return _ownedPlaceables.TryAdd(localIndex, placeable);
     }
 
     /// <summary>
@@ -56,9 +58,9 @@ internal sealed partial class ChunkPlaceableData
     /// <summary>
     /// Add external reference to placeable owned by another chunk
     /// </summary>
-    internal void AddExternalRef(int localIndex, Guid placeableGuid)
+    internal bool TryAddExternalRef(int localIndex, Guid placeableGuid)
     {
-        _externalRefs[localIndex] = placeableGuid;
+        return _externalRefs.TryAdd(localIndex, placeableGuid);
     }
 
     /// <summary>

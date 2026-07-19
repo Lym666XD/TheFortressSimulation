@@ -43,16 +43,16 @@ internal sealed class FortressPlacementRuntimePorts
         int zMin,
         int zMax,
         RuntimeConstructionShape shape,
-        string? preferredMaterialId,
-        string[] materialTags,
+        string? resultMaterialId,
+        RuntimeConstructionMaterialRequirement[] materialRequirements,
         int priority = 50) =>
         _commands.QueueConstructionOrder(
             rect,
             zMin,
             zMax,
             shape,
-            preferredMaterialId,
-            materialTags,
+            resultMaterialId,
+            materialRequirements,
             priority);
 
     internal void QueueBuildableConstructionOrder(

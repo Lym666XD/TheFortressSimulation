@@ -6,15 +6,18 @@ namespace HumanFortress.App.UI;
 
 internal static partial class UiQuickMenuRenderer
 {
-    private static void DrawWorkshopItemsPane(ScreenSurface surface, int x, int y, string category, SimulationBuildCatalogData? buildCatalog)
+    private static void DrawWorkshopItemsPane(ScreenSurface surface, int x, int y, string categoryId, SimulationBuildCatalogData? buildCatalog)
     {
         var bg = Color.Black.SetAlpha(200);
         var fg = Color.White;
         var highlight = Color.Yellow;
         DrawWorkshopItemsBox(surface, x, y, fg, bg);
-        surface.Print(x + 1, y, $" {char.ToUpper(category[0]) + category.Substring(1)} ", highlight);
+        var category = buildCatalog.HasValue
+            ? WorkshopCategoryPresentation.FindCategory(buildCatalog.Value, categoryId)
+            : null;
+        surface.Print(x + 1, y, $" {category?.DisplayName ?? categoryId} ", highlight);
 
-        var list = GetWorkshopsByCategory(buildCatalog, category);
+        var list = category?.Workshops ?? Array.Empty<BuildableConstructionView>();
         var keys = new[] { 'Z', 'X', 'C', 'V', 'F', 'G', 'R', 'T' };
         int max = Math.Min(keys.Length, list.Count);
         for (int i = 0; i < max; i++)
@@ -51,10 +54,4 @@ internal static partial class UiQuickMenuRenderer
         surface.SetGlyph(x + 38 - 1, y + 12 - 1, '+');
     }
 
-    private static List<BuildableConstructionView> GetWorkshopsByCategory(SimulationBuildCatalogData? buildCatalog, string category)
-    {
-        return buildCatalog.HasValue
-            ? WorkshopCategoryMapper.GetWorkshopsByCategory(buildCatalog.Value, category)
-            : new List<BuildableConstructionView>();
-    }
 }

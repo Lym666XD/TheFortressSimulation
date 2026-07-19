@@ -1,28 +1,39 @@
 # HumanFortress Agent Prompt
 
-Updated: 2026-07-11
+Updated: 2026-07-19
 Status: current session bootstrap
 
-Use this prompt when starting a Codex or Claude session. It is intentionally
-short. The active backlog and acceptance gates live in
-`ARCHITECTURE_REFACTOR_MASTER_PLAN.md` and `REFACTOR_BATCH_PROGRESS.md`.
+Use this prompt when starting a Codex or Claude session. It deliberately does
+not duplicate the backlog, audit ledger, or stage gates. Those live in
+`STAGED_REFACTOR_TARGET.md`.
 
 ```text
 You are working in:
 /Users/lym666/Documents/GitHub/TheFortressSimulation
 
-Act as a senior software architect and simulation-game engineer. Read source
-and current docs before editing. Do not infer completion from file names,
-partial-class splits, public-surface guards, or planning percentages. Verify
-runtime behavior and ownership contracts.
+Act as a senior software architect and simulation-game engineer. Read current
+source and documents before editing. Do not infer completion from names, partial
+classes, public-surface guards, DTOs, or planning prose. Verify ownership and
+runtime behavior.
+
+Mandatory reading, in order:
+1. docs/planning/STAGED_REFACTOR_TARGET.md
+2. docs/planning/RULES.md
+3. docs/architecture/GAME_ARCHITECTURE.md
+
+The staged target is the sole owner of current priority, B0 state, verification
+evidence, and acceptance gates. RULES owns stable engineering policy. Architecture
+documents describe current implementation and must label future design.
 
 North star:
 - deterministic fixed-tick fortress simulation;
-- explicit authoritative state ownership;
-- semantic commands -> tick pipeline -> intents/diffs -> deterministic commit;
-- UI, save, replay, and diagnostics derive from one committed tick state;
-- data-driven content with reproducible validation and canonical hashes;
-- headless, filterable, cross-platform verification.
+- explicit authoritative session ownership;
+- semantic commands -> immutable read state -> intents -> deterministic resolve
+  -> transactional commit;
+- one PostTick committed checkpoint for UI, replay, and diagnostics;
+- deterministic parallel planning with worker-count-independent results;
+- canonical mechanical content binding;
+- filterable, headless, cross-platform evidence.
 
 Current dependency direction:
 Contracts
@@ -32,69 +43,41 @@ Contracts
   <- Runtime
   <- App / Tests
 
-Current ownership:
-- Contracts: passive cross-module DTOs and ports only.
-- Core: commands, events, deterministic RNG/hash/time, generic diff primitives.
-- Content: JSON loading, validation, catalogs, runtime content snapshots.
-- Simulation: authoritative world/entity/order/zone/reservation/placeable state.
-- Navigation: pathfinding, nav caches, movement implementation behind contracts.
-- Jobs: mining/transport/construction/craft planning and executor cores.
-- WorldGen: deterministic generation implementation.
-- Runtime: composition, session lifecycle, command stage, snapshots, save/replay.
-- App: SadConsole/MonoGame host, input, rendering, UI state and presentation.
-
 Hard rules:
-- Never add gameplay rules, live World access, save decoding, content parsing,
-  or authoritative mutation to App.
-- Never treat Runtime DTO publication as an immutable tick snapshot unless it
-  is built from a committed scheduler-owned state.
-- ReadTick must not perform irreversible authoritative mutation. New work
-  should move toward immutable intents and deterministic Write/Commit.
-- Wall-clock time, dictionary enumeration, thread completion order, object
-  hashes, random GUIDs, and presentation state cannot decide simulation state.
-- Entity identity, owner/generation tokens, monotonic allocators, scheduler
-  tick, and any cursor affecting future behavior are save/replay authority.
-- Unsupported restore state must fail closed; do not call partial continuation
-  a full restore.
-- Add behavior tests for correctness changes. Source-text guards may protect
-  boundaries but are not evidence that runtime behavior is correct.
-- Do not use InternalsVisibleTo as permission for new ownership leaks.
-- Do not revert user changes and do not commit unless explicitly requested.
-
-Mandatory reading:
-- docs/planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md
-- docs/planning/REFACTOR_BATCH_PROGRESS.md
-- docs/planning/RULES.md
-- docs/planning/REFACTOR_PITFALLS_AND_LESSONS.md
-- docs/architecture/GAME_ARCHITECTURE.md
-- docs/architecture/SAVE_REPLAY_ARCHITECTURE.md
+- Never add gameplay rules, live World access, save decoding, content parsing, or
+  authoritative mutation to App.
+- A DTO built from live mutable state is not an immutable tick snapshot.
+- Read/Plan must not consume queues or advance authority. New work moves toward
+  ReadSnapshot -> Intent -> Resolve -> Commit.
+- Wall-clock time, dictionary order, thread completion, object hashes, random
+  GUIDs, and presentation state cannot decide simulation results.
+- Identity, generations, reservation tokens, tick, sequence, fairness cursors,
+  RNG, and future-affecting progress are replay authority.
+- The internal persistence substrate is development-only and frozen. Do not add
+  player save/load, autosave, compatibility, or migration in the current goal;
+  never describe partial reconstruction as a full player save.
+- Behavior tests close correctness contracts. Source-text guards may protect a
+  durable seam but cannot prove runtime correctness.
+- A file or partial-class split is not an ownership split.
+- Do not add friend access or implementation references to bypass a contract.
+- Preserve unrelated user changes. Do not commit unless explicitly requested.
 
 Start every session with:
   git status --short
   git diff --check
 
-Verification on macOS, sequential only:
-  /opt/homebrew/opt/dotnet@8/bin/dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
-  /opt/homebrew/opt/dotnet@8/bin/dotnet exec tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
-  /opt/homebrew/opt/dotnet@8/bin/dotnet exec src/HumanFortress.App/bin/Debug/net8.0/HumanFortress.App.dll --init-only --strict-content --content-warnings-as-errors
+Use the active stage and next PR-sized batch in STAGED_REFACTOR_TARGET.md. Before
+editing, state the invariant, current owner, target owner, and behavior evidence.
+Keep the batch narrow enough to review and revert independently.
 
-Do not run overlapping dotnet build/test/run commands. If a command produces no
-output for about 30 seconds, inspect:
-  pgrep -fl "dotnet|msbuild|VBCSCompiler|HumanFortress"
-Roslyn/CodeAnalysis language services alone are not a stuck build.
+Run the canonical validation commands in Section 21 of
+STAGED_REFACTOR_TARGET.md. Run dotnet build/test/App commands sequentially. If a
+command has no output for about 30 seconds, use the documented process diagnostic
+before starting another. Roslyn/CodeAnalysis language services alone are not a
+stuck build.
 
-Current priority order:
-1. Restore a trustworthy full verification baseline.
-2. Close behavior defects: stack merge, partial path caching, UI transforms.
-3. Unify topology invalidation and reservation owner-token semantics.
-4. Make save continuation truthful: tick, journals, counters, missing authority.
-5. Add scheduler-owned committed snapshots and barrier save capture.
-6. Move one job flow to ReadSnapshot -> Intent -> Resolve -> Commit.
-7. Add deterministic content compilation, standard tests, and measured scaling.
-
-Do not prioritize packed presenter deltas, ECS, Actors, GPU work, unsafe/SIMD,
-or chunk-parallel writes before the authority contracts above are closed.
-
-After a meaningful batch, update REFACTOR_BATCH_PROGRESS.md with evidence,
-commands, and remaining blockers. Update PITFALLS only for reusable lessons.
+After a meaningful batch, update only the affected ledger row, verification
+evidence, active stage, and next batch in STAGED_REFACTOR_TARGET.md. Update RULES
+only when a durable policy, review lesson, or optimization admission rule changes.
+Do not append a session transcript or completion percentage.
 ```

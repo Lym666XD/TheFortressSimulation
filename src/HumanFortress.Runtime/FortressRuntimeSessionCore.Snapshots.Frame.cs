@@ -6,9 +6,14 @@ namespace HumanFortress.Runtime;
 
 internal sealed partial class FortressRuntimeSessionCore
 {
-    SimulationUiOverlayFrameData IFortressRuntimeSessionReadPort.GetUiOverlayFrameData(
-        int currentZ,
-        RuntimeRect viewport,
+    SimulationAppFrameData IFortressRuntimeSessionReadPort.GetCommittedAppFrame(
+        SimulationAppFrameRequestData request)
+    {
+        return GetCommittedAppFrameCore(request);
+    }
+
+    SimulationUiOverlayFrameData IFortressRuntimeSessionSnapshotPort.GetUiOverlayFrameData(
+        RuntimeViewportGeometry viewport,
         bool showZoneOverlay,
         bool includeManagementDrawer,
         bool includeWorkDrawer,
@@ -16,12 +21,12 @@ internal sealed partial class FortressRuntimeSessionCore
         int? stockpileDetailZoneId,
         int? zoneDetailId)
     {
+        viewport = NormalizeViewport(viewport);
         return _frameSnapshots.PublishUiOverlayFrame(
             _runtimeSession,
             _services.TickScheduler.CurrentTick,
             allowCache: !_services.TickScheduler.IsRunning,
             new RuntimeUiOverlayFrameRequest(
-                currentZ,
                 viewport,
                 showZoneOverlay,
                 includeManagementDrawer,
@@ -31,38 +36,38 @@ internal sealed partial class FortressRuntimeSessionCore
                 zoneDetailId));
     }
 
-    SimulationFrameRenderData IFortressRuntimeSessionReadPort.GetFrameRenderData(
+    SimulationFrameRenderData IFortressRuntimeSessionSnapshotPort.GetFrameRenderData(
         bool includeMapViewport,
-        int fortressSize,
-        RuntimePoint cameraPosition,
+        RuntimeViewportGeometry viewport,
         RuntimePoint cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph,
         SimulationNavigationOverlayMode navigationMode,
         RuntimePoint? selectedNavigationTarget,
         RuntimePoint tileInspectionWorldPosition,
         int tileInspectionZ)
     {
+        viewport = NormalizeViewport(viewport);
         return _frameSnapshots.PublishFrameRender(
             _runtimeSession,
             _services.TickScheduler.CurrentTick,
             allowCache: !_services.TickScheduler.IsRunning,
             new RuntimeFrameRenderRequest(
                 includeMapViewport,
-                fortressSize,
-                cameraPosition,
+                viewport,
                 cursorPosition,
-                currentZ,
-                zoomLevel,
-                viewWidth,
-                viewHeight,
                 cursorGlyph,
                 navigationMode,
                 selectedNavigationTarget,
                 tileInspectionWorldPosition,
                 tileInspectionZ));
+    }
+
+    private RuntimeViewportGeometry NormalizeViewport(RuntimeViewportGeometry viewport)
+    {
+        var world = _runtimeSession?.World;
+        var worldBounds = world == null
+            ? RuntimeWorldBounds.Empty
+            : new RuntimeWorldBounds(0, 0, world.SizeInTiles, world.SizeInTiles, 0, world.MaxZ);
+        return RuntimeViewportGeometryMath.Normalize(viewport with { WorldBounds = worldBounds });
     }
 }

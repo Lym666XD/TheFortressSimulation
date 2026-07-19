@@ -14,43 +14,12 @@ internal sealed partial class SimulationTickPipeline
     {
         ApplyCommittedDiffs(tick);
         RebuildDirtyNavigationChunks();
+        _afterPostTickCommit?.Invoke(tick);
     }
 
     private void ApplyCommittedDiffs(ulong tick)
     {
-        // Apply item removals/splits before terrain/entity diffs can relocate or carry them.
-        var items = _mutationDiffs.Items.MergeAndSort();
-        ItemsDiffApplicator.ApplyPreSimulation(_world, items);
-
-        var merged = _diffLog.MergeAndSort();
-        SimulationDiffApplicator.ApplyAll(_world, merged, _geology);
-        _diffLog.Clear();
-
-        var creatureDiffs = _mutationDiffs.Creatures.MergeAndSort();
-        CreaturesDiffApplicator.ApplyAll(_world, creatureDiffs, tick);
-        _mutationDiffs.Creatures.Clear();
-
-        // Spawn new items after terrain changes, so mining drops see the post-dig tile.
-        ItemsDiffApplicator.ApplyAdditions(_world, items, tick);
-        _mutationDiffs.Items.Clear();
-
-        var orderDiffs = _mutationDiffs.Orders.MergeAndSort();
-        OrderDiffApplicator.ApplyAll(_world, orderDiffs);
-        _mutationDiffs.Orders.Clear();
-
-        var workshopDiffs = _mutationDiffs.Workshops.MergeAndSort();
-        WorkshopDiffApplicator.ApplyAll(_world, workshopDiffs, _constructions);
-        _mutationDiffs.Workshops.Clear();
-
-        var zoneDiffs = _mutationDiffs.Zones.MergeAndSort();
-        ZoneDiffApplicator.ApplyAll(_world, zoneDiffs);
-        _mutationDiffs.Zones.Clear();
-
-        var stockpileDiffs = _mutationDiffs.Stockpiles.MergeAndSort();
-        StockpileDiffApplicator.ApplyAll(_world, stockpileDiffs);
-        _mutationDiffs.Stockpiles.Clear();
-
-        _mutationDiffs.Professions.ApplyAll();
+        _mutationCommit.Commit(tick);
     }
 
     private void RebuildDirtyNavigationChunks()
@@ -60,10 +29,16 @@ internal sealed partial class SimulationTickPipeline
         if (dirtyChunks.Count == 0)
             return;
 
+        Interlocked.Add(ref _dirtyChunksProcessed, dirtyChunks.Count);
+
         foreach (var ck in dirtyChunks)
         {
             var navigationChunk = new HumanFortress.Contracts.Navigation.ChunkKey(ck.ChunkX, ck.ChunkY, ck.Z);
-            _navigation?.RebuildChunkNavData(navigationChunk);
+            if (_navigation != null)
+            {
+                _navigation.RebuildChunkNavData(navigationChunk);
+                Interlocked.Increment(ref _navigationChunkRebuilds);
+            }
             _pathServices?.InvalidateChunk(navigationChunk);
         }
     }

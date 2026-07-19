@@ -31,7 +31,7 @@ internal sealed class CraftMaterialReadinessChecker
             return true;
         }
 
-        var delivered = _inputCounter.CountAvailableInputs(placeable);
+        var delivered = _inputCounter.CountAvailableInputs(placeable, tick);
         foreach (var ingredient in recipe.Inputs)
         {
             delivered.TryGetValue(ingredient.DefId, out var have);

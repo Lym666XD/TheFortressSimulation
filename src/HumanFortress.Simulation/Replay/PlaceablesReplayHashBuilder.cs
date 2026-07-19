@@ -120,7 +120,6 @@ internal static class PlaceablesReplayHashBuilder
         {
             hash.AddGuid(entry.EntryId);
             hash.AddString(entry.RecipeId);
-            hash.AddString(entry.DisplayName);
             hash.AddInt32((int)entry.Status);
             hash.AddBoolean(entry.HasPendingRequests);
             hash.AddUInt64(entry.LastRequestTick);

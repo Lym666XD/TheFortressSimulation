@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using SadRogue.Primitives;
 using HumanFortress.Runtime.Session;
 
@@ -7,8 +8,7 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
 {
     internal static SimulationUiOverlayFrameData BuildUiOverlayFrameSnapshot(
         FortressRuntimeSession? session,
-        int currentZ,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         bool showZoneOverlay,
         bool includeManagementDrawer,
         bool includeWorkDrawer,
@@ -21,7 +21,6 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
             Host(session),
             World(session),
             Constructions(session),
-            currentZ,
             viewport,
             showZoneOverlay,
             includeManagementDrawer,
@@ -35,13 +34,8 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
     internal static SimulationFrameRenderData BuildFrameRenderSnapshot(
         FortressRuntimeSession? session,
         bool includeMapViewport,
-        int fortressSize,
-        Point cameraPosition,
+        RuntimeViewportGeometry viewport,
         Point cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph,
         SimulationNavigationOverlayMode navigationMode,
         Point? selectedNavigationTarget,
@@ -55,13 +49,8 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
             Navigation(session),
             NavigationTuning(session),
             includeMapViewport,
-            fortressSize,
-            cameraPosition,
+            viewport,
             cursorPosition,
-            currentZ,
-            zoomLevel,
-            viewWidth,
-            viewHeight,
             cursorGlyph,
             navigationMode,
             selectedNavigationTarget,

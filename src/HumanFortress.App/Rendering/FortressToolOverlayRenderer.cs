@@ -7,7 +7,8 @@ internal static class FortressToolOverlayRenderer
 {
     public static void Render(
         FortressUiOverlayRenderContext context,
-        SimulationUiOverlayFrameData overlayData)
+        SimulationUiOverlayFrameData overlayData,
+        SimulationPlacementPreviewFrameData placementPreviews)
     {
         var ui = context.Ui;
         var uiSurface = context.UiSurface;
@@ -18,7 +19,10 @@ internal static class FortressToolOverlayRenderer
         {
             if (ui.Context == UiContext.PlacingTool)
             {
-                FortressPlacementOverlayRenderer.Render(context, overlayData.BuildCatalog);
+                FortressPlacementOverlayRenderer.Render(
+                    context,
+                    overlayData.BuildCatalog,
+                    placementPreviews);
             }
 
             if (stockpileUI.EditingZoneId is int)

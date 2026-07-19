@@ -3,8 +3,8 @@ using HumanFortress.Runtime.Composition;
 namespace HumanFortress.Runtime;
 
 /// <summary>
-/// Public bootstrap entry for App-owned logger callback binding.
-/// Runtime keeps the lower-layer static callback target list internal.
+/// Compatibility bootstrap for objects created outside Runtime composition.
+/// Active Runtime sessions own an independent diagnostic sink.
 /// </summary>
 public static class FortressRuntimeLoggingBootstrap
 {

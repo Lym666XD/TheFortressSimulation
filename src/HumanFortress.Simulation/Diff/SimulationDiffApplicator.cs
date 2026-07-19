@@ -13,12 +13,11 @@ namespace HumanFortress.Simulation.Diff;
 /// </summary>
 internal static partial class SimulationDiffApplicator
 {
-    /// <summary>
-    /// Optional logging callback supplied by Runtime composition.
-    /// </summary>
-    internal static Action<string>? LogCallback { get; set; }
-
-    internal static void ApplyAll(SimulationWorld world, IReadOnlyList<DiffOp> ops, IRuntimeGeologyCatalog? geology = null)
+    internal static void ApplyAll(
+        SimulationWorld world,
+        IReadOnlyList<DiffOp> ops,
+        IRuntimeGeologyCatalog? geology = null,
+        ulong currentTick = 0)
     {
         if (ops.Count == 0) return;
 
@@ -29,19 +28,19 @@ internal static partial class SimulationDiffApplicator
                 switch (op.Op)
                 {
                     case DiffOpType.SetTerrain:
-                        ApplySetTerrain(world, op, geology);
+                        ApplySetTerrain(world, op, geology, currentTick);
                         break;
                     case DiffOpType.MoveCreature:
                         ApplyMoveCreature(world, op);
                         break;
                     case DiffOpType.MoveItem:
-                        ApplyMoveItem(world, op);
+                        ApplyMoveItem(world, op, currentTick);
                         break;
                     case DiffOpType.MarkCarried:
                         ApplyMarkCarried(world, op);
                         break;
                     case DiffOpType.UnmarkCarried:
-                        ApplyUnmarkCarried(world, op);
+                        ApplyUnmarkCarried(world, op, currentTick);
                         break;
                     default:
                         // Stockpile and other typed operations use their own applicators.
@@ -50,18 +49,19 @@ internal static partial class SimulationDiffApplicator
             }
             catch (Exception ex)
             {
-                EmitError($"[SimulationDiffApplicator] Failed to apply {op.Op}: {ex.Message}", ex);
+                EmitError(world, $"[SimulationDiffApplicator] Failed to apply {op.Op}: {ex.Message}", ex);
+                throw;
             }
         }
     }
 
-    private static void Emit(string message)
+    private static void Emit(SimulationWorld world, string message)
     {
-        SimulationDiagnostics.Information(LogCallback, "Simulation.Diff", message);
+        SimulationDiagnostics.Information(world.Diagnostics, "Simulation.Diff", message);
     }
 
-    private static void EmitError(string message, Exception exception)
+    private static void EmitError(SimulationWorld world, string message, Exception exception)
     {
-        SimulationDiagnostics.Error(LogCallback, "Simulation.Diff", message, exception);
+        SimulationDiagnostics.Error(world.Diagnostics, "Simulation.Diff", message, exception);
     }
 }

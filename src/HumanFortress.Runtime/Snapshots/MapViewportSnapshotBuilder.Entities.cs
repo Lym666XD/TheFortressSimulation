@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
 using HumanFortress.Simulation.World;
@@ -10,13 +11,10 @@ internal static partial class MapViewportSnapshotBuilder
     private static void AddEntityCells(
         List<MapViewportCellView> cells,
         World world,
-        Point cameraPosition,
-        int currentZ,
-        int viewWidth,
-        int viewHeight)
+        RuntimeViewportGeometry viewport)
     {
         var creatures = world.Creatures.GetAllInstances()
-            .Where(creature => creature.Z == currentZ && creature.HP > 0)
+            .Where(creature => creature.Z == viewport.CurrentZ && creature.HP > 0)
             .ToList();
         var creaturePositions = new HashSet<Point>();
 
@@ -24,27 +22,29 @@ internal static partial class MapViewportSnapshotBuilder
         {
             creaturePositions.Add(creature.Position);
 
-            int screenX = creature.Position.X - cameraPosition.X;
-            int screenY = creature.Position.Y - cameraPosition.Y;
-            if (!IsOnScreen(screenX, screenY, viewWidth, viewHeight))
+            if (!RuntimeViewportGeometryMath.TryWorldToLocal(
+                    viewport,
+                    new RuntimePoint(creature.Position.X, creature.Position.Y),
+                    out var screenPosition))
                 continue;
 
             var (glyph, color) = GetCreatureDisplay(world, creature);
-            cells.Add(new MapViewportCellView(screenX, screenY, glyph, color.ToSnapshotColor()));
+            cells.Add(new MapViewportCellView(screenPosition.X, screenPosition.Y, glyph, color.ToSnapshotColor()));
         }
 
-        foreach (var item in world.Items.GetGroundInstancesAtZ(currentZ))
+        foreach (var item in world.Items.GetGroundInstancesAtZ(viewport.CurrentZ))
         {
-            int screenX = item.Position.X - cameraPosition.X;
-            int screenY = item.Position.Y - cameraPosition.Y;
-            if (!IsOnScreen(screenX, screenY, viewWidth, viewHeight))
+            if (!RuntimeViewportGeometryMath.TryWorldToLocal(
+                    viewport,
+                    new RuntimePoint(item.Position.X, item.Position.Y),
+                    out var screenPosition))
                 continue;
 
             if (creaturePositions.Contains(item.Position))
                 continue;
 
             var (glyph, color) = GetItemDisplay(world, item);
-            cells.Add(new MapViewportCellView(screenX, screenY, glyph, color.ToSnapshotColor()));
+            cells.Add(new MapViewportCellView(screenPosition.X, screenPosition.Y, glyph, color.ToSnapshotColor()));
         }
     }
 

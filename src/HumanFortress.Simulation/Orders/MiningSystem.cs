@@ -5,14 +5,13 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Mining planner: reads mining designations and produces PlannedDig DTOs.
-/// Read phase only; no world mutation. Write phase hands off to executor inbox.
+/// Serialized compatibility stage that consumes mining designations, advances
+/// cursors, and hands PlannedDig DTOs to the executor inbox.
 /// </summary>
 internal enum MiningSegment { None, Top, Middle, Bottom }
 
-internal sealed partial class MiningSystem : ITick
+internal sealed partial class MiningSystem : ISequentialCompatibilityStage
 {
-    internal static System.Action<string>? LogCallback { get; set; }
     private readonly World.World _world;
     private readonly OrdersManager _orders;
     private readonly int _maxPerTick;
@@ -33,19 +32,21 @@ internal sealed partial class MiningSystem : ITick
     internal int Priority => UpdateOrder.Priority.Items; // plan before unit jobs write; same as items stage
     internal string SystemId => "Jobs.Mining";
 
-    int ITick.Priority => Priority;
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick)
-    {
-        ReadTick(tick);
-    }
-
-    void ITick.WriteTick(ulong tick)
-    {
-        WriteTick(tick);
-    }
-
-    internal readonly record struct PlannedDig(Point Cell, int Z, ushort GeologyHandle, byte TerrainKind, int Priority, ulong Seed, MiningAction Action, MiningSegment Segment, int DesignationId);
+    internal readonly record struct PlannedDig(
+        Point Cell,
+        int Z,
+        ushort GeologyHandle,
+        byte TerrainKind,
+        int Priority,
+        ulong Seed,
+        MiningAction Action,
+        MiningSegment Segment,
+        int DesignationId,
+        byte PathSearchAttempt = 0);
 }

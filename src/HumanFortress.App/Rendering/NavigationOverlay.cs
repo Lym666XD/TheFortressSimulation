@@ -22,9 +22,12 @@ internal sealed partial class NavigationOverlay
 
     private OverlayMode _currentMode = OverlayMode.None;
     private SimulationNavigationPathData _currentPath = SimulationNavigationPathData.Unavailable;
+    private SimulationNavigationPathRequestData? _pendingPathRequest;
+    private bool _awaitingPathResult;
     private Point? _selectedTarget;
 
     internal Point? SelectedTarget => _selectedTarget;
+    internal SimulationNavigationPathRequestData? PendingPathRequest => _pendingPathRequest;
     internal SimulationNavigationOverlayMode SnapshotMode => ToSnapshotMode(_currentMode);
 
     internal NavigationOverlay()
@@ -45,6 +48,37 @@ internal sealed partial class NavigationOverlay
     internal void ClearPath()
     {
         _currentPath = SimulationNavigationPathData.Unavailable;
+        _pendingPathRequest = null;
+        _awaitingPathResult = false;
+    }
+
+    internal void RequestPath(
+        Point start,
+        int startZ,
+        Point destination,
+        int destinationZ)
+    {
+        _pendingPathRequest = new SimulationNavigationPathRequestData(
+            new HumanFortress.Contracts.Runtime.RuntimePoint(start.X, start.Y),
+            startZ,
+            new HumanFortress.Contracts.Runtime.RuntimePoint(destination.X, destination.Y),
+            destinationZ);
+        _awaitingPathResult = true;
+    }
+
+    internal bool TryApplyCommittedPath(SimulationNavigationPathFrameData frame)
+    {
+        if (!_awaitingPathResult
+            || !_pendingPathRequest.HasValue
+            || !frame.IsAvailable
+            || frame.Request != _pendingPathRequest)
+        {
+            return false;
+        }
+
+        _currentPath = frame.Path;
+        _awaitingPathResult = false;
+        return true;
     }
 
     internal void SetTarget(Point target)

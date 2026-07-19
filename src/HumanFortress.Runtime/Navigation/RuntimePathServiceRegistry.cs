@@ -1,4 +1,6 @@
 using HumanFortress.Contracts.Navigation;
+using HumanFortress.Navigation.Implementation;
+using HumanFortress.Runtime.Diagnostics;
 
 namespace HumanFortress.Runtime.Navigation;
 
@@ -41,5 +43,41 @@ internal sealed class RuntimePathServiceRegistry
 
         foreach (var pathService in snapshot)
             pathService.InvalidateChunk(chunk);
+    }
+
+    internal RuntimePathMetricsSnapshot CaptureMetrics()
+    {
+        IPathService[] snapshot;
+        lock (_lock)
+        {
+            snapshot = _pathServices.ToArray();
+        }
+
+        long requests = 0;
+        long hits = 0;
+        long misses = 0;
+        long entries = 0;
+        var known = 0;
+        foreach (var service in snapshot)
+        {
+            if (service is not PathService pathService)
+                continue;
+
+            var stats = pathService.GetStats();
+            known++;
+            requests += stats.PathsComputedThisTick;
+            hits += stats.CacheHits;
+            misses += stats.CacheMisses;
+            entries += stats.CacheSize;
+        }
+
+        return new RuntimePathMetricsSnapshot(
+            InstrumentationIsComplete: known == snapshot.Length,
+            RegisteredServiceCountCurrent: snapshot.Length,
+            InstrumentedServiceCountCurrent: known,
+            RequestsServedThisTick: requests,
+            CacheHitsTotal: hits,
+            CacheMissesTotal: misses,
+            CacheEntriesCurrent: entries);
     }
 }

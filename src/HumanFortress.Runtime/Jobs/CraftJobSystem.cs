@@ -18,7 +18,7 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned craft executor.
 /// </summary>
-internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
+internal sealed class CraftJobSystem : IUnifiedCraftJobExecutor
 {
     private readonly CraftJobExecutor _executor;
     private readonly IPathService _paths;
@@ -66,17 +66,15 @@ internal sealed class CraftJobSystem : ITick, IUnifiedCraftJobExecutor
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
+    internal void PrepareSequentialCompatibility(ulong tick) => _executor.PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
-
-    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
-
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     internal IReadOnlyList<ActiveCraftJobView> GetActiveJobsSnapshot() => _executor.GetActiveJobsSnapshot();
 

@@ -1,6 +1,7 @@
 using HumanFortress.Core.Determinism;
 using HumanFortress.Simulation.Creatures;
 using HumanFortress.Simulation.Items;
+using HumanFortress.Simulation.Identity;
 using SimulationWorld = HumanFortress.Simulation.World.World;
 
 namespace HumanFortress.Simulation.Replay;
@@ -11,8 +12,9 @@ internal static partial class WorldReplayHashBuilder
     {
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("world.items.snapshot.v1");
+            hash.AddString("world.items.snapshot.v2");
             AddItemsHash(hash, world.Items.GetAllInstances());
+            AddIdentityAuthorityHash(hash, world.Items.GetIdentityAuthoritySnapshot());
         });
     }
 
@@ -20,8 +22,9 @@ internal static partial class WorldReplayHashBuilder
     {
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("world.creatures.snapshot.v1");
+            hash.AddString("world.creatures.snapshot.v2");
             AddCreaturesHash(hash, world.Creatures.GetAllInstances());
+            AddIdentityAuthorityHash(hash, world.Creatures.GetIdentityAuthoritySnapshot());
         });
     }
 
@@ -82,6 +85,23 @@ internal static partial class WorldReplayHashBuilder
             hash.AddInt32(creature.MaxHP);
             hash.AddUInt64(creature.SpawnedAtTick);
         }
+    }
+
+    private static void AddIdentityAuthorityHash(
+        ReplayHashBuilder hash,
+        LiveEntityIdentityAuthoritySnapshot snapshot)
+    {
+        hash.AddUInt64(snapshot.NextAllocationSequence);
+        hash.AddInt32(snapshot.HistoricalBindings.Count);
+        foreach (var binding in snapshot.HistoricalBindings)
+        {
+            hash.AddUInt64(binding.EntityKey);
+            hash.AddGuid(binding.OwnerGuid);
+        }
+
+        hash.AddInt32(snapshot.RetiredGuids.Count);
+        foreach (var retiredGuid in snapshot.RetiredGuids)
+            hash.AddGuid(retiredGuid);
     }
 
     private static void AddReservationTokensHash(ReplayHashBuilder hash, IEnumerable<ReservationToken> reservations)

@@ -48,7 +48,7 @@ internal sealed class ConstructionCompletionCoordinator
 
         var toConsume = construction.GetRequiredMaterialsSnapshot()
             .ToDictionary(static requirement => requirement.Key, static requirement => requirement.Value, StringComparer.OrdinalIgnoreCase);
-        if (!_materials.TryConsume(site, toConsume))
+        if (!_materials.TryConsume(site, toConsume, tick))
         {
             return false;
         }

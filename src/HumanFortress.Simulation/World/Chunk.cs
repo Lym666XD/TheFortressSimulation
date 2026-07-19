@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.World;
 /// Fixed-size chunk of tiles per CHUNK_AND_DATA_LAYOUT.md.
 /// Default 32x32 cells per Z-level.
 /// </summary>
-internal sealed class Chunk
+internal sealed partial class Chunk
 {
     internal const int SIZE_XY = 32;
     internal const int CELLS_PER_LAYER = SIZE_XY * SIZE_XY; // 1024
@@ -95,31 +95,98 @@ internal sealed class Chunk
     }
 
     /// <summary>
-    /// Place furniture. Must be called only during Write phase.
+    /// Copy the derived furniture blocker mask for a navigation snapshot.
+    /// Returning values rather than FurnitureCell references prevents Runtime
+    /// from retaining mutable Simulation-owned overlay objects.
     /// </summary>
-    internal void PlaceFurniture(int x, int y, FurnitureRef furniture, bool isBlocker, ulong tick)
+    internal bool[] GetFurnitureBlockerMaskCopy()
     {
-        int index = y * SIZE_XY + x;
+        var copy = new bool[CELLS_PER_LAYER];
         lock (_writeLock)
         {
-            if (!_furniture.TryGetValue(index, out var cell))
+            foreach (var entry in _furniture)
+                copy[entry.Key] = entry.Value.Blocker.HasValue;
+        }
+
+        return copy;
+    }
+
+    internal bool HasFurnitureAt(int localIndex)
+    {
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
+
+        lock (_writeLock)
+        {
+            return _furniture.TryGetValue(localIndex, out var cell)
+                && (cell.Blocker.HasValue || cell.Passables is { Count: > 0 });
+        }
+    }
+
+    internal bool IsFurnitureBlocked(int localIndex)
+    {
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
+
+        lock (_writeLock)
+        {
+            return _furniture.TryGetValue(localIndex, out var cell)
+                && cell.Blocker.HasValue;
+        }
+    }
+
+    internal bool HasPlaceableFurnitureAt(int localIndex, Guid placeableGuid)
+    {
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
+
+        lock (_writeLock)
+        {
+            if (!_furniture.TryGetValue(localIndex, out var cell))
+                return false;
+
+            if (cell.Blocker?.IsPlaceable == true
+                && cell.Blocker.Value.PlaceableGuid == placeableGuid)
             {
-                cell = new FurnitureCell();
-                _furniture[index] = cell;
+                return true;
             }
 
+            return cell.Passables?.Any(reference =>
+                reference.IsPlaceable && reference.PlaceableGuid == placeableGuid) == true;
+        }
+    }
+
+    /// <summary>
+    /// Apply derived placeable occupancy without publishing topology versions.
+    /// TopologyChangeTransaction publishes exactly one version/dirty event per
+    /// affected chunk after every authoritative and derived write succeeds.
+    /// </summary>
+    internal bool TryPlaceDerivedFurniture(
+        int localIndex,
+        FurnitureRef furniture,
+        bool isBlocker,
+        ulong tick)
+    {
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
+
+        lock (_writeLock)
+        {
+            if (_furniture.TryGetValue(localIndex, out var occupied)
+                && (occupied.Blocker.HasValue || occupied.Passables is { Count: > 0 }))
+            {
+                return false;
+            }
+
+            var cell = occupied ?? new FurnitureCell();
+            _furniture[localIndex] = cell;
             if (isBlocker)
-            {
                 cell.Blocker = furniture;
-                ConnectivityVersion++;
-            }
             else
-            {
-                cell.Passables ??= new List<FurnitureRef>();
-                cell.Passables.Add(furniture);
-            }
+                cell.Passables = new List<FurnitureRef> { furniture };
 
             LastModifiedTick = tick;
+            return true;
         }
     }
 
@@ -209,51 +276,73 @@ internal sealed class Chunk
     }
 
     /// <summary>
-    /// Remove a furniture reference at a cell matching the given placeable GUID.
-    /// Returns true if a blocking ref was removed (connectivity changed).
+    /// Remove derived placeable occupancy without publishing topology versions.
     /// </summary>
-    internal bool RemoveFurnitureAt(int x, int y, Guid placeableGuid, ulong tick)
+    internal bool RemoveDerivedFurniture(int localIndex, Guid placeableGuid, ulong tick)
     {
-        if (x < 0 || x >= SIZE_XY || y < 0 || y >= SIZE_XY)
-            throw new ArgumentOutOfRangeException();
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
 
         lock (_writeLock)
         {
-            int index = y * SIZE_XY + x;
-            bool blockerRemoved = false;
-            if (_furniture.TryGetValue(index, out var cell))
+            if (!_furniture.TryGetValue(localIndex, out var cell))
+                return false;
+
+            var removed = false;
+            if (cell.Blocker?.IsPlaceable == true
+                && cell.Blocker.Value.PlaceableGuid == placeableGuid)
             {
-                if (cell.Blocker?.IsPlaceable == true && cell.Blocker.Value.PlaceableGuid == placeableGuid)
-                {
-                    cell.Blocker = null;
-                    blockerRemoved = true;
-                }
-
-                if (cell.Passables != null)
-                {
-                    cell.Passables.RemoveAll(fr => fr.IsPlaceable && fr.PlaceableGuid == placeableGuid);
-                    if (cell.Passables.Count == 0) cell.Passables = null;
-                }
-
-                if (blockerRemoved)
-                {
-                    ConnectivityVersion++;
-                }
-                LastModifiedTick = tick;
+                cell.Blocker = null;
+                removed = true;
             }
 
-            return blockerRemoved;
+            if (cell.Passables != null)
+            {
+                removed |= cell.Passables.RemoveAll(reference =>
+                    reference.IsPlaceable && reference.PlaceableGuid == placeableGuid) > 0;
+                if (cell.Passables.Count == 0)
+                    cell.Passables = null;
+            }
+
+            if (!cell.Blocker.HasValue && cell.Passables == null)
+                _furniture.Remove(localIndex);
+
+            if (removed)
+                LastModifiedTick = tick;
+            return removed;
+        }
+    }
+
+    internal void ReplaceTileForTopologyTransaction(int localIndex, TileBase tile, ulong tick)
+    {
+        if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+            throw new ArgumentOutOfRangeException(nameof(localIndex));
+
+        lock (_writeLock)
+        {
+            _tiles[localIndex] = tile;
+            LastModifiedTick = tick;
         }
     }
 
     /// <summary>
-    /// Bump connectivity version to invalidate derived caches.
-    /// Called when L0 or L2 topology changes (tiles, furniture, placeables).
+    /// Publish one committed topology change for this chunk, regardless of how
+    /// many cells or derived layers the transaction changed.
     /// </summary>
-    internal void BumpConnectivityVersion()
+    internal void CommitTopologyChange(IEnumerable<int> changedLocalIndexes, ulong tick)
     {
+        ArgumentNullException.ThrowIfNull(changedLocalIndexes);
+
         lock (_writeLock)
         {
+            foreach (var localIndex in changedLocalIndexes)
+            {
+                if (localIndex < 0 || localIndex >= CELLS_PER_LAYER)
+                    throw new ArgumentOutOfRangeException(nameof(changedLocalIndexes));
+                _dirtyTiles.Add(localIndex);
+            }
+
+            LastModifiedTick = tick;
             ConnectivityVersion++;
         }
     }

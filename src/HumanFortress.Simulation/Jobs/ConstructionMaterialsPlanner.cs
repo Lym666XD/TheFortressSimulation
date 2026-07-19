@@ -11,13 +11,13 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Jobs
 {
     /// <summary>
-    /// Planner that scans construction sites and enqueues material transport requests.
+    /// Serialized compatibility stage that scans construction sites and enqueues
+    /// material transport requests.
     /// v1.1: naive item selection by tag and nearest distance; no advanced filters.
-    /// Integrates with the unified Jobs stage (Read-only).
+    /// Integrates with the unified Jobs stage as a sequential compatibility path.
     /// </summary>
-    internal sealed class ConstructionMaterialsPlanner : ITick
+    internal sealed class ConstructionMaterialsPlanner : ISequentialCompatibilityStage
     {
-        internal static Action<string>? LogCallback { get; set; }
         private readonly World.World _world;
         private readonly ITransportIntake _intake;
         private readonly IItemDefinitionCatalog _itemDefinitions;
@@ -35,14 +35,10 @@ namespace HumanFortress.Simulation.Jobs
             _scanBudgetPerTick = Math.Max(1, scanBudgetPerTick);
         }
 
-        internal int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items; // Read-only planner in Jobs stage
+        internal int Priority => HumanFortress.Core.Simulation.UpdateOrder.Priority.Items;
         internal string SystemId => "Jobs.ConstructionMaterialsPlanner";
 
-        int ITick.Priority => Priority;
-
-        string ITick.SystemId => SystemId;
-
-        internal void ReadTick(ulong tick)
+        internal void PrepareSequentialCompatibility(ulong tick)
         {
             int scannedSites = 0;
             int enqueued = 0;
@@ -130,20 +126,16 @@ namespace HumanFortress.Simulation.Jobs
             }
         }
 
-        void ITick.ReadTick(ulong tick)
+        internal void ApplySequentialCompatibility(ulong tick)
         {
-            ReadTick(tick);
+            // All legacy mutation currently occurs during compatibility preparation.
         }
 
-        internal void WriteTick(ulong tick)
-        {
-            // No writes in planner
-        }
+        void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+            => PrepareSequentialCompatibility(tick);
 
-        void ITick.WriteTick(ulong tick)
-        {
-            WriteTick(tick);
-        }
+        void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+            => ApplySequentialCompatibility(tick);
 
         private static uint SeedFrom(Guid a)
         {
@@ -311,9 +303,9 @@ namespace HumanFortress.Simulation.Jobs
             return false;
         }
 
-        private static void Log(string message)
+        private void Log(string message)
         {
-            SimulationDiagnostics.Information(LogCallback, "Jobs.ConstructionMaterials", message);
+            SimulationDiagnostics.Information(_world.Diagnostics, "Jobs.ConstructionMaterials", message);
         }
     }
 }

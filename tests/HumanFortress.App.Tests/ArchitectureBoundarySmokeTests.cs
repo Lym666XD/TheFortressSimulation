@@ -146,6 +146,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["Content/FortressRuntimeStockpilePresetCatalog.cs"] = "namespace HumanFortress.Runtime.Content;",
         ["Diff/RuntimeMutationDiffLogs.cs"] = "namespace HumanFortress.Runtime.Diff;",
         ["Diff/ProfessionAssignmentDiffLog.cs"] = "namespace HumanFortress.Runtime.Diff;",
+        ["Diagnostics/CallbackFactoryDiagnosticSink.cs"] = "namespace HumanFortress.Runtime.Diagnostics;",
         ["Session/FortressRuntimeSession.cs"] = "namespace HumanFortress.Runtime.Session;",
         ["Session/RuntimeSessionServices.cs"] = "namespace HumanFortress.Runtime.Session;",
         ["Session/SimulationRuntimeSession.cs"] = "namespace HumanFortress.Runtime.Session;",
@@ -367,6 +368,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["Placeables/PlaceableManager.cs"] = "namespace HumanFortress.Simulation.Placeables;",
         ["Placeables/PlaceableManager.AffectedChunks.cs"] = "namespace HumanFortress.Simulation.Placeables;",
         ["Placeables/PlaceableManager.Collision.cs"] = "namespace HumanFortress.Simulation.Placeables;",
+        ["Placeables/PlaceableManager.Doors.cs"] = "namespace HumanFortress.Simulation.Placeables;",
         ["Placeables/PlaceableManager.Lookup.cs"] = "namespace HumanFortress.Simulation.Placeables;",
         ["Placeables/PlaceableManager.Placement.cs"] = "namespace HumanFortress.Simulation.Placeables;",
         ["Placeables/PlaceableManager.Removal.cs"] = "namespace HumanFortress.Simulation.Placeables;",
@@ -410,13 +412,13 @@ internal static class ArchitectureBoundarySmokeTests
         "FortressRuntimeWorldGenerationFactory",
         "IFortressRuntimeAppSessionPorts",
         "IFortressRuntimeSessionBootstrapPort",
+        "IFortressRuntimeSessionCatalogQueryPort",
         "IFortressRuntimeSessionDebugCommandPort",
         "IFortressRuntimeSessionLifecyclePort",
         "IFortressRuntimeSessionPlacementCommandPort",
         "IFortressRuntimeSessionProfessionCommandPort",
         "IFortressRuntimeSessionReadPort",
         "IFortressRuntimeSessionSimulationControlPort",
-        "IFortressRuntimeSessionSnapshotPort",
         "IFortressRuntimeSessionWorkshopCommandPort"
     };
 
@@ -442,6 +444,8 @@ internal static class ArchitectureBoundarySmokeTests
         "ICommandReplayIdentity",
         "IEventBus",
         "IGameEvent",
+        "IReadPlanStage",
+        "ISequentialCompatibilityStage",
         "ISimulationContext",
         "ITick",
         "IWorldReader",
@@ -454,6 +458,8 @@ internal static class ArchitectureBoundarySmokeTests
         "StreamNames",
         "SystemId",
         "TickScheduler",
+        "TickSchedulerHealthSnapshot",
+        "TickSchedulerSystemFailureSnapshot",
         "UpdateOrder",
         "WorldParams",
         "WorldTile"
@@ -517,7 +523,7 @@ internal static class ArchitectureBoundarySmokeTests
         ["HumanFortress.Simulation"] = new[] { "HumanFortress.App.Tests", "HumanFortress.Jobs", "HumanFortress.Runtime", "HumanFortress.WorldGen" },
         ["HumanFortress.Jobs"] = new[] { "HumanFortress.App.Tests", "HumanFortress.Runtime" },
         ["HumanFortress.WorldGen"] = new[] { "HumanFortress.App.Tests", "HumanFortress.Runtime" },
-        ["HumanFortress.Runtime"] = new[] { "HumanFortress.App.Tests" },
+        ["HumanFortress.Runtime"] = new[] { "HumanFortress.App.Tests", "HumanFortress.Scenarios" },
         ["HumanFortress.App"] = new[] { "HumanFortress.App.Tests" }
     };
 
@@ -528,6 +534,7 @@ internal static class ArchitectureBoundarySmokeTests
         string root = TestRepositoryPaths.FindRepositoryRoot();
         TestAppSourceDoesNotReferenceForbiddenRuntimeModules(root);
         TestAppRuntimeNamespaceUseIsAdapterOnly(root);
+        TestAppGameplayOptionsComeFromRuntimeReadModels(root);
         TestRuntimeNamespaceUseIsBoundaryOnly(root);
         TestAppProjectDoesNotReferenceLowerImplementationProjects(root);
         TestContentLoaderImplementationStaysInternal(root);
@@ -583,7 +590,8 @@ internal static class ArchitectureBoundarySmokeTests
         TestLowerModulesAvoidConsoleOutputFallbacks(root);
         TestLowerModuleDiagnosticsAvoidDirectHubEmission(root);
         TestCoreInfrastructureDiagnosticsCanBeInjected(root);
-        TestRepositoryHasCiGateForBuildAndSmokeRunner(root);
+        TestRuntimeDiagnosticsAvoidProcessGlobalCallbacks(root);
+        TestRepositoryHasCiGateForStandardTestsAndArtifacts(root);
 
         Console.WriteLine("=== Architecture Boundary Smoke Tests Completed ===\n");
     }
@@ -605,12 +613,64 @@ internal static class ArchitectureBoundarySmokeTests
         Console.WriteLine("[PASS] App source avoids forbidden implementation module references");
     }
 
-    private static void TestRepositoryHasCiGateForBuildAndSmokeRunner(string root)
+    private static void TestAppGameplayOptionsComeFromRuntimeReadModels(string root)
+    {
+        var forbiddenTokens = new[]
+        {
+            "ui.workshop_categories.json",
+            "WorkshopCategoryMapper",
+            "core_race_",
+            "core_item_boulder_granite",
+            "\"stone_block\"",
+            "\"wood_log\"",
+            "\"wood_plank\"",
+            "\"gather_plants\"",
+            "\"sand_clay\"",
+            "\"restricted_traffic\"",
+            "\"military_grounds\""
+        };
+        var violations = new List<string>();
+        foreach (var file in TestRepositoryPaths.EnumerateSourceFiles(
+                     Path.Combine(root, "src", "HumanFortress.App")))
+        {
+            var text = File.ReadAllText(file);
+            foreach (var token in forbiddenTokens)
+            {
+                if (text.Contains(token, StringComparison.Ordinal))
+                    violations.Add($"{TestRepositoryPaths.RelativePath(root, file)} contains {token}");
+            }
+        }
+
+        var contractsText = string.Join(
+            '\n',
+            TestRepositoryPaths.EnumerateSourceFiles(
+                    Path.Combine(root, "src", "HumanFortress.Contracts", "Runtime", "Snapshots"))
+                .Select(File.ReadAllText));
+        var runtimeFactoryText = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "HumanFortress.Runtime",
+            "Commands",
+            "RuntimePlacementCommandFactory.Materials.cs"));
+
+        RegressionAssert.True(
+            violations.Count == 0
+            && contractsText.Contains("ConstructionMaterialOptionView", StringComparison.Ordinal)
+            && contractsText.Contains("WorkshopCategoryView", StringComparison.Ordinal)
+            && contractsText.Contains("SimulationZoneCatalogData", StringComparison.Ordinal)
+            && contractsText.Contains("DebugCreatureView", StringComparison.Ordinal)
+            && !runtimeFactoryText.Contains("core_mat_stone_granite", StringComparison.Ordinal),
+            "App gameplay options should come from Content/Runtime read models, without baked fallbacks:\n"
+            + string.Join('\n', violations));
+        Console.WriteLine("[PASS] App gameplay options come from Content/Runtime read models");
+    }
+
+    private static void TestRepositoryHasCiGateForStandardTestsAndArtifacts(string root)
     {
         string workflowPath = Path.Combine(root, ".github", "workflows", "dotnet-ci.yml");
         RegressionAssert.True(
             File.Exists(workflowPath),
-            "Repository should keep a GitHub Actions CI workflow for build and architecture/determinism smoke coverage.");
+            "Repository should keep a GitHub Actions CI workflow for build and standard test coverage.");
 
         string text = File.ReadAllText(workflowPath);
         var requiredTokens = new[]
@@ -622,8 +682,14 @@ internal static class ArchitectureBoundarySmokeTests
             "DOTNET_TieredCompilation: \"0\"",
             "dotnet restore HumanFortress.sln",
             "dotnet build HumanFortress.sln",
-            "tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj",
-            "dotnet tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll"
+            "dotnet test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj",
+            "TestCategory=content-identity",
+            "TestCategory=discoverable",
+            "TestCategory=end-to-end",
+            "--logger \"trx;LogFileName=",
+            "--results-directory artifacts/test-results",
+            "actions/upload-artifact@v4",
+            "if: always()"
         };
 
         var missing = requiredTokens
@@ -632,8 +698,8 @@ internal static class ArchitectureBoundarySmokeTests
 
         RegressionAssert.True(
             missing.Length == 0,
-            "CI workflow is missing build/smoke coverage tokens:\n" + string.Join('\n', missing));
-        Console.WriteLine("[PASS] Repository CI gate builds the solution and runs the smoke runner");
+            "CI workflow is missing standard test/result artifact tokens:\n" + string.Join('\n', missing));
+        Console.WriteLine("[PASS] Repository CI gate builds the solution and publishes standard test results");
     }
 
     private static void TestLowerModulesAvoidConsoleOutputFallbacks(string root)
@@ -715,11 +781,57 @@ internal static class ArchitectureBoundarySmokeTests
             && eventBusText.Contains("private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink", StringComparison.Ordinal)
             && schedulerText.Contains("public TickScheduler(IDiagnosticSink? diagnostics = null)", StringComparison.Ordinal)
             && schedulerText.Contains("private IDiagnosticSink Diagnostics => _diagnostics ?? DiagnosticHub.Sink", StringComparison.Ordinal)
-            && runtimeServicesText.Contains("new TickScheduler(DiagnosticHub.Sink)", StringComparison.Ordinal)
-            && runtimeServicesText.Contains("new CommandQueue(DiagnosticHub.Sink)", StringComparison.Ordinal)
-            && runtimeServicesText.Contains("new EventBus(DiagnosticHub.Sink)", StringComparison.Ordinal),
+            && runtimeServicesText.Contains("internal RuntimeSessionServices(", StringComparison.Ordinal)
+            && runtimeServicesText.Contains("IDiagnosticSink diagnostics,", StringComparison.Ordinal)
+            && runtimeServicesText.Contains("new TickScheduler(diagnostics)", StringComparison.Ordinal)
+            && runtimeServicesText.Contains("new CommandQueue(diagnostics)", StringComparison.Ordinal)
+            && runtimeServicesText.Contains("new EventBus(diagnostics)", StringComparison.Ordinal)
+            && runtimeServicesText.Contains("internal IDiagnosticSink Diagnostics { get; }", StringComparison.Ordinal),
             "Core infrastructure diagnostics should support injected sinks, with DiagnosticHub only as a compatibility fallback.");
         Console.WriteLine("[PASS] Core infrastructure diagnostics can be injected");
+    }
+
+    private static void TestRuntimeDiagnosticsAvoidProcessGlobalCallbacks(string root)
+    {
+        var scannedRoots = new[]
+        {
+            Path.Combine(root, "src", "HumanFortress.Navigation"),
+            Path.Combine(root, "src", "HumanFortress.Simulation")
+        };
+        var violations = scannedRoots
+            .SelectMany(TestRepositoryPaths.EnumerateSourceFiles)
+            .Where(file =>
+            {
+                string text = File.ReadAllText(file);
+                return text.Contains("static Action<string>? LogCallback", StringComparison.Ordinal)
+                    || text.Contains("static System.Action<string>? LogCallback", StringComparison.Ordinal);
+            })
+            .Select(file => TestRepositoryPaths.RelativePath(root, file))
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+
+        string bindingsPath = Path.Combine(
+            root,
+            "src",
+            "HumanFortress.Runtime",
+            "Composition",
+            "FortressRuntimeLogBindings.cs");
+        string bindingsText = File.ReadAllText(bindingsPath);
+        string worldText = File.ReadAllText(Path.Combine(
+            root,
+            "src",
+            "HumanFortress.Simulation",
+            "World",
+            "World.cs"));
+
+        RegressionAssert.True(
+            violations.Length == 0
+            && !bindingsText.Contains(".LogCallback =", StringComparison.Ordinal)
+            && worldText.Contains("internal IDiagnosticSink Diagnostics => _diagnostics;", StringComparison.Ordinal)
+            && worldText.Contains("internal void SetDiagnostics(IDiagnosticSink diagnostics)", StringComparison.Ordinal),
+            "Active Runtime diagnostics should be session-owned instead of process-global callbacks:\n"
+            + string.Join('\n', violations));
+        Console.WriteLine("[PASS] Runtime diagnostics avoid process-global callback authority");
     }
 
     private static void TestAppRuntimeNamespaceUseIsAdapterOnly(string root)
@@ -1673,15 +1785,21 @@ internal static class ArchitectureBoundarySmokeTests
         }
 
         string terrainText = File.ReadAllText(Path.Combine(simulationRoot, "Diff", "SimulationDiffApplicator.Terrain.cs"));
+        string topologyTransactionText = File.ReadAllText(Path.Combine(
+            simulationRoot,
+            "Topology",
+            "TopologyChangeTransaction.cs"));
         string itemsText = File.ReadAllText(Path.Combine(simulationRoot, "Diff", "SimulationDiffApplicator.Items.cs"));
         string creaturesText = File.ReadAllText(Path.Combine(simulationRoot, "Diff", "SimulationDiffApplicator.Creatures.cs"));
         string targetsText = File.ReadAllText(Path.Combine(simulationRoot, "Diff", "SimulationDiffApplicator.Targets.cs"));
 
         if (!terrainText.Contains("ApplySetTerrain", StringComparison.Ordinal)
             || !terrainText.Contains("WorldSafetyQueries.FindNearestStandableNonConstructionSite", StringComparison.Ordinal)
-            || !terrainText.Contains("MarkTerrainNeighborsDirty", StringComparison.Ordinal))
+            || !terrainText.Contains("TopologyChangeTransaction.ApplyTerrain", StringComparison.Ordinal)
+            || !topologyTransactionText.Contains("CommitTopologyChange", StringComparison.Ordinal)
+            || !topologyTransactionText.Contains("_world.MarkChunkDirty", StringComparison.Ordinal))
         {
-            violations.Add("Diff/SimulationDiffApplicator.Terrain.cs should own terrain mutation, ejection, and dirty propagation.");
+            violations.Add("Terrain diffs should own decoding/ejection and delegate atomic dirty/version publication to TopologyChangeTransaction.");
         }
 
         if (!itemsText.Contains("ApplyMoveItem", StringComparison.Ordinal)
@@ -2138,6 +2256,7 @@ internal static class ArchitectureBoundarySmokeTests
             "FortressRuntimeContentLoader.cs",
             "FortressRuntimeLoggingBootstrap.cs",
             "FortressRuntimeSessionFactory.cs",
+            "FortressRuntimeSessionPorts.CatalogQueries.cs",
             "FortressRuntimeSessionPorts.Commands.cs",
             "FortressRuntimeSessionPorts.Lifecycle.cs",
             "FortressRuntimeSessionPorts.Read.cs",

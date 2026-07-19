@@ -17,7 +17,26 @@ public enum RuntimeConstructionShape
     Stairs
 }
 
+public readonly record struct RuntimeConstructionMaterialRequirement(
+    string? Tag,
+    string? DefinitionId,
+    int Count);
+
 public sealed record RuntimeMaterialFilterSpec(
     string? PreferredMaterialId,
     string CategoryKey,
-    string[] Tags);
+    string[] Tags,
+    RuntimeConstructionMaterialRequirement[] Requirements)
+{
+    public RuntimeMaterialFilterSpec(
+        string? preferredMaterialId,
+        string categoryKey,
+        string[] tags)
+        : this(
+            preferredMaterialId,
+            categoryKey,
+            tags,
+            Array.Empty<RuntimeConstructionMaterialRequirement>())
+    {
+    }
+}

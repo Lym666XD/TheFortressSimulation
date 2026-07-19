@@ -120,7 +120,7 @@ internal readonly struct StockpileDiff
         int result = left.CellIndex.CompareTo(right.CellIndex);
         if (result != 0) return result;
 
-        result = right.Priority.CompareTo(left.Priority);
+        result = left.Priority.CompareTo(right.Priority);
         if (result != 0) return result;
 
         result = left.Op.CompareTo(right.Op);

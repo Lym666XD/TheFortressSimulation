@@ -1,11 +1,16 @@
 @echo off
-echo Running HumanFortress Tests...
-echo.
+setlocal
 
 cd /d "%~dp0"
-dotnet build tests\HumanFortress.App.Tests\HumanFortress.App.Tests.csproj --no-restore -m:1 -v:quiet -p:RunAnalyzers=false
-if errorlevel 1 exit /b %errorlevel%
-dotnet tests\HumanFortress.App.Tests\bin\Debug\net8.0\HumanFortress.App.Tests.dll
+if not defined DOTNET set "DOTNET=dotnet"
+if not defined RESULTS_DIR set "RESULTS_DIR=artifacts\test-results\local"
 
-echo.
-pause
+"%DOTNET%" test tests\HumanFortress.App.Tests\HumanFortress.App.Tests.csproj ^
+  -m:1 ^
+  -v:minimal ^
+  -p:RunAnalyzers=false ^
+  -p:UseAppHost=false ^
+  --filter "TestCategory=discoverable" ^
+  --logger "trx;LogFileName=discoverable-suites.trx" ^
+  --results-directory "%RESULTS_DIR%"
+exit /b %errorlevel%

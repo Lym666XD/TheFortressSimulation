@@ -21,7 +21,7 @@ internal sealed partial class OrdersManager
 
     /// <summary>
     /// Drain at most maxCount haul designations into the provided list.
-    /// Returns number drained. Use in the Read phase.
+    /// Returns number drained. Use only from serialized compatibility or commit.
     /// </summary>
     internal int DrainHaulDesignations(ICollection<HaulDesignation> into, int maxCount)
     {

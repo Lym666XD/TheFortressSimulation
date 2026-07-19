@@ -6,13 +6,23 @@ internal sealed partial class CreatureManager
 {
     private void EntityKeyIndexAdd(Guid id)
     {
-        _entityKeyIndex[DiffTargetEncoding.EntityKey(id)] = id;
+        var claim = _identityIndex.TryAdd(id);
+        if (!claim.Success)
+        {
+            throw new InvalidOperationException(claim.Describe("creature"));
+        }
+
         LegacyEntityIdIndexAdd(id);
     }
 
     private void EntityKeyIndexRemove(Guid id)
     {
-        _entityKeyIndex.Remove(DiffTargetEncoding.EntityKey(id));
+        if (!_identityIndex.Remove(id))
+        {
+            throw new InvalidOperationException(
+                $"The live creature identity index does not own GUID {id}.");
+        }
+
         LegacyEntityIdIndexRemove(id);
     }
 

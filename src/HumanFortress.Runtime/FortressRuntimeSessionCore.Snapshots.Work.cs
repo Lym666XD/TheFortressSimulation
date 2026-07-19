@@ -20,7 +20,7 @@ internal sealed partial class FortressRuntimeSessionCore
         return FortressRuntimeSessionSnapshotFacade.FindWorkshopSnapshot(_runtimeSession, workshopId);
     }
 
-    string? IFortressRuntimeSessionSnapshotPort.GetDefaultRecipeForWorkshop(string? workshopId)
+    string? IFortressRuntimeSessionCatalogQueryPort.GetDefaultRecipeForWorkshop(string? workshopId)
     {
         return FortressRuntimeSessionSnapshotFacade.GetDefaultRecipeForWorkshop(_runtimeSession, workshopId);
     }

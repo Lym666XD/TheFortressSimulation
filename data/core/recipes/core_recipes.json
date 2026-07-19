@@ -1,60 +1,54 @@
-[
-  {
-    "id": "core_recipe_metallurgy_bloomery_reduce",
-    "domain": "metallurgy",
-    "enablers": [],
-    "duration_s": 1800,
-    "inputs": [
-      { "id": "core_item_ore_iron_hematite", "count": 4 },
-      { "id": "core_item_powder_charcoal", "charges_g": 500 }
-    ],
-    "outputs": [
-      { "id": "core_item_ingot_iron_wrought", "count": 1 },
-      { "id": "core_item_waste_chem_slag", "count": 1 }
-    ],
-    "notes": "Simplified bloomery result; ore → wrought iron, plus slag."
-  },
-  {
-    "id": "core_recipe_steel_cementation_box",
-    "domain": "metallurgy",
-    "enablers": [],
-    "duration_s": 3600,
-    "inputs": [
-      { "id": "core_item_ingot_iron_wrought", "count": 1 },
-      { "id": "core_item_powder_charcoal", "charges_g": 200 }
-    ],
-    "outputs": [
-      { "id": "core_item_ingot_steel_refined", "count": 1 }
-    ],
-    "notes": "Cementation: carburize wrought iron into refined steel."
-  },
-  {
-    "id": "core_recipe_glass_cullet_remelt",
-    "domain": "glass",
-    "enablers": [],
-    "duration_s": 1200,
-    "inputs": [
-      { "id": "core_item_glass_cullet", "count": 10 }
-    ],
-    "outputs": [
-      { "id": "core_item_glass_batch", "charges_g": 11000 }
-    ],
-    "affinity": { "fuel_cost": -0.15, "time_cost": -0.10 },
-    "notes": "10 cullet → 11 kg batch; cheaper and faster than raw batch."
-  },
-  {
-    "id": "core_recipe_chem_sulfuric_from_wash",
-    "domain": "chemistry",
-    "enablers": [],
-    "duration_s": 1800,
-    "inputs": [
-      { "id": "core_item_liquid_acid_sulfuric_dilute", "charges_ml": 10000 }
-    ],
-    "outputs": [
-      { "id": "core_item_liquid_acid_sulfuric", "charges_ml": 3000 },
-      { "id": "core_item_liquid_water_pure", "charges_ml": 6000 },
-      { "id": "core_item_waste_chem_slag", "count": 1 }
-    ],
-    "notes": "Distillation and scrubbing of dilute sulfuric solution."
-  }
-]
+{
+  "$schema": "../../../content/schemas/recipes.schema.json",
+  "version": "1.0.0",
+  "recipes": [
+    {
+      "id": "core_recipe_metallurgy_bloomery_reduce",
+      "name": "Bloomery Reduction",
+      "category": "metallurgy",
+      "workshops": ["core_construction_workshop_metallurgy_smeltery"],
+      "work_time": { "duration_ticks": 1800 },
+      "skill": { "primary": "metallurgy", "difficulty": 2, "xp_per_craft": 10 },
+      "requirements": { "enablers": [], "power_w": 0 },
+      "inputs": [
+        { "def_id": "core_item_ore_iron_hematite", "count": 4 },
+        { "def_id": "core_item_powder_charcoal", "count": 1 }
+      ],
+      "outputs": [
+        { "def_id": "core_item_ingot_iron_wrought", "count": 1 },
+        { "def_id": "core_item_waste_chem_slag", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_steel_cementation_box",
+      "name": "Cementation Steel",
+      "category": "metallurgy",
+      "workshops": ["core_construction_workshop_metallurgy_smeltery"],
+      "work_time": { "duration_ticks": 3600 },
+      "skill": { "primary": "metallurgy", "difficulty": 3, "xp_per_craft": 15 },
+      "requirements": { "enablers": [], "power_w": 0 },
+      "inputs": [
+        { "def_id": "core_item_ingot_iron_wrought", "count": 1 },
+        { "def_id": "core_item_powder_charcoal", "count": 1 }
+      ],
+      "outputs": [
+        { "def_id": "core_item_ingot_steel_refined", "count": 1 }
+      ]
+    },
+    {
+      "id": "core_recipe_glass_cullet_remelt",
+      "name": "Cullet Remelt",
+      "category": "glass",
+      "workshops": ["core_construction_workshop_glass_house"],
+      "work_time": { "duration_ticks": 1200 },
+      "skill": { "primary": "glassmaking", "difficulty": 1, "xp_per_craft": 8 },
+      "requirements": { "enablers": [], "power_w": 0 },
+      "inputs": [
+        { "def_id": "core_item_glass_cullet", "count": 10 }
+      ],
+      "outputs": [
+        { "def_id": "core_item_glass_batch", "count": 11 }
+      ]
+    }
+  ]
+}

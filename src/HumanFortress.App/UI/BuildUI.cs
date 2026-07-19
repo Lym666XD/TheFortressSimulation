@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
 
@@ -26,7 +27,12 @@ internal sealed partial class BuildUI
 
     // For now, L2 menus are displayed without L3 details
     // In the future, workshops will have L3 submenus
-    public void DrawBuildWithSubmenu(ScreenSurface surface, int centerX, int centerY, BuildSubmenu activeSubmenu)
+    public void DrawBuildWithSubmenu(
+        ScreenSurface surface,
+        int centerX,
+        int centerY,
+        BuildSubmenu activeSubmenu,
+        SimulationBuildCatalogData? buildCatalog = null)
     {
         var bg = new Color(0, 0, 0, 200);
         var fg = Color.White;
@@ -56,7 +62,7 @@ internal sealed partial class BuildUI
         }
         else if (activeSubmenu == BuildSubmenu.Workshop)
         {
-            DrawWorkshopMenu(surface, l2X + l2Width + 2, l2Y);
+            DrawWorkshopMenu(surface, l2X + l2Width + 2, l2Y, buildCatalog);
         }
     }
 }

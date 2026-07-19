@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
+using HumanFortress.Content.Identity;
 using HumanFortress.Contracts.Content.Registry;
 
 namespace HumanFortress.Content.Definitions;
@@ -17,11 +18,31 @@ internal static partial class CoreDataRegistryLoader
             return new RecipeContentLoadResult(RecipeCatalogStore.Empty, 0, 0, messages);
         }
 
-        var files = Directory.GetFiles(recipesDir, "*.json", SearchOption.TopDirectoryOnly);
-        Array.Sort(files, StringComparer.OrdinalIgnoreCase);
+        var candidates = Directory.GetFiles(recipesDir, "*.json", SearchOption.TopDirectoryOnly)
+            .Select(file => new
+            {
+                File = file,
+                SourceId = "data/core/recipes/" + Path.GetFileName(file)
+            })
+            .OrderBy(static candidate => candidate.SourceId, StringComparer.Ordinal)
+            .ToArray();
+        var availableSourceIds = candidates
+            .Select(static candidate => candidate.SourceId)
+            .ToHashSet(StringComparer.Ordinal);
+        var files = candidates
+            .Where(candidate =>
+                MechanicalContentSourceFamilyManifest.TryResolve(
+                    candidate.SourceId,
+                    availableSourceIds,
+                    out var resolution)
+                && resolution.IsActive
+                && resolution.FamilyId.Equals("core.recipe", StringComparison.Ordinal))
+            .Select(static candidate => candidate.File)
+            .ToArray();
 
         var definitions = new List<RecipeDefinition>();
         var errors = 0;
+        var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var file in files)
         {
             try
@@ -43,6 +64,12 @@ internal static partial class CoreDataRegistryLoader
                     var definition = ParseRecipeDefinition(element);
                     if (definition != null)
                     {
+                        if (!seenIds.Add(definition.Id))
+                        {
+                            errors++;
+                            messages.Add($"duplicate or case-ambiguous recipe rejected: {definition.Id} from {Path.GetFileName(file)}");
+                            continue;
+                        }
                         definitions.Add(definition);
                     }
                 }
@@ -88,10 +115,22 @@ internal static partial class CoreDataRegistryLoader
         {
             Id = id,
             Name = name,
-            Workshops = workshops.ToArray(),
-            Inputs = ParseRecipeInputs(element).ToArray(),
-            Outputs = outputs.ToArray(),
-            RequiredEnablers = ParseRequiredEnablers(element).ToArray(),
+            Workshops = workshops
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static value => value, StringComparer.Ordinal)
+                .ToArray(),
+            Inputs = ParseRecipeInputs(element)
+                .OrderBy(static value => value.DefId, StringComparer.Ordinal)
+                .ThenBy(static value => value.Count)
+                .ToArray(),
+            Outputs = outputs
+                .OrderBy(static value => value.DefId, StringComparer.Ordinal)
+                .ThenBy(static value => value.Count)
+                .ToArray(),
+            RequiredEnablers = ParseRequiredEnablers(element)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(static value => value, StringComparer.Ordinal)
+                .ToArray(),
             DurationTicks = Math.Max(1, ParseRecipeDurationTicks(element)),
             PrimarySkill = ParsePrimarySkill(element),
             Era = ParseOptionalString(element, "era")

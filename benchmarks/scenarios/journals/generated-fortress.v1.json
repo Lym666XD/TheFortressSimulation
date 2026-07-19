@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "stage6-generated-fortress-journal-v1",
+  "hashAlgorithm": "sha256-v1",
+  "journalHash": "0cb6511f00e882c07433affe2a50b3d448ef65b72c67c2f693f93a033cc46ecc",
+  "records": [
+    {
+      "tick": 1,
+      "commandId": "d077f1f4-fe3d-ec10-67fe-42e92dca5f41",
+      "commandType": "debug.spawn.item",
+      "commandIdentitySequence": 1,
+      "payloadBase64": "AQAAABxjb3JlX2l0ZW1faW5nb3RfaXJvbl93cm91Z2h0AwAAAAMAAAAZAAAAAQAAAA=="
+    }
+  ]
+}

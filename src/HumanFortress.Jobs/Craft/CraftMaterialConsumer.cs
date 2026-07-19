@@ -23,7 +23,7 @@ internal sealed class CraftMaterialConsumer
         _diffEmitter = diffEmitter ?? throw new ArgumentNullException(nameof(diffEmitter));
     }
 
-    internal bool TryConsumeInputs(ActiveCraftJob job)
+    internal bool TryConsumeInputs(ActiveCraftJob job, ulong currentTick)
     {
         if (!_workshops.TryFind(job.WorkshopGuid, out var placeable, out var state) || placeable == null || state == null)
         {
@@ -52,7 +52,8 @@ internal sealed class CraftMaterialConsumer
             var candidates = _world.Items.GetGroundInstances()
                 .Where(item => item.DefinitionId == ingredient.DefId
                     && item.Z == placeable.Z
-                    && inputCells.Contains((item.Position.X, item.Position.Y)))
+                    && inputCells.Contains((item.Position.X, item.Position.Y))
+                    && !_world.Reservations.IsItemReserved(item.Guid, currentTick))
                 .OrderBy(item => item.Guid)
                 .ToList();
 

@@ -23,6 +23,8 @@ namespace HumanFortress.App
     /// </summary>
     public static class PhaseTests
     {
+        private static readonly Lazy<FortressRuntimeContentSnapshot> RuntimeContent = new(LoadRuntimeContent);
+
         public static void RunAllPhaseTests()
         {
             Console.WriteLine("\n========================================");
@@ -404,22 +406,43 @@ namespace HumanFortress.App
                     contentWarningsAsErrors: false);
                 runtime.InitializeWorld(sizeInChunks: 2, maxZ: 50);
 
-                SimulationFrameRenderData frame = runtime.GetFrameRenderData(
-                    includeMapViewport: true,
-                    fortressSize: 2,
-                    cameraPosition: new RuntimePoint(0, 0),
-                    cursorPosition: new RuntimePoint(1, 1),
-                    currentZ: 0,
-                    zoomLevel: 1,
-                    viewWidth: 20,
-                    viewHeight: 10,
-                    cursorGlyph: '@',
-                    navigationMode: SimulationNavigationOverlayMode.None,
-                    selectedNavigationTarget: null,
-                    tileInspectionWorldPosition: new RuntimePoint(1, 1),
-                    tileInspectionZ: 0);
+                var request = new SimulationAppFrameRequestData(
+                    IncludeMapViewport: true,
+                    Viewport: new RuntimeViewportGeometry(
+                        new RuntimeRect(0, 0, 20, 10),
+                        new RuntimePoint(0, 0),
+                        1,
+                        0,
+                        new RuntimeWorldBounds(0, 0, 64, 64, 0, 50)),
+                    CursorPosition: new RuntimePoint(1, 1),
+                    CursorGlyph: '@',
+                    NavigationMode: SimulationNavigationOverlayMode.None,
+                    SelectedNavigationTarget: null,
+                    TileInspectionWorldPosition: new RuntimePoint(1, 1),
+                    TileInspectionZ: 0,
+                    ShowZoneOverlay: false,
+                    IncludeManagementDrawer: false,
+                    IncludeWorkDrawer: false,
+                    IncludeDebugMenu: false,
+                    StockpileDetailZoneId: null,
+                    ZoneDetailId: null,
+                    PlacementPreviewRequests: Array.Empty<SimulationPlacementPreviewRequestData>(),
+                    NavigationPathRequest: null);
+                runtime.StartFortressPlay(enqueueAutoDig: false);
+                var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(2);
+                SimulationAppFrameData committed;
+                do
+                {
+                    committed = runtime.GetCommittedAppFrame(request);
+                    if (committed.IsAvailable)
+                        break;
+                    Thread.Sleep(5);
+                }
+                while (DateTime.UtcNow < deadline);
+                runtime.StopIfRunning();
+                var frame = committed.FrameRender;
 
-                if (!frame.MapViewport.IsAvailable || !frame.MapViewport.HasWorld)
+                if (!committed.IsAvailable || !frame.MapViewport.IsAvailable || !frame.MapViewport.HasWorld)
                     throw new Exception("Runtime map viewport snapshot unavailable");
 
                 if (frame.MapViewport.Width != 20 || frame.MapViewport.Height != 10)
@@ -834,12 +857,24 @@ namespace HumanFortress.App
 
         private static FortressGenerationContent CreateFortressGenerationContent()
         {
-            var content = FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+            var content = RuntimeContent.Value;
             return new FortressGenerationContent(
                 content.Geology,
                 content.MapgenTuningJson,
                 content.OreTuningJson,
                 content.CavernTuningJson);
+        }
+
+        private static FortressRuntimeContentSnapshot LoadRuntimeContent()
+        {
+            var loadedContent = FortressContentLoader.Load(AppContext.BaseDirectory);
+            loadedContent.ThrowIfInvalid();
+
+            return loadedContent.CoreCatalogs == null
+                ? FortressRuntimeContentSnapshotLoader.CaptureLoaded(loadedContent.StructuredRegistry)
+                : FortressRuntimeContentSnapshotLoader.ApplyCoreData(
+                    loadedContent.StructuredRegistry,
+                    loadedContent.CoreCatalogs.CoreData);
         }
 
         // Helper test tick system class

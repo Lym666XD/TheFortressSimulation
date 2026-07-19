@@ -13,18 +13,7 @@ internal static partial class FortressOverlayClickController
         if (mapLocal.X < 0 || mapLocal.X >= context.MapSurfaceWidth || mapLocal.Y < 0 || mapLocal.Y >= context.MapSurfaceHeight)
             return false;
 
-        if (context.Viewport.LastMousePosition.HasValue)
-        {
-            var worldPos = context.Viewport.LastMousePosition.Value;
-            var fakeLocal = new Point(
-                (worldPos.X - context.Viewport.CameraPosition.X) * context.Viewport.ZoomLevel,
-                (worldPos.Y - context.Viewport.CameraPosition.Y) * context.Viewport.ZoomLevel);
-            context.MapLeftClick(fakeLocal);
-        }
-        else
-        {
-            context.MapLeftClick(mapLocal);
-        }
+        context.MapLeftClick(mapLocal);
 
         return true;
     }

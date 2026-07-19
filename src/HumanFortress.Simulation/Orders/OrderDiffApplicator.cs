@@ -5,8 +5,6 @@ namespace HumanFortress.Simulation.Orders;
 
 internal static class OrderDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     internal static void ApplyAll(SimulationWorld world, IReadOnlyList<OrderDiff> diffs)
     {
         ArgumentNullException.ThrowIfNull(world);
@@ -24,10 +22,11 @@ internal static class OrderDiffApplicator
             catch (Exception ex)
             {
                 SimulationDiagnostics.Error(
-                    LogCallback,
+                    world.Diagnostics,
                     "Simulation.OrderDiff",
                     $"[OrderDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
                     ex);
+                throw;
             }
         }
     }

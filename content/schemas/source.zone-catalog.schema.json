@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.zone-catalog.schema.json",
+  "title": "Zone registry source family",
+  "type": "object",
+  "required": ["zones"],
+  "properties": {
+    "zones": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/zone" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "zone": {
+      "type": "object",
+      "required": ["id", "category", "display_name", "ui_hints", "default_policies"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$" },
+        "category": { "enum": ["production", "civil", "public", "military", "management"] },
+        "display_name": { "type": "string", "minLength": 1 },
+        "ui_hints": {
+          "type": "object",
+          "required": ["glyph", "color", "keybind"],
+          "properties": {
+            "glyph": { "type": "string", "minLength": 1 },
+            "color": { "type": "string", "pattern": "^#[0-9A-Fa-f]{6}$" },
+            "keybind": { "type": "string", "minLength": 1, "maxLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "default_policies": {
+          "type": "object",
+          "required": ["nav_cost_mode", "allows_actions"],
+          "properties": {
+            "nav_cost_mode": { "enum": ["none", "restricted", "preferred", "blocked"] },
+            "allows_actions": { "$ref": "#/definitions/stringSet" }
+          },
+          "additionalProperties": false
+        },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

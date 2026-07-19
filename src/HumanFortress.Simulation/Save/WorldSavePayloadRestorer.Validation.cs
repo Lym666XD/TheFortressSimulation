@@ -1,4 +1,5 @@
 using HumanFortress.Contracts.Simulation.Save;
+using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.World;
 using WorldModel = HumanFortress.Simulation.World.World;
 
@@ -194,6 +195,7 @@ internal static partial class WorldSavePayloadRestorer
         ICollection<string> issues)
     {
         var seen = new HashSet<Guid>();
+        var ownersByEntityKey = new Dictionary<ulong, Guid>();
         for (var i = 0; i < rows.Count; i++)
         {
             var guid = getGuid(rows[i]);
@@ -206,6 +208,18 @@ internal static partial class WorldSavePayloadRestorer
             if (!seen.Add(guid))
             {
                 issues.Add($"World payload {label}[{i}] duplicates guid {guid}.");
+                continue;
+            }
+
+            ulong entityKey = DiffTargetEncoding.EntityKey(guid);
+            if (ownersByEntityKey.TryGetValue(entityKey, out var existingOwner))
+            {
+                issues.Add(
+                    $"World payload {label}[{i}] guid {guid} collides with {existingOwner} at entity key 0x{entityKey:X16}.");
+            }
+            else
+            {
+                ownersByEntityKey.Add(entityKey, guid);
             }
         }
     }

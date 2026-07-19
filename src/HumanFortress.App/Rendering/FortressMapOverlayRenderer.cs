@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
 
@@ -9,21 +10,22 @@ internal static class FortressMapOverlayRenderer
     public static void Render(
         FortressUiOverlayRenderContext context,
         SimulationUiOverlayFrameData overlayData,
-        Rectangle viewport)
+        SimulationPlacementPreviewFrameData placementPreviews,
+        RuntimeViewportGeometry viewport)
     {
         var ui = context.Ui;
         var mapSurface = context.MapSurface;
 
         if (context.MapViewport.HasWorld)
         {
-            ui.PruneHighlights(context.UiTick);
             FortressMapOverlayGlyphRenderer.DrawOrderHighlights(
                 mapSurface,
                 ui,
-                context.CameraPosition,
+                viewport,
                 context.CurrentZ,
                 context.UiTick,
-                (first, second, mode) => context.Runtime.Read.GetPlacementPreviewData(
+                (first, second, mode) => FortressPlacementPreviewRequests.Find(
+                    placementPreviews,
                     first,
                     second,
                     context.CurrentZ,
@@ -31,8 +33,8 @@ internal static class FortressMapOverlayRenderer
         }
 
         var jobs = overlayData.Jobs;
-        FortressMapOverlayGlyphRenderer.DrawMiningJobHighlights(mapSurface, jobs?.ActiveMiningTargets, context.CameraPosition, context.CurrentZ, context.UiTick);
-        FortressMapOverlayGlyphRenderer.DrawMiningCompletedHighlights(mapSurface, jobs?.RecentMiningCompletions, context.CameraPosition, context.CurrentZ);
+        FortressMapOverlayGlyphRenderer.DrawMiningJobHighlights(mapSurface, jobs?.ActiveMiningTargets, viewport, context.UiTick);
+        FortressMapOverlayGlyphRenderer.DrawMiningCompletedHighlights(mapSurface, jobs?.RecentMiningCompletions, viewport);
 
         FortressMapOverlayGlyphRenderer.DrawWorkshopsOverlay(mapSurface, overlayData.Workshops, context.CurrentZ, viewport);
 

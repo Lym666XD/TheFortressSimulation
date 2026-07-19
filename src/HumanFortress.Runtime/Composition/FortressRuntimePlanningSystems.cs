@@ -56,7 +56,6 @@ internal sealed class FortressRuntimePlanningSystems
             transportIntake: transportQueue,
             stockpileDiffLog: stockpileDiffLog);
         var constructionMaterials = new ConstructionMaterialsPlanner(world, transportQueue, world.Items);
-        ConstructionMaterialsPlanner.LogCallback = logging.ConstructionMaterials;
         var construction = new ConstructionSystem(
             world,
             world.Orders,

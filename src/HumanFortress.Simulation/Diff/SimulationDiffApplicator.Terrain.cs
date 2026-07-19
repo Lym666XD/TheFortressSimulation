@@ -3,6 +3,7 @@ using System.Linq;
 using HumanFortress.Contracts.Content.Registry;
 using HumanFortress.Core.Simulation;
 using HumanFortress.Simulation.Tiles;
+using HumanFortress.Simulation.Topology;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 using SimulationChunk = HumanFortress.Simulation.World.Chunk;
@@ -12,11 +13,16 @@ namespace HumanFortress.Simulation.Diff;
 
 internal static partial class SimulationDiffApplicator
 {
-    private static void ApplySetTerrain(SimulationWorld world, DiffOp op, IRuntimeGeologyCatalog? geologyCatalog)
+    private static void ApplySetTerrain(
+        SimulationWorld world,
+        DiffOp op,
+        IRuntimeGeologyCatalog? geologyCatalog,
+        ulong currentTick)
     {
         var (ck, lx, ly) = DecodeTarget(op.Target);
         var chunk = world.GetChunk(ck);
-        if (chunk == null) return;
+        if (chunk == null)
+            throw new InvalidOperationException($"Terrain target chunk {ck} is not loaded.");
 
         var tile = chunk.GetTile(lx, ly);
         var kindVal = (byte)(op.Args & 0xFF);
@@ -33,20 +39,16 @@ internal static partial class SimulationDiffApplicator
         }
 
         ushort newGeoHandle = tile.GeoMatId;
-        try
+        if (overrideGeo != 0)
         {
-            if (overrideGeo != 0)
-            {
-                newGeoHandle = overrideGeo;
-            }
-            else
-            {
-                var geo = geologyCatalog?.GetGeologyByHandle(tile.GeoMatId);
-                if (geo != null && geologyCatalog!.TryGetGeologyHandleByMaterialAndKind(geo.Material, newKind.ToString(), out var handle))
-                    newGeoHandle = handle;
-            }
+            newGeoHandle = overrideGeo;
         }
-        catch { /* fallback to existing GeoMatId on any error */ }
+        else
+        {
+            var geo = geologyCatalog?.GetGeologyByHandle(tile.GeoMatId);
+            if (geo != null && geologyCatalog!.TryGetGeologyHandleByMaterialAndKind(geo.Material, newKind.ToString(), out var handle))
+                newGeoHandle = handle;
+        }
 
         byte newSurface = tile.SurfaceBits;
         if (newKind == TerrainKind.OpenNoFloor)
@@ -61,14 +63,13 @@ internal static partial class SimulationDiffApplicator
             tile.MetaBits,
             tile.TrafficCost);
 
-        chunk.SetTile(lx, ly, newTile, 0);
+        TopologyChangeTransaction.ApplyTerrain(world, ck, lx, ly, newTile, currentTick);
 
         int worldX = ck.ChunkX * SimulationChunk.SIZE_XY + lx;
         int worldY = ck.ChunkY * SimulationChunk.SIZE_XY + ly;
-        Emit($"[DIFF] ApplySetTerrain at ({worldX},{worldY},{ck.Z}): {tile.Kind} -> {newKind}");
+        Emit(world, $"[DIFF] ApplySetTerrain at ({worldX},{worldY},{ck.Z}): {tile.Kind} -> {newKind}");
 
-        EjectOccupantsFromBlockedTerrain(world, worldX, worldY, ck.Z, newKind);
-        MarkTerrainNeighborsDirty(world, ck, lx, ly);
+        EjectOccupantsFromBlockedTerrain(world, worldX, worldY, ck.Z, newKind, currentTick);
     }
 
     private static void EjectOccupantsFromBlockedTerrain(
@@ -76,14 +77,13 @@ internal static partial class SimulationDiffApplicator
         int worldX,
         int worldY,
         int worldZ,
-        TerrainKind newKind)
+        TerrainKind newKind,
+        ulong currentTick)
     {
-        try
-        {
-            if (IsWalkableTerrain(newKind))
-                return;
+        if (IsWalkableTerrain(newKind))
+            return;
 
-            var stuck = world.Creatures
+        var stuck = world.Creatures
                 .GetAllInstances()
                 .Where(c => c.Z == worldZ && c.Position.X == worldX && c.Position.Y == worldY)
                 .ToList();
@@ -95,7 +95,7 @@ internal static partial class SimulationDiffApplicator
 
                 creature.Position = new Point(safe.Value.X, safe.Value.Y);
                 creature.Z = safe.Value.Z;
-                Emit($"[EJECT] creature={creature.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                Emit(world, $"[EJECT] creature={creature.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
             }
 
             var items = world.Items.GetGroundItemsAt(new Point(worldX, worldY), worldZ).ToList();
@@ -106,12 +106,10 @@ internal static partial class SimulationDiffApplicator
                     continue;
 
                 var safePoint = new Point(safe.Value.X, safe.Value.Y);
-                world.Items.UpdateItemPosition(item.Guid, item.Position, item.Z, safePoint, safe.Value.Z);
-                try { world.Items.MergeStacksAt(safePoint, safe.Value.Z); } catch { }
-                Emit($"[EJECT] item={item.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
+                world.Items.UpdateItemPosition(item.Guid, safePoint, safe.Value.Z);
+                world.Items.MergeStacksAt(safePoint, safe.Value.Z, currentTick);
+                Emit(world, $"[EJECT] item={item.Guid} from=({worldX},{worldY},{worldZ}) to=({safe.Value.X},{safe.Value.Y},{safe.Value.Z})");
             }
-        }
-        catch { }
     }
 
     private static bool IsWalkableTerrain(TerrainKind kind)
@@ -123,33 +121,4 @@ internal static partial class SimulationDiffApplicator
             || kind == TerrainKind.StairsUD;
     }
 
-    private static void MarkTerrainNeighborsDirty(
-        SimulationWorld world,
-        ChunkKey ck,
-        int localX,
-        int localY)
-    {
-        world.MarkChunkDirty(ck);
-
-        if (ck.Z + 1 < world.MaxZ)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX, ck.ChunkY, ck.Z + 1));
-
-        if (ck.Z - 1 >= 0)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX, ck.ChunkY, ck.Z - 1));
-
-        int size = SimulationChunk.SIZE_XY;
-        int worldSizeChunks = world.SizeInChunks;
-
-        if (localX == 0 && ck.ChunkX - 1 >= 0)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX - 1, ck.ChunkY, ck.Z));
-
-        if (localX == size - 1 && ck.ChunkX + 1 < worldSizeChunks)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX + 1, ck.ChunkY, ck.Z));
-
-        if (localY == 0 && ck.ChunkY - 1 >= 0)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX, ck.ChunkY - 1, ck.Z));
-
-        if (localY == size - 1 && ck.ChunkY + 1 < worldSizeChunks)
-            world.MarkChunkDirty(new ChunkKey(ck.ChunkX, ck.ChunkY + 1, ck.Z));
-    }
 }

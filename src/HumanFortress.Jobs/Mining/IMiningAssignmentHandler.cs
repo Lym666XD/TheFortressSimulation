@@ -12,5 +12,6 @@ internal interface IMiningAssignmentHandler
         IReadOnlyList<CreatureInstance> creatures,
         HashSet<Guid> busy,
         ulong tick,
-        bool middleAlreadySatisfied);
+        bool middleAlreadySatisfied,
+        out bool increasePathSearchAttempt);
 }

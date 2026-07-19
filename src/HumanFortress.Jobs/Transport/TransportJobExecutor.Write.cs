@@ -2,8 +2,15 @@ namespace HumanFortress.Jobs.Transport;
 
 internal sealed partial class TransportJobExecutor
 {
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
+        if (_preparedTick?.Tick == tick)
+        {
+            CommitPreparedTick(_preparedTick);
+            _preparedTick = null;
+            return;
+        }
+
         if (_active.Count == 0)
         {
             return;

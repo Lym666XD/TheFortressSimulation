@@ -1,9 +1,14 @@
+using HumanFortress.Contracts.Navigation;
+
 namespace HumanFortress.Jobs.Transport;
 
 internal sealed partial class TransportJobExecutor
 {
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
+        if (_preparedTick?.Tick == tick)
+            return;
+
         _paths.BeginTick();
         int intakeBudget = GetEffectiveIntakeBudget();
         _inboxBuffer.Clear();
@@ -52,7 +57,12 @@ internal sealed partial class TransportJobExecutor
                 break;
             }
 
-            var assignedJob = _assignmentHandler.TryAssign(rq, creatures, busy, tick);
+            var assignedJob = _assignmentHandler.TryAssign(
+                rq,
+                creatures,
+                busy,
+                tick,
+                out bool increasePathSearchAttempt);
             if (assignedJob != null)
             {
                 _active.Add(assignedJob);
@@ -60,7 +70,15 @@ internal sealed partial class TransportJobExecutor
                 continue;
             }
 
-            if (_backlog.TryEnqueue(rq, tick))
+            var retry = increasePathSearchAttempt
+                ? rq with
+                {
+                    PathSearchAttempt = rq.PathSearchAttempt >= PathRequest.MaxSearchAttempt
+                        ? PathRequest.MaxSearchAttempt
+                        : (byte)(rq.PathSearchAttempt + 1)
+                }
+                : rq;
+            if (_backlog.TryEnqueue(retry, tick))
             {
                 _statsTracker.RecordRequeued();
             }

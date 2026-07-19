@@ -9,6 +9,7 @@ internal static class RuntimeSaveSnapshotDocumentCraftMapper
 {
     internal static RuntimeSaveCraftJobsData ToDocumentData(CraftJobReplaySnapshot snapshot)
     {
+        EnsureSnapshotIsRepresentable(snapshot);
         return new RuntimeSaveCraftJobsData(
             snapshot.ActiveJobs
                 .OrderBy(static job => job.Order)
@@ -42,6 +43,16 @@ internal static class RuntimeSaveSnapshotDocumentCraftMapper
     {
         return (payload.ActiveJobs?.Length ?? 0)
             + (payload.BacklogEntries?.Length ?? 0);
+    }
+
+    private static void EnsureSnapshotIsRepresentable(CraftJobReplaySnapshot snapshot)
+    {
+        if (snapshot.ActiveJobs.Any(static job => job.PathSearchAttempt != 0)
+            || snapshot.BacklogEntries.Any(static entry => entry.Job.PathSearchAttempt != 0))
+        {
+            throw new NotSupportedException(
+                "The experimental craft save document does not encode path search retry state.");
+        }
     }
 
     private static RuntimeSaveCraftActiveJobData ToDocumentActiveJob(

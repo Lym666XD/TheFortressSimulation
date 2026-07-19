@@ -1,11 +1,12 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
 
 internal static class FortressDebugMenuInput
 {
-    public static bool Handle(Keyboard keyboard, UiStore ui)
+    public static bool Handle(Keyboard keyboard, UiStore ui, SimulationDebugMenuData debugMenu)
     {
         ArgumentNullException.ThrowIfNull(keyboard);
         ArgumentNullException.ThrowIfNull(ui);
@@ -46,22 +47,16 @@ internal static class FortressDebugMenuInput
             return false;
 
         if (keyboard.IsKeyPressed(Keys.D))
-            return SelectCreature(ui, "core_race_dwarf");
+            return DebugSelectionPolicy.SelectCreatureByIndex(ui, debugMenu, 0);
         if (keyboard.IsKeyPressed(Keys.H))
-            return SelectCreature(ui, "core_race_human");
+            return DebugSelectionPolicy.SelectCreatureByIndex(ui, debugMenu, 1);
         if (keyboard.IsKeyPressed(Keys.G))
-            return SelectCreature(ui, "core_race_goblin");
+            return DebugSelectionPolicy.SelectCreatureByIndex(ui, debugMenu, 2);
         if (keyboard.IsKeyPressed(Keys.E))
-            return SelectCreature(ui, "core_race_elf");
+            return DebugSelectionPolicy.SelectCreatureByIndex(ui, debugMenu, 3);
         if (keyboard.IsKeyPressed(Keys.O))
-            return SelectCreature(ui, "core_race_orc");
+            return DebugSelectionPolicy.SelectCreatureByIndex(ui, debugMenu, 4);
 
         return false;
-    }
-
-    private static bool SelectCreature(UiStore ui, string creatureId)
-    {
-        ui.DebugSelectedCreature = creatureId;
-        return true;
     }
 }

@@ -106,11 +106,8 @@ public sealed class RecipeCatalogStore : IRecipeCatalog
         var frozenByWorkshop = new Dictionary<string, RecipeDefinition[]>(byWorkshop.Count, StringComparer.OrdinalIgnoreCase);
         foreach (var (workshopId, recipesForWorkshop) in byWorkshop.OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase))
         {
-            recipesForWorkshop.Sort((a, b) =>
-            {
-                int cmp = string.Compare(a.Name, b.Name, StringComparison.Ordinal);
-                return cmp != 0 ? cmp : string.Compare(a.Id, b.Id, StringComparison.Ordinal);
-            });
+            recipesForWorkshop.Sort(static (left, right) =>
+                string.Compare(left.Id, right.Id, StringComparison.Ordinal));
             frozenByWorkshop[workshopId] = recipesForWorkshop.ToArray();
         }
 

@@ -1,6 +1,6 @@
 # HumanFortress Documentation Index
 
-Updated: 2026-07-10
+Updated: 2026-07-19
 Status: current documentation map
 
 This is the entry point for project documentation. The codebase is in an active architecture refactor, so treat source code as authoritative when a document conflicts with implementation.
@@ -31,6 +31,8 @@ Document status terms:
 ## Runtime And Operations
 
 - [Run And Test Guide](operations/README-RUN.md) - current source-run, test, and app argument notes.
+- [Scenario Evidence](../benchmarks/README.md) - versioned determinism/scale
+  profiles, artifact interpretation, reproduction commands, and dated decisions.
 
 ## Simulation Systems
 
@@ -92,12 +94,10 @@ Machine-readable current sources:
 
 ## Planning And Refactor Notes
 
-- [Architecture Refactor Master Plan](planning/ARCHITECTURE_REFACTOR_MASTER_PLAN.md)
-- [Refactor Batch Progress](planning/REFACTOR_BATCH_PROGRESS.md)
-- [Refactor Pitfalls And Lessons](planning/REFACTOR_PITFALLS_AND_LESSONS.md)
+- [Staged Refactor Target](planning/STAGED_REFACTOR_TARGET.md) - controlling
+  audit ledger, current stage, ordered batches, and acceptance gates.
 - [Project Rules](planning/RULES.md)
 - [Agent Prompt](planning/AGENT_PROMPT.md)
-- [Optimization Suggestions](planning/OPTIMIZATION_SUGGESTION.md)
 
 ## Status Snapshots
 
@@ -111,8 +111,8 @@ Archived files are under [Archive](archive/README.md). Do not use archived docum
 
 Recently archived refactor/reference docs:
 
-- [Archived Milestone Plan](archive/plans/MILESTONE.md) - historical strategic milestone plan; current status lives in the master plan and batch progress log.
-- [Archived 2026-07-07 Audit Report](archive/plans/HumanFortress_审计报告_2026-07-07.md) - historical external audit source; current reconciled status lives in the master plan, architecture overview, and batch progress log.
+- [Archived Milestone Plan](archive/plans/MILESTONE.md) - historical strategic milestone plan; current status lives in the staged refactor target.
+- [Archived 2026-07-07 Audit Report](archive/plans/HumanFortress_审计报告_2026-07-07.md) - historical external audit source; current reconciled status lives in the staged refactor target and architecture overview.
 - [Archived Runtime Propagation Requirements](archive/architecture/RUNTIME_PROPAGATION_REQUIREMENTS.md) - completed/superseded TerrainBits/geology propagation checklist.
 - [Archived Concurrency Research](archive/architecture/CONCURRENCY_RESEARCH.md) - background research; normative rules live in the concurrency model and project rules.
 - [Archived Status Snapshot Pointer](archive/status/STATUS_SNAPSHOT_POINTER.md) - former current-tree pointer moved out of the active documentation set.

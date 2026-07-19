@@ -11,12 +11,14 @@ internal static partial class WorldReplayHashBuilder
 
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("world.snapshot.v1");
+            hash.AddString("world.snapshot.v2");
             hash.AddInt32(world.SizeInChunks);
             hash.AddInt32(world.MaxZ);
             AddTerrainHash(hash, world);
             AddItemsHash(hash, world.Items.GetAllInstances());
+            AddIdentityAuthorityHash(hash, world.Items.GetIdentityAuthoritySnapshot());
             AddCreaturesHash(hash, world.Creatures.GetAllInstances());
+            AddIdentityAuthorityHash(hash, world.Creatures.GetIdentityAuthoritySnapshot());
             AddReservationsHash(hash, world);
             AddStockpileZonesHash(hash, world.Stockpiles.GetAllZones());
             PlaceablesReplayHashBuilder.Append(hash, world);

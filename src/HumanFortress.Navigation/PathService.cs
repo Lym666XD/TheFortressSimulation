@@ -1,5 +1,4 @@
 using HumanFortress.Contracts.Navigation;
-using System.Collections.Generic;
 using NavPath = HumanFortress.Contracts.Navigation.Path;
 
 namespace HumanFortress.Navigation.Implementation;
@@ -12,7 +11,6 @@ internal sealed class PathService : IPathService
 {
     private readonly NavigationTuning _tuning;
     private readonly PathCache _cache;
-    private readonly Queue<PathRequest> _requestQueue;
     private readonly ThreadLocal<DeterministicAStar> _pathfinders;
     private int _pathRequestsServedThisTick;
 
@@ -20,7 +18,6 @@ internal sealed class PathService : IPathService
     {
         _tuning = tuning ?? NavigationTuning.Default;
         _cache = new PathCache(1024); // LRU cache with 1024 entries
-        _requestQueue = new Queue<PathRequest>();
         _pathfinders = new ThreadLocal<DeterministicAStar>(() => new DeterministicAStar(_tuning));
     }
 
@@ -35,9 +32,7 @@ internal sealed class PathService : IPathService
         // visible path requests than cold-cache sessions.
         if (_pathRequestsServedThisTick >= _tuning.MaxPathsPerTick)
         {
-            // Queue for next tick
-            _requestQueue.Enqueue(request);
-            return NavPath.Invalid;
+            return NavPath.BudgetExhausted;
         }
 
         _pathRequestsServedThisTick++;
@@ -51,10 +46,11 @@ internal sealed class PathService : IPathService
 
         // Compute path
         var pathfinder = _pathfinders.Value!;
-        var path = pathfinder.FindPath(request, world);
+        int nodeBudget = CalculateNodeBudget(_tuning.MaxNodesPerSearch, request.EffectiveSearchAttempt);
+        var path = pathfinder.FindPath(request, world, nodeBudget);
 
-        // Cache successful paths
-        if (path.Kind == PathResultKind.Found)
+        // Only a terminal path to the requested destination can enter the complete cache.
+        if (path.ReachesDestination(request.Destination))
         {
             _cache.Add(cacheKey, path);
         }
@@ -62,23 +58,11 @@ internal sealed class PathService : IPathService
     }
 
     /// <summary>
-    /// Start a new tick - resets counters and processes queued requests.
+    /// Start a new tick and reset the deterministic request counter.
     /// </summary>
     internal void BeginTick()
     {
         _pathRequestsServedThisTick = 0;
-    }
-
-    /// <summary>
-    /// Process queued path requests up to the deterministic request budget.
-    /// </summary>
-    internal void ProcessQueuedRequests(IWorldNavigationView world)
-    {
-        while (_requestQueue.Count > 0 && _pathRequestsServedThisTick < _tuning.MaxPathsPerTick)
-        {
-            var request = _requestQueue.Dequeue();
-            Solve(in request, in world);
-        }
     }
 
     /// <summary>
@@ -108,7 +92,6 @@ internal sealed class PathService : IPathService
             CacheSize = _cache.Count,
             CacheHits = _cache.Hits,
             CacheMisses = _cache.Misses,
-            QueuedRequests = _requestQueue.Count,
             PathsComputedThisTick = _pathRequestsServedThisTick,
         };
     }
@@ -139,6 +122,13 @@ internal sealed class PathService : IPathService
             position.Z);
     }
 
+    private static int CalculateNodeBudget(int baseBudget, byte searchAttempt)
+    {
+        int shift = Math.Min(searchAttempt, PathRequest.MaxSearchAttempt);
+        long scaled = (long)Math.Max(1, baseBudget) << shift;
+        return scaled >= int.MaxValue ? int.MaxValue : (int)scaled;
+    }
+
     internal void Dispose()
     {
         _pathfinders?.Dispose();
@@ -147,8 +137,6 @@ internal sealed class PathService : IPathService
     NavPath IPathService.Solve(in PathRequest request, in IWorldNavigationView world) => Solve(in request, in world);
 
     void IPathService.BeginTick() => BeginTick();
-
-    void IPathService.ProcessQueuedRequests(IWorldNavigationView world) => ProcessQueuedRequests(world);
 
     void IPathService.InvalidateChunk(ChunkKey chunk) => InvalidateChunk(chunk);
 }
@@ -161,6 +149,5 @@ internal struct PathServiceStats
     internal int CacheSize;
     internal long CacheHits;
     internal long CacheMisses;
-    internal int QueuedRequests;
     internal int PathsComputedThisTick;
 }

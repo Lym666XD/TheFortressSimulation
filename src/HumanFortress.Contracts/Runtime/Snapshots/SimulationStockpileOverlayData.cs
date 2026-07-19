@@ -20,7 +20,8 @@ public readonly record struct SimulationStockpileOverlayData(
 
 public readonly record struct StockpileOverlayCellView(
     int X,
-    int Y);
+    int Y,
+    int ZoneId = 0);
 
 public readonly record struct SimulationStockpileDetailData(
     bool HasZone,

@@ -1,236 +1,527 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using HumanFortress.Contracts.Simulation.Save;
 
 namespace HumanFortress.Simulation.Jobs;
 
 /// <summary>
-/// Central reservation manager for items/destinations.
-/// v1.1.1 minimal: item-level reservations with TTL and holder.
-/// Reservations are simulation-owned write-phase state.
+/// Owns resource reservations. Mutations require opaque generation tokens so a
+/// stale job/finalizer cannot renew, release, consume, or transfer a successor's claim.
 /// </summary>
-internal sealed class ReservationManager
+internal sealed partial class ReservationManager
 {
-    private sealed class ItemReservation
+    internal readonly struct ItemToken
     {
-        internal Guid ItemId { get; init; }
-        internal Guid HolderId { get; set; }
+        internal ItemToken(
+            Guid resourceId,
+            Guid holderId,
+            string systemId,
+            string jobId,
+            ulong generation)
+        {
+            ResourceId = resourceId;
+            HolderId = holderId;
+            SystemId = systemId;
+            JobId = jobId;
+            Generation = generation;
+        }
+
+        internal Guid ResourceId { get; }
+        internal Guid HolderId { get; }
+        internal string SystemId { get; }
+        internal string JobId { get; }
+        internal ulong Generation { get; }
+        internal bool IsValid => ResourceId != Guid.Empty
+            && HolderId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(SystemId)
+            && !string.IsNullOrWhiteSpace(JobId)
+            && Generation != 0;
+
+        internal bool Matches(ItemToken other) =>
+            ResourceId == other.ResourceId
+            && HolderId == other.HolderId
+            && string.Equals(SystemId, other.SystemId, StringComparison.Ordinal)
+            && string.Equals(JobId, other.JobId, StringComparison.Ordinal)
+            && Generation == other.Generation;
+
+    }
+
+    internal readonly struct CreatureToken
+    {
+        internal CreatureToken(
+            Guid resourceId,
+            string holderSystem,
+            string jobId,
+            ulong generation)
+        {
+            ResourceId = resourceId;
+            HolderSystem = holderSystem;
+            JobId = jobId;
+            Generation = generation;
+        }
+
+        internal Guid ResourceId { get; }
+        internal string HolderSystem { get; }
+        internal string JobId { get; }
+        internal ulong Generation { get; }
+        internal bool IsValid => ResourceId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(HolderSystem)
+            && !string.IsNullOrWhiteSpace(JobId)
+            && Generation != 0;
+
+        internal bool Matches(CreatureToken other) =>
+            ResourceId == other.ResourceId
+            && string.Equals(HolderSystem, other.HolderSystem, StringComparison.Ordinal)
+            && string.Equals(JobId, other.JobId, StringComparison.Ordinal)
+            && Generation == other.Generation;
+
+    }
+
+    internal sealed class ItemReservation
+    {
+        internal required ItemToken Token { get; init; }
+        internal ulong ExpireTick { get; set; }
+        internal bool IsStagedTransfer { get; init; }
+        internal Guid TransferSourceId { get; init; }
+        internal ulong TransferSourceGeneration { get; init; }
+    }
+
+    internal sealed class CreatureReservation
+    {
+        internal required CreatureToken Token { get; init; }
         internal ulong ExpireTick { get; set; }
     }
 
-    private readonly Dictionary<Guid, ItemReservation> _itemRes = new();
+    private readonly Dictionary<Guid, ItemReservation> _itemReservations = new();
+    private readonly Dictionary<Guid, CreatureReservation> _creatureReservations = new();
+    private readonly object _sync = new();
+    private ulong _nextGeneration;
 
-    // Creature (worker) reservations to ensure cross-system exclusivity
-    private sealed class CreatureReservation
+    internal bool TryAcquireItem(
+        Guid itemId,
+        Guid holderId,
+        string systemId,
+        string jobId,
+        ulong currentTick,
+        ulong expireTick,
+        out ItemToken token)
     {
-        internal Guid WorkerId { get; init; }
-        internal string HolderSystem { get; set; } = string.Empty;
-        internal string? JobId { get; set; }
-        internal ulong ExpireTick { get; set; }
-    }
-
-    private readonly Dictionary<Guid, CreatureReservation> _creatureRes = new();
-
-    /// <summary>
-    /// Try reserve an item for a holder until expireTick.
-    /// </summary>
-    internal bool TryReserveItem(Guid itemId, Guid holderId, ulong currentTick, ulong expireTick)
-    {
-        if (_itemRes.TryGetValue(itemId, out var existing)
-            && currentTick <= existing.ExpireTick
-            && existing.HolderId != holderId)
+        token = default;
+        if (!IsValidItemOwner(itemId, holderId, systemId, jobId)
+            || expireTick < currentTick)
         {
             return false;
         }
 
-        _itemRes[itemId] = new ItemReservation
+        lock (_sync)
         {
-            ItemId = itemId,
-            HolderId = holderId,
-            ExpireTick = expireTick
-        };
-        return true;
+            if (_itemReservations.TryGetValue(itemId, out var existing)
+                && currentTick <= existing.ExpireTick)
+            {
+                return false;
+            }
+
+            token = new ItemToken(itemId, holderId, systemId, jobId, NextGenerationLocked());
+            _itemReservations[itemId] = new ItemReservation
+            {
+                Token = token,
+                ExpireTick = expireTick
+            };
+            return true;
+        }
     }
 
-    /// <summary>
-    /// Release an item's reservation.
-    /// </summary>
-    internal void ReleaseItem(Guid itemId)
+    internal bool TryRenewItem(ItemToken token, ulong currentTick, ulong expireTick)
     {
-        _itemRes.Remove(itemId);
+        if (!token.IsValid || expireTick < currentTick)
+            return false;
+
+        lock (_sync)
+        {
+            if (!_itemReservations.TryGetValue(token.ResourceId, out var existing)
+                || existing.IsStagedTransfer
+                || currentTick > existing.ExpireTick
+                || !existing.Token.Matches(token))
+            {
+                return false;
+            }
+
+            existing.ExpireTick = expireTick;
+            return true;
+        }
     }
 
-    /// <summary>
-    /// Check if item is reserved at tick.
-    /// </summary>
+    internal bool TryReleaseItem(ItemToken token) => TryRemoveItem(token, requireStaged: false);
+
+    internal bool TryConsumeItem(ItemToken token) => TryRemoveItem(token, requireStaged: false);
+
+    internal bool TryStageItemTransfer(
+        ItemToken sourceToken,
+        Guid destinationItemId,
+        ulong currentTick,
+        ulong expireTick,
+        out ItemToken stagedToken)
+    {
+        stagedToken = default;
+        if (!sourceToken.IsValid
+            || destinationItemId == Guid.Empty
+            || destinationItemId == sourceToken.ResourceId
+            || expireTick < currentTick)
+        {
+            return false;
+        }
+
+        lock (_sync)
+        {
+            if (!_itemReservations.TryGetValue(sourceToken.ResourceId, out var source)
+                || source.IsStagedTransfer
+                || currentTick > source.ExpireTick
+                || !source.Token.Matches(sourceToken))
+            {
+                return false;
+            }
+
+            if (_itemReservations.TryGetValue(destinationItemId, out var destination)
+                && currentTick <= destination.ExpireTick)
+            {
+                return false;
+            }
+
+            stagedToken = new ItemToken(
+                destinationItemId,
+                sourceToken.HolderId,
+                sourceToken.SystemId,
+                sourceToken.JobId,
+                NextGenerationLocked());
+            _itemReservations[destinationItemId] = new ItemReservation
+            {
+                Token = stagedToken,
+                ExpireTick = expireTick,
+                IsStagedTransfer = true,
+                TransferSourceId = sourceToken.ResourceId,
+                TransferSourceGeneration = sourceToken.Generation
+            };
+            return true;
+        }
+    }
+
+    internal bool ValidateStagedItemTransfer(
+        ItemToken sourceToken,
+        ItemToken stagedToken,
+        ulong currentTick)
+    {
+        lock (_sync)
+        {
+            return MatchesStagedTransferLocked(sourceToken, stagedToken, currentTick);
+        }
+    }
+
+    internal bool TryCommitStagedItemTransfer(
+        ItemToken sourceToken,
+        ItemToken stagedToken,
+        ulong currentTick,
+        ulong expireTick)
+    {
+        if (expireTick < currentTick)
+            return false;
+
+        lock (_sync)
+        {
+            if (!MatchesStagedTransferLocked(sourceToken, stagedToken, currentTick))
+                return false;
+
+            _itemReservations.Remove(sourceToken.ResourceId);
+            _itemReservations[stagedToken.ResourceId] = new ItemReservation
+            {
+                Token = stagedToken,
+                ExpireTick = expireTick
+            };
+            return true;
+        }
+    }
+
+    internal bool TryCancelStagedItemTransfer(ItemToken stagedToken)
+    {
+        return TryRemoveItem(stagedToken, requireStaged: true);
+    }
+
+    internal bool TryAcquireCreature(
+        Guid workerId,
+        string systemId,
+        string jobId,
+        ulong currentTick,
+        ulong expireTick,
+        out CreatureToken token)
+    {
+        token = default;
+        if (workerId == Guid.Empty
+            || string.IsNullOrWhiteSpace(systemId)
+            || string.IsNullOrWhiteSpace(jobId)
+            || expireTick < currentTick)
+        {
+            return false;
+        }
+
+        lock (_sync)
+        {
+            if (_creatureReservations.TryGetValue(workerId, out var existing)
+                && currentTick <= existing.ExpireTick)
+            {
+                return false;
+            }
+
+            token = new CreatureToken(workerId, systemId, jobId, NextGenerationLocked());
+            _creatureReservations[workerId] = new CreatureReservation
+            {
+                Token = token,
+                ExpireTick = expireTick
+            };
+            return true;
+        }
+    }
+
+    internal bool TryRenewCreature(CreatureToken token, ulong currentTick, ulong expireTick)
+    {
+        if (!token.IsValid || expireTick < currentTick)
+            return false;
+
+        lock (_sync)
+        {
+            if (!_creatureReservations.TryGetValue(token.ResourceId, out var existing)
+                || currentTick > existing.ExpireTick
+                || !existing.Token.Matches(token))
+            {
+                return false;
+            }
+
+            existing.ExpireTick = expireTick;
+            return true;
+        }
+    }
+
+    internal bool TryReleaseCreature(CreatureToken token)
+    {
+        if (!token.IsValid)
+            return false;
+
+        lock (_sync)
+        {
+            if (!_creatureReservations.TryGetValue(token.ResourceId, out var existing)
+                || !existing.Token.Matches(token))
+            {
+                return false;
+            }
+
+            _creatureReservations.Remove(token.ResourceId);
+            return true;
+        }
+    }
+
     internal bool IsItemReserved(Guid itemId, ulong currentTick)
     {
-        if (_itemRes.TryGetValue(itemId, out var res))
+        lock (_sync)
         {
-            if (currentTick <= res.ExpireTick) return true;
+            return _itemReservations.TryGetValue(itemId, out var reservation)
+                && currentTick <= reservation.ExpireTick;
         }
-        return false;
     }
 
-    /// <summary>
-    /// Snapshot for UI/debugging.
-    /// </summary>
-    internal IReadOnlyCollection<(Guid itemId, Guid holderId, ulong expireTick)> GetItemReservationsSnapshot()
+    internal bool IsCreatureReserved(
+        Guid workerId,
+        ulong currentTick,
+        out string? holderSystem,
+        out string? jobId)
     {
-        var list = new List<(Guid, Guid, ulong)>(_itemRes.Count);
-        foreach (var kv in _itemRes.OrderBy(static kv => kv.Key))
+        lock (_sync)
         {
-            list.Add((kv.Key, kv.Value.HolderId, kv.Value.ExpireTick));
-        }
-        return list;
-    }
-
-    // ===== Creature reservation API =====
-
-    internal bool TryReserveCreature(Guid workerId, string systemId, ulong currentTick, ulong expireTick, string? jobId = null)
-    {
-        if (_creatureRes.TryGetValue(workerId, out var existing)
-            && currentTick <= existing.ExpireTick
-            && existing.HolderSystem != systemId)
-        {
-            return false;
-        }
-
-        _creatureRes[workerId] = new CreatureReservation
-        {
-            WorkerId = workerId,
-            HolderSystem = systemId,
-            JobId = jobId ?? existing?.JobId,
-            ExpireTick = expireTick
-        };
-        return true;
-    }
-
-    internal void ReleaseCreature(Guid workerId)
-    {
-        _creatureRes.Remove(workerId);
-    }
-
-    internal bool IsCreatureReserved(Guid workerId, ulong currentTick, out string? holderSystem, out string? jobId)
-    {
-        holderSystem = null; jobId = null;
-        if (_creatureRes.TryGetValue(workerId, out var res))
-        {
-            if (currentTick <= res.ExpireTick)
+            if (_creatureReservations.TryGetValue(workerId, out var reservation)
+                && currentTick <= reservation.ExpireTick)
             {
-                holderSystem = res.HolderSystem;
-                jobId = res.JobId;
+                holderSystem = reservation.Token.HolderSystem;
+                jobId = reservation.Token.JobId;
                 return true;
             }
         }
+
+        holderSystem = null;
+        jobId = null;
         return false;
     }
 
-    internal IReadOnlyCollection<(Guid workerId, string holderSystem, string? jobId, ulong expireTick)> GetCreatureReservationsSnapshot()
+    internal IReadOnlyCollection<(
+        Guid itemId,
+        Guid holderId,
+        string systemId,
+        string jobId,
+        ulong generation,
+        ulong expireTick,
+        bool stagedTransfer,
+        Guid transferSourceId,
+        ulong transferSourceGeneration)> GetItemReservationsSnapshot()
     {
-        var list = new List<(Guid, string, string?, ulong)>(_creatureRes.Count);
-        foreach (var kv in _creatureRes.OrderBy(static kv => kv.Key))
+        lock (_sync)
         {
-            list.Add((kv.Key, kv.Value.HolderSystem, kv.Value.JobId, kv.Value.ExpireTick));
+            return _itemReservations
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => (
+                    entry.Key,
+                    entry.Value.Token.HolderId,
+                    entry.Value.Token.SystemId,
+                    entry.Value.Token.JobId,
+                    entry.Value.Token.Generation,
+                    entry.Value.ExpireTick,
+                    entry.Value.IsStagedTransfer,
+                    entry.Value.TransferSourceId,
+                    entry.Value.TransferSourceGeneration))
+                .ToArray();
         }
-        return list;
+    }
+
+    internal IReadOnlyCollection<(
+        Guid workerId,
+        string holderSystem,
+        string jobId,
+        ulong generation,
+        ulong expireTick)> GetCreatureReservationsSnapshot()
+    {
+        lock (_sync)
+        {
+            return _creatureReservations
+                .OrderBy(static entry => entry.Key)
+                .Select(static entry => (
+                    entry.Key,
+                    entry.Value.Token.HolderSystem,
+                    entry.Value.Token.JobId,
+                    entry.Value.Token.Generation,
+                    entry.Value.ExpireTick))
+                .ToArray();
+        }
+    }
+
+    internal ulong GetGenerationHighWatermark()
+    {
+        lock (_sync)
+        {
+            return _nextGeneration;
+        }
     }
 
     internal IReadOnlyList<string> RestoreSnapshot(
         IReadOnlyList<WorldSaveItemReservationPayloadData>? itemReservations,
         IReadOnlyList<WorldSaveCreatureReservationPayloadData>? creatureReservations)
     {
-        var issues = new List<string>();
-        if (itemReservations == null)
-        {
-            issues.Add("World item reservation payload is missing.");
-        }
-
-        if (creatureReservations == null)
-        {
-            issues.Add("World creature reservation payload is missing.");
-        }
-
+        var issues = ValidateRestorePayload(itemReservations, creatureReservations);
         if (issues.Count > 0)
             return issues;
 
-        ValidateItemReservations(itemReservations!, issues);
-        ValidateCreatureReservations(creatureReservations!, issues);
-        if (issues.Count > 0)
-            return issues;
-
-        _itemRes.Clear();
-        foreach (var reservation in itemReservations!)
+        if (itemReservations!.Count != 0 || creatureReservations!.Count != 0)
         {
-            _itemRes[reservation.ItemId] = new ItemReservation
+            return new[]
             {
-                ItemId = reservation.ItemId,
-                HolderId = reservation.HolderId,
-                ExpireTick = reservation.ExpireTick
+                "Non-empty reservation restore is unsupported because the deferred payload does not carry ownership generations."
             };
         }
 
-        _creatureRes.Clear();
-        foreach (var reservation in creatureReservations!)
+        lock (_sync)
         {
-            _creatureRes[reservation.WorkerId] = new CreatureReservation
-            {
-                WorkerId = reservation.WorkerId,
-                HolderSystem = reservation.HolderSystem,
-                JobId = reservation.JobId,
-                ExpireTick = reservation.ExpireTick
-            };
+            _itemReservations.Clear();
+            _creatureReservations.Clear();
         }
 
         return Array.Empty<string>();
     }
 
-    private static void ValidateItemReservations(
-        IReadOnlyList<WorldSaveItemReservationPayloadData> reservations,
-        ICollection<string> issues)
+    private bool TryRemoveItem(ItemToken token, bool requireStaged)
     {
-        var seen = new HashSet<Guid>();
-        for (var i = 0; i < reservations.Count; i++)
+        if (!token.IsValid)
+            return false;
+
+        lock (_sync)
         {
-            var reservation = reservations[i];
-            if (reservation.ItemId == Guid.Empty)
+            if (!_itemReservations.TryGetValue(token.ResourceId, out var existing)
+                || !existing.Token.Matches(token)
+                || existing.IsStagedTransfer != requireStaged)
             {
-                issues.Add($"World item reservation payload[{i}] has an empty item id.");
-            }
-            else if (!seen.Add(reservation.ItemId))
-            {
-                issues.Add($"World item reservation payload[{i}] duplicates item id {reservation.ItemId}.");
+                return false;
             }
 
-            if (reservation.HolderId == Guid.Empty)
-            {
-                issues.Add($"World item reservation payload[{i}] has an empty holder id.");
-            }
+            _itemReservations.Remove(token.ResourceId);
+            return true;
         }
     }
 
-    private static void ValidateCreatureReservations(
-        IReadOnlyList<WorldSaveCreatureReservationPayloadData> reservations,
-        ICollection<string> issues)
+    private bool MatchesStagedTransferLocked(
+        ItemToken sourceToken,
+        ItemToken stagedToken,
+        ulong currentTick)
     {
-        var seen = new HashSet<Guid>();
-        for (var i = 0; i < reservations.Count; i++)
-        {
-            var reservation = reservations[i];
-            if (reservation.WorkerId == Guid.Empty)
-            {
-                issues.Add($"World creature reservation payload[{i}] has an empty worker id.");
-            }
-            else if (!seen.Add(reservation.WorkerId))
-            {
-                issues.Add($"World creature reservation payload[{i}] duplicates worker id {reservation.WorkerId}.");
-            }
+        return sourceToken.IsValid
+            && stagedToken.IsValid
+            && _itemReservations.TryGetValue(sourceToken.ResourceId, out var source)
+            && !source.IsStagedTransfer
+            && source.Token.Matches(sourceToken)
+            && currentTick <= source.ExpireTick
+            && _itemReservations.TryGetValue(stagedToken.ResourceId, out var staged)
+            && staged.IsStagedTransfer
+            && staged.Token.Matches(stagedToken)
+            && currentTick <= staged.ExpireTick
+            && staged.TransferSourceId == sourceToken.ResourceId
+            && staged.TransferSourceGeneration == sourceToken.Generation;
+    }
 
-            if (string.IsNullOrWhiteSpace(reservation.HolderSystem))
-            {
-                issues.Add($"World creature reservation payload[{i}] has a blank holder system.");
-            }
+    private ulong NextGenerationLocked()
+    {
+        if (_nextGeneration == ulong.MaxValue)
+            throw new InvalidOperationException("Reservation generation space is exhausted.");
+        return ++_nextGeneration;
+    }
+
+    private static bool IsValidItemOwner(
+        Guid itemId,
+        Guid holderId,
+        string systemId,
+        string jobId)
+    {
+        return itemId != Guid.Empty
+            && holderId != Guid.Empty
+            && !string.IsNullOrWhiteSpace(systemId)
+            && !string.IsNullOrWhiteSpace(jobId);
+    }
+
+    private static List<string> ValidateRestorePayload(
+        IReadOnlyList<WorldSaveItemReservationPayloadData>? itemReservations,
+        IReadOnlyList<WorldSaveCreatureReservationPayloadData>? creatureReservations)
+    {
+        var issues = new List<string>();
+        if (itemReservations == null)
+            issues.Add("World item reservation payload is missing.");
+        if (creatureReservations == null)
+            issues.Add("World creature reservation payload is missing.");
+        if (issues.Count > 0)
+            return issues;
+
+        var itemIds = new HashSet<Guid>();
+        for (var i = 0; i < itemReservations!.Count; i++)
+        {
+            var reservation = itemReservations[i];
+            if (reservation.ItemId == Guid.Empty)
+                issues.Add($"World item reservation payload[{i}] has an empty item id.");
+            else if (!itemIds.Add(reservation.ItemId))
+                issues.Add($"World item reservation payload[{i}] duplicates item id {reservation.ItemId}.");
+            if (reservation.HolderId == Guid.Empty)
+                issues.Add($"World item reservation payload[{i}] has an empty holder id.");
         }
+
+        var workerIds = new HashSet<Guid>();
+        for (var i = 0; i < creatureReservations!.Count; i++)
+        {
+            var reservation = creatureReservations[i];
+            if (reservation.WorkerId == Guid.Empty)
+                issues.Add($"World creature reservation payload[{i}] has an empty worker id.");
+            else if (!workerIds.Add(reservation.WorkerId))
+                issues.Add($"World creature reservation payload[{i}] duplicates worker id {reservation.WorkerId}.");
+            if (string.IsNullOrWhiteSpace(reservation.HolderSystem))
+                issues.Add($"World creature reservation payload[{i}] has a blank holder system.");
+        }
+
+        return issues;
     }
 }

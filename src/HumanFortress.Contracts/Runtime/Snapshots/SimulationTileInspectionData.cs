@@ -29,4 +29,27 @@ public readonly record struct SimulationTileInspectionData(
     int TrafficLevel,
     bool HasBlood,
     IReadOnlyList<TileInspectionItemView> Items,
-    IReadOnlyList<TileInspectionCreatureView> Creatures);
+    IReadOnlyList<TileInspectionCreatureView> Creatures)
+{
+    public static SimulationTileInspectionData Empty { get; } = new(
+        false,
+        0,
+        0,
+        0,
+        string.Empty,
+        string.Empty,
+        false,
+        false,
+        false,
+        false,
+        false,
+        0,
+        string.Empty,
+        0,
+        false,
+        false,
+        0,
+        false,
+        Array.Empty<TileInspectionItemView>(),
+        Array.Empty<TileInspectionCreatureView>());
+}

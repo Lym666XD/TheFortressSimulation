@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using HumanFortress.Simulation.World;
+using HumanFortress.Simulation.Jobs;
 
 namespace HumanFortress.Simulation.Items;
 
 /// <summary>
 /// Thread-safe log for ItemsDiff operations per tick.
 /// </summary>
-internal sealed class ItemsDiffLog
+internal sealed partial class ItemsDiffLog
 {
     private readonly List<ItemsDiff> _ops = new();
     private int _localSeq = 0;
@@ -41,25 +42,63 @@ internal sealed class ItemsDiffLog
         AddRemoveItem(itemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
     }
 
-    internal void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, ChunkKey chunk, int localIndex, int quantity, int priority, string systemId)
+    internal void AddSplitStack(
+        Guid sourceItemGuid,
+        Guid newItemGuid,
+        ChunkKey chunk,
+        int localIndex,
+        int quantity,
+        int priority,
+        string systemId,
+        ReservationManager.ItemToken sourceReservation = default,
+        ReservationManager.ItemToken stagedReservation = default)
     {
         lock (_lock)
         {
-            var diff = new ItemsDiff(ItemsDiffOp.SplitStack, chunk, localIndex, string.Empty, quantity, priority, systemId, _localSeq++, sourceItemGuid, newItemGuid);
+            var diff = new ItemsDiff(
+                ItemsDiffOp.SplitStack,
+                chunk,
+                localIndex,
+                string.Empty,
+                quantity,
+                priority,
+                systemId,
+                _localSeq++,
+                sourceItemGuid,
+                newItemGuid,
+                sourceReservation,
+                stagedReservation);
             _ops.Add(diff);
         }
     }
 
-    internal void AddSplitStack(Guid sourceItemGuid, Guid newItemGuid, WorldCellTarget target, int quantity, int priority, string systemId)
+    internal void AddSplitStack(
+        Guid sourceItemGuid,
+        Guid newItemGuid,
+        WorldCellTarget target,
+        int quantity,
+        int priority,
+        string systemId,
+        ReservationManager.ItemToken sourceReservation = default,
+        ReservationManager.ItemToken stagedReservation = default)
     {
-        AddSplitStack(sourceItemGuid, newItemGuid, target.ChunkKey, target.LocalIndex, quantity, priority, systemId);
+        AddSplitStack(
+            sourceItemGuid,
+            newItemGuid,
+            target.ChunkKey,
+            target.LocalIndex,
+            quantity,
+            priority,
+            systemId,
+            sourceReservation,
+            stagedReservation);
     }
 
     internal IReadOnlyList<ItemsDiff> MergeAndSort()
     {
         lock (_lock)
         {
-            _ops.Sort((a, b) => a.GetSortKey().CompareTo(b.GetSortKey()));
+            _ops.Sort(ItemsDiff.CompareDeterministic);
             return new List<ItemsDiff>(_ops);
         }
     }

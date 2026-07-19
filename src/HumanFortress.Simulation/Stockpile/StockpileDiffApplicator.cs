@@ -14,8 +14,6 @@ namespace HumanFortress.Simulation.Stockpile;
 /// </summary>
 internal sealed class StockpileDiffApplicator
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     private readonly SimulationWorld _world;
     private readonly StockpileManager _zoneManager;
 
@@ -46,10 +44,11 @@ internal sealed class StockpileDiffApplicator
             catch (Exception ex)
             {
                 SimulationDiagnostics.Error(
-                    LogCallback,
+                    world.Diagnostics,
                     "Simulation.StockpileDiff",
                     $"[StockpileDiffApplicator] Failed to apply diff {diff.Op}: {ex.Message}",
                     ex);
+                throw;
             }
         }
     }
@@ -188,7 +187,7 @@ internal sealed class StockpileDiffApplicator
         }
 
         SimulationDiagnostics.Information(
-            LogCallback,
+            _world.Diagnostics,
             "Simulation.StockpileDiff",
             $"[STOCKPILE] Applied zone {zoneId} name={request.Name} cells={acceptedCount}");
     }
@@ -225,7 +224,7 @@ internal sealed class StockpileDiffApplicator
 
         _zoneManager.DeleteZone(diff.ZoneId);
         SimulationDiagnostics.Information(
-            LogCallback,
+            _world.Diagnostics,
             "Simulation.StockpileDiff",
             $"[STOCKPILE] Deleted zone {diff.ZoneId}");
     }

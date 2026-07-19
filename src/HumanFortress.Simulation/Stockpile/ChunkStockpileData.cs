@@ -9,7 +9,7 @@ namespace HumanFortress.Simulation.Stockpile;
 /// Per-chunk stockpile data including zone shards and item indexing.
 /// Thread-safe for reads during Read phase, mutations only in Write phase per STOCKPILE_SPEC.md.
 /// </summary>
-internal sealed class ChunkStockpileData
+internal sealed partial class ChunkStockpileData
 {
     private readonly Dictionary<int, ZoneShard> _shards = new();
     private readonly int[] _cellZones; // zoneId per cell, 0=none

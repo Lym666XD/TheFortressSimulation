@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.workshop-catalog.schema.json",
+  "title": "Active workshop source family",
+  "description": "Authoritative mechanical contract for workshop constructions and attachments.",
+  "type": "object",
+  "required": ["version", "workshops"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "version": { "type": ["string", "integer"] },
+    "_comment": { "type": "string" },
+    "workshops": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/workshop" }
+    },
+    "attachments": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/attachment" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "footprint": {
+      "type": "object",
+      "required": ["w", "d", "h"],
+      "properties": {
+        "w": { "type": "integer", "minimum": 1 },
+        "d": { "type": "integer", "minimum": 1 },
+        "h": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "required": ["beauty", "comfort", "light_lumen", "heat_w"],
+      "properties": {
+        "beauty": { "type": "integer" },
+        "comfort": { "type": "integer", "minimum": 0 },
+        "light_lumen": { "type": "integer", "minimum": 0 },
+        "heat_w": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "placeableProfile": {
+      "type": "object",
+      "required": ["footprint", "passability", "requires_floor", "clearance_h", "blocks_light", "tags", "effects"],
+      "properties": {
+        "footprint": { "$ref": "#/definitions/footprint" },
+        "passability": { "enum": ["blocking", "nonblocking", "doorway"] },
+        "requires_floor": { "type": "boolean" },
+        "clearance_h": { "type": "integer", "minimum": 0 },
+        "blocks_light": { "type": "boolean" },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "effects": { "$ref": "#/definitions/effects" }
+      },
+      "additionalProperties": false
+    },
+    "materialRequirement": {
+      "type": "object",
+      "required": ["count"],
+      "properties": {
+        "tag": { "type": "string", "minLength": 1 },
+        "def_id": { "$ref": "#/definitions/id" },
+        "defId": { "$ref": "#/definitions/id" },
+        "count": { "type": "integer", "minimum": 1 }
+      },
+      "oneOf": [
+        { "required": ["tag"] },
+        { "required": ["def_id"] },
+        { "required": ["defId"] }
+      ],
+      "additionalProperties": false
+    },
+    "io": {
+      "type": "object",
+      "required": ["input_slots", "output_slots", "buffer_slots"],
+      "properties": {
+        "input_slots": { "type": "integer", "minimum": 0 },
+        "output_slots": { "type": "integer", "minimum": 0 },
+        "buffer_slots": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "workshop": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "tags",
+        "era_min",
+        "era_max",
+        "attachment_slots",
+        "io",
+        "power_baseline_w",
+        "category",
+        "build_time_ticks",
+        "material_costs",
+        "placeable_profile"
+      ],
+      "properties": {
+        "_comment": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "era_min": { "enum": ["C", "M", "R"] },
+        "era_max": { "enum": ["C", "M", "R"] },
+        "attachment_slots": { "$ref": "#/definitions/stringSet" },
+        "io": { "$ref": "#/definitions/io" },
+        "power_baseline_w": { "type": "integer", "minimum": 0 },
+        "category": { "const": "workshop" },
+        "build_time_ticks": { "type": "integer", "minimum": 1 },
+        "material_costs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/materialRequirement" }
+        },
+        "placeable_profile": { "$ref": "#/definitions/placeableProfile" }
+      },
+      "additionalProperties": false
+    },
+    "attachment": {
+      "type": "object",
+      "required": ["id", "name", "slot", "era", "upgrade_to", "tags", "power_w"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "slot": { "type": "string", "minLength": 1 },
+        "era": { "enum": ["C", "M", "R"] },
+        "era_min": { "enum": ["C", "M", "R"] },
+        "era_max": { "enum": ["C", "M", "R"] },
+        "upgrade_to": {
+          "oneOf": [
+            { "$ref": "#/definitions/id" },
+            { "type": "null" }
+          ]
+        },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "power_w": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

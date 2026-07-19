@@ -242,8 +242,6 @@ internal static partial class WorldSavePayloadRestorer
 
             if (string.IsNullOrWhiteSpace(entry.RecipeId))
                 issues.Add($"World placeable payload[{placeableIndex}] workshop queue[{i}] has a blank recipe id.");
-            if (string.IsNullOrWhiteSpace(entry.DisplayName))
-                issues.Add($"World placeable payload[{placeableIndex}] workshop queue[{i}] has a blank display name.");
             if (!Enum.IsDefined(typeof(CraftQueueStatus), entry.Status))
                 issues.Add($"World placeable payload[{placeableIndex}] workshop queue[{i}] has invalid status {entry.Status}.");
         }

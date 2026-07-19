@@ -103,7 +103,7 @@ public readonly struct DiffTarget
 /// <summary>
 /// Collects and merges diff operations for a single tick.
 /// </summary>
-public sealed class DiffLog
+public sealed partial class DiffLog
 {
     private readonly List<DiffOp> _operations = new();
     private readonly object _lock = new();
@@ -205,7 +205,15 @@ public sealed class DiffLog
 
     private static int CompareOps(DiffOp a, DiffOp b)
     {
-        int c = a.SortKey.CompareTo(b.SortKey);
+        int c = a.Target.ChunkId.CompareTo(b.Target.ChunkId);
+        if (c != 0) return c;
+
+        c = a.Target.LocalIndex.CompareTo(b.Target.LocalIndex);
+        if (c != 0) return c;
+
+        // Lower numeric priority is authoritative everywhere. Do not use the
+        // legacy packed SortKey here: it truncates priority to eight bits.
+        c = a.Priority.CompareTo(b.Priority);
         if (c != 0) return c;
 
         c = a.Op.CompareTo(b.Op);

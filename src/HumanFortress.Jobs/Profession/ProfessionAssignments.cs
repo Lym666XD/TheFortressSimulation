@@ -52,8 +52,10 @@ internal sealed class ProfessionAssignments
 
     internal int GetWeight(Guid workerId, string professionId)
     {
-        var profile = EnsureProfile(workerId);
-        return profile.TryGetValue(professionId, out var weight) ? weight : 5;
+        return _weights.TryGetValue(workerId, out var profile)
+            && profile.TryGetValue(professionId, out var weight)
+                ? weight
+                : 5;
     }
 
     internal IReadOnlyList<ProfessionRosterEntry> GetRosterSnapshot(HumanFortress.Simulation.World.World? world)
@@ -66,7 +68,7 @@ internal sealed class ProfessionAssignments
         {
             var def = definitions.GetDefinition(creature.DefinitionId);
             string name = def?.Name ?? creature.DefinitionId;
-            var weights = new Dictionary<string, int>(EnsureProfile(creature.Guid), StringComparer.OrdinalIgnoreCase);
+            var weights = CreateProfileSnapshot(creature.Guid);
             list.Add(new ProfessionRosterEntry(creature.Guid, name, weights));
         }
 
@@ -96,7 +98,7 @@ internal sealed class ProfessionAssignments
             if (creature.HP <= 0) continue;
             if (busy.Contains(creature.Guid)) continue;
 
-            var profile = EnsureProfile(creature.Guid);
+            var profile = CreateProfileSnapshot(creature.Guid);
             int weight = GetEffectiveWeight(profile, profDefs);
             if (weight <= 0) continue;
 
@@ -174,7 +176,77 @@ internal sealed class ProfessionAssignments
         return dict;
     }
 
-    private static int GetEffectiveWeight(Dictionary<string, int> profile, IReadOnlyList<ProfessionDefinition> professions)
+    internal ProfessionAssignmentsReplaySnapshot GetReplaySnapshot()
+    {
+        var workerIds = _weights.Keys
+            .Concat(_skillLevels.Keys)
+            .Distinct()
+            .OrderBy(static workerId => workerId)
+            .ToArray();
+        return new ProfessionAssignmentsReplaySnapshot(
+            workerIds
+                .Select(workerId => new ProfessionWorkerStateSnapshot(
+                    workerId,
+                    SnapshotValues(_weights.GetValueOrDefault(workerId)),
+                    SnapshotValues(_skillLevels.GetValueOrDefault(workerId))))
+                .ToArray());
+    }
+
+    internal void RestoreMutationMemento(ProfessionAssignmentsReplaySnapshot snapshot)
+    {
+        _weights.Clear();
+        _skillLevels.Clear();
+        foreach (var worker in snapshot.Workers.OrderBy(static worker => worker.WorkerId))
+        {
+            _weights.Add(
+                worker.WorkerId,
+                worker.Weights.ToDictionary(
+                    static entry => entry.Id,
+                    static entry => entry.Value,
+                    StringComparer.OrdinalIgnoreCase));
+            _skillLevels.Add(
+                worker.WorkerId,
+                worker.SkillLevels.ToDictionary(
+                    static entry => entry.Id,
+                    static entry => entry.Value,
+                    StringComparer.OrdinalIgnoreCase));
+        }
+    }
+
+    private Dictionary<string, int> CreateProfileSnapshot(Guid workerId)
+    {
+        var snapshot = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        if (_weights.TryGetValue(workerId, out var existing))
+        {
+            foreach (var entry in existing
+                .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(static entry => entry.Key, StringComparer.Ordinal))
+            {
+                snapshot[entry.Key] = entry.Value;
+            }
+        }
+
+        foreach (var definition in _registry.Definitions
+            .OrderBy(static definition => definition.Id, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static definition => definition.Id, StringComparer.Ordinal))
+        {
+            snapshot.TryAdd(definition.Id, 5);
+        }
+
+        return snapshot;
+    }
+
+    private static IReadOnlyList<ProfessionValueStateSnapshot> SnapshotValues(
+        IReadOnlyDictionary<string, int>? values)
+    {
+        return (values ?? new Dictionary<string, int>())
+            .OrderBy(static entry => entry.Key, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(static entry => entry.Key, StringComparer.Ordinal)
+            .Select(static entry => new ProfessionValueStateSnapshot(entry.Key, entry.Value))
+            .ToArray();
+    }
+
+    private static int GetEffectiveWeight(IReadOnlyDictionary<string, int> profile, IReadOnlyList<ProfessionDefinition> professions)
     {
         int best = 0;
         foreach (var profession in professions)

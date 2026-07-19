@@ -9,10 +9,10 @@ using HumanFortress.Jobs.Replay;
 using HumanFortress.Jobs.Transport;
 using HumanFortress.Runtime.Composition;
 using HumanFortress.Runtime.Host;
-using HumanFortress.Runtime.Save;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Simulation.Jobs;
 using HumanFortress.Simulation.Replay;
+using HumanFortress.Simulation.World;
 
 namespace HumanFortress.Runtime.Replay;
 
@@ -31,28 +31,44 @@ internal static class RuntimeReplayCheckpointHashBuilder
         CommandQueueReplaySnapshot? commandQueueSnapshot = null,
         IReadOnlyList<RngStreamStateSnapshot>? rngStreamSnapshot = null)
     {
+        return BuildData(
+            services,
+            session?.World,
+            session?.Host.Systems,
+            services.TickScheduler.CurrentTick,
+            commandQueueSnapshot,
+            rngStreamSnapshot);
+    }
+
+    internal static RuntimeReplayCheckpointData BuildData(
+        RuntimeSessionServices services,
+        World? world,
+        SimulationRuntimeSystems? systems,
+        ulong committedTick,
+        CommandQueueReplaySnapshot? commandQueueSnapshot = null,
+        IReadOnlyList<RngStreamStateSnapshot>? rngStreamSnapshot = null)
+    {
         ArgumentNullException.ThrowIfNull(services);
 
-        var metadata = SimulationSnapshotMetadata.Current(services.TickScheduler.CurrentTick);
-        var worldHash = session?.World == null
+        var metadata = SimulationSnapshotMetadata.Current(committedTick);
+        var worldHash = world == null
             ? null
-            : WorldReplayHashBuilder.Build(session.World);
+            : WorldReplayHashBuilder.Build(world);
         var rngSnapshot = rngStreamSnapshot ?? services.RngStreams.GetStateSnapshot();
         var rngHash = RngReplayHashBuilder.Build(rngSnapshot);
         commandQueueSnapshot ??= services.CommandQueue.GetReplaySnapshot();
         var commandLogHash = CommandReplayJournalHashBuilder.Build(commandQueueSnapshot.ExecutedRecords);
         var pendingCommandLogHash = CommandReplayJournalHashBuilder.Build(commandQueueSnapshot.PendingRecords);
-        var systems = session?.Host.Systems;
         string? transportHash = null;
         var transportRecordCount = 0;
         string? miningHash = null;
         var miningRecordCount = 0;
         string? craftHash = null;
         var craftRecordCount = 0;
-        if (session != null && systems == null)
+        if (world != null && systems == null)
         {
-            var transportQueueSnapshot = RuntimeSaveSnapshotEmptyJobState.CreateTransportQueueSnapshot();
-            var transportJobSnapshot = RuntimeSaveSnapshotEmptyJobState.CreateTransportReplaySnapshot();
+            var transportQueueSnapshot = RuntimeEmptyJobReplayState.CreateTransportQueue();
+            var transportJobSnapshot = RuntimeEmptyJobReplayState.CreateTransport();
             transportHash = TransportReplayHashBuilder.Build(
                 transportQueueSnapshot,
                 transportJobSnapshot);
@@ -60,11 +76,11 @@ internal static class RuntimeReplayCheckpointHashBuilder
                 transportQueueSnapshot,
                 transportJobSnapshot);
 
-            var miningSnapshot = RuntimeSaveSnapshotEmptyJobState.CreateMiningReplaySnapshot();
+            var miningSnapshot = RuntimeEmptyJobReplayState.CreateMining();
             miningHash = MiningReplayHashBuilder.Build(miningSnapshot);
             miningRecordCount = CountMiningRecords(miningSnapshot);
 
-            var craftSnapshot = RuntimeSaveSnapshotEmptyJobState.CreateCraftReplaySnapshot();
+            var craftSnapshot = RuntimeEmptyJobReplayState.CreateCraft();
             craftHash = CraftReplayHashBuilder.Build(craftSnapshot);
             craftRecordCount = CountCraftRecords(craftSnapshot);
         }

@@ -1,5 +1,6 @@
 using HumanFortress.App.UI;
 using HumanFortress.App.UI.Selection;
+using HumanFortress.Contracts.Runtime;
 using SadConsole.Input;
 
 namespace HumanFortress.App.Input;
@@ -12,7 +13,8 @@ internal static class FortressMouseWheelInput
         UiStore ui,
         ISelectionTool? selectionTool,
         int zoomLevel,
-        int currentZ)
+        int currentZ,
+        RuntimeWorldBounds worldBounds)
     {
         ArgumentNullException.ThrowIfNull(ui);
 
@@ -40,7 +42,9 @@ internal static class FortressMouseWheelInput
             return new FortressMouseWheelResult(true, nextZoom, currentZ);
         }
 
-        int nextZ = Math.Clamp(currentZ - delta, 0, 49);
+        int nextZ = worldBounds.IsEmpty
+            ? 0
+            : Math.Clamp(currentZ - delta, worldBounds.MinZ, worldBounds.MaxZExclusive - 1);
         FortressMiningZRangeSync.ApplyCurrentZ(ui, selectionTool, nextZ);
 
         Logger.Log($"[ZLEVEL-UPDATE] delta={delta} -> Z={nextZ}");

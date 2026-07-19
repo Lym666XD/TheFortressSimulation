@@ -34,11 +34,23 @@ internal sealed class TransportReplanHandler
 
     internal void HandleReplan(ActiveJob job, ulong tick, ulong entityKey, MovementUpdate update, Point3 goal)
     {
+        job.PathSearchAttempt = update.SearchAttempt;
         var source = update.Position;
-        var request = new PathRequest(source, goal, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
+        var request = new PathRequest(
+            source,
+            goal,
+            MoveMode.Walk,
+            PathFlags.AllowDiagonal,
+            _seedFrom(job.CreatureId, job.ItemId),
+            job.PathSearchAttempt);
         IWorldNavigationView view = _navView;
         var path = _paths.Solve(in request, in view);
         if (path.Kind == PathResultKind.Found)
+        {
+            _move.BeginMovement(entityKey, request, path);
+            job.InvalidReplanCount = 0;
+        }
+        else if (path.Kind is PathResultKind.Partial or PathResultKind.BudgetExhausted)
         {
             _move.BeginMovement(entityKey, request, path);
         }
@@ -64,6 +76,7 @@ internal sealed class TransportReplanHandler
         job.InvalidReplanCount = 0;
 
         var request = new PathRequest(safePoint, goal, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
+        job.PathSearchAttempt = 0;
         var path = _paths.Solve(in request, in view);
         if (path.Kind == PathResultKind.Found)
         {

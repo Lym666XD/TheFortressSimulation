@@ -26,6 +26,8 @@ internal static class FortressDebugSpawnController
 
         if (ui.DebugMenuTab == 1)
         {
+            if (string.IsNullOrWhiteSpace(ui.DebugSelectedCreature))
+                return false;
             Logger.Log($"[DEBUG] Attempting creature spawn: id={ui.DebugSelectedCreature}, pos=({worldPos.X},{worldPos.Y},{context.CurrentZ})");
             Logger.Log($"[DEBUG] Creature definitions count: {spawn.CreatureDefinitions}");
 
@@ -41,6 +43,8 @@ internal static class FortressDebugSpawnController
 
         if (ui.DebugMenuTab == 2)
         {
+            if (string.IsNullOrWhiteSpace(ui.DebugSelectedItem))
+                return false;
             Logger.Log($"[DEBUG] Attempting item spawn: id={ui.DebugSelectedItem}, pos=({worldPos.X},{worldPos.Y},{context.CurrentZ})");
             Logger.Log($"[DEBUG] Item definitions count: {spawn.ItemDefinitions}");
 

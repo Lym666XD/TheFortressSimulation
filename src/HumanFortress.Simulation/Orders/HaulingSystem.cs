@@ -12,9 +12,10 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Reads haul designations and turns them into transport requests.
+/// Serialized compatibility stage that consumes haul designations and emits
+/// transport requests.
 /// </summary>
-internal sealed class HaulingSystem : ITick
+internal sealed class HaulingSystem : ISequentialCompatibilityStage
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
@@ -40,11 +41,7 @@ internal sealed class HaulingSystem : ITick
     internal int Priority => UpdateOrder.Priority.Items; // Ensure writes align with Items stage
     internal string SystemId => "Jobs.Hauling";
 
-    int ITick.Priority => Priority;
-
-    string ITick.SystemId => SystemId;
-
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _plannedRequests.Clear();
         _plannedItems.Clear();
@@ -118,12 +115,7 @@ internal sealed class HaulingSystem : ITick
         return inZone;
     }
 
-    void ITick.ReadTick(ulong tick)
-    {
-        ReadTick(tick);
-    }
-
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (_plannedRequests.Count == 0) return;
 
@@ -163,10 +155,11 @@ internal sealed class HaulingSystem : ITick
         _plannedReservations.Clear();
     }
 
-    void ITick.WriteTick(ulong tick)
-    {
-        WriteTick(tick);
-    }
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     private static uint SeedFrom(Guid a)
     {
@@ -202,9 +195,9 @@ internal sealed class HaulingSystem : ITick
             : 1;
     }
 
-    private static void Log(string message)
+    private void Log(string message)
     {
-        SimulationDiagnostics.Information(OrdersManager.LogCallback, "Jobs.Hauling", message);
+        _orders.EmitDiagnostic("Jobs.Hauling", message);
     }
 
     internal struct PlannedTransportRequest

@@ -53,6 +53,11 @@
           "type": "string",
           "description": "Primary category for UI grouping"
         },
+        "result_material_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Optional geology material used for the completed structural terrain"
+        },
         "build_time_ticks": {
           "type": "integer",
           "minimum": 1,

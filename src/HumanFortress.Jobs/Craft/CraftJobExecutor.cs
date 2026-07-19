@@ -65,13 +65,12 @@ internal sealed partial class CraftJobExecutor
             _move,
             materialConsumer,
             outputEmitter,
-            SystemId,
             CreatureReserveTtlTicks);
     }
 
     internal int LastIntakeCount { get; private set; }
 
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _paths.BeginTick();
         _inbox.Clear();
@@ -105,12 +104,21 @@ internal sealed partial class CraftJobExecutor
             {
                 _backlog.Enqueue(job);
             }
+            else if (result == CraftAssignmentResult.RetryablePath)
+            {
+                _backlog.Enqueue(job with
+                {
+                    PathSearchAttempt = job.PathSearchAttempt >= PathRequest.MaxSearchAttempt
+                        ? PathRequest.MaxSearchAttempt
+                        : (byte)(job.PathSearchAttempt + 1)
+                });
+            }
         }
 
         _stats.RecordRead(LastIntakeCount, _active.Count, _backlog.Count);
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (_active.Count == 0)
         {
@@ -165,7 +173,8 @@ internal sealed partial class CraftJobExecutor
                 job.Stage,
                 job.WorkTicksRemaining,
                 job.Anchor,
-                job.Z);
+                job.Z,
+                job.PathSearchAttempt);
         }
 
         var backlogJobs = _backlog.ToArray();

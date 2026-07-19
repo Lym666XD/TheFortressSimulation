@@ -1,4 +1,5 @@
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -9,7 +10,7 @@ internal static partial class FortressPlacementOverlayRenderer
 {
     private static void RenderFloatingBuildablePreview(
         FortressUiOverlayRenderContext context,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         Point mouseWorld,
         SimulationBuildCatalogData buildCatalog)
     {
@@ -28,7 +29,7 @@ internal static partial class FortressPlacementOverlayRenderer
     private static void RenderWorkshopPlacementPreview(
         ScreenSurface mapSurface,
         Point anchor,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         string constructionId,
         SimulationBuildCatalogData buildCatalog)
     {

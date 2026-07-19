@@ -14,7 +14,7 @@ internal static class TransportReplayHashBuilder
     {
         return ReplayHashBuilder.Compute(hash =>
         {
-            hash.AddString("jobs.transport.snapshot.v1");
+            hash.AddString("jobs.transport.snapshot.v2");
             Append(hash, queue, executor);
         });
     }
@@ -63,6 +63,8 @@ internal static class TransportReplayHashBuilder
             hash.AddInt32(job.Quantity);
             hash.AddInt32(job.InvalidReplanCount);
             hash.AddInt32((int)job.Reason);
+            hash.AddByte(job.PathSearchAttempt);
+            AddMovementCursorHash(hash, job.MovementCursor);
         }
 
         hash.AddInt32(executor.BacklogEntries.Count);
@@ -87,6 +89,7 @@ internal static class TransportReplayHashBuilder
         hash.AddString(request.RequestorId);
         hash.AddUInt64(request.CreatedTick);
         hash.AddUInt32(request.Seed);
+        hash.AddByte(request.PathSearchAttempt);
     }
 
     private static void AddPointHash(ReplayHashBuilder hash, Point point)
@@ -109,5 +112,41 @@ internal static class TransportReplayHashBuilder
         {
             hash.AddInt32(value.Value);
         }
+    }
+
+    private static void AddMovementCursorHash(
+        ReplayHashBuilder hash,
+        MovementCursorData? cursor)
+    {
+        hash.AddBoolean(cursor.HasValue);
+        if (!cursor.HasValue)
+            return;
+
+        var value = cursor.Value;
+        hash.AddUInt64(value.EntityKey);
+        hash.AddUInt64(value.Revision);
+        AddPoint3Hash(hash, value.Request.Source);
+        AddPoint3Hash(hash, value.Request.Destination);
+        hash.AddInt32((int)value.Request.Mode);
+        hash.AddInt32((int)value.Request.Flags);
+        hash.AddUInt32(value.Request.Seed);
+        hash.AddByte(value.Request.EffectiveSearchAttempt);
+        hash.AddInt32((int)value.Path.Kind);
+        hash.AddInt32(value.Path.Length);
+        hash.AddUInt32(value.Path.TotalCost);
+        hash.AddUInt32(value.Path.Hash);
+        hash.AddInt32(value.Path.Steps.Length);
+        foreach (var step in value.Path.Steps.Span)
+        {
+            AddPoint3Hash(hash, step.Position);
+            hash.AddInt32(step.Cost);
+        }
+
+        hash.AddInt32(value.CurrentStep);
+        AddPoint3Hash(hash, value.Position);
+        hash.AddInt32(value.StuckTicks);
+        hash.AddInt32(value.LastProgress);
+        hash.AddInt32(value.LastConnectivityVersion);
+        hash.AddInt32(value.StepWait);
     }
 }

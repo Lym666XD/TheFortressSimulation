@@ -9,7 +9,7 @@ public static class FortressRuntimeContentLoader
 {
     public static FortressContentLoadReport LoadStartupContent(string baseDir)
     {
-        ContentRegistryDiagnostics.DiagnosticSink = DiagnosticHub.Sink;
+        using var diagnosticScope = ContentRegistryDiagnostics.PushSink(DiagnosticHub.Sink);
         return FortressContentLoader
             .Load(baseDir, includeCoreCatalogs: false)
             .ToReport();

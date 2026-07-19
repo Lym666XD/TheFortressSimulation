@@ -1,4 +1,5 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Simulation.World;
 using SadRogue.Primitives;
 
@@ -9,25 +10,15 @@ internal static partial class FortressRuntimeSnapshotBuilder
     internal static SimulationMapViewportData BuildMapViewportSnapshot(
         World? world,
         IRuntimeGeologyCatalog? geologyCatalog,
-        int fortressSize,
-        Point cameraPosition,
+        RuntimeViewportGeometry viewport,
         Point cursorPosition,
-        int currentZ,
-        int zoomLevel,
-        int viewWidth,
-        int viewHeight,
         int cursorGlyph)
     {
         return MapViewportSnapshotBuilder.Build(
             world,
             geologyCatalog,
-            fortressSize,
-            cameraPosition,
+            viewport,
             cursorPosition,
-            currentZ,
-            zoomLevel,
-            viewWidth,
-            viewHeight,
             cursorGlyph);
     }
 }

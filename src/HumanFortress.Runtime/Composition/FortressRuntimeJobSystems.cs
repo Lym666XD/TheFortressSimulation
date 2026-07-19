@@ -36,7 +36,8 @@ internal sealed partial class FortressRuntimeJobSystems
         RuntimePathServiceRegistry pathServices,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
-        FortressRuntimeLogging? logging = null)
+        FortressRuntimeLogging? logging = null,
+        int transportPlanningWorkerCount = 1)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(diffLog);
@@ -46,13 +47,25 @@ internal sealed partial class FortressRuntimeJobSystems
         ArgumentNullException.ThrowIfNull(pathServices);
         ArgumentNullException.ThrowIfNull(dependencies);
         ArgumentNullException.ThrowIfNull(planners);
+        if (transportPlanningWorkerCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(transportPlanningWorkerCount));
 
         logging ??= FortressRuntimeLogging.None;
         pathServices.Clear();
         var navigationServices = new RuntimeNavigationServices(pathServices, dependencies.NavigationTuning);
 
         var mining = CreateMining(world, diffLog, itemsDiffLog, navigation, navigationServices, dependencies, planners, logging);
-        var transport = CreateTransport(world, diffLog, itemsDiffLog, stockpileDiffLog, navigation, navigationServices, dependencies, planners, logging);
+        var transport = CreateTransport(
+            world,
+            diffLog,
+            itemsDiffLog,
+            stockpileDiffLog,
+            navigation,
+            navigationServices,
+            dependencies,
+            planners,
+            logging,
+            transportPlanningWorkerCount);
         var construction = CreateConstruction(world, diffLog, itemsDiffLog, stockpileDiffLog, dependencies, planners, logging);
         var craft = CreateCraft(world, itemsDiffLog, stockpileDiffLog, navigation, navigationServices, dependencies, planners);
 

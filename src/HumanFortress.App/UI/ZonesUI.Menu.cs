@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
 
@@ -21,7 +22,12 @@ internal sealed partial class ZonesUI
         surface.Print(x + 2, y + 6, "ESC: Cancel", Color.Gray);
     }
 
-    public void DrawZonesWithSubmenu(ScreenSurface surface, int centerX, int centerY, ZoneSubmenu activeSubmenu)
+    public void DrawZonesWithSubmenu(
+        ScreenSurface surface,
+        int centerX,
+        int centerY,
+        ZoneSubmenu activeSubmenu,
+        SimulationZoneCatalogData zoneCatalog)
     {
         var bg = new Color(0, 0, 0, 200);
         var fg = Color.White;
@@ -46,23 +52,6 @@ internal sealed partial class ZonesUI
         int l3X = centerX + 2;
         int l3Y = centerY;
 
-        switch (activeSubmenu)
-        {
-            case ZoneSubmenu.Production:
-                DrawProductionL3(surface, l3X, l3Y);
-                break;
-            case ZoneSubmenu.Civil:
-                DrawCivilL3(surface, l3X, l3Y);
-                break;
-            case ZoneSubmenu.Public:
-                DrawPublicL3(surface, l3X, l3Y);
-                break;
-            case ZoneSubmenu.Military:
-                DrawMilitaryL3(surface, l3X, l3Y);
-                break;
-            case ZoneSubmenu.Management:
-                DrawManagementL3(surface, l3X, l3Y);
-                break;
-        }
+        DrawZoneOptions(surface, l3X, l3Y, activeSubmenu, zoneCatalog);
     }
 }

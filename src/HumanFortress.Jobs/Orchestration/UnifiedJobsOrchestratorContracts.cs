@@ -4,7 +4,7 @@ using HumanFortress.Jobs.Transport;
 
 namespace HumanFortress.Jobs.Orchestration;
 
-internal interface IUnifiedJobExecutor : ITick
+internal interface IUnifiedJobExecutor : ISequentialCompatibilityStage
 {
     int LastIntakeCount { get; }
 }

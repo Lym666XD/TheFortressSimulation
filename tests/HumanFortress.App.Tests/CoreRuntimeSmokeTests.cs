@@ -6,6 +6,7 @@ using HumanFortress.Runtime.Jobs;
 using HumanFortress.App;
 using HumanFortress.Content.Definitions;
 using HumanFortress.Content.Loading;
+using HumanFortress.Content.Registry;
 using HumanFortress.Contracts.Content.Loading;
 using HumanFortress.Core.Commands;
 using HumanFortress.Core.Determinism;
@@ -35,6 +36,7 @@ using HumanFortress.Runtime.Replay;
 using HumanFortress.Runtime.Save;
 using HumanFortress.Runtime.Content;
 using HumanFortress.Runtime.Diff;
+using HumanFortress.Runtime.Diagnostics;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Runtime.Snapshots;
 using HumanFortress.Runtime.Startup;
@@ -60,6 +62,8 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("=== Core Runtime Smoke Tests ===");
 
         TestTickScheduler();
+        HumanFortress.App.Tests.ReadPlanPurityRegressionTests.RunAll();
+        TickCommitTransactionRegressionTests.RunAll();
         TestDeterministicRng();
         TestDeterministicRuntimeIds();
         TestRuntimeCommandIdsAreStable();
@@ -107,7 +111,10 @@ internal static class CoreRuntimeSmokeTests
         TestPlaceableTuningJson();
         TestSchedulerTuningJson();
         TestAsyncDiagnosticLogger();
+        TestRuntimeDiagnosticsAreSessionIsolated();
         TestContentBootstrap();
+        ConstructionMaterialPolicyRegressionTests.RunAll();
+        RuntimeContentSessionIsolationTests.RunAll();
         TestContentLoadDiagnostics();
         TestDefinitionCatalogReloadsClearIndexes();
         TestOrderCommandsUseRuntimeTarget();
@@ -321,8 +328,8 @@ internal static class CoreRuntimeSmokeTests
     {
         var workshopGuid = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         var state = new WorkshopState();
-        state.AddEntry("core_recipe_a", "Recipe A", workshopGuid, 100);
-        state.AddEntry("core_recipe_b", "Recipe B", workshopGuid, 100);
+        state.AddEntry("core_recipe_a", workshopGuid, 100);
+        state.AddEntry("core_recipe_b", workshopGuid, 100);
         return string.Join("|", state.Queue.Select(e => e.EntryId.ToString("N")));
     }
 
@@ -638,6 +645,16 @@ internal static class CoreRuntimeSmokeTests
         var hashB = WorldReplayHashBuilder.Build(worldB);
         var hashASecondRead = WorldReplayHashBuilder.Build(worldA);
         var workshopQueueCountAfter = GetReplayHashWorkshop(worldA).Workshop!.Queue.Count;
+        var constructionCatalog = CreateReplayWorkshopConstructionCatalog();
+        var originalPresentation = WorkshopSnapshotBuilder.Build(
+            worldA,
+            constructionCatalog,
+            CreateReplayRecipeCatalog("Original recipe name"));
+        var renamedPresentation = WorkshopSnapshotBuilder.Build(
+            worldA,
+            constructionCatalog,
+            CreateReplayRecipeCatalog("Renamed recipe name"));
+        var hashAfterCosmeticPresentation = WorldReplayHashBuilder.Build(worldA);
 
         GetReplayHashWorkshop(worldC).Workshop!.Queue[0].Status = CraftQueueStatus.InProgress;
         var changedPlaceableHash = WorldReplayHashBuilder.Build(worldC);
@@ -647,13 +664,49 @@ internal static class CoreRuntimeSmokeTests
         RegressionAssert.True(
             hashA == hashB
             && hashA == hashASecondRead
+            && hashA == hashAfterCosmeticPresentation
             && workshopQueueCountBefore == 1
             && workshopQueueCountAfter == workshopQueueCountBefore
+            && originalPresentation.Workshops.Single().Queue.Single().DisplayName == "Original recipe name"
+            && renamedPresentation.Workshops.Single().Queue.Single().DisplayName == "Renamed recipe name"
             && hashA != changedPlaceableHash
             && hashA != changedHash,
             "WorldReplayHashBuilder did not produce stable authoritative hashes for equivalent world state.");
 
         Console.WriteLine("[PASS] World replay hash builder");
+    }
+
+    private static ConstructionCatalogStore CreateReplayWorkshopConstructionCatalog()
+    {
+        return ConstructionCatalogStore.FromDefinitions(new[]
+        {
+            new ConstructionDefinition
+            {
+                Id = "core_construction_test_workshop",
+                Name = "Replay Workshop",
+                Category = "workshop",
+                BuildTimeTicks = 1,
+                MaterialCosts = new[] { new MaterialCost { Tag = "test", Count = 1 } },
+                PlaceableProfile = new PlaceableProfile
+                {
+                    Footprint = new Footprint(1, 1, 1),
+                    Tags = new[] { "workshop" }
+                }
+            }
+        });
+    }
+
+    private static RecipeCatalogStore CreateReplayRecipeCatalog(string displayName)
+    {
+        return RecipeCatalogStore.FromDefinitions(new[]
+        {
+            new RecipeDefinition
+            {
+                Id = "test_recipe_plank",
+                Name = displayName,
+                Workshops = new[] { "core_construction_test_workshop" }
+            }
+        });
     }
 
     private static void TestWorldSaveSnapshotBuilder()
@@ -816,20 +869,6 @@ internal static class CoreRuntimeSmokeTests
             Rotation = 1,
             StateId = "test-installed"
         };
-
-        var itemReservationHolder = Guid.Parse("11111111-2222-3333-4444-555555555555");
-        var creatureReservationJob = "job-restore-smoke";
-        terrainWorld.Reservations.TryReserveItem(
-            itemId,
-            itemReservationHolder,
-            currentTick: 8,
-            expireTick: 80);
-        terrainWorld.Reservations.TryReserveCreature(
-            creatureId,
-            "save.restore.test",
-            currentTick: 8,
-            expireTick: 81,
-            jobId: creatureReservationJob);
 
         var stockpileId = terrainWorld.Stockpiles.CreateZone(
             "Restore Stockpile",
@@ -1056,10 +1095,26 @@ internal static class CoreRuntimeSmokeTests
         var restoredAllItemsAtInstalledCell = restore.World?.Items.GetItemsAt(installedCell, 0, groundOnly: false).ToArray()
             ?? Array.Empty<ItemInstance>();
         var restoredCreature = restore.World?.Creatures.GetInstance(creatureId);
-        var restoredItemReservations = restore.World?.Reservations.GetItemReservationsSnapshot() ?? Array.Empty<(Guid itemId, Guid holderId, ulong expireTick)>();
-        var restoredCreatureReservations = restore.World?.Reservations.GetCreatureReservationsSnapshot() ?? Array.Empty<(Guid workerId, string holderSystem, string? jobId, ulong expireTick)>();
+        var restoredItemReservations = restore.World?.Reservations.GetItemReservationsSnapshot()
+            ?? Array.Empty<(
+                Guid itemId,
+                Guid holderId,
+                string systemId,
+                string jobId,
+                ulong generation,
+                ulong expireTick,
+                bool stagedTransfer,
+                Guid transferSourceId,
+                ulong transferSourceGeneration)>();
+        var restoredCreatureReservations = restore.World?.Reservations.GetCreatureReservationsSnapshot()
+            ?? Array.Empty<(
+                Guid workerId,
+                string holderSystem,
+                string jobId,
+                ulong generation,
+                ulong expireTick)>();
         var restoredStockpile = restore.World?.Stockpiles.GetZone(stockpileId);
-        var placeableWorld = CreateReplayHashWorld();
+        var placeableWorld = CreateReplayHashWorld(includeReservations: false);
         var placeablePayload = WorldSavePayloadBuilder.Build(placeableWorld);
         var placeableSectionRestore = WorldSavePayloadRestorer.RestoreSupportedSections(placeablePayload);
         var duplicatePlaceablePayload = placeablePayload with
@@ -1129,8 +1184,8 @@ internal static class CoreRuntimeSmokeTests
                 && itemPayload.ReservationTokens[0].ClaimantCreatureGuid == creatureId)
             && payload.Creatures.Length == 1
             && payload.Counts.CreatureCount == 1
-            && payload.ItemReservations.Length == 1
-            && payload.CreatureReservations.Length == 1
+            && payload.ItemReservations.Length == 0
+            && payload.CreatureReservations.Length == 0
             && payload.StockpileZones.Length == 1
             && payload.Placeables.Length == 0
             && payload.MiningOrders.Length == 1
@@ -1231,8 +1286,8 @@ internal static class CoreRuntimeSmokeTests
             && restoredCreature.Guid == creatureId
             && restoredCreature.HP == 77
             && restoredCreature.MaxHP == 120
-            && restoredItemReservations.Any(reservation => reservation.itemId == itemId && reservation.holderId == itemReservationHolder && reservation.expireTick == 80)
-            && restoredCreatureReservations.Any(reservation => reservation.workerId == creatureId && reservation.holderSystem == "save.restore.test" && reservation.jobId == creatureReservationJob && reservation.expireTick == 81)
+            && restoredItemReservations.Count == 0
+            && restoredCreatureReservations.Count == 0
             && restoredStockpile != null
             && restoredStockpile.Filter.ItemIds.Contains("core_item_log_oak")
             && restore.World!.Orders.GetActiveMiningSnapshot().Count == 1
@@ -1544,7 +1599,7 @@ internal static class CoreRuntimeSmokeTests
         string MiningHash,
         string CraftHash);
 
-    private static World CreateReplayHashWorld()
+    private static World CreateReplayHashWorld(bool includeReservations = true)
     {
         var world = new World(2, 2);
         DefinitionCatalogTestSupport.LoadItems(world);
@@ -1560,17 +1615,25 @@ internal static class CoreRuntimeSmokeTests
         var creatureId = world.Creatures.SpawnCreature("core_race_dwarf", creatureCell, 0, "player", currentTick: 6)
             ?? throw new InvalidOperationException("Test creature failed to spawn.");
 
-        world.Reservations.TryReserveItem(
-            itemId,
-            Guid.Parse("11111111-2222-3333-4444-555555555555"),
-            currentTick: 7,
-            expireTick: 20);
-        world.Reservations.TryReserveCreature(
-            creatureId,
-            "test.system",
-            currentTick: 7,
-            expireTick: 21,
-            jobId: "job-1");
+        if (includeReservations)
+        {
+            var replayItemHolder = Guid.Parse("11111111-2222-3333-4444-555555555555");
+            world.Reservations.TryAcquireItem(
+                itemId,
+                replayItemHolder,
+                "test.system",
+                "job-1",
+                currentTick: 7,
+                expireTick: 20,
+                out _);
+            world.Reservations.TryAcquireCreature(
+                creatureId,
+                "test.system",
+                "job-1",
+                currentTick: 7,
+                expireTick: 21,
+                out _);
+        }
 
         world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 2, 2), z: 0, priority: 13, createdTick: 8);
 
@@ -1601,6 +1664,7 @@ internal static class CoreRuntimeSmokeTests
         var constructionPosition = new SadRogue.Primitives.Point(4, 4);
         var workshopPosition = new SadRogue.Primitives.Point(8, 8);
         world.SetTile(constructionPosition.X, constructionPosition.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 10);
+        world.SetTile(constructionPosition.X + 1, constructionPosition.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 10);
         world.SetTile(workshopPosition.X, workshopPosition.Y, 0, new TileBase(0, (ushort)TerrainKind.OpenWithFloor, 0, 0, 0, 0, 1), 10);
 
         var constructionSite = PlaceableFactory.CreateConstructionSite(
@@ -1622,7 +1686,7 @@ internal static class CoreRuntimeSmokeTests
         var workshop = new PlaceableInstance(
             Guid.Parse("aaaaaaaa-5555-5555-5555-aaaaaaaaaaaa"),
             PlaceableKind.Construction,
-            "test_workshop",
+            "core_construction_test_workshop",
             workshopPosition,
             z: 0,
             footprint: new Footprint(1, 1, 1))
@@ -1632,7 +1696,7 @@ internal static class CoreRuntimeSmokeTests
             Workshop = new WorkshopState()
         };
         workshop.Workshop.ConfigureWorkers(defaultAllowed: 2, maxWorkers: 3);
-        var queueEntry = workshop.Workshop.AddEntry("test_recipe_plank", "Replay Plank", workshop.Guid, currentTick: 11);
+        var queueEntry = workshop.Workshop.AddEntry("test_recipe_plank", workshop.Guid, currentTick: 11);
         queueEntry.Status = CraftQueueStatus.AwaitingMaterials;
         queueEntry.HasPendingRequests = true;
         queueEntry.LastRequestTick = 12;
@@ -2763,7 +2827,7 @@ internal static class CoreRuntimeSmokeTests
             && invalidTransportFullRestoreResult.Validation.Success
             && invalidTransportFullRestoreResult.RestoreIssues.Any(issue =>
                 issue.Section == RuntimeSaveManifestSections.JobsTransport
-                && issue.Message.Contains("missing creature", StringComparison.Ordinal))
+                && issue.Message.Contains("omits reservation tokens and generations", StringComparison.Ordinal))
             && invalidTransportRestoreAfterHash == invalidTransportRestoreBeforeHash
             && invalidTransportRestoreAfterDocument.PendingCommandRecords.Length == 1
             && restoredRuntimeDocument.PendingCommandRecords.Length == 2
@@ -2898,7 +2962,7 @@ internal static class CoreRuntimeSmokeTests
         var workshopDiffLog = new WorkshopDiffLog();
         var workshopId = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-000000000001");
         workshopDiffLog.SetWorkerSlots(workshopId, workerSlots: 1, priority: 1, systemId: "test");
-        workshopDiffLog.AddRecipe(workshopId, "recipe.high", "High Priority Recipe", currentTick: 10, priority: 99, systemId: "test");
+        workshopDiffLog.AddRecipe(workshopId, "recipe.high", currentTick: 10, priority: 99, systemId: "test");
         var workshopDiffs = workshopDiffLog.MergeAndSort();
 
         var itemsDiffLog = new ItemsDiffLog();
@@ -2924,8 +2988,8 @@ internal static class CoreRuntimeSmokeTests
             && zoneDiffs[1].Op == ZoneDiffOp.CreateZone
             && workshopDiffs[0].Op == WorkshopDiffOp.SetWorkerSlots
             && workshopDiffs[1].Op == WorkshopDiffOp.AddRecipe
-            && itemDiffs[0].ItemId == "item.high"
-            && firstStockpileCreate?.Name == "High",
+            && itemDiffs[0].ItemId == "item.low"
+            && firstStockpileCreate?.Name == "Low",
             "Typed command diff ordering policy regressed.");
 
         Console.WriteLine("[PASS] Typed command diff ordering policy");
@@ -3034,8 +3098,8 @@ internal static class CoreRuntimeSmokeTests
         world.Orders.EnqueueMining(rect, z: 0, priority: 50, createdTick: 0);
 
         var mining = new MiningSystem(world, world.Orders, maxPerTick: 8);
-        mining.ReadTick(0);
-        mining.WriteTick(0);
+        mining.PrepareSequentialCompatibility(0);
+        mining.ApplySequentialCompatibility(0);
 
         var planned = new List<MiningSystem.PlannedDig>();
         int plannedCount = mining.DequeuePlannedDigs(max: 8, planned);
@@ -3334,7 +3398,8 @@ internal static class CoreRuntimeSmokeTests
 
         var splitId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         RegressionAssert.True(
-            world.Items.SplitStackWithGuid(sourceId, takeCount: 1, newGuid: splitId) == splitId,
+            world.Items.SplitStackWithGuid(sourceId, takeCount: 1, newGuid: splitId) is { Success: true, NewItemId: var createdId }
+            && createdId == splitId,
             "ItemManager split-stack setup failed.");
         ulong splitKey = DiffTargetEncoding.EntityKey(splitId);
         var mergeTarget = sourceId.CompareTo(splitId) <= 0 ? sourceId : splitId;
@@ -3347,7 +3412,7 @@ internal static class CoreRuntimeSmokeTests
             "ItemManager entity-key index did not register a split stack.");
 
         RegressionAssert.True(
-            world.Items.MergeStacksAt(cell, 0) == 1
+            world.Items.MergeStacksAt(cell, 0).RemovedInstanceCount == 1
             && world.Items.GetInstanceByEntityKey(mergedAwayKey) == null
             && world.Items.GetInstanceByEntityKey(mergeTargetKey)?.Guid == mergeTarget
             && world.Items.GetInstanceByEntityKey(mergeTargetKey)?.StackCount == 3,
@@ -3523,7 +3588,7 @@ internal static class CoreRuntimeSmokeTests
             priority: 100,
             systemId: "test.transport");
 
-        world.Items.UpdateItemPosition(itemId, source, 0, destination, 0);
+        world.Items.UpdateItemPosition(itemId, destination, 0);
         emitter.RecordDelivery(itemId, new HumanFortress.Contracts.Navigation.Point3(destination.X, destination.Y, 0), TransportReason.ToStockpile);
         StockpileDiffApplicator.ApplyAll(world, stockpileDiffLog.MergeAndSort());
         stockpileDiffLog.Clear();
@@ -3644,8 +3709,8 @@ internal static class CoreRuntimeSmokeTests
             stockpileDiffLog: stockpileDiffLog);
 
         world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 2, 1), z: 0, priority: 50, createdTick: 0);
-        hauling.ReadTick(0);
-        hauling.WriteTick(0);
+        hauling.PrepareSequentialCompatibility(0);
+        hauling.ApplySequentialCompatibility(0);
 
         var reserveDiffs = stockpileDiffLog.MergeAndSort()
             .Where(diff => diff.Op == StockpileDiffOp.ReserveSlot)
@@ -3698,12 +3763,12 @@ internal static class CoreRuntimeSmokeTests
             stockpileDiffLog: stockpileDiffLog);
 
         world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 1, 1), z: 0, priority: 50, createdTick: 0);
-        hauling.ReadTick(0);
-        hauling.WriteTick(0);
+        hauling.PrepareSequentialCompatibility(0);
+        hauling.ApplySequentialCompatibility(0);
 
         world.Orders.EnqueueHaul(new SadRogue.Primitives.Rectangle(1, 1, 1, 1), z: 0, priority: 50, createdTick: 1);
-        hauling.ReadTick(1);
-        hauling.WriteTick(1);
+        hauling.PrepareSequentialCompatibility(1);
+        hauling.ApplySequentialCompatibility(1);
 
         var reserveDiffs = stockpileDiffLog.MergeAndSort()
             .Where(diff => diff.Op == StockpileDiffOp.ReserveSlot)
@@ -3795,8 +3860,10 @@ internal static class CoreRuntimeSmokeTests
             new SadRogue.Primitives.Point(1, 0),
             z: 0,
             footprint: new Footprint(1, 1, 1));
-        placeableData.AddPlaceable(localIndex: 8, laterPlaceable);
-        placeableData.AddPlaceable(localIndex: 1, earlierPlaceable);
+        RegressionAssert.True(
+            placeableData.TryAddPlaceable(localIndex: 8, laterPlaceable)
+            && placeableData.TryAddPlaceable(localIndex: 1, earlierPlaceable),
+            "Placeable snapshot setup contained duplicate owner cells.");
 
         int[] localIndexes = placeableData.GetOwnedPlaceableSnapshot()
             .Select(static entry => entry.LocalIndex)
@@ -3943,25 +4010,37 @@ internal static class CoreRuntimeSmokeTests
         var holderB = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
         var workerId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
 
-        bool itemReserved = reservations.TryReserveItem(itemId, holderA, currentTick: 10, expireTick: 20);
-        bool itemBlocked = !reservations.TryReserveItem(itemId, holderB, currentTick: 11, expireTick: 40);
-        bool itemRefresh = reservations.TryReserveItem(itemId, holderA, currentTick: 12, expireTick: 50);
-        bool itemExpiredAllowsNewHolder = reservations.TryReserveItem(itemId, holderB, currentTick: 51, expireTick: 70);
+        bool itemReserved = reservations.TryAcquireItem(
+            itemId, holderA, "Jobs.Test", "item:a", 10, 20, out var itemTokenA);
+        bool itemBlocked = !reservations.TryAcquireItem(
+            itemId, holderB, "Jobs.Test", "item:b", 11, 40, out _);
+        bool itemRefresh = reservations.TryRenewItem(itemTokenA, 12, 50);
+        bool itemExpiredAllowsNewHolder = reservations.TryAcquireItem(
+            itemId, holderB, "Jobs.Test", "item:b", 51, 70, out var itemTokenB);
+        bool staleItemReleaseRejected = !reservations.TryReleaseItem(itemTokenA);
 
-        bool creatureReserved = reservations.TryReserveCreature(workerId, "Jobs.Mining", currentTick: 10, expireTick: 20, jobId: "mine:a");
-        bool creatureBlocked = !reservations.TryReserveCreature(workerId, "Jobs.Transport", currentTick: 11, expireTick: 40, jobId: "haul:a");
-        bool creatureRefresh = reservations.TryReserveCreature(workerId, "Jobs.Mining", currentTick: 12, expireTick: 50, jobId: "mine:b");
-        bool creatureExpiredAllowsNewHolder = reservations.TryReserveCreature(workerId, "Jobs.Transport", currentTick: 51, expireTick: 70, jobId: "haul:b");
+        bool creatureReserved = reservations.TryAcquireCreature(
+            workerId, "Jobs.Mining", "mine:a", 10, 20, out var creatureTokenA);
+        bool creatureBlocked = !reservations.TryAcquireCreature(
+            workerId, "Jobs.Mining", "mine:b", 11, 40, out _);
+        bool creatureRefresh = reservations.TryRenewCreature(creatureTokenA, 12, 50);
+        bool creatureExpiredAllowsNewHolder = reservations.TryAcquireCreature(
+            workerId, "Jobs.Transport", "haul:b", 51, 70, out var creatureTokenB);
+        bool staleCreatureReleaseRejected = !reservations.TryReleaseCreature(creatureTokenA);
 
         RegressionAssert.True(
             itemReserved
             && itemBlocked
             && itemRefresh
             && itemExpiredAllowsNewHolder
+            && itemTokenB.Generation > itemTokenA.Generation
+            && staleItemReleaseRejected
             && creatureReserved
             && creatureBlocked
             && creatureRefresh
-            && creatureExpiredAllowsNewHolder,
+            && creatureExpiredAllowsNewHolder
+            && creatureTokenB.Generation > creatureTokenA.Generation
+            && staleCreatureReleaseRejected,
             "ReservationManager allowed active holders to be stolen before expiry.");
 
         Console.WriteLine("[PASS] Reservations");
@@ -4674,6 +4753,122 @@ internal static class CoreRuntimeSmokeTests
         Console.WriteLine("[PASS] Async diagnostic logger");
     }
 
+    private static void TestRuntimeDiagnosticsAreSessionIsolated()
+    {
+        var originalGlobalSink = DiagnosticHub.Sink;
+        var globalSink = new RecordingDiagnosticSink();
+        var sessionAEvents = new List<string>();
+        var sessionBEvents = new List<string>();
+        var contentASink = new RecordingDiagnosticSink();
+        var contentBSink = new RecordingDiagnosticSink();
+
+        try
+        {
+            DiagnosticHub.Sink = globalSink;
+
+            var sessionASink = new CallbackFactoryDiagnosticSink(
+                category => message => sessionAEvents.Add($"{category}|{message}"));
+            var sessionBSink = new CallbackFactoryDiagnosticSink(
+                category => message => sessionBEvents.Add($"{category}|{message}"));
+            var servicesA = new RuntimeSessionServices(sessionASink);
+            var servicesB = new RuntimeSessionServices(sessionBSink);
+            var factoryA = new SimulationRuntimeSessionFactory<object>(
+                servicesA,
+                _ => { },
+                (_, _) => new object());
+            var factoryB = new SimulationRuntimeSessionFactory<object>(
+                servicesB,
+                _ => { },
+                (_, _) => new object());
+
+            var sessionA = factoryA.CreateNew(sizeInChunks: 2, maxZ: 1);
+            var sessionB = factoryB.CreateNew(sizeInChunks: 2, maxZ: 1);
+
+            sessionA.World.Orders.EnqueueMining(
+                new SadRogue.Primitives.Rectangle(1, 1, 1, 1),
+                z: 0,
+                priority: 1,
+                createdTick: 0);
+            sessionB.World.Orders.EnqueueMining(
+                new SadRogue.Primitives.Rectangle(2, 2, 1, 1),
+                z: 0,
+                priority: 1,
+                createdTick: 0);
+
+            bool sessionARejected = ApplyMissingItem(sessionA.World, "missing-session-a");
+            bool sessionBRejected = ApplyMissingItem(sessionB.World, "missing-session-b");
+
+            sessionA.World.GetOrCreateChunk(new ChunkKey(0, 0, 0));
+            sessionB.World.GetOrCreateChunk(new ChunkKey(0, 0, 0));
+            sessionA.Navigation.RebuildAll();
+            sessionB.Navigation.RebuildAll();
+
+            using var rendezvous = new Barrier(participantCount: 2);
+            var contentATask = Task.Run(() =>
+            {
+                using var scope = ContentRegistryDiagnostics.PushSink(contentASink);
+                rendezvous.SignalAndWait();
+                ContentRegistryDiagnostics.Emit("content-session-a");
+            });
+            var contentBTask = Task.Run(() =>
+            {
+                using var scope = ContentRegistryDiagnostics.PushSink(contentBSink);
+                rendezvous.SignalAndWait();
+                ContentRegistryDiagnostics.Emit("content-session-b");
+            });
+            Task.WaitAll(contentATask, contentBTask);
+
+            RegressionAssert.True(
+                sessionARejected
+                && sessionBRejected
+                && sessionAEvents.Any(entry => entry.Contains("missing-session-a", StringComparison.Ordinal))
+                && !sessionAEvents.Any(entry => entry.Contains("missing-session-b", StringComparison.Ordinal))
+                && sessionBEvents.Any(entry => entry.Contains("missing-session-b", StringComparison.Ordinal))
+                && !sessionBEvents.Any(entry => entry.Contains("missing-session-a", StringComparison.Ordinal))
+                && sessionAEvents.Any(entry => entry.StartsWith("Navigation.Manager|", StringComparison.Ordinal))
+                && sessionBEvents.Any(entry => entry.StartsWith("Navigation.Manager|", StringComparison.Ordinal))
+                && contentASink.Events.Any(entry => entry.Message == "content-session-a")
+                && !contentASink.Events.Any(entry => entry.Message == "content-session-b")
+                && contentBSink.Events.Any(entry => entry.Message == "content-session-b")
+                && !contentBSink.Events.Any(entry => entry.Message == "content-session-a")
+                && globalSink.Events.Count == 0,
+                "Runtime/content diagnostics leaked across independently composed session sinks or fell back to the process-global hub.");
+        }
+        finally
+        {
+            DiagnosticHub.Sink = originalGlobalSink;
+        }
+
+        Console.WriteLine("[PASS] Runtime diagnostics are session-isolated");
+
+        static bool ApplyMissingItem(World world, string itemId)
+        {
+            try
+            {
+                ItemsDiffApplicator.ApplyAdditions(
+                    world,
+                    new[]
+                    {
+                        new ItemsDiff(
+                            ItemsDiffOp.AddItem,
+                            new ChunkKey(0, 0, 0),
+                            localIndex: 0,
+                            itemId,
+                            quantity: 1,
+                            priority: 1,
+                            systemId: "diagnostic-isolation",
+                            localSeq: 0)
+                    },
+                    tick: 0);
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                return true;
+            }
+        }
+    }
+
     private static void TestContentBootstrap()
     {
         var contentPath = FortressContentLoader.ResolveContentPath(AppContext.BaseDirectory);
@@ -4698,7 +4893,8 @@ internal static class CoreRuntimeSmokeTests
                 bootstrap.StructuredRegistriesLoaded,
                 "Content bootstrapper did not load content registries.");
 
-            var structured = FortressRuntimeContentSnapshotLoader.CaptureLoaded();
+            var structured = FortressRuntimeContentSnapshotLoader.CaptureLoaded(
+                bootstrap.StructuredRegistry);
             var graniteWallHandle = structured.Geology.GetGeologyHandle("core_terrain_wall_rock_granite");
             var graniteWall = structured.Geology.GetGeologyByHandle(graniteWallHandle);
             var hasAirGeology = structured.Geology.TryGetGeologyHandleByMaterialAndKind(
@@ -4712,17 +4908,21 @@ internal static class CoreRuntimeSmokeTests
             var loadedContent = bootstrap.CoreCatalogs
                 ?? throw new InvalidOperationException("Content bootstrapper did not load core content catalogs.");
 
-            var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(loadedContent.CoreData);
+            var runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(
+                bootstrap.StructuredRegistry,
+                loadedContent.CoreData);
             var coreDataResult = loadedContent.CoreData;
             var constructionCount = runtimeContent.Constructions.Count;
             var recipeCount = runtimeContent.Recipes.Count;
             var workshopCount = runtimeContent.Constructions.GetConstructionsByCategory("workshop").Count();
-            var stoneworksRecipeCount = runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count;
+            var metallurgyRecipeCount = runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_metallurgy_smeltery").Count;
             var secondLoadedContent = CoreContentCatalogLoader.Load(bootstrap.CoreDataPath.ResolvedPath!);
-            runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(secondLoadedContent.CoreData);
+            runtimeContent = FortressRuntimeContentSnapshotLoader.ApplyCoreData(
+                bootstrap.StructuredRegistry,
+                secondLoadedContent.CoreData);
             var secondCoreDataResult = secondLoadedContent.CoreData;
             var stoneworks = runtimeContent.Constructions.GetConstruction("core_construction_workshop_stoneworks");
-            var stoneBlocksRecipe = runtimeContent.Recipes.GetRecipe("core_recipe_stone_cut_blocks_c");
+            var bloomeryRecipe = runtimeContent.Recipes.GetRecipe("core_recipe_metallurgy_bloomery_reduce");
 
             RegressionAssert.True(
                 bootstrap.StructuredRegistriesLoaded
@@ -4754,9 +4954,9 @@ internal static class CoreRuntimeSmokeTests
                 && runtimeContent.Constructions.Count == constructionCount
                 && runtimeContent.Recipes.Count == recipeCount
                 && runtimeContent.Constructions.GetConstructionsByCategory("workshop").Count() == workshopCount
-                && runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_stoneworks").Count == stoneworksRecipeCount
+                && runtimeContent.Recipes.GetRecipesForWorkshop("core_construction_workshop_metallurgy_smeltery").Count == metallurgyRecipeCount
                 && stoneworks != null
-                && stoneBlocksRecipe != null,
+                && bloomeryRecipe != null,
                 "Content bootstrapper did not load runtime content into the structured registry correctly.");
         }
         finally
@@ -5156,7 +5356,7 @@ internal static class CoreRuntimeSmokeTests
                 Outputs = new[] { new RecipeOutput { DefId = "test_output_b", Count = 1 } }
             }
         });
-        var constructionCatalog = FortressRuntimeContentSnapshotLoader.CaptureLoaded().Constructions;
+        var constructionCatalog = ConstructionCatalogStore.Empty;
         var mutationDiffs = new RuntimeMutationDiffLogs(
             itemsDiffLog,
             creaturesDiffLog,
@@ -5463,15 +5663,21 @@ internal static class CoreRuntimeSmokeTests
 
     private static void TestRuntimeStockpilePresetMenuUsesContentCatalog()
     {
-        var runtime = FortressRuntimeSessionFactory.Create(
+        var runtime = FortressRuntimeSessionFactory.CreateFull(
             AppContext.BaseDirectory,
             strictContent: false,
             contentWarningsAsErrors: false);
         runtime.InitializeWorld(sizeInChunks: 2, maxZ: 2);
+        var worldBounds = runtime.GetWorldAvailabilityData().WorldBounds;
+        var viewport = new RuntimeViewportGeometry(
+            new RuntimeRect(0, 0, 10, 10),
+            new RuntimePoint(0, 0),
+            1,
+            0,
+            worldBounds);
 
         var frame = runtime.GetUiOverlayFrameData(
-            currentZ: 0,
-            viewport: new RuntimeRect(0, 0, 10, 10),
+            viewport,
             showZoneOverlay: false,
             includeManagementDrawer: false,
             includeWorkDrawer: false,
@@ -5490,8 +5696,7 @@ internal static class CoreRuntimeSmokeTests
             "Runtime overlay snapshot metadata was not authored by the Runtime session.");
 
         var sameFrame = runtime.GetUiOverlayFrameData(
-            currentZ: 0,
-            viewport: new RuntimeRect(0, 0, 10, 10),
+            viewport,
             showZoneOverlay: false,
             includeManagementDrawer: false,
             includeWorkDrawer: false,
@@ -5499,8 +5704,7 @@ internal static class CoreRuntimeSmokeTests
             stockpileDetailZoneId: null,
             zoneDetailId: null);
         var differentFrameRequest = runtime.GetUiOverlayFrameData(
-            currentZ: 0,
-            viewport: new RuntimeRect(1, 0, 10, 10),
+            viewport with { CameraWorldOrigin = new RuntimePoint(1, 0) },
             showZoneOverlay: false,
             includeManagementDrawer: false,
             includeWorkDrawer: false,
@@ -5540,7 +5744,7 @@ internal static class CoreRuntimeSmokeTests
             && !string.IsNullOrWhiteSpace(frame.Delta.PayloadHash)
             && !frame.Delta.CanApplyToBase
             && frame.Delta.BasePayloadHash is null
-            && frame.Delta.SectionHashes.Count == 11
+            && frame.Delta.SectionHashes.Count == OverlaySectionHashes("expected").Length
             && frame.Delta.ChangedSections.Count == frame.Delta.SectionHashes.Count
             && frame.Delta.SectionHashes.Any(section => section.Section == SimulationUiOverlayFrameSection.StockpilePresets)
             && sameFrame.Delta.PayloadHash == frame.Delta.PayloadHash
@@ -5554,13 +5758,8 @@ internal static class CoreRuntimeSmokeTests
 
         var renderFrame = runtime.GetFrameRenderData(
             includeMapViewport: true,
-            fortressSize: 2 * 32,
-            cameraPosition: new RuntimePoint(0, 0),
+            viewport: viewport,
             cursorPosition: new RuntimePoint(0, 0),
-            currentZ: 0,
-            zoomLevel: 1,
-            viewWidth: 10,
-            viewHeight: 10,
             cursorGlyph: 'X',
             navigationMode: SimulationNavigationOverlayMode.None,
             selectedNavigationTarget: null,
@@ -5574,13 +5773,8 @@ internal static class CoreRuntimeSmokeTests
 
         var sameRenderFrame = runtime.GetFrameRenderData(
             includeMapViewport: true,
-            fortressSize: 2 * 32,
-            cameraPosition: new RuntimePoint(0, 0),
+            viewport: viewport,
             cursorPosition: new RuntimePoint(0, 0),
-            currentZ: 0,
-            zoomLevel: 1,
-            viewWidth: 10,
-            viewHeight: 10,
             cursorGlyph: 'X',
             navigationMode: SimulationNavigationOverlayMode.None,
             selectedNavigationTarget: null,
@@ -5588,13 +5782,8 @@ internal static class CoreRuntimeSmokeTests
             tileInspectionZ: 0);
         var differentRenderRequest = runtime.GetFrameRenderData(
             includeMapViewport: true,
-            fortressSize: 2 * 32,
-            cameraPosition: new RuntimePoint(1, 0),
+            viewport: viewport with { CameraWorldOrigin = new RuntimePoint(1, 0) },
             cursorPosition: new RuntimePoint(0, 0),
-            currentZ: 0,
-            zoomLevel: 1,
-            viewWidth: 10,
-            viewHeight: 10,
             cursorGlyph: 'X',
             navigationMode: SimulationNavigationOverlayMode.None,
             selectedNavigationTarget: null,
@@ -5665,8 +5854,12 @@ internal static class CoreRuntimeSmokeTests
     {
         var publisher = new RuntimeFrameSnapshotPublisher();
         var request = new RuntimeUiOverlayFrameRequest(
-            CurrentZ: 0,
-            Viewport: new RuntimeRect(0, 0, 10, 10),
+            Viewport: new RuntimeViewportGeometry(
+                new RuntimeRect(0, 0, 10, 10),
+                new RuntimePoint(0, 0),
+                1,
+                0,
+                new RuntimeWorldBounds(0, 0, 64, 64, 0, 2)),
             ShowZoneOverlay: false,
             IncludeManagementDrawer: false,
             IncludeWorkDrawer: false,
@@ -5688,7 +5881,7 @@ internal static class CoreRuntimeSmokeTests
             session: null,
             runtimeTick: 12,
             allowCache: false,
-            request with { CurrentZ = 1 });
+            request with { Viewport = request.Viewport with { CurrentZ = 1 } });
         publisher.Invalidate();
         var afterInvalidate = publisher.PublishUiOverlayFrame(
             session: null,
@@ -5730,13 +5923,13 @@ internal static class CoreRuntimeSmokeTests
 
         var renderRequest = new RuntimeFrameRenderRequest(
             IncludeMapViewport: true,
-            FortressSize: 2,
-            CameraPosition: new RuntimePoint(0, 0),
+            Viewport: new RuntimeViewportGeometry(
+                new RuntimeRect(0, 0, 4, 3),
+                new RuntimePoint(0, 0),
+                1,
+                0,
+                new RuntimeWorldBounds(0, 0, 64, 64, 0, 2)),
             CursorPosition: new RuntimePoint(0, 0),
-            CurrentZ: 0,
-            ZoomLevel: 1,
-            ViewWidth: 4,
-            ViewHeight: 3,
             CursorGlyph: 'X',
             NavigationMode: SimulationNavigationOverlayMode.None,
             SelectedNavigationTarget: null,
@@ -5756,7 +5949,10 @@ internal static class CoreRuntimeSmokeTests
             session: null,
             runtimeTick: 22,
             allowCache: false,
-            renderRequest with { CameraPosition = new RuntimePoint(1, 0) });
+            renderRequest with
+            {
+                Viewport = renderRequest.Viewport with { CameraWorldOrigin = new RuntimePoint(1, 0) }
+            });
 
         RegressionAssert.True(
             firstRender.MapViewport.Delta.IsAvailable
@@ -5981,6 +6177,7 @@ internal static class CoreRuntimeSmokeTests
             SimulationUiOverlayFrameSection.StockpileDetail,
             SimulationUiOverlayFrameSection.ZoneOverlay,
             SimulationUiOverlayFrameSection.ZoneDetail,
+            SimulationUiOverlayFrameSection.ZoneCatalog,
             SimulationUiOverlayFrameSection.ManagementDrawer,
             SimulationUiOverlayFrameSection.WorkDrawer,
             SimulationUiOverlayFrameSection.DebugMenu
@@ -6101,25 +6298,25 @@ internal static class CoreRuntimeSmokeTests
 
         var expected = new[]
         {
-            "mining-plan.read",
-            "haul-plan.read",
-            "construction-materials.read",
-            "construction-plan.read",
-            "craft-plan.read",
-            "mining-plan.write",
-            "haul-plan.write",
-            "construction-materials.write",
-            "construction-plan.write",
-            "craft-plan.write",
+            "mining-plan.prepare-compatibility",
+            "haul-plan.prepare-compatibility",
+            "construction-materials.prepare-compatibility",
+            "construction-plan.prepare-compatibility",
+            "craft-plan.prepare-compatibility",
+            "mining-plan.apply-compatibility",
+            "haul-plan.apply-compatibility",
+            "construction-materials.apply-compatibility",
+            "construction-plan.apply-compatibility",
+            "craft-plan.apply-compatibility",
             "haul-jobs.hints",
-            "haul-jobs.read",
-            "haul-jobs.write",
-            "mining-jobs.read",
-            "mining-jobs.write",
-            "construction-jobs.read",
-            "construction-jobs.write",
-            "craft-jobs.read",
-            "craft-jobs.write"
+            "haul-jobs.prepare-compatibility",
+            "haul-jobs.apply-compatibility",
+            "mining-jobs.prepare-compatibility",
+            "mining-jobs.apply-compatibility",
+            "construction-jobs.prepare-compatibility",
+            "construction-jobs.apply-compatibility",
+            "craft-jobs.prepare-compatibility",
+            "craft-jobs.apply-compatibility"
         };
 
         var stats = orchestrator.GetLastStats();
@@ -6131,8 +6328,8 @@ internal static class CoreRuntimeSmokeTests
             && stats.IntakeMining == miningJobs.LastIntakeCount
             && stats.IntakeConstruction == constructionJobs.LastIntakeCount
             && stats.IntakeCraft == craftJobs.LastIntakeCount
-            && stats.PlanStageCount == 5
-            && stats.ApplyStageCount == 4,
+            && stats.PlanStageCount == 0
+            && stats.ApplyStageCount == 9,
             "UnifiedJobsOrchestrator order, scheduling hints, or intake stats changed.");
 
         Console.WriteLine("[PASS] Unified jobs orchestrator");
@@ -6334,7 +6531,7 @@ internal static class CoreRuntimeSmokeTests
         }
     }
 
-    private sealed class OrchestratorPlannerProbe : ITick
+    private sealed class OrchestratorPlannerProbe : ISequentialCompatibilityStage
     {
         private readonly string _name;
         private readonly List<string> _trace;
@@ -6345,17 +6542,14 @@ internal static class CoreRuntimeSmokeTests
             _trace = trace;
         }
 
-        public int Priority => 1;
-        public string SystemId => _name;
-
-        public void ReadTick(ulong tick)
+        public void PrepareSequentialCompatibility(ulong tick)
         {
-            _trace.Add($"{_name}.read");
+            _trace.Add($"{_name}.prepare-compatibility");
         }
 
-        public void WriteTick(ulong tick)
+        public void ApplySequentialCompatibility(ulong tick)
         {
-            _trace.Add($"{_name}.write");
+            _trace.Add($"{_name}.apply-compatibility");
         }
     }
 
@@ -6368,8 +6562,6 @@ internal static class CoreRuntimeSmokeTests
             _trace = trace;
         }
 
-        public int Priority => 1;
-        public string SystemId => "haul-jobs";
         public int LastIntakeCount { get; private set; } = 2;
         public int? IntakeCap { get; private set; }
         public int ReserveSlots { get; private set; }
@@ -6386,9 +6578,9 @@ internal static class CoreRuntimeSmokeTests
             return new TransportJobStatsSnapshot(LastIntakeCount, Active: 1, Backlog: 0, CompletedDelta: 0, RequeuedDelta: 0, NoPathDelta: 0, CarryoverOld: 0);
         }
 
-        public void ReadTick(ulong tick) => _trace.Add("haul-jobs.read");
+        public void PrepareSequentialCompatibility(ulong tick) => _trace.Add("haul-jobs.prepare-compatibility");
 
-        public void WriteTick(ulong tick) => _trace.Add("haul-jobs.write");
+        public void ApplySequentialCompatibility(ulong tick) => _trace.Add("haul-jobs.apply-compatibility");
     }
 
     private sealed class OrchestratorMiningProbe : IUnifiedMiningJobExecutor
@@ -6402,8 +6594,6 @@ internal static class CoreRuntimeSmokeTests
             _backlogCount = backlogCount;
         }
 
-        public int Priority => 1;
-        public string SystemId => "mining-jobs";
         public int LastIntakeCount { get; private set; } = 3;
 
         public int GetBacklogCount() => _backlogCount;
@@ -6413,9 +6603,9 @@ internal static class CoreRuntimeSmokeTests
             return new MiningJobStatsSnapshot(LastIntakeCount, Active: 1, Backlog: _backlogCount, Deferred: 0, ReservedTiles: 0, CarryoverOld: 0);
         }
 
-        public void ReadTick(ulong tick) => _trace.Add("mining-jobs.read");
+        public void PrepareSequentialCompatibility(ulong tick) => _trace.Add("mining-jobs.prepare-compatibility");
 
-        public void WriteTick(ulong tick) => _trace.Add("mining-jobs.write");
+        public void ApplySequentialCompatibility(ulong tick) => _trace.Add("mining-jobs.apply-compatibility");
     }
 
     private sealed class OrchestratorConstructionProbe : IUnifiedConstructionJobExecutor
@@ -6427,13 +6617,11 @@ internal static class CoreRuntimeSmokeTests
             _trace = trace;
         }
 
-        public int Priority => 1;
-        public string SystemId => "construction-jobs";
         public int LastIntakeCount { get; private set; } = 4;
 
-        public void ReadTick(ulong tick) => _trace.Add("construction-jobs.read");
+        public void PrepareSequentialCompatibility(ulong tick) => _trace.Add("construction-jobs.prepare-compatibility");
 
-        public void WriteTick(ulong tick) => _trace.Add("construction-jobs.write");
+        public void ApplySequentialCompatibility(ulong tick) => _trace.Add("construction-jobs.apply-compatibility");
     }
 
     private sealed class OrchestratorCraftProbe : IUnifiedCraftJobExecutor
@@ -6445,13 +6633,11 @@ internal static class CoreRuntimeSmokeTests
             _trace = trace;
         }
 
-        public int Priority => 1;
-        public string SystemId => "craft-jobs";
         public int LastIntakeCount { get; private set; } = 5;
 
-        public void ReadTick(ulong tick) => _trace.Add("craft-jobs.read");
+        public void PrepareSequentialCompatibility(ulong tick) => _trace.Add("craft-jobs.prepare-compatibility");
 
-        public void WriteTick(ulong tick) => _trace.Add("craft-jobs.write");
+        public void ApplySequentialCompatibility(ulong tick) => _trace.Add("craft-jobs.apply-compatibility");
     }
 
     private sealed class TestRuntimeGeologyCatalog : IRuntimeGeologyCatalog

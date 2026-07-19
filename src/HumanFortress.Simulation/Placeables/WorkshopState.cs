@@ -46,8 +46,7 @@ internal sealed class WorkshopState
         {
             state._queue.Add(new CraftQueueEntry(
                 entryPayload.EntryId,
-                entryPayload.RecipeId,
-                entryPayload.DisplayName)
+                entryPayload.RecipeId)
             {
                 Status = (CraftQueueStatus)entryPayload.Status,
                 HasPendingRequests = entryPayload.HasPendingRequests,
@@ -87,11 +86,11 @@ internal sealed class WorkshopState
         ActiveJobs = 0;
     }
 
-    internal CraftQueueEntry AddEntry(string recipeId, string recipeName, Guid workshopGuid, ulong currentTick)
+    internal CraftQueueEntry AddEntry(string recipeId, Guid workshopGuid, ulong currentTick)
     {
         var sequence = ++_nextEntrySequence;
         var entryId = DeterministicGuidGenerator.GenerateFromGuid(WorkshopQueueEntryGuidScope ^ currentTick, workshopGuid, sequence);
-        var entry = new CraftQueueEntry(entryId, recipeId, recipeName);
+        var entry = new CraftQueueEntry(entryId, recipeId);
         _queue.Add(entry);
         return entry;
     }
@@ -122,6 +121,33 @@ internal sealed class WorkshopState
     internal void ClearQueue() => _queue.Clear();
 
     internal CraftQueueEntry? GetEntry(Guid entryId) => _queue.FirstOrDefault(e => e.EntryId == entryId);
+
+    internal WorkshopState CloneForMutationMemento()
+    {
+        var clone = new WorkshopState
+        {
+            AutoRequestMaterials = AutoRequestMaterials,
+            AutoStockpileOutputs = AutoStockpileOutputs,
+            AllowedWorkers = AllowedWorkers,
+            MaxWorkers = MaxWorkers,
+            ActiveJobs = ActiveJobs,
+            _nextEntrySequence = _nextEntrySequence
+        };
+        foreach (var entry in _queue)
+        {
+            clone._queue.Add(new CraftQueueEntry(entry.EntryId, entry.RecipeId)
+            {
+                Status = entry.Status,
+                HasPendingRequests = entry.HasPendingRequests,
+                LastRequestTick = entry.LastRequestTick,
+                ActiveWorkerId = entry.ActiveWorkerId,
+                IsScheduled = entry.IsScheduled,
+                BlockingReason = entry.BlockingReason
+            });
+        }
+
+        return clone;
+    }
 }
 
 internal enum CraftQueueStatus
@@ -134,16 +160,14 @@ internal enum CraftQueueStatus
 
 internal sealed class CraftQueueEntry
 {
-    internal CraftQueueEntry(Guid entryId, string recipeId, string recipeName)
+    internal CraftQueueEntry(Guid entryId, string recipeId)
     {
         EntryId = entryId;
         RecipeId = recipeId;
-        DisplayName = recipeName;
     }
 
     internal Guid EntryId { get; }
     internal string RecipeId { get; }
-    internal string DisplayName { get; }
     internal CraftQueueStatus Status { get; set; } = CraftQueueStatus.Pending;
     internal bool HasPendingRequests { get; set; }
     internal ulong LastRequestTick { get; set; }

@@ -1,0 +1,8 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.object.schema.json",
+  "title": "Manifest-classified object source",
+  "type": "object",
+  "minProperties": 1,
+  "additionalProperties": true
+}

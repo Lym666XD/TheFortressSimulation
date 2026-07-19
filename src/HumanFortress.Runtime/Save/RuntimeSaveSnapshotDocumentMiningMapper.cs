@@ -11,6 +11,7 @@ internal static class RuntimeSaveSnapshotDocumentMiningMapper
 {
     internal static RuntimeSaveMiningJobsData ToDocumentData(MiningJobReplaySnapshot snapshot)
     {
+        EnsureSnapshotIsRepresentable(snapshot);
         return new RuntimeSaveMiningJobsData(
             snapshot.ActiveJobs
                 .OrderBy(static job => job.Order)
@@ -75,6 +76,17 @@ internal static class RuntimeSaveSnapshotDocumentMiningMapper
             + (payload.DeferredStairwells?.Length ?? 0)
             + (payload.ReservedTiles?.Length ?? 0)
             + (payload.RecentCompletions?.Length ?? 0);
+    }
+
+    private static void EnsureSnapshotIsRepresentable(MiningJobReplaySnapshot snapshot)
+    {
+        if (snapshot.ActiveJobs.Any(static job => job.PathSearchAttempt != 0)
+            || snapshot.BacklogEntries.Any(static entry => entry.Dig.PathSearchAttempt != 0)
+            || snapshot.DeferredStairwells.Any(static entry => entry.Dig.PathSearchAttempt != 0))
+        {
+            throw new NotSupportedException(
+                "The experimental mining save document does not encode path search retry state.");
+        }
     }
 
     private static RuntimeSaveMiningActiveJobData ToDocumentActiveJob(

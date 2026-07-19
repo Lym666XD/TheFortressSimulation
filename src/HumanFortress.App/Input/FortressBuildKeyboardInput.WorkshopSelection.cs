@@ -59,10 +59,13 @@ internal static partial class FortressBuildKeyboardInput
         if (string.IsNullOrWhiteSpace(category))
             return null;
 
-        var list = WorkshopCategoryMapper.GetWorkshopsByCategory(buildCatalog, category);
-        if (index < 0 || index >= list.Count)
+        var categoryView = WorkshopCategoryPresentation.FindCategory(buildCatalog, category);
+        if (!categoryView.HasValue
+            || categoryView.Value.Workshops == null
+            || index < 0
+            || index >= categoryView.Value.Workshops.Count)
             return null;
 
-        return list[index].Id;
+        return categoryView.Value.Workshops[index].Id;
     }
 }

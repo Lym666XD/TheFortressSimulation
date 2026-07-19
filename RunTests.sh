@@ -2,5 +2,14 @@
 set -eu
 
 cd "$(dirname "$0")"
-/opt/homebrew/opt/dotnet@8/bin/dotnet build tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-restore -m:1 -v:quiet -p:RunAnalyzers=false
-/opt/homebrew/opt/dotnet@8/bin/dotnet tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
+DOTNET="${DOTNET:-dotnet}"
+RESULTS_DIR="${RESULTS_DIR:-artifacts/test-results/local}"
+
+"$DOTNET" test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj \
+  -m:1 \
+  -v:minimal \
+  -p:RunAnalyzers=false \
+  -p:UseAppHost=false \
+  --filter "TestCategory=discoverable" \
+  --logger "trx;LogFileName=discoverable-suites.trx" \
+  --results-directory "$RESULTS_DIR"

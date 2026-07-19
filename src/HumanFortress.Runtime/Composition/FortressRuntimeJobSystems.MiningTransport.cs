@@ -48,7 +48,8 @@ internal sealed partial class FortressRuntimeJobSystems
         RuntimeNavigationServices navigationServices,
         FortressRuntimeDependencies dependencies,
         FortressRuntimePlanningSystems planners,
-        FortressRuntimeLogging logging)
+        FortressRuntimeLogging logging,
+        int transportPlanningWorkerCount)
     {
         var schedulerTunings = dependencies.SchedulerTunings;
 
@@ -66,6 +67,7 @@ internal sealed partial class FortressRuntimeJobSystems
             workerStrategy: schedulerTunings.WorkerSelection,
             navigationTuning: dependencies.NavigationTuning,
             navigationServices: navigationServices,
-            log: logging.Log);
+            log: logging.Log,
+            planningWorkerCount: transportPlanningWorkerCount);
     }
 }

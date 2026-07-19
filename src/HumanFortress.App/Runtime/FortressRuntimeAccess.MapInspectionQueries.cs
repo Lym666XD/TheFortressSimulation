@@ -7,22 +7,55 @@ internal sealed partial class FortressRuntimeAccess
 {
     internal ZoneHitData FindZoneAt(Point worldPosition, int z)
     {
-        return _snapshots.FindZoneAt(worldPosition.ToRuntimePoint(), z);
+        if (!TryGetCommittedFrame(out var committed)
+            || committed.Request.Viewport.CurrentZ != z)
+        {
+            return ZoneHitData.Empty;
+        }
+
+        var cell = committed.Frame.UiOverlay.ZoneOverlay.Cells.FirstOrDefault(candidate =>
+            candidate.X == worldPosition.X && candidate.Y == worldPosition.Y);
+        return cell.ZoneId <= 0
+            ? ZoneHitData.Empty
+            : new ZoneHitData(true, cell.ZoneId, worldPosition.X, worldPosition.Y, z);
     }
 
     internal StockpileHitData FindStockpileAt(Point worldPosition, int z)
     {
-        return _snapshots.FindStockpileAt(worldPosition.ToRuntimePoint(), z);
+        if (!TryGetCommittedFrame(out var committed)
+            || committed.Request.Viewport.CurrentZ != z)
+        {
+            return StockpileHitData.Empty;
+        }
+
+        var cell = committed.Frame.UiOverlay.StockpileOverlay.Cells.FirstOrDefault(candidate =>
+            candidate.X == worldPosition.X && candidate.Y == worldPosition.Y);
+        return cell.ZoneId <= 0
+            ? StockpileHitData.Empty
+            : new StockpileHitData(
+                true,
+                cell.ZoneId,
+                new SnapshotPoint(worldPosition.X, worldPosition.Y));
     }
 
     internal SimulationTileInspectionData GetTileInspectionData(Point tileWorldPosition, int tileZ)
     {
-        return _snapshots.GetTileInspectionData(tileWorldPosition.ToRuntimePoint(), tileZ);
+        if (!TryGetCommittedFrame(out var committed)
+            || committed.Request.TileInspectionZ != tileZ
+            || committed.Request.TileInspectionWorldPosition.X != tileWorldPosition.X
+            || committed.Request.TileInspectionWorldPosition.Y != tileWorldPosition.Y)
+        {
+            return SimulationTileInspectionData.Empty;
+        }
+
+        return committed.Frame.FrameRender.TileInspection;
     }
 
     internal SimulationWorkshopDebugData GetWorkshopDebugData()
     {
-        return _snapshots.GetWorkshopDebugData();
+        return TryGetCommittedFrame(out var committed)
+            ? committed.Frame.UiOverlay.Workshops
+            : new SimulationWorkshopDebugData(Array.Empty<WorkshopSummaryView>(), 0, 0, 0);
     }
 
     ZoneHitData IFortressRuntimeMapInspectionAccess.FindZoneAt(Point worldPosition, int z) =>

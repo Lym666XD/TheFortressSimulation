@@ -2,7 +2,7 @@ namespace HumanFortress.Simulation.Orders;
 
 internal sealed partial class MiningSystem
 {
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _planned.Clear();
 
@@ -49,18 +49,18 @@ internal sealed partial class MiningSystem
         LogPlannedCounts(perId);
     }
 
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (_planned.Count == 0)
         {
             if ((tick % 60UL) == 0UL)
             {
-                Log("[MINING][PLAN] WriteTick: no planned digs");
+                Log("[MINING][COMPAT] apply: no planned digs");
             }
             return;
         }
 
-        Log($"[MINING][PLAN] WriteTick: enqueuing planned digs: {_planned.Count}");
+        Log($"[MINING][COMPAT] apply: enqueuing planned digs: {_planned.Count}");
         foreach (var plannedDig in _planned)
         {
             _outbox.Enqueue(plannedDig);
@@ -111,7 +111,7 @@ internal sealed partial class MiningSystem
             .ToList();
     }
 
-    private static void LogPlannedCounts(Dictionary<int, int> perId)
+    private void LogPlannedCounts(Dictionary<int, int> perId)
     {
         foreach (var entry in perId)
         {

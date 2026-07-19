@@ -13,6 +13,7 @@ internal static class RuntimeSaveSnapshotDocumentTransportMapper
         TransportRequestQueueStateSnapshot queue,
         TransportJobReplaySnapshot executor)
     {
+        EnsureSnapshotIsRepresentable(queue, executor);
         return new RuntimeSaveTransportJobsData(
             executor.IntakeCapHint,
             executor.MaxActiveCapHint,
@@ -79,6 +80,25 @@ internal static class RuntimeSaveSnapshotDocumentTransportMapper
             + (payload.ActiveJobs?.Length ?? 0)
             + (payload.BacklogEntries?.Length ?? 0)
             + schedulingHintCount;
+    }
+
+    private static void EnsureSnapshotIsRepresentable(
+        TransportRequestQueueStateSnapshot queue,
+        TransportJobReplaySnapshot executor)
+    {
+        if (executor.ActiveJobs.Count > 0)
+        {
+            throw new NotSupportedException(
+                "The experimental transport save document does not encode reservation tokens, generations, or movement cursors for active jobs.");
+        }
+
+        if (queue.PendingRequests.Any(static request => request.PathSearchAttempt != 0)
+            || executor.ActiveJobs.Any(static job => job.PathSearchAttempt != 0)
+            || executor.BacklogEntries.Any(static entry => entry.Request.PathSearchAttempt != 0))
+        {
+            throw new NotSupportedException(
+                "The experimental transport save document does not encode path search retry state.");
+        }
     }
 
     private static RuntimeSaveTransportRequestData ToDocumentRequest(TransportRequest request)

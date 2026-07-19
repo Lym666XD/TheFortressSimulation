@@ -38,10 +38,19 @@ namespace HumanFortress.WorldGen.Implementation
                 }
                 catch (Exception ex)
                 {
+                    string errorMessage = $"Stage '{stage.Name}' failed: {ex.Message}";
                     Diagnostics.Error(
                         "WorldGen.Generator",
-                        $"Error in stage {stage.Name}: {ex.Message}",
+                        errorMessage,
                         ex);
+
+                    return new WorldGenResult
+                    {
+                        Success = false,
+                        Tiles = context.Tiles,
+                        Params = parameters,
+                        ErrorMessage = errorMessage
+                    };
                 }
             }
             
@@ -51,7 +60,8 @@ namespace HumanFortress.WorldGen.Implementation
             {
                 Success = true,
                 Tiles = context.Tiles,
-                Params = parameters
+                Params = parameters,
+                ErrorMessage = string.Empty
             };
         }
 

@@ -14,7 +14,7 @@ internal static partial class FortressBuildKeyboardInput
         return ui.BuildMenu switch
         {
             BuildSubmenu.None => HandleSubmenuSelection(keyboard, ui),
-            BuildSubmenu.Structural => HandleStructural(keyboard, ui, uiTick),
+            BuildSubmenu.Structural => HandleStructural(keyboard, ui, uiTick, buildCatalog),
             BuildSubmenu.Workshop => HandleWorkshopMenu(keyboard, ui, currentZ, uiTick, buildCatalog),
             _ => HandlePlaceholderSubmenu(keyboard, ui, uiTick)
         };

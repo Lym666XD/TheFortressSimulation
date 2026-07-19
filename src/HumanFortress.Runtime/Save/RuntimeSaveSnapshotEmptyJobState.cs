@@ -2,6 +2,7 @@ using HumanFortress.Contracts.Runtime.Save;
 using HumanFortress.Jobs.Craft;
 using HumanFortress.Jobs.Mining;
 using HumanFortress.Jobs.Transport;
+using HumanFortress.Runtime.Replay;
 using HumanFortress.Simulation.Jobs;
 
 namespace HumanFortress.Runtime.Save;
@@ -10,34 +11,22 @@ internal static class RuntimeSaveSnapshotEmptyJobState
 {
     internal static MiningJobReplaySnapshot CreateMiningReplaySnapshot()
     {
-        return new MiningJobReplaySnapshot(
-            Array.Empty<MiningActiveJobStateSnapshot>(),
-            Array.Empty<MiningBacklogEntrySnapshot>(),
-            Array.Empty<MiningDeferredStairwellSnapshot>(),
-            Array.Empty<MiningReservedTileSnapshot>(),
-            Array.Empty<MiningRecentCompletionSnapshot>());
+        return RuntimeEmptyJobReplayState.CreateMining();
     }
 
     internal static TransportRequestQueueStateSnapshot CreateTransportQueueSnapshot()
     {
-        return new TransportRequestQueueStateSnapshot(Array.Empty<TransportRequest>());
+        return RuntimeEmptyJobReplayState.CreateTransportQueue();
     }
 
     internal static TransportJobReplaySnapshot CreateTransportReplaySnapshot()
     {
-        return new TransportJobReplaySnapshot(
-            null,
-            null,
-            0,
-            Array.Empty<TransportActiveJobStateSnapshot>(),
-            Array.Empty<TransportBacklogEntrySnapshot>());
+        return RuntimeEmptyJobReplayState.CreateTransport();
     }
 
     internal static CraftJobReplaySnapshot CreateCraftReplaySnapshot()
     {
-        return new CraftJobReplaySnapshot(
-            Array.Empty<CraftActiveJobStateSnapshot>(),
-            Array.Empty<CraftBacklogEntrySnapshot>());
+        return RuntimeEmptyJobReplayState.CreateCraft();
     }
 
     internal static RuntimeSaveMiningJobsData CreateMiningDocumentData()

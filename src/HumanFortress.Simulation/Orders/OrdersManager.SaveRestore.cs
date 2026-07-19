@@ -235,7 +235,20 @@ internal sealed partial class OrdersManager
                 .Where(static tag => !string.IsNullOrWhiteSpace(tag))
                 .Order(StringComparer.Ordinal)
                 .ToArray()
-                ?? Array.Empty<string>()
+                ?? Array.Empty<string>(),
+            Requirements = payload.Requirements?
+                .Where(static requirement =>
+                    !string.IsNullOrWhiteSpace(requirement.Tag)
+                    || !string.IsNullOrWhiteSpace(requirement.DefinitionId))
+                .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                .ThenBy(static requirement => requirement.Count)
+                .Select(static requirement => new MaterialRequirementSpec(
+                    requirement.Tag,
+                    requirement.DefinitionId,
+                    Math.Max(1, requirement.Count)))
+                .ToArray()
+                ?? Array.Empty<MaterialRequirementSpec>()
         };
     }
 
@@ -245,7 +258,12 @@ internal sealed partial class OrdersManager
             '\0',
             (payload.Tags ?? Array.Empty<string>())
                 .Where(static tag => !string.IsNullOrWhiteSpace(tag))
-                .Order(StringComparer.Ordinal));
+                .Order(StringComparer.Ordinal)
+                .Concat((payload.Requirements ?? Array.Empty<WorldSaveMaterialRequirementPayloadData>())
+                    .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.Count)
+                    .Select(static requirement => $"{requirement.Tag}|{requirement.DefinitionId}|{requirement.Count}")));
     }
 
     private static Rectangle ToRectangle(WorldSaveRectangleData rectangle)

@@ -21,7 +21,12 @@ internal static partial class UiQuickMenuRenderer
         }
     }
 
-    private static void DrawZonesMenu(ScreenSurface mapSurface, UiStore ui, ZonesUI zonesUI, int centerX)
+    private static void DrawZonesMenu(
+        ScreenSurface mapSurface,
+        UiStore ui,
+        ZonesUI zonesUI,
+        int centerX,
+        SimulationZoneCatalogData zoneCatalog)
     {
         var surf = mapSurface.Surface;
         if (ui.ZoneMenu == ZoneSubmenu.None)
@@ -33,7 +38,7 @@ internal static partial class UiQuickMenuRenderer
         else
         {
             int l2Y = surf.Height - 9;
-            zonesUI.DrawZonesWithSubmenu(mapSurface, centerX, l2Y, ui.ZoneMenu);
+            zonesUI.DrawZonesWithSubmenu(mapSurface, centerX, l2Y, ui.ZoneMenu, zoneCatalog);
         }
     }
 
@@ -54,7 +59,7 @@ internal static partial class UiQuickMenuRenderer
         }
 
         int l2Y = surf.Height - 9;
-        buildUI.DrawBuildWithSubmenu(mapSurface, centerX, l2Y, ui.BuildMenu);
+        buildUI.DrawBuildWithSubmenu(mapSurface, centerX, l2Y, ui.BuildMenu, buildCatalog);
 
         if (ui.BuildMenu == BuildSubmenu.Workshop && ui.WorkshopBrowsingItems && ui.SelectedWorkshopCategory != null)
         {

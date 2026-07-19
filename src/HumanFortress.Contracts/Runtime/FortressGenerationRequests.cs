@@ -12,7 +12,8 @@ public sealed record RuntimeFortressGenerationRequest(
     byte RiverClass,
     bool HasAquifer,
     IReadOnlyList<ushort> StoneSet,
-    IReadOnlyList<int> LandmarkIds);
+    IReadOnlyList<int> LandmarkIds,
+    uint? GenerationSeed = null);
 
 public enum RuntimeFortressGenerationStatus
 {

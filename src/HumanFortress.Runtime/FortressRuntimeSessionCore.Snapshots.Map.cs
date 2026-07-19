@@ -41,7 +41,7 @@ internal sealed partial class FortressRuntimeSessionCore
             tileZ);
     }
 
-    SimulationPlacementPreviewData IFortressRuntimeSessionReadPort.GetPlacementPreviewData(
+    SimulationPlacementPreviewData IFortressRuntimeSessionSnapshotPort.GetPlacementPreviewData(
         RuntimePoint first,
         RuntimePoint second,
         int z,

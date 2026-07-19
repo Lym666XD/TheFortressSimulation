@@ -29,7 +29,8 @@ internal sealed partial class CraftJobExecutor
                 Stage = job.Stage,
                 WorkTicksRemaining = job.WorkTicksRemaining,
                 Anchor = job.Anchor,
-                Z = job.Z
+                Z = job.Z,
+                PathSearchAttempt = job.PathSearchAttempt
             };
 
             _active.Add(active);
@@ -48,6 +49,8 @@ internal sealed partial class CraftJobExecutor
         var issues = new List<string>();
         if (snapshot.ActiveJobs == null)
             issues.Add("Craft active job list is missing.");
+        else if (snapshot.ActiveJobs.Count > 0)
+            issues.Add("Craft active job restore is unsupported because the deferred payload omits reservation tokens and generations.");
         if (snapshot.BacklogEntries == null)
             issues.Add("Craft backlog list is missing.");
         if (issues.Count > 0)
@@ -88,6 +91,8 @@ internal sealed partial class CraftJobExecutor
             issues.Add($"Craft active job stage {job.Stage} is not supported.");
         if (job.WorkTicksRemaining < 0)
             issues.Add("Craft active job work ticks remaining must not be negative.");
+        if (job.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add("Craft active job path search attempt exceeds the supported maximum.");
         if (!activeWorkers.Add(job.WorkerId))
             issues.Add($"Craft active job duplicates worker {job.WorkerId}.");
         ValidateUniqueQueueEntry(job.QueueEntryId, "active job", queueEntryIds, issues);
@@ -129,6 +134,8 @@ internal sealed partial class CraftJobExecutor
             issues.Add("Craft backlog job recipe id must not be blank.");
         if (job.DurationTicks < 0)
             issues.Add("Craft backlog job duration ticks must not be negative.");
+        if (job.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add("Craft backlog job path search attempt exceeds the supported maximum.");
         ValidateUniqueQueueEntry(job.QueueEntryId, "backlog job", queueEntryIds, issues);
         ValidateRecipe(job.RecipeId, "backlog job", issues);
         if (!IsWorldCellPresent(job.Anchor.X, job.Anchor.Y, job.Z))
@@ -228,7 +235,8 @@ internal sealed partial class CraftJobExecutor
             destination,
             MoveMode.Walk,
             PathFlags.None,
-            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid));
+            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid),
+            job.PathSearchAttempt);
         var path = _paths.Solve(in request, in _navView);
         if (path.Kind == PathResultKind.Found)
             return true;
@@ -248,7 +256,8 @@ internal sealed partial class CraftJobExecutor
             new Point3(job.Anchor.X, job.Anchor.Y, job.Z),
             MoveMode.Walk,
             PathFlags.None,
-            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid));
+            CraftPathSeed.From(job.WorkerId, job.WorkshopGuid),
+            job.PathSearchAttempt);
         var path = _paths.Solve(in request, in _navView);
         _move.BeginMovement(DiffTargetEncoding.EntityKey(job.WorkerId), request, path);
     }

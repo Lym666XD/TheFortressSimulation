@@ -272,6 +272,14 @@ internal sealed class MaterialRegistry : IRuntimeMaterialCatalog
             .OrderBy(static material => material.StringId, StringComparer.Ordinal);
     }
 
+    internal IReadOnlyList<string> GetCanonicalIdsSnapshot()
+    {
+        return _allMaterials
+            .Select(static material => material.StringId)
+            .OrderBy(static id => id, StringComparer.Ordinal)
+            .ToArray();
+    }
+
     /// <summary>
     /// Check if material exists
     /// </summary>

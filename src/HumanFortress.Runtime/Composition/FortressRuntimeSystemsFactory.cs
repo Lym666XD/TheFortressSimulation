@@ -1,4 +1,5 @@
 using HumanFortress.Core.Simulation;
+using HumanFortress.Core.Time;
 using HumanFortress.Jobs.Orchestration;
 using HumanFortress.Jobs.Safety;
 using HumanFortress.Navigation.Implementation;
@@ -19,7 +20,8 @@ internal static class FortressRuntimeSystemsFactory
         NavigationManager navigation,
         RuntimePathServiceRegistry pathServices,
         FortressRuntimeDependencies dependencies,
-        FortressRuntimeLogging? logging = null)
+        FortressRuntimeLogging? logging = null,
+        int transportPlanningWorkerCount = 1)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(diffLog);
@@ -28,6 +30,8 @@ internal static class FortressRuntimeSystemsFactory
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentNullException.ThrowIfNull(pathServices);
         ArgumentNullException.ThrowIfNull(dependencies);
+        if (transportPlanningWorkerCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(transportPlanningWorkerCount));
 
         logging ??= FortressRuntimeLogging.None;
 
@@ -45,7 +49,8 @@ internal static class FortressRuntimeSystemsFactory
             pathServices,
             dependencies,
             planners,
-            logging);
+            logging,
+            transportPlanningWorkerCount);
 
         var sanitizer = new SanitizeSystem(world, diffLog, intervalTicks: 40, maxPerTick: 8, log: logging.Log);
 
@@ -60,7 +65,8 @@ internal static class FortressRuntimeSystemsFactory
             jobs.Construction,
             jobs.Craft,
             dependencies.SchedulerTunings,
-            logging.Log);
+            logging.Log,
+            readPlanStages: new IReadPlanStage[] { jobs.Transport });
 
         return new SimulationRuntimeSystems(
             planners.Hauling,

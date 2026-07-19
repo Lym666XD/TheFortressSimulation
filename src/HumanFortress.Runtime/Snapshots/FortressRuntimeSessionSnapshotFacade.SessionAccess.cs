@@ -48,6 +48,12 @@ internal static partial class FortressRuntimeSessionSnapshotFacade
         return session?.Host.Constructions;
     }
 
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>>? WorkshopCategoryTags(
+        FortressRuntimeSession? session)
+    {
+        return session?.Host.WorkshopCategoryTags;
+    }
+
     private static IRuntimeGeologyCatalog? Geology(FortressRuntimeSession? session)
     {
         return session?.Host.Geology;

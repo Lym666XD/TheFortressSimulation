@@ -9,6 +9,7 @@ internal static partial class WorkshopSnapshotBuilder
     private static bool TryCreateWorkshopView(
         World world,
         IConstructionCatalog constructions,
+        IRecipeCatalog recipes,
         PlaceableInstance placeable,
         out WorkshopSummaryView workshop)
     {
@@ -22,7 +23,7 @@ internal static partial class WorkshopSnapshotBuilder
         var state = placeable.Workshop;
         IReadOnlyList<WorkshopQueueEntryView> queue = state == null
             ? Array.Empty<WorkshopQueueEntryView>()
-            : state.Queue.Select(MapQueueEntry).ToList();
+            : state.Queue.Select(entry => MapQueueEntry(entry, recipes)).ToList();
         var tags = definition.PlaceableProfile.Tags?.ToArray() ?? Array.Empty<string>();
         var materialProgress = placeable.ConstructionSite == null
             ? null
@@ -53,31 +54,32 @@ internal static partial class WorkshopSnapshotBuilder
         return true;
     }
 
-    private static WorkshopQueueEntryView MapQueueEntry(CraftQueueEntry entry)
+    private static WorkshopQueueEntryView MapQueueEntry(CraftQueueEntry entry, IRecipeCatalog recipes)
     {
+        var displayName = recipes.GetRecipe(entry.RecipeId)?.Name ?? entry.RecipeId;
         return entry.Status switch
         {
             CraftQueueStatus.InProgress => new WorkshopQueueEntryView(
                 entry.EntryId,
-                entry.DisplayName,
+                displayName,
                 ">",
                 entry.ActiveWorkerId.HasValue ? $"Working ({entry.ActiveWorkerId.Value.ToString("N")[..6]})" : "Working",
                 false),
             CraftQueueStatus.AwaitingMaterials => new WorkshopQueueEntryView(
                 entry.EntryId,
-                entry.DisplayName,
+                displayName,
                 "!",
                 entry.BlockingReason ?? "Waiting for inputs",
                 true),
             CraftQueueStatus.Scheduled => new WorkshopQueueEntryView(
                 entry.EntryId,
-                entry.DisplayName,
+                displayName,
                 "*",
                 "Assigned",
                 false),
             _ => new WorkshopQueueEntryView(
                 entry.EntryId,
-                entry.DisplayName,
+                displayName,
                 "-",
                 "Ready",
                 false)

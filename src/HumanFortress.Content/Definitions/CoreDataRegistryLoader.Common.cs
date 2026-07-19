@@ -17,6 +17,8 @@ internal static partial class CoreDataRegistryLoader
         return arrayElement.EnumerateArray()
             .Select(value => value.GetString() ?? string.Empty)
             .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
     }
 

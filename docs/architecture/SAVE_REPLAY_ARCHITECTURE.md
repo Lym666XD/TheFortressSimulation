@@ -1,66 +1,67 @@
 # Save And Replay Architecture
 
-Updated: 2026-07-10
-Status: current implementation boundary plus staged plan
+Updated: 2026-07-11
+Status: experimental internal substrate; player persistence deferred
 
-This document describes how HumanFortress should approach persistence from the
-current refactor state. `SAVE_FORMAT.md` remains the long-term on-disk format
-target. This file is the near-term architecture bridge: what exists now, what
-must not be persisted yet, and which seams remain before the full save-slot
-loader and migration layer are implemented.
+This document records the experimental internal snapshot export/restore substrate
+and future persistence constraints. It is not an active implementation plan and
+does not describe a player save/load feature. `SAVE_FORMAT.md` remains a
+long-term design reference only.
 
 ## Current Decision
 
-Do not build the full player-facing save-slot system in App yet.
+Player save/load, autosave, persistence compatibility, migration, and public slot
+formats are explicitly deferred until after the active architecture refactor.
+App exposes no persistence port and must remain that way during the current goal.
 
-A Runtime-owned vertical slice now exists: Runtime can assemble a
-save-slot directory containing `slot_manifest.json` plus a
+A Runtime-owned, test-only vertical slice exists: Runtime can assemble an
+experimental export directory containing `slot_manifest.json` plus a
 `runtime_snapshot.json` document. The document contains manifest metadata,
 command replay rows, primitive RNG stream rows, and a Simulation-owned world
 payload for the currently supported authoritative slices. The document now also
 carries Jobs-owned payload slices for transport pending requests, transport
 active/backlog jobs, transport scheduling hints, mining active/backlog/
 deferred/reserved/recent-completion jobs, and craft active/backlog jobs.
-The slot manifest records
+The development manifest records
 the document filename, snapshot format, Runtime-authored metadata,
 checkpoint/world/job hashes, and section/row counts. Runtime also owns the
-first compatibility policy for this vertical slice: current slots are readable,
-older slot/document versions are classified as migration-required and migrate
-only through registered Runtime transforms, and future/unknown slot kinds fail
-closed. Runtime can validate/read a compatible directory and restore the
+first development compatibility policy for this vertical slice: known documents
+are readable by internal tests, registered transforms exercise migration
+mechanics, and future/unknown kinds fail closed. Runtime can validate/read a
+compatible directory and restore the
 supported world payload, transport/mining/craft job payloads, RNG streams, and
 pending commands into a freshly composed session. Runtime also owns the current
 content signature compatibility gate: mismatched or unavailable saved/current
 content signatures block inspection restore plans and actual restore ports with
 structured `slot.content` issues until concrete missing-content remap policy
-exists. Current format 6 manifests also persist a saved content catalog summary
-beside the saved content signature; this improves Runtime-authored diagnostics
-for new saves but does not make App responsible for content remapping.
+exists. Current format 6 manifests also persist a content catalog summary beside
+the content signature. None of these development versions have been released to
+players or carry a backward-compatibility promise.
 
-That is still not the full `SAVE_FORMAT.md` slot implementation. Chunk shards,
-autosave rings, additional runtime snapshot schema migration transforms,
-directory fsync policy, concrete missing-content placeholder/remap policy, and
-broader deterministic replay scenarios remain future persistence work.
+This is not the `SAVE_FORMAT.md` player-slot implementation. Capture is not one
+committed tick, the two files are not one crash-atomic generation, and restore is
+not complete deterministic continuation. Chunk shards, autosave rings, public
+formats, compatibility, directory durability, missing-content policy, and player
+UX all remain future persistence work.
 The current world payload restore supports contained items when their
 containing item exists in the same acyclic payload graph, carried/equipped
 items when their owning creature exists in the same payload, installed item
 placement data when the installed anchor/z/rotation is valid for the saved
 world, and item-local reservation tokens whose claimant creatures and reserved
 counts validate against the item payload.
-App should therefore continue to treat save/load as a Runtime
-port/slot-selection boundary and must not assemble restore authority from live
-`World`, job systems, command queues, or Runtime-internal save codec/store
-helpers.
+App must not access this substrate or assemble restore authority from live
+`World`, job systems, command queues, or Runtime-internal codec/store helpers.
 
-The near-term goal is:
+While persistence is deferred:
 
 - keep command replay data immutable and independent from live command objects;
 - define where command replay decoding will live;
-- expose Runtime-authored save manifests/packages/documents without letting App
-  assemble authority from `World`, job systems, or `CommandQueue`;
+- keep existing export/restore APIs internal and test-only;
 - document which state is authoritative vs derived;
-- keep expanding deterministic replay/save round-trip tests before committing to
-  the full chunk-sharded slot format.
+- do not add document versions, player entry points, compatibility promises, or
+  migration scope merely to extend the prototype;
+- allow active replay/determinism work to reuse stable primitive hashing and
+  command-record seams without treating that as save feature work.
 
 ## Existing Seams
 

@@ -35,7 +35,7 @@ internal static partial class StockpileSnapshotBuilder
                     if (!Contains(viewport, worldX, worldY))
                         continue;
 
-                    cells.Add(new StockpileOverlayCellView(worldX, worldY));
+                    cells.Add(new StockpileOverlayCellView(worldX, worldY, zone.ZoneId));
                 }
             }
         }

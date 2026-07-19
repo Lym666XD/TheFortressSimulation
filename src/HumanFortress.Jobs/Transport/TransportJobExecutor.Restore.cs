@@ -32,7 +32,8 @@ internal sealed partial class TransportJobExecutor
                 Stage = snapshot.Stage,
                 Quantity = snapshot.Quantity,
                 InvalidReplanCount = snapshot.InvalidReplanCount,
-                Reason = snapshot.Reason
+                Reason = snapshot.Reason,
+                PathSearchAttempt = snapshot.PathSearchAttempt
             };
 
             _active.Add(job);
@@ -53,6 +54,8 @@ internal sealed partial class TransportJobExecutor
             issues.Add("Transport pending request list is missing.");
         if (executor.ActiveJobs == null)
             issues.Add("Transport active job list is missing.");
+        else if (executor.ActiveJobs.Count > 0)
+            issues.Add("Transport active job restore is unsupported because the deferred payload omits reservation tokens and generations.");
         if (executor.BacklogEntries == null)
             issues.Add("Transport backlog list is missing.");
         if (executor.ReserveSlotsHint < 0)
@@ -98,6 +101,8 @@ internal sealed partial class TransportJobExecutor
             issues.Add($"Transport {label} quantity must not be negative.");
         if (request.RequestorId == null)
             issues.Add($"Transport {label} requestor id is missing.");
+        if (request.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add($"Transport {label} path search attempt exceeds the supported maximum.");
         if (_world.Items.GetInstance(request.ItemGuid) == null)
             issues.Add($"Transport {label} references missing item {request.ItemGuid}.");
         if (!IsWorldCellPresent(request.From.X, request.From.Y, request.FromZ))
@@ -122,6 +127,8 @@ internal sealed partial class TransportJobExecutor
             issues.Add("Transport active job quantity must be positive.");
         if (job.InvalidReplanCount < 0)
             issues.Add("Transport active job invalid-replan count must not be negative.");
+        if (job.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add("Transport active job path search attempt exceeds the supported maximum.");
         if (!activeWorkers.Add(job.CreatureId))
             issues.Add($"Transport active job duplicates worker {job.CreatureId}.");
         ValidateUniqueTransportItem(job.ItemId, "active job", transportItems, issues);
@@ -161,7 +168,8 @@ internal sealed partial class TransportJobExecutor
             goal,
             MoveMode.Walk,
             PathFlags.AllowDiagonal,
-            SeedFrom(job.CreatureId, job.ItemId));
+            SeedFrom(job.CreatureId, job.ItemId),
+            job.PathSearchAttempt);
         IWorldNavigationView view = _navView;
         var path = _paths.Solve(in request, in view);
         if (path.Kind == PathResultKind.Found)
@@ -180,7 +188,8 @@ internal sealed partial class TransportJobExecutor
             goal,
             MoveMode.Walk,
             PathFlags.AllowDiagonal,
-            SeedFrom(job.CreatureId, job.ItemId));
+            SeedFrom(job.CreatureId, job.ItemId),
+            job.PathSearchAttempt);
         IWorldNavigationView view = _navView;
         var path = _paths.Solve(in request, in view);
         _move.BeginMovement(DiffTargetEncoding.EntityKey(job.CreatureId), request, path);

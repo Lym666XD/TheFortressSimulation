@@ -6,7 +6,7 @@ internal sealed partial class FortressRuntimeAccess
 {
     internal SimulationBuildCatalogData GetBuildCatalogData()
     {
-        return _snapshots.GetBuildCatalogData();
+        return _catalog.GetBuildCatalogData();
     }
 
     SimulationBuildCatalogData IFortressRuntimeBuildCatalogAccess.GetBuildCatalogData() => GetBuildCatalogData();

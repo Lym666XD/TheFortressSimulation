@@ -10,12 +10,12 @@ using SadRogue.Primitives;
 namespace HumanFortress.Simulation.Orders;
 
 /// <summary>
-/// Planner for L0 structural construction. Reads ConstructionDesignation and produces PlannedBuilds.
+/// Serialized compatibility stage for L0 structural construction.
 /// - Multi-Z prism support: top layer -> StairsDown, bottom -> StairsUp, middle -> StairsUD when Shape=Stairs.
 /// - Material resolution: delegates material/kind to geology-handle mapping to an injected runtime resolver.
-/// - WriteTick: places L2 ghost placeables for visualization/claiming; actual L0 SetTerrain is left to executor/jobs.
+/// - Apply: places L2 construction sites; actual L0 SetTerrain is left to executor/jobs.
 /// </summary>
-internal sealed class ConstructionSystem : ITick
+internal sealed class ConstructionSystem : ISequentialCompatibilityStage
 {
     private readonly World.World _world;
     private readonly OrdersManager _orders;
@@ -42,11 +42,7 @@ internal sealed class ConstructionSystem : ITick
     internal int Priority => UpdateOrder.Priority.Furniture; // ghost placement touches L2
     internal string SystemId => "Orders.Construction";
 
-    int ITick.Priority => Priority;
-
-    string ITick.SystemId => SystemId;
-
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
         _planned.Clear();
         var desigs = new List<ConstructionDesignation>();
@@ -70,7 +66,7 @@ internal sealed class ConstructionSystem : ITick
                         if (tileOpt == null)
                         {
                             if (debugCells)
-                                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=OutOfWorld");
+                                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=OutOfWorld");
                             continue;
                         }
 
@@ -78,7 +74,7 @@ internal sealed class ConstructionSystem : ITick
                         if (!IsBuildCandidate(tileOpt.Value, d.Shape, x, y, z))
                         {
                             if (debugCells)
-                                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=CandidateFail");
+                                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=CandidateFail");
                             continue;
                         }
 
@@ -91,16 +87,25 @@ internal sealed class ConstructionSystem : ITick
                             if (geo == 0)
                             {
                                 if (debugCells)
-                                    OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=GeoFail");
+                                    _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.CONSTR.CELL] ({x},{y},{z}) SKIP reason=GeoFail");
                                 continue; // cannot resolve material-kind
                             }
                         }
 
-                        _planned.Add(new PlannedBuild(new Point(x, y), z, shapeKind, geo, d.Shape, d.Filter.Tags ?? Array.Empty<string>(), d.Priority, SeedFrom(x, y, z)));
+                        _planned.Add(new PlannedBuild(
+                            new Point(x, y),
+                            z,
+                            shapeKind,
+                            geo,
+                            d.Shape,
+                            d.Filter.Tags ?? Array.Empty<string>(),
+                            d.Filter.Requirements ?? Array.Empty<MaterialRequirementSpec>(),
+                            d.Priority,
+                            SeedFrom(x, y, z)));
                         addedForThisRect++;
                         count++;
                         if (debugCells)
-                            OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR.CELL] ({x},{y},{z}) OK");
+                            _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.CONSTR.CELL] ({x},{y},{z}) OK");
                     }
                     if (count >= _maxPerTick) break;
                 }
@@ -109,19 +114,14 @@ internal sealed class ConstructionSystem : ITick
             // Log summary for this rectangle
             try
             {
-                OrdersManager.LogCallback?.Invoke($"[ORDERS.CONSTR] rect=({d.WorldRect.X},{d.WorldRect.Y},{d.WorldRect.Width}x{d.WorldRect.Height}) z={d.ZMin}..{d.ZMax} shape={d.Shape} planned={addedForThisRect}");
+                _orders.EmitDiagnostic("Simulation.Orders", $"[ORDERS.CONSTR] rect=({d.WorldRect.X},{d.WorldRect.Y},{d.WorldRect.Width}x{d.WorldRect.Height}) z={d.ZMin}..{d.ZMax} shape={d.Shape} planned={addedForThisRect}");
             }
             catch { }
             if (count >= _maxPerTick) break;
         }
     }
 
-    void ITick.ReadTick(ulong tick)
-    {
-        ReadTick(tick);
-    }
-
-    internal void WriteTick(ulong tick)
+    internal void ApplySequentialCompatibility(ulong tick)
     {
         if (_planned.Count == 0) return;
 
@@ -132,12 +132,30 @@ internal sealed class ConstructionSystem : ITick
             {
                 var tuning = _tuning; // local
                 var req = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+                foreach (var requirement in p.Requirements)
+                {
+                    var requirementId = !string.IsNullOrWhiteSpace(requirement.Tag)
+                        ? ConstructionMaterialRequirement.ForTag(requirement.Tag!)
+                        : !string.IsNullOrWhiteSpace(requirement.DefinitionId)
+                            ? ConstructionMaterialRequirement.ForDefinition(requirement.DefinitionId!)
+                            : string.Empty;
+                    if (requirementId.Length == 0)
+                        continue;
+
+                    req[requirementId] = req.GetValueOrDefault(requirementId)
+                        + Math.Max(1, requirement.Count);
+                }
+
                 // Map shape + filter tags to required item tags
                 // We rely on designation filter tags: e.g., ["stone_block"], ["wood_log"], ["wood_plank"], or combination for Ramp
                 // When tags are missing, default to stone_block for Wall/Floor and both for Ramp
                 // Preferred from RequiredTags if provided
                 var tags = p.RequiredTags ?? Array.Empty<string>();
-                if (tags.Length > 0)
+                if (req.Count > 0)
+                {
+                    // Content-authored requirements are already exact and complete.
+                }
+                else if (tags.Length > 0)
                 {
                     foreach (var tag in tags)
                     {
@@ -212,10 +230,11 @@ internal sealed class ConstructionSystem : ITick
         _planned.Clear();
     }
 
-    void ITick.WriteTick(ulong tick)
-    {
-        WriteTick(tick);
-    }
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     /// <summary>
     /// Helper to pack SetTerrain args with optional geology override (plan A: existing opcode).

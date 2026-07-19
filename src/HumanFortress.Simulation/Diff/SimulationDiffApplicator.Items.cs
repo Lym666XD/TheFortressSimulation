@@ -8,7 +8,7 @@ namespace HumanFortress.Simulation.Diff;
 
 internal static partial class SimulationDiffApplicator
 {
-    private static void ApplyMoveItem(SimulationWorld world, DiffOp op)
+    private static void ApplyMoveItem(SimulationWorld world, DiffOp op, ulong currentTick)
     {
         var (ck, lx, ly) = DecodeTarget(op.Target);
         int worldX = ck.ChunkX * SimulationChunk.SIZE_XY + lx;
@@ -16,24 +16,25 @@ internal static partial class SimulationDiffApplicator
         int worldZ = ck.Z;
 
         var item = FindItemByTarget(world, op.Target);
-        if (item == null) return;
+        if (item == null)
+            throw new InvalidOperationException("MoveItem target does not resolve to a live item.");
 
-        var oldPos = item.Position;
-        var oldZ = item.Z;
         var newPos = new Point(worldX, worldY);
-        world.Items.UpdateItemPosition(item.Guid, oldPos, oldZ, newPos, worldZ);
+        if (!world.Items.UpdateItemPosition(item.Guid, newPos, worldZ))
+            throw new InvalidOperationException($"MoveItem rejected for {item.Guid}.");
 
         try
         {
-            int removed = world.Items.MergeStacksAt(newPos, worldZ);
-            if (removed > 0)
+            var merge = world.Items.MergeStacksAt(newPos, worldZ, currentTick);
+            if (merge.Changed)
             {
-                Emit($"[DIFF][Items] MergeStacksAt ({worldX},{worldY},{worldZ}) removed={removed}");
+                Emit(world, $"[DIFF][Items] MergeStacksAt ({worldX},{worldY},{worldZ}) transferred={merge.TransferredQuantity} removed={merge.RemovedInstanceCount}");
             }
         }
         catch (Exception ex)
         {
-            EmitError($"[DIFF][Items] MergeStacksAt exception: {ex.Message}", ex);
+            EmitError(world, $"[DIFF][Items] MergeStacksAt exception: {ex.Message}", ex);
+            throw;
         }
     }
 
@@ -45,21 +46,22 @@ internal static partial class SimulationDiffApplicator
         int worldZ = ck.Z;
 
         var item = FindItemByTarget(world, op.Target);
-        if (item == null) return;
+        if (item == null)
+            throw new InvalidOperationException("MarkCarried target does not resolve to a live item.");
 
         var carrier = FindCreatureByEntityArgument(world, op);
+        if (carrier == null)
+            throw new InvalidOperationException("MarkCarried carrier does not resolve to a live creature.");
 
-        var oldPos = item.Position;
-        int oldZ = item.Z;
         var carryPos = new Point(worldX, worldY);
-        if (oldPos != carryPos || oldZ != worldZ)
+        if (item.Position != carryPos || item.Z != worldZ)
         {
-            world.Items.UpdateItemPosition(item.Guid, oldPos, oldZ, carryPos, worldZ);
+            world.Items.UpdateItemPosition(item.Guid, carryPos, worldZ);
         }
-        item.CarriedBy = carrier?.Guid ?? Guid.Empty;
+        item.CarriedBy = carrier.Guid;
     }
 
-    private static void ApplyUnmarkCarried(SimulationWorld world, DiffOp op)
+    private static void ApplyUnmarkCarried(SimulationWorld world, DiffOp op, ulong currentTick)
     {
         var (ck, lx, ly) = DecodeTarget(op.Target);
         int worldX = ck.ChunkX * SimulationChunk.SIZE_XY + lx;
@@ -67,28 +69,28 @@ internal static partial class SimulationDiffApplicator
         int worldZ = ck.Z;
 
         var item = FindItemByTarget(world, op.Target);
-        if (item == null) return;
+        if (item == null)
+            throw new InvalidOperationException("UnmarkCarried target does not resolve to a live item.");
 
-        var oldPos = item.Position;
-        int oldZ = item.Z;
         var dropPos = new Point(worldX, worldY);
-        if (oldPos != dropPos || oldZ != worldZ)
+        if (item.Position != dropPos || item.Z != worldZ)
         {
-            world.Items.UpdateItemPosition(item.Guid, oldPos, oldZ, dropPos, worldZ);
+            world.Items.UpdateItemPosition(item.Guid, dropPos, worldZ);
         }
         item.CarriedBy = null;
 
         try
         {
-            int removed = world.Items.MergeStacksAt(item.Position, item.Z);
-            if (removed > 0)
+            var merge = world.Items.MergeStacksAt(item.Position, item.Z, currentTick);
+            if (merge.Changed)
             {
-                Emit($"[DIFF][Items] MergeStacksAt (uncarry) ({item.Position.X},{item.Position.Y},{item.Z}) removed={removed}");
+                Emit(world, $"[DIFF][Items] MergeStacksAt (uncarry) ({item.Position.X},{item.Position.Y},{item.Z}) transferred={merge.TransferredQuantity} removed={merge.RemovedInstanceCount}");
             }
         }
         catch (Exception ex)
         {
-            EmitError($"[DIFF][Items] MergeStacksAt (uncarry) exception: {ex.Message}", ex);
+            EmitError(world, $"[DIFF][Items] MergeStacksAt (uncarry) exception: {ex.Message}", ex);
+            throw;
         }
     }
 }

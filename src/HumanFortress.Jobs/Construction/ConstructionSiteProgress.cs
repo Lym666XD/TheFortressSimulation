@@ -31,7 +31,7 @@ internal sealed class ConstructionSiteProgress
             return false;
         }
 
-        var delivered = _materials.CountDelivered(site);
+        var delivered = _materials.CountDelivered(site, tick);
         construction.MaterialsDelivered = delivered;
 
         _logger.Log($"[BUILD.EXEC] site=({site.Position.X},{site.Position.Y},{site.Z}) delivered={FormatDict(delivered)} req={FormatDict(construction.GetRequiredMaterialsSnapshot())} progress={construction.BuildProgressTicks}/{construction.TotalBuildTicks}");

@@ -51,6 +51,41 @@ internal sealed class TransportPickupHandler
 
     internal void HandleArrivedAtItem(ActiveJob job, ulong tick, ulong entityKey, Point3 workerPosition, ICollection<ActiveJob> finished)
     {
+        if (job.PendingSplitReservation.IsValid)
+        {
+            Guid splitItemId = job.PendingSplitReservation.ResourceId;
+            if (_world.Items.GetInstance(splitItemId) == null)
+            {
+                if (tick <= job.PendingSplitIssuedTick)
+                    return;
+
+                _world.Reservations.TryCancelStagedItemTransfer(job.PendingSplitReservation);
+                _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} because staged split {splitItemId} was not committed");
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
+                _jobFinalizer.Finish(job, finished);
+                return;
+            }
+
+            if (!_world.Reservations.TryCommitStagedItemTransfer(
+                    job.ItemReservation,
+                    job.PendingSplitReservation,
+                    tick,
+                    tick + (ulong)_creatureReserveTtlTicks))
+            {
+                _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} because staged split reservation lost ownership");
+                _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
+                _jobFinalizer.Finish(job, finished);
+                return;
+            }
+
+            var sourceItemId = job.ItemId;
+            job.ItemId = splitItemId;
+            job.ItemReservation = job.PendingSplitReservation;
+            job.PendingSplitReservation = default;
+            job.PendingSplitIssuedTick = 0;
+            _logger.Log($"[TRANS-JOBS][{tick}] Committed split reservation old={sourceItemId} new={splitItemId}");
+        }
+
         if (job.Reason == TransportReason.ToStockpile && _destinationValidator.IsItemInStockpile(job.ItemId))
         {
             _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={job.ItemId} because already in stockpile ({DropReasonInStockpile})");
@@ -71,6 +106,7 @@ internal sealed class TransportPickupHandler
         var currentItemPos = new Point3(inst.Position.X, inst.Position.Y, inst.Z);
         if (currentItemPos != workerPosition)
         {
+            job.PathSearchAttempt = 0;
             var retry = new PathRequest(workerPosition, currentItemPos, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
             IWorldNavigationView retryView = _navView;
             var retryPath = _paths.Solve(in retry, in retryView);
@@ -78,6 +114,13 @@ internal sealed class TransportPickupHandler
             {
                 _move.BeginMovement(entityKey, retry, retryPath);
                 _logger.Log($"[TRANS-JOBS][{tick}] Repath to moved item={job.ItemId} from=({workerPosition.X},{workerPosition.Y},{workerPosition.Z}) to=({currentItemPos.X},{currentItemPos.Y},{currentItemPos.Z})");
+                return;
+            }
+
+            if (retryPath.Kind is PathResultKind.Partial or PathResultKind.BudgetExhausted)
+            {
+                _move.BeginMovement(entityKey, retry, retryPath);
+                _logger.Log($"[TRANS-JOBS][{tick}] Defer moved-item repath item={job.ItemId} kind={retryPath.Kind}");
                 return;
             }
 
@@ -100,7 +143,12 @@ internal sealed class TransportPickupHandler
                 return;
             }
 
-            if (!_world.Reservations.TryReserveItem(newId, job.CreatureId, tick, tick + (ulong)_creatureReserveTtlTicks))
+            if (!_world.Reservations.TryStageItemTransfer(
+                    job.ItemReservation,
+                    newId,
+                    tick,
+                    tick + (ulong)_creatureReserveTtlTicks,
+                    out var stagedReservation))
             {
                 _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={sourceItemId} split reservation failed new={newId}");
                 _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
@@ -108,22 +156,32 @@ internal sealed class TransportPickupHandler
                 return;
             }
 
-            if (!_diffEmitter.SplitStack(sourceItemId, newId, inst.Position.X, inst.Position.Y, inst.Z, job.Quantity))
+            if (!_diffEmitter.SplitStack(
+                    sourceItemId,
+                    newId,
+                    inst.Position.X,
+                    inst.Position.Y,
+                    inst.Z,
+                    job.Quantity,
+                    job.ItemReservation,
+                    stagedReservation))
             {
                 _logger.Log($"[TRANS-JOBS][{tick}] Drop job item={sourceItemId} split emit failed take={job.Quantity}");
-                _world.Reservations.ReleaseItem(newId);
+                _world.Reservations.TryCancelStagedItemTransfer(stagedReservation);
                 _stockpileIndexEmitter.ReleaseDestinationReservation(job.Dest, job.Reason);
                 _jobFinalizer.Finish(job, finished);
                 return;
             }
 
-            _world.Reservations.ReleaseItem(sourceItemId);
-            _logger.Log($"[TRANS-JOBS][{tick}] Split stack old={sourceItemId} new={newId} take={job.Quantity}");
-            job.ItemId = newId;
+            job.PendingSplitReservation = stagedReservation;
+            job.PendingSplitIssuedTick = tick;
+            _logger.Log($"[TRANS-JOBS][{tick}] Staged split old={sourceItemId} new={newId} take={job.Quantity}");
+            return;
         }
 
         _stockpileIndexEmitter.RecordPickup(job.ItemId, currentItemPos);
         _diffEmitter.MarkCarried(job.ItemId, job.CreatureId, workerPosition);
+        job.PathSearchAttempt = 0;
         var toDest = new PathRequest(workerPosition, job.Dest, MoveMode.Walk, PathFlags.AllowDiagonal, _seedFrom(job.CreatureId, job.ItemId));
         IWorldNavigationView view = _navView;
         var path = _paths.Solve(in toDest, in view);
@@ -132,6 +190,14 @@ internal sealed class TransportPickupHandler
             _move.BeginMovement(entityKey, toDest, path);
             job.Stage = JobStage.ToDest;
             _logger.Log($"[TRANS-JOBS][{tick}] Picked item={job.ItemId}; now moving to dest=({job.Dest.X},{job.Dest.Y},{job.Dest.Z})");
+            return;
+        }
+
+        if (path.Kind is PathResultKind.Partial or PathResultKind.BudgetExhausted)
+        {
+            _move.BeginMovement(entityKey, toDest, path);
+            job.Stage = JobStage.ToDest;
+            _logger.Log($"[TRANS-JOBS][{tick}] Picked item={job.ItemId}; defer destination path kind={path.Kind}");
             return;
         }
 

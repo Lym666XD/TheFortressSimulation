@@ -2,41 +2,59 @@ using HumanFortress.Contracts.Content.Loading;
 using HumanFortress.Content.Loading;
 using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Composition;
+using HumanFortress.Runtime.Diagnostics;
 using HumanFortress.Runtime.Host;
 using HumanFortress.Runtime.Session;
 using HumanFortress.Runtime.Snapshots;
 
 namespace HumanFortress.Runtime;
 
-internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeSessionPorts
+internal sealed partial class FortressRuntimeSessionCore : IFortressRuntimeHeadlessScenarioSessionPorts
 {
     private readonly string _baseDir;
-    private RuntimeSessionServices _services;
     private readonly bool _strictContent;
     private readonly bool _contentWarningsAsErrors;
     private readonly Action<string> _log;
     private readonly Func<string, Action<string>> _createLogCallback;
+    private readonly CallbackFactoryDiagnosticSink _diagnostics;
     private readonly Action<FortressContentLoadReport> _logContentIssues;
-    private readonly FortressRuntimeWorkshopCompletionNotifier _workshopCompletionNotifier = new();
+    private readonly ulong _rngSeed;
+    private readonly int _transportPlanningWorkerCount;
     private readonly RuntimeFrameSnapshotPublisher _frameSnapshots = new();
-    private SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory;
+    private readonly RuntimeSessionLifecycleOwner _lifecycle;
 
-    private FortressRuntimeSession? _runtimeSession;
-    private FortressRuntimeContentSnapshot? _runtimeContentSnapshot;
+    private RuntimeSessionServices _services => _lifecycle.Services;
+    private FortressRuntimeWorkshopCompletionNotifier _workshopCompletionNotifier =>
+        _lifecycle.WorkshopCompletionNotifier;
+    private SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> _runtimeSessionFactory =>
+        _lifecycle.SessionFactory;
+    private FortressRuntimeSession? _runtimeSession => _lifecycle.ActiveSession;
+    private FortressRuntimeContentSnapshot? _runtimeContentSnapshot
+    {
+        get => _lifecycle.ContentSnapshot;
+        set => _lifecycle.SetContentSnapshot(value);
+    }
 
     internal FortressRuntimeSessionCore(FortressRuntimeSessionCoreOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
 
         _baseDir = options.BaseDir;
-        _services = new RuntimeSessionServices();
         _strictContent = options.StrictContent;
         _contentWarningsAsErrors = options.ContentWarningsAsErrors;
         _log = options.Log ?? (_ => { });
         _createLogCallback = options.CreateLogCallback ?? (_ => _log);
+        _diagnostics = new CallbackFactoryDiagnosticSink(_createLogCallback);
         _logContentIssues = options.LogContentIssues ?? (_ => { });
-
-        _runtimeSessionFactory = CreateRuntimeSessionFactory(_services);
+        _rngSeed = options.RngSeed;
+        _transportPlanningWorkerCount = options.TransportPlanningWorkerCount;
+        _lifecycle = new RuntimeSessionLifecycleOwner(
+            _diagnostics,
+            CreateRuntimeSessionFactory,
+            InvalidateCheckpointGeneration,
+            () => _frameSnapshots.Invalidate(),
+            _log,
+            _rngSeed);
     }
 
     internal FortressRuntimeSessionCore(

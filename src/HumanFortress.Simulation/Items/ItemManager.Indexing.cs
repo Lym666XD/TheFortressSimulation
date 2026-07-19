@@ -8,13 +8,23 @@ internal sealed partial class ItemManager
 
     private void EntityKeyIndexAdd(Guid id)
     {
-        _entityKeyIndex[ToEntityKey(id)] = id;
+        var claim = _identityIndex.TryAdd(id);
+        if (!claim.Success)
+        {
+            throw new InvalidOperationException(claim.Describe("item"));
+        }
+
         LegacyEntityIdIndexAdd(id);
     }
 
     private void EntityKeyIndexRemove(Guid id)
     {
-        _entityKeyIndex.Remove(ToEntityKey(id));
+        if (!_identityIndex.Remove(id))
+        {
+            throw new InvalidOperationException(
+                $"The live item identity index does not own GUID {id}.");
+        }
+
         LegacyEntityIdIndexRemove(id);
     }
 

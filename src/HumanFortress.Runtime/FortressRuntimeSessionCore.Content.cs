@@ -1,4 +1,5 @@
 using HumanFortress.Content.Loading;
+using HumanFortress.Core.Time;
 using HumanFortress.Navigation.Implementation;
 using HumanFortress.Runtime.Composition;
 using HumanFortress.Runtime.Content;
@@ -23,7 +24,8 @@ internal sealed partial class FortressRuntimeSessionCore
             _strictContent,
             _contentWarningsAsErrors,
             _log,
-            _logContentIssues);
+            _logContentIssues,
+            _diagnostics);
     }
 
     private SimulationRuntimeSessionFactory<SimulationRuntimeHost<SimulationRuntimeSystems>> CreateRuntimeSessionFactory(
@@ -57,7 +59,7 @@ internal sealed partial class FortressRuntimeSessionCore
         out RuntimeSessionServices stagedServices,
         out FortressRuntimeContentSnapshot? stagedContentSnapshot)
     {
-        stagedServices = new RuntimeSessionServices();
+        stagedServices = new RuntimeSessionServices(_diagnostics, _rngSeed);
         FortressRuntimeContentSnapshot? contentSnapshot = null;
         var stagedFactory = CreateRuntimeSessionFactory(
             stagedServices,
@@ -74,13 +76,11 @@ internal sealed partial class FortressRuntimeSessionCore
         SimulationRuntimeSession<SimulationRuntimeHost<SimulationRuntimeSystems>> stagedSession,
         FortressRuntimeContentSnapshot? stagedContentSnapshot)
     {
-        StopIfRunningCore();
-        _workshopCompletionNotifier.SetHandler(null);
-        _services = stagedServices ?? throw new ArgumentNullException(nameof(stagedServices));
-        _runtimeSessionFactory = CreateRuntimeSessionFactory(_services);
-        _runtimeSession = new FortressRuntimeSession(stagedSession);
-        _runtimeContentSnapshot = stagedContentSnapshot;
-        InvalidateFrameSnapshots();
+        _lifecycle.CommitStagedSession(
+            stagedServices,
+            stagedSession,
+            stagedContentSnapshot,
+            ActivateCheckpointGeneration);
     }
 
     private SimulationRuntimeHost<SimulationRuntimeSystems> CreateRuntimeHost(
@@ -95,7 +95,8 @@ internal sealed partial class FortressRuntimeSessionCore
             navigation,
             _baseDir,
             contentSnapshot,
-            CreateRuntimeLogging());
+            CreateRuntimeLogging(),
+            _transportPlanningWorkerCount);
     }
 
     private FortressRuntimeLogging CreateRuntimeLogging()

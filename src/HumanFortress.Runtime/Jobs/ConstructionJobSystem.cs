@@ -16,7 +16,7 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned construction executor.
 /// </summary>
-internal sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExecutor
+internal sealed class ConstructionJobSystem : IUnifiedConstructionJobExecutor
 {
     private readonly ConstructionJobExecutor _executor;
 
@@ -61,19 +61,17 @@ internal sealed class ConstructionJobSystem : ITick, IUnifiedConstructionJobExec
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
-
-    string ITick.SystemId => SystemId;
-
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
-
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
-
-    internal void ReadTick(ulong tick)
+    internal void PrepareSequentialCompatibility(ulong tick)
     {
     }
 
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
+
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     private sealed class CallbackConstructionWorkshopCompletionSink : IConstructionWorkshopCompletionSink
     {

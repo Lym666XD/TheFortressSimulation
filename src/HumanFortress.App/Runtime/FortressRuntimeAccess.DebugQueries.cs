@@ -6,7 +6,13 @@ internal sealed partial class FortressRuntimeAccess
 {
     internal SimulationDebugSpawnData GetDebugSpawnData()
     {
-        return _snapshots.GetDebugSpawnData();
+        var debug = GetDebugMenuData().WorldStatus;
+        return debug.HasWorld
+            ? new SimulationDebugSpawnData(
+                true,
+                debug.ItemDefinitions,
+                debug.CreatureDefinitions)
+            : SimulationDebugSpawnData.Empty;
     }
 
     SimulationDebugSpawnData IFortressRuntimeDebugSpawnQueryAccess.GetDebugSpawnData() => GetDebugSpawnData();

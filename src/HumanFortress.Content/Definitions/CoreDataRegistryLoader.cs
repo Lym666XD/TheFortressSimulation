@@ -20,8 +20,7 @@ internal static partial class CoreDataRegistryLoader
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(coreDataPath);
 
-        var constructions = LoadBuildableConstructions(
-            Path.Combine(coreDataPath, "workshops"));
+        var constructions = LoadBuildableConstructions(coreDataPath);
         var recipes = LoadRecipeDefinitions(Path.Combine(coreDataPath, "recipes"));
 
         return new CoreDataLoadResult(constructions, recipes);

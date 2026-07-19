@@ -37,7 +37,8 @@ internal sealed partial class MiningJobExecutor
                 ReplanFailCount = job.ReplanFailCount,
                 Action = job.Action,
                 Segment = job.Segment,
-                DesignationId = job.DesignationId
+                DesignationId = job.DesignationId,
+                PathSearchAttempt = job.PathSearchAttempt
             };
 
             _active.Add(active);
@@ -59,6 +60,8 @@ internal sealed partial class MiningJobExecutor
         var issues = new List<string>();
         if (snapshot.ActiveJobs == null)
             issues.Add("Mining active job list is missing.");
+        else if (snapshot.ActiveJobs.Count > 0)
+            issues.Add("Mining active job restore is unsupported because the deferred payload omits reservation tokens and generations.");
         if (snapshot.BacklogEntries == null)
             issues.Add("Mining backlog list is missing.");
         if (snapshot.DeferredStairwells == null)
@@ -119,6 +122,8 @@ internal sealed partial class MiningJobExecutor
             issues.Add("Mining active job progress ticks must not exceed required ticks.");
         if (job.ReplanFailCount < 0)
             issues.Add("Mining active job replan fail count must not be negative.");
+        if (job.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add("Mining active job path search attempt exceeds the supported maximum.");
         if (job.DesignationId <= 0)
             issues.Add("Mining active job designation id must be positive.");
         ValidateEnum<TerrainKind>((int)job.TerrainKind, "Mining active job terrain kind", issues);
@@ -170,6 +175,8 @@ internal sealed partial class MiningJobExecutor
     {
         if (dig.DesignationId <= 0)
             issues.Add($"Mining {label} designation id must be positive.");
+        if (dig.PathSearchAttempt > PathRequest.MaxSearchAttempt)
+            issues.Add($"Mining {label} path search attempt exceeds the supported maximum.");
         ValidateEnum<TerrainKind>(dig.TerrainKind, $"Mining {label} terrain kind", issues);
         ValidateEnum<MiningAction>((int)dig.Action, $"Mining {label} action", issues);
         ValidateEnum<MiningSegment>((int)dig.Segment, $"Mining {label} segment", issues);
@@ -219,7 +226,8 @@ internal sealed partial class MiningJobExecutor
             destination,
             MoveMode.Walk,
             PathFlags.AllowDiagonal,
-            MiningPathSeed.From(job.WorkerId, job.Target));
+            MiningPathSeed.From(job.WorkerId, job.Target),
+            job.PathSearchAttempt);
         var path = _paths.Solve(in request, in _navView);
         if (path.Kind == PathResultKind.Found)
             return true;
@@ -239,7 +247,8 @@ internal sealed partial class MiningJobExecutor
             new Point3(job.Adjacent.X, job.Adjacent.Y, job.Z),
             MoveMode.Walk,
             PathFlags.AllowDiagonal,
-            MiningPathSeed.From(job.WorkerId, job.Target));
+            MiningPathSeed.From(job.WorkerId, job.Target),
+            job.PathSearchAttempt);
         var path = _paths.Solve(in request, in _navView);
         _move.BeginMovement(DiffTargetEncoding.EntityKey(job.WorkerId), request, path);
     }

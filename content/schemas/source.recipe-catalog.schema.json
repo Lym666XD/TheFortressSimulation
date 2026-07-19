@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.recipe-catalog.schema.json",
+  "title": "Active recipe source family",
+  "description": "Authoritative mechanical contract for active recipe catalogs.",
+  "oneOf": [
+    { "$ref": "#/definitions/recipeArray" },
+    {
+      "type": "object",
+      "required": ["version", "recipes"],
+      "properties": {
+        "$schema": { "type": "string", "minLength": 1 },
+        "version": { "type": ["string", "integer"] },
+        "_comment": { "type": "string" },
+        "recipes": { "$ref": "#/definitions/recipeArray" }
+      },
+      "additionalProperties": false
+    }
+  ],
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "idSet": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/id" },
+      "uniqueItems": true
+    },
+    "recipeArray": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/recipe" }
+    },
+    "recipe": {
+      "type": "object",
+      "required": ["id", "name", "category", "workshops", "work_time", "skill", "requirements", "inputs", "outputs"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "category": { "type": "string", "minLength": 1 },
+        "workshops": { "$ref": "#/definitions/idSet" },
+        "work_time": { "$ref": "#/definitions/workTime" },
+        "skill": { "$ref": "#/definitions/skill" },
+        "requirements": { "$ref": "#/definitions/requirements" },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/ingredient" }
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/product" }
+        },
+        "era": { "enum": ["C", "M", "R"] },
+        "era_min": { "enum": ["C", "M", "R"] },
+        "era_max": { "enum": ["C", "M", "R"] },
+        "unlock": { "$ref": "#/definitions/unlock" },
+        "requires_enablers": { "$ref": "#/definitions/idSet" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "anyOf": [
+              { "required": ["era_min"] },
+              { "required": ["era_max"] }
+            ]
+          },
+          "then": { "not": { "required": ["era"] } }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "workTime": {
+      "type": "object",
+      "required": ["duration_ticks"],
+      "properties": {
+        "duration_ticks": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "skill": {
+      "type": "object",
+      "required": ["primary", "difficulty", "xp_per_craft"],
+      "properties": {
+        "primary": { "type": "string", "minLength": 1 },
+        "difficulty": { "type": "integer", "minimum": 0 },
+        "xp_per_craft": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "requirements": {
+      "type": "object",
+      "required": ["enablers", "power_w"],
+      "properties": {
+        "enablers": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/id" },
+          "uniqueItems": true
+        },
+        "power_w": { "type": "integer", "minimum": 0 },
+        "fluid_inputs": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/fluidRequirement" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "fluidRequirement": {
+      "type": "object",
+      "required": ["id", "rate_ml_s"],
+      "properties": {
+        "id": { "$ref": "#/definitions/id" },
+        "rate_ml_s": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "ingredient": {
+      "type": "object",
+      "required": ["def_id", "count"],
+      "properties": {
+        "def_id": { "$ref": "#/definitions/id" },
+        "count": { "type": "integer", "minimum": 1 },
+        "consume": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "product": {
+      "type": "object",
+      "required": ["def_id", "count"],
+      "properties": {
+        "def_id": { "$ref": "#/definitions/id" },
+        "count": { "type": "integer", "minimum": 1 },
+        "byproduct": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "unlock": {
+      "type": "object",
+      "properties": {
+        "autolearn": { "type": "boolean" },
+        "researched": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/id" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

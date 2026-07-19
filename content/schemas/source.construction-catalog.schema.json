@@ -1,0 +1,175 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.construction-catalog.schema.json",
+  "title": "Active construction source family",
+  "description": "Authoritative mechanical contract for active placeable construction catalogs.",
+  "type": "object",
+  "required": ["version", "constructions"],
+  "properties": {
+    "$schema": { "type": "string", "minLength": 1 },
+    "version": { "type": ["string", "integer"] },
+    "_comment": { "type": "string" },
+    "category": { "type": "string", "minLength": 1 },
+    "constructions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/construction" }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+    },
+    "stringSet": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "orientationMask": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "enum": ["N", "E", "S", "W"] },
+      "uniqueItems": true
+    },
+    "footprint": {
+      "type": "object",
+      "required": ["w", "d", "h"],
+      "properties": {
+        "w": { "type": "integer", "minimum": 1 },
+        "d": { "type": "integer", "minimum": 1 },
+        "h": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "properties": {
+        "beauty": { "type": "integer" },
+        "comfort": { "type": "integer", "minimum": 0 },
+        "light_lumen": { "type": "integer", "minimum": 0 },
+        "heat_w": { "type": "integer", "minimum": 0 }
+      },
+      "minProperties": 1,
+      "additionalProperties": false
+    },
+    "materialRequirement": {
+      "type": "object",
+      "required": ["count"],
+      "properties": {
+        "tag": { "type": "string", "minLength": 1 },
+        "def_id": { "$ref": "#/definitions/id" },
+        "defId": { "$ref": "#/definitions/id" },
+        "count": { "type": "integer", "minimum": 1 }
+      },
+      "oneOf": [
+        { "required": ["tag"] },
+        { "required": ["def_id"] },
+        { "required": ["defId"] }
+      ],
+      "additionalProperties": false
+    },
+    "materialRequirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/materialRequirement" }
+    },
+    "placeableProfile": {
+      "type": "object",
+      "required": ["footprint", "passability", "requires_floor", "clearance_h", "blocks_light", "tags", "effects"],
+      "properties": {
+        "footprint": { "$ref": "#/definitions/footprint" },
+        "anchor": { "enum": ["topleft"] },
+        "orientation_mask": { "$ref": "#/definitions/orientationMask" },
+        "passability": { "enum": ["blocking", "nonblocking", "doorway"] },
+        "requires_floor": { "type": "boolean" },
+        "clearance_h": { "type": "integer", "minimum": 0 },
+        "blocks_light": { "type": "boolean" },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "effects": { "$ref": "#/definitions/effects" }
+      },
+      "additionalProperties": false
+    },
+    "destruction": {
+      "type": "object",
+      "required": ["is_destroyable", "destroyer_immune_tags", "durability_points", "on_destroy"],
+      "properties": {
+        "is_destroyable": { "type": "boolean" },
+        "destroyer_immune_tags": { "$ref": "#/definitions/stringSet" },
+        "durability_points": { "type": "integer", "minimum": 1 },
+        "on_destroy": {
+          "type": "object",
+          "required": ["drop_rules", "fx"],
+          "properties": {
+            "drop_rules": { "enum": ["none", "salvage_some", "salvage_all"] },
+            "fx": { "$ref": "#/definitions/stringSet" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "construction": {
+      "type": "object",
+      "required": ["id", "name", "category", "build_time_ticks", "skill_level_min"],
+      "properties": {
+        "_comment": { "type": "string" },
+        "id": { "$ref": "#/definitions/id" },
+        "name": { "type": "string", "minLength": 1 },
+        "category": {
+          "enum": ["wall", "floor", "stairs", "ramp", "structural", "utility", "functional", "fortification", "trap", "workshop"]
+        },
+        "tags": { "$ref": "#/definitions/stringSet" },
+        "result_material_id": { "$ref": "#/definitions/id" },
+        "footprint": { "$ref": "#/definitions/footprint" },
+        "orientation_mask": { "$ref": "#/definitions/orientationMask" },
+        "passability": { "enum": ["blocking", "nonblocking", "doorway"] },
+        "requires_floor": { "type": "boolean" },
+        "clearance_h": { "type": "integer", "minimum": 0 },
+        "blocks_light": { "type": "boolean" },
+        "effects": { "$ref": "#/definitions/effects" },
+        "placeable_profile": { "$ref": "#/definitions/placeableProfile" },
+        "materials_required": { "$ref": "#/definitions/materialRequirements" },
+        "material_costs": { "$ref": "#/definitions/materialRequirements" },
+        "requires_installed_components": { "$ref": "#/definitions/materialRequirements" },
+        "build_time_ticks": { "type": "integer", "minimum": 1 },
+        "required_skill": { "type": "string", "minLength": 1 },
+        "skill_required": { "type": "string", "minLength": 1 },
+        "skill_level_min": { "type": "integer", "minimum": 0 },
+        "door_state_default": {
+          "type": "object",
+          "required": ["locked"],
+          "properties": {
+            "locked": { "type": "boolean" }
+          },
+          "additionalProperties": false
+        },
+        "trap_type": { "type": "string", "minLength": 1 },
+        "destruction": { "$ref": "#/definitions/destruction" }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            { "required": ["placeable_profile"] },
+            {
+              "required": ["footprint", "orientation_mask", "passability", "requires_floor", "clearance_h", "blocks_light", "effects"]
+            }
+          ]
+        },
+        {
+          "oneOf": [
+            { "required": ["materials_required"] },
+            { "required": ["material_costs"] }
+          ]
+        },
+        {
+          "oneOf": [
+            { "required": ["required_skill"] },
+            { "required": ["skill_required"] }
+          ]
+        }
+      ],
+      "additionalProperties": false
+    }
+  }
+}

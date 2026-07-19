@@ -30,8 +30,7 @@ internal static class FortressMapRenderer
 
             if (navigationOverlay != null)
             {
-                var viewport = new Rectangle(mapData.CameraX, mapData.CameraY, mapData.Width, mapData.Height);
-                navigationOverlay.RenderOverlay(mapSurface, navigationOverlayData, viewport);
+                navigationOverlay.RenderOverlay(mapSurface, navigationOverlayData, mapData.Viewport);
             }
         }
         catch (Exception ex)

@@ -1,4 +1,6 @@
 using System;
+using HumanFortress.App.Rendering;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -10,18 +12,17 @@ internal sealed partial class StockpileUI
     /// <summary>
     /// Render stockpile overlays on the map.
     /// </summary>
-    public void RenderOverlay(ScreenSurface mapSurface, SimulationStockpileOverlayData overlay, Rectangle viewport)
+    public void RenderOverlay(ScreenSurface mapSurface, SimulationStockpileOverlayData overlay, RuntimeViewportGeometry viewport)
     {
         foreach (var cell in overlay.Cells)
         {
-            int screenX = cell.X - viewport.X;
-            int screenY = cell.Y - viewport.Y;
-
-            if (screenX >= 0 && screenX < mapSurface.Width &&
-                screenY >= 0 && screenY < mapSurface.Height)
-            {
-                mapSurface.SetGlyph(screenX, screenY, 'S', Color.Green.SetAlpha(150));
-            }
+            FortressViewportDrawing.SetWorldCellGlyph(
+                mapSurface.Surface,
+                viewport,
+                cell.X,
+                cell.Y,
+                'S',
+                Color.Green.SetAlpha(150));
         }
     }
 
@@ -32,7 +33,7 @@ internal sealed partial class StockpileUI
         ScreenSurface mapSurface,
         Point corner1,
         Point corner2,
-        Rectangle viewport,
+        RuntimeViewportGeometry viewport,
         bool valid)
     {
         var rect = CreateRectangle(corner1, corner2);
@@ -42,10 +43,13 @@ internal sealed partial class StockpileUI
         {
             for (int y = rect.Y; y < rect.Y + rect.Height; y++)
             {
-                var screenX = x - viewport.X;
-                var screenY = y - viewport.Y;
-                if (screenX >= 0 && screenX < mapSurface.Width && screenY >= 0 && screenY < mapSurface.Height)
-                    mapSurface.SetGlyph(screenX, screenY, '.', gold, Color.Transparent);
+                FortressViewportDrawing.SetWorldCellGlyph(
+                    mapSurface.Surface,
+                    viewport,
+                    x,
+                    y,
+                    '.',
+                    gold);
             }
         }
     }

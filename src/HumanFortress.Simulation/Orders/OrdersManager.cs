@@ -1,3 +1,4 @@
+using HumanFortress.Contracts.Diagnostics;
 using HumanFortress.Simulation.Diagnostics;
 
 namespace HumanFortress.Simulation.Orders;
@@ -10,11 +11,15 @@ namespace HumanFortress.Simulation.Orders;
 /// </summary>
 internal sealed partial class OrdersManager
 {
-    internal static Action<string>? LogCallback { get; set; }
-
     private const int RecentCapacity = 32;
 
     private readonly object _sync = new();
+    private IDiagnosticSink _diagnostics;
+
+    internal OrdersManager(IDiagnosticSink? diagnostics = null)
+    {
+        _diagnostics = diagnostics ?? DiagnosticHub.Sink;
+    }
 
     private readonly Queue<HaulDesignation> _haulQueue = new();
     private readonly Queue<HaulDesignation> _recentHauls = new();
@@ -37,9 +42,19 @@ internal sealed partial class OrdersManager
     private readonly Queue<BuildableConstructionDesignation> _recentBuildable = new();
     private readonly List<BuildableConstructionDesignation> _activeBuildable = new();
 
-    private static void Log(string message)
+    internal void SetDiagnostics(IDiagnosticSink diagnostics)
     {
-        SimulationDiagnostics.Information(LogCallback, "Simulation.Orders", message);
+        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+    }
+
+    internal void EmitDiagnostic(string category, string message)
+    {
+        SimulationDiagnostics.Information(_diagnostics, category, message);
+    }
+
+    private void Log(string message)
+    {
+        EmitDiagnostic("Simulation.Orders", message);
     }
 
     private int DrainQueue<T>(Queue<T> queue, ICollection<T> into, int maxCount)
@@ -136,6 +151,13 @@ internal sealed partial class OrdersManager
 
     private static string BuildMaterialFilterSortKey(MaterialFilterSpec filter)
     {
-        return string.Join('\0', filter.Tags.Order(StringComparer.Ordinal));
+        return string.Join(
+            '\0',
+            filter.Tags.Order(StringComparer.Ordinal)
+                .Concat(filter.Requirements
+                    .OrderBy(static requirement => requirement.Tag ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.DefinitionId ?? string.Empty, StringComparer.Ordinal)
+                    .ThenBy(static requirement => requirement.Count)
+                    .Select(static requirement => $"{requirement.Tag}|{requirement.DefinitionId}|{requirement.Count}")));
     }
 }

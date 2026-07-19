@@ -114,7 +114,7 @@ internal static partial class WorldSavePayloadBuilder
         return new WorldSaveWorkshopQueueEntryPayloadData(
             entry.EntryId,
             entry.RecipeId,
-            entry.DisplayName,
+            entry.RecipeId,
             (int)entry.Status,
             entry.HasPendingRequests,
             entry.LastRequestTick,

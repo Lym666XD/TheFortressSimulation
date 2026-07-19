@@ -1,5 +1,6 @@
 using HumanFortress.App.Diagnostics;
 using HumanFortress.App.UI;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadRogue.Primitives;
 
@@ -14,6 +15,7 @@ internal sealed record FortressUiOverlayRenderContext(
     FortressUiServices? UiServices,
     FortressUiOverlayPresenterCache UiOverlayPresenter,
     SimulationMapViewportData MapViewport,
+    RuntimeViewportGeometry ViewportGeometry,
     Point CameraPosition,
     Point CursorPosition,
     Point? LastMousePosition,

@@ -94,8 +94,8 @@ internal sealed class NavigationTuning
     internal int MaxNodesPerSearch { get; set; } = 10000;
 
     /// <summary>
-    /// Maximum paths to compute per tick. This is a deterministic budget; queued
-    /// requests are processed on later ticks in request order.
+    /// Maximum path requests to start per tick. Requests beyond the budget return
+    /// BudgetExhausted and remain owned by their caller for deterministic retry.
     /// </summary>
     internal int MaxPathsPerTick { get; set; } = 1024;
 

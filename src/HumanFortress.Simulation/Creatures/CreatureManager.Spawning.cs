@@ -68,8 +68,8 @@ internal sealed partial class CreatureManager
             {
                 guid = CreateNextInstanceGuidLocked();
                 var instance = new CreatureInstance(guid, creatureId, factionId, worldPos, z, maxHP, currentTick);
-                _instances[guid] = instance;
                 EntityKeyIndexAdd(guid);
+                _instances.Add(guid, instance);
             }
 
             Emit($"[CreatureManager] SUCCESS: Spawned '{def.Name}' (id={creatureId}, guid={guid}) at ({worldPos.X},{worldPos.Y},{z})");

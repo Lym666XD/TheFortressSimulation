@@ -25,7 +25,7 @@ internal static partial class FortressRuntimeSnapshotBuilder
             BuildJobsSnapshot(runtimeHost, tick),
             BuildWorkforceSnapshot(runtimeHost, world),
             BuildOrdersSnapshot(world),
-            BuildWorkshopSnapshot(world, constructions));
+            BuildWorkshopSnapshot(world, constructions, runtimeHost?.Recipes));
     }
 
     internal static WorkforceDebugData BuildWorkforceSnapshot(
@@ -42,17 +42,19 @@ internal static partial class FortressRuntimeSnapshotBuilder
 
     internal static SimulationWorkshopDebugData BuildWorkshopSnapshot(
         World? world,
-        IConstructionCatalog? constructions)
+        IConstructionCatalog? constructions,
+        IRecipeCatalog? recipes)
     {
-        return WorkshopSnapshotBuilder.Build(world, constructions);
+        return WorkshopSnapshotBuilder.Build(world, constructions, recipes);
     }
 
     internal static WorkshopSummaryView? FindWorkshopSnapshot(
         World? world,
         IConstructionCatalog? constructions,
+        IRecipeCatalog? recipes,
         Guid workshopGuid)
     {
-        return WorkshopSnapshotBuilder.FindById(world, constructions, workshopGuid);
+        return WorkshopSnapshotBuilder.FindById(world, constructions, recipes, workshopGuid);
     }
 
     internal static string? GetDefaultRecipeForWorkshop(IRecipeCatalog? recipes, string? workshopId)

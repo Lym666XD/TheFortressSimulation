@@ -11,7 +11,7 @@ namespace HumanFortress.Simulation.Zones;
 /// Maintains zone definitions and runtime instances.
 /// Thread-safe for reads during Read phase.
 /// </summary>
-internal sealed class ZoneManager
+internal sealed partial class ZoneManager
 {
     private readonly Dictionary<int, ZoneInstance> _zones = new();
     private readonly Dictionary<string, ZoneDefinition> _definitions = new();

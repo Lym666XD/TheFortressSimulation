@@ -11,7 +11,7 @@ jobs:
   build-and-smoke:
     name: Build and smoke tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     env:
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -38,10 +38,76 @@ jobs:
         run: dotnet restore HumanFortress.sln
 
       - name: Build solution
+        id: build
         run: dotnet build HumanFortress.sln --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
 
-      - name: Build smoke runner
-        run: dotnet build tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
+      - name: Run strict content identity gate
+        run: dotnet test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-build --configuration Debug --filter "TestCategory=content-identity" --logger "trx;LogFileName=content-identity.trx" --results-directory artifacts/test-results
 
-      - name: Run smoke runner
-        run: dotnet tests/HumanFortress.App.Tests/bin/Debug/net8.0/HumanFortress.App.Tests.dll
+      - name: Run discoverable suites
+        if: always() && steps.build.outcome == 'success'
+        run: dotnet test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-build --configuration Debug --filter "TestCategory=discoverable" --logger "trx;LogFileName=discoverable-suites.trx" --results-directory artifacts/test-results
+
+      - name: Run end-to-end smoke lane
+        if: always() && steps.build.outcome == 'success'
+        run: dotnet test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-build --configuration Debug --filter "TestCategory=end-to-end" --logger "trx;LogFileName=end-to-end.trx" --results-directory artifacts/test-results
+
+      - name: Run Stage 6 determinism matrix
+        if: always() && steps.build.outcome == 'success'
+        run: dotnet test tests/HumanFortress.App.Tests/HumanFortress.App.Tests.csproj --no-build --configuration Debug --filter "TestCategory=stage6-determinism" --logger "trx;LogFileName=stage6-determinism.trx" --results-directory artifacts/test-results
+
+      - name: Publish cross-platform determinism evidence
+        if: always() && steps.build.outcome == 'success'
+        run: dotnet tools/HumanFortress.Scenarios/bin/Debug/net8.0/HumanFortress.Scenarios.dll run --profile benchmarks/scenarios/determinism-ci.v1.json --output artifacts/determinism/run.json --transport-workers 1
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ runner.os }}
+          path: artifacts/test-results/**/*.trx
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload determinism evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: determinism-${{ runner.os }}
+          path: artifacts/determinism/run.json
+          if-no-files-found: error
+          retention-days: 14
+
+  compare-platform-determinism:
+    name: Compare Linux and Windows determinism
+    needs: build-and-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore scenario runner
+        run: dotnet restore tools/HumanFortress.Scenarios/HumanFortress.Scenarios.csproj
+
+      - name: Build scenario runner
+        run: dotnet build tools/HumanFortress.Scenarios/HumanFortress.Scenarios.csproj --no-restore -m:1 -v:minimal -p:RunAnalyzers=false -p:UseAppHost=false
+
+      - name: Download platform evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: determinism-*
+          path: artifacts/platforms
+
+      - name: Compare platform hashes and deterministic counters
+        run: dotnet tools/HumanFortress.Scenarios/bin/Debug/net8.0/HumanFortress.Scenarios.dll compare --left artifacts/platforms/determinism-Linux/run.json --right artifacts/platforms/determinism-Windows/run.json

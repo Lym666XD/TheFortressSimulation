@@ -15,7 +15,8 @@ internal static partial class SimulationDiffApplicator
         int worldZ = ck.Z;
 
         var creature = FindCreatureByTarget(world, op.Target);
-        if (creature == null) return;
+        if (creature == null)
+            throw new InvalidOperationException("MoveCreature target does not resolve to a live creature.");
 
         creature.Position = new Point(worldX, worldY);
         creature.Z = worldZ;

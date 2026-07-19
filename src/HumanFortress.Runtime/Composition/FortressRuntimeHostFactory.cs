@@ -15,12 +15,15 @@ internal static class FortressRuntimeHostFactory
         NavigationManager navigation,
         string baseDir,
         FortressRuntimeContentSnapshot? content = null,
-        FortressRuntimeLogging? logging = null)
+        FortressRuntimeLogging? logging = null,
+        int transportPlanningWorkerCount = 1)
     {
         ArgumentNullException.ThrowIfNull(world);
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(navigation);
         ArgumentException.ThrowIfNullOrWhiteSpace(baseDir);
+        if (transportPlanningWorkerCount < 1)
+            throw new ArgumentOutOfRangeException(nameof(transportPlanningWorkerCount));
 
         logging ??= FortressRuntimeLogging.None;
 
@@ -39,7 +42,8 @@ internal static class FortressRuntimeHostFactory
                 navigation,
                 pathServices,
                 dependencies,
-                logging),
+                logging,
+                transportPlanningWorkerCount),
             (bindings, systems) => bindings.SetProfessionWeightHandler(systems.ProfessionAssignments.SetWeight),
             logging.Log,
             dependencies.Recipes,
@@ -47,7 +51,8 @@ internal static class FortressRuntimeHostFactory
             dependencies.Geology,
             dependencies.NavigationTuning,
             dependencies.StockpilePresets,
-            pathServices);
+            pathServices,
+            dependencies.WorkshopCategoryTags);
     }
 
 }

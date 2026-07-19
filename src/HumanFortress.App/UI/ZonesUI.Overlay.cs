@@ -1,3 +1,5 @@
+using HumanFortress.App.Rendering;
+using HumanFortress.Contracts.Runtime;
 using HumanFortress.Contracts.Runtime.Snapshots;
 using SadConsole;
 using SadRogue.Primitives;
@@ -9,19 +11,17 @@ internal sealed partial class ZonesUI
     /// <summary>
     /// Render zone overlay on map (only when zone menu is open).
     /// </summary>
-    public void RenderOverlay(MapScreenSurface mapSurface, SimulationZoneOverlayData overlay, Rectangle viewport)
+    public void RenderOverlay(MapScreenSurface mapSurface, SimulationZoneOverlayData overlay, RuntimeViewportGeometry viewport)
     {
         foreach (var cell in overlay.Cells)
         {
-            int sx = cell.X - viewport.X;
-            int sy = cell.Y - viewport.Y;
-            if (sx < 0 || sx >= mapSurface.Surface.Width || sy < 0 || sy >= mapSurface.Surface.Height)
+            if (!FortressViewportDrawing.TryGetLocalPosition(viewport, cell.X, cell.Y, out var local))
                 continue;
 
             Color zoneColor = ParseColor(cell.ColorHex);
-            mapSurface.Surface.SetGlyph(sx, sy, cell.Glyph);
-            mapSurface.Surface.SetForeground(sx, sy, zoneColor);
-            mapSurface.Surface.SetBackground(sx, sy, new Color(zoneColor.R / 4, zoneColor.G / 4, zoneColor.B / 4, 80));
+            mapSurface.Surface.SetGlyph(local.X, local.Y, cell.Glyph);
+            mapSurface.Surface.SetForeground(local.X, local.Y, zoneColor);
+            mapSurface.Surface.SetBackground(local.X, local.Y, new Color(zoneColor.R / 4, zoneColor.G / 4, zoneColor.B / 4, 80));
         }
     }
 }

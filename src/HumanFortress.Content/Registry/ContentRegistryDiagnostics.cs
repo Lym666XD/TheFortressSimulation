@@ -4,7 +4,16 @@ namespace HumanFortress.Content.Registry;
 
 internal static class ContentRegistryDiagnostics
 {
-    internal static IDiagnosticSink? DiagnosticSink { get; set; }
+    private static readonly AsyncLocal<IDiagnosticSink?> ScopedSink = new();
+
+    internal static IDisposable PushSink(IDiagnosticSink diagnosticSink)
+    {
+        ArgumentNullException.ThrowIfNull(diagnosticSink);
+
+        var previous = ScopedSink.Value;
+        ScopedSink.Value = diagnosticSink;
+        return new DiagnosticScope(previous);
+    }
 
     internal static void Emit(string message)
     {
@@ -21,7 +30,7 @@ internal static class ContentRegistryDiagnostics
         Diagnostics.Write(DiagnosticEvent.Create(DiagnosticLevel.Error, "Content.Registry", message, exception));
     }
 
-    private static IDiagnosticSink Diagnostics => DiagnosticSink ?? DiagnosticHub.Sink;
+    private static IDiagnosticSink Diagnostics => ScopedSink.Value ?? DiagnosticHub.Sink;
 
     private static DiagnosticLevel ResolveLevel(string message)
     {
@@ -41,5 +50,25 @@ internal static class ContentRegistryDiagnostics
         }
 
         return DiagnosticLevel.Information;
+    }
+
+    private sealed class DiagnosticScope : IDisposable
+    {
+        private readonly IDiagnosticSink? _previous;
+        private bool _disposed;
+
+        internal DiagnosticScope(IDiagnosticSink? previous)
+        {
+            _previous = previous;
+        }
+
+        void IDisposable.Dispose()
+        {
+            if (_disposed)
+                return;
+
+            ScopedSink.Value = _previous;
+            _disposed = true;
+        }
     }
 }

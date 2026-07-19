@@ -1,4 +1,6 @@
 using HumanFortress.Contracts.Content.Registry;
+using HumanFortress.Contracts.Content.Identity;
+using HumanFortress.Contracts.Jobs;
 using StructuredContentRegistry = HumanFortress.Content.Registry.ContentRegistry;
 
 namespace HumanFortress.Content.Loading;
@@ -18,6 +20,7 @@ internal sealed class FortressRuntimeContentSnapshot
         IRuntimeGeologyCatalog geology,
         IReadOnlyDictionary<string, GeologyData> geologyEntries,
         IReadOnlyDictionary<string, ZoneDefinitionData> zonesById,
+        IReadOnlyDictionary<string, string[]> workshopCategoryTags,
         string? constructionTuningJson,
         string? mapgenTuningJson,
         string? miningTuningJson,
@@ -26,7 +29,10 @@ internal sealed class FortressRuntimeContentSnapshot
         string? navigationTuningJson,
         string? placeableTuningJson,
         string? schedulerTuningJson,
-        string? workshopTuningJson)
+        string? workshopTuningJson,
+        MechanicalContentIdentityData? mechanicalIdentity = null,
+        IProfessionRegistry? professions = null,
+        IReadOnlyList<StockpilePresetDefinition>? stockpilePresetDefinitions = null)
     {
         ContentVersion = contentVersion;
         ContentHash = contentHash ?? string.Empty;
@@ -43,6 +49,15 @@ internal sealed class FortressRuntimeContentSnapshot
             .OrderBy(zone => zone.Key, StringComparer.Ordinal)
             .Select(zone => zone.Value)
             .ToArray();
+        WorkshopCategoryTags = workshopCategoryTags
+            .OrderBy(static category => category.Key, StringComparer.Ordinal)
+            .ToDictionary(
+                static category => category.Key,
+                static category => (IReadOnlyList<string>)Array.AsReadOnly(category.Value
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(static tag => tag, StringComparer.Ordinal)
+                    .ToArray()),
+                StringComparer.Ordinal);
         ConstructionTuningJson = constructionTuningJson;
         MapgenTuningJson = mapgenTuningJson;
         MiningTuningJson = miningTuningJson;
@@ -52,6 +67,10 @@ internal sealed class FortressRuntimeContentSnapshot
         PlaceableTuningJson = placeableTuningJson;
         SchedulerTuningJson = schedulerTuningJson;
         WorkshopTuningJson = workshopTuningJson;
+        MechanicalIdentity = mechanicalIdentity;
+        Professions = professions;
+        StockpilePresetDefinitions = Array.AsReadOnly(
+            stockpilePresetDefinitions?.ToArray() ?? Array.Empty<StockpilePresetDefinition>());
     }
 
     internal ContentVersion ContentVersion { get; }
@@ -64,6 +83,7 @@ internal sealed class FortressRuntimeContentSnapshot
     internal IReadOnlyDictionary<string, GeologyData> GeologyEntries { get; }
     internal IReadOnlyDictionary<string, ZoneDefinitionData> ZonesById { get; }
     internal IReadOnlyList<ZoneDefinitionData> ZoneDefinitions { get; }
+    internal IReadOnlyDictionary<string, IReadOnlyList<string>> WorkshopCategoryTags { get; }
     internal string? ConstructionTuningJson { get; }
     internal string? MapgenTuningJson { get; }
     internal string? MiningTuningJson { get; }
@@ -73,21 +93,38 @@ internal sealed class FortressRuntimeContentSnapshot
     internal string? PlaceableTuningJson { get; }
     internal string? SchedulerTuningJson { get; }
     internal string? WorkshopTuningJson { get; }
+    internal MechanicalContentIdentityData? MechanicalIdentity { get; }
+    internal IProfessionRegistry? Professions { get; }
+    internal IReadOnlyList<StockpilePresetDefinition> StockpilePresetDefinitions { get; }
 }
 
 internal static class FortressRuntimeContentSnapshotLoader
 {
-    internal static FortressRuntimeContentSnapshot ApplyCoreData(CoreDataLoadResult coreData)
+    internal static FortressRuntimeContentSnapshot ApplyCoreData(
+        StructuredContentRegistry registry,
+        CoreDataLoadResult coreData,
+        MechanicalContentIdentityData? mechanicalIdentity = null,
+        IProfessionRegistry? professions = null,
+        IReadOnlyList<StockpilePresetDefinition>? stockpilePresetDefinitions = null)
     {
+        ArgumentNullException.ThrowIfNull(registry);
         ArgumentNullException.ThrowIfNull(coreData);
 
-        StructuredContentRegistry.Instance.ApplyCoreData(coreData);
-        return CaptureLoaded();
+        registry.ApplyCoreData(coreData);
+        return CaptureLoaded(
+            registry,
+            mechanicalIdentity,
+            professions,
+            stockpilePresetDefinitions);
     }
 
-    internal static FortressRuntimeContentSnapshot CaptureLoaded()
+    internal static FortressRuntimeContentSnapshot CaptureLoaded(
+        StructuredContentRegistry registry,
+        MechanicalContentIdentityData? mechanicalIdentity = null,
+        IProfessionRegistry? professions = null,
+        IReadOnlyList<StockpilePresetDefinition>? stockpilePresetDefinitions = null)
     {
-        var registry = StructuredContentRegistry.Instance;
+        ArgumentNullException.ThrowIfNull(registry);
 
         return new FortressRuntimeContentSnapshot(
             registry.Version,
@@ -99,6 +136,7 @@ internal static class FortressRuntimeContentSnapshotLoader
             registry,
             registry.GeologyEntries,
             registry.Zones,
+            registry.WorkshopCategoryTags,
             registry.GetTuningJson("tuning.construction", "$"),
             registry.GetTuningJson("tuning.mapgen", "$"),
             registry.GetTuningJson("tuning.mining", "$"),
@@ -107,6 +145,9 @@ internal static class FortressRuntimeContentSnapshotLoader
             registry.GetTuningJson("tuning.navigation", "$"),
             registry.GetTuningJson("tuning.placeable", "$"),
             registry.GetTuningJson("tuning.scheduler", "$"),
-            registry.GetTuningJson("tuning.workshops", "$"));
+            registry.GetTuningJson("tuning.workshops", "$"),
+            mechanicalIdentity,
+            professions,
+            stockpilePresetDefinitions);
     }
 }

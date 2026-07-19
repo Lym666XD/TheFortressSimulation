@@ -19,7 +19,7 @@ namespace HumanFortress.Runtime.Jobs;
 /// <summary>
 /// Tick-facing composition shell for the Jobs-owned mining executor.
 /// </summary>
-internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
+internal sealed class MiningJobSystem : IUnifiedMiningJobExecutor
 {
     private readonly NavigationManager _nav;
     private readonly MiningJobExecutor _executor;
@@ -82,17 +82,15 @@ internal sealed class MiningJobSystem : ITick, IUnifiedMiningJobExecutor
 
     int IUnifiedJobExecutor.LastIntakeCount => LastIntakeCount;
 
-    int ITick.Priority => Priority;
+    internal void PrepareSequentialCompatibility(ulong tick) => _executor.PrepareSequentialCompatibility(tick);
 
-    string ITick.SystemId => SystemId;
+    internal void ApplySequentialCompatibility(ulong tick) => _executor.ApplySequentialCompatibility(tick);
 
-    void ITick.ReadTick(ulong tick) => ReadTick(tick);
+    void ISequentialCompatibilityStage.PrepareSequentialCompatibility(ulong tick)
+        => PrepareSequentialCompatibility(tick);
 
-    void ITick.WriteTick(ulong tick) => WriteTick(tick);
-
-    internal void ReadTick(ulong tick) => _executor.ReadTick(tick);
-
-    internal void WriteTick(ulong tick) => _executor.WriteTick(tick);
+    void ISequentialCompatibilityStage.ApplySequentialCompatibility(ulong tick)
+        => ApplySequentialCompatibility(tick);
 
     internal List<(Point Cell, int Z)> GetRecentCompletions(ulong now) => _executor.GetRecentCompletions(now);
 

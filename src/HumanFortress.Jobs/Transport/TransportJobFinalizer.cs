@@ -13,8 +13,10 @@ internal sealed class TransportJobFinalizer
 
     internal void Finish(ActiveJob job, ICollection<ActiveJob> finished)
     {
-        _reservations.ReleaseItem(job.ItemId);
-        _reservations.ReleaseCreature(job.CreatureId);
+        if (job.PendingSplitReservation.IsValid)
+            _reservations.TryCancelStagedItemTransfer(job.PendingSplitReservation);
+        _reservations.TryReleaseItem(job.ItemReservation);
+        _reservations.TryReleaseCreature(job.CreatureReservation);
         finished.Add(job);
     }
 }

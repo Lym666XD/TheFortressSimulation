@@ -27,8 +27,7 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
             ReplayHashBuilder.Algorithm);
         var dataWithoutPresenterFrame = FortressRuntimeSessionSnapshotFacade.BuildUiOverlayFrameSnapshot(
             session,
-            request.CurrentZ,
-            request.Viewport.ToSadRogueRectangle(),
+            request.Viewport,
             request.ShowZoneOverlay,
             request.IncludeManagementDrawer,
             request.IncludeWorkDrawer,
@@ -84,13 +83,8 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
         var dataWithoutPresenterFrame = FortressRuntimeSessionSnapshotFacade.BuildFrameRenderSnapshot(
             session,
             request.IncludeMapViewport,
-            request.FortressSize,
-            request.CameraPosition.ToSadRoguePoint(),
+            request.Viewport,
             request.CursorPosition.ToSadRoguePoint(),
-            request.CurrentZ,
-            request.ZoomLevel,
-            request.ViewWidth,
-            request.ViewHeight,
             request.CursorGlyph,
             request.NavigationMode,
             request.SelectedNavigationTarget.ToSadRoguePoint(),
@@ -130,8 +124,7 @@ internal sealed partial class RuntimeFrameSnapshotPublisher
 }
 
 internal readonly record struct RuntimeUiOverlayFrameRequest(
-    int CurrentZ,
-    RuntimeRect Viewport,
+    RuntimeViewportGeometry Viewport,
     bool ShowZoneOverlay,
     bool IncludeManagementDrawer,
     bool IncludeWorkDrawer,
@@ -141,13 +134,8 @@ internal readonly record struct RuntimeUiOverlayFrameRequest(
 
 internal readonly record struct RuntimeFrameRenderRequest(
     bool IncludeMapViewport,
-    int FortressSize,
-    RuntimePoint CameraPosition,
+    RuntimeViewportGeometry Viewport,
     RuntimePoint CursorPosition,
-    int CurrentZ,
-    int ZoomLevel,
-    int ViewWidth,
-    int ViewHeight,
     int CursorGlyph,
     SimulationNavigationOverlayMode NavigationMode,
     RuntimePoint? SelectedNavigationTarget,

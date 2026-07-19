@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://humanfortress.game/schemas/source.tuning-cavern.schema.json",
+  "title": "Active cavern tuning",
+  "description": "Mechanical contract for deterministic cavern path, room, shaft, and floor generation.",
+  "type": "object",
+  "required": ["band", "path", "rooms", "shafts", "moss_on_floor"],
+  "properties": {
+    "band": {
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": { "enum": ["max_density"] }
+      },
+      "additionalProperties": false
+    },
+    "path": {
+      "type": "object",
+      "required": ["thickness", "steps_factor", "direction_bias_east", "tunnel_width"],
+      "properties": {
+        "thickness": { "type": "integer", "minimum": 1 },
+        "steps_factor": { "type": "number", "exclusiveMinimum": 0 },
+        "direction_bias_east": { "type": "number", "minimum": 0, "maximum": 1 },
+        "tunnel_width": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "rooms": {
+      "type": "object",
+      "required": ["radius_min", "radius_max", "interval_factor"],
+      "properties": {
+        "radius_min": { "type": "integer", "minimum": 1 },
+        "radius_max": { "type": "integer", "minimum": 1 },
+        "interval_factor": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "shafts": {
+      "type": "object",
+      "required": ["count"],
+      "properties": {
+        "count": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "moss_on_floor": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

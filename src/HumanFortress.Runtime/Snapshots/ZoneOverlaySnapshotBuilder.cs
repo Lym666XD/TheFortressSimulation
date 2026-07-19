@@ -53,7 +53,8 @@ internal static partial class ZoneOverlaySnapshotBuilder
                             worldX,
                             worldY,
                             definition.UiHints.Glyph,
-                            definition.UiHints.Color));
+                            definition.UiHints.Color,
+                            zone.ZoneId));
                     }
                 }
             }
